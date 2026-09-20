@@ -92,8 +92,14 @@ export function loadModelRouting(root = process.cwd()) {
   return JSON.parse(fs.readFileSync(path.join(root, "scripts", "model-routing.json"), "utf8"));
 }
 
-export function appendRunLog(entry, root = process.cwd()) {
-  const logPath = path.join(root, "pipeline", "run-log.md");
+/**
+ * @param {string} entry
+ * @param {string} [logPath] - đường dẫn run-log.md để ghi vào (thường là `videoPaths(slug).runLog`
+ *   từ `./video-paths.mjs`). Nếu bỏ trống, không ghi log (chỉ console.log ở nơi gọi).
+ */
+export function appendRunLog(entry, logPath) {
+  if (!logPath) return;
+  fs.mkdirSync(path.dirname(logPath), { recursive: true });
   const time = new Date().toISOString();
   const line = `\n- **${time}** — ${entry}\n`;
   fs.appendFileSync(logPath, line, "utf8");

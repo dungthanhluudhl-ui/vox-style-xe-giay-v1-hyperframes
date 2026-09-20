@@ -2,23 +2,27 @@
 // Script tự đọc toàn bộ ngữ cảnh cần thiết từ đĩa (script, transcript+timestamp, style DNA,
 // manifest media) và gửi cho 9router — Claude không cần đọc lại các file nặng này để tạo
 // scene plan, chỉ đọc kết quả markdown ngắn gọn sau khi xong.
-// Usage: node scripts/05-scene-plan.router.mjs
-//        node scripts/05-scene-plan.router.mjs --from=S05   (giữ nguyên scene trước S05, chỉ tạo lại từ S05 trở đi)
+// Usage: node scripts/05-scene-plan.router.mjs --video=<slug>
+//        node scripts/05-scene-plan.router.mjs --video=<slug> --from=S05   (giữ nguyên scene trước S05, chỉ tạo lại từ S05 trở đi)
 import fs from "node:fs";
 import path from "node:path";
 import { callModel, extractText, extractJson, loadModelRouting, appendRunLog } from "./lib/router-client.mjs";
+import { getVideoSlug, videoPaths } from "./lib/video-paths.mjs";
 
 const root = process.cwd();
 const routing = loadModelRouting();
 const model = routing.reasoning_generator;
 
+const slug = getVideoSlug();
+const vp = videoPaths(slug);
+
 function read(p) {
   return fs.readFileSync(path.join(root, p), "utf8");
 }
 
-const scriptText = read("content/an-le-64-script.txt").trim();
-const captions = JSON.parse(read("public/captions/an-le-64-captions.json"));
-const mediaManifest = JSON.parse(read("pipeline/media-analysis/manifest.json"));
+const scriptText = fs.readFileSync(vp.scriptFile, "utf8").trim();
+const captions = JSON.parse(fs.readFileSync(vp.captionsFile, "utf8"));
+const mediaManifest = JSON.parse(fs.readFileSync(vp.manifestJson, "utf8"));
 
 const styleDnaFiles = [
   "planning/style-dna/STYLE_DNA.md",
@@ -42,7 +46,7 @@ const fromSceneId = fromArg ? fromArg.split("=")[1] : null;
 let keptScenes = [];
 let regenFromMs = 0;
 if (fromSceneId) {
-  const existing = JSON.parse(read("planning/scene-plan.json"));
+  const existing = JSON.parse(fs.readFileSync(vp.scenePlanJson, "utf8"));
   const fromIndex = existing.findIndex((s) => s.id === fromSceneId);
   if (fromIndex === -1) {
     console.error(`Không tìm thấy scene ${fromSceneId} trong scene-plan.json hiện có.`);
@@ -148,15 +152,15 @@ if (!Array.isArray(newScenes) || newScenes.length === 0) {
 const scenes = [...keptScenes, ...newScenes];
 
 // Ghi JSON (nguồn dữ liệu chính cho bước Shotlist/code-gen sau)
-const jsonOutPath = path.join(root, "planning", "scene-plan.json");
-fs.writeFileSync(jsonOutPath, JSON.stringify(scenes, null, 2), "utf8");
+fs.mkdirSync(path.dirname(vp.scenePlanJson), { recursive: true });
+fs.writeFileSync(vp.scenePlanJson, JSON.stringify(scenes, null, 2), "utf8");
 
 // Render markdown dễ đọc (deterministic, không gọi model lần 2)
 const fmtMs = (ms) => `${Math.floor(ms / 1000)}.${String(ms % 1000).padStart(3, "0")}s`;
 const md = [
-  "# Scene Plan — Án lệ 64",
+  `# Scene Plan — ${slug}`,
   "",
-  `> Sinh bởi \`scripts/05-scene-plan.router.mjs\` qua ${model}. Nguồn dữ liệu: \`planning/scene-plan.json\`. Sửa tay thì sửa cả 2 file cho khớp.`,
+  `> Sinh bởi \`scripts/05-scene-plan.router.mjs\` qua ${model}. Nguồn dữ liệu: \`planning/videos/${slug}/scene-plan.json\`. Sửa tay thì sửa cả 2 file cho khớp.`,
   "",
   `Tổng thời lượng: ${fmtMs(totalDurationMs)} · ${scenes.length} scene`,
   "",
@@ -172,8 +176,8 @@ const md = [
   ...scenes.map((s) => `- **${s.id}**: ${s.notes || "—"}`),
 ].join("\n");
 
-fs.writeFileSync(path.join(root, "planning", "scene-plan.md"), md, "utf8");
+fs.writeFileSync(vp.scenePlanMd, md, "utf8");
 
-const summary = `Scene Plan: ${scenes.length} scene bằng ${model}, ghi planning/scene-plan.json + planning/scene-plan.md`;
+const summary = `Scene Plan: ${scenes.length} scene bằng ${model}, ghi planning/videos/${slug}/scene-plan.json + scene-plan.md`;
 console.log(summary);
-appendRunLog(`\`scripts/05-scene-plan.router.mjs\` — ${summary}`);
+appendRunLog(`\`scripts/05-scene-plan.router.mjs\` — ${summary}`, vp.runLog);

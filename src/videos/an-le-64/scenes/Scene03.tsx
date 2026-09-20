@@ -7,14 +7,14 @@ import {
   staticFile,
   useCurrentFrame,
 } from "remotion";
-import {BackgroundTreatment} from "../components/BackgroundTreatment";
-import {MediaAssembler} from "../components/MediaAssembler";
-import {DissolveEntrance} from "../components/SceneTransitions";
+import {BackgroundTreatment} from "../../../components/BackgroundTreatment";
+import {MediaAssembler} from "../../../components/MediaAssembler";
+import {DissolveEntrance} from "../../../components/SceneTransitions";
 import {
   COLORS,
   FONT,
   fontFamily,
-} from "../styles/theme";
+} from "../../../styles/theme";
 
 const ArrestShot: React.FC = () => {
   const frame = useCurrentFrame();
@@ -55,7 +55,7 @@ const ArrestShot: React.FC = () => {
       <MediaAssembler
         kind="image"
         src={staticFile(
-          "media/images/img-01-police-arresting-suspect-night.jpeg",
+          "videos/an-le-64/media/images/img-01-police-arresting-suspect-night.jpeg",
         )}
         durationInFrames={57}
         cameraMotion="zoom-in"
@@ -136,7 +136,7 @@ const CourtShot: React.FC = () => {
         <MediaAssembler
           kind="image"
           src={staticFile(
-            "media/images/img-09-terrified-defendant-courtroom-trial.jpeg",
+            "videos/an-le-64/media/images/img-09-terrified-defendant-courtroom-trial.jpeg",
           )}
           durationInFrames={137}
           cameraMotion="zoom-in"
@@ -297,7 +297,7 @@ const JusticeSystemShot: React.FC = () => {
           <MediaAssembler
             kind="image"
             src={staticFile(
-              "media/images/img-02-police-arrest-suspect-cutout.jpeg",
+              "videos/an-le-64/media/images/img-02-police-arrest-suspect-cutout.jpeg",
             )}
             durationInFrames={112}
             cameraMotion="none"

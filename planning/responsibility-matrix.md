@@ -7,6 +7,8 @@ Ký hiệu:
 - **9router[tier]** = script gọi model qua 9router (`http://localhost:20128/v1`). Tier tra trong `scripts/model-routing.json`.
 - **Local** = script/CLI chạy local, không gọi AI (ffmpeg, ffprobe, sharp, whisper.cpp, remotion CLI, tsc, eslint...).
 
+**Repo sản xuất nhiều video.** Mọi script `03/05/06/07-*.router.mjs` và `08-sync-root.mjs` nhận tham số bắt buộc `--video=<slug>` (slug = tên ngắn không dấu, vd `an-le-64`), tự suy ra toàn bộ đường dẫn qua `scripts/lib/video-paths.mjs` (nguồn xác thực duy nhất cho convention đường dẫn — sửa 1 chỗ này nếu cần đổi cấu trúc thư mục). Nội dung riêng từng video nằm trong `videos/<slug>/` bên trong mỗi nhóm (`content/`, `public/`, `planning/`, `pipeline/`, `src/`); phần dùng chung (style DNA, component, theme, script) nằm ở gốc mỗi nhóm.
+
 ## 1. Intake & Validation
 | Task | Ai/gì đảm nhiệm | Công cụ |
 |---|---|---|
@@ -52,19 +54,22 @@ Mô hình **generator → verify → reviewer**, chạy trong script, Claude ch�
 
 | Bước | Ai/gì đảm nhiệm | Công cụ |
 |---|---|---|
-| 1. Generate: theme, transition xé giấy dùng chung, khung `Root.tsx`, toàn bộ scene (kể cả scene đầu tiên) | 9router[reasoning_generator] | script tự bundle skill docs + style tokens + shotlist + (từ scene 2) code scene trước làm ví dụ convention |
-| 2. Verify tự động | Local | `tsc --noEmit`, `eslint`, render smoke-test (`npx remotion render` đúng dải frame scene đang xử lý — bắt lỗi runtime-only mà tsc/eslint không thấy, ví dụ `interpolate()` output-range sai) |
-| 3. Review | 9router[reasoning_reviewer] | `cx/gpt-5.6-sol-review` — verdict PASS/FAIL + danh sách lỗi |
-| 4. Nếu FAIL: gửi lỗi lại generator, lặp bước 1–3 | Local orchestration | tối đa 3 lần trước khi escalate |
-| 5. Ghi file + cập nhật `pipeline/run-log.md` | Local | — |
-| 6. Hết lần vẫn FAIL, hoặc vấn đề mang tính sản phẩm | Claude | đọc code/log chi tiết để xử lý |
-| 7. PASS bình thường | Claude | chỉ đọc báo cáo ngắn, không đọc code |
+| 1. Generate: CHỈ (các) file scene `src/videos/<slug>/scenes/SceneNN.tsx` (lần đầu tiên trong cả repo thì kèm theo theme.ts + component dùng chung — xem ghi chú dưới) | 9router[reasoning_generator] | script tự bundle skill docs + style tokens + shotlist + (từ scene 2 của video) code scene trước làm ví dụ convention |
+| 2. Ráp `src/Root.tsx` (khối riêng cho video này, giữ nguyên khối video khác) | Local, tất định, KHÔNG AI | `scripts/lib/sync-root-lib.mjs` — gọi tự động ngay trong `verify()` của bước 3, trừ khi `--no-root-sync` |
+| 3. Verify tự động | Local | `tsc --noEmit`, `eslint`, render smoke-test (`npx remotion render <CompositionId>` đúng dải frame scene đang xử lý — bắt lỗi runtime-only mà tsc/eslint không thấy, ví dụ `interpolate()` output-range sai) |
+| 4. Review | 9router[reasoning_reviewer] | `cx/gpt-5.6-sol-review` — verdict PASS/FAIL + danh sách lỗi |
+| 5. Nếu FAIL: gửi lỗi lại generator, lặp bước 1–4 | Local orchestration | tối đa 3 lần trước khi escalate |
+| 6. Ghi file + cập nhật `pipeline/videos/<slug>/run-log.md` | Local | — |
+| 7. Hết lần vẫn FAIL, hoặc vấn đề mang tính sản phẩm | Claude | đọc code/log chi tiết để xử lý |
+| 8. PASS bình thường | Claude | chỉ đọc báo cáo ngắn, không đọc code |
 
 Ghi chú: agent gọi qua 9router **không** tự có quyền truy cập skill Remotion của Claude Code — script phải chủ động đọc file skill liên quan (`remotion-best-practices`, `remotion-markup`, `remotion-create/video-layout.md`, `remotion-interactivity`, `remotion-captions/display-captions.md`) và nhét vào prompt mỗi lần gọi.
 
-**Quy tắc bắt buộc: KHÔNG BAO GIỜ batch nhiều scene trong 1 lần gọi `scripts/07-codegen.router.mjs`.** Đã kiểm chứng thật: request càng nhiều scene, model sinh càng nhiều token, thời gian gọi cộng dồn theo số scene và dễ vượt timeout mạng — nguyên nhân thật của các lỗi `fetch failed`/`HeadersTimeoutError` từng gặp, KHÔNG phải do máy quá tải khi render smoke-test. Luôn gọi 1 scene / 1 lần.
+**Generator không bao giờ viết `src/Root.tsx` nữa** (kể cả scene đầu tiên của video đầu tiên) — việc ráp Root.tsx (Sequence theo frame, mount `<Audio>`+`<Captions src=...>`, khai báo `<Composition id={PascalCase(slug)}>`) hoàn toàn do `scripts/lib/sync-root-lib.mjs` đảm nhiệm, tất định 100%, không AI. `theme.ts` (`src/styles/theme.ts`) và component dùng chung (`src/components/*`) vẫn do generator tạo/mở rộng, nhưng CHỈ MỘT LẦN CHO CẢ REPO (video đầu tiên tạo nền tảng, các video sau tái sử dụng, chỉ bổ sung field/type mới khi thật sự cần — không xoá/đổi field cũ vì các video khác đang dùng chung).
 
-**Chạy song song nhiều scene để tăng tốc:** chạy nhiều lệnh `scripts/07-codegen.router.mjs --scenes=SNN` (mỗi lệnh 1 scene) như các **process hệ điều hành riêng biệt cùng lúc**, mỗi lệnh thêm cờ `--no-root-sync` — chế độ này không đọc/ghi `src/Root.tsx`, không đụng `src/styles/theme.ts`/`src/components/*` (dùng type cục bộ trong scene nếu cần), không chạy render smoke-test (vì `Root.tsx` chưa có scene mới nên chưa render được gì có nghĩa) — nhờ vậy loại bỏ hoàn toàn race condition ghi đè file dùng chung giữa các process. Sau khi TẤT CẢ scene song song đã xong, chạy **một lần duy nhất** `node scripts/08-sync-root.mjs` (script local, không gọi AI, đọc `planning/scene-plan.json` + quét `src/scenes/*.tsx` hiện có để tự ráp lại toàn bộ `src/Root.tsx`), rồi mới chạy 1 lần `tsc`/`eslint`/render smoke-test tổng cho dải scene mới.
+**Quy tắc bắt buộc: KHÔNG BAO GIỜ batch nhiều scene trong 1 lần gọi `scripts/07-codegen.router.mjs`.** Đã kiểm chứng thật: request càng nhiều scene, model sinh càng nhiều token, thời gian gọi cộng dồn theo số scene và dễ vượt timeout mạng — nguyên nhân thật của các lỗi `fetch failed`/`HeadersTimeoutError` từng gặp, KHÔNG phải do máy quá tải khi render smoke-test. Luôn gọi 1 scene / 1 lần: `node scripts/07-codegen.router.mjs --video=<slug> --scenes=SNN`.
+
+**Chạy song song nhiều scene để tăng tốc:** chạy nhiều lệnh `scripts/07-codegen.router.mjs --video=<slug> --scenes=SNN` (mỗi lệnh 1 scene) như các **process hệ điều hành riêng biệt cùng lúc**, mỗi lệnh thêm cờ `--no-root-sync` — chế độ này không gọi `sync-root-lib.mjs`, không đụng `src/styles/theme.ts`/`src/components/*` (dùng type cục bộ trong scene nếu cần), không chạy render smoke-test (vì `Root.tsx` chưa có scene mới nên chưa render được gì có nghĩa) — nhờ vậy loại bỏ hoàn toàn race condition ghi đè file dùng chung giữa các process. Chỉ chạy song song các scene CỦA CÙNG 1 VIDEO; không chạy song song 2 video khác nhau nếu cả hai đều cần MỞ RỘNG theme.ts/component dùng chung trong cùng lúc (vẫn có thể race ở lớp dùng-chung này — xử lý tuần tự phần mở rộng dùng chung, hoặc merge tay sau). Sau khi TẤT CẢ scene song song đã xong, chạy **một lần duy nhất** `node scripts/08-sync-root.mjs --video=<slug>` (script local, không gọi AI, đọc `planning/videos/<slug>/scene-plan.json` + quét `src/videos/<slug>/scenes/*.tsx` hiện có để tự ráp lại khối Root.tsx của video này, giữ nguyên khối video khác), rồi chạy 1 lần `tsc`/`eslint`/render smoke-test tổng cho dải scene mới.
 
 ## 7. Preview & QA
 | Task | Ai/gì đảm nhiệm | Công cụ |
@@ -80,13 +85,13 @@ Ghi chú: agent gọi qua 9router **không** tự có quyền truy cập skill R
 | Kiểm tra file render (duration, resolution, không lỗi) | Local | ffprobe |
 
 ## Ghi chú vận hành: không tự tạo file lưu-lịch-sử thủ công
-Từ khi repo đã có git backup (2026-09-20), **không** tạo thêm file kiểu "trước-khi-sửa"/"v1"/"v2" trong `pipeline/*-history/` mỗi lần sửa lỗi hay chạy lại một bước — git đã lưu đúng việc này tốt hơn (`git log`, `git diff <commit> -- <file>`, `git show <commit>:<file>`). Việc này tránh cộng dồn số file vô hạn theo mỗi vòng sửa lỗi của mỗi video khi sản xuất hàng loạt. Các file lịch sử đã có sẵn trong `pipeline/scene-plan-history/` (tạo trước khi có git) được giữ nguyên, không cần dọn.
+Từ khi repo đã có git backup (2026-09-20), **không** tạo thêm file kiểu "trước-khi-sửa"/"v1"/"v2" trong `pipeline/videos/<slug>/*-history/` mỗi lần sửa lỗi hay chạy lại một bước — git đã lưu đúng việc này tốt hơn (`git log`, `git diff <commit> -- <file>`, `git show <commit>:<file>`). Việc này tránh cộng dồn số file vô hạn theo mỗi vòng sửa lỗi của mỗi video khi sản xuất hàng loạt. Các file lịch sử đã có sẵn trong `pipeline/scene-plan-history/` (tạo trước khi có git) được giữ nguyên, không cần dọn.
 
 ## Điều phối / Báo cáo (xuyên suốt)
 | Task | Ai/gì đảm nhiệm |
 |---|---|
 | Quyết định bước kế tiếp, chọn đúng script + model/tier | Claude |
-| Cập nhật `pipeline/run-log.md` sau mỗi bước | Claude / script |
+| Cập nhật `pipeline/videos/<slug>/run-log.md` sau mỗi bước | Claude / script |
 | Báo cáo tiến độ, xin xác nhận khi cần | Claude |
 
 ## Quy ước đặt tên script

@@ -2,7 +2,7 @@
 // Đồng thời CHUẨN HOÁ tên file (slug ngắn theo nội dung thật) + ghi manifest tổng hợp để các
 // giai đoạn sau (scene plan, shotlist, code-gen) dễ tra cứu bằng ID thay vì tên file gốc dài.
 // Claude không mở ảnh/video này — toàn bộ việc "nhìn" do model qua 9router đảm nhiệm.
-// Usage: node scripts/03-media-analyze.router.mjs
+// Usage: node scripts/03-media-analyze.router.mjs --video=<slug>
 import fs from "node:fs";
 import path from "node:path";
 import { execSync } from "node:child_process";
@@ -14,19 +14,15 @@ import {
   loadModelRouting,
   appendRunLog,
 } from "./lib/router-client.mjs";
+import { getVideoSlug, videoPaths } from "./lib/video-paths.mjs";
 
 const routing = loadModelRouting();
 const model = routing.vision_standard;
 
-const IMAGES_DIR = path.join(process.cwd(), "public", "media", "images");
-const VIDEO_DIR_OLD = path.join(process.cwd(), "public", "media", "video");
-const VIDEOS_DIR = path.join(process.cwd(), "public", "media", "videos");
-
-// Chuẩn hoá tên thư mục: "video" (số ít) -> "videos" (số nhiều, khớp "images")
-if (fs.existsSync(VIDEO_DIR_OLD) && !fs.existsSync(VIDEOS_DIR)) {
-  fs.renameSync(VIDEO_DIR_OLD, VIDEOS_DIR);
-  console.log("Đổi tên thư mục public/media/video -> public/media/videos");
-}
+const slug = getVideoSlug();
+const vp = videoPaths(slug);
+const IMAGES_DIR = vp.imagesDir;
+const VIDEOS_DIR = vp.videosDir;
 
 const VISUAL_LANGUAGES = [
   "cutout",
@@ -134,7 +130,7 @@ for (const file of imageFiles) {
   manifest.push({
     id,
     type: "image",
-    file: `public/media/images/${newName}`,
+    file: `public/videos/${slug}/media/images/${newName}`,
     originalFilename: file,
     width: stream?.width,
     height: stream?.height,
@@ -159,7 +155,7 @@ for (const file of videoFiles) {
   manifest.push({
     id,
     type: "video",
-    file: `public/media/videos/${newName}`,
+    file: `public/videos/${slug}/media/videos/${newName}`,
     originalFilename: file,
     width: vStream?.width,
     height: vStream?.height,
@@ -170,11 +166,9 @@ for (const file of videoFiles) {
   vidIndex++;
 }
 
-const manifestDir = path.join(process.cwd(), "pipeline", "media-analysis");
-fs.mkdirSync(manifestDir, { recursive: true });
-const manifestPath = path.join(manifestDir, "manifest.json");
-fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2), "utf8");
+fs.mkdirSync(path.dirname(vp.manifestJson), { recursive: true });
+fs.writeFileSync(vp.manifestJson, JSON.stringify(manifest, null, 2), "utf8");
 
-const summary = `Phân tích ${manifest.length} asset (${imageFiles.length} ảnh, ${videoFiles.length} video) bằng ${model}, chuẩn hoá tên file (img-NN-slug / vid-NN-slug) + thư mục videos/, ghi manifest tại pipeline/media-analysis/manifest.json`;
+const summary = `Phân tích ${manifest.length} asset (${imageFiles.length} ảnh, ${videoFiles.length} video) bằng ${model}, chuẩn hoá tên file (img-NN-slug / vid-NN-slug), ghi manifest tại pipeline/videos/${slug}/media-analysis/manifest.json`;
 console.log(summary);
-appendRunLog(`\`scripts/03-media-analyze.router.mjs\` — ${summary}`);
+appendRunLog(`\`scripts/03-media-analyze.router.mjs\` — ${summary}`, vp.runLog);

@@ -1,22 +1,30 @@
 // Sinh code Remotion theo shotlist đã chốt. Mô hình generator -> verify (local) -> reviewer
 // -> auto-retry. Claude không viết code, chỉ điều phối + đọc báo cáo cuối cùng.
-// Usage: node scripts/07-codegen.router.mjs --scenes=S01[,S02,...]  (hoặc --scenes=all)
-//        node scripts/07-codegen.router.mjs --scenes=S01 --issue-file=path/to/bug.txt  (sửa lỗi cụ thể trên code hiện có, không sinh lại từ đầu)
-//        node scripts/07-codegen.router.mjs --scenes=S06 --no-root-sync  (CHẠY SONG SONG NHIỀU SCENE: mỗi
-//          tiến trình chỉ sinh + verify(tsc/eslint, KHÔNG render) đúng 1 file scene của mình, KHÔNG đụng
-//          Root.tsx/theme.ts — tránh race condition khi nhiều tiến trình ghi cùng lúc. Sau khi TẤT CẢ tiến
-//          trình song song xong, chạy `node scripts/08-sync-root.mjs` một lần (tuần tự, không AI) để ráp
-//          Root.tsx, rồi 1 lần render-smoke-test tổng cho các scene mới.
+// Generator CHỈ BAO GIỜ output file scene (src/videos/<slug>/scenes/SceneNN.tsx) — không bao giờ
+// viết Root.tsx (việc đó do scripts/lib/sync-root-lib.mjs làm tất định, không AI, gọi tự động
+// bên dưới sau mỗi scene trừ khi --no-root-sync).
+// Usage: node scripts/07-codegen.router.mjs --video=<slug> --scenes=S01[,S02,...]  (hoặc --scenes=all)
+//        node scripts/07-codegen.router.mjs --video=<slug> --scenes=S01 --issue-file=path/to/bug.txt  (sửa lỗi cụ thể trên code hiện có, không sinh lại từ đầu)
+//        node scripts/07-codegen.router.mjs --video=<slug> --scenes=S06 --no-root-sync  (CHẠY SONG SONG NHIỀU
+//          SCENE CỦA CÙNG 1 VIDEO: mỗi tiến trình chỉ sinh + verify(tsc/eslint, KHÔNG render) đúng 1 file scene
+//          của mình, KHÔNG tự ráp Root.tsx — tránh race condition khi nhiều tiến trình ghi cùng lúc. Sau khi
+//          TẤT CẢ tiến trình song song xong, chạy `node scripts/08-sync-root.mjs --video=<slug>` một lần
+//          (tuần tự, không AI) để ráp Root.tsx, rồi tự render-smoke-test tổng cho các scene mới nếu cần.
 import fs from "node:fs";
 import path from "node:path";
 import { execSync } from "node:child_process";
 import { callModel, extractText, loadModelRouting, appendRunLog } from "./lib/router-client.mjs";
+import { getVideoSlug, videoPaths } from "./lib/video-paths.mjs";
+import { syncRoot } from "./lib/sync-root-lib.mjs";
 
 const root = process.cwd();
 const routing = loadModelRouting();
 const GEN_MODEL = routing.reasoning_generator;
 const REVIEW_MODEL = routing.reasoning_reviewer;
 const MAX_ATTEMPTS = 3;
+
+const slug = getVideoSlug();
+const vp = videoPaths(slug);
 
 function read(p) {
   return fs.readFileSync(path.join(root, p), "utf8");
@@ -25,14 +33,20 @@ function tryRead(p) {
   const full = path.join(root, p);
   return fs.existsSync(full) ? fs.readFileSync(full, "utf8") : null;
 }
+function tryReadAbs(full) {
+  return fs.existsSync(full) ? fs.readFileSync(full, "utf8") : null;
+}
 function listDir(p) {
   const full = path.join(root, p);
   return fs.existsSync(full) ? fs.readdirSync(full).filter((f) => /\.(tsx?|css)$/.test(f)) : [];
 }
+function listDirAbs(full) {
+  return fs.existsSync(full) ? fs.readdirSync(full).filter((f) => /\.(tsx?|css)$/.test(f)) : [];
+}
 
 const argScenes = (process.argv.find((a) => a.startsWith("--scenes=")) || "--scenes=S01").split("=")[1];
-const allScenes = JSON.parse(read("planning/scene-plan.json"));
-const allShots = JSON.parse(read("planning/shotlist.json"));
+const allScenes = JSON.parse(fs.readFileSync(vp.scenePlanJson, "utf8"));
+const allShots = JSON.parse(fs.readFileSync(vp.shotlistJson, "utf8"));
 const sceneIds = argScenes === "all" ? allScenes.map((s) => s.id) : argScenes.split(",");
 
 const scenes = allScenes.filter((s) => sceneIds.includes(s.id));
@@ -41,7 +55,7 @@ const frameRange = {
   start: Math.min(...shots.map((s) => s.startFrame)),
   end: Math.max(...shots.map((s) => s.endFrame)) - 1,
 };
-const mediaManifest = JSON.parse(read("pipeline/media-analysis/manifest.json"));
+const mediaManifest = JSON.parse(fs.readFileSync(vp.manifestJson, "utf8"));
 const mediaById = Object.fromEntries(mediaManifest.map((m) => [m.id, m]));
 const usedMedia = [...new Set(shots.map((s) => s.assetId).filter(Boolean))].map((id) => mediaById[id]);
 const noRootSync = process.argv.includes("--no-root-sync");
@@ -80,17 +94,17 @@ const KNOWN_GOTCHAS = `LỖI THƯỜNG GẶP — TRÁNH NGAY TỪ ĐẦU (đã r
 - Một số TÊN FILE ảnh có chữ "cutout" (vd img-08-extortion-money-demand-cutout.jpeg) — đó chỉ là mô tả phong cách minh hoạ đã có sẵn trong chính ảnh AI tạo ra, KHÔNG phải chỉ định phải code thêm xử lý cutout. Dùng ảnh này y như file ảnh thường (nền toàn khung, giữ nguyên màu), không cần và không được thêm filter grayscale/tách nền/đổ bóng trong code.`;
 
 function buildPrompt(feedback, previousFiles) {
-  const existingRoot = tryRead("src/Root.tsx");
   const existingTheme = tryRead("src/styles/theme.ts");
   const componentFiles = listDir("src/components");
-  const sceneFiles = listDir("src/scenes");
+  const sceneFiles = listDirAbs(vp.scenesDir);
   const isFoundation = !existingTheme;
 
   const existingFilesBlock = [
     existingTheme ? `### src/styles/theme.ts\n\`\`\`ts\n${existingTheme}\n\`\`\`` : null,
     ...componentFiles.map((f) => `### src/components/${f}\n\`\`\`tsx\n${tryRead(`src/components/${f}`)}\n\`\`\``),
-    ...sceneFiles.map((f) => `### src/scenes/${f}\n\`\`\`tsx\n${tryRead(`src/scenes/${f}`)}\n\`\`\``),
-    !noRootSync && existingRoot ? `### src/Root.tsx\n\`\`\`tsx\n${existingRoot}\n\`\`\`` : null,
+    ...sceneFiles.map(
+      (f) => `### src/videos/${slug}/scenes/${f}\n\`\`\`tsx\n${tryReadAbs(path.join(vp.scenesDir, f))}\n\`\`\``,
+    ),
   ]
     .filter(Boolean)
     .join("\n\n");
@@ -116,21 +130,17 @@ ${KNOWN_GOTCHAS}
 
 DỰ ÁN HIỆN TẠI:
 - Remotion project blank scaffold, TypeScript, đã cài @remotion/captions, @remotion/media, @remotion/install-whisper-cpp.
-- ${isFoundation ? "CHƯA có theme.ts hay scene nào — đây là lần generate ĐẦU TIÊN cho toàn dự án, bạn phải thiết lập toàn bộ nền tảng (theme, component dùng chung, Root.tsx)." : "ĐÃ có nền tảng — dưới đây là TOÀN BỘ file hiện có trong dự án. BÁM SÁT đúng convention/tên/kiểu dữ liệu đã có, tái sử dụng component đã có, KHÔNG đổi tên file/interface đã tồn tại trừ khi thực sự cần bổ sung."}
+- ${isFoundation ? "CHƯA có theme.ts hay component dùng chung nào — đây là lần generate ĐẦU TIÊN cho toàn repo (không riêng video này), bạn phải thiết lập nền tảng dùng chung (theme, component dùng chung) TRƯỚC KHI viết scene đầu tiên." : "ĐÃ có nền tảng dùng chung (theme.ts + component) — dưới đây là TOÀN BỘ file hiện có. BÁM SÁT đúng convention/tên/kiểu dữ liệu đã có, tái sử dụng component đã có, KHÔNG đổi tên file/interface đã tồn tại trừ khi thực sự cần bổ sung."}
 ${existingFilesBlock ? `\nFILE HIỆN CÓ TRONG DỰ ÁN:\n\n${existingFilesBlock}\n` : ""}
 
 YÊU CẦU CẤU TRÚC FILE:
 - ${isFoundation ? "Tạo 'src/styles/theme.ts' xuất ra các hằng số/type từ style tokens (màu, font, canvas, safeZone, caption, pacing) để mọi scene dùng chung." : "KHÔNG tạo lại theme.ts trừ khi thiếu field cần dùng — khi đó CHỈ bổ sung field mới vào file đã có, giữ nguyên toàn bộ field cũ, in lại đầy đủ nội dung file."}
 - ${isFoundation ? "Tạo các component dùng chung trong 'src/components/': ít nhất một component ráp media (ảnh/video nền toàn khung, hỗ trợ crop/Ken-Burns pan-zoom, hỗ trợ trim cho video), một component hiển thị overlay nhẹ (label tối đa 4 từ/punch-phrase/icon đơn giản), và helper cho các kiểu chuyển cảnh (animation-variants) thực sự dùng trong shot list bên dưới." : "Tái sử dụng NGUYÊN VẸN component đã có trong 'src/components/' (xem file hiện có ở trên) nếu phù hợp; chỉ tạo file component mới khi thực sự cần biến thể chưa có, và không sửa lại các component đã có trừ khi chúng đang lỗi."}
-- Mỗi scene trong danh sách yêu cầu → 1 file 'src/scenes/SceneNN.tsx' (NN = số thứ tự, 2 chữ số), export 1 component tự dùng useCurrentFrame() nội bộ theo frame TUYỆT ĐỐI của Sequence cha (không cần nhận prop startFrame).
-- Asset ảnh/video dùng đường dẫn staticFile("media/images/<file>") hoặc staticFile("media/videos/<file>") đúng theo đường dẫn trong media manifest bên dưới (bỏ tiền tố "public/").
-${
-  noRootSync
-    ? `- CHẾ ĐỘ CHẠY SONG SONG: đang có NHIỀU tiến trình khác chạy đồng thời, mỗi tiến trình lo 1 scene khác nhau. TUYỆT ĐỐI KHÔNG được xuất file 'src/Root.tsx' (một bước riêng sẽ ráp Root.tsx sau khi tất cả tiến trình xong, không phải việc của bạn ở đây). TUYỆT ĐỐI KHÔNG sửa 'src/styles/theme.ts' hay bất kỳ component nào trong 'src/components/' (nếu thiếu 1 type/biến thể, dùng type nội bộ (local) ngay trong file scene của bạn thay vì mở rộng file dùng chung — vì các tiến trình khác có thể đang ghi đè file đó cùng lúc). Output CHỈ gồm đúng 1 file 'src/scenes/SceneNN.tsx'.`
-    : `- Cập nhật 'src/Root.tsx': in lại TOÀN BỘ nội dung file, thêm/giữ đúng Sequence (from={...} durationInFrames={...}) cho từng scene theo đúng startFrame/durationInFrames đã tính sẵn trong shotlist (KHÔNG tự tính lại frame, dùng đúng số đã cho), giữ nguyên các scene đã có từ trước không nằm trong danh sách yêu cầu lần này.
-- Caption: nếu đây là lần đầu (${isFoundation}), thêm component hiển thị caption theo remotion-captions/display-captions.md, mount MỘT LẦN ở Root.tsx (không phải trong từng scene), đọc public/captions/an-le-64-captions.json qua staticFile()+fetch. Nếu không phải lần đầu, không đụng vào phần caption đã có.
-- Audio: nếu lần đầu, thêm Audio từ "@remotion/media" phát public/audio/an-le-64-narration.mp3 ở Root.tsx.`
-}
+- Mỗi scene trong danh sách yêu cầu → 1 file 'src/videos/${slug}/scenes/SceneNN.tsx' (NN = số thứ tự, 2 chữ số), export 1 component tên "SceneNN" (đúng khớp tên file) tự dùng useCurrentFrame() nội bộ theo frame TUYỆT ĐỐI của Sequence cha (không cần nhận prop startFrame).
+- Asset ảnh/video dùng đường dẫn staticFile("videos/${slug}/media/images/<file>") hoặc staticFile("videos/${slug}/media/videos/<file>") đúng theo đường dẫn trong media manifest bên dưới (bỏ tiền tố "public/" khỏi trường "file" của manifest, giữ nguyên phần còn lại).
+- TUYỆT ĐỐI KHÔNG được xuất file 'src/Root.tsx' và KHÔNG đụng vào caption/audio/Composition — một bước riêng (tất định, không AI) tự ráp Root.tsx từ scene-plan + các file scene đã sinh, luôn luôn, không phải việc của bạn ở đây, kể cả khi đây là scene đầu tiên của video.
+- TUYỆT ĐỐI KHÔNG sửa 'src/styles/theme.ts' hay bất kỳ component nào trong 'src/components/' TRỪ KHI thực sự thiếu 1 field/type cần dùng (khi đó CHỈ bổ sung, không xoá/đổi field cũ, in lại đầy đủ nội dung file) — vì đây là 2 nơi DÙNG CHUNG cho MỌI video trong repo, không riêng video này. Nếu chỉ cần 1 type/biến thể hẹp riêng cho scene này, ưu tiên khai báo type nội bộ ngay trong file scene thay vì mở rộng file dùng chung.
+- Output CHỈ gồm đúng (các) file 'src/videos/${slug}/scenes/SceneNN.tsx' của scene đang yêu cầu, cộng theme.ts/component dùng chung NẾU thực sự cần tạo/mở rộng theo quy tắc trên.
 
 ${
   feedback
@@ -219,14 +229,21 @@ function verify() {
     errors.push("### eslint src\n" + (e.stdout?.toString().slice(0, 4000) || e.message));
   }
 
-  // Render smoke-test: chỉ render đúng dải frame của scene đang xử lý để bắt lỗi RUNTIME
-  // (vd interpolate() dùng sai outputRange) mà tsc/eslint không phát hiện được.
-  // Bỏ qua ở chế độ song song vì Root.tsx CHƯA có scene này (sẽ render tổng ở scripts/08 sau).
+  // Ráp lại Root.tsx (tất định, không AI) rồi render smoke-test đúng dải frame của scene đang xử
+  // lý, để bắt lỗi RUNTIME (vd interpolate() dùng sai outputRange) mà tsc/eslint không phát hiện
+  // được. Bỏ qua cả hai ở chế độ song song vì nhiều tiến trình ghi Root.tsx cùng lúc sẽ race
+  // (ráp tổng 1 lần ở scripts/08 sau khi tất cả tiến trình xong).
   if (errors.length === 0 && !noRootSync) {
+    try {
+      syncRoot(slug, root);
+    } catch (e) {
+      errors.push("### sync-root\n" + (e.message || String(e)));
+      return errors;
+    }
     const tmpOut = path.join(root, "pipeline", ".cache", "smoke-test.mp4");
     try {
       execSync(
-        `npx remotion render AnLe64 "${tmpOut}" --frames=${frameRange.start}-${frameRange.end} --log=error`,
+        `npx remotion render ${vp.compositionId} "${tmpOut}" --frames=${frameRange.start}-${frameRange.end} --log=error`,
         { cwd: root, stdio: "pipe", timeout: 180000 },
       );
     } catch (e) {
@@ -321,7 +338,7 @@ const summary =
     : `Codegen scenes [${sceneIds.join(",")}] KHÔNG đạt sau ${attempt} lần thử — cần Claude can thiệp. Verdict cuối:\n${finalVerdict ?? "(chưa qua được verify)"}`;
 
 console.log("\n" + summary);
-appendRunLog(`\`scripts/07-codegen.router.mjs --scenes=${sceneIds.join(",")}\` — ${summary}`);
+appendRunLog(`\`scripts/07-codegen.router.mjs --video=${slug} --scenes=${sceneIds.join(",")}\` — ${summary}`, vp.runLog);
 
 if (!(finalVerdict && /VERDICT:\s*PASS/i.test(finalVerdict))) {
   process.exit(1);

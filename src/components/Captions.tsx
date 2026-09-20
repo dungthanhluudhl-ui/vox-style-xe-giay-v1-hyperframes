@@ -27,7 +27,6 @@ import {
   useState,
 } from "react";
 
-const CAPTIONS_FILE = "captions/an-le-64-captions.json";
 const PAGE_WINDOW_MS = 10_000;
 
 const applyFourWordPageBreaks = (captions: Caption[]): Caption[] => {
@@ -159,7 +158,12 @@ const CaptionSequence: React.FC<CaptionSequenceProps> = ({
   );
 };
 
-export const Captions: React.FC = () => {
+type CaptionsProps = {
+  /** Đường dẫn tương đối trong public/, vd "videos/an-le-64/captions/captions.json" */
+  src: string;
+};
+
+export const Captions: React.FC<CaptionsProps> = ({src}) => {
   const [captions, setCaptions] = useState<Caption[] | null>(null);
   const {delayRender, continueRender, cancelRender} = useDelayRender();
   const [renderHandle] = useState(() =>
@@ -169,7 +173,7 @@ export const Captions: React.FC = () => {
 
   const fetchCaptions = useCallback(async () => {
     try {
-      const response = await fetch(staticFile(CAPTIONS_FILE));
+      const response = await fetch(staticFile(src));
 
       if (!response.ok) {
         throw new Error(
@@ -199,7 +203,7 @@ export const Captions: React.FC = () => {
           : new Error("Unknown error while loading captions."),
       );
     }
-  }, [cancelRender, continueRender, renderHandle]);
+  }, [cancelRender, continueRender, renderHandle, src]);
 
   useEffect(() => {
     fetchCaptions();

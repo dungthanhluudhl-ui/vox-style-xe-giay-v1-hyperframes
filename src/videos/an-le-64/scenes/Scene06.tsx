@@ -6,13 +6,13 @@ import {
   staticFile,
   useCurrentFrame,
 } from "remotion";
-import {BackgroundTreatment} from "../components/BackgroundTreatment";
-import {MediaAssembler} from "../components/MediaAssembler";
+import {BackgroundTreatment} from "../../../components/BackgroundTreatment";
+import {MediaAssembler} from "../../../components/MediaAssembler";
 import {
   COLORS,
   FONT,
   fontFamily,
-} from "../styles/theme";
+} from "../../../styles/theme";
 
 const EscapeRoute: React.FC = () => {
   const frame = useCurrentFrame();
@@ -530,7 +530,7 @@ export const Scene06: React.FC = () => {
         <MediaAssembler
           kind="video"
           src={staticFile(
-            "media/videos/vid-02-suspect-looking-back-alley.mp4",
+            "videos/an-le-64/media/videos/vid-02-suspect-looking-back-alley.mp4",
           )}
           durationInFrames={185}
           trimBefore={0.9 * 30}

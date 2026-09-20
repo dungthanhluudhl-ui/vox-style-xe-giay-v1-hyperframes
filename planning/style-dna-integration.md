@@ -20,7 +20,7 @@
 
 ## Quan trọng: style UI (chrome) ≠ style media nguồn
 - **Style DNA ở trên** = ngôn ngữ đồ hoạ/UI của toàn bộ video (nền, chữ, icon, caption, bố cục, cutout treatment).
-- **Media nguồn** (`public/media/`) = nội dung minh hoạ cụ thể cho video "Án lệ 64" — 9 ảnh thực tế + 5 video paper-tear animation (8s/clip). Xem `pipeline/media-analysis/manifest.json` để biết mỗi asset dùng cho ý nào.
+- **Media nguồn** (`public/videos/<slug>/media/`) = nội dung minh hoạ riêng cho TỪNG video (khác `public/style/` là style DNA dùng chung). Vd video "Án lệ 64": `public/videos/an-le-64/media/` — 9 ảnh thực tế + 5 video paper-tear animation (8s/clip), xem `pipeline/videos/an-le-64/media-analysis/manifest.json` để biết mỗi asset dùng cho ý nào.
 - **Quyết định 2026-09-20 (đơn giản hoá phạm vi hiện tại)**: 9 ảnh nguồn dùng làm **ảnh nền** (background), KHÔNG áp dụng xử lý cutout (grayscale+bóng cam) như DNA mô tả cho người/vật thể cắt nền. Việc cutout nhân vật/asset sẽ bổ sung sau khi được yêu cầu — tương tự PDF bản án, đây là hạng mục hoãn lại (deferred), không phải bỏ vĩnh viễn.
 - Shot nào không có asset phù hợp → dựng bằng component đồ hoạ thuần (card/diagram/label) theo đúng style DNA, không cần media ngoài.
 

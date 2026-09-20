@@ -6,13 +6,13 @@ import {
   staticFile,
   useCurrentFrame,
 } from "remotion";
-import {BackgroundTreatment} from "../components/BackgroundTreatment";
-import {MediaAssembler} from "../components/MediaAssembler";
+import {BackgroundTreatment} from "../../../components/BackgroundTreatment";
+import {MediaAssembler} from "../../../components/MediaAssembler";
 import {
   COLORS,
   FONT,
   fontFamily,
-} from "../styles/theme";
+} from "../../../styles/theme";
 
 export const Scene02: React.FC = () => {
   const frame = useCurrentFrame();
@@ -94,7 +94,7 @@ export const Scene02: React.FC = () => {
         <MediaAssembler
           kind="video"
           src={staticFile(
-            "media/videos/vid-01-police-arresting-male-suspect.mp4",
+            "videos/an-le-64/media/videos/vid-01-police-arresting-male-suspect.mp4",
           )}
           durationInFrames={163}
           trimBefore={1.29 * 30}

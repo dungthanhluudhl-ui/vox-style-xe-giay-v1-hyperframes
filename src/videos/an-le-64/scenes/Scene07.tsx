@@ -8,9 +8,9 @@ import {
   staticFile,
   useCurrentFrame,
 } from "remotion";
-import {BackgroundTreatment} from "../components/BackgroundTreatment";
-import {MediaAssembler} from "../components/MediaAssembler";
-import {COLORS, FONT, fontFamily} from "../styles/theme";
+import {BackgroundTreatment} from "../../../components/BackgroundTreatment";
+import {MediaAssembler} from "../../../components/MediaAssembler";
+import {COLORS, FONT, fontFamily} from "../../../styles/theme";
 
 const UnfoldAccountShot: React.FC = () => {
   const frame = useCurrentFrame();
@@ -52,7 +52,7 @@ const UnfoldAccountShot: React.FC = () => {
         <MediaAssembler
           kind="image"
           src={staticFile(
-            "media/images/img-03-man-smartphone-screen-glow-cutout.jpeg",
+            "videos/an-le-64/media/images/img-03-man-smartphone-screen-glow-cutout.jpeg",
           )}
           durationInFrames={83}
           cameraMotion="zoom-in"
@@ -93,7 +93,7 @@ const ProfileDissolveShot: React.FC = () => {
     >
       <CanvasImage
         src={staticFile(
-          "media/images/img-03-man-smartphone-screen-glow-cutout.jpeg",
+          "videos/an-le-64/media/images/img-03-man-smartphone-screen-glow-cutout.jpeg",
         )}
         cropLeft={0.006}
         cropRight={0.006}
@@ -142,7 +142,7 @@ const ProfileDissolveShot: React.FC = () => {
       >
         <CanvasImage
           src={staticFile(
-            "media/images/img-05-online-scam-dating-profile.jpeg",
+            "videos/an-le-64/media/images/img-05-online-scam-dating-profile.jpeg",
           )}
           cropLeft={0.006}
           cropRight={0.006}
@@ -187,7 +187,7 @@ const ScamVideoShot: React.FC = () => {
       <MediaAssembler
         kind="video"
         src={staticFile(
-          "media/videos/vid-04-online-scam-phone-blue-fire.mp4",
+          "videos/an-le-64/media/videos/vid-04-online-scam-phone-blue-fire.mp4",
         )}
         durationInFrames={64}
         trimBefore={3.7 * 30}

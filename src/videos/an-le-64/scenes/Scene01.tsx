@@ -6,14 +6,14 @@ import {
   staticFile,
   useCurrentFrame,
 } from "remotion";
-import {BackgroundTreatment} from "../components/BackgroundTreatment";
-import {LightOverlay} from "../components/LightOverlay";
-import {MediaAssembler} from "../components/MediaAssembler";
+import {BackgroundTreatment} from "../../../components/BackgroundTreatment";
+import {LightOverlay} from "../../../components/LightOverlay";
+import {MediaAssembler} from "../../../components/MediaAssembler";
 import {
   DissolveEntrance,
   ZoomThroughEntrance,
-} from "../components/SceneTransitions";
-import {COLORS} from "../styles/theme";
+} from "../../../components/SceneTransitions";
+import {COLORS} from "../../../styles/theme";
 
 const DebtTrapConnector: React.FC<{frame: number}> = ({frame}) => {
   return (
@@ -166,7 +166,7 @@ export const Scene01: React.FC = () => {
           <MediaAssembler
             kind="image"
             src={staticFile(
-              "media/images/img-08-extortion-money-demand-cutout.jpeg",
+              "videos/an-le-64/media/images/img-08-extortion-money-demand-cutout.jpeg",
             )}
             durationInFrames={150}
             cameraMotion="zoom-in"
@@ -189,7 +189,7 @@ export const Scene01: React.FC = () => {
           <MediaAssembler
             kind="image"
             src={staticFile(
-              "media/images/img-04-online-scam-catfish-victim.jpeg",
+              "videos/an-le-64/media/images/img-04-online-scam-catfish-victim.jpeg",
             )}
             durationInFrames={84}
             cameraMotion="pan-right"

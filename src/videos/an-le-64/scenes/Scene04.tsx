@@ -7,12 +7,12 @@ import {
   staticFile,
   useCurrentFrame,
 } from "remotion";
-import {BackgroundTreatment} from "../components/BackgroundTreatment";
+import {BackgroundTreatment} from "../../../components/BackgroundTreatment";
 import {
   COLORS,
   FONT,
   fontFamily,
-} from "../styles/theme";
+} from "../../../styles/theme";
 
 type DocumentCopyProps = {
   delay: number;
@@ -406,7 +406,7 @@ const CourtroomVideo: React.FC = () => {
       >
         <Video
           src={staticFile(
-            "media/videos/vid-03-shocked-defendant-courtroom-verdict.mp4",
+            "videos/an-le-64/media/videos/vid-03-shocked-defendant-courtroom-verdict.mp4",
           )}
           muted
           durationInFrames={206}

@@ -8,14 +8,14 @@ import {
   staticFile,
   useCurrentFrame,
 } from "remotion";
-import {BackgroundTreatment} from "../components/BackgroundTreatment";
-import {SimpleIcon} from "../components/LightOverlay";
-import {MediaAssembler} from "../components/MediaAssembler";
+import {BackgroundTreatment} from "../../../components/BackgroundTreatment";
+import {SimpleIcon} from "../../../components/LightOverlay";
+import {MediaAssembler} from "../../../components/MediaAssembler";
 import {
   COLORS,
   FONT,
   fontFamily,
-} from "../styles/theme";
+} from "../../../styles/theme";
 
 const LoanVideoShot: React.FC = () => {
   const frame = useCurrentFrame();
@@ -59,7 +59,7 @@ const LoanVideoShot: React.FC = () => {
       <MediaAssembler
         kind="video"
         src={staticFile(
-          "media/videos/vid-05-man-demanding-extortion-money.mp4",
+          "videos/an-le-64/media/videos/vid-05-man-demanding-extortion-money.mp4",
         )}
         durationInFrames={110}
         trimBefore={2.1 * 30}
@@ -129,7 +129,7 @@ const DebtCollectionShot: React.FC = () => {
       <MediaAssembler
         kind="image"
         src={staticFile(
-          "media/images/img-06-suspect-looking-back-dark-alley.jpeg",
+          "videos/an-le-64/media/images/img-06-suspect-looking-back-dark-alley.jpeg",
         )}
         durationInFrames={54}
         cameraMotion="pan-right"
@@ -210,7 +210,7 @@ const DisappearanceShot: React.FC = () => {
     >
       <CanvasImage
         src={staticFile(
-          "media/images/img-06-suspect-looking-back-dark-alley.jpeg",
+          "videos/an-le-64/media/images/img-06-suspect-looking-back-dark-alley.jpeg",
         )}
         cropTop={0.006}
         cropBottom={0.006}
@@ -242,7 +242,7 @@ const DisappearanceShot: React.FC = () => {
         <MediaAssembler
           kind="image"
           src={staticFile(
-            "media/images/img-07-suspect-hiding-dark-alley.jpeg",
+            "videos/an-le-64/media/images/img-07-suspect-hiding-dark-alley.jpeg",
           )}
           durationInFrames={45}
           cameraMotion="zoom-in"

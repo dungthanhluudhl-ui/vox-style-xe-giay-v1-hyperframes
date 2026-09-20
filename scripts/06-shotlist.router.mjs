@@ -1,35 +1,38 @@
 // Lập Shotlist: chia mỗi scene (planning/scene-plan.json) thành shot chi tiết (frame in/out,
 // cách xử lý từng asset, overlay/label theo đúng cue lời thoại). Do 9router đảm nhiệm,
 // Claude chỉ đọc kết quả markdown ngắn gọn sau khi xong.
-// Usage: node scripts/06-shotlist.router.mjs
-//        node scripts/06-shotlist.router.mjs --scenes=S05,S06,S07,S08   (chỉ sinh lại shot cho các scene này, merge vào shotlist.json hiện có)
+// Usage: node scripts/06-shotlist.router.mjs --video=<slug>
+//        node scripts/06-shotlist.router.mjs --video=<slug> --scenes=S05,S06,S07   (chỉ sinh lại shot cho các scene này, merge vào shotlist.json hiện có)
 import fs from "node:fs";
 import path from "node:path";
 import { callModel, extractText, extractJson, loadModelRouting, appendRunLog } from "./lib/router-client.mjs";
+import { getVideoSlug, videoPaths } from "./lib/video-paths.mjs";
 
 const root = process.cwd();
 const routing = loadModelRouting();
 const model = routing.reasoning_generator;
 const FPS = 30;
 
+const slug = getVideoSlug();
+const vp = videoPaths(slug);
+
 function read(p) {
   return fs.readFileSync(path.join(root, p), "utf8");
 }
-function tryRead(p) {
-  const full = path.join(root, p);
-  return fs.existsSync(full) ? fs.readFileSync(full, "utf8") : null;
+function tryReadAbs(fullPath) {
+  return fs.existsSync(fullPath) ? fs.readFileSync(fullPath, "utf8") : null;
 }
 const msToFrame = (ms) => Math.round((ms / 1000) * FPS);
 
 const scenesArg = process.argv.find((a) => a.startsWith("--scenes="));
 const filterSceneIds = scenesArg ? scenesArg.split("=")[1].split(",") : null;
 
-const allScenesInPlan = JSON.parse(read("planning/scene-plan.json"));
+const allScenesInPlan = JSON.parse(fs.readFileSync(vp.scenePlanJson, "utf8"));
 const scenes = filterSceneIds ? allScenesInPlan.filter((s) => filterSceneIds.includes(s.id)) : allScenesInPlan;
-const mediaManifest = JSON.parse(read("pipeline/media-analysis/manifest.json"));
-const captions = JSON.parse(read("public/captions/an-le-64-captions.json"));
+const mediaManifest = JSON.parse(fs.readFileSync(vp.manifestJson, "utf8"));
+const captions = JSON.parse(fs.readFileSync(vp.captionsFile, "utf8"));
 
-const existingShotlistRaw = tryRead("planning/shotlist.json");
+const existingShotlistRaw = tryReadAbs(vp.shotlistJson);
 const existingShotlist = existingShotlistRaw ? JSON.parse(existingShotlistRaw) : [];
 const currentSceneIds = new Set(allScenesInPlan.map((s) => s.id));
 const keptShots = filterSceneIds
@@ -132,16 +135,17 @@ for (const s of newShots) {
 }
 
 const shots = [...keptShots, ...newShots];
-fs.writeFileSync(path.join(root, "planning", "shotlist.json"), JSON.stringify(shots, null, 2), "utf8");
+fs.mkdirSync(path.dirname(vp.shotlistJson), { recursive: true });
+fs.writeFileSync(vp.shotlistJson, JSON.stringify(shots, null, 2), "utf8");
 
 const fmtMs = (ms) => `${Math.floor(ms / 1000)}.${String(ms % 1000).padStart(3, "0")}s`;
 const bySceneId = {};
 for (const s of shots) (bySceneId[s.sceneId] ??= []).push(s);
 
 const md = [
-  "# Shotlist — Án lệ 64",
+  `# Shotlist — ${slug}`,
   "",
-  `> Sinh bởi \`scripts/06-shotlist.router.mjs\` qua ${model}. Nguồn dữ liệu: \`planning/shotlist.json\`. FPS=${FPS}.`,
+  `> Sinh bởi \`scripts/06-shotlist.router.mjs\` qua ${model}. Nguồn dữ liệu: \`planning/videos/${slug}/shotlist.json\`. FPS=${FPS}.`,
   "",
   `Tổng: ${shots.length} shot trên ${Object.keys(bySceneId).length} scene`,
   "",
@@ -166,8 +170,8 @@ const md = [
   ...shots.map((s) => `- **${s.id}**: ${s.notes || "—"}`),
 ].join("\n");
 
-fs.writeFileSync(path.join(root, "planning", "shotlist.md"), md, "utf8");
+fs.writeFileSync(vp.shotlistMd, md, "utf8");
 
-const summary = `Shotlist: ${shots.length} shot trên ${Object.keys(bySceneId).length} scene bằng ${model}, ghi planning/shotlist.json + planning/shotlist.md`;
+const summary = `Shotlist: ${shots.length} shot trên ${Object.keys(bySceneId).length} scene bằng ${model}, ghi planning/videos/${slug}/shotlist.json + shotlist.md`;
 console.log(summary);
-appendRunLog(`\`scripts/06-shotlist.router.mjs\` — ${summary}`);
+appendRunLog(`\`scripts/06-shotlist.router.mjs\` — ${summary}`, vp.runLog);
