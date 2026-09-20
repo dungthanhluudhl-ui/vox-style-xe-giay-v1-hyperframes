@@ -53,7 +53,7 @@ Mô hình **generator → verify → reviewer**, chạy trong script, Claude ch�
 | Bước | Ai/gì đảm nhiệm | Công cụ |
 |---|---|---|
 | 1. Generate: theme, transition xé giấy dùng chung, khung `Root.tsx`, toàn bộ scene (kể cả scene đầu tiên) | 9router[reasoning_generator] | script tự bundle skill docs + style tokens + shotlist + (từ scene 2) code scene trước làm ví dụ convention |
-| 2. Verify tự động | Local | `tsc --noEmit`, `eslint`, `npx remotion render --still` |
+| 2. Verify tự động | Local | `tsc --noEmit`, `eslint`, render smoke-test (`npx remotion render` đúng dải frame scene đang xử lý — bắt lỗi runtime-only mà tsc/eslint không thấy, ví dụ `interpolate()` output-range sai) |
 | 3. Review | 9router[reasoning_reviewer] | `cx/gpt-5.6-sol-review` — verdict PASS/FAIL + danh sách lỗi |
 | 4. Nếu FAIL: gửi lỗi lại generator, lặp bước 1–3 | Local orchestration | tối đa 3 lần trước khi escalate |
 | 5. Ghi file + cập nhật `pipeline/run-log.md` | Local | — |
@@ -61,6 +61,10 @@ Mô hình **generator → verify → reviewer**, chạy trong script, Claude ch�
 | 7. PASS bình thường | Claude | chỉ đọc báo cáo ngắn, không đọc code |
 
 Ghi chú: agent gọi qua 9router **không** tự có quyền truy cập skill Remotion của Claude Code — script phải chủ động đọc file skill liên quan (`remotion-best-practices`, `remotion-markup`, `remotion-create/video-layout.md`, `remotion-interactivity`, `remotion-captions/display-captions.md`) và nhét vào prompt mỗi lần gọi.
+
+**Quy tắc bắt buộc: KHÔNG BAO GIỜ batch nhiều scene trong 1 lần gọi `scripts/07-codegen.router.mjs`.** Đã kiểm chứng thật: request càng nhiều scene, model sinh càng nhiều token, thời gian gọi cộng dồn theo số scene và dễ vượt timeout mạng — nguyên nhân thật của các lỗi `fetch failed`/`HeadersTimeoutError` từng gặp, KHÔNG phải do máy quá tải khi render smoke-test. Luôn gọi 1 scene / 1 lần.
+
+**Chạy song song nhiều scene để tăng tốc:** chạy nhiều lệnh `scripts/07-codegen.router.mjs --scenes=SNN` (mỗi lệnh 1 scene) như các **process hệ điều hành riêng biệt cùng lúc**, mỗi lệnh thêm cờ `--no-root-sync` — chế độ này không đọc/ghi `src/Root.tsx`, không đụng `src/styles/theme.ts`/`src/components/*` (dùng type cục bộ trong scene nếu cần), không chạy render smoke-test (vì `Root.tsx` chưa có scene mới nên chưa render được gì có nghĩa) — nhờ vậy loại bỏ hoàn toàn race condition ghi đè file dùng chung giữa các process. Sau khi TẤT CẢ scene song song đã xong, chạy **một lần duy nhất** `node scripts/08-sync-root.mjs` (script local, không gọi AI, đọc `planning/scene-plan.json` + quét `src/scenes/*.tsx` hiện có để tự ráp lại toàn bộ `src/Root.tsx`), rồi mới chạy 1 lần `tsc`/`eslint`/render smoke-test tổng cho dải scene mới.
 
 ## 7. Preview & QA
 | Task | Ai/gì đảm nhiệm | Công cụ |
@@ -75,6 +79,9 @@ Ghi chú: agent gọi qua 9router **không** tự có quyền truy cập skill R
 | Render video cuối (chỉ khi được yêu cầu rõ) | Local | `npx remotion render` |
 | Kiểm tra file render (duration, resolution, không lỗi) | Local | ffprobe |
 
+## Ghi chú vận hành: không tự tạo file lưu-lịch-sử thủ công
+Từ khi repo đã có git backup (2026-09-20), **không** tạo thêm file kiểu "trước-khi-sửa"/"v1"/"v2" trong `pipeline/*-history/` mỗi lần sửa lỗi hay chạy lại một bước — git đã lưu đúng việc này tốt hơn (`git log`, `git diff <commit> -- <file>`, `git show <commit>:<file>`). Việc này tránh cộng dồn số file vô hạn theo mỗi vòng sửa lỗi của mỗi video khi sản xuất hàng loạt. Các file lịch sử đã có sẵn trong `pipeline/scene-plan-history/` (tạo trước khi có git) được giữ nguyên, không cần dọn.
+
 ## Điều phối / Báo cáo (xuyên suốt)
 | Task | Ai/gì đảm nhiệm |
 |---|---|
@@ -83,10 +90,15 @@ Ghi chú: agent gọi qua 9router **không** tự có quyền truy cập skill R
 | Báo cáo tiến độ, xin xác nhận khi cần | Claude |
 
 ## Quy ước đặt tên script
-`scripts/<số-thứ-tự>-<giai-đoạn>-<tên-task>.<owner>.mjs`, ví dụ:
+`scripts/<số-thứ-tự>-<giai-đoạn>-<tên-task>.<owner>.mjs`, ví dụ thực tế trong repo:
 - `scripts/01-audio-transcribe.local.mjs`
 - `scripts/02-audio-clean-transcript.router.mjs`
-- `scripts/06-media-analyze.router.mjs`
-- `scripts/10-scene-plan.router.mjs`
+- `scripts/03-media-analyze.router.mjs`
+- `scripts/05-scene-plan.router.mjs`
+- `scripts/06-shotlist.router.mjs`
+- `scripts/07-codegen.router.mjs`
+- `scripts/08-sync-root.mjs` (local, không có hậu tố owner vì không gọi AI — script mechanical thuần)
 
 Hậu tố `.local.mjs` / `.router.mjs` cho biết ngay loại xử lý. Mọi script `.router.mjs` dùng chung `scripts/lib/router-client.mjs` và tra model qua `scripts/model-routing.json`.
+
+**Vì sao không có `04`**: Stage 4 (phân tích style DNA từ ảnh/video mẫu, xem mục 4 phía trên) không cần script vì Style DNA của dự án này được kế thừa nguyên bộ từ `vox-style-3` (xem `planning/style-dna/README.md`), không phải phân tích lại từ đầu. Số thứ tự giữ nguyên khoảng trống này để phản ánh đúng vị trí Stage 4 trong pipeline — không phải lỗi đánh số.

@@ -20,11 +20,11 @@
 
 ## Quan trọng: style UI (chrome) ≠ style media nguồn
 - **Style DNA ở trên** = ngôn ngữ đồ hoạ/UI của toàn bộ video (nền, chữ, icon, caption, bố cục, cutout treatment).
-- **Media nguồn** (`public/media/`) = nội dung minh hoạ cụ thể cho video "Án lệ 64" — 9 ảnh thực tế + 5 video paper-tear animation (8s/clip). Xem `pipeline/media-analysis/` (sẽ tạo ở bước phân tích media) để biết mỗi asset dùng cho ý nào.
+- **Media nguồn** (`public/media/`) = nội dung minh hoạ cụ thể cho video "Án lệ 64" — 9 ảnh thực tế + 5 video paper-tear animation (8s/clip). Xem `pipeline/media-analysis/manifest.json` để biết mỗi asset dùng cho ý nào.
 - **Quyết định 2026-09-20 (đơn giản hoá phạm vi hiện tại)**: 9 ảnh nguồn dùng làm **ảnh nền** (background), KHÔNG áp dụng xử lý cutout (grayscale+bóng cam) như DNA mô tả cho người/vật thể cắt nền. Việc cutout nhân vật/asset sẽ bổ sung sau khi được yêu cầu — tương tự PDF bản án, đây là hạng mục hoãn lại (deferred), không phải bỏ vĩnh viễn.
 - Shot nào không có asset phù hợp → dựng bằng component đồ hoạ thuần (card/diagram/label) theo đúng style DNA, không cần media ngoài.
 
 ## Còn thiếu / cần làm rõ thêm
-- [ ] Font file "Be Vietnam Pro" thực tế (tải Google Fonts hay đã có sẵn?) — cần trước khi code theme.
-- [ ] 15 icon vocabulary: có sẵn SVG path nào chưa, hay cần dựng mới theo mô tả?
+- [x] Font file "Be Vietnam Pro" — giải quyết xong: cài `@remotion/google-fonts`, `theme.ts` load qua `loadFont()` từ `@remotion/google-fonts/BeVietnamPro` (weights 700/900, subset vietnamese+latin), không dùng chuỗi CSS tĩnh.
+- [ ] 15 icon vocabulary: không còn cấp thiết — sau khi áp dụng quy tắc media-first (xem `style-dna/README.md`, mục "Đã điều chỉnh"), scene ưu tiên dùng media thật, diagram/icon tự vẽ chỉ còn là overlay nhẹ khi thật sự không có asset phù hợp. Chưa cần xây bộ icon vocabulary riêng.
 - [ ] PDF bản án/án lệ liên quan (nếu có) — **người dùng xác nhận sẽ cung cấp sau**, chưa cần cho giai đoạn hiện tại.

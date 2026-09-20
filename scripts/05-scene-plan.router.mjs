@@ -16,7 +16,7 @@ function read(p) {
   return fs.readFileSync(path.join(root, p), "utf8");
 }
 
-const scriptText = read("script/an-le-64-script.txt").trim();
+const scriptText = read("content/an-le-64-script.txt").trim();
 const captions = JSON.parse(read("public/captions/an-le-64-captions.json"));
 const mediaManifest = JSON.parse(read("pipeline/media-analysis/manifest.json"));
 
