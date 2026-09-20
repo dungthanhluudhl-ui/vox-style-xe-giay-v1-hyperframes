@@ -23,6 +23,32 @@ DNA, component, theme, script pipeline) nằm ở gốc của từng nhóm, khô
 9. Preview bằng `npm run dev` (Remotion Studio), chọn đúng composition id (PascalCase của slug, vd `AnLe64`).
 10. Render bằng `npx remotion render <CompositionId> out/<slug>-full.mp4` (chỉ khi được yêu cầu render chính thức).
 
+## Tối ưu render (Stage 8) — đã đo thật, không đoán (2026-09-20/21)
+Trước đây `remotion.config.ts` không cấu hình `concurrency`/`hardware-acceleration` gì cả, nên
+mỗi lần render rơi vào mặc định của Remotion (`min(8, cores/2)` = 8 trên máy này, Xeon E5-2629 v3
+8 core/16 thread). Đã audit bằng `npx remotion benchmark` (công cụ chính thức của Remotion) +
+1 lần render full video thật để kiểm chứng, thay vì đoán:
+- Benchmark mẫu 300 frame (`AnLe64Phan2`, 2 vòng đo độc lập): concurrency=8 (mặc định cũ) luôn
+  là mốc CHẬM NHẤT trong mọi mốc test (4/8/12/16 và 2/3/4/6); concurrency≈3-4 nhất quán nhanh
+  nhất qua cả 2 vòng dù có nhiễu thời gian tuyệt đối giữa 2 lần chạy khác thời điểm.
+- `--hardware-acceleration=if-possible` (NVENC, RTX 1660 Super) đo riêng ở concurrency=4: KHÔNG
+  tạo khác biệt đo được so với không bật (69.5s vs 68.8s, trong khoảng nhiễu) — đúng như docs
+  Remotion: hardware-acceleration chỉ tăng tốc bước ENCODE, không tăng tốc phần Chromium
+  render/composite từng frame (bottleneck thật ở đây) — không bật, tránh thêm phức tạp
+  (CRF không tương thích hardware-acceleration, phải đổi qua video-bitrate, file nặng hơn) mà
+  không đổi lại gì.
+- Render FULL video thật (`AnLe64Phan2`, 1628 frame/54.27s) để kiểm chứng cuối: baseline (mặc
+  định cũ) **5m45.587s**, concurrency=4 **5m33.704s** — cải thiện thật nhưng khiêm tốn (~3.4%),
+  KHÔNG lớn như benchmark mẫu 300 frame gợi ý (~20%). Output 2 bản ffprobe xác nhận giống hệt
+  (duration/resolution/codec), không đổi chất lượng.
+- **Kết luận**: đã set `Config.setConcurrency(4)` trong `remotion.config.ts` — thắng nhỏ, an
+  toàn, áp dụng mặc định cho mọi render sau này. Mức ~5.8-6.4x thời lượng thật (54s video ~5m45s
+  render) nhiều khả năng là chi phí VỐN CÓ của kiến trúc render Chromium-per-frame + decode
+  video nguồn của Remotion trên 1 máy, không phải lỗi cấu hình — không có cờ nào trong tài liệu
+  Remotion khắc phục được mức này. Đường duy nhất tài liệu Remotion mô tả cho tăng tốc theo bậc
+  độ lớn là **Remotion Lambda** (render phân tán trên nhiều máy cloud song song) — chưa triển
+  khai (cần AWS + phát sinh chi phí cloud), để bạn quyết định nếu muốn theo hướng đó sau.
+
 ## Trạng thái hiện tại
 - [x] Scaffold dự án Remotion (blank template)
 - [x] Cài skill Remotion (`.agents/skills/`, `.claude/skills/`)

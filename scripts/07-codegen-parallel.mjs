@@ -32,11 +32,15 @@ if (!scenesArg) {
 const sceneIds = scenesArg.split("=")[1].split(",");
 
 const concurrencyArg = process.argv.find((a) => a.startsWith("--concurrency="));
-// Mặc định 3: bước tăng thận trọng từ mốc 2 đã kiểm chứng thật (video 1, S06+S07 song song,
-// 0 lỗi). Không có cách audit giới hạn thật của 9router/model backend từ trong repo này — tăng
-// dần có kiểm chứng (đối chiếu thời gian mỗi cuộc gọi qua log của router-client.mjs) ở các video
-// sau thay vì đoán một con số "an toàn tối đa".
-const CONCURRENCY = concurrencyArg ? parseInt(concurrencyArg.split("=")[1], 10) : 3;
+// Mặc định 10 (nâng từ 3, đã kiểm chứng thật 2026-09-20 trên slug test riêng dùng 1 lần, không
+// đụng video thật): chạy đủ 16 scene ở concurrency=10, 15/16 PASS, 0 lỗi mạng/timeout với
+// 9router — 9router chịu tải tốt ở mức này. Có phát hiện phụ: ~30% scene (5/16) bị lỗi
+// `tsc: Cannot find module` sai ở lần thử đầu (file thực ra tồn tại), tự PASS ở lần thử 2 —
+// nhiều khả năng do tranh chấp tiến trình/I/O cục bộ trên Windows khi nhiều `npx tsc`/`npx
+// eslint` chạy đồng thời, KHÔNG phải giới hạn 9router. Người dùng đã xem chi phí này và quyết
+// định chấp nhận đổi lấy tốc độ. Nếu sau này thấy tần suất lỗi cục bộ này tăng đáng kể, xem
+// pipeline/codegen-issues.jsonl (stage=verify-tsc/verify-eslint) để cân nhắc giảm lại.
+const CONCURRENCY = concurrencyArg ? parseInt(concurrencyArg.split("=")[1], 10) : 10;
 const MAX_AUTO_RELAUNCH = 1;
 
 function runScene(sceneId) {

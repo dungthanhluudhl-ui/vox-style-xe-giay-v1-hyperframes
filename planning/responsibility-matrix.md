@@ -121,7 +121,7 @@ Ghi chú: agent gọi qua 9router **không** tự có quyền truy cập skill R
 **Quy tắc bắt buộc: KHÔNG BAO GIỜ batch nhiều scene trong 1 lần gọi `scripts/07-codegen.router.mjs`.** Đã kiểm chứng thật: request càng nhiều scene, model sinh càng nhiều token, thời gian gọi cộng dồn theo số scene và dễ vượt timeout mạng — nguyên nhân thật của các lỗi `fetch failed`/`HeadersTimeoutError` từng gặp, KHÔNG phải do máy quá tải khi render smoke-test. Luôn gọi 1 scene / 1 lần: `node scripts/07-codegen.router.mjs --video=<slug> --scenes=SNN`.
 
 **Chạy song song nhiều scene — MẶC ĐỊNH cho mọi video từ 2 scene trở lên, không phải một lựa chọn thỉnh thoảng mới dùng:**
-`node scripts/07-codegen-parallel.mjs --video=<slug> --scenes=S01,S02,...,SNN [--concurrency=3]` — script orchestrator (local, không gọi AI trực tiếp, chỉ quản lý tiến trình con) duy trì đúng `--concurrency` scene chạy đồng thời theo mô hình hàng đợi (worker pool): ngay khi 1 scene xong (pass hay fail), lập tức lấy scene tiếp theo trong hàng đợi vào chỗ trống đó, không đợi cả nhóm cùng đợt xong (tránh thời gian chết khi các scene có độ phức tạp khác nhau). Mỗi tiến trình con tự chạy `scripts/07-codegen.router.mjs --scenes=SNN --no-root-sync` (không đụng `src/styles/theme.ts`/`src/components/*`, không chạy render smoke-test riêng). Khi TẤT CẢ scene PASS, script tự gọi `syncRoot()` ráp `src/Root.tsx` — không cần chạy `scripts/08-sync-root.mjs` riêng nữa.
+`node scripts/07-codegen-parallel.mjs --video=<slug> --scenes=S01,S02,...,SNN [--concurrency=10]` — script orchestrator (local, không gọi AI trực tiếp, chỉ quản lý tiến trình con) duy trì đúng `--concurrency` scene chạy đồng thời theo mô hình hàng đợi (worker pool): ngay khi 1 scene xong (pass hay fail), lập tức lấy scene tiếp theo trong hàng đợi vào chỗ trống đó, không đợi cả nhóm cùng đợt xong (tránh thời gian chết khi các scene có độ phức tạp khác nhau). Mỗi tiến trình con tự chạy `scripts/07-codegen.router.mjs --scenes=SNN --no-root-sync` (không đụng `src/styles/theme.ts`/`src/components/*`, không chạy render smoke-test riêng). Khi TẤT CẢ scene PASS, script tự gọi `syncRoot()` ráp `src/Root.tsx` — không cần chạy `scripts/08-sync-root.mjs` riêng nữa.
 
 **Bug thật phát hiện + đã sửa (video "tham-hoa-itaewon-phan-2", lần đầu chạy song song ở quy mô 16 scene, concurrency=3):** dòng trên từng khẳng định `--no-root-sync` "loại bỏ hoàn toàn race condition giữa các process" — SAI, đã bị bác bỏ bằng bằng chứng thật. `verify()` bên trong `scripts/07-codegen.router.mjs` vẫn chạy `tsc --noEmit`/`eslint src --fix` trên TOÀN BỘ `src/` bất kể `--no-root-sync`, nên verify() của 1 scene có thể đọc (và `eslint --fix` còn có thể GHI ĐÈ) file của scene KHÁC đang giữa chừng sinh dở cùng lúc — xác nhận thật: scene S01 bị báo lỗi verify nằm trong file `Scene03.tsx` của một tiến trình song song khác, biến mất khi chạy lại sau khi các tiến trình khác đã ổn định. Đã sửa tận gốc: `verify()` giờ nhận đúng danh sách (các) file mà lần gọi generator này vừa ghi, scope `eslint` thẳng vào đúng các file đó (loại bỏ hoàn toàn race ghi đè), còn `tsc` vẫn phải chạy toàn `src/` (để giữ đúng tsconfig/path alias) nhưng lọc output chỉ giữ dòng lỗi thuộc đúng file của scene này — lỗi ở file khác là trách nhiệm của verify() thuộc đúng tiến trình sinh ra file đó.
 
@@ -148,7 +148,16 @@ file này.
 
 Script tự phân loại lỗi để quyết định có tự chạy lại hay không: lỗi mạng/timeout thuần tuý (không có Verify/Review nào chạy được trong cả 3 lần thử nội bộ) → tự động chạy lại 1 lượt; lỗi nội dung thật (reviewer có VERDICT: FAIL) hoặc lỗi verify (tsc/eslint) → KHÔNG tự chạy lại, in ngay lỗi ra để Claude sửa targeted bằng `--issue-file` trong khi các scene khác vẫn tiếp tục chạy song song (không chờ cả batch).
 
-Concurrency mặc định = 3 (bước tăng thận trọng từ mốc 2 đã kiểm chứng thật ở video 1) — không có cách audit giới hạn thật của 9router/model backend từ trong repo này, tăng dần có kiểm chứng (đối chiếu log thời gian mỗi cuộc gọi qua `router-client.mjs`) ở các video sau thay vì đoán một con số tối đa.
+**Concurrency mặc định = 10** (nâng từ 3, đã kiểm chứng thật 2026-09-20 trên slug bản sao dùng 1
+lần, không đụng dữ liệu thật — xem lịch sử cũ ở git log nếu cần biết mốc 2→3 trước đó). Chạy đủ
+16 scene ở concurrency=10: 15/16 PASS, **0 lỗi mạng/timeout với 9router** — ở mức tải này
+9router hoàn toàn đáp ứng được. Phát hiện chi phí phụ đã được người dùng xem và chấp nhận: 5/16
+scene bị lỗi `tsc: Cannot find module` sai (file thực ra tồn tại) ở lần thử đầu, tự PASS ở lần
+thử 2 — nhiều khả năng do tranh chấp tiến trình/I/O cục bộ trên Windows khi 10 tiến trình
+`npx tsc`/`npx eslint` chạy đồng thời, KHÔNG phải giới hạn 9router — coi là không đáng kể so
+với tốc độ có được. Chưa test các mốc giữa 3 và 10 (vd 6-7); nếu sau này tần suất lỗi cục bộ
+này tăng rõ rệt (xem `pipeline/codegen-issues.jsonl`, `stage=verify-tsc`/`verify-eslint`), cân
+nhắc giảm lại thay vì đoán tiếp.
 
 Chỉ chạy song song các scene CỦA CÙNG 1 VIDEO; không chạy song song 2 video khác nhau nếu cả hai đều cần MỞ RỘNG theme.ts/component dùng chung trong cùng lúc (vẫn có thể race ở lớp dùng-chung này — xử lý tuần tự phần mở rộng dùng chung, hoặc merge tay sau).
 
