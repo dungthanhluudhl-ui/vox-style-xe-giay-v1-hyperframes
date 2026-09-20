@@ -121,7 +121,30 @@ Ghi chú: agent gọi qua 9router **không** tự có quyền truy cập skill R
 **Quy tắc bắt buộc: KHÔNG BAO GIỜ batch nhiều scene trong 1 lần gọi `scripts/07-codegen.router.mjs`.** Đã kiểm chứng thật: request càng nhiều scene, model sinh càng nhiều token, thời gian gọi cộng dồn theo số scene và dễ vượt timeout mạng — nguyên nhân thật của các lỗi `fetch failed`/`HeadersTimeoutError` từng gặp, KHÔNG phải do máy quá tải khi render smoke-test. Luôn gọi 1 scene / 1 lần: `node scripts/07-codegen.router.mjs --video=<slug> --scenes=SNN`.
 
 **Chạy song song nhiều scene — MẶC ĐỊNH cho mọi video từ 2 scene trở lên, không phải một lựa chọn thỉnh thoảng mới dùng:**
-`node scripts/07-codegen-parallel.mjs --video=<slug> --scenes=S01,S02,...,SNN [--concurrency=3]` — script orchestrator (local, không gọi AI trực tiếp, chỉ quản lý tiến trình con) duy trì đúng `--concurrency` scene chạy đồng thời theo mô hình hàng đợi (worker pool): ngay khi 1 scene xong (pass hay fail), lập tức lấy scene tiếp theo trong hàng đợi vào chỗ trống đó, không đợi cả nhóm cùng đợt xong (tránh thời gian chết khi các scene có độ phức tạp khác nhau). Mỗi tiến trình con tự chạy `scripts/07-codegen.router.mjs --scenes=SNN --no-root-sync` (không đụng `src/styles/theme.ts`/`src/components/*`, không chạy render smoke-test riêng — loại bỏ hoàn toàn race condition giữa các process). Khi TẤT CẢ scene PASS, script tự gọi `syncRoot()` ráp `src/Root.tsx` — không cần chạy `scripts/08-sync-root.mjs` riêng nữa.
+`node scripts/07-codegen-parallel.mjs --video=<slug> --scenes=S01,S02,...,SNN [--concurrency=3]` — script orchestrator (local, không gọi AI trực tiếp, chỉ quản lý tiến trình con) duy trì đúng `--concurrency` scene chạy đồng thời theo mô hình hàng đợi (worker pool): ngay khi 1 scene xong (pass hay fail), lập tức lấy scene tiếp theo trong hàng đợi vào chỗ trống đó, không đợi cả nhóm cùng đợt xong (tránh thời gian chết khi các scene có độ phức tạp khác nhau). Mỗi tiến trình con tự chạy `scripts/07-codegen.router.mjs --scenes=SNN --no-root-sync` (không đụng `src/styles/theme.ts`/`src/components/*`, không chạy render smoke-test riêng). Khi TẤT CẢ scene PASS, script tự gọi `syncRoot()` ráp `src/Root.tsx` — không cần chạy `scripts/08-sync-root.mjs` riêng nữa.
+
+**Bug thật phát hiện + đã sửa (video "tham-hoa-itaewon-phan-2", lần đầu chạy song song ở quy mô 16 scene, concurrency=3):** dòng trên từng khẳng định `--no-root-sync` "loại bỏ hoàn toàn race condition giữa các process" — SAI, đã bị bác bỏ bằng bằng chứng thật. `verify()` bên trong `scripts/07-codegen.router.mjs` vẫn chạy `tsc --noEmit`/`eslint src --fix` trên TOÀN BỘ `src/` bất kể `--no-root-sync`, nên verify() của 1 scene có thể đọc (và `eslint --fix` còn có thể GHI ĐÈ) file của scene KHÁC đang giữa chừng sinh dở cùng lúc — xác nhận thật: scene S01 bị báo lỗi verify nằm trong file `Scene03.tsx` của một tiến trình song song khác, biến mất khi chạy lại sau khi các tiến trình khác đã ổn định. Đã sửa tận gốc: `verify()` giờ nhận đúng danh sách (các) file mà lần gọi generator này vừa ghi, scope `eslint` thẳng vào đúng các file đó (loại bỏ hoàn toàn race ghi đè), còn `tsc` vẫn phải chạy toàn `src/` (để giữ đúng tsconfig/path alias) nhưng lọc output chỉ giữ dòng lỗi thuộc đúng file của scene này — lỗi ở file khác là trách nhiệm của verify() thuộc đúng tiến trình sinh ra file đó.
+
+**Quan trọng — render smoke-test KHÔNG chạy trong luồng song song mặc định:** bước 3 (Verify)
+mô tả ở bảng trên có render smoke-test, nhưng đó là hành vi của `07-codegen.router.mjs` khi
+chạy TUẦN TỰ (không có `--no-root-sync`). Vì luồng song song (mặc định cho mọi video ≥2 scene,
+xem trên) LUÔN gọi mỗi tiến trình con với `--no-root-sync`, và `verify()` bỏ qua hẳn bước
+render smoke-test khi có cờ này — **không có scene nào của các video ≥2 scene (video 1 dùng
+sequential nên có, video 3/4 dùng song song nên không) được render thử trong lúc codegen**. Đã
+kiểm chứng lại (2026-09-20): đây từng là một giả thuyết sai về nguyên nhân Stage 7 chậm — thực
+tế Stage 7 không hề render mỗi scene 2 lần trong luồng sản xuất mặc định. An toàn runtime hiện
+dựa hoàn toàn vào review + render final (Stage 8) + log lỗi (xem đoạn `codegen-issues.jsonl`
+dưới), không phải smoke-test.
+
+**Log lỗi codegen dùng chung mọi video — `pipeline/codegen-issues.jsonl`:** mỗi lần một attempt
+trong `07-codegen.router.mjs` bị FAIL (verify tsc/eslint/render/sync-root, hoặc reviewer FAIL),
+kể cả khi lần thử sau đó tự PASS, được ghi thêm 1 dòng JSON (`{ts, video, scene, attempt, stage,
+detail}`) vào file này — trước đây các lỗi này chỉ in ra console rồi mất, chỉ verdict của lần
+thử CUỐI được lưu vào `run-log.md`. Mục đích: trong đợt audit định kỳ 1-3 video, đọc file này để
+tìm lỗi lặp lại qua nhiều scene/video; nếu là bài học tổng quát hoá được thì đưa tay vào
+`KNOWN_GOTCHAS` trong `scripts/07-codegen.router.mjs`. Khi Claude xử lý escalation (bước 7 ở
+bảng trên) hoặc sửa lỗi qua `--issue-file`, nên ghi thêm 1 dòng nguyên nhân/cách sửa vào cùng
+file này.
 
 Script tự phân loại lỗi để quyết định có tự chạy lại hay không: lỗi mạng/timeout thuần tuý (không có Verify/Review nào chạy được trong cả 3 lần thử nội bộ) → tự động chạy lại 1 lượt; lỗi nội dung thật (reviewer có VERDICT: FAIL) hoặc lỗi verify (tsc/eslint) → KHÔNG tự chạy lại, in ngay lỗi ra để Claude sửa targeted bằng `--issue-file` trong khi các scene khác vẫn tiếp tục chạy song song (không chờ cả batch).
 

@@ -202,6 +202,27 @@ async function generate(feedback, previousFiles) {
   return files;
 }
 
+// Ghi lại MỌI lần thử fail (verify hoặc review), kể cả các lần thử tự PASS ở lượt sau — trước
+// đây các lỗi này chỉ console.log, không lưu lại đâu, nên không có dữ liệu để phát hiện lỗi lặp
+// lại qua nhiều scene/video. File dùng CHUNG cho mọi video (không phải per-video như run-log.md)
+// để audit định kỳ có thể tìm pattern lặp lại xuyên video, rồi mới đưa tay vào KNOWN_GOTCHAS.
+function categorizeVerifyError(err) {
+  if (err.startsWith("### tsc")) return "verify-tsc";
+  if (err.startsWith("### eslint")) return "verify-eslint";
+  if (err.startsWith("### render smoke-test")) return "verify-render";
+  if (err.startsWith("### sync-root")) return "verify-syncroot";
+  return "verify-other";
+}
+function appendCodegenIssue(entries) {
+  const logPath = path.join(root, "pipeline", "codegen-issues.jsonl");
+  fs.mkdirSync(path.dirname(logPath), { recursive: true });
+  const ts = new Date().toISOString();
+  const lines = entries.map((e) =>
+    JSON.stringify({ ts, video: slug, scene: sceneIds.join(","), attempt, ...e }),
+  );
+  fs.appendFileSync(logPath, lines.join("\n") + "\n", "utf8");
+}
+
 function writeFiles(files) {
   for (const [rel, content] of Object.entries(files)) {
     const full = path.join(root, rel);
@@ -211,22 +232,39 @@ function writeFiles(files) {
   }
 }
 
-function verify() {
+function verify(fileRelPaths) {
   const errors = [];
+  // Bug thật phát hiện khi chạy song song concurrency=3 lần đầu ở quy mô 16 scene (video
+  // "tham-hoa-itaewon-phan-2"): `eslint src --fix`/`tsc --noEmit` không scope trước đây quét
+  // TOÀN BỘ src/ — khi nhiều tiến trình `--no-root-sync` chạy đồng thời, verify() của scene A
+  // có thể bắt (và `--fix` còn có thể GHI ĐÈ) file của scene B đang giữa chừng sinh dở, gây lỗi
+  // verify sai chủ (vd S01 bị báo lỗi thật ra nằm trong Scene03.tsx của tiến trình khác — xác
+  // nhận bằng cách chạy lại tsc sau khi mọi tiến trình đã ổn định, không còn lỗi nào). Fix:
+  // scope eslint thẳng vào đúng (các) file mà LẦN GỌI NÀY vừa ghi (loại bỏ hoàn toàn race ghi);
+  // tsc vẫn phải chạy toàn `src/` (để giữ đúng tsconfig/path alias) nhưng LỌC output, chỉ giữ
+  // dòng lỗi thuộc chính (các) file này — lỗi ở file khác là trách nhiệm của verify() thuộc
+  // đúng tiến trình sinh ra file đó.
+  const targets = fileRelPaths.map((p) => `"${p}"`).join(" ");
   try {
-    execSync("npx eslint src --fix", { cwd: root, stdio: "pipe" });
+    execSync(`npx eslint ${targets} --fix`, { cwd: root, stdio: "pipe" });
   } catch {
     // ignore — sẽ bắt lỗi còn lại ở lượt check bên dưới
   }
   try {
     execSync("npx tsc --noEmit", { cwd: root, stdio: "pipe" });
   } catch (e) {
-    errors.push("### tsc --noEmit\n" + e.stdout?.toString().slice(0, 4000));
+    const fullOutput = e.stdout?.toString() || "";
+    const relevantLines = fullOutput
+      .split("\n")
+      .filter((line) => fileRelPaths.some((p) => line.includes(p)));
+    if (relevantLines.length > 0) {
+      errors.push("### tsc --noEmit\n" + relevantLines.join("\n").slice(0, 4000));
+    }
   }
   try {
-    execSync("npx eslint src", { cwd: root, stdio: "pipe" });
+    execSync(`npx eslint ${targets}`, { cwd: root, stdio: "pipe" });
   } catch (e) {
-    errors.push("### eslint src\n" + (e.stdout?.toString().slice(0, 4000) || e.message));
+    errors.push("### eslint\n" + (e.stdout?.toString().slice(0, 4000) || e.message));
   }
 
   // Ráp lại Root.tsx (tất định, không AI) rồi render smoke-test đúng dải frame của scene đang xử
@@ -308,9 +346,12 @@ while (attempt < MAX_ATTEMPTS) {
     writeFiles(files);
     previousFiles = files;
 
-    const verifyErrors = verify();
+    const verifyErrors = verify(Object.keys(files));
     if (verifyErrors.length > 0) {
       console.log("Verify FAILED:\n" + verifyErrors.join("\n\n"));
+      appendCodegenIssue(
+        verifyErrors.map((err) => ({ stage: categorizeVerifyError(err), detail: err.slice(0, 2000) })),
+      );
       feedback = verifyErrors.join("\n\n");
       continue;
     }
@@ -324,6 +365,7 @@ while (attempt < MAX_ATTEMPTS) {
     if (/VERDICT:\s*PASS/i.test(reviewText)) {
       break;
     }
+    appendCodegenIssue([{ stage: "review", detail: reviewText.slice(0, 2000) }]);
     feedback = "Reviewer FAIL:\n" + reviewText;
   } catch (e) {
     // Lỗi mạng/timeout gọi 9router không nên làm crash cả vòng lặp — coi như 1 lần thử
