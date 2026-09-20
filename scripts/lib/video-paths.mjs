@@ -42,6 +42,7 @@ export function videoPaths(slug, root = process.cwd()) {
     transcriptsDir: path.join(root, "pipeline", "videos", slug, "transcripts"),
     contactSheetDir: path.join(root, "pipeline", "videos", slug, "contact-sheet"),
     runLog: path.join(root, "pipeline", "videos", slug, "run-log.md"),
+    mediaGenerateLog: path.join(root, "pipeline", "videos", slug, "media-generate-log.md"),
     scenesDir: path.join(root, "src", "videos", slug, "scenes"),
   };
 }
