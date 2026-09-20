@@ -1,0 +1,328 @@
+// Sinh code Remotion theo shotlist đã chốt. Mô hình generator -> verify (local) -> reviewer
+// -> auto-retry. Claude không viết code, chỉ điều phối + đọc báo cáo cuối cùng.
+// Usage: node scripts/07-codegen.router.mjs --scenes=S01[,S02,...]  (hoặc --scenes=all)
+//        node scripts/07-codegen.router.mjs --scenes=S01 --issue-file=path/to/bug.txt  (sửa lỗi cụ thể trên code hiện có, không sinh lại từ đầu)
+//        node scripts/07-codegen.router.mjs --scenes=S06 --no-root-sync  (CHẠY SONG SONG NHIỀU SCENE: mỗi
+//          tiến trình chỉ sinh + verify(tsc/eslint, KHÔNG render) đúng 1 file scene của mình, KHÔNG đụng
+//          Root.tsx/theme.ts — tránh race condition khi nhiều tiến trình ghi cùng lúc. Sau khi TẤT CẢ tiến
+//          trình song song xong, chạy `node scripts/08-sync-root.mjs` một lần (tuần tự, không AI) để ráp
+//          Root.tsx, rồi 1 lần render-smoke-test tổng cho các scene mới.
+import fs from "node:fs";
+import path from "node:path";
+import { execSync } from "node:child_process";
+import { callModel, extractText, loadModelRouting, appendRunLog } from "./lib/router-client.mjs";
+
+const root = process.cwd();
+const routing = loadModelRouting();
+const GEN_MODEL = routing.reasoning_generator;
+const REVIEW_MODEL = routing.reasoning_reviewer;
+const MAX_ATTEMPTS = 3;
+
+function read(p) {
+  return fs.readFileSync(path.join(root, p), "utf8");
+}
+function tryRead(p) {
+  const full = path.join(root, p);
+  return fs.existsSync(full) ? fs.readFileSync(full, "utf8") : null;
+}
+function listDir(p) {
+  const full = path.join(root, p);
+  return fs.existsSync(full) ? fs.readdirSync(full).filter((f) => /\.(tsx?|css)$/.test(f)) : [];
+}
+
+const argScenes = (process.argv.find((a) => a.startsWith("--scenes=")) || "--scenes=S01").split("=")[1];
+const allScenes = JSON.parse(read("planning/scene-plan.json"));
+const allShots = JSON.parse(read("planning/shotlist.json"));
+const sceneIds = argScenes === "all" ? allScenes.map((s) => s.id) : argScenes.split(",");
+
+const scenes = allScenes.filter((s) => sceneIds.includes(s.id));
+const shots = allShots.filter((s) => sceneIds.includes(s.sceneId));
+const frameRange = {
+  start: Math.min(...shots.map((s) => s.startFrame)),
+  end: Math.max(...shots.map((s) => s.endFrame)) - 1,
+};
+const mediaManifest = JSON.parse(read("pipeline/media-analysis/manifest.json"));
+const mediaById = Object.fromEntries(mediaManifest.map((m) => [m.id, m]));
+const usedMedia = [...new Set(shots.map((s) => s.assetId).filter(Boolean))].map((id) => mediaById[id]);
+const noRootSync = process.argv.includes("--no-root-sync");
+
+const skillFiles = [
+  ".agents/skills/remotion-best-practices/SKILL.md",
+  ".agents/skills/remotion-markup/SKILL.md",
+  ".agents/skills/remotion-markup/multi-scene-video.md",
+  ".agents/skills/remotion-markup/sequencing.md",
+  ".agents/skills/remotion-markup/embedding-videos.md",
+  ".agents/skills/remotion-markup/cropping.md",
+  ".agents/skills/remotion-markup/images.md",
+  ".agents/skills/remotion-markup/transitions.md",
+  ".agents/skills/remotion-markup/text-highlights.md",
+  ".agents/skills/remotion-markup/timing.md",
+  ".agents/skills/remotion-markup/google-fonts.md",
+  ".agents/skills/remotion-captions/SKILL.md",
+  ".agents/skills/remotion-captions/display-captions.md",
+  ".agents/skills/remotion-create/video-layout.md",
+];
+const skillDocs = skillFiles.map((f) => `### ${f}\n\n${read(f)}`).join("\n\n---\n\n");
+const styleTokens = read("planning/style-dna/style-tokens.json");
+const styleDnaCore = read("planning/style-dna/STYLE_DNA.md");
+
+const KNOWN_GOTCHAS = `LỖI THƯỜNG GẶP — TRÁNH NGAY TỪ ĐẦU (đã rút ra từ các lần chạy trước, đây là eslint config @remotion/eslint-config-flat thực tế của dự án, không có trong skill docs chung):
+- Sequence: KHÔNG truyền prop from={0} (0 đã là mặc định, eslint báo lỗi @remotion/from-0 nếu truyền tường minh) — chỉ truyền from khi khác 0.
+- <Video>/<Audio> từ "@remotion/media": prop volume PHẢI là callback dạng (f) => interpolate(...), không được là số tĩnh (eslint @remotion/volume-callback).
+- <Video> từ "@remotion/media": objectFit PHẢI truyền trực tiếp như prop objectFit="cover", KHÔNG đặt trong style={{objectFit: ...}} (eslint @remotion/no-object-fit-on-media-video).
+- Sequence không có prop premountFor trong bản này — không dùng prop này trừ khi thấy nó xuất hiện rõ trong skill docs bên trên.
+- interpolate() với outputRange là CHUỖI (string) chỉ hỗ trợ chuỗi có 1-3 thành phần cách nhau bởi khoảng trắng (dùng cho transform/translate như "10px 20px"). TUYỆT ĐỐI KHÔNG dùng interpolate() outputRange chuỗi cho boxShadow hoặc bất kỳ CSS value nào có ≥4 phần cách nhau bởi space (vd "10px 10px 0 rgba(...)" có 4 phần → lỗi "String outputRange values must contain 1 to 3 components"). Với boxShadow/filter/các giá trị nhiều thành phần: tách riêng từng phần số cần animate thành các interpolate() SỐ HỌC riêng biệt (outputRange là number), rồi tự ghép chuỗi CSS bằng template string, vd: const s = interpolate(frame,[0,12],[0,18]); const o = interpolate(frame,[0,12],[0,1]); style={{boxShadow: \`\${s}px \${s}px 0 rgba(255,106,26,\${o})\`}}.
+- Định nghĩa type/union trong theme.ts (vd kiểu camera motion, kiểu transition) phải dùng ĐÚNG NHẤT QUÁN ở mọi file khác — không định nghĩa union hẹp rồi so sánh với giá trị ngoài union đó ở file khác.
+- <Composition>/<Sequence> không có prop "id" tuỳ tiện trên component tự viết trừ khi bạn tự định nghĩa prop đó trong interface của chính component đó.
+- FONT "Be Vietnam Pro" BẮT BUỘC load qua @remotion/google-fonts (import {loadFont} from "@remotion/google-fonts/BeVietnamPro"; const {fontFamily} = loadFont(...)) rồi dùng fontFamily đó ở mọi nơi cần font này. TUYỆT ĐỐI KHÔNG chỉ khai báo fontFamily: '"Be Vietnam Pro", sans-serif' dạng chuỗi CSS suông — môi trường render (headless Chrome) không có sẵn font này cài hệ thống, dẫn tới vỡ dấu tiếng Việt và chữ dính nhau do fallback sai font. theme.ts nên export ra fontFamily đã load được từ loadFont(), không chỉ export tên chuỗi font.
+- Caption/token text ghép nhiều span liền nhau (mỗi từ 1 span) PHẢI có khoảng trắng giữa các từ — nếu dữ liệu caption không có sẵn dấu cách ở đầu mỗi từ, phải tự thêm khoảng cách khi render (vd thêm {" "} giữa các span, hoặc dùng CSS gap trên flex container chứa các span) để không bị dính chữ.
+- BẮT BUỘC: AbsoluteFill NGOÀI CÙNG của MỖI scene phải có isolation: "isolate" trong style. Lý do: các phần tử con nằm sâu bên trong scene thường dùng zIndex (để xếp lớp overlay/media/hiệu ứng trong scene đó). Nếu scene không tự cô lập stacking context bằng isolation: "isolate", các zIndex nội bộ đó sẽ so sánh trực tiếp với component Captions ở cấp Root (Captions không có zIndex riêng, coi như 0) THAY VÌ chỉ so sánh trong nội bộ scene — hậu quả là phụ đề bị các lớp overlay trong scene đè lên, mờ hoặc mất hẳn dù Captions đã mount sau cùng ở Root.tsx. Đây là lỗi thật đã xảy ra ở nhiều scene, luôn phải thêm isolation: "isolate" ngay từ đầu, không phải thứ có thể bỏ qua.
+- Một số TÊN FILE ảnh có chữ "cutout" (vd img-08-extortion-money-demand-cutout.jpeg) — đó chỉ là mô tả phong cách minh hoạ đã có sẵn trong chính ảnh AI tạo ra, KHÔNG phải chỉ định phải code thêm xử lý cutout. Dùng ảnh này y như file ảnh thường (nền toàn khung, giữ nguyên màu), không cần và không được thêm filter grayscale/tách nền/đổ bóng trong code.`;
+
+function buildPrompt(feedback, previousFiles) {
+  const existingRoot = tryRead("src/Root.tsx");
+  const existingTheme = tryRead("src/styles/theme.ts");
+  const componentFiles = listDir("src/components");
+  const sceneFiles = listDir("src/scenes");
+  const isFoundation = !existingTheme;
+
+  const existingFilesBlock = [
+    existingTheme ? `### src/styles/theme.ts\n\`\`\`ts\n${existingTheme}\n\`\`\`` : null,
+    ...componentFiles.map((f) => `### src/components/${f}\n\`\`\`tsx\n${tryRead(`src/components/${f}`)}\n\`\`\``),
+    ...sceneFiles.map((f) => `### src/scenes/${f}\n\`\`\`tsx\n${tryRead(`src/scenes/${f}`)}\n\`\`\``),
+    !noRootSync && existingRoot ? `### src/Root.tsx\n\`\`\`tsx\n${existingRoot}\n\`\`\`` : null,
+  ]
+    .filter(Boolean)
+    .join("\n\n");
+
+  const retryFilesBlock = previousFiles
+    ? Object.entries(previousFiles)
+        .map(([p, c]) => `### ${p}\n\`\`\`\n${c}\n\`\`\``)
+        .join("\n\n")
+    : null;
+
+  const systemPrompt = `Bạn là kỹ sư Remotion (TypeScript + React). Dự án dùng Remotion 4.0.526 — API đã đổi khác nhiều so với bản cũ, PHẢI theo đúng skill docs bên dưới, không dùng kiến thức Remotion cũ/mặc định (vd Video/Audio giờ import từ "@remotion/media", không phải "remotion").
+
+SKILL DOCS (bắt buộc tuân theo):
+${skillDocs}
+
+STYLE DNA (STYLE_DNA.md — quy tắc hình ảnh/màu/font/caption/pacing bắt buộc):
+${styleDnaCore}
+
+STYLE TOKENS (số liệu chính xác):
+${styleTokens}
+
+${KNOWN_GOTCHAS}
+
+DỰ ÁN HIỆN TẠI:
+- Remotion project blank scaffold, TypeScript, đã cài @remotion/captions, @remotion/media, @remotion/install-whisper-cpp.
+- ${isFoundation ? "CHƯA có theme.ts hay scene nào — đây là lần generate ĐẦU TIÊN cho toàn dự án, bạn phải thiết lập toàn bộ nền tảng (theme, component dùng chung, Root.tsx)." : "ĐÃ có nền tảng — dưới đây là TOÀN BỘ file hiện có trong dự án. BÁM SÁT đúng convention/tên/kiểu dữ liệu đã có, tái sử dụng component đã có, KHÔNG đổi tên file/interface đã tồn tại trừ khi thực sự cần bổ sung."}
+${existingFilesBlock ? `\nFILE HIỆN CÓ TRONG DỰ ÁN:\n\n${existingFilesBlock}\n` : ""}
+
+YÊU CẦU CẤU TRÚC FILE:
+- ${isFoundation ? "Tạo 'src/styles/theme.ts' xuất ra các hằng số/type từ style tokens (màu, font, canvas, safeZone, caption, pacing) để mọi scene dùng chung." : "KHÔNG tạo lại theme.ts trừ khi thiếu field cần dùng — khi đó CHỈ bổ sung field mới vào file đã có, giữ nguyên toàn bộ field cũ, in lại đầy đủ nội dung file."}
+- ${isFoundation ? "Tạo các component dùng chung trong 'src/components/': ít nhất một component ráp media (ảnh/video nền toàn khung, hỗ trợ crop/Ken-Burns pan-zoom, hỗ trợ trim cho video), một component hiển thị overlay nhẹ (label tối đa 4 từ/punch-phrase/icon đơn giản), và helper cho các kiểu chuyển cảnh (animation-variants) thực sự dùng trong shot list bên dưới." : "Tái sử dụng NGUYÊN VẸN component đã có trong 'src/components/' (xem file hiện có ở trên) nếu phù hợp; chỉ tạo file component mới khi thực sự cần biến thể chưa có, và không sửa lại các component đã có trừ khi chúng đang lỗi."}
+- Mỗi scene trong danh sách yêu cầu → 1 file 'src/scenes/SceneNN.tsx' (NN = số thứ tự, 2 chữ số), export 1 component tự dùng useCurrentFrame() nội bộ theo frame TUYỆT ĐỐI của Sequence cha (không cần nhận prop startFrame).
+- Asset ảnh/video dùng đường dẫn staticFile("media/images/<file>") hoặc staticFile("media/videos/<file>") đúng theo đường dẫn trong media manifest bên dưới (bỏ tiền tố "public/").
+${
+  noRootSync
+    ? `- CHẾ ĐỘ CHẠY SONG SONG: đang có NHIỀU tiến trình khác chạy đồng thời, mỗi tiến trình lo 1 scene khác nhau. TUYỆT ĐỐI KHÔNG được xuất file 'src/Root.tsx' (một bước riêng sẽ ráp Root.tsx sau khi tất cả tiến trình xong, không phải việc của bạn ở đây). TUYỆT ĐỐI KHÔNG sửa 'src/styles/theme.ts' hay bất kỳ component nào trong 'src/components/' (nếu thiếu 1 type/biến thể, dùng type nội bộ (local) ngay trong file scene của bạn thay vì mở rộng file dùng chung — vì các tiến trình khác có thể đang ghi đè file đó cùng lúc). Output CHỈ gồm đúng 1 file 'src/scenes/SceneNN.tsx'.`
+    : `- Cập nhật 'src/Root.tsx': in lại TOÀN BỘ nội dung file, thêm/giữ đúng Sequence (from={...} durationInFrames={...}) cho từng scene theo đúng startFrame/durationInFrames đã tính sẵn trong shotlist (KHÔNG tự tính lại frame, dùng đúng số đã cho), giữ nguyên các scene đã có từ trước không nằm trong danh sách yêu cầu lần này.
+- Caption: nếu đây là lần đầu (${isFoundation}), thêm component hiển thị caption theo remotion-captions/display-captions.md, mount MỘT LẦN ở Root.tsx (không phải trong từng scene), đọc public/captions/an-le-64-captions.json qua staticFile()+fetch. Nếu không phải lần đầu, không đụng vào phần caption đã có.
+- Audio: nếu lần đầu, thêm Audio từ "@remotion/media" phát public/audio/an-le-64-narration.mp3 ở Root.tsx.`
+}
+
+${
+  feedback
+    ? `\nLẦN THỬ TRƯỚC BỊ LỖI. Đây là TOÀN BỘ code lần thử trước:\n\n${retryFilesBlock}\n\nLỖI CẦN SỬA (sửa đúng các lỗi này trong chính các file trên, GIỮ NGUYÊN kiến trúc/tên file/tên component đã dùng, chỉ sửa phần bị lỗi, in lại đầy đủ nội dung từng file đã sửa):\n${feedback}\n`
+    : ""
+}
+
+ĐỊNH DẠNG OUTPUT — KHÔNG dùng JSON, dùng định dạng sau cho MỖI file cần tạo/cập nhật (in lại TOÀN BỘ nội dung file, không phải diff, không markdown fence bên trong):
+
+### FILE: đường/dẫn/tương/đối.tsx
+<toàn bộ nội dung file>
+### FILE: đường/dẫn/khác.ts
+<nội dung>
+### END
+
+Không viết gì khác ngoài các khối ### FILE ... ### END này.`;
+
+  const userPrompt = `SCENE PLAN (các scene cần code lần này):
+${JSON.stringify(scenes, null, 2)}
+
+SHOTLIST (chi tiết từng shot, đã có startFrame/endFrame/durationInFrames tính sẵn theo fps=30):
+${JSON.stringify(shots, null, 2)}
+
+MEDIA MANIFEST (asset dùng trong các shot trên):
+${JSON.stringify(usedMedia, null, 2)}
+
+Hãy sinh code theo đúng yêu cầu ở trên cho các scene: ${sceneIds.join(", ")}.`;
+
+  return { systemPrompt, userPrompt };
+}
+
+function parseFiles(text) {
+  const files = {};
+  const re = /### FILE: (.+?)\r?\n([\s\S]*?)(?=\r?\n### FILE: |\r?\n### END|$)/g;
+  let m;
+  while ((m = re.exec(text))) {
+    files[m[1].trim()] = m[2].replace(/\r?\n$/, "");
+  }
+  return files;
+}
+
+async function generate(feedback, previousFiles) {
+  const { systemPrompt, userPrompt } = buildPrompt(feedback, previousFiles);
+  console.log(`Gọi ${GEN_MODEL} để sinh code cho scene: ${sceneIds.join(", ")}${feedback ? " (retry)" : ""}...`);
+  const response = await callModel({
+    model: GEN_MODEL,
+    messages: [
+      { role: "system", content: systemPrompt },
+      { role: "user", content: userPrompt },
+    ],
+    temperature: 0.3,
+    maxTokens: 16000,
+  });
+  const text = extractText(response);
+  const files = parseFiles(text);
+  if (Object.keys(files).length === 0) {
+    throw new Error("Không parse được file nào từ output generator:\n" + text.slice(0, 1000));
+  }
+  return files;
+}
+
+function writeFiles(files) {
+  for (const [rel, content] of Object.entries(files)) {
+    const full = path.join(root, rel);
+    fs.mkdirSync(path.dirname(full), { recursive: true });
+    fs.writeFileSync(full, content, "utf8");
+    console.log(`  wrote ${rel} (${content.length} chars)`);
+  }
+}
+
+function verify() {
+  const errors = [];
+  try {
+    execSync("npx eslint src --fix", { cwd: root, stdio: "pipe" });
+  } catch {
+    // ignore — sẽ bắt lỗi còn lại ở lượt check bên dưới
+  }
+  try {
+    execSync("npx tsc --noEmit", { cwd: root, stdio: "pipe" });
+  } catch (e) {
+    errors.push("### tsc --noEmit\n" + e.stdout?.toString().slice(0, 4000));
+  }
+  try {
+    execSync("npx eslint src", { cwd: root, stdio: "pipe" });
+  } catch (e) {
+    errors.push("### eslint src\n" + (e.stdout?.toString().slice(0, 4000) || e.message));
+  }
+
+  // Render smoke-test: chỉ render đúng dải frame của scene đang xử lý để bắt lỗi RUNTIME
+  // (vd interpolate() dùng sai outputRange) mà tsc/eslint không phát hiện được.
+  // Bỏ qua ở chế độ song song vì Root.tsx CHƯA có scene này (sẽ render tổng ở scripts/08 sau).
+  if (errors.length === 0 && !noRootSync) {
+    const tmpOut = path.join(root, "pipeline", ".cache", "smoke-test.mp4");
+    try {
+      execSync(
+        `npx remotion render AnLe64 "${tmpOut}" --frames=${frameRange.start}-${frameRange.end} --log=error`,
+        { cwd: root, stdio: "pipe", timeout: 180000 },
+      );
+    } catch (e) {
+      errors.push(
+        `### render smoke-test (frame ${frameRange.start}-${frameRange.end})\n` +
+          (e.stdout?.toString().slice(0, 3000) || e.stderr?.toString().slice(0, 3000) || e.message),
+      );
+    }
+  }
+
+  return errors;
+}
+
+async function review(files) {
+  const systemPrompt = `Bạn review code Remotion vừa sinh ra, đối chiếu với shotlist và style DNA. Trả lời NGẮN GỌN theo format:
+VERDICT: PASS hoặc FAIL
+ISSUES:
+- (liệt kê vấn đề cụ thể nếu FAIL, để trống nếu PASS)
+
+QUAN TRỌNG: đây là Remotion 4.0.526, API khác bản cũ — CHỈ được chấm một cách dùng API là sai nếu nó mâu thuẫn với SKILL DOCS bên dưới (là tài liệu chính thức của đúng version này). KHÔNG dựa vào kiến thức Remotion cũ/mặc định của bạn để bác một pattern nếu skill docs bên dưới có ví dụ dùng chính pattern đó (vd interpolate() với output "perceptual-scale", hoặc translate nhận chuỗi "0px -92px" đều là ví dụ CÓ THẬT trong skill docs, không phải lỗi).
+
+SKILL DOCS (nguồn xác thực duy nhất cho việc đúng/sai API):
+${skillDocs}
+
+${KNOWN_GOTCHAS}
+
+LƯU Ý VỀ TÊN FILE ASSET: một số file ảnh có chữ "cutout" trong TÊN FILE (vd img-08-extortion-money-demand-cutout.jpeg) — đó chỉ là mô tả phong cách minh hoạ do ảnh AI tạo sẵn đã có (ảnh trông giống cắt dán giấy), KHÔNG phải chỉ định phải áp dụng xử lý cutout (grayscale+bóng cam) trong code. Theo quyết định dự án, ảnh luôn dùng làm nền toàn khung, giữ nguyên màu — chỉ bị coi là lỗi nếu CODE chủ động áp filter grayscale/tách nền/thêm bóng, không phải vì tên file chứa chữ "cutout".
+
+Kiểm tra: đúng API theo skill docs trên, đúng đường dẫn asset theo media manifest, đúng frame timing theo shotlist, đúng style DNA (màu/font/caption), không có code rõ ràng sai cú pháp. Ưu tiên PASS nếu ý chính của shotlist đã được thể hiện đúng tinh thần — đừng FAIL vì tiểu tiết chuyển động không khớp 100% mô tả câu chữ trong shotlist, miễn không sai API/sai style DNA cốt lõi (màu, không cutout-processing, caption).`;
+  const filesText = Object.entries(files)
+    .map(([p, c]) => `### ${p}\n\`\`\`tsx\n${c}\n\`\`\``)
+    .join("\n\n");
+  const userPrompt = `SHOTLIST liên quan:\n${JSON.stringify(shots, null, 2)}\n\nCODE VỪA SINH:\n${filesText}`;
+  const response = await callModel({
+    model: REVIEW_MODEL,
+    messages: [
+      { role: "system", content: systemPrompt },
+      { role: "user", content: userPrompt },
+    ],
+    temperature: 0.2,
+    maxTokens: 2000,
+  });
+  return extractText(response);
+}
+
+const issueFileArg = process.argv.find((a) => a.startsWith("--issue-file="));
+const seededIssue = issueFileArg
+  ? fs.readFileSync(issueFileArg.split("=").slice(1).join("="), "utf8")
+  : null;
+
+let attempt = 0;
+let feedback = seededIssue ? `Người dùng báo lỗi trên bản đã PASS trước đó, sửa đúng các lỗi sau (giữ nguyên phần còn lại):\n${seededIssue}` : null;
+let previousFiles = null;
+let finalFiles = null;
+let finalVerdict = null;
+
+while (attempt < MAX_ATTEMPTS) {
+  attempt++;
+  console.log(`\n=== Attempt ${attempt}/${MAX_ATTEMPTS} ===`);
+  try {
+    const files = await generate(feedback, previousFiles);
+    writeFiles(files);
+    previousFiles = files;
+
+    const verifyErrors = verify();
+    if (verifyErrors.length > 0) {
+      console.log("Verify FAILED:\n" + verifyErrors.join("\n\n"));
+      feedback = verifyErrors.join("\n\n");
+      continue;
+    }
+    console.log("Verify (tsc + eslint) PASS.");
+
+    const reviewText = await review(files);
+    console.log("Review result:\n" + reviewText);
+    finalFiles = files;
+    finalVerdict = reviewText;
+
+    if (/VERDICT:\s*PASS/i.test(reviewText)) {
+      break;
+    }
+    feedback = "Reviewer FAIL:\n" + reviewText;
+  } catch (e) {
+    // Lỗi mạng/timeout gọi 9router không nên làm crash cả vòng lặp — coi như 1 lần thử
+    // thất bại, giữ nguyên feedback hiện tại (nếu có) và thử lại.
+    console.log(`Lỗi khi gọi 9router (sẽ thử lại): ${e.message || e}`);
+  }
+}
+
+const summary =
+  finalVerdict && /VERDICT:\s*PASS/i.test(finalVerdict)
+    ? `Codegen scenes [${sceneIds.join(",")}] PASS sau ${attempt} lần thử bằng ${GEN_MODEL} (review: ${REVIEW_MODEL}). Files: ${finalFiles ? Object.keys(finalFiles).join(", ") : "?"}`
+    : `Codegen scenes [${sceneIds.join(",")}] KHÔNG đạt sau ${attempt} lần thử — cần Claude can thiệp. Verdict cuối:\n${finalVerdict ?? "(chưa qua được verify)"}`;
+
+console.log("\n" + summary);
+appendRunLog(`\`scripts/07-codegen.router.mjs --scenes=${sceneIds.join(",")}\` — ${summary}`);
+
+if (!(finalVerdict && /VERDICT:\s*PASS/i.test(finalVerdict))) {
+  process.exit(1);
+}

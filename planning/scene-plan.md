@@ -1,0 +1,29 @@
+# Scene Plan — Án lệ 64
+
+> Sinh bởi `scripts/05-scene-plan.router.mjs` qua cx/gpt-5.6-sol. Nguồn dữ liệu: `planning/scene-plan.json`. Sửa tay thì sửa cả 2 file cho khớp.
+
+Tổng thời lượng: 49.340s · 7 scene
+
+| # | Thời gian | Lời thoại | Chức năng | Quan hệ hình ảnh | Ngôn ngữ thị giác | Nền | Asset | Vào cảnh |
+|---|---|---|---|---|---|---|---|---|
+| S01 | 0.000s–7.800s | Cho người ta vay 150 củ, đòi mãi không trả... lại còn trốn biệt tăm.
+Bực quá, mới lập mưu dùng "mỹ nhân kế", lừa con nợ ra, rồi bắt giữ để ép trả tiền. | hook | Mảnh giấy ghi khoản nợ 150 triệu bị treo lại không được thanh toán; một hồ sơ Zalo gái đẹp sau đó trượt vào như mồi nhử và khép thành chiếc bẫy giữ con nợ. | background-photo + flow | spotlight | img-08, img-04 | zoom-through |
+| S02 | 7.800s–13.220s | Nghe qua, thì tưởng chỉ là chuyện... đi đòi lại tiền mồ hôi nước mắt của mình, đúng không?
+Nhưng mà không các bạn ạ! | paradox | Lập luận có vẻ chính đáng về việc lấy lại tiền xuất hiện trước, rồi bị hình ảnh còng tay xé xuyên qua đúng nhịp “không”, khiến cách hiểu dân sự lập tức chuyển sang cảnh báo hình sự. | cutout + quote | card | vid-01 | punch |
+| S03 | 13.220s–23.040s | Đến khi công an ập vào bế đi, ra tòa nhận bản án về tội... "Bắt cóc nhằm chiếm đoạt tài sản", thì chủ nợ mới ngơ ngác, không hiểu vì sao mình từ một nạn nhân bị quỵt tiền... lại biến thành tội phạm bắt cóc! | reversal | Cảnh công an bắt giữ lấn sang phòng xử án; đồng thời vị thế “người bị quỵt tiền” mất lãnh thổ và bị thay bằng vị thế bị cáo mang tội danh bắt cóc. | background-photo + split | spotlight | img-01, img-09, img-02 | rise |
+| S04 | 23.080s–29.920s | Vụ án này ly kỳ đến mức, Hội đồng Thẩm phán Tòa án nhân dân tối cao... phải chọn làm hẳn một Án lệ chuẩn, để áp dụng cho cả nước luôn. | evidence | Một vụ xét xử đơn lẻ được ép phẳng thành hồ sơ pháp lý, đóng dấu thành án lệ rồi nhân thành nhiều bản áp dụng vượt ra ngoài chính vụ án ban đầu. | cutout + document | card | vid-03 | flip |
+| S05 | 29.920s–36.600s | Câu chuyện bắt đầu, khi anh Trần Văn N, cho một người tên T vay số tiền 150 triệu đồng.
+Sau nhiều lần đòi nợ không được, anh T lặn mất tăm, | causal-chain | Mảnh giấy 150 triệu ban đầu nằm giữa hai người như một khoản vay có thể thu hồi; các lần đòi nợ sau đó chồng dần thành chuỗi không hồi đáp, còn người vay lùi sâu vào hẻm tối rồi biến khỏi đầu cuối của dòng thời gian. | timeline + background-photo | grid | vid-05, img-06, img-07 | peel |
+| S06 | 36.600s–42.780s | trốn vào tận Thành phố Hồ Chí Minh.
+Cay cú vì mất tiền, N quyết định không ngồi chờ nữa, mà lên kế hoạch đòi nợ cực kỳ bài bản. | cause | Chuyển động bỏ trốn của T kéo khoảng cách với khoản nợ ngày càng xa; đến nhịp N không chịu ngồi chờ, đường chạy ấy bị một đường cam quay ngược, chia thành các ô kế hoạch và biến sự bế tắc thành hành động có chủ đích. | cutout + flow | spotlight | vid-02 | zoom-through |
+| S07 | 42.780s–49.340s | Đầu tiên, N mượn tài khoản Zalo của một cô gái tên L, lấy hình đại diện xinh xắn, rồi chủ động kết bạn, nhắn tin thả thính với con nợ. | mechanism | Một tài khoản Zalo vốn thuộc về L được đặt vào khung điện thoại, ảnh đại diện trở thành danh tính mượn; nút kết bạn và các tin nhắn lần lượt nối sang điện thoại của con nợ, khiến hồ sơ vô hại khép lại thành mồi nhử trực tuyến. | mockup + background-photo | card | img-03, img-05, vid-04 | unfold |
+
+## Ghi chú từng scene
+
+- **S01**: Dùng img-08 rồi img-04 dưới dạng hai ảnh nền toàn khung nối tiếp, không xử lý cutout. Giữ con số 150 triệu xuyên qua lần chuyển ảnh để nối khoản nợ với động cơ. Overlay nhẹ gồm đường dẫn cam từ tiền sang hồ sơ giả rồi khép thành khung bẫy; các nhãn bổ sung có thể là “KHOẢN NỢ TREO”, “MỒI ẢO”, “BẪY THẬT”.
+- **S02**: Video bắt giữ là lớp hình chính, nhưng chỉ lộ dần sau nửa đầu câu hỏi. Trước nhịp đảo chiều, đặt quote card “CÓ VẺ HỢP LÝ”; tại từ “không”, card bị một nét cam duy nhất gạch bỏ và video mở rộng chiếm khung. Punch phrase cảnh báo giữ tối thiểu 48 frame.
+- **S03**: Ba ảnh đều dùng toàn khung theo trình tự: img-01 cho nhịp công an ập vào, img-09 cho cú sốc tại tòa, img-02 cho hệ thống tư pháp khép lại. Phần tòa án phải vật lý lấn và đẩy phần bắt giữ ra khỏi khung, không chỉ đặt hai ảnh cạnh nhau. Tội danh xuất hiện như punch phrase lớn, không dùng làm nhãn chú thích nhỏ.
+- **S04**: Dùng video phiên tòa làm lớp chính. Khi lời thoại nhắc Hội đồng Thẩm phán, khung video thu vào một tờ hồ sơ kem; tại “Án lệ chuẩn”, dấu cam đóng xuống rồi các bản sao tài liệu tỏa về nhiều cạnh khung. Overlay tài liệu phải đơn giản, tránh dựng icon hoặc SVG pháp lý phức tạp.
+- **S05**: Dùng vid-05 toàn khung cho mốc khoản tiền, sau đó chuyển sang img-06 và img-07 dưới dạng ảnh nền nối tiếp, tuyệt đối không xử lý cutout. Cho hai ảnh hẻm chồng thời gian bằng crossfade để mỗi ảnh hiện ít nhất 1,5 giây. Overlay timeline nhẹ gồm mốc cho vay, các dấu đòi nợ không hồi đáp và đoạn cuối đứt khỏi khung; nhãn bổ sung có thể là “KHOẢN NỢ MẮC KẸT” và “DẤU VẾT ĐỨT”.
+- **S06**: Dùng vid-02 làm lớp hình chính xuyên suốt, không dựng lại cảnh lẩn trốn bằng code. Ở nửa đầu, một vệt đường mảnh kéo dài sau nhân vật; từ “không ngồi chờ nữa”, đường này khựng lại rồi quay ngược vào ba ô kế hoạch trống. Chỉ dùng flow overlay đơn giản, không vẽ bản đồ giả hoặc ghim trên nền trắng. Punch phrase “KHÔNG NGỒI CHỜ” giữ trên 48 frame.
+- **S07**: Dùng img-03 rồi img-05 làm hai ảnh nền toàn khung nối tiếp, không xử lý cutout; đến nhịp kết bạn và nhắn tin, chuyển sang vid-04. Vẽ một khung điện thoại vector đơn giản phủ lên media để gom ảnh đại diện, nút kết bạn và bong bóng chat thành cùng một cơ chế; không cắt nền thiết bị. Các nhãn bổ sung có thể là “DANH TÍNH MƯỢN” và “MỒI ẢO”; punch phrase cuối giữ tối thiểu 48 frame.

@@ -1,0 +1,28 @@
+# Scene Plan — Án lệ 64
+
+> Sinh bởi `scripts/05-scene-plan.router.mjs` qua cx/gpt-5.6-sol. Nguồn dữ liệu: `planning/scene-plan.json`. Sửa tay thì sửa cả 2 file cho khớp.
+
+Tổng thời lượng: 53.680s · 7 scene
+
+| # | Thời gian | Lời thoại | Chức năng | Quan hệ hình ảnh | Ngôn ngữ thị giác | Nền | Asset | Vào cảnh |
+|---|---|---|---|---|---|---|---|---|
+| S01 | 0.000s–7.800s | Cho người ta vay 150 củ, đòi mãi không trả... lại còn trốn biệt tăm.
+Bực quá, mới lập mưu dùng "mỹ nhân kế", lừa con nợ ra, rồi bắt giữ để ép trả tiền. | hook | Bộ đếm tiền tăng từ 0 lên 150 triệu khi dòng tiền chạy từ chủ nợ sang con nợ; mũi tên hoàn trả liên tục bị chặn, biểu tượng con nợ biến mất, rồi một mồi nhử kéo người đó trở lại và khung giữ người đóng sập quanh họ. | data + flow | chart | — | punch |
+| S02 | 7.800s–13.220s | Nghe qua, thì tưởng chỉ là chuyện... đi đòi lại tiền mồ hôi nước mắt của mình, đúng không?
+Nhưng mà không các bạn ạ! | paradox | Một cán cân ban đầu nghiêng về phía quyền đòi lại tài sản, khiến cách hiểu này trông hợp lý; đến chữ “không”, một nét cam duy nhất gạch bỏ kết luận đó và để lộ phía sau là hành vi cưỡng ép người khác. | diagram + annotated | card | — | flip |
+| S03 | 13.220s–23.040s | Đến khi công an ập vào bế đi, ra tòa nhận bản án về tội... "Bắt cóc nhằm chiếm đoạt tài sản", thì chủ nợ mới ngơ ngác, không hiểu vì sao mình từ một nạn nhân bị quỵt tiền... lại biến thành tội phạm bắt cóc! | reversal | Nửa khung hình mang vị thế “người bị quỵt tiền” bị cảnh bắt giữ và phòng xử án lấn sang từng bước; khi tên tội danh xuất hiện, phần hình sự chiếm trọn khung và đổi vai chủ nợ thành bị cáo. | split + background-photo | spotlight | vid-01, vid-03 | zoom-through |
+| S04 | 23.040s–29.920s | Vụ án này ly kỳ đến mức, Hội đồng Thẩm phán Tòa án nhân dân tối cao... phải chọn làm hẳn một Án lệ chuẩn, để áp dụng cho cả nước luôn. | evidence | Một hồ sơ vụ án được rút khỏi chồng hồ sơ, nhận dấu cam xác lập án lệ, rồi các đường áp dụng tỏa từ hồ sơ này đến nhiều biểu tượng tòa án ở các vùng khác nhau, biến một vụ việc riêng thành chuẩn dùng chung. | document + flow | card | — | peel |
+| S05 | 29.920s–38.320s | Câu chuyện bắt đầu, khi anh Trần Văn N, cho một người tên T vay số tiền 150 triệu đồng.
+Sau nhiều lần đòi nợ không được, anh T lặn mất tăm, trốn vào tận Thành phố Hồ Chí Minh. | causal-chain | Mười lăm ô tiền, mỗi ô tương ứng 10 triệu, lần lượt được chuyển từ N sang T để đủ 150 triệu; các tín hiệu đòi nợ sau đó hội tụ nhưng không chạm được T, trước khi dấu người biến khỏi liên lạc và xuất hiện lại đúng vị trí Thành phố Hồ Chí Minh trên bản đồ thật. | map + data | grid | — | rise |
+| S06 | 38.320s–42.720s | Cay cú vì mất tiền, N quyết định không ngồi chờ nữa, mà lên kế hoạch đòi nợ cực kỳ bài bản. | cause | Một chiếc đồng hồ chờ đợi đang chạy bị gạch bỏ, sau đó một bìa kế hoạch rơi xuống và mở ra thành chuỗi ô hành động liên kết, cho thấy sự bức xúc đã chuyển từ trạng thái chờ thụ động sang chuẩn bị có tổ chức. | diagram + document | grid | — | wobble-drop |
+| S07 | 42.720s–53.680s | Đầu tiên, N mượn tài khoản Zalo của một cô gái tên L, lấy hình đại diện xinh xắn, rồi chủ động kết bạn, nhắn tin thả thính với con nợ. | mechanism | Khung điện thoại ban đầu mang tài khoản của L được bàn giao cho N, ảnh đại diện nữ được gắn vào hồ sơ, yêu cầu kết bạn chạy sang phía con nợ và sau khi được chấp nhận, các bong bóng tin nhắn nối dài thành một đường dẫn dụ. | background-photo + mockup | spotlight | img-04 | unfold |
+
+## Ghi chú từng scene
+
+- **S01**: Không có asset khớp toàn bộ chuỗi nên dựng bằng code. Cho các khối tiền đếm thật đến 150 triệu, dùng icon money/person tự vẽ; lần lượt xuất hiện chuyển tiền, đòi thất bại, mất dấu, mồi nhử và khung bắt giữ để không có khoảng chết quá 3 giây.
+- **S02**: Fallback hoàn toàn bằng code với icon scale và question tự vẽ. Không dùng dấu X hai nét; chỉ một nét cam phủ định. Các annotation phải tối đa 4 từ và bổ sung ý pháp lý, không chép lại lời thoại.
+- **S03**: Dùng vid-01 làm nền toàn khung cho nhịp công an bắt giữ, sau đó vid-03 lấn sang vật lý ở nhịp ra tòa. Tên tội danh là punch phrase giữ tối thiểu 48 frame; chuyển động lấn khung phải thực sự hoàn tất phép đảo vai, không chỉ đặt hai video cạnh nhau.
+- **S04**: Không có tài liệu án lệ thật trong manifest nên dựng hồ sơ, dấu xác lập và mạng lưới áp dụng bằng code. Dùng icon doc tự vẽ thay vì viết nhãn diễn giải; các nhánh tỏa ra theo từng nhịp lời “chọn”, “án lệ”, “cả nước”.
+- **S05**: Fallback bằng code: vẽ đủ 15 ô tiền để người xem cảm nhận số lượng, sau đó chuyển sang bản đồ địa lý chính xác có địa danh Thành phố Hồ Chí Minh; bắt buộc có nền bản đồ thật dạng SVG/raster nội bộ, không dùng một ghim trên giấy trắng. Dùng icon pin, money và person tự vẽ.
+- **S06**: Không dùng ảnh chung chung về người tức giận; dựng bằng code để thấy rõ trạng thái chờ bị thay thế bởi kế hoạch. Dùng icon clock và doc tự vẽ, chỉ hé lộ các bước chưa ghi nội dung cụ thể để không kể trước thủ đoạn của scene sau.
+- **S07**: img-04 chỉ được dùng làm ảnh nền toàn khung dưới lớp wash, tuyệt đối không tách nền hoặc áp dụng xử lý cutout. Vẽ khung điện thoại và giao diện Zalo bằng code ở tiền cảnh; lần lượt hiện bàn giao tài khoản, đổi avatar, kết bạn và tin nhắn theo đúng cue lời thoại. Dùng icon phone tự vẽ, các bong bóng lệch pha nhẹ sau khi vào cảnh.
