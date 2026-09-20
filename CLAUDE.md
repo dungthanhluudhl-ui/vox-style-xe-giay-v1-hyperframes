@@ -56,6 +56,15 @@ việc cùng nhau.
 - Sửa lỗi ở **đúng gốc**, không vá triệu chứng — và luôn để lại bài học lâu dài ở nơi phù hợp
   (memory, `KNOWN_GOTCHAS` trong script, tài liệu dự án) để không lặp lại lỗi tương tự ở
   video/phiên làm việc sau.
+- **Khi một kỹ thuật tối ưu đã được xây VÀ kiểm chứng thật, áp dụng nó làm mặc định ngay** —
+  không chỉ dùng một lần rồi quay lại thói quen cũ/an toàn ở lần sau. (Ví dụ thật: chạy song
+  song code-gen đã kiểm chứng ở video 1 nhưng video 2 vẫn bị chạy tuần tự vì Claude tự chọn
+  cách quen thuộc thay vì mặc định mới — người dùng phải nhắc lại. Bài học: khi một cách làm
+  mới đã được xác nhận tốt hơn, sửa NGAY vào script/tài liệu để nó trở thành đường đi mặc định,
+  không phụ thuộc việc Claude có nhớ nhắc lại ở phiên sau hay không.)
+- **Không đoán giới hạn kỹ thuật của hệ thống bên ngoài (vd giới hạn tốc độ/đồng thời của
+  9router) khi không có cách kiểm chứng từ trong repo** — nói rõ đây là ẩn số, đề xuất cách
+  tăng dần có đo lường thay vì chốt một con số "an toàn" không có cơ sở.
 - Không thêm tính năng/tài liệu/trừu tượng hoá ngoài phạm vi được yêu cầu — nhưng nếu phát
   hiện vấn đề liên quan rõ ràng, nhỏ, rủi ro thấp trong lúc đang làm (vd một đường dẫn bị
   stale phát hiện qua grep), chủ động sửa luôn thay vì lờ đi, miễn có báo lại cho người dùng

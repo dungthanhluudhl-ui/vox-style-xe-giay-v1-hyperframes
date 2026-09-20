@@ -69,7 +69,16 @@ Ghi chú: agent gọi qua 9router **không** tự có quyền truy cập skill R
 
 **Quy tắc bắt buộc: KHÔNG BAO GIỜ batch nhiều scene trong 1 lần gọi `scripts/07-codegen.router.mjs`.** Đã kiểm chứng thật: request càng nhiều scene, model sinh càng nhiều token, thời gian gọi cộng dồn theo số scene và dễ vượt timeout mạng — nguyên nhân thật của các lỗi `fetch failed`/`HeadersTimeoutError` từng gặp, KHÔNG phải do máy quá tải khi render smoke-test. Luôn gọi 1 scene / 1 lần: `node scripts/07-codegen.router.mjs --video=<slug> --scenes=SNN`.
 
-**Chạy song song nhiều scene để tăng tốc:** chạy nhiều lệnh `scripts/07-codegen.router.mjs --video=<slug> --scenes=SNN` (mỗi lệnh 1 scene) như các **process hệ điều hành riêng biệt cùng lúc**, mỗi lệnh thêm cờ `--no-root-sync` — chế độ này không gọi `sync-root-lib.mjs`, không đụng `src/styles/theme.ts`/`src/components/*` (dùng type cục bộ trong scene nếu cần), không chạy render smoke-test (vì `Root.tsx` chưa có scene mới nên chưa render được gì có nghĩa) — nhờ vậy loại bỏ hoàn toàn race condition ghi đè file dùng chung giữa các process. Chỉ chạy song song các scene CỦA CÙNG 1 VIDEO; không chạy song song 2 video khác nhau nếu cả hai đều cần MỞ RỘNG theme.ts/component dùng chung trong cùng lúc (vẫn có thể race ở lớp dùng-chung này — xử lý tuần tự phần mở rộng dùng chung, hoặc merge tay sau). Sau khi TẤT CẢ scene song song đã xong, chạy **một lần duy nhất** `node scripts/08-sync-root.mjs --video=<slug>` (script local, không gọi AI, đọc `planning/videos/<slug>/scene-plan.json` + quét `src/videos/<slug>/scenes/*.tsx` hiện có để tự ráp lại khối Root.tsx của video này, giữ nguyên khối video khác), rồi chạy 1 lần `tsc`/`eslint`/render smoke-test tổng cho dải scene mới.
+**Chạy song song nhiều scene — MẶC ĐỊNH cho mọi video từ 2 scene trở lên, không phải một lựa chọn thỉnh thoảng mới dùng:**
+`node scripts/07-codegen-parallel.mjs --video=<slug> --scenes=S01,S02,...,SNN [--concurrency=3]` — script orchestrator (local, không gọi AI trực tiếp, chỉ quản lý tiến trình con) duy trì đúng `--concurrency` scene chạy đồng thời theo mô hình hàng đợi (worker pool): ngay khi 1 scene xong (pass hay fail), lập tức lấy scene tiếp theo trong hàng đợi vào chỗ trống đó, không đợi cả nhóm cùng đợt xong (tránh thời gian chết khi các scene có độ phức tạp khác nhau). Mỗi tiến trình con tự chạy `scripts/07-codegen.router.mjs --scenes=SNN --no-root-sync` (không đụng `src/styles/theme.ts`/`src/components/*`, không chạy render smoke-test riêng — loại bỏ hoàn toàn race condition giữa các process). Khi TẤT CẢ scene PASS, script tự gọi `syncRoot()` ráp `src/Root.tsx` — không cần chạy `scripts/08-sync-root.mjs` riêng nữa.
+
+Script tự phân loại lỗi để quyết định có tự chạy lại hay không: lỗi mạng/timeout thuần tuý (không có Verify/Review nào chạy được trong cả 3 lần thử nội bộ) → tự động chạy lại 1 lượt; lỗi nội dung thật (reviewer có VERDICT: FAIL) hoặc lỗi verify (tsc/eslint) → KHÔNG tự chạy lại, in ngay lỗi ra để Claude sửa targeted bằng `--issue-file` trong khi các scene khác vẫn tiếp tục chạy song song (không chờ cả batch).
+
+Concurrency mặc định = 3 (bước tăng thận trọng từ mốc 2 đã kiểm chứng thật ở video 1) — không có cách audit giới hạn thật của 9router/model backend từ trong repo này, tăng dần có kiểm chứng (đối chiếu log thời gian mỗi cuộc gọi qua `router-client.mjs`) ở các video sau thay vì đoán một con số tối đa.
+
+Chỉ chạy song song các scene CỦA CÙNG 1 VIDEO; không chạy song song 2 video khác nhau nếu cả hai đều cần MỞ RỘNG theme.ts/component dùng chung trong cùng lúc (vẫn có thể race ở lớp dùng-chung này — xử lý tuần tự phần mở rộng dùng chung, hoặc merge tay sau).
+
+Chỉ chạy `scripts/07-codegen.router.mjs` tuần tự/thủ công (không qua orchestrator) khi có lý do cụ thể, ví dụ đang debug/sửa riêng 1 scene bằng `--issue-file`.
 
 ## 7. Preview & QA
 | Task | Ai/gì đảm nhiệm | Công cụ |
@@ -102,6 +111,7 @@ Từ khi repo đã có git backup (2026-09-20), **không** tạo thêm file ki�
 - `scripts/05-scene-plan.router.mjs`
 - `scripts/06-shotlist.router.mjs`
 - `scripts/07-codegen.router.mjs`
+- `scripts/07-codegen-parallel.mjs` (local, không gọi AI trực tiếp — orchestrator quản lý tiến trình con, xem mục 6)
 - `scripts/08-sync-root.mjs` (local, không có hậu tố owner vì không gọi AI — script mechanical thuần)
 
 Hậu tố `.local.mjs` / `.router.mjs` cho biết ngay loại xử lý. Mọi script `.router.mjs` dùng chung `scripts/lib/router-client.mjs` và tra model qua `scripts/model-routing.json`.

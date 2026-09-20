@@ -72,6 +72,65 @@ const AnLe64Timeline: React.FC = () => {
 };
 // === VIDEO: an-le-64 END ===
 
+// === VIDEO: an-le-64-phan-2 START ===
+import {Scene01 as AnLe64Phan2Scene01} from "./videos/an-le-64-phan-2/scenes/Scene01";
+import {Scene02 as AnLe64Phan2Scene02} from "./videos/an-le-64-phan-2/scenes/Scene02";
+import {Scene03 as AnLe64Phan2Scene03} from "./videos/an-le-64-phan-2/scenes/Scene03";
+import {Scene04 as AnLe64Phan2Scene04} from "./videos/an-le-64-phan-2/scenes/Scene04";
+import {Scene05 as AnLe64Phan2Scene05} from "./videos/an-le-64-phan-2/scenes/Scene05";
+import {Scene06 as AnLe64Phan2Scene06} from "./videos/an-le-64-phan-2/scenes/Scene06";
+import {Scene07 as AnLe64Phan2Scene07} from "./videos/an-le-64-phan-2/scenes/Scene07";
+
+const AnLe64Phan2Timeline: React.FC = () => {
+  return (
+    <AbsoluteFill
+      style={{
+        backgroundColor: COLORS.background,
+        color: COLORS.ink,
+        fontFamily,
+        overflow: "hidden",
+      }}
+    >
+      <Sequence name="S01 · Dùng img-05 làm ảnh nền toàn khung, khôn" durationInFrames={251}>
+        <AnLe64Phan2Scene01 />
+      </Sequence>
+
+      <Sequence name="S02 · Dùng chuyển động lật lịch và tiền trong " from={251} durationInFrames={237}>
+        <AnLe64Phan2Scene02 />
+      </Sequence>
+
+      <Sequence name="S03 · Dùng img-07 làm ảnh nền, crop tập trung " from={488} durationInFrames={181}>
+        <AnLe64Phan2Scene03 />
+      </Sequence>
+
+      <Sequence name="S04 · Dùng vid-05 làm lớp hình chính trong một" from={669} durationInFrames={166}>
+        <AnLe64Phan2Scene04 />
+      </Sequence>
+
+      <Sequence name="S05 · Dùng vid-02 ở panel trái cho mốc 19:00 v" from={835} durationInFrames={258}>
+        <AnLe64Phan2Scene05 />
+      </Sequence>
+
+      <Sequence name="S06 · Ưu tiên hoạt cảnh vid-01 làm lớp chính. " from={1093} durationInFrames={191}>
+        <AnLe64Phan2Scene06 />
+      </Sequence>
+
+      <Sequence name="S07 · Tất cả ảnh chỉ dùng như các background-p" from={1284} durationInFrames={344}>
+        <AnLe64Phan2Scene07 />
+      </Sequence>
+
+      <Audio
+        src={staticFile("videos/an-le-64-phan-2/audio/narration.mp3")}
+        durationInFrames={1628}
+        volume={() => 1}
+      />
+
+      <Captions src="videos/an-le-64-phan-2/captions/captions.json" />
+    </AbsoluteFill>
+  );
+};
+// === VIDEO: an-le-64-phan-2 END ===
+
 export const RemotionRoot: React.FC = () => {
   return (
     <>
@@ -79,6 +138,14 @@ export const RemotionRoot: React.FC = () => {
         id="AnLe64"
         component={AnLe64Timeline}
         durationInFrames={1480}
+        fps={CANVAS.fps}
+        width={CANVAS.width}
+        height={CANVAS.height}
+      />
+      <Composition
+        id="AnLe64Phan2"
+        component={AnLe64Phan2Timeline}
+        durationInFrames={1628}
         fps={CANVAS.fps}
         width={CANVAS.width}
         height={CANVAS.height}

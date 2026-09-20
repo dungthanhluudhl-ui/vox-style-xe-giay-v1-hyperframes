@@ -139,6 +139,44 @@ if (realDurationMs != null) {
   }
 }
 
+// Kiểm tra tất định: audio thật có thể chứa nội dung THỪA ở đầu/cuối so với script gốc — ví dụ
+// do cắt file audio dính sang đoạn TRƯỚC/SAU nó (đã xảy ra thực tế: audio "phần 2" dính thêm
+// 3 từ "theo kế hoạch" thuộc về đoạn kế tiếp). ASR thô (`captions`, chưa align) là bằng chứng
+// độc lập cho toàn bộ nội dung audio thực sự nói ra, không phụ thuộc script — nếu ASR thô nghe
+// được nội dung có nghĩa nằm ngoài khoảng thời gian mà bản align (`cleaned`) bao phủ, rất có
+// thể là lẫn nội dung từ đoạn khác, không phải lỗi align. Chỉ cảnh báo, không tự sửa, vì không
+// đủ dữ kiện để biết audio bị lẫn thật hay script chỉ đơn giản thiếu câu — con người quyết định.
+if (referenceScript) {
+  const BOUNDARY_BUFFER_MS = 350;
+  const isMeaningful = (text) => (text.match(/[a-zA-ZÀ-ỹ]/g) || []).length >= 2;
+
+  const firstAlignedStartMs = cleaned[0]?.startMs ?? 0;
+  const lastAlignedEndMs = cleaned[cleaned.length - 1]?.endMs ?? 0;
+
+  // Ngưỡng để QUYẾT ĐỊNH có cảnh báo hay không (tránh báo động giả vì khoảng lặng tự nhiên);
+  // khi ĐÃ quyết định cảnh báo, hiển thị TOÀN BỘ text ngay sát mép (không trừ buffer) để câu
+  // chữ đọc được trọn vẹn thay vì bị cắt cụt ngay chỗ buffer bắt đầu.
+  const extraBeforeCheck = captions.filter((c) => c.endMs < firstAlignedStartMs - BOUNDARY_BUFFER_MS);
+  const extraAfterCheck = captions.filter((c) => c.startMs > lastAlignedEndMs + BOUNDARY_BUFFER_MS);
+  const extraBeforeText = extraBeforeCheck.map((c) => c.text).join("").trim();
+  const extraAfterText = extraAfterCheck.map((c) => c.text).join("").trim();
+
+  if (isMeaningful(extraBeforeText)) {
+    const full = captions.filter((c) => c.endMs <= firstAlignedStartMs);
+    const fullText = full.map((c) => c.text).join("").trim();
+    console.warn(
+      `\n⚠ CẢNH BÁO: ASR thô nghe được nội dung THỪA TRƯỚC đoạn khớp với script gốc (${full[0]?.startMs ?? 0}ms–${firstAlignedStartMs}ms): "${fullText}"\n  → Có thể audio bị cắt dính sang đoạn TRƯỚC nó, hoặc script thiếu câu đầu. Kiểm tra lại nếu không chủ đích.\n`,
+    );
+  }
+  if (isMeaningful(extraAfterText)) {
+    const full = captions.filter((c) => c.startMs >= lastAlignedEndMs);
+    const fullText = full.map((c) => c.text).join("").trim();
+    console.warn(
+      `\n⚠ CẢNH BÁO: ASR thô nghe được nội dung THỪA SAU đoạn khớp với script gốc (${lastAlignedEndMs}ms–${full[full.length - 1]?.endMs ?? lastAlignedEndMs}ms): "${fullText}"\n  → Có thể audio bị cắt dính sang đoạn KẾ TIẾP, hoặc script thiếu câu cuối. Kiểm tra lại nếu không chủ đích.\n`,
+    );
+  }
+}
+
 fs.writeFileSync(outputPath, JSON.stringify(cleaned, null, 2), "utf8");
 
 const mode = referenceScript ? "align-với-script-gốc" : "sửa-chính-tả-mù";

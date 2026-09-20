@@ -112,14 +112,38 @@ async function analyzeVideo(filePath) {
   }
 }
 
+// Chạy các cuộc gọi 9router (phần chậm, mỗi asset độc lập hoàn toàn) đồng thời có giới hạn,
+// nhưng thu kết quả theo ĐÚNG THỨ TỰ MẢNG GỐC (không theo thứ tự hoàn thành) — để bước đổi tên
+// + đánh số img-NN/vid-NN phía sau vẫn chạy tuần tự, tất định, không phụ thuộc asset nào xong
+// trước. Không có race condition thật giữa các asset khi phân tích (không đọc/ghi state chung).
+const ANALYZE_CONCURRENCY = 5;
+async function mapWithConcurrency(items, limit, fn) {
+  const results = new Array(items.length);
+  let next = 0;
+  async function worker() {
+    while (next < items.length) {
+      const i = next++;
+      results[i] = await fn(items[i], i);
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
+  return results;
+}
+
 const manifest = [];
 
 const imageFiles = fs.readdirSync(IMAGES_DIR).filter((f) => /\.(jpe?g|png)$/i.test(f));
+console.log(`Phân tích ${imageFiles.length} ảnh (đồng thời tối đa ${ANALYZE_CONCURRENCY})...`);
+const imageAnalyses = await mapWithConcurrency(imageFiles, ANALYZE_CONCURRENCY, async (file, i) => {
+  const analysis = await analyzeImage(path.join(IMAGES_DIR, file));
+  console.log(`  [${i + 1}/${imageFiles.length}] xong: ${file}`);
+  return analysis;
+});
 let imgIndex = 1;
-for (const file of imageFiles) {
+for (let i = 0; i < imageFiles.length; i++) {
+  const file = imageFiles[i];
+  const analysis = imageAnalyses[i];
   const fullPath = path.join(IMAGES_DIR, file);
-  console.log(`[${imgIndex}/${imageFiles.length}] Đang phân tích ảnh: ${file}`);
-  const analysis = await analyzeImage(fullPath);
   const ext = path.extname(file);
   const id = `img-${String(imgIndex).padStart(2, "0")}`;
   const newName = `${id}-${slugify(analysis.suggested_slug || analysis.tags?.[0])}${ext}`;
@@ -140,11 +164,17 @@ for (const file of imageFiles) {
 }
 
 const videoFiles = fs.readdirSync(VIDEOS_DIR).filter((f) => /\.mp4$/i.test(f));
+console.log(`Phân tích ${videoFiles.length} video (đồng thời tối đa ${ANALYZE_CONCURRENCY})...`);
+const videoAnalyses = await mapWithConcurrency(videoFiles, ANALYZE_CONCURRENCY, async (file, i) => {
+  const analysis = await analyzeVideo(path.join(VIDEOS_DIR, file));
+  console.log(`  [${i + 1}/${videoFiles.length}] xong: ${file}`);
+  return analysis;
+});
 let vidIndex = 1;
-for (const file of videoFiles) {
+for (let i = 0; i < videoFiles.length; i++) {
+  const file = videoFiles[i];
+  const analysis = videoAnalyses[i];
   const fullPath = path.join(VIDEOS_DIR, file);
-  console.log(`[${vidIndex}/${videoFiles.length}] Đang phân tích video: ${file}`);
-  const analysis = await analyzeVideo(fullPath);
   const ext = path.extname(file);
   const id = `vid-${String(vidIndex).padStart(2, "0")}`;
   const newName = `${id}-${slugify(analysis.suggested_slug || analysis.tags?.[0])}${ext}`;
