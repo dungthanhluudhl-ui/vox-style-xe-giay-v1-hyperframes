@@ -1,61 +1,47 @@
-# Quy trình dựng video (Vox-style xé giấy) bằng Remotion
+# Quy trình dựng video (Vox-style xé giấy) bằng HyperFrames
 
-Repo sản xuất NHIỀU video, mỗi video xác định bằng 1 slug ngắn không dấu (vd `an-le-64`). Mọi
-nội dung riêng của 1 video nằm trong thư mục con `videos/<slug>/` bên trong từng nhóm
-(`content/`, `public/`, `planning/`, `pipeline/`, `src/`). Phần dùng CHUNG cho mọi video (style
-DNA, component, theme, script pipeline) nằm ở gốc của từng nhóm, không lặp lại theo video.
+Repo sản xuất NHIỀU video, mỗi video xác định bằng 1 slug ngắn không dấu (vd `ban-an-473-phan-1`).
+Mọi nội dung riêng của 1 video nằm trong thư mục con `videos/<slug>/` bên trong từng nhóm
+(`content/`, `public/`, `planning/`, `pipeline/`, `hyperframes/`). Phần dùng CHUNG cho mọi video
+(style DNA, script pipeline) nằm ở gốc của từng nhóm, không lặp lại theo video.
+
+**HyperFrames là framework dựng video mặc định từ video 5 trở đi.** 4 video đầu (`an-le-64`,
+`an-le-64-phan-2`, `tham-hoa-itaewon-phan-1`, `tham-hoa-itaewon-phan-2`) được dựng bằng Remotion,
+giữ nguyên làm archive tại `archive/remotion-legacy/` (xem mục "Archive: pipeline Remotion cũ" ở
+cuối file) — không migrate lại, không phát triển tiếp trên nhánh đó.
 
 ## Input cần nhận từ bạn (cho MỖI video mới, slug ví dụ `<slug>`)
 - **Audio sạch**: đặt vào `public/videos/<slug>/audio/narration.mp3`
 - **Script video**: đặt vào `content/videos/<slug>/script.txt`
-- **Media nguồn** (ảnh/video): đặt vào `public/videos/<slug>/media/images/` và `public/videos/<slug>/media/videos/`
-- **Style DNA**: dùng CHUNG cho mọi video, đã có sẵn ở `planning/style-dna/` — chỉ cần đọc/điều chỉnh (xem `planning/style-dna-integration.md`), không tạo lại cho từng video. File/asset tham chiếu style (texture giấy, font mẫu...) đặt vào `public/style/` (cũng dùng chung).
+- **Media nguồn** (ảnh/video): đặt vào `public/videos/<slug>/media/images/` và `public/videos/<slug>/media/videos/` — nếu chưa có, dùng Stage 2b (Google Flow, xem `responsibility-matrix.md` mục 2b) để tự tạo.
+- **Style DNA**: dùng CHUNG cho mọi video, đã có sẵn ở `planning/style-dna/` — chỉ cần đọc/điều chỉnh (xem `planning/style-dna-integration.md`), không tạo lại cho từng video.
 
-## Các bước dựng 1 video (chạy với `--video=<slug>` ở mọi script `.router.mjs`/`08-sync-root.mjs`)
+## Các bước dựng 1 video (chạy với `--video=<slug>` ở mọi script `.router.mjs`)
 1. `scripts/01-audio-transcribe.local.mjs` — transcribe audio thô (whisper.cpp local).
 2. `scripts/02-audio-clean-transcript.router.mjs --script=... --audio=...` — sửa/align transcript, ghi `public/videos/<slug>/captions/captions.json`.
-3. `scripts/03-media-analyze.router.mjs --video=<slug>` — phân tích + chuẩn hoá tên media nguồn, ghi `pipeline/videos/<slug>/media-analysis/manifest.json`.
-4. *(bỏ qua nếu style DNA đã có sẵn/dùng chung — xem ghi chú "Vì sao không có `scripts/04-*`" trong `responsibility-matrix.md`)*
-5. `scripts/05-scene-plan.router.mjs --video=<slug>` — lập Scene Plan, ghi `planning/videos/<slug>/scene-plan.json`/`.md`.
-6. `scripts/06-shotlist.router.mjs --video=<slug>` — lập Shotlist, ghi `planning/videos/<slug>/shotlist.json`/`.md`.
-7. `scripts/07-codegen.router.mjs --video=<slug> --scenes=SNN` — sinh code từng scene (generator→verify→reviewer→retry), tự động ráp `src/Root.tsx` sau mỗi scene (trừ khi `--no-root-sync` để chạy song song nhiều scene, xem ghi chú trong `responsibility-matrix.md`).
-8. `scripts/08-sync-root.mjs --video=<slug>` — chỉ cần chạy tay khi dùng chế độ song song ở bước 7.
-9. Preview bằng `npm run dev` (Remotion Studio), chọn đúng composition id (PascalCase của slug, vd `AnLe64`).
-10. Render bằng `npx remotion render <CompositionId> out/<slug>-full.mp4` (chỉ khi được yêu cầu render chính thức).
-
-## Tối ưu render (Stage 8) — đã đo thật, không đoán (2026-09-20/21)
-Trước đây `remotion.config.ts` không cấu hình `concurrency`/`hardware-acceleration` gì cả, nên
-mỗi lần render rơi vào mặc định của Remotion (`min(8, cores/2)` = 8 trên máy này, Xeon E5-2629 v3
-8 core/16 thread). Đã audit bằng `npx remotion benchmark` (công cụ chính thức của Remotion) +
-1 lần render full video thật để kiểm chứng, thay vì đoán:
-- Benchmark mẫu 300 frame (`AnLe64Phan2`, 2 vòng đo độc lập): concurrency=8 (mặc định cũ) luôn
-  là mốc CHẬM NHẤT trong mọi mốc test (4/8/12/16 và 2/3/4/6); concurrency≈3-4 nhất quán nhanh
-  nhất qua cả 2 vòng dù có nhiễu thời gian tuyệt đối giữa 2 lần chạy khác thời điểm.
-- `--hardware-acceleration=if-possible` (NVENC, RTX 1660 Super) đo riêng ở concurrency=4: KHÔNG
-  tạo khác biệt đo được so với không bật (69.5s vs 68.8s, trong khoảng nhiễu) — đúng như docs
-  Remotion: hardware-acceleration chỉ tăng tốc bước ENCODE, không tăng tốc phần Chromium
-  render/composite từng frame (bottleneck thật ở đây) — không bật, tránh thêm phức tạp
-  (CRF không tương thích hardware-acceleration, phải đổi qua video-bitrate, file nặng hơn) mà
-  không đổi lại gì.
-- Render FULL video thật (`AnLe64Phan2`, 1628 frame/54.27s) để kiểm chứng cuối: baseline (mặc
-  định cũ) **5m45.587s**, concurrency=4 **5m33.704s** — cải thiện thật nhưng khiêm tốn (~3.4%),
-  KHÔNG lớn như benchmark mẫu 300 frame gợi ý (~20%). Output 2 bản ffprobe xác nhận giống hệt
-  (duration/resolution/codec), không đổi chất lượng.
-- **Kết luận**: đã set `Config.setConcurrency(4)` trong `remotion.config.ts` — thắng nhỏ, an
-  toàn, áp dụng mặc định cho mọi render sau này. Mức ~5.8-6.4x thời lượng thật (54s video ~5m45s
-  render) nhiều khả năng là chi phí VỐN CÓ của kiến trúc render Chromium-per-frame + decode
-  video nguồn của Remotion trên 1 máy, không phải lỗi cấu hình — không có cờ nào trong tài liệu
-  Remotion khắc phục được mức này. Đường duy nhất tài liệu Remotion mô tả cho tăng tốc theo bậc
-  độ lớn là **Remotion Lambda** (render phân tán trên nhiều máy cloud song song) — chưa triển
-  khai (cần AWS + phát sinh chi phí cloud), để bạn quyết định nếu muốn theo hướng đó sau.
+3. *(không có sẵn media)* `scripts/02b-media-generate.router.mjs --video=<slug>` — tạo ảnh/video qua Google Flow.
+4. `scripts/03-media-analyze.router.mjs --video=<slug>` — phân tích + chuẩn hoá tên media nguồn, ghi `pipeline/videos/<slug>/media-analysis/manifest.json`.
+5. *(bỏ qua nếu style DNA đã có sẵn/dùng chung — xem ghi chú "Vì sao không có `scripts/04-*`" trong `responsibility-matrix.md`)*
+6. `scripts/05-scene-plan.router.mjs --video=<slug>` — lập Scene Plan, ghi `planning/videos/<slug>/scene-plan.json`/`.md`.
+7. `scripts/06-shotlist.router.mjs --video=<slug>` — lập Shotlist, ghi `planning/videos/<slug>/shotlist.json`/`.md`.
+8. Codegen HyperFrames (generator→verify `hyperframes check`→reviewer→retry), luôn 1 scene/lần:
+   - **Mặc định (≥2 scene)**: `node scripts/07-codegen-hf-parallel.mjs --video=<slug> --scenes=S01,S02,...,SNN [--concurrency=10]` — worker-pool song song, tự ráp `index.html` khi tất cả scene PASS.
+   - Tuần tự/debug 1 scene riêng: `node scripts/07-codegen.hf.router.mjs --video=<slug> --scenes=SNN [--issue-file=...]`.
+   - `caption-track.html` được `syncRootHf()` tự sinh tất định từ `captions.json` mỗi lần ráp (`scripts/lib/generate-caption-track-hf.mjs`) — không cần thao tác tay.
+9. Preview bằng `npx hyperframes preview --background` (xem `hyperframes/videos/<slug>/CLAUDE.md`).
+10. Render bằng `npx hyperframes render --quality looks -o out/<slug>-full.mp4 hyperframes/videos/<slug>` (chỉ khi được yêu cầu render chính thức). Xác minh bằng `ffprobe` (duration khớp audio thật) + vision agent (9router) trên vài khung hình — không chỉ tin log render.
 
 ## Trạng thái hiện tại
-- [x] Scaffold dự án Remotion (blank template)
-- [x] Cài skill Remotion (`.agents/skills/`, `.claude/skills/`)
-- [x] Khung điều phối 9router (`scripts/lib/router-client.mjs`, `scripts/model-routing.json`, đã test thật)
-- [x] Backup checkpoint lên GitHub (2026-09-20) — commit `685f606`, `origin/main`.
-- [x] Audit toàn diện + tham số hoá pipeline theo `--video=<slug>` để sản xuất hàng loạt (2026-09-20) — mọi script `03/05/06/07/08` nhận `--video=`, cấu trúc thư mục chuyển sang `videos/<slug>/` trong từng nhóm (`content/`, `public/`, `planning/`, `pipeline/`, `src/`). Chi tiết đầy đủ tại `C:\Users\DTL\.claude\plans\b-n-c-th-c-i-vast-dragonfly.md`.
-- [ ] **Đang di trú kiến trúc Remotion → HyperFrames** (chạy song song, không cutover cứng) cho video MỚI trở đi — 4 video Remotion hiện có giữ nguyên làm archive. Giai đoạn A-D đã xong và đạt (Checkpoint D: 6.2/10, xác nhận bằng vision agent 9router). Giai đoạn E (video 5 "ban-an-473-phan-1", 2026-09-21) — codegen (14 scene, `scripts/07-codegen-hf-parallel.mjs` concurrency=10, mới tạo) + render đã xong (`hyperframes check` ok=true, 101.833s khớp audio), **đang chờ người dùng xem & xác nhận đạt** trước khi coi Checkpoint E hoàn tất. Chi tiết đầy đủ + bài học kỹ thuật: memory dự án (`project_vox_style_xe_giay`, `feedback_incremental_buildout`) và `C:\Users\DTL\.claude\plans\repo-d-ng-video-e2e-kind-flamingo.md`.
+- [x] Scaffold dự án Remotion ban đầu, sau đó di trú toàn bộ sang HyperFrames (xem lịch sử `git log`/mục Archive bên dưới).
+- [x] Khung điều phối 9router (`scripts/lib/router-client.mjs`, `scripts/model-routing.json`, đã test thật).
+- [x] Audit toàn diện + tham số hoá pipeline theo `--video=<slug>` để sản xuất hàng loạt (2026-09-20).
+- [x] **Di trú kiến trúc Remotion → HyperFrames hoàn tất (2026-09-21).** Giai đoạn A-D (xem
+  `C:\Users\DTL\.claude\plans\repo-d-ng-video-e2e-kind-flamingo.md`) đạt Checkpoint D 6.2/10.
+  Giai đoạn E (video 5 "ban-an-473-phan-1") dựng end-to-end thành công, Checkpoint E đạt — người
+  dùng xác nhận chất lượng vượt mong đợi so với cả 4 video Remotion trước, sau khi vá 2 bug thật
+  (caption-track chưa generalize, z-index rò rỉ stacking context — xem memory
+  `feedback_incremental_buildout` bài học #4-5). Giai đoạn F (dọn dẹp Remotion, chuyển HyperFrames
+  thành mặc định chính thức) đang thực hiện.
 
 ### Video "an-le-64" (video đầu tiên, đã hoàn chỉnh và đã migrate vào cấu trúc mới)
 - [x] Nhận script + audio + media + style DNA (2026-09-20). PDF bản án sẽ cung cấp sau, chưa cần cho giai đoạn hiện tại.
@@ -104,4 +90,37 @@ mỗi lần render rơi vào mặc định của Remotion (`min(8, cores/2)` = 8
   1. `compositions/caption-track.html` (Giai đoạn A) trước đây chỉ tồn tại viết tay cho project test `an-le-64`, chưa từng được sinh tất định cho video thật — viết mới `scripts/lib/generate-caption-track-hf.mjs` (port đúng `applyFourWordPageBreaks()` + dùng thẳng `createTikTokStyleCaptions()` của `@remotion/captions`), gọi tự động trong `syncRootHf()`.
   2. Phụ đề vẫn bị che khuất đúng bằng thời lượng scene S01 (0-10.68s) — do `.clip` trong `index.html` thiếu `isolation: isolate`, khiến z-index nội bộ 1 scene (vd `.brand-bottom-bar` z-index:20) thoát stacking context, đè lên slot `caption-track` ở stacking context gốc trang. Đã thêm `isolation: isolate` vào `.clip` trong `sync-root-hf-lib.mjs` — cô lập vĩnh viễn cho mọi slot/video.
   - Xác minh cuối bằng vision agent (9router) trực tiếp trên file MP4 render lại: 10/10 mốc giây 1→101 đều thấy phụ đề + karaoke-highlight đúng.
-- [ ] **Checkpoint E**: đang chờ người dùng xem lại bản đã sửa phụ đề và xác nhận đạt.
+- [x] **Checkpoint E đạt (2026-09-21)** — người dùng xem lại bản đã sửa phụ đề, xác nhận đạt.
+
+## Archive: pipeline Remotion cũ (4 video đầu, `archive/remotion-legacy/`)
+
+Giữ lại đúng nguyên trạng để tham khảo/sửa lỗi cho 4 video archive — KHÔNG áp dụng cho video mới.
+
+### Các bước dựng 1 video bằng Remotion (lịch sử)
+1-6. Giống hệt pipeline HyperFrames ở trên (Stage 1-6 framework-agnostic).
+7. `scripts/07-codegen.router.mjs --video=<slug> --scenes=SNN` (hoặc `07-codegen-parallel.mjs` cho ≥2 scene) — sinh code từng scene, tự ráp `src/Root.tsx` (`scripts/lib/sync-root-lib.mjs`).
+8. Preview bằng `npm run dev` (Remotion Studio), chọn đúng composition id (PascalCase của slug, vd `AnLe64`).
+9. Render bằng `npx remotion render <CompositionId> out/<slug>-full.mp4`.
+
+### Tối ưu render Remotion — đã đo thật, không đoán (2026-09-20/21)
+Trước đây `remotion.config.ts` không cấu hình `concurrency`/`hardware-acceleration` gì cả, nên
+mỗi lần render rơi vào mặc định của Remotion (`min(8, cores/2)` = 8 trên máy này, Xeon E5-2629 v3
+8 core/16 thread). Đã audit bằng `npx remotion benchmark` (công cụ chính thức của Remotion) +
+1 lần render full video thật để kiểm chứng, thay vì đoán:
+- Benchmark mẫu 300 frame (`AnLe64Phan2`, 2 vòng đo độc lập): concurrency=8 (mặc định cũ) luôn
+  là mốc CHẬM NHẤT trong mọi mốc test (4/8/12/16 và 2/3/4/6); concurrency≈3-4 nhất quán nhanh
+  nhất qua cả 2 vòng dù có nhiễu thời gian tuyệt đối giữa 2 lần chạy khác thời điểm.
+- `--hardware-acceleration=if-possible` (NVENC, RTX 1660 Super) đo riêng ở concurrency=4: KHÔNG
+  tạo khác biệt đo được so với không bật (69.5s vs 68.8s, trong khoảng nhiễu) — đúng như docs
+  Remotion: hardware-acceleration chỉ tăng tốc bước ENCODE, không tăng tốc phần Chromium
+  render/composite từng frame (bottleneck thật ở đây) — không bật, tránh thêm phức tạp
+  (CRF không tương thích hardware-acceleration, phải đổi qua video-bitrate, file nặng hơn) mà
+  không đổi lại gì.
+- Render FULL video thật (`AnLe64Phan2`, 1628 frame/54.27s) để kiểm chứng cuối: baseline (mặc
+  định cũ) **5m45.587s**, concurrency=4 **5m33.704s** — cải thiện thật nhưng khiêm tốn (~3.4%),
+  KHÔNG lớn như benchmark mẫu 300 frame gợi ý (~20%). Output 2 bản ffprobe xác nhận giống hệt
+  (duration/resolution/codec), không đổi chất lượng.
+- **Kết luận**: đã set `Config.setConcurrency(4)` trong `remotion.config.ts` — thắng nhỏ, an
+  toàn. Mức ~5.8-6.4x thời lượng thật (54s video ~5m45s render) nhiều khả năng là chi phí VỐN CÓ
+  của kiến trúc render Chromium-per-frame + decode video nguồn của Remotion trên 1 máy, không
+  phải lỗi cấu hình.

@@ -5,9 +5,13 @@ Tài liệu tham chiếu cố định: mỗi task trong pipeline do ai/gì đả
 Ký hiệu:
 - **Claude** = xử lý trực tiếp trong session điều phối chính.
 - **9router[tier]** = script gọi model qua 9router (`http://localhost:20128/v1`). Tier tra trong `scripts/model-routing.json`.
-- **Local** = script/CLI chạy local, không gọi AI (ffmpeg, ffprobe, sharp, whisper.cpp, remotion CLI, tsc, eslint...).
+- **Local** = script/CLI chạy local, không gọi AI (ffmpeg, ffprobe, sharp, whisper.cpp, hyperframes CLI, remotion CLI/tsc/eslint cho archive...).
 
-**Repo sản xuất nhiều video.** Mọi script `02b/03/05/06/07-*.router.mjs` và `08-sync-root.mjs` nhận tham số bắt buộc `--video=<slug>` (slug = tên ngắn không dấu, vd `an-le-64`), tự suy ra toàn bộ đường dẫn qua `scripts/lib/video-paths.mjs` (nguồn xác thực duy nhất cho convention đường dẫn — sửa 1 chỗ này nếu cần đổi cấu trúc thư mục). Nội dung riêng từng video nằm trong `videos/<slug>/` bên trong mỗi nhóm (`content/`, `public/`, `planning/`, `pipeline/`, `src/`); phần dùng chung (style DNA, component, theme, script) nằm ở gốc mỗi nhóm.
+**HyperFrames là framework mặc định từ video 5 trở đi** (xem mục 6). 4 video đầu dùng Remotion,
+giữ nguyên archive tại `archive/remotion-legacy/` — các ghi chú riêng Remotion trong tài liệu này
+được đánh dấu rõ "(archive)".
+
+**Repo sản xuất nhiều video.** Mọi script `02b/03/05/06/07-*.router.mjs` nhận tham số bắt buộc `--video=<slug>` (slug = tên ngắn không dấu, vd `ban-an-473-phan-1`), tự suy ra toàn bộ đường dẫn qua `scripts/lib/video-paths.mjs` (nguồn xác thực duy nhất cho convention đường dẫn — sửa 1 chỗ này nếu cần đổi cấu trúc thư mục). Nội dung riêng từng video nằm trong `videos/<slug>/` bên trong mỗi nhóm (`content/`, `public/`, `planning/`, `pipeline/`, `hyperframes/`); phần dùng chung (style DNA, script) nằm ở gốc mỗi nhóm.
 
 ## 1. Intake & Validation
 | Task | Ai/gì đảm nhiệm | Công cụ |
@@ -104,7 +108,7 @@ Media tới đây từ Stage 2b (tự động qua Google Flow) hoặc copy tay n
 |---|---|---|
 | Phân tích ảnh/video mẫu style (màu, texture giấy, cơ chế xé) | 9router[vision_standard] | `ag/gemini-3.8-flash-high` |
 | Tổng hợp thành design tokens (text/JSON) | 9router[text_cleanup hoặc reasoning_generator nếu phức tạp] | — |
-| Viết `src/styles/theme.ts` từ design tokens | Claude | — |
+| Nạp trực tiếp `STYLE_DNA.md`/`style-tokens.json` vào prompt generator mỗi lần codegen (không có file theme trung gian như `theme.ts` bên Remotion) | Local | `scripts/07-codegen.hf.router.mjs` |
 
 ## 5. Lập kế hoạch nội dung
 | Task | Ai/gì đảm nhiệm | Công cụ |
@@ -113,81 +117,103 @@ Media tới đây từ Stage 2b (tự động qua Google Flow) hoặc copy tay n
 | Lập Shotlist | 9router[reasoning_generator hoặc reasoning_alt] | `cx/gpt-6-astra` |
 | Đọc & chốt Scene Plan/Shotlist trước khi dựng code | Claude | — (text, không nặng context) |
 
-## 6. Dựng video (code Remotion)
-Mô hình **generator → verify → reviewer**, chạy trong script, Claude chỉ nhận báo cáo cuối:
+## 6. Dựng video (code HyperFrames)
+Mô hình **generator → verify → reviewer**, chạy trong script, Claude chỉ nhận báo cáo cuối. Kiến
+trúc quan trọng (đã kiểm chứng qua Checkpoint D + Giai đoạn E, xem memory
+`feedback_incremental_buildout`): **LLM chỉ sinh 1 composition STANDALONE** (`index.html`,
+`composition-id="main"`, không biết gì về sub-composition/`<template>`) trong 1 project tạm
+riêng mỗi scene (`hyperframes/.gen-tmp/<slug>-<sceneId>/`) — bắt LLM tự sinh đúng khuôn dạng
+sub-composition trực tiếp đã bị bác bỏ vì làm giảm điểm khớp Style DNA rõ rệt.
 
 | Bước | Ai/gì đảm nhiệm | Công cụ |
 |---|---|---|
-| 1. Generate: CHỈ (các) file scene `src/videos/<slug>/scenes/SceneNN.tsx` (lần đầu tiên trong cả repo thì kèm theo theme.ts + component dùng chung — xem ghi chú dưới) | 9router[reasoning_generator] | script tự bundle skill docs + style tokens + shotlist + (từ scene 2 của video) code scene trước làm ví dụ convention |
-| 2. Ráp `src/Root.tsx` (khối riêng cho video này, giữ nguyên khối video khác) | Local, tất định, KHÔNG AI | `scripts/lib/sync-root-lib.mjs` — gọi tự động ngay trong `verify()` của bước 3, trừ khi `--no-root-sync` |
-| 3. Verify tự động | Local | `tsc --noEmit`, `eslint`, render smoke-test (`npx remotion render <CompositionId>` đúng dải frame scene đang xử lý — bắt lỗi runtime-only mà tsc/eslint không thấy, ví dụ `interpolate()` output-range sai) |
-| 4. Review | 9router[reasoning_reviewer] | `cx/gpt-5.6-sol-review` — verdict PASS/FAIL + danh sách lỗi |
-| 5. Nếu FAIL: gửi lỗi lại generator, lặp bước 1–4 | Local orchestration | tối đa 3 lần trước khi escalate |
+| 1. Generate: composition standalone cho 1 scene, project tạm riêng | 9router[reasoning_generator] | script tự bundle skill docs HyperFrames + `STYLE_DNA.md`/`style-tokens.json` + shotlist |
+| 2. Verify tự động | Local | `npx hyperframes check --json` chạy TRÊN PROJECT TẠM RIÊNG scene đó (cách ly hoàn toàn, không race khi song song) |
+| 3. Review | 9router[reasoning_reviewer] | `cx/gpt-5.6-sol-review` — verdict PASS/FAIL + danh sách lỗi |
+| 4. Nếu FAIL: gửi lỗi lại generator, lặp bước 1–3 | Local orchestration | tối đa 3 lần trước khi escalate |
+| 5. PASS: chuyển đổi tất định standalone → `compositions/scene-sNN.html`, ráp `index.html` | Local, tất định, KHÔNG AI | `scripts/lib/sync-root-hf-lib.mjs` (`standaloneToSubComposition()` + `syncRootHf()`) — gọi tự động, trừ khi `--no-root-sync` |
 | 6. Ghi file + cập nhật `pipeline/videos/<slug>/run-log.md` | Local | — |
-| 7. Hết lần vẫn FAIL, hoặc vấn đề mang tính sản phẩm | Claude | đọc code/log chi tiết để xử lý |
+| 7. Hết lần vẫn FAIL, hoặc vấn đề mang tính sản phẩm | Claude | đọc code/log chi tiết để xử lý, sửa targeted bằng `--issue-file` |
 | 8. PASS bình thường | Claude | chỉ đọc báo cáo ngắn, không đọc code |
 
-Ghi chú: agent gọi qua 9router **không** tự có quyền truy cập skill Remotion của Claude Code — script phải chủ động đọc file skill liên quan (`remotion-best-practices`, `remotion-markup`, `remotion-create/video-layout.md`, `remotion-interactivity`, `remotion-captions/display-captions.md`) và nhét vào prompt mỗi lần gọi.
+`syncRootHf()` cũng tự sinh tất định `compositions/caption-track.html` từ `captions.json` mỗi
+lần ráp (`scripts/lib/generate-caption-track-hf.mjs`, port đúng `applyFourWordPageBreaks()` +
+`createTikTokStyleCaptions()` của `@remotion/captions`) và mount `<audio>` — không cần thao tác
+tay cho bất kỳ video nào.
 
-**Generator không bao giờ viết `src/Root.tsx` nữa** (kể cả scene đầu tiên của video đầu tiên) — việc ráp Root.tsx (Sequence theo frame, mount `<Audio>`+`<Captions src=...>`, khai báo `<Composition id={PascalCase(slug)}>`) hoàn toàn do `scripts/lib/sync-root-lib.mjs` đảm nhiệm, tất định 100%, không AI. `theme.ts` (`src/styles/theme.ts`) và component dùng chung (`src/components/*`) vẫn do generator tạo/mở rộng, nhưng CHỈ MỘT LẦN CHO CẢ REPO (video đầu tiên tạo nền tảng, các video sau tái sử dụng, chỉ bổ sung field/type mới khi thật sự cần — không xoá/đổi field cũ vì các video khác đang dùng chung).
+**Quy tắc bắt buộc (giữ nguyên từ bản Remotion): KHÔNG BAO GIỜ batch nhiều scene trong 1 lần gọi.** Luôn 1 scene/lần: `node scripts/07-codegen.hf.router.mjs --video=<slug> --scenes=SNN [--issue-file=...]`.
 
-**Quy tắc bắt buộc: KHÔNG BAO GIỜ batch nhiều scene trong 1 lần gọi `scripts/07-codegen.router.mjs`.** Đã kiểm chứng thật: request càng nhiều scene, model sinh càng nhiều token, thời gian gọi cộng dồn theo số scene và dễ vượt timeout mạng — nguyên nhân thật của các lỗi `fetch failed`/`HeadersTimeoutError` từng gặp, KHÔNG phải do máy quá tải khi render smoke-test. Luôn gọi 1 scene / 1 lần: `node scripts/07-codegen.router.mjs --video=<slug> --scenes=SNN`.
+**Chạy song song nhiều scene — MẶC ĐỊNH cho mọi video từ 2 scene trở lên:**
+`node scripts/07-codegen-hf-parallel.mjs --video=<slug> --scenes=S01,S02,...,SNN [--concurrency=10]` — mirror đúng worker-pool đã kiểm chứng bên Remotion (xem "Lịch sử: pipeline Remotion" bên dưới), nhưng AN TOÀN HƠN theo kiến trúc: mỗi scene HyperFrames sinh trong project tạm RIÊNG THƯ MỤC (không phải cùng chia sẻ `src/` như Remotion), nên không còn nhóm lỗi race-condition-verify-quét-nhầm-file từng gặp bên Remotion. Khi TẤT CẢ scene PASS, script tự gọi `syncRootHf()` ráp `index.html`.
 
-**Chạy song song nhiều scene — MẶC ĐỊNH cho mọi video từ 2 scene trở lên, không phải một lựa chọn thỉnh thoảng mới dùng:**
-`node scripts/07-codegen-parallel.mjs --video=<slug> --scenes=S01,S02,...,SNN [--concurrency=10]` — script orchestrator (local, không gọi AI trực tiếp, chỉ quản lý tiến trình con) duy trì đúng `--concurrency` scene chạy đồng thời theo mô hình hàng đợi (worker pool): ngay khi 1 scene xong (pass hay fail), lập tức lấy scene tiếp theo trong hàng đợi vào chỗ trống đó, không đợi cả nhóm cùng đợt xong (tránh thời gian chết khi các scene có độ phức tạp khác nhau). Mỗi tiến trình con tự chạy `scripts/07-codegen.router.mjs --scenes=SNN --no-root-sync` (không đụng `src/styles/theme.ts`/`src/components/*`, không chạy render smoke-test riêng). Khi TẤT CẢ scene PASS, script tự gọi `syncRoot()` ráp `src/Root.tsx` — không cần chạy `scripts/08-sync-root.mjs` riêng nữa.
+**Đã kiểm chứng thật lần đầu ở quy mô lớn (video "ban-an-473-phan-1", 2026-09-21, 14 scene, concurrency=10):** 13/13 scene (S02-S14) PASS trong ngân sách tự động retry (đa số 1 lần, S03/S08 2 lần, S14 3 lần), không cần `--issue-file` can thiệp tay, 0 lỗi mạng/timeout — kết quả tốt hơn cả mốc Remotion (15/16). Trước khi vào vòng song song, S01 (chạy riêng để bootstrap) fail 3 lần đầu do 2 gotcha thật của HyperFrames chưa từng gặp bên Remotion (contrast WCAG AA không đạt, `querySelector` dùng template literal khiến bundler crash) — đã vá vào `KNOWN_GOTCHAS_HF` trong `scripts/07-codegen.hf.router.mjs`, PASS ngay sau đó.
 
-**Bug thật phát hiện + đã sửa (video "tham-hoa-itaewon-phan-2", lần đầu chạy song song ở quy mô 16 scene, concurrency=3):** dòng trên từng khẳng định `--no-root-sync` "loại bỏ hoàn toàn race condition giữa các process" — SAI, đã bị bác bỏ bằng bằng chứng thật. `verify()` bên trong `scripts/07-codegen.router.mjs` vẫn chạy `tsc --noEmit`/`eslint src --fix` trên TOÀN BỘ `src/` bất kể `--no-root-sync`, nên verify() của 1 scene có thể đọc (và `eslint --fix` còn có thể GHI ĐÈ) file của scene KHÁC đang giữa chừng sinh dở cùng lúc — xác nhận thật: scene S01 bị báo lỗi verify nằm trong file `Scene03.tsx` của một tiến trình song song khác, biến mất khi chạy lại sau khi các tiến trình khác đã ổn định. Đã sửa tận gốc: `verify()` giờ nhận đúng danh sách (các) file mà lần gọi generator này vừa ghi, scope `eslint` thẳng vào đúng các file đó (loại bỏ hoàn toàn race ghi đè), còn `tsc` vẫn phải chạy toàn `src/` (để giữ đúng tsconfig/path alias) nhưng lọc output chỉ giữ dòng lỗi thuộc đúng file của scene này — lỗi ở file khác là trách nhiệm của verify() thuộc đúng tiến trình sinh ra file đó.
+**`KNOWN_GOTCHAS_HF`** (trong `scripts/07-codegen.hf.router.mjs`) là nơi tích luỹ mọi lỗi
+HyperFrames-cụ-thể tổng quát hoá được (contrast, template-literal selector, quy tắc file ảnh
+"cutout"...) — khi Claude xử lý escalation hoặc phát hiện lỗi lặp lại qua `pipeline/codegen-issues.jsonl` (field `framework: "hyperframes"`, dùng chung với Remotion), thêm gotcha mới vào đây thay vì chỉ sửa 1 lần cho scene đang lỗi.
 
-**Quan trọng — render smoke-test KHÔNG chạy trong luồng song song mặc định:** bước 3 (Verify)
-mô tả ở bảng trên có render smoke-test, nhưng đó là hành vi của `07-codegen.router.mjs` khi
-chạy TUẦN TỰ (không có `--no-root-sync`). Vì luồng song song (mặc định cho mọi video ≥2 scene,
-xem trên) LUÔN gọi mỗi tiến trình con với `--no-root-sync`, và `verify()` bỏ qua hẳn bước
-render smoke-test khi có cờ này — **không có scene nào của các video ≥2 scene (video 1 dùng
-sequential nên có, video 3/4 dùng song song nên không) được render thử trong lúc codegen**. Đã
-kiểm chứng lại (2026-09-20): đây từng là một giả thuyết sai về nguyên nhân Stage 7 chậm — thực
-tế Stage 7 không hề render mỗi scene 2 lần trong luồng sản xuất mặc định. An toàn runtime hiện
-dựa hoàn toàn vào review + render final (Stage 8) + log lỗi (xem đoạn `codegen-issues.jsonl`
-dưới), không phải smoke-test.
+**Bug thật đã sửa ở tầng ráp (`sync-root-hf-lib.mjs`), áp dụng cho MỌI video:** CSS `.clip` (style mọi slot `data-composition-src` trong `index.html`) phải có `isolation: isolate` — thiếu dòng này, z-index dùng NỘI BỘ trong 1 scene có thể thoát stacking context và đè lên slot khác (kể cả `caption-track` dù luôn nằm sau trong DOM). Xem memory `feedback_incremental_buildout` bài học #5 để biết đầy đủ cách phát hiện + tại sao track-index không liên quan.
 
-**Log lỗi codegen dùng chung mọi video — `pipeline/codegen-issues.jsonl`:** mỗi lần một attempt
-trong `07-codegen.router.mjs` bị FAIL (verify tsc/eslint/render/sync-root, hoặc reviewer FAIL),
-kể cả khi lần thử sau đó tự PASS, được ghi thêm 1 dòng JSON (`{ts, video, scene, attempt, stage,
-detail}`) vào file này — trước đây các lỗi này chỉ in ra console rồi mất, chỉ verdict của lần
-thử CUỐI được lưu vào `run-log.md`. Mục đích: trong đợt audit định kỳ 1-3 video, đọc file này để
-tìm lỗi lặp lại qua nhiều scene/video; nếu là bài học tổng quát hoá được thì đưa tay vào
-`KNOWN_GOTCHAS` trong `scripts/07-codegen.router.mjs`. Khi Claude xử lý escalation (bước 7 ở
-bảng trên) hoặc sửa lỗi qua `--issue-file`, nên ghi thêm 1 dòng nguyên nhân/cách sửa vào cùng
-file này.
-
-Script tự phân loại lỗi để quyết định có tự chạy lại hay không: lỗi mạng/timeout thuần tuý (không có Verify/Review nào chạy được trong cả 3 lần thử nội bộ) → tự động chạy lại 1 lượt; lỗi nội dung thật (reviewer có VERDICT: FAIL) hoặc lỗi verify (tsc/eslint) → KHÔNG tự chạy lại, in ngay lỗi ra để Claude sửa targeted bằng `--issue-file` trong khi các scene khác vẫn tiếp tục chạy song song (không chờ cả batch).
-
-**Concurrency mặc định = 10** (nâng từ 3, đã kiểm chứng thật 2026-09-20 trên slug bản sao dùng 1
-lần, không đụng dữ liệu thật — xem lịch sử cũ ở git log nếu cần biết mốc 2→3 trước đó). Chạy đủ
-16 scene ở concurrency=10: 15/16 PASS, **0 lỗi mạng/timeout với 9router** — ở mức tải này
-9router hoàn toàn đáp ứng được. Phát hiện chi phí phụ đã được người dùng xem và chấp nhận: 5/16
-scene bị lỗi `tsc: Cannot find module` sai (file thực ra tồn tại) ở lần thử đầu, tự PASS ở lần
-thử 2 — nhiều khả năng do tranh chấp tiến trình/I/O cục bộ trên Windows khi 10 tiến trình
-`npx tsc`/`npx eslint` chạy đồng thời, KHÔNG phải giới hạn 9router — coi là không đáng kể so
-với tốc độ có được. Chưa test các mốc giữa 3 và 10 (vd 6-7); nếu sau này tần suất lỗi cục bộ
-này tăng rõ rệt (xem `pipeline/codegen-issues.jsonl`, `stage=verify-tsc`/`verify-eslint`), cân
-nhắc giảm lại thay vì đoán tiếp.
-
-Chỉ chạy song song các scene CỦA CÙNG 1 VIDEO; không chạy song song 2 video khác nhau nếu cả hai đều cần MỞ RỘNG theme.ts/component dùng chung trong cùng lúc (vẫn có thể race ở lớp dùng-chung này — xử lý tuần tự phần mở rộng dùng chung, hoặc merge tay sau).
-
-Chỉ chạy `scripts/07-codegen.router.mjs` tuần tự/thủ công (không qua orchestrator) khi có lý do cụ thể, ví dụ đang debug/sửa riêng 1 scene bằng `--issue-file`.
+Chỉ chạy `scripts/07-codegen.hf.router.mjs` tuần tự/thủ công (không qua orchestrator) khi có lý do cụ thể, ví dụ đang debug/sửa riêng 1 scene bằng `--issue-file`.
 
 ## 7. Preview & QA
 | Task | Ai/gì đảm nhiệm | Công cụ |
 |---|---|---|
-| Chạy Remotion Studio preview | Local | `npx remotion studio` |
-| Kiểm tra hình ảnh preview có khớp ý đồ/style không | 9router[vision_standard] | chụp vài frame gửi review, trả nhận xét text |
+| Preview | Local | `npx hyperframes preview --background` (xem `hyperframes/videos/<slug>/CLAUDE.md`) |
+| Kiểm tra hình ảnh preview có khớp ý đồ/style không | 9router[vision_standard] | `hyperframes snapshot` chụp vài frame gửi review, trả nhận xét text — KHÔNG Claude tự xem |
 | Sửa code theo phản hồi QA | Claude (hoặc quay lại bước generate ở Stage 6 nếu là lỗi code) | — |
 
 ## 8. Render
 | Task | Ai/gì đảm nhiệm | Công cụ |
 |---|---|---|
-| Render video cuối (chỉ khi được yêu cầu rõ) | Local | `npx remotion render` |
+| Render video cuối (chỉ khi được yêu cầu rõ) | Local | `npx hyperframes render --quality looks -o out/<slug>-full.mp4 hyperframes/videos/<slug>` |
 | Kiểm tra file render (duration, resolution, không lỗi) | Local | ffprobe |
+| Xác nhận nội dung hiển thị đúng (vd phụ đề, hiệu ứng xuyên suốt) trước khi coi Checkpoint đạt | 9router[vision_standard] | trích frame bằng ffmpeg tại nhiều mốc + gửi vision agent — bài học thật: `hyperframes check` PASS không đảm bảo mọi lớp nội dung THỰC SỰ hiển thị (vd bug stacking-context ở mục 6) |
+
+## Lịch sử: pipeline Remotion (archive, 4 video đầu — KHÔNG áp dụng cho video mới)
+
+Giữ nguyên để tham khảo/sửa lỗi cho `archive/remotion-legacy/`.
+
+Mô hình generator → verify → reviewer y hệt tinh thần mục 6, nhưng: generate ghi file scene
+`src/videos/<slug>/scenes/SceneNN.tsx`; verify chạy `tsc --noEmit` + `eslint` + render smoke-test
+(`npx remotion render <CompositionId>` đúng dải frame scene — bắt lỗi runtime-only như
+`interpolate()` output-range sai); ráp `src/Root.tsx` tất định qua `scripts/lib/sync-root-lib.mjs`.
+Agent qua 9router không tự có quyền truy cập skill Remotion — script phải tự đọc file skill
+(`remotion-best-practices`, `remotion-markup`, `remotion-create/video-layout.md`,
+`remotion-interactivity`, `remotion-captions/display-captions.md`) và nhét vào prompt.
+
+`theme.ts` (`src/styles/theme.ts`) và component dùng chung (`src/components/*`) do generator
+tạo/mở rộng CHỈ MỘT LẦN CHO CẢ REPO (video đầu tiên tạo nền tảng, các video sau tái sử dụng).
+
+**Quy tắc không batch nhiều scene** — đã kiểm chứng: request càng nhiều scene, model sinh càng
+nhiều token, thời gian gọi cộng dồn dễ vượt timeout mạng (`fetch failed`/`HeadersTimeoutError`),
+KHÔNG phải do máy quá tải khi render smoke-test.
+
+**Chạy song song mặc định ≥2 scene**: `scripts/07-codegen-parallel.mjs --video=<slug> --scenes=... [--concurrency=10]`, worker-pool, mỗi tiến trình con `--no-root-sync`.
+
+**Bug thật đã sửa (video "tham-hoa-itaewon-phan-2", 16 scene, concurrency=3):** `--no-root-sync`
+KHÔNG loại bỏ hoàn toàn race condition như từng tưởng — `verify()` vẫn chạy `tsc`/`eslint --fix`
+trên TOÀN BỘ `src/`, nên verify() của 1 scene có thể đọc/ghi đè nhầm file scene KHÁC đang sinh dở
+cùng lúc (xác nhận thật: lỗi verify S01 nằm trong file `Scene03.tsx`). Sửa: `verify()` scope
+`eslint` đúng file vừa ghi, lọc output `tsc` chỉ giữ lỗi đúng file đó.
+
+**Render smoke-test KHÔNG chạy trong luồng song song mặc định** — chỉ chạy khi `07-codegen.router.mjs` chạy TUẦN TỰ (video 1). Luồng song song (video 3/4) không render thử trong lúc codegen; an toàn runtime dựa vào review + render final + `codegen-issues.jsonl`.
+
+**Concurrency mặc định = 10** (nâng từ 3, kiểm chứng 2026-09-20): 16 scene, 15/16 PASS, 0 lỗi
+mạng/timeout. 5/16 scene lỗi `tsc: Cannot find module` sai ở lần thử đầu (tranh chấp I/O cục bộ
+Windows khi 10 tiến trình `npx tsc`/`npx eslint` đồng thời), tự PASS lần 2 — chấp nhận đổi lấy
+tốc độ.
+
+**Log lỗi codegen dùng chung Remotion + HyperFrames — `pipeline/codegen-issues.jsonl`** (field
+`framework` phân biệt): mỗi attempt FAIL được ghi 1 dòng JSON `{ts, video, scene, attempt, stage,
+detail}` — dùng để audit định kỳ tìm lỗi lặp lại, đưa vào `KNOWN_GOTCHAS`/`KNOWN_GOTCHAS_HF`
+tương ứng.
+
+Chỉ chạy song song scene CỦA CÙNG 1 VIDEO; không chạy song song 2 video nếu cả hai cần MỞ RỘNG
+`theme.ts`/component dùng chung cùng lúc (race ở lớp dùng-chung — xử lý tuần tự hoặc merge tay).
+
+### Tối ưu render Remotion
+Đã đo thật `Config.setConcurrency(4)` trong `remotion.config.ts` — xem chi tiết đầy đủ (benchmark, kết luận) tại `planning/README.md` mục "Archive: pipeline Remotion cũ".
 
 ## Ghi chú vận hành: không tự tạo file lưu-lịch-sử thủ công
 Từ khi repo đã có git backup (2026-09-20), **không** tạo thêm file kiểu "trước-khi-sửa"/"v1"/"v2" trong `pipeline/videos/<slug>/*-history/` mỗi lần sửa lỗi hay chạy lại một bước — git đã lưu đúng việc này tốt hơn (`git log`, `git diff <commit> -- <file>`, `git show <commit>:<file>`). Việc này tránh cộng dồn số file vô hạn theo mỗi vòng sửa lỗi của mỗi video khi sản xuất hàng loạt. Các file lịch sử đã có sẵn trong `pipeline/scene-plan-history/` (tạo trước khi có git) được giữ nguyên, không cần dọn.
@@ -208,10 +234,14 @@ Từ khi repo đã có git backup (2026-09-20), **không** tạo thêm file ki�
 - `scripts/03-media-analyze.router.mjs`
 - `scripts/05-scene-plan.router.mjs`
 - `scripts/06-shotlist.router.mjs`
-- `scripts/07-codegen.router.mjs`
-- `scripts/07-codegen-parallel.mjs` (local, không gọi AI trực tiếp — orchestrator quản lý tiến trình con, xem mục 6)
-- `scripts/08-sync-root.mjs` (local, không có hậu tố owner vì không gọi AI — script mechanical thuần)
-- `scripts/07-codegen.hf.router.mjs`, `scripts/07-codegen-hf-parallel.mjs`, `scripts/08-sync-root.hf.mjs` — bản HyperFrames song song của 3 script trên (hậu tố `.hf.` phân biệt nhánh framework), cùng kiến trúc/quy tắc, xem `planning/style-dna-integration.md` và kế hoạch di trú Remotion → HyperFrames.
+- `scripts/07-codegen.hf.router.mjs` — codegen HyperFrames, mặc định từ video 5 (xem mục 6)
+- `scripts/07-codegen-hf-parallel.mjs` (local, không gọi AI trực tiếp — orchestrator worker-pool, mặc định cho ≥2 scene, xem mục 6)
+- `scripts/08-sync-root.hf.mjs` (local, không gọi AI — CLI ráp `index.html` thủ công, thường không cần gọi riêng vì `07-codegen-hf-parallel.mjs` đã tự gọi khi xong)
+- `scripts/lib/generate-caption-track-hf.mjs` (local, không gọi AI — sinh `caption-track.html` tất định, gọi tự động bởi `syncRootHf()`)
+- Hậu tố `.hf.`/`-hf-` phân biệt nhánh HyperFrames.
+
+Archive (Remotion, 4 video đầu — không dùng cho video mới): `scripts/07-codegen.router.mjs`,
+`scripts/07-codegen-parallel.mjs`, `scripts/08-sync-root.mjs`.
 
 Hậu tố `.local.mjs` / `.router.mjs` cho biết ngay loại xử lý. Mọi script `.router.mjs` dùng chung `scripts/lib/router-client.mjs` và tra model qua `scripts/model-routing.json`.
 

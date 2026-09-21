@@ -94,14 +94,15 @@ const KNOWN_GOTCHAS = `LỖI THƯỜNG GẶP — TRÁNH NGAY TỪ ĐẦU (đã r
 - Một số TÊN FILE ảnh có chữ "cutout" (vd img-08-extortion-money-demand-cutout.jpeg) — đó chỉ là mô tả phong cách minh hoạ đã có sẵn trong chính ảnh AI tạo ra, KHÔNG phải chỉ định phải code thêm xử lý cutout. Dùng ảnh này y như file ảnh thường (nền toàn khung, giữ nguyên màu), không cần và không được thêm filter grayscale/tách nền/đổ bóng trong code.`;
 
 function buildPrompt(feedback, previousFiles) {
-  const existingTheme = tryRead("src/styles/theme.ts");
-  const componentFiles = listDir("src/components");
+  // Archive Remotion (Giai đoạn F, 2026-09-21): src/ di dời sang archive/remotion-legacy/src/.
+  const existingTheme = tryRead("archive/remotion-legacy/src/styles/theme.ts");
+  const componentFiles = listDir("archive/remotion-legacy/src/components");
   const sceneFiles = listDirAbs(vp.scenesDir);
   const isFoundation = !existingTheme;
 
   const existingFilesBlock = [
     existingTheme ? `### src/styles/theme.ts\n\`\`\`ts\n${existingTheme}\n\`\`\`` : null,
-    ...componentFiles.map((f) => `### src/components/${f}\n\`\`\`tsx\n${tryRead(`src/components/${f}`)}\n\`\`\``),
+    ...componentFiles.map((f) => `### src/components/${f}\n\`\`\`tsx\n${tryRead(`archive/remotion-legacy/src/components/${f}`)}\n\`\`\``),
     ...sceneFiles.map(
       (f) => `### src/videos/${slug}/scenes/${f}\n\`\`\`tsx\n${tryReadAbs(path.join(vp.scenesDir, f))}\n\`\`\``,
     ),

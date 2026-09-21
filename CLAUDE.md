@@ -8,15 +8,17 @@ việc cùng nhau.
 
 ## Vai trò của Claude trong dự án này
 - Claude là **người điều phối (coordinator)**, không phải người trực tiếp làm mọi việc nặng
-  context. Việc phân tích media, sinh code Remotion, transcribe audio... đều giao cho script
+  context. Việc phân tích media, sinh code scene, transcribe audio... đều giao cho script
   gọi 9router (`http://localhost:20128/v1`) đảm nhiệm — xem `planning/responsibility-matrix.md`
   để biết chính xác việc nào do ai/gì làm.
 - Claude **không tự xem ảnh/video/audio nguồn trực tiếp** — luôn để model vision qua 9router
   làm việc đó và ghi lại thành mô tả text, Claude chỉ đọc mô tả text.
-- Claude **không tự tay viết code scene Remotion** — toàn bộ code (kể cả file nền tảng đầu
-  tiên) đi qua vòng generator → verify (tsc/eslint/render smoke-test) → reviewer → retry của
-  `scripts/07-codegen.router.mjs`. Việc ráp `Root.tsx` là tất định (`scripts/lib/sync-root-lib.mjs`),
-  không dùng AI.
+- Claude **không tự tay viết code scene** — toàn bộ code (kể cả file nền tảng đầu tiên) đi
+  qua vòng generator → verify (`hyperframes check`) → reviewer → retry của
+  `scripts/07-codegen.hf.router.mjs`. Việc ráp `index.html` là tất định
+  (`scripts/lib/sync-root-hf-lib.mjs`), không dùng AI. (4 video dựng bằng Remotion trước đây
+  giữ nguyên làm archive tại `archive/remotion-legacy/` — không migrate lại, không phát triển
+  tiếp trên nhánh đó.)
 - Mục đích của toàn bộ kiến trúc trên: giữ session chính của Claude nhẹ token/context, để có
   thể điều phối một dự án sản xuất video phức tạp, nhiều giai đoạn mà không phình to.
 

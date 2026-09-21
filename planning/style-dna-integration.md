@@ -25,6 +25,6 @@
 - Shot nào không có asset phù hợp → dựng bằng component đồ hoạ thuần (card/diagram/label) theo đúng style DNA, không cần media ngoài.
 
 ## Còn thiếu / cần làm rõ thêm
-- [x] Font file "Be Vietnam Pro" — giải quyết xong: cài `@remotion/google-fonts`, `theme.ts` load qua `loadFont()` từ `@remotion/google-fonts/BeVietnamPro` (weights 700/900, subset vietnamese+latin), không dùng chuỗi CSS tĩnh.
+- [x] Font file "Be Vietnam Pro" — giải quyết xong. HyperFrames (mặc định từ video 5): nạp qua đúng 1 thẻ `<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap">` trong `<head>` mỗi composition, dùng trực tiếp `font-family: "Be Vietnam Pro", sans-serif` — KHÔNG dùng `@font-face`/`local()` trỏ file `.ttf` (gây lỗi 404 runtime, xem `KNOWN_GOTCHAS_HF` trong `scripts/07-codegen.hf.router.mjs`). *(Archive Remotion, 4 video đầu: cài `@remotion/google-fonts`, `theme.ts` load qua `loadFont()` từ `@remotion/google-fonts/BeVietnamPro`.)*
 - [ ] 15 icon vocabulary: không còn cấp thiết — sau khi áp dụng quy tắc media-first (xem `style-dna/README.md`, mục "Đã điều chỉnh"), scene ưu tiên dùng media thật, diagram/icon tự vẽ chỉ còn là overlay nhẹ khi thật sự không có asset phù hợp. Chưa cần xây bộ icon vocabulary riêng.
 - [ ] PDF bản án/án lệ liên quan (nếu có) — **người dùng xác nhận sẽ cung cấp sau**, chưa cần cho giai đoạn hiện tại.

@@ -138,13 +138,13 @@ mới là animation/component cụ thể để dựng nó. Đảo ngược thứ
 trước rồi mới biện minh ngược lại — là nguyên nhân gốc của mọi video bị người xem đánh giá
 "rập khuôn, lặp lại".
 
-**Phạm vi code Remotion**: diagram/icon tự-vẽ-dần phức tạp (mục 6) rất dễ lỗi hoặc trông
-xấu khi để code tự sinh hàng loạt. Code Remotion nên tập trung vào phụ đề/caption,
-text/tiêu đề/punch-phrase, ráp nối & hiệu ứng cho A-roll/B-roll (media thật: crop/pan/zoom/
-Ken-Burns, chuyển cảnh), và motion graphics/transition effect — không phải vẽ minh hoạ từ
-đầu khi đã có media phù hợp. Diagram/icon tự vẽ toàn cảnh chỉ dùng khi thực sự không có
-media phù hợp (mục 4), ưu tiên phiên bản đơn giản thay vì bộ "self-drawing SVG path" phức
-tạp ở mục 6 nếu không thật sự cần thiết cho cảnh đó.
+**Phạm vi code scene (HyperFrames, trước đây Remotion)**: diagram/icon tự-vẽ-dần phức tạp
+(mục 6) rất dễ lỗi hoặc trông xấu khi để code tự sinh hàng loạt. Code scene nên tập trung vào
+phụ đề/caption, text/tiêu đề/punch-phrase, ráp nối & hiệu ứng cho A-roll/B-roll (media thật:
+crop/pan/zoom/Ken-Burns, chuyển cảnh), và motion graphics/transition effect (GSAP timeline bên
+HyperFrames) — không phải vẽ minh hoạ từ đầu khi đã có media phù hợp. Diagram/icon tự vẽ toàn
+cảnh chỉ dùng khi thực sự không có media phù hợp (mục 4), ưu tiên phiên bản đơn giản thay vì bộ
+"self-drawing SVG path" phức tạp ở mục 6 nếu không thật sự cần thiết cho cảnh đó.
 
 ## 8. Ngưỡng chất lượng — "tốt" trông như thế nào bằng số
 

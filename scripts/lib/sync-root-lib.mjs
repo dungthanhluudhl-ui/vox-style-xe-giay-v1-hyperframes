@@ -105,7 +105,8 @@ ${sequences}
 
 /** Ráp lại toàn bộ src/Root.tsx, gồm slug đang sync + mọi slug khác đã có sẵn trong file. */
 export function syncRoot(slug, root = process.cwd()) {
-  const rootTsxPath = path.join(root, "src", "Root.tsx");
+  // Archive Remotion (Giai đoạn F, 2026-09-21): src/ di dời sang archive/remotion-legacy/src/.
+  const rootTsxPath = path.join(root, "archive", "remotion-legacy", "src", "Root.tsx");
   const existing = fs.existsSync(rootTsxPath) ? fs.readFileSync(rootTsxPath, "utf8") : null;
 
   const existingSlugs = existing ? [...existing.matchAll(/\/\/ === VIDEO: (.+?) START ===/g)].map((m) => m[1]) : [];
