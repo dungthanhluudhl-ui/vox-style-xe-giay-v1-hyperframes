@@ -55,6 +55,7 @@ mỗi lần render rơi vào mặc định của Remotion (`min(8, cores/2)` = 8
 - [x] Khung điều phối 9router (`scripts/lib/router-client.mjs`, `scripts/model-routing.json`, đã test thật)
 - [x] Backup checkpoint lên GitHub (2026-09-20) — commit `685f606`, `origin/main`.
 - [x] Audit toàn diện + tham số hoá pipeline theo `--video=<slug>` để sản xuất hàng loạt (2026-09-20) — mọi script `03/05/06/07/08` nhận `--video=`, cấu trúc thư mục chuyển sang `videos/<slug>/` trong từng nhóm (`content/`, `public/`, `planning/`, `pipeline/`, `src/`). Chi tiết đầy đủ tại `C:\Users\DTL\.claude\plans\b-n-c-th-c-i-vast-dragonfly.md`.
+- [ ] **Đang di trú kiến trúc Remotion → HyperFrames** (chạy song song, không cutover cứng) cho video MỚI trở đi — 4 video Remotion hiện có giữ nguyên làm archive. Giai đoạn A-D đã xong và đạt (Checkpoint D: 6.2/10, xác nhận bằng vision agent 9router). Tiếp theo: Giai đoạn E — dựng 1 video MỚI end-to-end qua nhánh HyperFrames (`scripts/07-codegen.hf.router.mjs`/`08-sync-root.hf.mjs`). Chi tiết đầy đủ + bài học kỹ thuật: memory dự án (`project_vox_style_xe_giay`, `feedback_incremental_buildout`) và `C:\Users\DTL\.claude\plans\repo-d-ng-video-e2e-kind-flamingo.md`.
 
 ### Video "an-le-64" (video đầu tiên, đã hoàn chỉnh và đã migrate vào cấu trúc mới)
 - [x] Nhận script + audio + media + style DNA (2026-09-20). PDF bản án sẽ cung cấp sau, chưa cần cho giai đoạn hiện tại.
