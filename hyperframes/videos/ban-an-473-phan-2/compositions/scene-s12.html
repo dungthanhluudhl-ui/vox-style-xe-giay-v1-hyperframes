@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap">
+      <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #e7e3d9;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: #e7e3d9;
+      }
+
+      /* Background Variant: CHART */
+      .chart-grid {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background-size: 84px 84px;
+        background-image:
+          linear-gradient(to right, rgba(20, 20, 20, 0.08) 1.5px, transparent 1.5px),
+          linear-gradient(to bottom, rgba(20, 20, 20, 0.08) 1.5px, transparent 1.5px);
+      }
+      .chart-lines {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+      }
+      .chart-line {
+        position: absolute;
+        left: 0;
+        width: 100%;
+        height: 2px;
+        background-color: rgba(20, 20, 20, 0.22);
+      }
+      .chart-line::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: -5px;
+        width: 20px;
+        height: 12px;
+        background-color: #ff6a1a;
+      }
+      .chart-label {
+        position: absolute;
+        left: 32px;
+        top: -24px;
+        font-size: 16px;
+        font-weight: 700;
+        color: rgba(20, 20, 20, 0.85);
+        letter-spacing: 0.06em;
+      }
+
+      /* Noise Grain Texture */
+      .grain-overlay {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        opacity: 0.18;
+        mix-blend-mode: multiply;
+        background-image: radial-gradient(rgba(20, 20, 20, 0.8) 1px, transparent 0);
+        background-size: 4px 4px;
+      }
+
+      /* Non-timed layout wrapper */
+      .scene-layout {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+      }
+
+      /* Header Evidence Badge (Safe zone: Y 170px) */
+      .header-badge {
+        position: absolute;
+        top: 170px;
+        left: 60px;
+        right: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background-color: #141414;
+        color: #f7f4ec;
+        padding: 16px 24px;
+        border-radius: 4px;
+        box-shadow: 6px 6px 0px #ff6a1a;
+      }
+      .header-badge .tag {
+        font-size: 22px;
+        font-weight: 900;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #f7f4ec;
+      }
+      .header-badge .stamp {
+        font-size: 18px;
+        font-weight: 700;
+        color: #ff6a1a;
+        background-color: rgba(255, 106, 26, 0.16);
+        padding: 4px 12px;
+        border-radius: 2px;
+        border: 1px solid #ff6a1a;
+      }
+
+      /* Central Mockup Frame (Y: 250px - 790px) */
+      .media-frame-wrapper {
+        position: absolute;
+        top: 250px;
+        left: 60px;
+        width: 960px;
+        height: 540px;
+        background-color: #141414;
+        border: 4px solid #141414;
+        border-radius: 8px;
+        box-shadow: 10px 10px 0px #ff6a1a;
+        overflow: hidden;
+      }
+      .video-layer {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+      .video-inner-frame {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        box-shadow: inset 0 0 40px rgba(20, 20, 20, 0.6);
+        border: 2px solid rgba(247, 244, 236, 0.2);
+      }
+      .video-label-top {
+        position: absolute;
+        top: 14px;
+        left: 16px;
+        background-color: rgba(20, 20, 20, 0.9);
+        color: #f7f4ec;
+        font-size: 16px;
+        font-weight: 700;
+        padding: 6px 14px;
+        border-radius: 4px;
+        letter-spacing: 0.05em;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .video-label-top .rec-dot {
+        width: 10px;
+        height: 10px;
+        background-color: #ff6a1a;
+        border-radius: 50%;
+        display: inline-block;
+      }
+
+      /* SVG Icon Vocabulary: Crowd */
+      .crowd-icon-box {
+        position: absolute;
+        top: 745px;
+        right: 80px;
+        width: 72px;
+        height: 72px;
+        background-color: #f5f0e4;
+        border: 3px solid #141414;
+        border-radius: 50%;
+        box-shadow: 4px 4px 0px #141414;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 15;
+      }
+      .crowd-svg {
+        width: 42px;
+        height: 42px;
+      }
+      .crowd-svg path,
+      .crowd-svg circle {
+        fill: none;
+        stroke: #141414;
+        stroke-width: 3.5;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
+      /* Data Panels: Hai nhóm riêng (Y: 875px - 1145px) */
+      .data-container {
+        position: absolute;
+        top: 875px;
+        left: 60px;
+        width: 960px;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 28px;
+      }
+
+      /* Group Card */
+      .group-card {
+        background-color: #141414;
+        border: 4px solid #141414;
+        border-radius: 8px;
+        padding: 22px 20px;
+        color: #f7f4ec;
+        box-shadow: 8px 8px 0px rgba(20, 20, 20, 0.3);
+        position: relative;
+        overflow: hidden;
+      }
+      .group-card.accent {
+        border-color: #ff6a1a;
+        box-shadow: 8px 8px 0px #ff6a1a;
+      }
+      .group-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 2px solid rgba(247, 244, 236, 0.16);
+        padding-bottom: 10px;
+        margin-bottom: 14px;
+      }
+      .group-title {
+        font-size: 24px;
+        font-weight: 900;
+        letter-spacing: 0.04em;
+        color: #f7f4ec;
+      }
+      .group-tag {
+        font-size: 14px;
+        font-weight: 700;
+        padding: 3px 8px;
+        border-radius: 3px;
+        background-color: rgba(247, 244, 236, 0.15);
+        color: #f7f4ec;
+      }
+      .group-card.accent .group-tag {
+        background-color: #ff6a1a;
+        color: #141414;
+      }
+
+      /* Counter & Metrics */
+      .metric-body {
+        display: block;
+        margin-top: 4px;
+      }
+      .metric-label {
+        display: block;
+        font-size: 15px;
+        font-weight: 700;
+        color: rgba(247, 244, 236, 0.85);
+        letter-spacing: 0.06em;
+        margin-bottom: 12px;
+        line-height: 1.2;
+      }
+      .metric-value-row {
+        display: flex;
+        align-items: baseline;
+        gap: 8px;
+        line-height: 1;
+      }
+      .metric-number {
+        display: inline-block;
+        font-size: 64px;
+        font-weight: 900;
+        line-height: 1;
+        color: #f7f4ec;
+        letter-spacing: -0.02em;
+      }
+      .group-card.accent .metric-number {
+        color: #ff6a1a;
+      }
+      .metric-unit {
+        font-size: 20px;
+        font-weight: 900;
+        color: #f7f4ec;
+        letter-spacing: 0.04em;
+      }
+      .group-card.accent .metric-unit {
+        color: #ff6a1a;
+      }
+
+      /* Progress Bar Meter (Using scaleX on .meter-fill to prevent layout reflows) */
+      .meter-track {
+        width: 100%;
+        height: 14px;
+        background-color: rgba(247, 244, 236, 0.15);
+        border-radius: 7px;
+        margin-top: 18px;
+        overflow: hidden;
+      }
+      .meter-fill {
+        height: 100%;
+        width: 100%;
+        background-color: #f7f4ec;
+        border-radius: 7px;
+        transform-origin: left center;
+        will-change: transform;
+      }
+      .group-card.accent .meter-fill {
+        background-color: #ff6a1a;
+      }
+
+      /* Punch Phrase Banner (Y: 1180px) */
+      .punch-banner {
+        position: absolute;
+        top: 1180px;
+        left: 60px;
+        width: 960px;
+        background-color: #ff6a1a;
+        color: #141414;
+        padding: 18px 28px;
+        border-radius: 6px;
+        border: 4px solid #141414;
+        box-shadow: 8px 8px 0px #141414;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .punch-banner-text {
+        font-size: 34px;
+        font-weight: 900;
+        letter-spacing: 0.02em;
+        line-height: 1.2;
+      }
+      .punch-banner-badge {
+        background-color: #141414;
+        color: #f7f4ec;
+        font-size: 20px;
+        font-weight: 900;
+        padding: 6px 16px;
+        border-radius: 4px;
+        letter-spacing: 0.06em;
+      }
+
+      /* Signature Orange Bottom Bar */
+      .signature-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 10px;
+        background-color: #ff6a1a;
+        z-index: 99;
+      }
+    </style>
+
+    <div data-hf-id="hf-mnd2" id="root" data-composition-id="scene-s12" data-width="1080" data-height="1920" data-duration="5.9">
+      <!-- Background Variant: Chart Grid & Lines -->
+      <div data-hf-id="hf-sza4" class="chart-grid" data-layout-ignore=""></div>
+      <div data-hf-id="hf-kckr" class="chart-lines" data-layout-ignore="">
+        <div data-hf-id="hf-5dna" class="chart-line" style="top: 240px">
+          <span data-hf-id="hf-o885" class="chart-label">MỐC ĐỈNH // 1.000</span>
+        </div>
+        <div data-hf-id="hf-ka8f" class="chart-line" style="top: 520px">
+          <span data-hf-id="hf-3dom" class="chart-label">NGƯỠNG CAO // 750</span>
+        </div>
+        <div data-hf-id="hf-yih8" class="chart-line" style="top: 840px">
+          <span data-hf-id="hf-ki91" class="chart-label">TRUNG BÌNH // 500</span>
+        </div>
+        <div data-hf-id="hf-hhm9" class="chart-line" style="top: 1150px">
+          <span data-hf-id="hf-8evn" class="chart-label">BAN ĐẦU // 250</span>
+        </div>
+      </div>
+      <div data-hf-id="hf-l7nv" class="grain-overlay" data-layout-ignore=""></div>
+
+      <!-- Main Layout Structure -->
+      <div data-hf-id="hf-eahz" class="scene-layout">
+        <!-- Top Evidence Header -->
+        <div data-hf-id="hf-x0c6" id="header-badge" class="header-badge">
+          <div data-hf-id="hf-qyzj" class="tag">BẰNG CHỨNG KỸ THUẬT SỐ // MẠNG LƯỚI ẨN DANH</div>
+          <div data-hf-id="hf-e8wr" class="stamp">HỒ SƠ #S12</div>
+        </div>
+
+        <!-- Central Mockup Frame with vid-05 -->
+        <div data-hf-id="hf-uqeg" id="media-frame" class="media-frame-wrapper">
+          <video data-hf-id="hf-6uvu" id="evidence-video" class="video-layer" src="assets/vid-05-illegal-chat-group-expansion.mp4" data-start="0" data-duration="5.9" data-media-start="1" muted playsinline></video>
+          <div data-hf-id="hf-c8b6" class="video-inner-frame"></div>
+          <div data-hf-id="hf-z8m2" class="video-label-top">
+            <span data-hf-id="hf-7vwv" class="rec-dot"></span>
+            <span data-hf-id="hf-lwnw">GIÁM SÁT 2 THIẾT BỊ // TELEGRAM MOCKUP</span>
+          </div>
+        </div>
+
+        <!-- Vocabulary Icon: Crowd -->
+        <div data-hf-id="hf-ag8u" id="crowd-icon" class="crowd-icon-box">
+          <svg data-hf-id="hf-3i9k" class="crowd-svg" viewBox="0 0 64 64">
+            <!-- Main Person -->
+            <circle data-hf-id="hf-sfub" cx="32" cy="20" r="8" />
+            <path data-hf-id="hf-78mm" d="M 18 46 C 18 36, 46 36, 46 46" />
+            <!-- Left Person -->
+            <circle data-hf-id="hf-zt6j" cx="16" cy="24" r="6" />
+            <path data-hf-id="hf-ammo" d="M 6 48 C 6 41, 24 41, 24 48" />
+            <!-- Right Person -->
+            <circle data-hf-id="hf-e4ui" cx="48" cy="24" r="6" />
+            <path data-hf-id="hf-xax4" d="M 40 48 C 40 41, 58 41, 58 48" />
+          </svg>
+        </div>
+
+        <!-- Data Mockup Panels: Nhóm 1 & Nhóm 2 -->
+        <div data-hf-id="hf-4e8u" class="data-container">
+          <!-- Nhóm 1 Panel -->
+          <div data-hf-id="hf-nrqg" id="card-group-1" class="group-card">
+            <div data-hf-id="hf-hmte" class="group-card-header">
+              <span data-hf-id="hf-2hcu" class="group-title">NHÓM 1</span>
+              <span data-hf-id="hf-7r2z" class="group-tag">HOẠT ĐỘNG</span>
+            </div>
+            <div data-hf-id="hf-388h" class="metric-body">
+              <span data-hf-id="hf-ds9z" class="metric-label">QUY MÔ BƯỚC ĐẦU</span>
+              <div data-hf-id="hf-xgfb" class="metric-value-row">
+                <span data-hf-id="hf-foft" id="counter-1" class="metric-number">0</span>
+                <span data-hf-id="hf-kh9f" class="metric-unit">NGƯỜI</span>
+              </div>
+            </div>
+            <div data-hf-id="hf-b4dl" class="meter-track">
+              <div data-hf-id="hf-78lk" id="meter-fill-1" class="meter-fill"></div>
+            </div>
+          </div>
+
+          <!-- Nhóm 2 Panel -->
+          <div data-hf-id="hf-m4pp" id="card-group-2" class="group-card accent">
+            <div data-hf-id="hf-k8py" class="group-card-header">
+              <span data-hf-id="hf-2vnv" class="group-title">NHÓM 2</span>
+              <span data-hf-id="hf-e9kr" class="group-tag">BÙNG NỔ</span>
+            </div>
+            <div data-hf-id="hf-pnqd" class="metric-body">
+              <span data-hf-id="hf-vio6" class="metric-label">TĂNG TRƯỞNG MẠNH</span>
+              <div data-hf-id="hf-he6f" class="metric-value-row">
+                <span data-hf-id="hf-hsbs" id="counter-2" class="metric-number">0</span>
+                <span data-hf-id="hf-3ntv" class="metric-unit">NGƯỜI</span>
+              </div>
+            </div>
+            <div data-hf-id="hf-zaot" class="meter-track">
+              <div data-hf-id="hf-i437" id="meter-fill-2" class="meter-fill"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Final Punch Phrase Banner (At 4.70s) -->
+        <div data-hf-id="hf-qt2u" id="punch-phrase-banner" class="punch-banner">
+          <div data-hf-id="hf-zzqh" class="punch-banner-text">NHÓM 2: 908 NGƯỜI</div>
+          <div data-hf-id="hf-ukrr" class="punch-banner-badge">+125% MỞ RỘNG</div>
+        </div>
+      </div>
+
+      <!-- Signature Orange Bottom Bar -->
+      <div data-hf-id="hf-b0nn" class="signature-bar" data-layout-ignore=""></div>
+    </div>
+
+    <script>
+      // 1. Initial State Setup: explicit compositing without CSS transform collisions
+      gsap.set("#header-badge", { y: -30, opacity: 0 });
+      gsap.set("#media-frame", { scale: 0.94, opacity: 0, y: 20 });
+      gsap.set("#evidence-video", { x: 20 });
+      gsap.set("#crowd-icon", { scale: 0, opacity: 0, rotation: -20 });
+      gsap.set("#card-group-1", { y: 40, opacity: 0 });
+      gsap.set("#card-group-2", { y: 40, opacity: 0 });
+      gsap.set("#meter-fill-1", { scaleX: 0 });
+      gsap.set("#meter-fill-2", { scaleX: 0 });
+      gsap.set("#punch-phrase-banner", { y: 30, opacity: 0, scale: 0.95 });
+
+      // SVG Path Draw setup for Crowd Icon
+      const crowdPaths = document.querySelectorAll(".crowd-svg path, .crowd-svg circle");
+      crowdPaths.forEach((path) => {
+        const len = path.getTotalLength ? path.getTotalLength() : 50;
+        path.style.strokeDasharray = len;
+        path.style.strokeDashoffset = len;
+      });
+
+      // 2. Create the Paused GSAP Timeline
+      const tl = gsap.timeline({ paused: true });
+
+      // Entrance Animation: Punch (0s - 0.6s)
+      tl.to(
+        "#header-badge",
+        { y: 0, opacity: 1, duration: 0.45, ease: "power3.out" },
+        0.05
+      );
+      tl.to(
+        "#media-frame",
+        { scale: 1, opacity: 1, y: 0, duration: 0.55, ease: "power3.out" },
+        0.15
+      );
+
+      // Continuous Pan-Left for the Video Inside Mockup Frame (5.9s duration)
+      tl.to(
+        "#evidence-video",
+        { x: -20, duration: 5.75, ease: "none" },
+        0.15
+      );
+
+      // Overlay Icon: Crowd (at 0.76s = 77300ms - 76540ms)
+      tl.to(
+        "#crowd-icon",
+        { scale: 1, opacity: 1, rotation: 0, duration: 0.45, ease: "power3.out" },
+        0.76
+      );
+      crowdPaths.forEach((path, idx) => {
+        tl.to(
+          path,
+          { strokeDashoffset: 0, duration: 0.5, ease: "power2.out" },
+          0.85 + idx * 0.06
+        );
+      });
+
+      // Group 1 Arrival & Counter (at 1.93s = 78470ms - 76540ms)
+      tl.to(
+        "#card-group-1",
+        { y: 0, opacity: 1, duration: 0.5, ease: "power3.out" },
+        1.93
+      );
+      tl.fromTo(
+        "#meter-fill-1",
+        { scaleX: 0 },
+        { scaleX: 0.403, duration: 0.85, ease: "power2.out" },
+        2.05
+      );
+
+      // Numeric counter for Group 1 (0 -> 403)
+      const countObj1 = { val: 0 };
+      const counterEl1 = document.getElementById("counter-1");
+      tl.fromTo(
+        countObj1,
+        { val: 0 },
+        {
+          val: 403,
+          duration: 0.85,
+          ease: "power2.out",
+          onUpdate: () => {
+            counterEl1.innerText = Math.round(countObj1.val);
+          }
+        },
+        2.05
+      );
+
+      // Group 2 Arrival early build-up at 3.3s
+      tl.to(
+        "#card-group-2",
+        { y: 0, opacity: 1, duration: 0.5, ease: "power3.out" },
+        3.3
+      );
+      tl.fromTo(
+        "#meter-fill-2",
+        { scaleX: 0 },
+        { scaleX: 0.45, duration: 0.8, ease: "power2.out" },
+        3.4
+      );
+
+      const countObj2 = { val: 0 };
+      const counterEl2 = document.getElementById("counter-2");
+      tl.fromTo(
+        countObj2,
+        { val: 0 },
+        {
+          val: 450,
+          duration: 0.8,
+          ease: "power2.out",
+          onUpdate: () => {
+            counterEl2.innerText = Math.round(countObj2.val);
+          }
+        },
+        3.4
+      );
+
+      // Punch Phrase & Surge: NHÓM 2 CÁN MỐC 908 NGƯỜI (at 4.70s = 81240ms - 76540ms)
+      // Explicit endpoints with fromTo to ensure deterministic render across any seek position
+      tl.fromTo(
+        countObj2,
+        { val: 450 },
+        {
+          val: 908,
+          duration: 0.7,
+          ease: "power3.out",
+          onUpdate: () => {
+            counterEl2.innerText = Math.round(countObj2.val);
+          }
+        },
+        4.7
+      );
+      tl.fromTo(
+        "#meter-fill-2",
+        { scaleX: 0.45 },
+        { scaleX: 0.908, duration: 0.7, ease: "power3.out" },
+        4.7
+      );
+      tl.fromTo(
+        "#card-group-2",
+        { scale: 1 },
+        { scale: 1.04, duration: 0.25, yoyo: true, repeat: 1, ease: "power2.out" },
+        4.7
+      );
+      tl.to(
+        "#punch-phrase-banner",
+        { y: 0, opacity: 1, scale: 1, duration: 0.45, ease: "power3.out" },
+        4.7
+      );
+
+      // Register the master timeline
+      window.__timelines["scene-s12"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

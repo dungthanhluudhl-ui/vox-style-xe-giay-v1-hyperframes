@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap">
+      <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      width: 1080px;
+      height: 1920px;
+      overflow: hidden;
+      background-color: #E7E3D9;
+      font-family: "Be Vietnam Pro", sans-serif;
+      color: #141414;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    #root {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #E7E3D9;
+    }
+
+    /* Paper background & 84px Grid */
+    .bg-paper {
+      position: absolute;
+      inset: 0;
+      background-color: #E7E3D9;
+      z-index: 0;
+    }
+
+    .bg-grid {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 1;
+      opacity: 0.35;
+      background-size: 84px 84px;
+      background-image:
+        linear-gradient(to right, rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px),
+        linear-gradient(to bottom, rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px);
+    }
+
+    /* Background Video (Asset vid-04) */
+    #bg-video {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 1080px;
+      height: 1920px;
+      object-fit: cover;
+      z-index: 2;
+      opacity: 0.92;
+      filter: contrast(1.12) brightness(0.96);
+    }
+
+    /* 18% Multiply Film Grain Texture Overlay */
+    .grain-overlay {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 4;
+      opacity: 0.18;
+      mix-blend-mode: multiply;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+    }
+
+    /* Paper Unfold Entrance Transition */
+    .unfold-wrapper {
+      position: absolute;
+      inset: 0;
+      perspective: 1200px;
+      z-index: 30;
+      pointer-events: none;
+    }
+
+    .unfold-panel {
+      position: absolute;
+      left: 0;
+      width: 1080px;
+      height: 960px;
+      background-color: #E7E3D9;
+      background-size: 84px 84px;
+      background-image:
+        linear-gradient(to right, rgba(20, 20, 20, 0.25) 1.5px, transparent 1.5px),
+        linear-gradient(to bottom, rgba(20, 20, 20, 0.25) 1.5px, transparent 1.5px);
+      backface-visibility: hidden;
+    }
+
+    .unfold-panel-top {
+      top: 0;
+      transform-origin: top center;
+      border-bottom: 3px solid #141414;
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.28);
+    }
+
+    .unfold-panel-bottom {
+      top: 960px;
+      transform-origin: bottom center;
+      border-top: 3px solid #141414;
+      box-shadow: 0 -16px 36px rgba(0, 0, 0, 0.28);
+    }
+
+    .unfold-crease {
+      position: absolute;
+      left: 0;
+      top: 955px;
+      width: 1080px;
+      height: 10px;
+      background-color: #FF6A1A;
+      box-shadow: 0 0 18px rgba(255, 106, 26, 0.6);
+    }
+
+    /* Interactive Overlay Layer (Un-timed DOM wrapper to avoid nested timeline clip warning) */
+    .scene-content {
+      position: absolute;
+      inset: 0;
+      z-index: 10;
+      pointer-events: none;
+    }
+
+    /* Phase 1: Label 1 "MỘT AO ĐÔNG CÁ" */
+    .vox-label-box {
+      position: absolute;
+      top: 220px;
+      left: 80px;
+      right: 80px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      z-index: 15;
+    }
+
+    .vox-label-kicker {
+      display: inline-block;
+      background-color: #FF6A1A;
+      color: #141414;
+      font-size: 20px;
+      font-weight: 900;
+      letter-spacing: 2px;
+      padding: 6px 18px;
+      border-radius: 4px;
+      margin-bottom: 12px;
+      border: 2px solid #141414;
+      box-shadow: 3px 3px 0px #141414;
+    }
+
+    .vox-label-title {
+      background-color: #141414;
+      color: #F7F4EC;
+      font-size: 42px;
+      font-weight: 900;
+      padding: 16px 34px;
+      border-radius: 8px;
+      letter-spacing: 1px;
+      box-shadow: 6px 8px 0px #FF6A1A;
+      text-align: center;
+      border-left: 8px solid #FF6A1A;
+    }
+
+    /* Diagram: Central Pond with Density Icon */
+    .pond-container {
+      position: absolute;
+      top: 480px;
+      left: 380px;
+      width: 320px;
+      height: 320px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 12;
+      transform-origin: 50% 50%;
+    }
+
+    .pond-card {
+      position: relative;
+      width: 260px;
+      height: 260px;
+      border-radius: 50%;
+      background-color: rgba(245, 240, 228, 0.94);
+      border: 4px solid #141414;
+      box-shadow: 0 10px 25px rgba(20, 20, 20, 0.25);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .pond-svg {
+      width: 220px;
+      height: 220px;
+    }
+
+    .pond-subtag {
+      position: absolute;
+      bottom: -18px;
+      background-color: #141414;
+      color: #F7F4EC;
+      font-size: 16px;
+      font-weight: 900;
+      padding: 6px 14px;
+      border-radius: 4px;
+      border: 2px solid #FF6A1A;
+      letter-spacing: 0.5px;
+      white-space: nowrap;
+    }
+
+    /* Phase 2: Network Connector Lines */
+    .network-svg {
+      position: absolute;
+      inset: 0;
+      width: 1080px;
+      height: 1920px;
+      z-index: 11;
+      pointer-events: none;
+    }
+
+    .network-line {
+      fill: none;
+      stroke: #FF6A1A;
+      stroke-width: 5;
+      stroke-dasharray: 8 6;
+      stroke-linecap: round;
+    }
+
+    /* Phase 2: Satellite Lake / Zalo Group Cards */
+    .satellite-card {
+      position: absolute;
+      width: 360px;
+      background-color: #F5F0E4;
+      border: 3px solid #141414;
+      border-radius: 12px;
+      padding: 16px 20px;
+      box-shadow: 6px 8px 0px #141414;
+      z-index: 14;
+      transform-origin: 50% 50%;
+    }
+
+    #card-sat-1 {
+      top: 440px;
+      left: 60px;
+    }
+
+    #card-sat-2 {
+      top: 440px;
+      right: 60px;
+    }
+
+    #card-sat-3 {
+      top: 860px;
+      left: 60px;
+    }
+
+    #card-sat-4 {
+      top: 860px;
+      right: 60px;
+    }
+
+    .sat-tag {
+      display: inline-block;
+      background-color: #FF6A1A;
+      color: #141414;
+      font-size: 14px;
+      font-weight: 900;
+      padding: 3px 10px;
+      border-radius: 3px;
+      margin-bottom: 6px;
+      letter-spacing: 0.5px;
+    }
+
+    .sat-title {
+      font-size: 22px;
+      font-weight: 900;
+      color: #141414;
+      line-height: 1.25;
+      margin-bottom: 6px;
+    }
+
+    .sat-metric {
+      font-size: 15px;
+      font-weight: 700;
+      color: #141414;
+      opacity: 0.85;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .sat-dot {
+      width: 8px;
+      height: 8px;
+      background-color: #FF6A1A;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    /* Phase 3: Punch Phrase "NHÂN BẢN HÀNG LOẠT" */
+    .punch-container {
+      position: absolute;
+      top: 320px;
+      left: 70px;
+      right: 70px;
+      background-color: #141414;
+      border-radius: 16px;
+      padding: 38px 32px 32px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      box-shadow: 10px 14px 0px #FF6A1A;
+      border: 4px solid #F5F0E4;
+      z-index: 25;
+      transform-origin: 50% 50%;
+    }
+
+    .punch-kicker {
+      display: inline-block;
+      background-color: #FF6A1A;
+      color: #141414;
+      font-size: 20px;
+      font-weight: 900;
+      letter-spacing: 2px;
+      padding: 6px 18px;
+      border-radius: 4px;
+      margin-bottom: 16px;
+    }
+
+    .punch-headline {
+      font-size: 64px;
+      font-weight: 900;
+      color: #F7F4EC;
+      line-height: 1.25;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 14px;
+    }
+
+    .punch-subtext {
+      font-size: 24px;
+      font-weight: 700;
+      color: #FF6A1A;
+      letter-spacing: 0.5px;
+      margin-bottom: 18px;
+    }
+
+    .punch-bar {
+      width: 100%;
+      height: 6px;
+      background-color: #FF6A1A;
+      border-radius: 3px;
+    }
+
+    /* Signature Orange Bottom Bar */
+    .bottom-orange-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 12px;
+      background-color: #FF6A1A;
+      z-index: 50;
+    }
+  </style>
+
+  <div data-hf-id="hf-crnn" id="root" data-composition-id="scene-s05" data-start="0" data-width="1080" data-height="1920" data-duration="8.55" data-layout-allow-overflow="true">
+    <!-- Paper base & grid -->
+    <div data-hf-id="hf-j9v8" class="bg-paper"></div>
+    <div data-hf-id="hf-yqqm" class="bg-grid"></div>
+
+    <!-- Background Video: Asset vid-04 -->
+    <video data-hf-id="hf-p0eg" id="bg-video" data-start="0" data-duration="8.55" data-media-start="0" src="assets/vid-04-suspect-growing-online-network.mp4" muted playsinline preload="auto"></video>
+
+    <!-- Film grain overlay -->
+    <div data-hf-id="hf-k01a" class="grain-overlay"></div>
+
+    <!-- Paper Unfold Transition Overlay -->
+    <div data-hf-id="hf-lvga" class="unfold-wrapper">
+      <div data-hf-id="hf-rq0c" id="unfold-top" class="unfold-panel unfold-panel-top"></div>
+      <div data-hf-id="hf-um10" id="unfold-bottom" class="unfold-panel unfold-panel-bottom"></div>
+      <div data-hf-id="hf-te8q" id="unfold-crease" class="unfold-crease"></div>
+    </div>
+
+    <!-- Active Scene Content Layer -->
+    <div data-hf-id="hf-ax3d" id="scene-content" class="scene-content" data-layout-allow-overflow="true">
+      
+      <!-- Phase 1: Label "MỘT AO ĐÔNG CÁ" (atMs 29220 -> 2.03s, hold 2000ms) -->
+      <div data-hf-id="hf-rqmv" id="label-card" class="vox-label-box" data-layout-allow-occlusion="true" data-layout-allow-overlap="true">
+        <div data-hf-id="hf-tniw" class="vox-label-kicker">GIAI ĐOẠN ĐẦU</div>
+        <div data-hf-id="hf-ocof" class="vox-label-title">MỘT AO ĐÔNG CÁ</div>
+      </div>
+
+      <!-- Center Pond with Density Icon (atMs 30100 -> 2.91s, hold 1800ms) -->
+      <div data-hf-id="hf-ns5u" id="central-pond" class="pond-container" data-layout-allow-occlusion="true" data-layout-allow-overlap="true">
+        <div data-hf-id="hf-648c" class="pond-card">
+          <svg data-hf-id="hf-eics" class="pond-svg" viewBox="0 0 200 200">
+            <!-- Concentric rings of the pond -->
+            <circle data-hf-id="hf-zpnw" cx="100" cy="100" r="85" fill="none" stroke="#141414" stroke-width="3" stroke-dasharray="6 4" />
+            <circle data-hf-id="hf-xsvn" cx="100" cy="100" r="62" fill="none" stroke="#FF6A1A" stroke-width="2" />
+            <!-- Density Icon Vocabulary: Cluster of high-density members -->
+            <g data-hf-id="hf-9396" id="density-dots">
+              <circle data-hf-id="hf-y1x4" class="density-dot" cx="100" cy="100" r="7" fill="#FF6A1A" />
+              <circle data-hf-id="hf-uld8" class="density-dot" cx="84" cy="92" r="6" fill="#141414" />
+              <circle data-hf-id="hf-6age" class="density-dot" cx="116" cy="92" r="6" fill="#141414" />
+              <circle data-hf-id="hf-l29v" class="density-dot" cx="100" cy="80" r="5" fill="#FF6A1A" />
+              <circle data-hf-id="hf-erz4" class="density-dot" cx="100" cy="120" r="5" fill="#FF6A1A" />
+              <circle data-hf-id="hf-izc3" class="density-dot" cx="80" cy="112" r="6" fill="#141414" />
+              <circle data-hf-id="hf-zh6y" class="density-dot" cx="120" cy="112" r="6" fill="#141414" />
+              <circle data-hf-id="hf-8gok" class="density-dot" cx="68" cy="86" r="5" fill="#141414" />
+              <circle data-hf-id="hf-nu3m" class="density-dot" cx="132" cy="86" r="5" fill="#141414" />
+              <circle data-hf-id="hf-pe6u" class="density-dot" cx="68" cy="116" r="5" fill="#141414" />
+              <circle data-hf-id="hf-ncpc" class="density-dot" cx="132" cy="116" r="5" fill="#141414" />
+              <circle data-hf-id="hf-z6hq" class="density-dot" cx="88" cy="132" r="4.5" fill="#FF6A1A" />
+              <circle data-hf-id="hf-h4z8" class="density-dot" cx="112" cy="132" r="4.5" fill="#FF6A1A" />
+            </g>
+          </svg>
+          <div data-hf-id="hf-kxy1" class="pond-subtag">MẬT ĐỘ QUÁ TẢI</div>
+        </div>
+      </div>
+
+      <!-- Phase 2: Network Connector Lines -->
+      <svg data-hf-id="hf-tep8" id="network-lines" class="network-svg" data-layout-allow-overlap="true">
+        <path data-hf-id="hf-y2be" id="line-top-left" class="network-line" d="M 450 560 L 260 520" />
+        <path data-hf-id="hf-zoqn" id="line-top-right" class="network-line" d="M 630 560 L 820 520" />
+        <path data-hf-id="hf-bx3p" id="line-bottom-left" class="network-line" d="M 450 720 L 260 880" />
+        <path data-hf-id="hf-4o7u" id="line-bottom-right" class="network-line" d="M 630 720 L 820 880" />
+      </svg>
+
+      <!-- Phase 2: Satellite Lakes / Zalo Group Cards -->
+      <div data-hf-id="hf-6j4t" id="card-sat-1" class="satellite-card" data-layout-allow-occlusion="true" data-layout-allow-overlap="true">
+        <div data-hf-id="hf-pn4x" class="sat-tag">HỒ MỚI #01</div>
+        <div data-hf-id="hf-tq6p" class="sat-title">NHÓM ZALO VIP A</div>
+        <div data-hf-id="hf-bw6p" class="sat-metric"><span data-hf-id="hf-qevl" class="sat-dot"></span>1,200 Thành viên</div>
+      </div>
+
+      <div data-hf-id="hf-ah8u" id="card-sat-2" class="satellite-card" data-layout-allow-occlusion="true" data-layout-allow-overlap="true">
+        <div data-hf-id="hf-qu20" class="sat-tag">HỒ MỚI #02</div>
+        <div data-hf-id="hf-ux3s" class="sat-title">NHÓM ZALO VIP B</div>
+        <div data-hf-id="hf-rs88" class="sat-metric"><span data-hf-id="hf-1sg5" class="sat-dot"></span>2,400 Thành viên</div>
+      </div>
+
+      <div data-hf-id="hf-efcv" id="card-sat-3" class="satellite-card" data-layout-allow-occlusion="true" data-layout-allow-overlap="true">
+        <div data-hf-id="hf-qfqz" class="sat-tag">HỒ MỚI #03</div>
+        <div data-hf-id="hf-tn19" class="sat-title">KÊNH CHIA TÁCH</div>
+        <div data-hf-id="hf-u42a" class="sat-metric"><span data-hf-id="hf-2zd8" class="sat-dot"></span>Đào thêm cụm hồ mới</div>
+      </div>
+
+      <div data-hf-id="hf-idgw" id="card-sat-4" class="satellite-card" data-layout-allow-occlusion="true" data-layout-allow-overlap="true">
+        <div data-hf-id="hf-og7u" class="sat-tag">HỒ MỚI #04</div>
+        <div data-hf-id="hf-avqf" class="sat-title">MẠNG LƯỚI KHÉP KÍN</div>
+        <div data-hf-id="hf-jpdm" class="sat-metric"><span data-hf-id="hf-2l27" class="sat-dot"></span>Nhân rộng đa kênh</div>
+      </div>
+
+      <!-- Phase 3: Punch Phrase "NHÂN BẢN HÀNG LOẠT" (atMs 33920 -> 6.73s, hold 1820ms) -->
+      <div data-hf-id="hf-6pmp" id="punch-card" class="punch-container" data-layout-allow-occlusion="true" data-layout-allow-overlap="true">
+        <div data-hf-id="hf-28id" class="punch-kicker">QUY MÔ ĐƯỜNG DÂY</div>
+        <div data-hf-id="hf-jsvp" class="punch-headline">NHÂN BẢN HÀNG LOẠT</div>
+        <div data-hf-id="hf-ockz" class="punch-subtext">ĐÀO HỒ MỚI • LẬP HÀNG LOẠT NHÓM ZALO</div>
+        <div data-hf-id="hf-ckkg" class="punch-bar"></div>
+      </div>
+
+    </div>
+
+    <!-- Fixed Bottom Brand Bar -->
+    <div data-hf-id="hf-2ykk" class="bottom-orange-bar"></div>
+  </div>
+
+  <script>
+    // Measure and set stroke-dash for connector lines
+    const lineTopLeft = document.getElementById("line-top-left");
+    const lineTopRight = document.getElementById("line-top-right");
+    const lineBottomLeft = document.getElementById("line-bottom-left");
+    const lineBottomRight = document.getElementById("line-bottom-right");
+
+    const lines = [lineTopLeft, lineTopRight, lineBottomLeft, lineBottomRight];
+    lines.forEach((line) => {
+      const len = line.getTotalLength();
+      line.style.strokeDasharray = len + " " + len;
+      line.style.strokeDashoffset = len;
+    });
+
+    // Create exactly one paused timeline
+    const tl = gsap.timeline({ paused: true });
+
+    // 0.0s - 0.75s: Paper Unfold Entrance Transition
+    tl.fromTo("#unfold-top",
+      { rotateX: 0, opacity: 1 },
+      { rotateX: 95, opacity: 0, duration: 0.65, ease: "power3.inOut" },
+      0.08
+    );
+    tl.fromTo("#unfold-bottom",
+      { rotateX: 0, opacity: 1 },
+      { rotateX: -95, opacity: 0, duration: 0.65, ease: "power3.inOut" },
+      0.08
+    );
+    tl.fromTo("#unfold-crease",
+      { scaleX: 1, opacity: 1 },
+      { scaleX: 0, opacity: 0, duration: 0.45, ease: "power2.in" },
+      0.22
+    );
+
+    // 0.0s - 8.0s: Video zoom-out camera motion
+    tl.fromTo("#bg-video",
+      { scale: 1.10, x: 0, y: -15 },
+      { scale: 1.0, x: 0, y: 0, duration: 8.0, ease: "power1.out" },
+      0
+    );
+    // 8.0s - 8.55s: Freeze frame subtle pan at tail
+    tl.to("#bg-video",
+      { x: -12, y: -8, duration: 0.55, ease: "sine.inOut" },
+      8.0
+    );
+
+    // Initial states for diagram elements
+    tl.set("#label-card", { opacity: 0, scale: 0.8, y: -20 }, 0);
+    tl.set("#central-pond", { opacity: 0, scale: 0.6 }, 0);
+    tl.set(".density-dot", { opacity: 0, scale: 0 }, 0);
+    tl.set(".satellite-card", { opacity: 0, scale: 0.4 }, 0);
+    tl.set("#punch-card", { opacity: 0, scale: 0.88, y: 35 }, 0);
+    tl.set(".punch-bar", { scaleX: 0, transformOrigin: "left center" }, 0);
+
+    // Phase 1 (atMs 29220 -> 2.03s): Label "MỘT AO ĐÔNG CÁ" entrance
+    tl.to("#label-card",
+      { opacity: 1, scale: 1.0, y: 0, duration: 0.5, ease: "power3.out" },
+      2.03
+    );
+
+    // 2.20s: Central pond boundary emerges
+    tl.to("#central-pond",
+      { opacity: 1, scale: 1.0, duration: 0.55, ease: "power3.out" },
+      2.20
+    );
+
+    // Phase 1 Icon (atMs 30100 -> 2.91s): Density icon dots appear with cluster stagger
+    tl.to(".density-dot",
+      { opacity: 1, scale: 1.0, duration: 0.35, stagger: { amount: 0.45, from: "center" }, ease: "power3.out" },
+      2.91
+    );
+
+    // 4.05s: Label "MỘT AO ĐÔNG CÁ" fades out to make space for replication
+    tl.to("#label-card",
+      { opacity: 0, y: -18, duration: 0.35, ease: "power2.in" },
+      4.05
+    );
+
+    // Phase 2 (4.30s): Central pond shrinks into a network hub
+    tl.to("#central-pond",
+      { scale: 0.78, duration: 0.45, ease: "power2.inOut" },
+      4.30
+    );
+
+    // 4.45s - 4.80s: Connector rays branch out
+    tl.to(lineTopLeft, { strokeDashoffset: 0, duration: 0.35, ease: "power2.out" }, 4.45);
+    tl.to(lineTopRight, { strokeDashoffset: 0, duration: 0.35, ease: "power2.out" }, 4.55);
+    tl.to(lineBottomLeft, { strokeDashoffset: 0, duration: 0.35, ease: "power2.out" }, 4.65);
+    tl.to(lineBottomRight, { strokeDashoffset: 0, duration: 0.35, ease: "power2.out" }, 4.75);
+
+    // 4.60s - 5.10s: Staggered pop-in of 4 satellite lake/Zalo group cards
+    tl.to("#card-sat-1", { opacity: 1, scale: 1.0, duration: 0.45, ease: "power3.out" }, 4.60);
+    tl.to("#card-sat-2", { opacity: 1, scale: 1.0, duration: 0.45, ease: "power3.out" }, 4.75);
+    tl.to("#card-sat-3", { opacity: 1, scale: 1.0, duration: 0.45, ease: "power3.out" }, 4.90);
+    tl.to("#card-sat-4", { opacity: 1, scale: 1.0, duration: 0.45, ease: "power3.out" }, 5.05);
+
+    // 6.35s - 6.65s: Complete fade-out of Phase 2 diagram before Punch Phrase arrives
+    tl.to([".satellite-card", "#network-lines", "#central-pond"],
+      { opacity: 0, scale: 0.75, duration: 0.30, ease: "power2.in" },
+      6.35
+    );
+
+    // Phase 3 (atMs 33920 -> 6.73s): Punch phrase "NHÂN BẢN HÀNG LOẠT" arrives
+    tl.to("#punch-card",
+      { opacity: 1, scale: 1.0, y: 0, duration: 0.55, ease: "power3.out" },
+      6.73
+    );
+    tl.to(".punch-bar",
+      { scaleX: 1.0, duration: 0.45, ease: "power2.out" },
+      7.02
+    );
+
+    // Register paused timeline on window.__timelines["scene-s05"]
+    window.__timelines = window.__timelines || {};
+    window.__timelines["scene-s05"] = tl;
+  </script>
+
+    </template>
+  </body>
+</html>

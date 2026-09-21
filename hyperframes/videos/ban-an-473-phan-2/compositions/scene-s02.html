@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap">
+      <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      width: 1080px;
+      height: 1920px;
+      overflow: hidden;
+      background-color: #E7E3D9;
+      font-family: "Be Vietnam Pro", system-ui, -apple-system, sans-serif;
+      color: #141414;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    #root {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #E7E3D9;
+    }
+
+    /* Nền lưới 84px đặc trưng Vox Style */
+    .grid-canvas {
+      position: absolute;
+      inset: 0;
+      background-size: 84px 84px;
+      background-image:
+        linear-gradient(to right, rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px),
+        linear-gradient(to bottom, rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px);
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    /* Paper Grain Overlay */
+    .grain-overlay {
+      position: absolute;
+      inset: 0;
+      opacity: 0.18;
+      mix-blend-mode: multiply;
+      pointer-events: none;
+      z-index: 2;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+    }
+
+    /* Dải cam cố định đáy khung hình theo Style DNA */
+    .bottom-brand-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 1080px;
+      height: 14px;
+      background-color: #FF6A1A;
+      z-index: 1000;
+    }
+
+    .clip {
+      position: absolute;
+      inset: 0;
+      z-index: 10;
+    }
+
+    /* Tách biệt 2 container cho Camera Pan và Scene Rise để tránh transform conflict */
+    .camera-pan {
+      position: absolute;
+      inset: 0;
+      transform-origin: center center;
+      will-change: transform;
+    }
+
+    .scene-rise {
+      position: absolute;
+      inset: 0;
+      transform-origin: center center;
+      will-change: transform, opacity;
+    }
+
+    /* Header chủ đề phong cách báo chí xé dán */
+    .header-stamp {
+      position: absolute;
+      top: 170px;
+      left: 60px;
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      background: #141414;
+      padding: 8px 18px;
+      border-radius: 4px;
+      box-shadow: 4px 4px 0px #FF6A1A;
+      z-index: 40;
+    }
+
+    .header-stamp-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #FF6A1A;
+    }
+
+    .header-stamp-text {
+      font-size: 22px;
+      font-weight: 900;
+      color: #F7F4EC;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    /* Hero Collage Card */
+    .hero-container {
+      position: absolute;
+      top: 310px;
+      left: 140px;
+      width: 660px;
+      height: 860px;
+      z-index: 20;
+    }
+
+    .hero-shadow-solid {
+      position: absolute;
+      inset: 0;
+      background-color: #ff7a1a;
+      transform: translate(20px, 20px);
+      border: 3px solid #141414;
+      z-index: 1;
+    }
+
+    .hero-card {
+      position: absolute;
+      inset: 0;
+      background-color: #F5F0E4;
+      border: 3.5px solid #141414;
+      overflow: hidden;
+      z-index: 2;
+      box-shadow: 0 10px 25px rgba(20, 20, 20, 0.15);
+    }
+
+    .hero-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    /* Băng dính tape trang trí trên ảnh */
+    .tape-corner {
+      position: absolute;
+      top: -14px;
+      left: 60px;
+      width: 130px;
+      height: 34px;
+      background-color: rgba(245, 240, 228, 0.92);
+      border-left: 2px dashed rgba(20, 20, 20, 0.4);
+      border-right: 2px dashed rgba(20, 20, 20, 0.4);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+      transform: rotate(-3deg);
+      z-index: 5;
+    }
+
+    .card-footer-tag {
+      position: absolute;
+      bottom: 20px;
+      left: 20px;
+      right: 20px;
+      background: rgba(20, 20, 20, 0.92);
+      padding: 12px 18px;
+      border-radius: 4px;
+      border-left: 6px solid #FF6A1A;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 6;
+    }
+
+    .card-footer-title {
+      color: #F7F4EC;
+      font-size: 24px;
+      font-weight: 900;
+      letter-spacing: 0.5px;
+    }
+
+    .card-footer-link {
+      color: #FF6A1A;
+      font-size: 20px;
+      font-weight: 700;
+    }
+
+    /* Flow SVG vector arrows */
+    .flow-layer {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 25;
+    }
+
+    /* Label 1: "NHÓM KÍN KHIÊU DÂM" */
+    .punch-label-1 {
+      position: absolute;
+      top: 236px;
+      left: 120px;
+      display: flex;
+      align-items: center;
+      background-color: #141414;
+      border: 3.5px solid #141414;
+      border-radius: 6px;
+      box-shadow: 8px 8px 0px #FF6A1A;
+      z-index: 50;
+      transform-origin: left center;
+      will-change: transform, opacity;
+    }
+
+    .badge-prefix {
+      background-color: #FF6A1A;
+      color: #141414;
+      font-weight: 900;
+      font-size: 24px;
+      padding: 14px 20px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      border-right: 3.5px solid #141414;
+    }
+
+    .badge-content {
+      color: #F7F4EC;
+      font-weight: 900;
+      font-size: 44px;
+      padding: 14px 28px;
+      letter-spacing: 0.5px;
+    }
+
+    /* Overlay 2: Warning Badge */
+    .warning-card {
+      position: absolute;
+      top: 720px;
+      right: 90px;
+      width: 250px;
+      background-color: #F5F0E4;
+      border: 3.5px solid #141414;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 8px 8px 0px #141414;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      z-index: 55;
+      transform-origin: center center;
+      will-change: transform, opacity;
+    }
+
+    .warning-label {
+      font-size: 22px;
+      font-weight: 900;
+      color: #141414;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      text-align: center;
+    }
+
+    /* Flow Targets: Simulated Victim / Stranger Nodes */
+    .strangers-network {
+      position: absolute;
+      top: 1140px;
+      right: 120px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      z-index: 30;
+    }
+
+    .stranger-chip {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      background-color: #F5F0E4;
+      border: 2.5px solid #141414;
+      box-shadow: 4px 4px 0px #FF6A1A;
+      border-radius: 30px;
+      padding: 8px 20px 8px 10px;
+      will-change: transform, opacity;
+    }
+
+    .stranger-avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background-color: #141414;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #F7F4EC;
+    }
+
+    .stranger-name {
+      font-size: 20px;
+      font-weight: 900;
+      color: #141414;
+    }
+
+    /* Overlay 3: Label 2 "LÔI KÉO NGƯỜI LẠ" */
+    .punch-label-2 {
+      position: absolute;
+      top: 1280px;
+      left: 100px;
+      display: flex;
+      align-items: center;
+      background-color: #141414;
+      border: 3.5px solid #141414;
+      border-radius: 6px;
+      box-shadow: 8px 8px 0px #FF6A1A;
+      z-index: 50;
+      transform-origin: left center;
+      will-change: transform, opacity;
+    }
+
+    /* Overlay 4: Crowd Icon Badge */
+    .crowd-badge {
+      position: absolute;
+      top: 1370px;
+      right: 90px;
+      background-color: #F5F0E4;
+      border: 3.5px solid #141414;
+      box-shadow: 6px 6px 0px #141414;
+      border-radius: 6px;
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      z-index: 55;
+      transform-origin: right center;
+      will-change: transform, opacity;
+    }
+
+    .crowd-text {
+      font-size: 26px;
+      font-weight: 900;
+      color: #141414;
+      letter-spacing: 0.5px;
+    }
+  </style>
+
+  <div data-hf-id="hf-klrw" id="root" data-composition-id="scene-s02" data-width="1080" data-height="1920" data-duration="6.86" data-layout-allow-overflow="true">
+    <!-- Lưới giấy và hiệu ứng hạt giấy nền -->
+    <div data-hf-id="hf-jojt" class="grid-canvas"></div>
+    <div data-hf-id="hf-k01a" class="grain-overlay"></div>
+
+    <!-- Cảnh S02 (thời lượng 6.86s từ 6140ms đến 13000ms) -->
+    <div data-hf-id="hf-x12s" class="clip" data-start="0" data-duration="6.86">
+      <!-- Camera Pan container tách biệt với Scene Rise để tránh transform conflict -->
+      <div data-hf-id="hf-su87" class="camera-pan" id="camera-pan" data-layout-allow-overflow="true">
+        <div data-hf-id="hf-7z6v" class="scene-rise" id="scene-rise" data-layout-allow-overflow="true">
+          
+          <!-- Header Section Stamp -->
+          <div data-hf-id="hf-pib6" class="header-stamp" id="header-stamp">
+            <div data-hf-id="hf-zrov" class="header-stamp-dot"></div>
+            <div data-hf-id="hf-n50v" class="header-stamp-text">THỦ ĐOẠN / TIẾP CẬN MẠNG XÃ HỘI</div>
+          </div>
+
+          <!-- Hero Collage: Ảnh nhân vật cầm điện thoại lời mời nhóm chat -->
+          <div data-hf-id="hf-q0qq" class="hero-container" id="hero-container">
+            <div data-hf-id="hf-57ar" class="hero-shadow-solid"></div>
+            <div data-hf-id="hf-0ga0" class="hero-card" id="hero-card">
+              <div data-hf-id="hf-qhu2" class="tape-corner"></div>
+              <img data-hf-id="hf-ecqo" class="hero-img" src="assets/img-03-sin-su-group-chat-invite.jpeg" alt="Nhân vật gửi lời mời nhóm chat">
+              <div data-hf-id="hf-c5nh" class="card-footer-tag">
+                <span data-hf-id="hf-9bs5" class="card-footer-title">LỜI MỜI NHÓM KÍN</span>
+                <span data-hf-id="hf-3cwv" class="card-footer-link">t.me/invite/group_473</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Flow Layer: Mũi tên chỉ cơ chế lôi kéo người dùng vào nhóm -->
+          <svg data-hf-id="hf-gqu7" class="flow-layer" viewBox="0 0 1080 1920" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <!-- Đường dẫn luồng hút thành viên -->
+            <path data-hf-id="hf-hfwu" id="flow-arrow-1" d="M 520 1170 C 520 1230, 680 1180, 770 1190" stroke="#141414" stroke-width="5" stroke-dasharray="10 6" stroke-linecap="round" />
+            <path data-hf-id="hf-wrl0" id="flow-arrow-2" d="M 500 1170 C 500 1280, 620 1270, 750 1265" stroke="#FF6A1A" stroke-width="6" stroke-linecap="round" />
+            <!-- Mũi tên chỉ hướng -->
+            <polygon data-hf-id="hf-zo1n" id="flow-head" points="765,1253 785,1265 765,1277" fill="#FF6A1A" />
+          </svg>
+
+          <!-- Overlay 1: Label "NHÓM KÍN KHIÊU DÂM" (at 0.47s, hold ~2.2s) -->
+          <div data-hf-id="hf-cj03" class="punch-label-1" id="label-1">
+            <div data-hf-id="hf-t2yz" class="badge-prefix">THỦ ĐOẠN</div>
+            <div data-hf-id="hf-irbb" class="badge-content">NHÓM KÍN KHIÊU DÂM</div>
+          </div>
+
+          <!-- Overlay 2: Warning Icon (at 1.92s, hold ~1.8s) -->
+          <div data-hf-id="hf-m82q" class="warning-card" id="warning-card">
+            <svg data-hf-id="hf-n25v" viewBox="0 0 100 90" width="80" height="72">
+              <path data-hf-id="hf-9fg1" id="warning-triangle" d="M 50 10 L 90 80 L 10 80 Z" fill="none" stroke="#FF6A1A" stroke-width="8" stroke-linejoin="round" stroke-linecap="round" />
+              <line data-hf-id="hf-aht5" id="warning-bar" x1="50" y1="34" x2="50" y2="54" stroke="#141414" stroke-width="8" stroke-linecap="round" />
+              <circle data-hf-id="hf-8thr" id="warning-dot" cx="50" cy="69" r="4.5" fill="#141414" />
+            </svg>
+            <div data-hf-id="hf-a788" class="warning-label">CẢNH BÁO</div>
+          </div>
+
+          <!-- Network: Các tài khoản người lạ bị hút vào luồng -->
+          <div data-hf-id="hf-yyqe" class="strangers-network" id="strangers-network">
+            <div data-hf-id="hf-0jh3" class="stranger-chip" id="chip-1">
+              <div data-hf-id="hf-y3xw" class="stranger-avatar">
+                <svg data-hf-id="hf-zt8c" viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
+                  <path data-hf-id="hf-d0yt" d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+                </svg>
+              </div>
+              <span data-hf-id="hf-ebv9" class="stranger-name">Người dùng #8291</span>
+            </div>
+            <div data-hf-id="hf-pnzg" class="stranger-chip" id="chip-2">
+              <div data-hf-id="hf-7ogc" class="stranger-avatar">
+                <svg data-hf-id="hf-9cfo" viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
+                  <path data-hf-id="hf-2d15" d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+                </svg>
+              </div>
+              <span data-hf-id="hf-4fwh" class="stranger-name">Người dùng #4105</span>
+            </div>
+          </div>
+
+          <!-- Overlay 3: Label "LÔI KÉO NGƯỜI LẠ" (at 4.96s, hold ~1.8s) -->
+          <div data-hf-id="hf-w19l" class="punch-label-2" id="label-2">
+            <div data-hf-id="hf-aoet" class="badge-prefix">HÀNH VI</div>
+            <div data-hf-id="hf-di76" class="badge-content">LÔI KÉO NGƯỜI LẠ</div>
+          </div>
+
+          <!-- Overlay 4: Icon Crowd (at 5.62s, hold ~1.24s) -->
+          <div data-hf-id="hf-0ang" class="crowd-badge" id="crowd-badge">
+            <svg data-hf-id="hf-blce" viewBox="0 0 48 36" width="48" height="36" fill="#FF6A1A">
+              <!-- SVG Silhouette 3 người tượng trưng cho Crowd -->
+              <path data-hf-id="hf-b7rw" d="M16 16c2.2 0 4-1.8 4-4s-1.8-4-4-4-4 1.8-4 4 1.8 4 4 4zm0 3c-3 0-9 1.5-9 4.5V26h18v-2.5c0-3-6-4.5-9-4.5z" />
+              <path data-hf-id="hf-36pd" d="M32 16c2.2 0 4-1.8 4-4s-1.8-4-4-4-4 1.8-4 4 1.8 4 4 4zm0 3c-1 0-2.1.2-3.1.6 1.8 1.2 3.1 2.8 3.1 4.9V26h8v-2.5c0-3-6-4.5-8-4.5z" />
+              <path data-hf-id="hf-s3dl" d="M24 12c1.7 0 3-1.3 3-3s-1.3-3-3-3-3 1.3-3 3 1.3 3 3 3zm0 2.5c-2.3 0-7 1.1-7 3.5V20h14v-2c0-2.4-4.7-3.5-7-3.5z" fill="#141414" />
+            </svg>
+            <div data-hf-id="hf-qsiq" class="crowd-text">HÀNG LOẠT THÀNH VIÊN</div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- Thanh cam cố định nhận diện thương hiệu dưới đáy -->
+    <div data-hf-id="hf-8g79" class="bottom-brand-bar"></div>
+  </div>
+
+  <script>
+    // Khởi tạo timeline paused duy nhất theo HyperFrames Core Contract
+    const tl = gsap.timeline({ paused: true });
+
+    // Setup đo lường SVG Path Draw bằng getTotalLength() thực tế từ DOM geometry
+    const warningTri = document.getElementById("warning-triangle");
+    if (warningTri && typeof warningTri.getTotalLength === "function") {
+      const len = warningTri.getTotalLength();
+      warningTri.style.strokeDasharray = len;
+      warningTri.style.strokeDashoffset = len;
+    }
+
+    const flowArrow2 = document.getElementById("flow-arrow-2");
+    if (flowArrow2 && typeof flowArrow2.getTotalLength === "function") {
+      const flowLen = flowArrow2.getTotalLength();
+      flowArrow2.style.strokeDasharray = flowLen;
+      flowArrow2.style.strokeDashoffset = flowLen;
+    }
+
+    // 1. Camera Motion: Pan-right độc lập trên #camera-pan (0s -> 6.86s)
+    tl.fromTo(
+      "#camera-pan",
+      { x: -18 },
+      { x: 18, duration: 6.86, ease: "none" },
+      0
+    );
+
+    // 2. Scene Entrance: transitionIn 'rise' trên #scene-rise (0s -> 0.7s)
+    tl.fromTo(
+      "#scene-rise",
+      { y: 70, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.7, ease: "power3.out" },
+      0
+    );
+
+    // Header stamp xuất hiện nhanh
+    tl.fromTo(
+      "#header-stamp",
+      { y: -20, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.45, ease: "power3.out" },
+      0.1
+    );
+
+    // Hero collage card pop-in (chuẩn smooth settle power3.out theo Style DNA)
+    tl.fromTo(
+      "#hero-container",
+      { scale: 0.9, opacity: 0 },
+      { scale: 1, opacity: 1, duration: 0.75, ease: "power3.out" },
+      0.15
+    );
+
+    // 3. Overlay 1: "NHÓM KÍN KHIÊU DÂM" (atMs: 6610 -> 0.47s, holdMs: 2200 -> kết thúc lúc 2.67s)
+    tl.fromTo(
+      "#label-1",
+      { scale: 0.85, opacity: 0, y: -24 },
+      { scale: 1, opacity: 1, y: 0, duration: 0.45, ease: "power3.out" },
+      0.47
+    );
+    tl.to(
+      "#label-1",
+      { opacity: 0, y: -16, duration: 0.35, ease: "power2.in" },
+      2.67
+    );
+
+    // 4. Overlay 2: Icon "warning" (atMs: 8060 -> 1.92s, holdMs: 1800 -> kết thúc lúc 3.72s)
+    // Nghiêm túc: dùng power3.out chuẩn mực thay cho back.out
+    tl.fromTo(
+      "#warning-card",
+      { scale: 0.7, opacity: 0 },
+      { scale: 1, opacity: 1, duration: 0.5, ease: "power3.out" },
+      1.92
+    );
+
+    // SVG path draw cho tam giác cảnh báo
+    tl.to(
+      "#warning-triangle",
+      { strokeDashoffset: 0, duration: 0.55, ease: "power2.out" },
+      2.0
+    );
+
+    tl.fromTo(
+      ["#warning-bar", "#warning-dot"],
+      { opacity: 0, scale: 0 },
+      { opacity: 1, scale: 1, duration: 0.25, stagger: 0.08, ease: "power3.out" },
+      2.3
+    );
+
+    tl.to(
+      "#warning-card",
+      { scale: 0.88, opacity: 0, duration: 0.35, ease: "power2.in" },
+      3.72
+    );
+
+    // 5. Flow Arrows & Network Nodes: Luồng lôi kéo thành viên (bắt đầu vẽ từ 3.2s)
+    tl.fromTo(
+      "#flow-arrow-1",
+      { opacity: 0 },
+      { opacity: 1, duration: 0.4, ease: "power1.out" },
+      3.2
+    );
+
+    tl.to(
+      "#flow-arrow-2",
+      { strokeDashoffset: 0, duration: 0.75, ease: "power2.out" },
+      3.3
+    );
+
+    tl.fromTo(
+      "#flow-head",
+      { scale: 0, opacity: 0, transformOrigin: "center center" },
+      { scale: 1, opacity: 1, duration: 0.25, ease: "power3.out" },
+      3.9
+    );
+
+    // Các thành viên lạ bị lôi kéo vào danh sách
+    tl.fromTo(
+      "#chip-1",
+      { x: 30, opacity: 0 },
+      { x: 0, opacity: 1, duration: 0.4, ease: "power3.out" },
+      3.8
+    );
+
+    tl.fromTo(
+      "#chip-2",
+      { x: 30, opacity: 0 },
+      { x: 0, opacity: 1, duration: 0.4, ease: "power3.out" },
+      4.2
+    );
+
+    // 6. Overlay 3: Label "LÔI KÉO NGƯỜI LẠ" (atMs: 11100 -> 4.96s, holdMs: 1800 -> kết thúc lúc 6.76s)
+    tl.fromTo(
+      "#label-2",
+      { scale: 0.85, opacity: 0, x: -30 },
+      { scale: 1, opacity: 1, x: 0, duration: 0.45, ease: "power3.out" },
+      4.96
+    );
+    tl.to(
+      "#label-2",
+      { opacity: 0, y: 15, duration: 0.1, ease: "power2.in" },
+      6.76
+    );
+
+    // 7. Overlay 4: Icon "crowd" (atMs: 11760 -> 5.62s, holdMs: 1240 -> giữ đến hết scene 6.86s)
+    tl.fromTo(
+      "#crowd-badge",
+      { scale: 0.7, opacity: 0, y: 20 },
+      { scale: 1, opacity: 1, y: 0, duration: 0.5, ease: "power3.out" },
+      5.62
+    );
+
+    // Đăng ký timeline duy nhất vào window.__timelines với key "scene-s02"
+    window.__timelines["scene-s02"] = tl;
+  </script>
+
+    </template>
+  </body>
+</html>

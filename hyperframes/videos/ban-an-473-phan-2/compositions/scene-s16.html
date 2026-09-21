@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap">
+      <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #e7e3d9;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      #root {
+        position: relative;
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+        background-color: #e7e3d9;
+      }
+
+      .clip {
+        position: absolute;
+        inset: 0;
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+      }
+
+      /* Nền chart kẻ vạch ngang theo DNA */
+      .bg-chart-overlay {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        z-index: 1;
+      }
+
+      .chart-ruled-line {
+        position: absolute;
+        left: 0;
+        width: 100%;
+        height: 2px;
+        background-color: rgba(20, 20, 20, 0.18);
+      }
+
+      .chart-ruled-tick {
+        position: absolute;
+        left: 0;
+        top: -3px;
+        width: 24px;
+        height: 8px;
+        background-color: #ff6a1a;
+      }
+
+      .noise-layer {
+        position: absolute;
+        inset: 0;
+        opacity: 0.16;
+        mix-blend-mode: multiply;
+        pointer-events: none;
+        background-image: radial-gradient(rgba(20, 20, 20, 0.35) 1px, transparent 0);
+        background-size: 6px 6px;
+      }
+
+      .brand-bottom-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 14px;
+        background-color: #ff6a1a;
+        z-index: 100;
+      }
+
+      #camera-rig {
+        position: absolute;
+        inset: 0;
+        z-index: 10;
+        perspective: 1200px;
+      }
+
+      /* Header Zone */
+      .header-zone {
+        position: absolute;
+        top: 170px;
+        left: 60px;
+        right: 60px;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .badge-category {
+        display: inline-flex;
+        align-items: center;
+        background-color: #141414;
+        color: #f7f4ec;
+        padding: 8px 18px;
+        border-radius: 6px;
+        font-size: 20px;
+        font-weight: 700;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        border-left: 6px solid #ff6a1a;
+      }
+
+      .punch-phrase {
+        margin: 16px 0 0 0;
+        font-size: 68px;
+        font-weight: 900;
+        line-height: 1.25;
+        color: #141414;
+        letter-spacing: -1.5px;
+        text-transform: uppercase;
+      }
+
+      .punch-phrase .highlight {
+        display: inline-block;
+        background-color: #ff6a1a;
+        color: #141414;
+        padding: 0 12px;
+        border-radius: 4px;
+      }
+
+      .header-sub {
+        margin: 10px 0 0 0;
+        font-size: 26px;
+        font-weight: 700;
+        color: rgba(20, 20, 20, 0.65);
+      }
+
+      /* Khung bảng số liệu Neo-Brutalist */
+      #chart-board {
+        position: absolute;
+        top: 480px;
+        left: 60px;
+        width: 960px;
+        height: 940px;
+        background-color: #f5f0e4;
+        border: 4px solid #141414;
+        box-shadow: 14px 14px 0px #141414;
+        border-radius: 8px;
+        overflow: hidden;
+        transform-origin: center top;
+        z-index: 20;
+      }
+
+      .board-header {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 80px;
+        background-color: #e7e3d9;
+        border-bottom: 3px solid #141414;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 28px;
+        z-index: 30;
+      }
+
+      .board-title {
+        font-size: 22px;
+        font-weight: 900;
+        letter-spacing: 1px;
+        color: #141414;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .board-title-dot {
+        width: 14px;
+        height: 14px;
+        background-color: #ff6a1a;
+        border-radius: 50%;
+        border: 2px solid #141414;
+      }
+
+      .scale-badge {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background-color: #141414;
+        padding: 6px 14px;
+        border-radius: 6px;
+      }
+
+      .scale-badge-text {
+        font-size: 16px;
+        font-weight: 700;
+        color: #f7f4ec;
+        letter-spacing: 0.5px;
+      }
+
+      #icon-scale {
+        width: 36px;
+        height: 36px;
+      }
+
+      /* Khu vực đồ thị cột */
+      .chart-plot-area {
+        position: absolute;
+        top: 80px;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        overflow: hidden;
+      }
+
+      .grid-lines-container {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+      }
+
+      .plot-grid-line {
+        position: absolute;
+        left: 110px;
+        right: 40px;
+        height: 2px;
+        background-color: rgba(20, 20, 20, 0.15);
+        transform-origin: left center;
+      }
+
+      .plot-grid-line.baseline {
+        height: 4px;
+        background-color: #141414;
+      }
+
+      .plot-axis-label {
+        position: absolute;
+        left: 30px;
+        transform: translateY(-50%);
+        font-size: 20px;
+        font-weight: 700;
+        color: rgba(20, 20, 20, 0.6);
+        width: 65px;
+        text-align: right;
+      }
+
+      .columns-container {
+        position: absolute;
+        top: 0;
+        left: 110px;
+        right: 40px;
+        bottom: 0;
+      }
+
+      /* Cột 1: MUA VÀO (250K) */
+      .col-buy {
+        position: absolute;
+        left: 50px;
+        width: 250px;
+        bottom: 120px;
+        height: 350px;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+      }
+
+      .bar-shape-buy {
+        width: 100%;
+        height: 100%;
+        border: 4px solid #141414;
+        background-color: #e7e3d9;
+        background-image: repeating-linear-gradient(
+          -45deg,
+          rgba(20, 20, 20, 0.08),
+          rgba(20, 20, 20, 0.08) 10px,
+          transparent 10px,
+          transparent 20px
+        );
+        transform-origin: bottom center;
+        box-shadow: 6px 0px 0px rgba(20, 20, 20, 0.15);
+      }
+
+      /* Cột 2: BÁN RA (350K) */
+      .col-sell {
+        position: absolute;
+        left: 490px;
+        width: 250px;
+        bottom: 120px;
+        height: 490px;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+      }
+
+      .bar-shape-sell-margin {
+        width: 100%;
+        height: 140px;
+        background-color: #ff6a1a;
+        border: 4px solid #141414;
+        border-bottom: 3px dashed #141414;
+        transform-origin: bottom center;
+        position: relative;
+        background-image: repeating-linear-gradient(
+          -45deg,
+          rgba(255, 255, 255, 0.25),
+          rgba(255, 255, 255, 0.25) 10px,
+          transparent 10px,
+          transparent 20px
+        );
+      }
+
+      .bar-shape-sell-base {
+        width: 100%;
+        height: 350px;
+        border: 4px solid #141414;
+        border-top: none;
+        background-color: #e7e3d9;
+        background-image: repeating-linear-gradient(
+          -45deg,
+          rgba(20, 20, 20, 0.08),
+          rgba(20, 20, 20, 0.08) 10px,
+          transparent 10px,
+          transparent 20px
+        );
+        transform-origin: bottom center;
+        box-shadow: 6px 0px 0px rgba(20, 20, 20, 0.15);
+      }
+
+      /* Tag giá trên đỉnh cột */
+      .tag-price {
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+        background-color: #141414;
+        border-radius: 8px;
+        padding: 8px 16px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        white-space: nowrap;
+        border: 3px solid #141414;
+        z-index: 30;
+      }
+
+      .tag-buy-pos {
+        top: -88px;
+      }
+
+      .tag-sell-pos {
+        top: -88px;
+        border-color: #ff6a1a;
+      }
+
+      .tag-num {
+        font-size: 34px;
+        font-weight: 900;
+        color: #f7f4ec;
+        line-height: 1;
+        letter-spacing: -0.5px;
+      }
+
+      .tag-unit {
+        font-size: 15px;
+        font-weight: 700;
+        color: rgba(247, 244, 236, 0.75);
+        margin-top: 3px;
+        text-transform: uppercase;
+      }
+
+      /* Nhãn đáy cột */
+      .col-footer-label {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        margin-top: 12px;
+        text-align: center;
+      }
+
+      .col-title {
+        font-size: 24px;
+        font-weight: 900;
+        color: #141414;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .col-subtitle-badge {
+        display: inline-block;
+        margin-top: 6px;
+        background-color: #141414;
+        color: #f7f4ec;
+        font-size: 15px;
+        font-weight: 700;
+        padding: 4px 10px;
+        border-radius: 4px;
+      }
+
+      /* Đường đo & Badge chênh lệch (+100K/GÓI) */
+      #diff-group {
+        position: absolute;
+        left: 315px;
+        bottom: 470px;
+        width: 160px;
+        height: 140px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 40;
+      }
+
+      .diff-arrow-line {
+        position: absolute;
+        left: 50%;
+        top: 0;
+        bottom: 0;
+        width: 4px;
+        background-color: #ff6a1a;
+        transform: translateX(-50%);
+      }
+
+      .diff-arrow-head {
+        position: absolute;
+        top: -6px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 0;
+        height: 0;
+        border-left: 7px solid transparent;
+        border-right: 7px solid transparent;
+        border-bottom: 11px solid #ff6a1a;
+      }
+
+      .diff-badge-card {
+        position: relative;
+        background-color: #141414;
+        border: 2px solid #ff6a1a;
+        border-radius: 8px;
+        padding: 8px 12px;
+        text-align: center;
+        white-space: nowrap;
+        box-shadow: 0px 4px 12px rgba(20, 20, 20, 0.25);
+      }
+
+      .diff-badge-val {
+        font-size: 22px;
+        font-weight: 900;
+        color: #f7f4ec;
+        line-height: 1.1;
+      }
+
+      .diff-badge-label {
+        font-size: 14px;
+        font-weight: 700;
+        color: #ff6a1a;
+        margin-top: 2px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+    </style>
+
+    <div data-hf-id="hf-qpwy" id="root" data-composition-id="scene-s16" data-start="0" data-width="1080" data-height="1920" data-duration="7.28" data-layout-allow-overflow="">
+      <div data-hf-id="hf-lz45" class="bg-chart-overlay">
+        <div data-hf-id="hf-xsva" class="chart-ruled-line" style="top: 20%">
+          <div data-hf-id="hf-spcp" class="chart-ruled-tick"></div>
+        </div>
+        <div data-hf-id="hf-4v2w" class="chart-ruled-line" style="top: 40%">
+          <div data-hf-id="hf-zt4d" class="chart-ruled-tick"></div>
+        </div>
+        <div data-hf-id="hf-xp4y" class="chart-ruled-line" style="top: 60%">
+          <div data-hf-id="hf-101g" class="chart-ruled-tick"></div>
+        </div>
+        <div data-hf-id="hf-vqtw" class="chart-ruled-line" style="top: 80%">
+          <div data-hf-id="hf-0lqf" class="chart-ruled-tick"></div>
+        </div>
+        <div data-hf-id="hf-jqkq" class="noise-layer"></div>
+      </div>
+
+      <section data-hf-id="hf-npgw" id="scene-s16" class="clip" data-start="0" data-duration="7.28">
+        <div data-hf-id="hf-iu6l" id="camera-rig">
+          <div data-hf-id="hf-wmea" class="header-zone">
+            <div data-hf-id="hf-h137" id="header-badge" class="badge-category">
+              Cơ chế ăn chia • Hồ sơ V16
+            </div>
+            <h1 data-hf-id="hf-c6ut" id="header-title" class="punch-phrase">
+              Sao chép <span data-hf-id="hf-mvkl" class="highlight">nguyên xi</span>
+            </h1>
+            <p data-hf-id="hf-rwje" id="header-sub" class="header-sub">
+              Tỷ lệ chênh lệch giá nhập và giá bán lại
+            </p>
+          </div>
+
+          <div data-hf-id="hf-t8nr" id="chart-board" data-layout-allow-overflow="">
+            <div data-hf-id="hf-ysgi" class="board-header">
+              <div data-hf-id="hf-bvkz" class="board-title">
+                <span data-hf-id="hf-hl3w" class="board-title-dot"></span>
+                BIÊN ĐỘ LỢI NHUẬN TRÊN MỖI GÓI
+              </div>
+              <div data-hf-id="hf-auou" id="scale-container" class="scale-badge">
+                <svg data-hf-id="hf-8iyr" id="icon-scale" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path data-hf-id="hf-n6km" class="scale-stroke" d="M 50 16 L 50 86" stroke="#F7F4EC" stroke-width="5" stroke-linecap="round" />
+                  <path data-hf-id="hf-rvcp" class="scale-stroke" d="M 32 86 L 68 86" stroke="#F7F4EC" stroke-width="6" stroke-linecap="round" />
+                  <path data-hf-id="hf-ilz0" class="scale-stroke" d="M 18 28 L 82 28" stroke="#FF6A1A" stroke-width="5" stroke-linecap="round" />
+                  <path data-hf-id="hf-s34s" class="scale-stroke" d="M 18 28 L 10 54 M 18 28 L 28 54" stroke="#F7F4EC" stroke-width="3.5" stroke-linecap="round" />
+                  <path data-hf-id="hf-uhyg" class="scale-stroke" d="M 6 56 Q 19 68 32 56 Z" stroke="#F7F4EC" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" />
+                  <path data-hf-id="hf-wewn" class="scale-stroke" d="M 82 28 L 72 54 M 82 28 L 92 54" stroke="#F7F4EC" stroke-width="3.5" stroke-linecap="round" />
+                  <path data-hf-id="hf-39q5" class="scale-stroke" d="M 68 56 Q 81 68 94 56 Z" stroke="#F7F4EC" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+                <span data-hf-id="hf-1oi7" class="scale-badge-text">TỶ LỆ CHUẨN</span>
+              </div>
+            </div>
+
+            <div data-hf-id="hf-w00u" class="chart-plot-area">
+              <div data-hf-id="hf-z19s" class="grid-lines-container">
+                <div data-hf-id="hf-1sbm" class="plot-grid-line" style="bottom: 680px"></div>
+                <div data-hf-id="hf-7swi" class="plot-axis-label" style="bottom: 680px">400K</div>
+
+                <div data-hf-id="hf-j3rj" class="plot-grid-line" id="line-350" style="bottom: 610px; background-color: rgba(255, 106, 26, 0.4)"></div>
+                <div data-hf-id="hf-xyir" class="plot-axis-label" style="bottom: 610px; color: #141414; font-weight: 900">
+                  350K
+                </div>
+
+                <div data-hf-id="hf-l9kl" class="plot-grid-line" style="bottom: 540px"></div>
+                <div data-hf-id="hf-s9ga" class="plot-axis-label" style="bottom: 540px">300K</div>
+
+                <div data-hf-id="hf-imgd" class="plot-grid-line" id="line-250" style="bottom: 470px; background-color: rgba(20, 20, 20, 0.35)"></div>
+                <div data-hf-id="hf-h4eq" class="plot-axis-label" style="bottom: 470px; color: #141414; font-weight: 900">
+                  250K
+                </div>
+
+                <div data-hf-id="hf-ztxc" class="plot-grid-line" style="bottom: 400px"></div>
+                <div data-hf-id="hf-yy6e" class="plot-axis-label" style="bottom: 400px">200K</div>
+
+                <div data-hf-id="hf-eves" class="plot-grid-line" style="bottom: 260px"></div>
+                <div data-hf-id="hf-arrt" class="plot-axis-label" style="bottom: 260px">100K</div>
+
+                <div data-hf-id="hf-8jgk" class="plot-grid-line baseline" style="bottom: 120px"></div>
+                <div data-hf-id="hf-9llz" class="plot-axis-label" style="bottom: 120px; font-weight: 900; color: #141414">
+                  0đ
+                </div>
+              </div>
+
+              <div data-hf-id="hf-3coj" class="columns-container">
+                <div data-hf-id="hf-vgrd" class="col-buy">
+                  <div data-hf-id="hf-cz0b" id="tag-buy" class="tag-price tag-buy-pos">
+                    <span data-hf-id="hf-y6rn" id="buy-num" class="tag-num">0</span>
+                    <span data-hf-id="hf-buzq" class="tag-unit">VNĐ / GÓI</span>
+                  </div>
+                  <div data-hf-id="hf-i9la" id="bar-buy" class="bar-shape-buy"></div>
+                  <div data-hf-id="hf-96o7" class="col-footer-label">
+                    <div data-hf-id="hf-bcev" class="col-title">Mua Vào</div>
+                    <div data-hf-id="hf-wmzy" id="label-sub-buy" class="col-subtitle-badge">Từ Tiến (Bỏ Sỉ)</div>
+                  </div>
+                </div>
+
+                <div data-hf-id="hf-6ax2" id="diff-group">
+                  <div data-hf-id="hf-3hcg" class="diff-arrow-line"></div>
+                  <div data-hf-id="hf-tf8k" class="diff-arrow-head"></div>
+                  <div data-hf-id="hf-876i" class="diff-badge-card">
+                    <div data-hf-id="hf-3avu" class="diff-badge-val">+100.000đ</div>
+                    <div data-hf-id="hf-vyjb" class="diff-badge-label">Chênh Lệch / Gói</div>
+                  </div>
+                </div>
+
+                <div data-hf-id="hf-pe6f" class="col-sell">
+                  <div data-hf-id="hf-lh0f" id="tag-sell" class="tag-price tag-sell-pos">
+                    <span data-hf-id="hf-lr9n" id="sell-num" class="tag-num">0</span>
+                    <span data-hf-id="hf-i8sx" class="tag-unit">VNĐ / BÁN LẠI</span>
+                  </div>
+                  <div data-hf-id="hf-mxco" id="bar-sell-margin" class="bar-shape-sell-margin"></div>
+                  <div data-hf-id="hf-9zqy" id="bar-sell-base" class="bar-shape-sell-base"></div>
+                  <div data-hf-id="hf-4q3r" class="col-footer-label">
+                    <div data-hf-id="hf-yurp" class="col-title">Bán Ra</div>
+                    <div data-hf-id="hf-ikd6" id="label-sub-sell" class="col-subtitle-badge" style="border: 1px solid #ff6a1a">
+                      Giá Đến Tay Khách
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div data-hf-id="hf-v6l5" class="brand-bottom-bar"></div>
+    </div>
+
+    <script>
+      const scaleStrokes = document.querySelectorAll(".scale-stroke");
+      scaleStrokes.forEach((path) => {
+        const len = path.getTotalLength();
+        path.style.strokeDasharray = len + 1 + "px";
+        path.style.strokeDashoffset = len + 1 + "px";
+      });
+
+      const tl = gsap.timeline({ paused: true });
+
+      const buyCounter = { val: 0 };
+      const sellCounter = { val: 0 };
+      const elBuyNum = document.getElementById("buy-num");
+      const elSellNum = document.getElementById("sell-num");
+
+      // 1. BEAT 1 (0.0s - 1.8s): Thiết lập không gian và tiêu đề
+      tl.fromTo(
+        "#camera-rig",
+        { x: 20 },
+        { x: -20, duration: 7.28, ease: "sine.inOut" },
+        0
+      );
+
+      tl.fromTo(
+        "#header-badge",
+        { y: -25, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.5, ease: "power2.out" },
+        0.2
+      );
+
+      tl.fromTo(
+        "#header-title",
+        { scale: 0.92, opacity: 0, y: 15 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.6, ease: "power3.out" },
+        0.4
+      );
+
+      tl.fromTo(
+        "#header-sub",
+        { opacity: 0, y: 10 },
+        { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" },
+        0.65
+      );
+
+      tl.fromTo(
+        "#chart-board",
+        { rotationX: 18, y: 70, opacity: 0 },
+        { rotationX: 0, y: 0, opacity: 1, duration: 0.8, ease: "power3.out" },
+        0.5
+      );
+
+      tl.fromTo(
+        ".plot-grid-line",
+        { scaleX: 0 },
+        { scaleX: 1, duration: 0.55, stagger: 0.04, ease: "power2.out" },
+        0.85
+      );
+
+      tl.fromTo(
+        ".plot-axis-label",
+        { opacity: 0, x: -10 },
+        { opacity: 1, x: 0, duration: 0.35, stagger: 0.03, ease: "power2.out" },
+        1.05
+      );
+
+      // 2. BEAT 2 (1.8s - 4.2s): "Mua hàng từ Tiến với giá 250.000 đồng."
+      tl.fromTo(
+        "#bar-buy",
+        { scaleY: 0 },
+        { scaleY: 1, duration: 0.85, ease: "power3.out" },
+        1.8
+      );
+
+      tl.fromTo(
+        "#tag-buy",
+        { scale: 0, opacity: 0, y: 25 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.5, ease: "power3.out" },
+        2.2
+      );
+
+      tl.to(
+        buyCounter,
+        {
+          val: 250000,
+          duration: 0.9,
+          ease: "power2.out",
+          onUpdate: () => {
+            elBuyNum.textContent = Math.round(buyCounter.val).toLocaleString("vi-VN");
+          },
+        },
+        2.1
+      );
+
+      tl.fromTo(
+        "#label-sub-buy",
+        { opacity: 0, y: 10 },
+        { opacity: 1, y: 0, duration: 0.4, ease: "power2.out" },
+        2.5
+      );
+
+      // 3. BEAT 3 (4.2s - 7.28s): "Bán lại với giá 350.000 đồng."
+      tl.to(
+        ".scale-stroke",
+        {
+          strokeDashoffset: 0,
+          duration: 0.7,
+          stagger: 0.07,
+          ease: "power2.out",
+        },
+        3.9
+      );
+
+      tl.fromTo(
+        "#scale-container",
+        { scale: 0.85, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.45, ease: "power3.out" },
+        3.8
+      );
+
+      tl.fromTo(
+        "#bar-sell-base",
+        { scaleY: 0 },
+        { scaleY: 1, duration: 0.75, ease: "power3.out" },
+        4.5
+      );
+
+      tl.fromTo(
+        "#bar-sell-margin",
+        { scaleY: 0 },
+        { scaleY: 1, duration: 0.65, ease: "power3.out" },
+        5.1
+      );
+
+      tl.fromTo(
+        "#tag-sell",
+        { scale: 0, opacity: 0, y: 25 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.5, ease: "power3.out" },
+        5.3
+      );
+
+      tl.to(
+        sellCounter,
+        {
+          val: 350000,
+          duration: 0.95,
+          ease: "power2.out",
+          onUpdate: () => {
+            elSellNum.textContent = Math.round(sellCounter.val).toLocaleString("vi-VN");
+          },
+        },
+        5.0
+      );
+
+      tl.fromTo(
+        "#label-sub-sell",
+        { opacity: 0, y: 10 },
+        { opacity: 1, y: 0, duration: 0.4, ease: "power2.out" },
+        5.5
+      );
+
+      tl.fromTo(
+        "#diff-group",
+        { scale: 0.4, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.55, ease: "power3.out" },
+        5.6
+      );
+
+      window.__timelines = window.__timelines || {};
+      window.__timelines["scene-s16"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

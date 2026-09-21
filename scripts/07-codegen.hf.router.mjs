@@ -68,7 +68,13 @@ const noRootSync = process.argv.includes("--no-root-sync");
 // (hyperframes.json/meta.json/package.json/index.html) sang, KHÔNG ghi đè gì đã có sẵn.
 if (!fs.existsSync(path.join(vp.hfProjectDir, "hyperframes.json"))) {
   fs.mkdirSync(path.dirname(vp.hfProjectDir), { recursive: true });
-  const tmpDir = path.join(path.dirname(vp.hfProjectDir), `.scaffold-tmp-${slug}`);
+  // Tên thư mục tạm PHẢI unique per-process (sceneId + pid) — nếu nhiều scene chạy song song
+  // đều thấy "chưa tồn tại" cùng lúc (chưa có scene nào bootstrap trước), dùng chung 1 tên tmp
+  // cố định gây race condition thật (1 process rmSync trong khi process khác đang init cùng
+  // path) — lỗi thật đã gặp khi chạy 18 scene song song ngay từ đầu (video ban-an-473-phan-2,
+  // không bootstrap 1 scene riêng trước). Copy sang đích cuối vẫn dùng guard !exists(dest) nên
+  // nhiều process cùng scaffold xong rồi copy đè không gây hỏng dữ liệu (cùng version/flags CLI).
+  const tmpDir = path.join(path.dirname(vp.hfProjectDir), `.scaffold-tmp-${slug}-${sceneId.toLowerCase()}-${process.pid}`);
   fs.rmSync(tmpDir, { recursive: true, force: true });
   console.log(`Scaffold project HyperFrames mới cho video "${slug}": ${vp.hfProjectDir}`);
   execSync(
@@ -166,7 +172,8 @@ const KNOWN_GOTCHAS_HF = `QUY TẮC BẮT BUỘC CỦA COMPOSITION CONTRACT (rú
 - TUYỆT ĐỐI không dùng biến template literal (vd \`\${compId}\`, \`\${sceneId}\`) bên trong querySelector/CSS selector ở thẻ <script> — trình bundler HTML của HyperFrames parse CSS/selector bằng static analysis và CRASH khi gặp biến nội suy. Luôn hardcode chuỗi cố định (vd document.querySelector('[data-composition-id="main"]'), không phải \`[data-composition-id="\${id}"]\`).
 - Mọi cặp màu chữ/nền PHẢI đạt tối thiểu WCAG AA (tỉ lệ tương phản ≥3:1, ưu tiên ≥4.5:1 cho chữ thường) — "hyperframes check" chấm điểm contrast thật và FAIL cứng nếu không đạt. Không dùng chữ màu cam/vàng nhạt trên nền be/kem sáng (cặp màu tương phản thấp thường gặp) — nếu STYLE_DNA/style-tokens có sẵn cặp màu đã kiểm chứng đạt tương phản, ưu tiên dùng nguyên cặp đó thay vì tự phối màu mới.
 - TUYỆT ĐỐI không dùng giá trị GSAP tương đối (vd y: "+=6") trên 1 thuộc tính nếu có tween khác cũng ghi cùng thuộc tính đó trên cùng phần tử ở khoảng thời gian gần nhau — "hyperframes check" bắt lỗi \`gsap_relative_value_second_writer\` (giá trị tương đối chốt mốc gốc lúc tween khởi tạo, seek tuần tự vs. worker render lẻ frame sẽ ra 2 kết quả khác nhau). Luôn dùng giá trị tuyệt đối cho y/x/scale/rotation, hoặc fromTo() với endpoint tường minh.
-- Kiểm tra kỹ mọi text/chữ KHÔNG bị phần tử khác đè lên (che khuất) tại bất kỳ mốc thời gian nào trong lúc nó đang hiển thị — "hyperframes check" bắt lỗi \`text_occluded\` (chữ bị ẩn dưới 1 phần tử opaque). Nếu che khuất là CÓ CHỦ ĐÍCH (transition, reveal), dùng data-layout-allow-occlusion trên đúng phần tử; nếu không, đổi z-index/vị trí để chữ luôn đọc được khi đang trong khung thời gian hiển thị của nó.`;
+- Kiểm tra kỹ mọi text/chữ KHÔNG bị phần tử khác đè lên (che khuất) tại bất kỳ mốc thời gian nào trong lúc nó đang hiển thị — "hyperframes check" bắt lỗi \`text_occluded\` (chữ bị ẩn dưới 1 phần tử opaque). Nếu che khuất là CÓ CHỦ ĐÍCH (transition, reveal), dùng data-layout-allow-occlusion trên đúng phần tử; nếu không, đổi z-index/vị trí để chữ luôn đọc được khi đang trong khung thời gian hiển thị của nó.
+- TUYỆT ĐỐI không tạo NHIỀU phần tử timed (data-start khác nhau) cùng chứa/render TRÙNG LẶP cùng 1 nội dung text (vd hiệu ứng "label/punch-phrase xuất hiện" bị vô tình lặp lại thành 2-3 bản sao với data-start lệch nhau vài trăm ms đến ~1.3s thay vì đúng 1 bản duy nhất) — "hyperframes check" bắt lỗi \`content_overlap\` (2 khối text đè lên nhau tại cùng vị trí, chữ bị lem không đọc được). Mỗi label/punch-phrase/overlay chỉ được có ĐÚNG 1 phần tử/1 timeline hiển thị nó; nếu cần hiệu ứng xuất hiện theo từng từ, dùng 1 cấu trúc timeline duy nhất kiểm soát opacity/transform của từng span con, không tạo nhiều bản sao độc lập của cùng khối text.`;
 
 function buildPrompt(feedback, previousFiles) {
   const retryFilesBlock = previousFiles

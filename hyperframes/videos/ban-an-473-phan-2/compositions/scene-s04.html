@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap">
+      <style>
+      :root {
+        --bg: #E7E3D9;
+        --bg-card: #F5F0E4;
+        --ink: #141414;
+        --orange: #FF6A1A;
+        --grid-line: rgba(20, 20, 20, 0.32);
+        --on-dark: #F7F4EC;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: var(--bg);
+        color: var(--ink);
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      #root {
+        position: relative;
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+        background-color: var(--bg);
+      }
+
+      .clip {
+        position: absolute;
+        inset: 0;
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+      }
+
+      /* Nền biến thể "chart" theo Style DNA: 4 đường kẻ ngang đậm + tick cam mép trái */
+      .chart-bg {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+      }
+
+      /* Lưới dọc phụ 84px */
+      .grid-vertical {
+        position: absolute;
+        inset: 0;
+        background-image: repeating-linear-gradient(
+          to right,
+          rgba(20, 20, 20, 0.08) 0px,
+          rgba(20, 20, 20, 0.08) 1px,
+          transparent 1px,
+          transparent 84px
+        );
+      }
+
+      /* 4 đường kẻ ngang đậm ở 20%, 40%, 60%, 80% chiều cao */
+      .chart-line {
+        position: absolute;
+        left: 0;
+        width: 100%;
+        height: 2.5px;
+        background-color: var(--grid-line);
+      }
+      .chart-line-1 { top: 384px; }
+      .chart-line-2 { top: 768px; }
+      .chart-line-3 { top: 1152px; }
+      .chart-line-4 { top: 1536px; }
+
+      /* Điểm tick cam cố định mép trái của mỗi đường kẻ theo Style DNA */
+      .chart-tick {
+        position: absolute;
+        left: 0;
+        width: 32px;
+        height: 6px;
+        background-color: var(--orange);
+        top: -2px;
+      }
+
+      /* Lớp hạt nhiễu giấy (grain) multiply 18% */
+      .grain-overlay {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 1920px;
+        opacity: 0.18;
+        mix-blend-mode: multiply;
+        pointer-events: none;
+        z-index: 50;
+      }
+
+      /* Chữ ký thị giác: thanh cam cố định mép dưới cùng */
+      .signature-bottom-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 1080px;
+        height: 10px;
+        background-color: var(--orange);
+        z-index: 100;
+      }
+
+      /* Container nội dung trong dải an toàn (safeZone top 160, bottom 460) */
+      .content-layer {
+        position: absolute;
+        top: 160px;
+        left: 0;
+        width: 1080px;
+        height: 1300px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        z-index: 20;
+      }
+
+      /* Hàng tiêu đề / date badge */
+      .header-row {
+        width: 880px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24px;
+      }
+
+      .date-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        background-color: var(--ink);
+        color: var(--on-dark);
+        padding: 10px 24px;
+        border-radius: 4px;
+        font-size: 26px;
+        font-weight: 900;
+        letter-spacing: 1px;
+        box-shadow: 4px 4px 0 rgba(20, 20, 20, 0.2);
+        will-change: transform, opacity;
+      }
+
+      .date-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background-color: var(--orange);
+      }
+
+      .category-tag {
+        font-size: 22px;
+        font-weight: 900;
+        color: var(--ink);
+        letter-spacing: 2px;
+        text-transform: uppercase;
+      }
+
+      /* Khung ảnh Hero Collage (img-06) */
+      .hero-card-container {
+        position: relative;
+        width: 880px;
+        height: 590px;
+        background-color: var(--bg-card);
+        border: 3.5px solid var(--ink);
+        box-shadow: 12px 12px 0px rgba(20, 20, 20, 0.16);
+        overflow: hidden;
+        margin-bottom: 28px;
+        transform-origin: 50% 50%;
+        will-change: transform, opacity;
+      }
+
+      .hero-image-pan {
+        position: absolute;
+        top: -40px;
+        left: -40px;
+        width: 960px;
+        height: 670px;
+        object-fit: cover;
+        object-position: center 25%;
+        will-change: transform;
+      }
+
+      /* Mẩu băng dính dán góc tạo chất collage */
+      .paper-tape {
+        position: absolute;
+        background: rgba(245, 240, 228, 0.92);
+        border: 1px solid rgba(20, 20, 20, 0.25);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+        z-index: 5;
+        pointer-events: none;
+      }
+      .tape-tl {
+        top: -12px;
+        left: 40px;
+        width: 130px;
+        height: 34px;
+        transform: rotate(-6deg);
+      }
+      .tape-tr {
+        top: -12px;
+        right: 40px;
+        width: 130px;
+        height: 34px;
+        transform: rotate(5deg);
+      }
+
+      /* Nhãn chú thích trên card ảnh */
+      .hero-caption-tab {
+        position: absolute;
+        left: 20px;
+        bottom: 20px;
+        background-color: var(--ink);
+        color: var(--on-dark);
+        padding: 8px 18px;
+        font-size: 20px;
+        font-weight: 700;
+        border-radius: 3px;
+        letter-spacing: 0.5px;
+        z-index: 6;
+      }
+
+      /* Sticker Overlay 1: QUY MÔ BÙNG NỔ (ẩn ban đầu bằng opacity: 0) */
+      .sticker-label {
+        position: absolute;
+        right: 24px;
+        bottom: -18px;
+        background-color: var(--orange);
+        color: var(--ink);
+        border: 3.5px solid var(--ink);
+        padding: 12px 28px;
+        font-size: 34px;
+        font-weight: 900;
+        box-shadow: 6px 6px 0 var(--ink);
+        z-index: 15;
+        transform-origin: 50% 50%;
+        letter-spacing: 0.5px;
+        opacity: 0;
+        will-change: transform, opacity;
+      }
+
+      /* Khối Data & Counter (Visual languages: data + annotated) */
+      .data-panel {
+        position: relative;
+        width: 880px;
+        height: 520px;
+        background-color: var(--bg-card);
+        border: 3.5px solid var(--ink);
+        box-shadow: 12px 12px 0px rgba(20, 20, 20, 0.16);
+        padding: 24px 36px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        will-change: transform, opacity;
+      }
+
+      /* Đồ thị SVG trend line */
+      .chart-visual-wrapper {
+        position: relative;
+        width: 808px;
+        height: 160px;
+        border-bottom: 2.5px solid var(--ink);
+      }
+
+      .chart-svg {
+        position: absolute;
+        inset: 0;
+        width: 808px;
+        height: 160px;
+      }
+
+      .chart-svg path.trend-stroke {
+        fill: none;
+        stroke: var(--orange);
+        stroke-width: 8;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
+      .chart-svg path.grid-dash {
+        fill: none;
+        stroke: rgba(20, 20, 20, 0.25);
+        stroke-width: 1.5;
+        stroke-dasharray: 6 6;
+      }
+
+      /* Khối hiển thị bộ đếm số lượng người */
+      .counter-display-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-top: 8px;
+      }
+
+      .icon-box {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        opacity: 0;
+        will-change: transform, opacity;
+      }
+
+      .crowd-svg {
+        width: 90px;
+        height: 80px;
+        overflow: visible;
+      }
+
+      .crowd-svg path,
+      .crowd-svg circle {
+        fill: none;
+        stroke: var(--ink);
+        stroke-width: 4;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
+      .icon-tag-text {
+        font-size: 22px;
+        font-weight: 900;
+        color: var(--ink);
+        text-transform: uppercase;
+        line-height: 1.3;
+      }
+
+      .counter-box {
+        display: flex;
+        align-items: baseline;
+        gap: 14px;
+      }
+
+      .counter-value {
+        font-size: 110px;
+        font-weight: 900;
+        color: var(--ink);
+        line-height: 1;
+        letter-spacing: -2px;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .counter-unit-badge {
+        background-color: var(--ink);
+        color: var(--orange);
+        padding: 6px 14px;
+        border-radius: 4px;
+        font-size: 24px;
+        font-weight: 900;
+        letter-spacing: 1px;
+      }
+
+      /* Overlay 3: Punch Phrase Banner (900 THÀNH VIÊN) - ẩn ban đầu bằng opacity: 0 */
+      .punch-phrase-banner {
+        width: 100%;
+        background-color: var(--ink);
+        color: var(--on-dark);
+        border-left: 14px solid var(--orange);
+        padding: 16px 28px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-shadow: 6px 6px 0 rgba(20, 20, 20, 0.25);
+        transform-origin: 50% 50%;
+        opacity: 0;
+        will-change: transform, opacity;
+      }
+
+      .punch-title {
+        font-size: 44px;
+        font-weight: 900;
+        letter-spacing: 1px;
+        line-height: 1;
+      }
+
+      .punch-tagline {
+        font-size: 22px;
+        font-weight: 700;
+        color: var(--orange);
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+      }
+    </style>
+
+    <div data-hf-id="hf-pci4" id="root" data-composition-id="scene-s04" data-start="0" data-width="1080" data-height="1920" data-duration="5.45" data-layout-allow-overflow="true">
+      <!-- Scene Clip S04 -->
+      <section data-hf-id="hf-qn4p" id="scene-s04" class="clip" data-start="0" data-duration="5.45" data-layout-allow-overflow="true">
+        <!-- Nền Chart chuẩn Style DNA (đường kẻ ngang đậm + tick cam mép trái) -->
+        <div data-hf-id="hf-33aw" class="chart-bg">
+          <div data-hf-id="hf-c0e3" class="grid-vertical"></div>
+          
+          <div data-hf-id="hf-h4y8" class="chart-line chart-line-1">
+            <div data-hf-id="hf-t4yy" class="chart-tick"></div>
+          </div>
+          <div data-hf-id="hf-psu3" class="chart-line chart-line-2">
+            <div data-hf-id="hf-wqb2" class="chart-tick"></div>
+          </div>
+          <div data-hf-id="hf-luq2" class="chart-line chart-line-3">
+            <div data-hf-id="hf-x4m3" class="chart-tick"></div>
+          </div>
+          <div data-hf-id="hf-330d" class="chart-line chart-line-4">
+            <div data-hf-id="hf-xix4" class="chart-tick"></div>
+          </div>
+        </div>
+
+        <!-- Hạt nhiễu giấy (grain) -->
+        <svg data-hf-id="hf-si98" class="grain-overlay" aria-hidden="true">
+          <filter data-hf-id="hf-xd64" id="noiseFilter">
+            <feturbulence data-hf-id="hf-yhp5" type="fractalNoise" baseFrequency="0.75" numOctaves="3" stitchTiles="stitch" />
+            <fecolormatrix data-hf-id="hf-skw8" type="saturate" values="0" />
+          </filter>
+          <rect data-hf-id="hf-3bax" width="100%" height="100%" filter="url(#noiseFilter)" />
+        </svg>
+
+        <!-- Dải an toàn: Nội dung hiển thị chính -->
+        <div data-hf-id="hf-yehr" class="content-layer">
+          <!-- Hàng header -->
+          <div data-hf-id="hf-76a4" class="header-row">
+            <div data-hf-id="hf-57oa" id="date-badge" class="date-badge">
+              <span data-hf-id="hf-9w7n" class="date-dot"></span>
+              <span data-hf-id="hf-3ut9">ĐẾN CUỐI THÁNG 12</span>
+            </div>
+            <div data-hf-id="hf-yoxt" class="category-tag">BÁO CÁO TĂNG TRƯỞNG</div>
+          </div>
+
+          <!-- Card hình ảnh minh họa (img-06) -->
+          <div data-hf-id="hf-w8m1" id="hero-card" class="hero-card-container" data-layout-allow-overflow="true">
+            <div data-hf-id="hf-kxx3" class="paper-tape tape-tl" data-layout-allow-overflow="true"></div>
+            <div data-hf-id="hf-snj5" class="paper-tape tape-tr" data-layout-allow-overflow="true"></div>
+            <img data-hf-id="hf-qkvk" id="hero-img" class="hero-image-pan" src="assets/img-06-cyber-fraud-group-members.jpeg" alt="Hội nhóm tội phạm mạng" data-layout-allow-overflow="true">
+            <div data-hf-id="hf-yca8" class="hero-caption-tab">ĐƯỜNG DÂY MẠNG XÃ HỘI</div>
+
+            <!-- Overlay 1: Label QUY MÔ BÙNG NỔ -->
+            <div data-hf-id="hf-07kv" id="sticker-label" class="sticker-label" data-layout-allow-overflow="true">QUY MÔ BÙNG NỔ</div>
+          </div>
+
+          <!-- Bảng dữ liệu: Đồ thị tăng trưởng + Bộ đếm số + Punch phrase -->
+          <div data-hf-id="hf-c6fe" id="data-panel" class="data-panel">
+            <!-- Đồ thị SVG đường dốc tăng vọt -->
+            <div data-hf-id="hf-0gan" class="chart-visual-wrapper">
+              <svg data-hf-id="hf-w87o" class="chart-svg" viewBox="0 0 808 160">
+                <!-- Đường lưới toạ độ phụ -->
+                <path data-hf-id="hf-xll1" class="grid-dash" d="M 0 40 L 808 40" />
+                <path data-hf-id="hf-2rvh" class="grid-dash" d="M 0 80 L 808 80" />
+                <path data-hf-id="hf-icox" class="grid-dash" d="M 0 120 L 808 120" />
+                
+                <!-- Đường trendline tăng vọt -->
+                <path data-hf-id="hf-1ad3" id="trend-line" class="trend-stroke" d="M 20 144 C 220 140, 440 114, 580 58 S 720 20, 788 16" />
+                <!-- Điểm đánh dấu đỉnh đồ thị (ẩn ban đầu) -->
+                <circle data-hf-id="hf-4b93" id="trend-peak" cx="788" cy="16" r="9" fill="#FF6A1A" stroke="#141414" stroke-width="3.5" opacity="0" />
+              </svg>
+            </div>
+
+            <!-- Hàng bộ đếm số liệu & Biểu tượng crowd -->
+            <div data-hf-id="hf-9dua" class="counter-display-row">
+              <div data-hf-id="hf-o6es" id="icon-group" class="icon-box">
+                <!-- SVG Icon Crowd tự vẽ nét -->
+                <svg data-hf-id="hf-o8ws" id="crowd-icon" class="crowd-svg" viewBox="0 0 90 80">
+                  <!-- Người trung tâm -->
+                  <circle data-hf-id="hf-qp4s" cx="45" cy="24" r="14" />
+                  <path data-hf-id="hf-oove" d="M 23 68 C 23 48, 67 48, 67 68" />
+                  <!-- Người bên trái -->
+                  <circle data-hf-id="hf-o38u" cx="20" cy="32" r="10" />
+                  <path data-hf-id="hf-pmrw" d="M 4 72 C 4 56, 36 56, 36 72" />
+                  <!-- Người bên phải -->
+                  <circle data-hf-id="hf-cgwf" cx="70" cy="32" r="10" />
+                  <path data-hf-id="hf-d0sm" d="M 54 72 C 54 56, 86 56, 86 72" />
+                </svg>
+                <div data-hf-id="hf-p8ch" class="icon-tag-text">
+                  THÀNH VIÊN<br data-hf-id="hf-x5px">HOẠT ĐỘNG
+                </div>
+              </div>
+
+              <!-- Bộ đếm 0 -> 900 -->
+              <div data-hf-id="hf-sowc" class="counter-box">
+                <span data-hf-id="hf-mofk" id="counter-num" class="counter-value">0</span>
+                <span data-hf-id="hf-u86n" class="counter-unit-badge">NGƯỜI</span>
+              </div>
+            </div>
+
+            <!-- Overlay 3: Punch Phrase Banner 900 THÀNH VIÊN -->
+            <div data-hf-id="hf-wqbc" id="punch-banner" class="punch-phrase-banner">
+              <div data-hf-id="hf-h1h7" class="punch-title">900 THÀNH VIÊN</div>
+              <div data-hf-id="hf-sg7m" class="punch-tagline">MỐC GHI NHẬN T12</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Chữ ký thị giác nhận diện: Thanh cam cố định đáy -->
+        <div data-hf-id="hf-utni" class="signature-bottom-bar"></div>
+      </section>
+    </div>
+
+    <!-- Kịch bản GSAP Timeline -->
+    <script>
+      // 1. Khởi tạo thuộc tính SVG Stroke để vẽ tự nhiên (svg-path-draw)
+      const trendLine = document.getElementById("trend-line");
+      const trendLen = trendLine.getTotalLength();
+      trendLine.style.strokeDasharray = trendLen;
+      trendLine.style.strokeDashoffset = trendLen;
+
+      const crowdStrokes = document.querySelectorAll("#crowd-icon path, #crowd-icon circle");
+      crowdStrokes.forEach((el) => {
+        const len = el.getTotalLength ? el.getTotalLength() : 120;
+        el.style.strokeDasharray = len;
+        el.style.strokeDashoffset = len;
+      });
+
+      // 2. Thiết lập trạng thái ẩn ban đầu ngoài timeline để Seek frame 0 luôn đúng
+      gsap.set("#trend-peak", { scale: 0, opacity: 0, transformOrigin: "50% 50%" });
+      gsap.set("#punch-banner", { scale: 0.85, opacity: 0, y: 18 });
+      gsap.set("#sticker-label", { scale: 0, opacity: 0, rotation: -14 });
+      gsap.set("#icon-group", { scale: 0.85, opacity: 0 });
+
+      // 3. Khởi tạo Timeline Paused duy nhất theo contract của HyperFrames
+      const tl = gsap.timeline({ paused: true });
+
+      // 4. Camera Motion: Pan-left nhẹ nhàng trên ảnh trong suốt shot (0.0s -> 5.45s)
+      tl.fromTo(
+        "#hero-img",
+        { x: 35 },
+        { x: -35, duration: 5.45, ease: "none" },
+        0
+      );
+
+      // 5. Transition In: "grow" nảy nhẹ card Hero (0.15s)
+      tl.fromTo(
+        "#hero-card",
+        { scale: 0.85, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.65, ease: "power3.out" },
+        0.15
+      );
+
+      // 6. Date badge xuất hiện phía trên
+      tl.fromTo(
+        "#date-badge",
+        { y: -30, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.5, ease: "power3.out" },
+        0.35
+      );
+
+      // 7. Khối Data Panel trượt lên nhẹ nhàng
+      tl.fromTo(
+        "#data-panel",
+        { y: 40, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.6, ease: "power3.out" },
+        0.5
+      );
+
+      // 8. Overlay 1 (1.07s / 22810ms): Label "QUY MÔ BÙNG NỔ" nảy spring-pop vào vị trí
+      tl.fromTo(
+        "#sticker-label",
+        { scale: 0, opacity: 0, rotation: -14 },
+        { scale: 1, opacity: 1, rotation: -3, duration: 0.5, ease: "power3.out" },
+        1.07
+      );
+
+      // 9. Đồ thị trendline bắt đầu vẽ nét từ 1.25s đến 2.85s
+      tl.to(
+        "#trend-line",
+        { strokeDashoffset: 0, duration: 1.6, ease: "power2.out" },
+        1.25
+      );
+
+      // 10. Counter số nhảy vọt từ 0 lên 900 (1.25s -> 3.05s)
+      tl.to(
+        "#counter-num",
+        { innerText: 900, snap: { innerText: 1 }, duration: 1.8, ease: "power2.out" },
+        1.25
+      );
+
+      // Điểm peak của đồ thị hiện rõ khi đường trendline chạm đỉnh (2.8s)
+      tl.fromTo(
+        "#trend-peak",
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.35, ease: "power3.out" },
+        2.8
+      );
+
+      // 11. Overlay 2 (3.52s / 25260ms): Biểu tượng "crowd" vẽ tự động các nét
+      tl.fromTo(
+        "#icon-group",
+        { scale: 0.85, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.4, ease: "power3.out" },
+        3.52
+      );
+      tl.to(
+        crowdStrokes,
+        { strokeDashoffset: 0, duration: 0.6, stagger: 0.08, ease: "power2.out" },
+        3.52
+      );
+
+      // 12. Overlay 3 (4.14s / 25880ms): Punch Phrase "900 THÀNH VIÊN" xuất hiện dứt khoát
+      tl.fromTo(
+        "#punch-banner",
+        { scale: 0.85, opacity: 0, y: 18 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.48, ease: "power3.out" },
+        4.14
+      );
+
+      // Đăng ký timeline paused vào window.__timelines["scene-s04"]
+      window.__timelines["scene-s04"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

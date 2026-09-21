@@ -92,6 +92,24 @@ cuối file) — không migrate lại, không phát triển tiếp trên nhánh 
   - Xác minh cuối bằng vision agent (9router) trực tiếp trên file MP4 render lại: 10/10 mốc giây 1→101 đều thấy phụ đề + karaoke-highlight đúng.
 - [x] **Checkpoint E đạt (2026-09-21)** — người dùng xem lại bản đã sửa phụ đề, xác nhận đạt.
 
+### Video "ban-an-473-phan-2" (video thứ 6, phần tiếp theo bản án 473)
+- [x] Nhận script + audio (2026-09-22) từ `Vox style 3.1_test/.../Bản án số 473/Phan2` — không có media nguồn sẵn.
+- [x] Transcribe (whisper.cpp) + align với script gốc qua 9router (2026-09-22) — 504/504 caption khớp đúng thời lượng audio thật (131.600s), cơ chế tự chia đôi khi tràn token hoạt động đúng (1 lần tràn).
+- [x] Tạo media qua Google Flow (Stage 2b, 2026-09-22) — 7 ảnh + 6 video (768×1376/720×1280, 8.0s/clip), không lặp lại lỗi collage khổ ngang của video 5.
+- [x] Phân tích + chuẩn hoá tên media qua 9router[vision] (2026-09-22) — 13/13 asset.
+- [x] Scene Plan (2026-09-22) — 18 scene, dùng đủ 13/13 asset (6 scene text-only theo thiết kế).
+- [x] Shotlist (2026-09-22) — 20 shot / 18 scene. Phát hiện + sửa 1 bug thật trong `scripts/06-shotlist.router.mjs`: bảng markdown dùng nhầm field `o.text` cho overlay kiểu `icon` (chỉ có field `name`) → mọi icon hiển thị `"undefined"` trong `shotlist.md` (dữ liệu JSON gốc vẫn đúng, chỉ sai phần hiển thị .md) — đã vá, áp dụng mọi video sau.
+- [x] Dựng composition qua nhánh HyperFrames (2026-09-22) — lần đầu chạy thẳng 18 scene song song NGAY TỪ SCENE ĐẦU (không bootstrap 1 scene riêng trước như các video trước), phát hiện + sửa tận gốc 1 bug race condition thật trong `scripts/07-codegen.hf.router.mjs`: bước scaffold PROJECT CHUNG của video dùng tên thư mục tạm CỐ ĐỊNH (không gắn sceneId/pid) — 10 process chạy song song cùng thấy project chung "chưa tồn tại" nên cùng ghi/xoá chung 1 thư mục, gây 11/18 scene fail hạ tầng ngay từ đầu. Đã sửa tên thư mục tạm thành unique per-process, xem `planning/responsibility-matrix.md` mục 6. Sau khi sửa: 8/9 scene retry PASS ngay; scene còn lại (S10) + 2 scene lỗi nội dung thật từ lần chạy đầu (S12: text bị che khuất; S17: nhiều lỗi GSAP determinism) xử lý bằng `--issue-file`, PASS trong 1-3 lần thử.
+- [x] QA project đã ráp phát hiện thêm 3 lỗi content_overlap/contrast không lộ ra ở test standalone riêng lẻ từng scene (S09, S06, S14, S18 — 1 trong số đó là regression phát sinh khi sửa contrast S18 lần đầu) — cả 2 loại lỗi (`content_overlap` do punch-phrase bị nhân bản chồng thời gian, gặp độc lập ở cả S09 và S18) đã vá bằng `--issue-file` + thêm gotcha mới vào `KNOWN_GOTCHAS_HF`. `hyperframes check` cuối trên project đã ráp (18/18 scene): ok=true, 0 lỗi lint/runtime/layout, contrast 46/47 đạt (1 case biên 2.99/3.0 do làm tròn, không phải lỗi thật).
+- [x] Render bản đầy đủ (2026-09-21) — `out/ban-an-473-phan-2-full.mp4`, **131.600s** (khớp chính xác audio thật 131.600083s), 1080×1920 h264/aac, 207.4MB. Xác minh bằng ffprobe.
+- **Bài học quy trình quan trọng (2026-09-21):** sau khi Stage 6 xong sạch lỗi, Claude tự ý mở
+  `hyperframes preview --background` và tự chụp snapshot + gửi vision agent QA toàn bộ scene
+  trước khi render — người dùng chỉ rõ đây KHÔNG phải bước bắt buộc của pipeline (tốn token vô
+  ích, không phải video nào cũng cần). Đã sửa `planning/responsibility-matrix.md` mục 7-8: đi
+  thẳng Stage 6 → Stage 8 (Render), chỉ preview/snapshot/vision QA khi có lý do cụ thể (debug,
+  người dùng yêu cầu, hoặc nghi ngờ rõ ràng sau khi xem kết quả thật).
+- [ ] **Đang chờ người dùng xem `out/ban-an-473-phan-2-full.mp4` và xác nhận Checkpoint.**
+
 ## Archive: pipeline Remotion cũ (4 video đầu, `archive/remotion-legacy/`)
 
 Giữ lại đúng nguyên trạng để tham khảo/sửa lỗi cho 4 video archive — KHÔNG áp dụng cho video mới.

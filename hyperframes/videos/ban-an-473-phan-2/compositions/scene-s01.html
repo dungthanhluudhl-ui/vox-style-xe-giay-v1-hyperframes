@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap">
+      <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: #0b0f14;
+      color: #141414;
+      font-family: "Be Vietnam Pro", sans-serif;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Root canvas 1080x1920 */
+    #root {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #E7E3D9;
+    }
+
+    .clip {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+    }
+
+    /* Background Grid & Spotlight Variant */
+    .bg-grid {
+      position: absolute;
+      inset: 0;
+      background-image: 
+        linear-gradient(to right, rgba(20, 20, 20, 0.22) 1.5px, transparent 1.5px),
+        linear-gradient(to bottom, rgba(20, 20, 20, 0.22) 1.5px, transparent 1.5px);
+      background-size: 84px 84px;
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    /* Camera rig containing the hero asset */
+    .camera-rig {
+      position: absolute;
+      inset: -6%;
+      width: 112%;
+      height: 112%;
+      transform-origin: 50% 42%;
+      will-change: transform;
+      z-index: 2;
+    }
+
+    .hero-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center 40%;
+      display: block;
+    }
+
+    /* Spotlight vignette layer: dark radial gradient */
+    .spotlight-vignette {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 50% 42%, rgba(20, 20, 20, 0.15) 20%, rgba(20, 20, 20, 0.65) 60%, rgba(12, 14, 18, 0.92) 100%);
+      mix-blend-mode: multiply;
+      pointer-events: none;
+      z-index: 3;
+    }
+
+    /* Paper grain overlay 18% opacity with multiply blend */
+    .grain-overlay {
+      position: absolute;
+      inset: 0;
+      opacity: 0.18;
+      mix-blend-mode: multiply;
+      pointer-events: none;
+      z-index: 4;
+    }
+
+    /* Technical layout boundaries / Vox HUD framing */
+    .hud-frame {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    /* Safe zone header */
+    .header-badge {
+      position: absolute;
+      top: 180px;
+      left: 60px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background: rgba(20, 20, 20, 0.88);
+      border-left: 6px solid #FF6A1A;
+      padding: 12px 24px;
+      border-radius: 4px;
+    }
+
+    .header-tag {
+      font-size: 20px;
+      font-weight: 900;
+      letter-spacing: 2px;
+      color: #FF6A1A;
+      text-transform: uppercase;
+    }
+
+    .header-sub {
+      font-size: 19px;
+      font-weight: 700;
+      color: #F7F4EC;
+      letter-spacing: 0.5px;
+    }
+
+    /* OVERLAY 1: Punch Phrase Card (THỦ ĐOẠN ẨN DANH) */
+    .punch-phrase-wrapper {
+      position: absolute;
+      top: 320px;
+      left: 60px;
+      right: 60px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      z-index: 20;
+    }
+
+    .punch-kicker {
+      display: inline-block;
+      background: #141414;
+      color: #FF6A1A;
+      font-size: 24px;
+      font-weight: 900;
+      letter-spacing: 2px;
+      padding: 8px 20px;
+      border-radius: 4px 4px 0 0;
+      text-transform: uppercase;
+    }
+
+    .punch-box {
+      background: #F5F0E4;
+      border: 4px solid #141414;
+      padding: 24px 36px;
+      box-shadow: 12px 12px 0px #FF6A1A;
+      border-radius: 0 8px 8px 8px;
+    }
+
+    .punch-text {
+      font-size: 64px;
+      font-weight: 900;
+      color: #141414;
+      line-height: 1.2;
+      letter-spacing: -1px;
+      text-transform: uppercase;
+    }
+
+    /* OVERLAY 2: Target Reticle & Person Icon */
+    .suspect-reticle-container {
+      position: absolute;
+      top: 680px;
+      left: 70px;
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      z-index: 25;
+      background: rgba(20, 20, 20, 0.9);
+      border: 2px solid rgba(255, 106, 26, 0.85);
+      padding: 16px 24px;
+      border-radius: 8px;
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.6);
+    }
+
+    .person-icon-box {
+      position: relative;
+      width: 76px;
+      height: 76px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255, 106, 26, 0.12);
+      border-radius: 6px;
+    }
+
+    .person-svg {
+      width: 60px;
+      height: 60px;
+    }
+
+    .person-svg path,
+    .person-svg circle {
+      fill: none;
+      stroke: #FF6A1A;
+      stroke-width: 4;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .suspect-info {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .suspect-role {
+      font-size: 18px;
+      font-weight: 900;
+      color: #FF6A1A;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+    }
+
+    .suspect-name {
+      font-size: 32px;
+      font-weight: 900;
+      color: #F7F4EC;
+      letter-spacing: 0.5px;
+    }
+
+    /* OVERLAY 3: ZALO: T TUTI & Distribution Network Mockup */
+    .zalo-network-container {
+      position: absolute;
+      top: 1040px;
+      left: 60px;
+      right: 60px;
+      z-index: 30;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .zalo-main-card {
+      position: relative;
+      width: 100%;
+      background: #F5F0E4;
+      border: 4px solid #141414;
+      border-radius: 12px;
+      padding: 24px 32px;
+      box-shadow: 10px 10px 0px #141414, 18px 18px 0px #FF6A1A;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .zalo-left {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .zalo-badge-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .zalo-tag {
+      background: #141414;
+      color: #FF6A1A;
+      font-size: 18px;
+      font-weight: 900;
+      letter-spacing: 1.5px;
+      padding: 4px 12px;
+      border-radius: 4px;
+      text-transform: uppercase;
+    }
+
+    .zalo-status {
+      font-size: 18px;
+      font-weight: 700;
+      color: #555;
+    }
+
+    .zalo-title {
+      font-size: 54px;
+      font-weight: 900;
+      color: #141414;
+      letter-spacing: -0.5px;
+      text-transform: uppercase;
+    }
+
+    .zalo-avatar {
+      width: 90px;
+      height: 90px;
+      border-radius: 50%;
+      background: #141414;
+      border: 3px solid #FF6A1A;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #F7F4EC;
+      font-size: 34px;
+      font-weight: 900;
+      flex-shrink: 0;
+    }
+
+    /* Distribution branches SVG */
+    .network-canvas-wrap {
+      position: relative;
+      width: 100%;
+      height: 90px;
+      margin-top: 8px;
+    }
+
+    .network-svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    .network-line {
+      fill: none;
+      stroke: #FF6A1A;
+      stroke-width: 3.5;
+      stroke-dasharray: 6 6;
+    }
+
+    /* Node chips below the main card */
+    .nodes-row {
+      width: 100%;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-top: 6px;
+    }
+
+    .network-chip {
+      background: rgba(20, 20, 20, 0.94);
+      border: 2px solid rgba(255, 106, 26, 0.7);
+      border-radius: 6px;
+      padding: 12px 10px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .chip-code {
+      font-size: 14px;
+      font-weight: 700;
+      color: #FF6A1A;
+      letter-spacing: 1px;
+    }
+
+    .chip-label {
+      font-size: 19px;
+      font-weight: 900;
+      color: #F7F4EC;
+      text-transform: uppercase;
+    }
+
+    /* Signature bottom brand orange bar */
+    .bottom-bar {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 10px;
+      background: #FF6A1A;
+      z-index: 50;
+    }
+  </style>
+
+  <div data-hf-id="hf-jp6w" id="root" data-composition-id="scene-s01" data-width="1080" data-height="1920" data-duration="6.14" data-layout-allow-overflow="true">
+    <div data-hf-id="hf-9uuf" id="scene-s01" class="clip" data-start="0" data-duration="6.14" data-layout-allow-overflow="true">
+      <!-- Base paper grid -->
+      <div data-hf-id="hf-yqqm" class="bg-grid"></div>
+
+      <!-- Hero image container with zoom-through and creeping zoom-in motion -->
+      <div data-hf-id="hf-qixq" class="camera-rig" id="camera-rig">
+        <img data-hf-id="hf-7jzx" class="hero-img" src="assets/img-04-social-chat-contraband-suspect.jpeg" alt="Tiến và giao diện nhóm chat">
+      </div>
+
+      <!-- Spotlight Vignette -->
+      <div data-hf-id="hf-cwjj" class="spotlight-vignette"></div>
+
+      <!-- Grain overlay -->
+      <div data-hf-id="hf-k01a" class="grain-overlay">
+        <svg data-hf-id="hf-n26j" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+          <filter data-hf-id="hf-xd64" id="noiseFilter">
+            <feturbulence data-hf-id="hf-yhp5" type="fractalNoise" baseFrequency="0.75" numOctaves="3" stitchTiles="stitch" />
+            <fecolormatrix data-hf-id="hf-skw8" type="saturate" values="0" />
+          </filter>
+          <rect data-hf-id="hf-3bax" width="100%" height="100%" filter="url(#noiseFilter)" />
+        </svg>
+      </div>
+
+      <!-- Top HUD Header Tag -->
+      <div data-hf-id="hf-kznn" class="hud-frame">
+        <div data-hf-id="hf-x0c6" class="header-badge" id="header-badge">
+          <span data-hf-id="hf-7ua0" class="header-tag">Hồ Sơ Vụ Án</span>
+          <span data-hf-id="hf-3mqs" class="header-sub">Đối Tượng // Nguyễn Văn Tiến</span>
+        </div>
+      </div>
+
+      <!-- OVERLAY 1: Punch Phrase (atMs: 950, holdMs: 1800 -> 0.95s to 2.75s) -->
+      <div data-hf-id="hf-8vre" class="punch-phrase-wrapper" id="punch-phrase" data-layout-allow-overlap="true">
+        <div data-hf-id="hf-7gzs" class="punch-kicker">Phương Pháp Mới</div>
+        <div data-hf-id="hf-a4d4" class="punch-box">
+          <div data-hf-id="hf-tiea" class="punch-text">THỦ ĐOẠN ẨN DANH</div>
+        </div>
+      </div>
+
+      <!-- OVERLAY 2: Person Icon & Target HUD (atMs: 3540, holdMs: 1600 -> 3.54s to 5.14s) -->
+      <div data-hf-id="hf-mez5" class="suspect-reticle-container" id="suspect-hud" data-layout-allow-overlap="true">
+        <div data-hf-id="hf-la5r" class="person-icon-box">
+          <svg data-hf-id="hf-lu7i" class="person-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <circle data-hf-id="hf-2b2d" class="svg-draw" cx="50" cy="34" r="16" />
+            <path data-hf-id="hf-vxbw" class="svg-draw" d="M 20 84 C 20 62, 34 54, 50 54 C 66 54, 80 62, 80 84" />
+          </svg>
+        </div>
+        <div data-hf-id="hf-1vrs" class="suspect-info">
+          <span data-hf-id="hf-iwiq" class="suspect-role">Chủ Mưu Cầm Đầu</span>
+          <span data-hf-id="hf-5rud" class="suspect-name">Tiến “T Tuti”</span>
+        </div>
+      </div>
+
+      <!-- OVERLAY 3: ZALO: T TUTI & Distribution Branches (atMs: 4750, holdMs: 1390 -> 4.75s to 6.14s) -->
+      <div data-hf-id="hf-m6uw" class="zalo-network-container" id="zalo-network" data-layout-allow-overlap="true">
+        <div data-hf-id="hf-kp4y" class="zalo-main-card" id="zalo-card">
+          <div data-hf-id="hf-ubra" class="zalo-left">
+            <div data-hf-id="hf-3py1" class="zalo-badge-row">
+              <span data-hf-id="hf-9yhn" class="zalo-tag">Tài Khoản Ảo</span>
+              <span data-hf-id="hf-w0ag" class="zalo-status">Bàn đạp phát tán</span>
+            </div>
+            <div data-hf-id="hf-skj4" class="zalo-title">ZALO: “T TUTI”</div>
+          </div>
+          <div data-hf-id="hf-werq" class="zalo-avatar">TT</div>
+        </div>
+
+        <!-- Branch connectors -->
+        <div data-hf-id="hf-dboc" class="network-canvas-wrap">
+          <svg data-hf-id="hf-0wjj" class="network-svg" viewBox="0 0 960 90" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+            <path data-hf-id="hf-t1pf" class="network-line branch-path" d="M 480 0 L 160 85" />
+            <path data-hf-id="hf-kwg2" class="network-line branch-path" d="M 480 0 L 480 85" />
+            <path data-hf-id="hf-b1ou" class="network-line branch-path" d="M 480 0 L 800 85" />
+          </svg>
+        </div>
+
+        <!-- Cloned network destination nodes -->
+        <div data-hf-id="hf-oxmc" class="nodes-row">
+          <div data-hf-id="hf-8ex1" class="network-chip" id="node-1">
+            <span data-hf-id="hf-wttj" class="chip-code">NHÁNH KẾT NỐI 01</span>
+            <span data-hf-id="hf-88rc" class="chip-label">Hội Nhóm Kín</span>
+          </div>
+          <div data-hf-id="hf-ekmu" class="network-chip" id="node-2">
+            <span data-hf-id="hf-wfii" class="chip-code">NHÁNH KẾT NỐI 02</span>
+            <span data-hf-id="hf-4tze" class="chip-label">Người Dùng Lạ</span>
+          </div>
+          <div data-hf-id="hf-iiqv" class="network-chip" id="node-3">
+            <span data-hf-id="hf-w17h" class="chip-code">NHÁNH KẾT NỐI 03</span>
+            <span data-hf-id="hf-6hx2" class="chip-label">Giao Dịch Ẩn</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Fixed Signature Bottom Brand Bar -->
+      <div data-hf-id="hf-tmht" class="bottom-bar"></div>
+    </div>
+  </div>
+
+  <script>
+    // Chuẩn bị stroke-dasharray & stroke-dashoffset cho các phần tử vẽ vector
+    document.querySelectorAll(".svg-draw").forEach(function(el) {
+      var length = el.getTotalLength ? el.getTotalLength() : 180;
+      el.style.strokeDasharray = length;
+      el.style.strokeDashoffset = length;
+    });
+
+    document.querySelectorAll(".branch-path").forEach(function(el) {
+      var length = el.getTotalLength ? el.getTotalLength() : 250;
+      el.style.strokeDasharray = length;
+      el.style.strokeDashoffset = length;
+    });
+
+    // Tạo đúng 1 master timeline PAUSED cho composition root
+    var tl = gsap.timeline({ paused: true });
+
+    // 1. Camera Motion: zoom-through dứt khoát lúc mở màn rồi drift zoom-in đều
+    tl.fromTo(
+      "#camera-rig",
+      { scale: 1.24, y: 30 },
+      { scale: 1.06, y: 0, duration: 0.85, ease: "power3.out" },
+      0
+    );
+    tl.to(
+      "#camera-rig",
+      { scale: 1.14, y: -18, duration: 5.29, ease: "none" },
+      0.85
+    );
+
+    // 2. Header Tag xuất hiện nhẹ đầu scene
+    tl.fromTo(
+      "#header-badge",
+      { opacity: 0, x: -30 },
+      { opacity: 1, x: 0, duration: 0.5, ease: "power3.out" },
+      0.2
+    );
+
+    // 3. OVERLAY 1: Punch phrase "THỦ ĐOẠN ẨN DANH" (atMs: 950, holdMs: 1800)
+    // Vào lúc 0.95s, thoát êm trước mốc 2.75s (0.95 + 1.8)
+    tl.fromTo(
+      "#punch-phrase",
+      { opacity: 0, scale: 0.82, y: 40 },
+      { opacity: 1, scale: 1, y: 0, duration: 0.45, ease: "power3.out" },
+      0.95
+    );
+    tl.to(
+      "#punch-phrase",
+      { opacity: 0, y: -25, scale: 0.94, duration: 0.25, ease: "power2.in" },
+      2.50
+    );
+
+    // 4. OVERLAY 2: Icon person & Target HUD (atMs: 3540, holdMs: 1600)
+    // Vào lúc 3.54s, vẽ nét icon và thoát trước 5.14s (3.54 + 1.6)
+    tl.fromTo(
+      "#suspect-hud",
+      { opacity: 0, scale: 0.85, x: -30 },
+      { opacity: 1, scale: 1, x: 0, duration: 0.38, ease: "power3.out" },
+      3.54
+    );
+    tl.to(
+      ".svg-draw",
+      { strokeDashoffset: 0, duration: 0.42, ease: "power2.out", stagger: 0.1 },
+      3.65
+    );
+    tl.to(
+      "#suspect-hud",
+      { opacity: 0, y: -20, scale: 0.92, duration: 0.25, ease: "power2.in" },
+      4.89
+    );
+
+    // 5. OVERLAY 3: "ZALO: T TUTI" và các nhánh kết nối ngầm (atMs: 4750, holdMs: 1390)
+    // Vào lúc 4.75s, giữ chắc đến hết thời lượng scene 6.14s
+    tl.fromTo(
+      "#zalo-card",
+      { opacity: 0, scale: 0.86, y: 35 },
+      { opacity: 1, scale: 1, y: 0, duration: 0.42, ease: "power3.out" },
+      4.75
+    );
+    // Nhánh mạng kết nối bung ra
+    tl.to(
+      ".branch-path",
+      { strokeDashoffset: 0, duration: 0.32, ease: "power2.out", stagger: 0.06 },
+      5.05
+    );
+    // Các node nhóm chat / người dùng lạ bung mở
+    tl.fromTo(
+      "#node-1, #node-2, #node-3",
+      { opacity: 0, scale: 0.75, y: 20 },
+      { opacity: 1, scale: 1, y: 0, duration: 0.32, ease: "power3.out", stagger: 0.08 },
+      5.18
+    );
+
+    // Đăng ký timeline chính với HyperFrames runtime
+    window.__timelines["scene-s01"] = tl;
+  </script>
+
+    </template>
+  </body>
+</html>

@@ -1,0 +1,47 @@
+# Scene Plan — ban-an-473-phan-2
+
+> Sinh bởi `scripts/05-scene-plan.router.mjs` qua ag/gemini-3.8-flash-high. Nguồn dữ liệu: `planning/videos/ban-an-473-phan-2/scene-plan.json`. Sửa tay thì sửa cả 2 file cho khớp.
+
+Tổng thời lượng: 131.600s · 18 scene
+
+| # | Thời gian | Lời thoại | Chức năng | Quan hệ hình ảnh | Ngôn ngữ thị giác | Nền | Asset | Vào cảnh |
+|---|---|---|---|---|---|---|---|---|
+| S01 | 0.000s–6.140s | Và đây là lúc cái phương pháp bán hàng đặc biệt kia xuất hiện. Tiến sử dụng tài khoản Zalo tên “T Tuti”, | hook | Giao diện chat cá nhân biến đổi thành bàn đạp phát tán: tài khoản ảo 'T Tuti' xuất hiện, bung mở các nhánh kết nối ngầm tới người dùng lạ. | mockup + annotated | spotlight | img-04 | zoom-through |
+| S02 | 6.140s–13.000s | lập một nhóm có cái tên mà tôi nghĩ là không tiện nhắc lại quá nhiều lần trong video này, rồi mời hàng loạt người không quen biết vào. | mechanism | Từ một đường link mời nhóm kín, hàng loạt silhouette người lạ liên tiếp bị hút vào khung chat trung tâm, lấp đầy danh sách thành viên ảo. | flow + annotated | grid | img-03 | rise |
+| S03 | 13.000s–21.740s | Sau đó Tiến đăng hình ảnh, video có nội dung đồi trụy để các thành viên xem, mục đích theo bản án xác định là kích thích ham muốn, sau đấy mới rao bán Sìn Sú. | causal-chain | Chuỗi mồi nhử 3 nhịp hình thành tuần tự: video đồi trụy phát tán -> kích hoạt thanh đo ham muốn dâng cao -> các gói Sìn Sú xuất hiện chốt đơn ngay đỉnh điểm. | background-photo + flow | spotlight | vid-03 | peel |
+| S04 | 21.740s–27.190s | Cách làm này tỏ ra khá hiệu quả. Đến cuối tháng 12, nhóm đã có khoảng 900 người. | evidence | Bộ đếm số lượng người nhảy vọt từ 0 lên 900, các mẩu tài liệu xé dán ghi nhận mốc 900 thành viên mở rộng lấp đầy nửa trên khung hình. | data + annotated | chart | img-06 | grow |
+| S05 | 27.190s–35.740s | Sang đầu năm 2020, thấy một cái ao bắt đầu đông cá thì Tiến không câu ở một ao nữa mà đào thêm cả hồ, lập thêm hàng loạt nhóm Zalo khác | reversal | Một biểu tượng 'ao cá' ban đầu bị chia tách và nhân bản thành nhiều vòng tròn hồ chứa/nhóm chat Zalo mới vây quanh đối tượng trung tâm. | diagram + background-photo | grid | vid-04 | unfold |
+| S06 | 35.740s–42.530s | và tiếp tục sử dụng cùng một công thức. Kết quả là Tiến khai đã bán được khoảng 200 gói, thu lợi khoảng 30 triệu đồng. | evidence | Khối lượng 200 gói Sìn Sú chuyển hóa thành các cọc tiền polymer xếp tầng trên bàn, bộ đếm số liệu chốt lại ở con số 30 TRIỆU ĐỒNG. | background-photo + data | chart | vid-02, img-02 | punch |
+| S07 | 42.530s–47.650s | Nhưng mà kinh doanh có vẻ ổn rồi thì bạn bè nhìn vào tất nhiên cũng sẽ hỏi: “Có kèo gì kiếm tiền không?” | question | Bối cảnh quán cà phê xuất hiện, từ phía người đối diện bung nở bong bóng thoại chứa câu hỏi tò mò 'Có kèo gì kiếm tiền không?' hướng thẳng về Tiến. | background-photo + quote | card | img-07 | flip |
+| S08 | 47.650s–57.430s | Và đây là lúc nhân vật thứ hai xuất hiện: Nguyễn Quang S. Để khỏi lát nữa cứ phải gọi “ông S” nghe giống như đang giải phương trình toán học, từ đây tôi sẽ tạm gọi anh này là Sơn. | definition | Ký hiệu ẩn số toán học 'Ông S' trên mặt hồ sơ bị một vệt mực cam gạch bỏ dứt khoát, thay thế bằng nhãn định danh rõ ràng 'SƠN' trên tấm thẻ nhân vật. | document + annotated | card | — | strike |
+| S09 | 57.430s–63.240s | Sơn là bạn của Tiến và đã hỏi Tiến xem có công việc gì kiếm được tiền hay không. Tiến không giấu nghề. | cause | Đường liên kết bạn bè giữa hai nhân vật được xác lập, biểu tượng ổ khóa bí quyết mở ra kèm mũi tên chuyển giao tài liệu kinh doanh sang phía Sơn. | flow + diagram | grid | — | wobble-drop |
+| S10 | 63.240s–70.330s | Tiến hướng dẫn Sơn mua Sìn Sú của mình với giá 250.000 đồng, bán ra khoảng 300.000 đến 350.000 đồng; | mechanism | Sơ đồ dòng tiền trên giấy hiện rõ: mức giá nhập 250.000đ từ Tiến phân nhánh sang mức bán lẻ 300.000đ - 350.000đ, làm nổi bật khoảng chênh lệch lợi nhuận. | diagram + data | chart | vid-01 | rise |
+| S11 | 70.330s–76.540s | quan trọng hơn là chỉ luôn cái công thức kéo khách bằng cách lập nhóm Zalo rồi đăng nội dung đồi trụy. | causal-chain | Quy trình lôi kéo 3 bước tự vẽ trên màn hình: Lập nhóm Zalo -> Đăng video khiêu dâm -> Kéo tệp khách tò mò, tạo thành chiếc phễu gom người dùng. | flow + diagram | spotlight | — | spiral |
+| S12 | 76.540s–82.440s | Sau đó Sơn mở hai nhóm riêng, một nhóm có 403 người, nhóm còn lại lên tới 908 người. | evidence | Hai khung màn hình điện thoại song song hiện lên, hiển thị hai nhóm chat độc lập của Sơn với số lượng thành viên lần lượt cán mốc 403 và 908 người. | mockup + data | chart | vid-05 | punch |
+| S13 | 82.440s–89.400s | Nhưng mà một công thức kiếm tiền nhìn có vẻ ngon thì thường sẽ không chỉ có hai người tham gia. Nhân vật thứ ba là Đinh Doãn Đức H. | reversal | Mô hình hai người Tiến - Sơn bị phá vỡ thế cân bằng khi một bóng nhân vật thứ ba chen vào, gắn nhãn hồ sơ tố tụng 'Đinh Doãn Đức H.'. | split + diagram | card | — | peel |
+| S14 | 89.400s–96.190s | Cái tên này thì hồ sơ đã cho chúng ta khá nhiều chữ rồi, nên tôi tạm nối nốt chữ cuối và gọi anh này là Đức Huy cho dễ nhớ. | definition | Văn bản hồ sơ vụ án phóng to cụm từ 'Đinh Doãn Đức H.', một nét bút cam viết tiếp hai chữ cái 'uy' để hoàn tất định danh 'Đức Huy'. | document + annotated | card | — | grow |
+| S15 | 96.190s–104.330s | Một lần nữa, Đức Huy cũng chỉ là cái tên giả định tôi sử dụng trong video này thôi nhé. Đức Huy quen Tiến và cũng biết Tiến đang bán Sìn Sú. | evidence | Con dấu đỏ 'TÊN GIẢ ĐỊNH' đóng xuống khung hình, đồng thời mũi tên liên hệ nối từ Đức Huy sang kho nguồn cung Sìn Sú của Tiến. | annotated + flow | spotlight | — | unfold |
+| S16 | 104.330s–111.610s | Công thức gần như được sao chép nguyên xi. Mua hàng từ Tiến với giá 250.000 đồng. Bán lại với giá 350.000 đồng. | mechanism | Hai cột mốc giá 250.000đ và 350.000đ dựng đứng cạnh nhau, mũi tên chênh lệch 100.000đ/gói bật sáng biểu thị công thức sao chép nguyên xi. | diagram + data | chart | — | flip |
+| S17 | 111.610s–123.720s | Lập nhóm Zalo. Kéo người vào. Đăng nội dung đồi trụy. Rồi chờ xem trong đám người đang xem kia có ai muốn mua Sìn Sú hay không. Đức Huy lập một nhóm riêng và kéo số thành viên lên tới 999 người. | causal-chain | Chu trình khép kín gồm nhóm Zalo, video đồi trụy và các gói hàng Sìn Sú quay vòng quanh điện thoại, đỉnh điểm là con số thành viên chạm ngưỡng 999 người. | flow + data | spotlight | img-05 | zoom-through |
+| S18 | 123.720s–131.600s | Tức là đến lúc này chúng ta có ba người: Tiến, Sơn và Đức Huy, nhiều nhóm Zalo và hàng nghìn lượt thành viên được gom vào cùng một kiểu hệ thống. | conclusion | Sơ đồ mạng lưới phân cấp hoàn chỉnh hợp nhất: Tiến ở đỉnh chỉ huy phân nhánh xuống Sơn và Đức Huy, các luồng xung kích lan tỏa điều phối nhiều nhóm Zalo và gom hàng nghìn thành viên vào đáy tháp. | diagram + flow | spotlight | vid-06, img-01 | shatter |
+
+## Ghi chú từng scene
+
+- **S01**: Dùng img-04 làm nền visual chính thể hiện đối tượng cầm đầu Tiến với màn hình nhóm chat và tang vật số; nhịp mở đầu dứt khoát kéo người xem vào vụ án.
+- **S02**: Dùng img-03 (hình cắt dán nam thanh niên cầm điện thoại hiển thị lời mời vào nhóm chat) làm nền, kết hợp mũi tên chỉ luồng lôi kéo người dùng lạ.
+- **S03**: Ưu tiên video vid-03 (hoạt họa chuyển động nhóm chat, bóng nhảy múa và gói Sìn Sú) làm nền video động, thể hiện cơ chế mồi chài của đối tượng.
+- **S04**: Dùng img-06 minh họa quy mô 900 thành viên; kết hợp counter số chạy thực tế từ 0 đến 900 người trên trục lưới chart.
+- **S05**: Dùng vid-04 (hoạt ảnh các lớp giấy xé mở ra thể hiện đám đông và quy mô thành viên tăng vọt) làm nền, biểu đạt hành vi nhân bản nhóm kín.
+- **S06**: Xếp lớp vid-02 (thanh niên đếm tiền liên tục) cùng chi tiết ảnh img-02, nhấn mạnh mốc thu lợi bất chính 30 triệu đồng và 200 gói tang vật.
+- **S07**: Dùng img-07 (hai thanh niên ngồi đối diện tại quán cà phê) làm nền, overlay bong bóng trích dẫn câu thoại tò mò của người bạn.
+- **S08**: Cảnh giải mã tố tụng thuần đồ họa thẻ card: gạch chéo ký hiệu ẩn số S toán học và thay bằng tên quy ước Sơn theo quy tắc đính chính (worked example #5).
+- **S09**: Dựng bằng sơ đồ quan hệ bạn bè và đường truyền giao thức kiếm tiền; nhịp chuyển tiếp logic trước khi đi vào chi tiết giá bán.
+- **S10**: Dùng vid-01 (hoạt cảnh hai người ngồi quán cà phê chỉ sơ đồ tài chính 250k - 350k) làm lớp nền động chính xác khớp từng lời thoại.
+- **S11**: Sơ đồ phễu dòng chảy vẽ tay 3 bước thủ đoạn theo phong cách Vox, làm nổi bật cốt lõi phương thức phạm tội chuyển giao giữa các bị can.
+- **S12**: Dùng vid-05 (hai màn hình điện thoại hiển thị nhóm chat kín có thành viên tăng vọt) khớp hoàn hảo với chi tiết Sơn lập hai nhóm 403 và 908 người.
+- **S13**: Bố cục split chia đôi màn hình, một nhánh thứ ba xuất hiện mở rộng mô hình phạm tội sang nhân vật mới.
+- **S14**: Mô phỏng trang tài liệu tòa án với highlighter cam tô sáng cụm từ Đinh Doãn Đức H. và ghép thêm chữ quy ước Đức Huy.
+- **S15**: Tạo chip cảnh báo pháp lý 'TÊN GIẢ ĐỊNH' theo safe zone, kết hợp sơ đồ nhánh quan hệ giữa Đức Huy và đầu mối Tiến.
+- **S16**: Biểu đồ so sánh biên lợi nhuận trực quan dạng hai cột thước đo, chứng minh Đức Huy sao chép chính xác tỷ lệ ăn chia của Sơn.
+- **S17**: Dùng img-05 làm visual chủ đạo (minh họa đầy đủ chu trình: thành viên nhóm 999, nội dung khiêu dâm, gói Sìn Sú và tiền chênh lệch 250k - 350k).
+- **S18**: Hợp nhất vid-06 và img-01 tạo cú chốt hạ toàn cảnh kim tự tháp tội phạm: 3 đối tượng cầm đầu - các hội nhóm Zalo đồi trụy - hàng nghìn thành viên bị lôi kéo.

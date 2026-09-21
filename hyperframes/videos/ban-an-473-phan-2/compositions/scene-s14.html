@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap">
+      <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+        background: #e7e3d9;
+        font-family: "Be Vietnam Pro", sans-serif;
+        color: #141414;
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+      .clip {
+        position: absolute;
+        inset: 0;
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+      }
+
+      /* Background Grid (Vox DNA: 84px grid cell) */
+      .bg-grid {
+        position: absolute;
+        inset: 0;
+        background-size: 84px 84px;
+        background-image:
+          linear-gradient(to right, rgba(20, 20, 20, 0.08) 1.5px, transparent 1.5px),
+          linear-gradient(to bottom, rgba(20, 20, 20, 0.08) 1.5px, transparent 1.5px);
+        pointer-events: none;
+      }
+
+      /* Fixed signature orange bottom bar */
+      #bottom-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 1080px;
+        height: 10px;
+        background: #ff6a1a;
+        z-index: 99;
+      }
+
+      /* Top Label Overlay */
+      #badge-record {
+        position: absolute;
+        top: 190px;
+        left: 80px;
+        background: #141414;
+        color: #f7f4ec;
+        font-size: 26px;
+        font-weight: 900;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        padding: 12px 28px;
+        border-radius: 6px;
+        box-shadow: 4px 4px 0 #ff6a1a;
+        z-index: 20;
+      }
+
+      /* Document Stage Wrapper (handles camera zoom-in) */
+      #stage-container {
+        position: absolute;
+        inset: 0;
+        transform-origin: 540px 750px;
+      }
+
+      /* Court Document Sheet */
+      #document-card {
+        position: absolute;
+        top: 270px;
+        left: 80px;
+        width: 920px;
+        height: 800px;
+        background: #fcfaf4;
+        border: 3px solid #141414;
+        box-shadow: 12px 14px 0 rgba(20, 20, 20, 0.16);
+        border-radius: 4px;
+        padding: 44px 50px;
+        z-index: 10;
+        transform-origin: center center;
+      }
+
+      /* Document Header */
+      .doc-court-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        border-bottom: 2px solid rgba(20, 20, 20, 0.25);
+        padding-bottom: 24px;
+        margin-bottom: 28px;
+      }
+      .court-jurisdiction {
+        font-size: 21px;
+        font-weight: 900;
+        color: #141414;
+        text-transform: uppercase;
+        line-height: 1.35;
+      }
+      .court-jurisdiction span {
+        display: block;
+        font-size: 17px;
+        font-weight: 700;
+        color: #333333;
+        margin-top: 4px;
+      }
+      .doc-stamp-badge {
+        border: 2px dashed #8c2e00;
+        color: #8c2e00;
+        font-size: 17px;
+        font-weight: 900;
+        text-transform: uppercase;
+        padding: 6px 14px;
+        letter-spacing: 0.05em;
+        transform: rotate(-3deg);
+      }
+
+      /* Document Title */
+      .doc-title-box {
+        text-align: center;
+        margin-bottom: 30px;
+      }
+      .doc-main-title {
+        font-size: 32px;
+        font-weight: 900;
+        color: #141414;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+      .doc-sub-title {
+        font-size: 20px;
+        font-weight: 700;
+        color: #444444;
+        margin-top: 6px;
+      }
+
+      /* Document Body Lines */
+      .doc-body {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+      .doc-line {
+        font-size: 22px;
+        font-weight: 700;
+        color: #2a2a2a;
+        line-height: 1.4;
+      }
+
+      /* Hero Target Name Line */
+      .hero-target-line {
+        margin: 22px 0;
+        padding: 16px 20px;
+        background: #f4eee2;
+        border-left: 6px solid #ff6a1a;
+        display: flex;
+        align-items: center;
+        flex-wrap: nowrap;
+      }
+      .field-label {
+        font-size: 26px;
+        font-weight: 900;
+        color: #141414;
+        margin-right: 16px;
+      }
+      .name-highlight-wrap {
+        position: relative;
+        display: inline-flex;
+        align-items: baseline;
+      }
+      #highlight-rect {
+        position: absolute;
+        inset: -6px -12px;
+        background: rgba(255, 106, 26, 0.32);
+        border-radius: 4px;
+        transform-origin: left center;
+        z-index: 1;
+      }
+      #name-original {
+        position: relative;
+        font-size: 42px;
+        font-weight: 900;
+        color: #141414;
+        letter-spacing: 0.02em;
+        z-index: 2;
+      }
+      #name-suffix {
+        position: relative;
+        font-size: 46px;
+        font-weight: 900;
+        color: #8c2e00;
+        margin-left: 4px;
+        z-index: 2;
+      }
+
+      /* SVG Pen Stroke Connector */
+      .pen-svg {
+        position: absolute;
+        top: 26px;
+        right: -80px;
+        width: 100px;
+        height: 60px;
+        overflow: visible;
+        z-index: 3;
+      }
+
+      /* SVG Icon Doc */
+      #doc-icon-container {
+        position: absolute;
+        top: 290px;
+        right: 105px;
+        width: 70px;
+        height: 80px;
+        z-index: 25;
+      }
+
+      /* Naming Convention Punch Card */
+      #naming-card {
+        position: absolute;
+        top: 1110px;
+        left: 80px;
+        width: 920px;
+        background: #f5f0e4;
+        border: 3px solid #141414;
+        box-shadow: 8px 8px 0 #141414;
+        border-radius: 6px;
+        padding: 34px 44px;
+        z-index: 30;
+      }
+      #card-tag {
+        font-size: 24px;
+        font-weight: 900;
+        color: #141414;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        border-bottom: 2px dashed rgba(20, 20, 20, 0.28);
+        padding-bottom: 14px;
+        margin-bottom: 20px;
+      }
+      .card-content-row {
+        display: flex;
+        align-items: baseline;
+      }
+      #card-label {
+        font-size: 40px;
+        font-weight: 900;
+        color: #141414;
+        margin-right: 22px;
+        letter-spacing: 0.02em;
+      }
+      #card-punch-name {
+        font-size: 72px;
+        font-weight: 900;
+        color: #8c2e00;
+        letter-spacing: 0.03em;
+        line-height: 1;
+      }
+    </style>
+
+    <div data-hf-id="hf-r1xe" id="root" data-composition-id="scene-s14" data-start="0" data-width="1080" data-height="1920" data-duration="6.79">
+      <section data-hf-id="hf-nqb7" id="scene-s14" class="clip" data-start="0" data-duration="6.79">
+        <!-- Background Grid -->
+        <div data-hf-id="hf-yqqm" class="bg-grid"></div>
+
+        <!-- Overlays -->
+        <div data-hf-id="hf-8ar2" id="badge-record">HỒ SƠ BẢN ÁN</div>
+
+        <!-- Self-drawing SVG Document Icon -->
+        <div data-hf-id="hf-zrmv" id="doc-icon-container">
+          <svg data-hf-id="hf-ho63" viewBox="0 0 64 74" fill="none" width="100%" height="100%">
+            <path data-hf-id="hf-qnlp" id="doc-icon-path" d="M6 4 H42 L58 20 V70 H6 Z" stroke="#141414" stroke-width="5" stroke-linejoin="round" />
+            <path data-hf-id="hf-hdzo" id="doc-icon-fold" d="M42 4 V20 H58" stroke="#141414" stroke-width="5" stroke-linejoin="round" />
+            <line data-hf-id="hf-ik8j" x1="16" y1="36" x2="48" y2="36" stroke="#8C2E00" stroke-width="4" stroke-linecap="round" />
+            <line data-hf-id="hf-dv9o" x1="16" y1="48" x2="48" y2="48" stroke="#141414" stroke-width="4" stroke-linecap="round" />
+          </svg>
+        </div>
+
+        <!-- Document Camera Zoom Wrapper -->
+        <div data-hf-id="hf-yskb" id="stage-container">
+          <!-- Document Card -->
+          <div data-hf-id="hf-m2y5" id="document-card">
+            <div data-hf-id="hf-s6ti" class="doc-court-header">
+              <div data-hf-id="hf-1pts" class="court-jurisdiction">
+                TÒA ÁN NHÂN DÂN TP. HÀ NỘI
+                <span data-hf-id="hf-otsy">HỘI ĐỒNG XÉT XỬ SƠ THẨM</span>
+              </div>
+              <div data-hf-id="hf-r52s" class="doc-stamp-badge">TÀI LIỆU VỤ ÁN</div>
+            </div>
+
+            <div data-hf-id="hf-wz5f" class="doc-title-box">
+              <h1 data-hf-id="hf-jki6" class="doc-main-title">TRÍCH LỤC BẢN ÁN HÌNH SỰ</h1>
+              <div data-hf-id="hf-8ofe" class="doc-sub-title">Số: 142/2023/HS-ST • Xác minh lý lịch bị cáo</div>
+            </div>
+
+            <div data-hf-id="hf-qvab" class="doc-body">
+              <div data-hf-id="hf-c3p5" class="doc-line">Căn cứ hồ sơ vụ án và biên bản lấy lời khai điều tra;</div>
+              <div data-hf-id="hf-97g3" class="doc-line">Thông tin nhân thân bị cáo chủ mưu trong đường dây:</div>
+
+              <!-- Hero Name & Annotation Line -->
+              <div data-hf-id="hf-45w5" class="hero-target-line">
+                <span data-hf-id="hf-ls9t" class="field-label">Họ và tên:</span>
+                <div data-hf-id="hf-74s3" class="name-highlight-wrap">
+                  <div data-hf-id="hf-jq9e" id="highlight-rect"></div>
+                  <span data-hf-id="hf-60il" id="name-original">ĐINH DOÃN ĐỨC H.</span>
+                  <span data-hf-id="hf-iyol" id="name-suffix">uy</span>
+                  <svg data-hf-id="hf-dgli" class="pen-svg" viewBox="0 0 80 40">
+                    <path data-hf-id="hf-qc98" id="pen-arc" d="M 5 10 Q 35 35 70 8" fill="none" stroke="#8C2E00" stroke-width="5" stroke-linecap="round" />
+                  </svg>
+                </div>
+              </div>
+
+              <div data-hf-id="hf-tdmo" class="doc-line">Năm sinh: 1996 • Nơi ĐKHKTT: TP. Hà Nội</div>
+              <div data-hf-id="hf-t31v" class="doc-line">Tội danh truy tố: Lừa đảo chiếm đoạt tài sản qua mạng viễn thông</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Naming Convention Punch Card -->
+        <div data-hf-id="hf-pd1w" id="naming-card">
+          <div data-hf-id="hf-wj7m" id="card-tag">QUY ƯỚC ĐỊNH DANH NHÂN VẬT</div>
+          <div data-hf-id="hf-8n5h" class="card-content-row">
+            <span data-hf-id="hf-meur" id="card-label">GỌI LÀ:</span>
+            <span data-hf-id="hf-yvj8" id="card-punch-name">ĐỨC HUY</span>
+          </div>
+        </div>
+
+        <!-- Bottom Orange Identity Bar -->
+        <div data-hf-id="hf-rdr4" id="bottom-bar"></div>
+      </section>
+    </div>
+
+    <script>
+      const tl = gsap.timeline({ paused: true });
+
+      // 1. Initial State Setup
+      gsap.set("#document-card", { scale: 0.92, opacity: 0, y: 30 });
+      gsap.set("#badge-record", { y: -24, opacity: 0 });
+      gsap.set("#doc-icon-container", { scale: 0, opacity: 0 });
+      gsap.set("#highlight-rect", { scaleX: 0 });
+      gsap.set("#name-suffix", { scale: 0, opacity: 0, transformOrigin: "left bottom" });
+      gsap.set("#naming-card", { scale: 0.88, opacity: 0, y: 36 });
+
+      // Prep SVG self-drawing paths
+      const docPath = document.getElementById("doc-icon-path");
+      const docFold = document.getElementById("doc-icon-fold");
+      const penArc = document.getElementById("pen-arc");
+
+      [docPath, docFold, penArc].forEach((p) => {
+        if (p && p.getTotalLength) {
+          const len = p.getTotalLength();
+          p.style.strokeDasharray = len;
+          p.style.strokeDashoffset = len;
+        }
+      });
+
+      // 2. Camera slow drift zoom-in on document
+      tl.to("#stage-container", { scale: 1.05, duration: 6.79, ease: "none" }, 0);
+
+      // 3. Document Entrance (Entrance animation: grow)
+      tl.to("#document-card", { scale: 1, opacity: 1, y: 0, duration: 0.65, ease: "power3.out" }, 0.2);
+
+      // 4. Label Overlay ("HỒ SƠ BẢN ÁN" at 90260 ms -> rel 0.86s, hold ~1.9s)
+      tl.to("#badge-record", { y: 0, opacity: 1, duration: 0.4, ease: "power3.out" }, 0.86);
+      tl.to("#badge-record", { y: -16, opacity: 0, duration: 0.35, ease: "power2.in" }, 2.76);
+
+      // 5. Doc Icon SVG reveal at 91930 ms -> rel 2.53s, hold ~1.8s
+      tl.to("#doc-icon-container", { scale: 1, opacity: 1, duration: 0.4, ease: "back.out(1.4)" }, 2.53);
+      if (docPath) {
+        tl.to(docPath, { strokeDashoffset: 0, duration: 0.6, ease: "power2.out" }, 2.55);
+      }
+      if (docFold) {
+        tl.to(docFold, { strokeDashoffset: 0, duration: 0.4, ease: "power2.out" }, 2.85);
+      }
+      tl.to("#doc-icon-container", { opacity: 0, duration: 0.35, ease: "power2.in" }, 4.33);
+
+      // 6. Highlighter sweeps across "ĐINH DOÃN ĐỨC H."
+      tl.to("#highlight-rect", { scaleX: 1, duration: 0.6, ease: "power2.out" }, 3.1);
+
+      // 7. Pen traces addition of "uy"
+      if (penArc) {
+        tl.to(penArc, { strokeDashoffset: 0, duration: 0.45, ease: "power2.out" }, 3.65);
+      }
+      tl.to("#name-suffix", { scale: 1, opacity: 1, duration: 0.35, ease: "back.out(1.6)" }, 3.8);
+
+      // 8. Punch Phrase Card ("GỌI LÀ: ĐỨC HUY" at 95030 ms -> rel 5.03s)
+      tl.to("#naming-card", { scale: 1, opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, 5.03);
+      tl.fromTo(
+        "#card-punch-name",
+        { scale: 0.85, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.4, ease: "power3.out" },
+        5.18
+      );
+
+      // Register timeline
+      window.__timelines = window.__timelines || {};
+      window.__timelines["scene-s14"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

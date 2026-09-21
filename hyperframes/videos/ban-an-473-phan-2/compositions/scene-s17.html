@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap">
+      <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #E7E3D9;
+      font-family: "Be Vietnam Pro", sans-serif;
+      color: #141414;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    #root {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #E7E3D9;
+    }
+
+    /* Outer timed scene clip - purely layout, never tweened directly */
+    .clip {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    /* --- Background Layers (Spotlight + Grid + Grain) --- */
+    .bg-grid {
+      position: absolute;
+      inset: 0;
+      background-size: 84px 84px;
+      background-image:
+        linear-gradient(to right, rgba(20, 20, 20, 0.16) 1.5px, transparent 1.5px),
+        linear-gradient(to bottom, rgba(20, 20, 20, 0.16) 1.5px, transparent 1.5px);
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .bg-spotlight {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 50% 45%, rgba(231, 227, 217, 0) 30%, rgba(20, 20, 20, 0.35) 70%, rgba(15, 15, 15, 0.72) 100%);
+      mix-blend-mode: multiply;
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    .grain-overlay {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      mix-blend-mode: multiply;
+      opacity: 0.18;
+      z-index: 80;
+    }
+
+    /* Fixed bottom signature orange bar */
+    .brand-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 12px;
+      background-color: #FF6A1A;
+      z-index: 95;
+    }
+
+    /* --- Camera Stage Wrapper (Tween target inside .clip) --- */
+    #camera-stage {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      transform-origin: 50% 50%;
+      z-index: 10;
+    }
+
+    /* --- Documentary Top Header --- */
+    .case-header {
+      position: absolute;
+      top: 160px;
+      left: 60px;
+      right: 60px;
+      height: 48px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 14px;
+      border-bottom: 2px solid rgba(20, 20, 20, 0.28);
+      z-index: 25;
+    }
+
+    .case-title {
+      font-size: 22px;
+      font-weight: 900;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      color: #141414;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .case-bullet {
+      width: 10px;
+      height: 10px;
+      background-color: #FF6A1A;
+      display: inline-block;
+      flex-shrink: 0;
+    }
+
+    .case-badge {
+      background-color: #141414;
+      color: #FF6A1A;
+      font-size: 15px;
+      font-weight: 900;
+      padding: 6px 14px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      flex-shrink: 0;
+    }
+
+    /* Central Infographic Collage Card */
+    #infographic-card {
+      position: absolute;
+      top: 250px;
+      left: 180px;
+      width: 720px;
+      height: 890px;
+      background-color: #F5F0E4;
+      border: 3px solid #141414;
+      box-shadow: 14px 14px 0px #FF6A1A, 24px 24px 0px rgba(20, 20, 20, 0.25);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      z-index: 10;
+      transform-origin: 50% 50%;
+    }
+
+    .card-media-wrapper {
+      position: relative;
+      flex: 1;
+      background-color: #E7E3D9;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    #main-asset {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
+    }
+
+    /* Registration crosshairs on card corners */
+    .crosshair {
+      position: absolute;
+      width: 18px;
+      height: 18px;
+      pointer-events: none;
+      z-index: 15;
+    }
+    .crosshair::before, .crosshair::after {
+      content: "";
+      position: absolute;
+      background-color: rgba(20, 20, 20, 0.5);
+    }
+    .crosshair::before { top: 8px; left: 0; width: 18px; height: 2px; }
+    .crosshair::after { top: 0; left: 8px; width: 2px; height: 18px; }
+    .crosshair-tl { top: 12px; left: 12px; }
+    .crosshair-tr { top: 12px; right: 12px; }
+    .crosshair-bl { bottom: 12px; left: 12px; }
+    .crosshair-br { bottom: 12px; right: 12px; }
+
+    /* --- Overlay Steps & Annotations --- */
+    .step-card {
+      position: absolute;
+      z-index: 30;
+      transform-origin: 50% 50%;
+    }
+
+    .step-inner {
+      display: flex;
+      align-items: stretch;
+      background-color: #141414;
+      border: 2px solid #FF6A1A;
+      box-shadow: 8px 8px 0px rgba(20, 20, 20, 0.35);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .step-badge {
+      background-color: #FF6A1A;
+      color: #141414;
+      font-size: 20px;
+      font-weight: 900;
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      letter-spacing: 0.5px;
+      white-space: nowrap;
+    }
+
+    .step-body {
+      padding: 10px 22px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .step-title {
+      color: #F7F4EC;
+      font-size: 25px;
+      font-weight: 900;
+      line-height: 1.25;
+      letter-spacing: 0.5px;
+      white-space: nowrap;
+    }
+
+    .step-meta {
+      color: #E7E3D9;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      opacity: 0.88;
+      margin-top: 2px;
+      white-space: nowrap;
+    }
+
+    /* Step 1 */
+    #step-1 {
+      top: 240px;
+      left: 60px;
+    }
+
+    /* Step 2 */
+    #step-2 {
+      top: 480px;
+      right: 60px;
+    }
+
+    /* Warning Overlay */
+    #overlay-warning {
+      position: absolute;
+      top: 580px;
+      right: 60px;
+      z-index: 35;
+      transform-origin: 100% 50%;
+    }
+
+    .warning-inner {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      background-color: #141414;
+      border: 2px solid #FF6A1A;
+      box-shadow: 8px 8px 0px rgba(20, 20, 20, 0.4);
+      padding: 12px 20px;
+      border-radius: 4px;
+    }
+
+    .warning-svg {
+      width: 44px;
+      height: 44px;
+      flex-shrink: 0;
+    }
+
+    .warning-text-group {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .warning-headline {
+      color: #FF6A1A;
+      font-size: 20px;
+      font-weight: 900;
+      letter-spacing: 0.5px;
+      white-space: nowrap;
+    }
+
+    .warning-detail {
+      color: #F7F4EC;
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      opacity: 0.9;
+      white-space: nowrap;
+    }
+
+    /* Step 3 */
+    #step-3 {
+      top: 860px;
+      left: 60px;
+    }
+
+    /* Crowd Icon Pill */
+    #overlay-crowd {
+      position: absolute;
+      top: 960px;
+      left: 60px;
+      z-index: 40;
+      transform-origin: 0% 50%;
+    }
+
+    .crowd-inner {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background-color: #141414;
+      border: 2px solid #FF6A1A;
+      box-shadow: 8px 8px 0px rgba(20, 20, 20, 0.35);
+      padding: 12px 22px;
+      border-radius: 4px;
+    }
+
+    .crowd-svg {
+      width: 54px;
+      height: 38px;
+      flex-shrink: 0;
+    }
+
+    .crowd-text-group {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .crowd-kicker {
+      color: #FF6A1A;
+      font-size: 15px;
+      font-weight: 900;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .crowd-heading {
+      color: #F7F4EC;
+      font-size: 22px;
+      font-weight: 900;
+      letter-spacing: 0.5px;
+      white-space: nowrap;
+    }
+
+    /* --- Climax Punch-Phrase Card --- */
+    #punch-card {
+      position: absolute;
+      top: 1200px;
+      left: 60px;
+      width: 960px;
+      height: 190px;
+      background-color: #141414;
+      border: 2px solid rgba(255, 106, 26, 0.6);
+      box-shadow: 12px 12px 0px #FF6A1A, 22px 22px 0px rgba(20, 20, 20, 0.35);
+      display: flex;
+      align-items: stretch;
+      overflow: hidden;
+      z-index: 50;
+      transform-origin: 50% 50%;
+    }
+
+    .punch-accent-strip {
+      width: 16px;
+      background-color: #FF6A1A;
+      flex-shrink: 0;
+    }
+
+    .punch-content {
+      flex: 1;
+      padding: 20px 34px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .punch-meta-row {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 6px;
+    }
+
+    .punch-tag {
+      background-color: #FF6A1A;
+      color: #141414;
+      font-size: 17px;
+      font-weight: 900;
+      padding: 4px 14px;
+      border-radius: 3px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .punch-subtext {
+      color: #F5F0E4;
+      font-size: 19px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      opacity: 0.85;
+    }
+
+    .punch-phrase-text {
+      font-size: 64px;
+      font-weight: 900;
+      line-height: 1.15;
+      color: #F7F4EC;
+      letter-spacing: -0.5px;
+      display: flex;
+      align-items: baseline;
+      gap: 14px;
+    }
+
+    .punch-lead {
+      color: #F7F4EC;
+    }
+
+    #counter-num {
+      color: #FF6A1A;
+      font-size: 72px;
+      font-weight: 900;
+      display: inline-block;
+      min-width: 140px;
+      transform-origin: 50% 50%;
+    }
+
+    .punch-unit {
+      color: #F7F4EC;
+    }
+  </style>
+
+  <div data-hf-id="hf-jcv2" id="root" data-composition-id="scene-s17" data-start="0" data-width="1080" data-height="1920" data-duration="12.11">
+    <!-- Background Texture & Lighting Layers -->
+    <div data-hf-id="hf-yqqm" class="bg-grid"></div>
+    <div data-hf-id="hf-5hlo" id="spotlight-layer" class="bg-spotlight"></div>
+
+    <svg data-hf-id="hf-sv4a" class="grain-overlay" width="100%" height="100%">
+      <filter data-hf-id="hf-xd64" id="noiseFilter">
+        <feturbulence data-hf-id="hf-2yt5" type="fractalNoise" baseFrequency="0.8" numOctaves="3" stitchTiles="stitch" />
+        <fecolormatrix data-hf-id="hf-9qon" type="matrix" values="0 0 0 0 0.08  0 0 0 0 0.08  0 0 0 0 0.08  0 0 0 0.18 0" />
+      </filter>
+      <rect data-hf-id="hf-3bax" width="100%" height="100%" filter="url(#noiseFilter)" />
+    </svg>
+
+    <!-- Main Visual Timed Clip (Untweened .clip container) -->
+    <div data-hf-id="hf-x8kp" id="scene-clip" class="clip" data-start="0" data-duration="12.11" data-track-index="0" data-layout-allow-overflow="true">
+      <!-- Camera Stage (Inner tween target for scale/opacity) -->
+      <div data-hf-id="hf-n350" id="camera-stage" data-layout-allow-overflow="true">
+        <!-- Top Case Header -->
+        <div data-hf-id="hf-d9fn" class="case-header" data-layout-allow-overflow="true">
+          <div data-hf-id="hf-k30b" class="case-title">
+            <span data-hf-id="hf-gx96" class="case-bullet"></span>
+            HỒ SƠ VỤ ÁN #473 // PHƯƠNG THỨC HOẠT ĐỘNG
+          </div>
+          <div data-hf-id="hf-ngr8" class="case-badge">CHU TRÌNH KHÉP KÍN</div>
+        </div>
+
+        <!-- Central Infographic Card -->
+        <div data-hf-id="hf-5rpr" id="infographic-card" data-layout-allow-overflow="true">
+          <div data-hf-id="hf-eepp" class="crosshair crosshair-tl"></div>
+          <div data-hf-id="hf-dmxv" class="crosshair crosshair-tr"></div>
+          <div data-hf-id="hf-7ezf" class="crosshair crosshair-bl"></div>
+          <div data-hf-id="hf-uzyd" class="crosshair crosshair-br"></div>
+
+          <div data-hf-id="hf-pj17" class="card-media-wrapper">
+            <img data-hf-id="hf-h12y" id="main-asset" src="assets/img-05-contraband-online-sales-flow.jpeg" alt="Minh họa chu trình buôn bán online bất chính">
+          </div>
+        </div>
+
+        <!-- Step 1: Lập nhóm Zalo (at 0.22s) -->
+        <div data-hf-id="hf-cujq" id="step-1" class="step-card" data-layout-allow-overflow="true">
+          <div data-hf-id="hf-rlb9" class="step-inner">
+            <div data-hf-id="hf-r9cz" class="step-badge">01</div>
+            <div data-hf-id="hf-crj3" class="step-body">
+              <div data-hf-id="hf-l5va" class="step-title">1. LẬP NHÓM ZALO</div>
+              <div data-hf-id="hf-e6sn" class="step-meta">TẠO KHÔNG GIAN KÍN // CÂU KÉO</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 2: Đăng nội dung đồi trụy (at 2.21s) -->
+        <div data-hf-id="hf-8wfp" id="step-2" class="step-card" data-layout-allow-overflow="true">
+          <div data-hf-id="hf-hss9" class="step-inner">
+            <div data-hf-id="hf-qv1y" class="step-badge">02</div>
+            <div data-hf-id="hf-vpb3" class="step-body">
+              <div data-hf-id="hf-q4ec" class="step-title">2. NỘI DUNG KHIÊU DÂM</div>
+              <div data-hf-id="hf-s217" class="step-meta">KÍCH THÍCH LƯỢT XEM // GIỮ CHÂN</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Warning Icon Overlay (at 2.77s) -->
+        <div data-hf-id="hf-ymd3" id="overlay-warning" data-layout-allow-overflow="true">
+          <div data-hf-id="hf-rw93" class="warning-inner">
+            <svg data-hf-id="hf-m2c8" id="svg-warning" class="warning-svg" viewBox="0 0 44 44" fill="none">
+              <path data-hf-id="hf-y3vx" id="warn-triangle" d="M22 4 L41 38 L3 38 Z" stroke="#FF6A1A" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
+              <path data-hf-id="hf-dhxv" id="warn-line" d="M22 16 L22 27" stroke="#FF6A1A" stroke-width="4" stroke-linecap="round" />
+              <circle data-hf-id="hf-3537" id="warn-dot" cx="22" cy="33" r="2.5" fill="#FF6A1A" />
+            </svg>
+            <div data-hf-id="hf-049i" class="warning-text-group">
+              <span data-hf-id="hf-uupl" class="warning-headline">THỦ ĐOẠN ĐỒI TRỤY</span>
+              <span data-hf-id="hf-6q14" class="warning-detail">CÂU KHÁCH PHẠM PHÁP</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 3: Mồi chài mua hàng Sìn Sú (at 5.90s) -->
+        <div data-hf-id="hf-84rw" id="step-3" class="step-card" data-layout-allow-overflow="true">
+          <div data-hf-id="hf-izpc" class="step-inner">
+            <div data-hf-id="hf-qgqx" class="step-badge">03</div>
+            <div data-hf-id="hf-vb02" class="step-body">
+              <div data-hf-id="hf-vvmk" class="step-title">3. MỒI CHÀI MUA HÀNG</div>
+              <div data-hf-id="hf-mfto" class="step-meta">SÌN SÚ // CHÊNH LỆCH 250K - 350K</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Crowd Icon Overlay (at 9.73s) -->
+        <div data-hf-id="hf-1h5k" id="overlay-crowd" data-layout-allow-overflow="true">
+          <div data-hf-id="hf-qvx8" class="crowd-inner">
+            <svg data-hf-id="hf-uj74" id="svg-crowd" class="crowd-svg" viewBox="0 0 64 44" fill="none">
+              <circle data-hf-id="hf-n50a" class="crowd-path" cx="32" cy="14" r="7" stroke="#FF6A1A" stroke-width="3.5" />
+              <path data-hf-id="hf-ui0l" class="crowd-path" d="M18 38 C18 28 46 28 46 38" stroke="#FF6A1A" stroke-width="3.5" stroke-linecap="round" />
+              <circle data-hf-id="hf-ckls" class="crowd-path" cx="14" cy="17" r="5" stroke="#F7F4EC" stroke-width="2.5" />
+              <path data-hf-id="hf-gvqg" class="crowd-path" d="M4 40 C4 32 24 32 24 40" stroke="#F7F4EC" stroke-width="2.5" stroke-linecap="round" />
+              <circle data-hf-id="hf-3j7c" class="crowd-path" cx="50" cy="17" r="5" stroke="#F7F4EC" stroke-width="2.5" />
+              <path data-hf-id="hf-rb5i" class="crowd-path" d="M40 40 C40 32 60 32 60 40" stroke="#F7F4EC" stroke-width="2.5" stroke-linecap="round" />
+            </svg>
+            <div data-hf-id="hf-lv8f" class="crowd-text-group">
+              <span data-hf-id="hf-vp9o" class="crowd-kicker">LÔI KÉO DỒN DẬP</span>
+              <span data-hf-id="hf-ddsi" class="crowd-heading">BÙNG NỔ THÀNH VIÊN</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Punch-Phrase Climax (at 10.68s) -->
+        <div data-hf-id="hf-rn9b" id="punch-card" data-layout-allow-overflow="true">
+          <div data-hf-id="hf-7dtm" class="punch-accent-strip"></div>
+          <div data-hf-id="hf-pj6g" class="punch-content">
+            <div data-hf-id="hf-ryep" class="punch-meta-row">
+              <span data-hf-id="hf-vbn2" class="punch-tag">QUY MÔ NHÓM KÍN</span>
+              <span data-hf-id="hf-16jo" class="punch-subtext">ĐỨC HUY ĐIỀU HÀNH</span>
+            </div>
+            <div data-hf-id="hf-876q" class="punch-phrase-text">
+              <span data-hf-id="hf-cac4" class="punch-lead">KỶ LỤC:</span>
+              <span data-hf-id="hf-sp1v" id="counter-num">0</span>
+              <span data-hf-id="hf-rnnh" class="punch-unit">NGƯỜI</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Visual Anchor: Bottom Brand Bar -->
+    <div data-hf-id="hf-add3" class="brand-bar"></div>
+  </div>
+
+  <script>
+    // Master GSAP seekable timeline contract
+    const tl = gsap.timeline({ paused: true });
+
+    // 1. Prepare SVG stroke draw paths deterministically
+    const warnTriangle = document.getElementById("warn-triangle");
+    const warnLine = document.getElementById("warn-line");
+    const warnDot = document.getElementById("warn-dot");
+
+    if (warnTriangle && warnLine) {
+      const lenTri = warnTriangle.getTotalLength();
+      const lenLine = warnLine.getTotalLength();
+      warnTriangle.style.strokeDasharray = lenTri.toString();
+      warnTriangle.style.strokeDashoffset = lenTri.toString();
+      warnLine.style.strokeDasharray = lenLine.toString();
+      warnLine.style.strokeDashoffset = lenLine.toString();
+    }
+
+    const crowdPaths = document.querySelectorAll(".crowd-path");
+    crowdPaths.forEach(function(path) {
+      const len = path.getTotalLength();
+      path.style.strokeDasharray = len.toString();
+      path.style.strokeDashoffset = len.toString();
+    });
+
+    // 2. Camera Stage entrance ("zoom-through" transition in on child wrapper, never .clip)
+    tl.fromTo("#camera-stage",
+      { scale: 0.88, opacity: 0 },
+      { scale: 1.0, opacity: 1, duration: 0.6, ease: "power3.out" },
+      0.0
+    );
+
+    // Continuous camera motion: subtle push-in across the whole scene
+    tl.to("#camera-stage",
+      { scale: 1.04, duration: 11.51, ease: "none" },
+      0.6
+    );
+
+    // Explicit fromTo for seek-safe ambient organic float on central card
+    tl.fromTo("#infographic-card",
+      { y: 0 },
+      { y: -6, duration: 2.5, yoyo: true, repeat: 3, ease: "sine.inOut" },
+      0.6
+    );
+
+    // Dynamic spotlight intensity adjustment toward the climax
+    tl.to("#spotlight-layer",
+      { opacity: 0.85, duration: 3.0, ease: "power2.inOut" },
+      7.5
+    );
+
+    // --- Overlay Timing sequence as specified in Shotlist ---
+
+    // Overlay 1: "1. LẬP NHÓM ZALO" at 0.22s
+    tl.fromTo("#step-1",
+      { y: 30, opacity: 0, scale: 0.92 },
+      { y: 0, opacity: 1, scale: 1.0, duration: 0.5, ease: "power3.out" },
+      0.22
+    );
+
+    // Overlay 2: "2. NỘI DUNG KHIÊU DÂM" at 2.21s
+    tl.fromTo("#step-2",
+      { y: 30, opacity: 0, scale: 0.92 },
+      { y: 0, opacity: 1, scale: 1.0, duration: 0.5, ease: "power3.out" },
+      2.21
+    );
+
+    // Overlay 3: Icon "warning" at 2.77s
+    tl.fromTo("#overlay-warning",
+      { scale: 0, opacity: 0 },
+      { scale: 1.0, opacity: 1, duration: 0.45, ease: "power3.out" },
+      2.77
+    );
+
+    if (warnTriangle && warnLine && warnDot) {
+      tl.to(warnTriangle, { strokeDashoffset: 0, duration: 0.45, ease: "power2.out" }, 2.85);
+      tl.to(warnLine, { strokeDashoffset: 0, duration: 0.3, ease: "power2.out" }, 3.05);
+      tl.fromTo(warnDot, { opacity: 0 }, { opacity: 1, duration: 0.2, ease: "power1.out" }, 3.25);
+    }
+
+    // Overlay 4: "3. MỒI CHÀI MUA HÀNG" at 5.90s
+    tl.fromTo("#step-3",
+      { y: 30, opacity: 0, scale: 0.92 },
+      { y: 0, opacity: 1, scale: 1.0, duration: 0.5, ease: "power3.out" },
+      5.90
+    );
+
+    // Overlay 5: Icon "crowd" at 9.73s
+    tl.fromTo("#overlay-crowd",
+      { scale: 0, opacity: 0 },
+      { scale: 1.0, opacity: 1, duration: 0.45, ease: "power3.out" },
+      9.73
+    );
+
+    crowdPaths.forEach(function(path) {
+      tl.to(path, { strokeDashoffset: 0, duration: 0.5, ease: "power2.out" }, 9.85);
+    });
+
+    // Overlay 6: Punch-phrase "KỶ LỤC: 999 NGƯỜI" at 10.68s
+    tl.fromTo("#punch-card",
+      { scale: 0.88, opacity: 0, y: 35 },
+      { scale: 1.0, opacity: 1, y: 0, duration: 0.45, ease: "power3.out" },
+      10.68
+    );
+
+    // Visual language: "data" - deterministic integer counter climb up to 999
+    tl.fromTo("#counter-num",
+      { innerText: 0 },
+      {
+        innerText: 999,
+        snap: { innerText: 1 },
+        duration: 0.7,
+        ease: "power2.out"
+      },
+      10.75
+    );
+
+    // Explicit seek-safe scale pulse on reaching the climax 999
+    tl.fromTo("#counter-num",
+      { scale: 1.0 },
+      {
+        scale: 1.15,
+        duration: 0.15,
+        yoyo: true,
+        repeat: 1,
+        ease: "power2.out",
+        immediateRender: false
+      },
+      11.45
+    );
+
+    // Register paused timeline under the root composition ID
+    window.__timelines["scene-s17"] = tl;
+  </script>
+
+    </template>
+  </body>
+</html>

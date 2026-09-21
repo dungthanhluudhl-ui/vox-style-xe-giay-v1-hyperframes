@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap">
+      <style>
+      *, *::before, *::after {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #141414;
+        color: #141414;
+        font-family: "Be Vietnam Pro", -apple-system, BlinkMacSystemFont, sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        background-color: #F5F0E4; /* Card variant background tone */
+        overflow: hidden;
+      }
+
+      /* Fullscreen clip container */
+      .clip {
+        position: absolute;
+        inset: 0;
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+      }
+
+      /* Subtle paper texture overlay */
+      .paper-grain {
+        position: absolute;
+        inset: 0;
+        opacity: 0.14;
+        pointer-events: none;
+        background-image: radial-gradient(#141414 1px, transparent 1px);
+        background-size: 16px 16px;
+        mix-blend-mode: multiply;
+        z-index: 1;
+      }
+
+      /* Persistent Brand Signature Bottom Orange Bar */
+      .bottom-orange-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 12px;
+        background-color: #FF6A1A;
+        z-index: 99;
+      }
+
+      /* 3D Scene Viewport */
+      .scene-stage {
+        position: absolute;
+        inset: 0;
+        perspective: 1400px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        z-index: 10;
+      }
+
+      /* Photo collage card container */
+      .photo-card-wrap {
+        position: absolute;
+        top: 260px;
+        left: 90px;
+        width: 900px;
+        height: 800px;
+        transform-style: preserve-3d;
+      }
+
+      .photo-card {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        background-color: #E7E3D9;
+        border: 4px solid #141414;
+        box-shadow: 16px 20px 0px #141414;
+        overflow: hidden;
+        transform-origin: 20% 50%;
+        opacity: 0; /* Author initial hidden state directly in CSS to avoid flash */
+      }
+
+      .photo-card img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center 30%;
+        display: block;
+        transform-origin: center center;
+      }
+
+      /* Top Label Badge ("BẠN BÈ DÒ HỎI") */
+      .label-badge {
+        position: absolute;
+        top: 180px;
+        left: 90px;
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        background-color: #141414;
+        color: #F7F4EC;
+        padding: 14px 28px;
+        border-radius: 4px;
+        box-shadow: 6px 8px 0px #FF6A1A;
+        z-index: 30;
+        opacity: 0; /* Initial hidden state */
+      }
+
+      .label-badge .indicator-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background-color: #FF6A1A;
+      }
+
+      .label-badge span {
+        font-size: 26px;
+        font-weight: 900;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+      }
+
+      /* Speech / Quote Bubble ("“CÓ KÈO GÌ KHÔNG?”") */
+      .quote-bubble {
+        position: absolute;
+        top: 1080px;
+        left: 80px;
+        width: 920px;
+        background-color: #FFFFFF;
+        border: 5px solid #141414;
+        border-radius: 20px;
+        padding: 40px 48px;
+        box-shadow: 12px 14px 0px #FF6A1A, 20px 22px 0px #141414;
+        z-index: 40;
+        transform-origin: 75% 15%;
+        opacity: 0; /* Initial hidden state */
+      }
+
+      /* Speech bubble pointer arrow pointing towards friend in cafe */
+      .quote-bubble::before {
+        content: "";
+        position: absolute;
+        top: -34px;
+        right: 180px;
+        width: 0;
+        height: 0;
+        border-left: 24px solid transparent;
+        border-right: 24px solid transparent;
+        border-bottom: 34px solid #141414;
+      }
+
+      .quote-bubble::after {
+        content: "";
+        position: absolute;
+        top: -26px;
+        right: 184px;
+        width: 0;
+        height: 0;
+        border-left: 20px solid transparent;
+        border-right: 20px solid transparent;
+        border-bottom: 28px solid #FFFFFF;
+      }
+
+      .quote-kicker-badge {
+        display: inline-flex;
+        align-items: center;
+        background-color: #FF6A1A;
+        color: #141414;
+        font-size: 22px;
+        font-weight: 900;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        padding: 6px 14px;
+        border-radius: 4px;
+        margin-bottom: 16px;
+      }
+
+      .quote-text {
+        margin: 0;
+        font-size: 64px;
+        font-weight: 900;
+        line-height: 1.25;
+        color: #141414;
+        text-transform: uppercase;
+      }
+
+      .quote-text .accent-highlight {
+        background-color: #FF6A1A;
+        color: #141414;
+        padding: 2px 14px;
+        border-radius: 6px;
+        display: inline-block;
+      }
+
+      /* Self-Drawing Question Mark Icon Badge */
+      .question-badge {
+        position: absolute;
+        top: -46px;
+        right: 32px;
+        width: 104px;
+        height: 104px;
+        background-color: #F5F0E4;
+        border: 4px solid #141414;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 6px 6px 0px #141414;
+        z-index: 50;
+        transform-origin: center center;
+        opacity: 0; /* Initial hidden state */
+      }
+
+      .question-badge svg {
+        width: 60px;
+        height: 60px;
+      }
+
+      #q-dot {
+        opacity: 0;
+      }
+    </style>
+
+    <div data-hf-id="hf-n98l" id="root" data-composition-id="scene-s07" data-start="0" data-width="1080" data-height="1920" data-duration="5.12" data-layout-allow-overflow="true">
+      <!-- Background Texture -->
+      <div data-hf-id="hf-osr0" class="paper-grain"></div>
+
+      <!-- Main Visual Scene Clip (0s to 5.12s) -->
+      <section data-hf-id="hf-wnhz" id="scene-s07" class="clip" data-start="0" data-duration="5.12">
+        <div data-hf-id="hf-8iv5" class="scene-stage">
+          <!-- Top Classification Tag -->
+          <div data-hf-id="hf-pkt2" id="label-badge" class="label-badge">
+            <div data-hf-id="hf-qbvd" class="indicator-dot"></div>
+            <span data-hf-id="hf-ot42">BẠN BÈ DÒ HỎI</span>
+          </div>
+
+          <!-- Cafe Pitch Collage Card -->
+          <div data-hf-id="hf-7k6a" id="photo-card-wrap" class="photo-card-wrap">
+            <div data-hf-id="hf-32ia" id="photo-card" class="photo-card">
+              <img data-hf-id="hf-ykl8" id="photo-img" src="assets/img-07-mlm-fraud-cafe-pitch.jpeg" alt="Hai thanh niên ngồi đối diện tại quán cà phê">
+            </div>
+          </div>
+
+          <!-- Quote Speech Bubble Overlay -->
+          <div data-hf-id="hf-qnqa" id="quote-bubble" class="quote-bubble" data-layout-allow-overlap="true">
+            <!-- Drawn Question Icon Badge -->
+            <div data-hf-id="hf-taju" id="question-badge" class="question-badge">
+              <svg data-hf-id="hf-hkqv" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path data-hf-id="hf-e73w" id="q-curve" d="M 32 36 C 32 23, 41 15, 52 15 C 64 15, 72 23, 72 34 C 72 46, 52 48, 52 64" stroke="#FF6A1A" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" />
+                <circle data-hf-id="hf-o0t3" id="q-dot" cx="52" cy="80" r="5" fill="#FF6A1A" />
+              </svg>
+            </div>
+
+            <div data-hf-id="hf-gwgk" class="quote-kicker-badge">CÂU HỎI QUEN THUỘC</div>
+            <h1 data-hf-id="hf-ui56" class="quote-text">“CÓ <span data-hf-id="hf-9xnz" class="accent-highlight">KÈO GÌ</span> KHÔNG?”</h1>
+          </div>
+        </div>
+      </section>
+
+      <!-- Signature Orange Bar -->
+      <div data-hf-id="hf-2ykk" class="bottom-orange-bar"></div>
+    </div>
+
+    <script>
+      // Prepare SVG Path drawing for deterministic rendering
+      const qPath = document.getElementById("q-curve");
+      let qPathLength = 100;
+      if (qPath) {
+        qPathLength = Math.ceil(qPath.getTotalLength());
+        qPath.style.strokeDasharray = qPathLength + " " + qPathLength;
+        qPath.style.strokeDashoffset = qPathLength;
+      }
+
+      // Root GSAP Paused Timeline
+      const tl = gsap.timeline({ paused: true });
+
+      // 1. Camera Motion: Subtle continuous zoom-in on image
+      tl.fromTo(
+        "#photo-img",
+        { scale: 1.0 },
+        { scale: 1.09, duration: 5.12, ease: "none" },
+        0
+      );
+
+      // 2. Entrance: 3D Flip entrance of the photo card (starts at 0.15s)
+      tl.fromTo(
+        "#photo-card",
+        {
+          rotationY: -65,
+          scale: 0.88,
+          opacity: 0,
+          x: -40
+        },
+        {
+          rotationY: 0,
+          scale: 1,
+          opacity: 1,
+          x: 0,
+          duration: 0.85,
+          ease: "power3.out"
+        },
+        0.15
+      );
+
+      // 3. Subtle paper card organic float after landing
+      tl.to(
+        "#photo-card-wrap",
+        {
+          y: -10,
+          duration: 4.0,
+          ease: "sine.inOut"
+        },
+        1.0
+      );
+
+      // 4. Overlay 1: Label Badge arrives ("BẠN BÈ DÒ HỎI") at 44400ms -> 1.87s
+      tl.fromTo(
+        "#label-badge",
+        {
+          y: -30,
+          opacity: 0
+        },
+        {
+          y: 0,
+          opacity: 1,
+          duration: 0.45,
+          ease: "power3.out"
+        },
+        1.87
+      );
+
+      // 5. Overlay 2: Quote Bubble pops in ("“CÓ KÈO GÌ KHÔNG?”") at 46130ms -> 3.60s
+      tl.fromTo(
+        "#quote-bubble",
+        {
+          scale: 0,
+          opacity: 0
+        },
+        {
+          scale: 1,
+          opacity: 1,
+          duration: 0.5,
+          ease: "power3.out"
+        },
+        3.60
+      );
+
+      // 6. Overlay 3: Question Mark Badge & Self-drawing path at 46500ms -> 3.97s
+      tl.fromTo(
+        "#question-badge",
+        {
+          scale: 0,
+          rotation: -25,
+          opacity: 0
+        },
+        {
+          scale: 1,
+          rotation: 0,
+          opacity: 1,
+          duration: 0.4,
+          ease: "power3.out"
+        },
+        3.97
+      );
+
+      // Progressively trace the question mark stroke
+      if (qPath) {
+        tl.fromTo(
+          "#q-curve",
+          { strokeDashoffset: qPathLength },
+          {
+            strokeDashoffset: 0,
+            duration: 0.45,
+            ease: "power2.out"
+          },
+          4.10
+        );
+      }
+
+      // Pop the question mark dot
+      tl.fromTo(
+        "#q-dot",
+        {
+          scale: 0,
+          opacity: 0,
+          transformOrigin: "center"
+        },
+        {
+          scale: 1,
+          opacity: 1,
+          duration: 0.25,
+          ease: "power3.out"
+        },
+        4.45
+      );
+
+      // Register master timeline on window.__timelines["scene-s07"]
+      window.__timelines = window.__timelines || {};
+      window.__timelines["scene-s07"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

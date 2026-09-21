@@ -113,8 +113,8 @@ Media tới đây từ Stage 2b (tự động qua Google Flow) hoặc copy tay n
 ## 5. Lập kế hoạch nội dung
 | Task | Ai/gì đảm nhiệm | Công cụ |
 |---|---|---|
-| Lập Scene Plan | 9router[reasoning_generator] | `cx/gpt-5.6-sol` hoặc `ag/claude-opus-4-6-thinking` |
-| Lập Shotlist | 9router[reasoning_generator hoặc reasoning_alt] | `cx/gpt-6-astra` |
+| Lập Scene Plan | 9router[reasoning_generator] | `ag/gemini-3.8-flash-high` (đổi từ `cx/gpt-5.6-sol` cùng đợt POC Stage 7, xem mục 6) |
+| Lập Shotlist | 9router[reasoning_generator hoặc reasoning_alt] | `ag/gemini-3.8-flash-high` hoặc `cx/gpt-6-astra` |
 | Đọc & chốt Scene Plan/Shotlist trước khi dựng code | Claude | — (text, không nặng context) |
 
 ## 6. Dựng video (code HyperFrames)
@@ -153,6 +153,8 @@ HyperFrames-cụ-thể tổng quát hoá được (contrast, template-literal se
 "cutout"...) — khi Claude xử lý escalation hoặc phát hiện lỗi lặp lại qua `pipeline/codegen-issues.jsonl` (field `framework: "hyperframes"`, dùng chung với Remotion), thêm gotcha mới vào đây thay vì chỉ sửa 1 lần cho scene đang lỗi.
 
 **Bug thật đã sửa ở tầng ráp (`sync-root-hf-lib.mjs`), áp dụng cho MỌI video:** CSS `.clip` (style mọi slot `data-composition-src` trong `index.html`) phải có `isolation: isolate` — thiếu dòng này, z-index dùng NỘI BỘ trong 1 scene có thể thoát stacking context và đè lên slot khác (kể cả `caption-track` dù luôn nằm sau trong DOM). Xem memory `feedback_incremental_buildout` bài học #5 để biết đầy đủ cách phát hiện + tại sao track-index không liên quan.
+
+**Bug race condition thật đã sửa (video "ban-an-473-phan-2", 2026-09-22), áp dụng cho MỌI video:** trước đây `07-codegen.hf.router.mjs` scaffold PROJECT CHUNG của video (khi `hyperframes.json` của `hfProjectDir` chưa tồn tại) vào một thư mục tạm tên CỐ ĐỊNH `.scaffold-tmp-<slug>` (không gắn sceneId/pid) — khác với project test standalone riêng từng scene vốn đã an toàn. Chạy thẳng ≥2 scene song song NGAY TỪ SCENE ĐẦU (chưa có scene nào bootstrap project chung trước) khiến nhiều process cùng thấy "chưa tồn tại" và cùng ghi/xoá CHUNG một thư mục tạm → 11/18 scene fail với lỗi `hyperframes init`/`ENOENT scandir` (không phải lỗi nội dung). Đã sửa: tên thư mục tạm giờ gắn cả `sceneId` + `process.pid` để luôn unique. Trước bản vá này, quy trình "chạy S01 riêng để bootstrap trước khi vào vòng song song" (xem video ban-an-473-phan-1 bên dưới) ngẫu nhiên né được bug này (project chung đã tồn tại trước khi vòng song song bắt đầu) — nhưng đó không phải lý do chính thức của bước bootstrap riêng (lý do chính thức là phát hiện sớm gotcha nội dung). Từ nay chạy thẳng toàn bộ scene song song ngay từ đầu (không cần bootstrap 1 scene riêng trước) là an toàn.
 
 Chỉ chạy `scripts/07-codegen.hf.router.mjs` tuần tự/thủ công (không qua orchestrator) khi có lý do cụ thể, ví dụ đang debug/sửa riêng 1 scene bằng `--issue-file`.
 
@@ -211,19 +213,54 @@ writer khác cùng thuộc tính) và `text_occluded` (chữ bị phần tử kh
 được trong ngân sách 3 lần thử, không cần can thiệp tay, nhưng theo dõi qua
 `pipeline/codegen-issues.jsonl` nếu tái diễn nhiều.
 
+**Nghi vấn chưa xác nhận 100% (video "ban-an-473-phan-2", scene S13, 2026-09-22) — đốm cam nhỏ
+lạc trên silhouette nhân vật:** người dùng xem preview phát hiện 1 đốm tròn cam ⌀10-12px đè lên
+thân silhouette "Sơn". Xác nhận toạ độ chính xác qua vision agent (x≈428, y≈742 trên khung
+1080×1920, nằm giữa ngực/sườn silhouette). Đối chiếu code `compositions/scene-s13.html`: nhân vật
+dùng kỹ thuật 2-layer SVG "cutout" phổ biến trong style DNA (`.shadow-layer` màu cam `#ff7a1a`
+đặt `top:10px; left:10px` lệch phía sau `.front-layer` màu đen cùng path) để tạo hiệu ứng đổ bóng
+giấy — **nghi vấn cao nhất nhưng CHƯA xác nhận qua debug trực tiếp** (chưa thử tắt từng layer để
+kiểm chứng): tại các đoạn path có độ cong lớn (cổ/vai nơi phần đầu path và phần thân path nối
+nhau), phần lệch offset 10px của `.shadow-layer` có thể lộ ra ngoài viền `.front-layer` thành 1
+đốm cam nhỏ tách biệt thay vì bị che khuất hoàn toàn như phần còn lại. Nếu gặp lại ở video sau
+(cùng kỹ thuật 2-layer shadow cho silhouette nhân vật), kiểm tra bằng cách tạm ẩn `.front-layer`
+để xem `.shadow-layer` lộ ra ở đâu, rồi cân nhắc giảm offset hoặc dùng `clip-path`/mask thay vì
+2 SVG chồng lệch.
+
 ## 7. Preview & QA
+**QUAN TRỌNG (làm rõ 2026-09-22 sau khi Claude hiểu nhầm và tự ý làm sai — xem bài học bên dưới):
+đây KHÔNG PHẢI bước bắt buộc chạy tự động cho mọi video.** Sau khi Stage 6 xong và
+`hyperframes check` trên project đã ráp sạch lỗi (ok=true), đi thẳng sang Stage 8 (Render).
+Chỉ dùng preview/snapshot khi CÓ lý do cụ thể cần nó: đang debug trực tiếp 1 vấn đề đã biết,
+người dùng yêu cầu xem trước, hoặc lần đầu áp dụng kỹ thuật/kiến trúc mới chưa từng kiểm chứng.
+Chạy mặc định mỗi video là lãng phí token/thời gian vô ích — không phải video nào cũng có vấn đề
+sau Stage 6/7.
+
 | Task | Ai/gì đảm nhiệm | Công cụ |
 |---|---|---|
-| Preview | Local | `npx hyperframes preview --background` (xem `hyperframes/videos/<slug>/CLAUDE.md`) |
-| Kiểm tra hình ảnh preview có khớp ý đồ/style không | 9router[vision_standard] | `hyperframes snapshot` chụp vài frame gửi review, trả nhận xét text — KHÔNG Claude tự xem |
+| Preview (chỉ khi cần debug/người dùng yêu cầu xem) | Local | `npx hyperframes preview --background` (xem `hyperframes/videos/<slug>/CLAUDE.md`) |
+| Kiểm tra hình ảnh preview có khớp ý đồ/style không (chỉ khi cần, KHÔNG mặc định) | 9router[vision_standard] | `hyperframes snapshot` chụp vài frame gửi review, trả nhận xét text — KHÔNG Claude tự xem |
 | Sửa code theo phản hồi QA | Claude (hoặc quay lại bước generate ở Stage 6 nếu là lỗi code) | — |
 
 ## 8. Render
+**Chạy ngay sau khi Stage 6 xong (`hyperframes check` project đã ráp ok=true), không cần bước
+Preview/QA riêng ở giữa** (xem ghi chú mục 7).
+
 | Task | Ai/gì đảm nhiệm | Công cụ |
 |---|---|---|
 | Render video cuối (chỉ khi được yêu cầu rõ) | Local | `npx hyperframes render --quality looks -o out/<slug>-full.mp4 hyperframes/videos/<slug>` |
 | Kiểm tra file render (duration, resolution, không lỗi) | Local | ffprobe |
-| Xác nhận nội dung hiển thị đúng (vd phụ đề, hiệu ứng xuyên suốt) trước khi coi Checkpoint đạt | 9router[vision_standard] | trích frame bằng ffmpeg tại nhiều mốc + gửi vision agent — bài học thật: `hyperframes check` PASS không đảm bảo mọi lớp nội dung THỰC SỰ hiển thị (vd bug stacking-context ở mục 6) |
+| Xác nhận nội dung hiển thị đúng (vd phụ đề, hiệu ứng xuyên suốt) — CHỈ khi có lý do nghi ngờ cụ thể (không mặc định mọi video) | 9router[vision_standard] | trích frame bằng ffmpeg tại nhiều mốc + gửi vision agent — bài học thật (video 5): `hyperframes check` PASS không đảm bảo mọi lớp nội dung THỰC SỰ hiển thị (vd bug stacking-context ở mục 6). Đây là ghi chú cho 1 trường hợp cụ thể đã xảy ra, KHÔNG phải quy tắc bắt buộc tự động cho mọi video. |
+
+**Bài học thật (video "ban-an-473-phan-2", 2026-09-22):** sau khi Stage 6 xong và `hyperframes
+check` đã ok=true, Claude tự ý mở `hyperframes preview --background` (không ai yêu cầu xem) và
+tự chụp snapshot + gửi 9router[vision] để "tự QA" toàn bộ 18 scene trước khi render — người dùng
+chỉ rõ đây là hiểu sai pipeline: (1) không có yêu cầu nào cho việc mở preview cho người dùng xem,
+(2) bước xác minh bằng vision agent ở mục 8 chỉ là ghi chú từ 1 lần xảy ra vấn đề thật (video 5,
+phụ đề thiếu), không phải bước mặc định bắt buộc tự động — làm vậy mỗi video là tốn token vô ích.
+**Áp dụng từ nay:** sau Stage 6 sạch lỗi → Render thẳng (Stage 8) → chỉ verify bằng
+ffprobe (bắt buộc, rẻ) → vision agent CHỈ khi người dùng report vấn đề cụ thể sau khi xem, hoặc
+Claude có nghi ngờ rõ ràng dựa trên bằng chứng cụ thể (không phải "để chắc ăn").
 
 ## Lịch sử: pipeline Remotion (archive, 4 video đầu — KHÔNG áp dụng cho video mới)
 

@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap">
+      <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+        background: #e7e3d9;
+        font-family: "Be Vietnam Pro", sans-serif;
+        color: #141414;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: #e7e3d9;
+      }
+
+      /* Nền biến thể chart: 4 đường kẻ ngang đậm tại 20%, 40%, 60%, 80% + vạch cam bên trái */
+      .chart-bg {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        z-index: 1;
+      }
+      .chart-grid-pattern {
+        position: absolute;
+        inset: 0;
+        background-image:
+          linear-gradient(to right, rgba(20, 20, 20, 0.08) 1.5px, transparent 1.5px),
+          linear-gradient(to bottom, rgba(20, 20, 20, 0.08) 1.5px, transparent 1.5px);
+        background-size: 84px 84px;
+        opacity: 0.65;
+      }
+      .chart-line {
+        position: absolute;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: rgba(20, 20, 20, 0.32);
+      }
+      .chart-line::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: -4px;
+        width: 28px;
+        height: 10px;
+        background: #ff6a1a;
+      }
+      .chart-line-1 { top: 20%; }
+      .chart-line-2 { top: 40%; }
+      .chart-line-3 { top: 60%; }
+      .chart-line-4 { top: 80%; }
+
+      /* Thanh cam thương hiệu cố định mép đáy */
+      .bottom-brand-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 12px;
+        background: #ff6a1a;
+        z-index: 100;
+        pointer-events: none;
+      }
+
+      /* Header hồ sơ chứng cứ cố định cho toàn bộ cảnh S06 */
+      .scene-header {
+        position: absolute;
+        top: 90px;
+        left: 54px;
+        right: 54px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        z-index: 40;
+        pointer-events: none;
+      }
+      .header-badge {
+        display: inline-flex;
+        align-items: center;
+        background: #141414;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 8px 24px rgba(20, 20, 20, 0.2);
+      }
+      .badge-code {
+        background: #ff6a1a;
+        color: #141414;
+        font-weight: 900;
+        font-size: 24px;
+        padding: 8px 18px;
+        letter-spacing: 0.05em;
+      }
+      .badge-title {
+        color: #f7f4ec;
+        font-weight: 900;
+        font-size: 24px;
+        padding: 8px 22px;
+        letter-spacing: 0.03em;
+        text-transform: uppercase;
+      }
+      .header-meta {
+        font-size: 20px;
+        font-weight: 900;
+        color: #141414;
+        background: rgba(245, 240, 228, 0.95);
+        padding: 8px 16px;
+        border: 2px solid #141414;
+        border-radius: 6px;
+      }
+
+      /* Clip chuẩn HyperFrames: định vị full-frame */
+      .clip {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+
+      /* ================= SHOT 1 ================= */
+      .video-wrapper {
+        position: absolute;
+        top: 170px;
+        left: 54px;
+        right: 54px;
+        height: 1220px;
+        border: 4px solid #141414;
+        background: #141414;
+        box-shadow: 12px 14px 0px rgba(20, 20, 20, 0.35);
+        overflow: hidden;
+        transform-origin: 50% 50%;
+        z-index: 10;
+      }
+      #vid-counting {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+        transform-origin: 50% 50%;
+      }
+      .video-overlay-frame {
+        position: absolute;
+        inset: 0;
+        box-shadow: inset 0 0 60px rgba(20, 20, 20, 0.45);
+        pointer-events: none;
+      }
+
+      /* Overlay Shot 1: Label CÙNG CÔNG THỨC */
+      .label-formula-pill {
+        position: absolute;
+        top: 220px;
+        left: 84px;
+        display: inline-flex;
+        align-items: center;
+        background: #141414;
+        border: 3px solid #ff6a1a;
+        border-radius: 8px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+        z-index: 30;
+        opacity: 0;
+        pointer-events: none;
+      }
+      .pill-tag {
+        background: #ff6a1a;
+        color: #141414;
+        font-weight: 900;
+        font-size: 26px;
+        padding: 10px 18px;
+        text-transform: uppercase;
+      }
+      .pill-main-text {
+        color: #f7f4ec;
+        font-weight: 900;
+        font-size: 32px;
+        padding: 10px 24px;
+        letter-spacing: 0.02em;
+      }
+
+      /* Overlay Shot 1: Icon Money */
+      .icon-money-badge {
+        position: absolute;
+        bottom: 580px;
+        right: 84px;
+        background: #141414;
+        border: 3px solid #ff6a1a;
+        padding: 16px 24px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        box-shadow: 8px 8px 0px rgba(20, 20, 20, 0.4);
+        z-index: 30;
+        opacity: 0;
+        transform-origin: 50% 50%;
+        pointer-events: none;
+      }
+      .icon-money-badge span {
+        color: #f7f4ec;
+        font-weight: 900;
+        font-size: 28px;
+        letter-spacing: 0.04em;
+      }
+
+      /* ================= SHOT 2 ================= */
+      #shot-2 {
+        z-index: 20;
+        background: #e7e3d9;
+        perspective: 1200px;
+      }
+      .shot-2-stage {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        transform-origin: 50% 45%;
+        transform-style: preserve-3d;
+      }
+
+      /* Khung ảnh chứng cứ phía trên (Shot 2) */
+      .evidence-photo-box {
+        position: absolute;
+        top: 170px;
+        left: 54px;
+        right: 54px;
+        height: 600px;
+        background: #f5f0e4;
+        border: 4px solid #141414;
+        box-shadow: 12px 14px 0px rgba(20, 20, 20, 0.35);
+        overflow: hidden;
+      }
+      #img-suspect {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+      .evidence-stamp {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        background: #ff6a1a;
+        color: #141414;
+        font-weight: 900;
+        font-size: 22px;
+        padding: 6px 16px;
+        border: 2px solid #141414;
+        box-shadow: 4px 4px 0px #141414;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+
+      /* Hồ sơ bóc tách số liệu phía dưới (Shot 2) */
+      .dossier-card {
+        position: absolute;
+        top: 795px;
+        left: 54px;
+        right: 54px;
+        background: #f5f0e4;
+        border: 4px solid #141414;
+        box-shadow: 12px 14px 0px rgba(20, 20, 20, 0.35);
+        padding: 26px 32px;
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+      }
+
+      .dossier-title-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 2.5px dashed rgba(20, 20, 20, 0.4);
+        padding-bottom: 14px;
+      }
+      .dossier-main-title {
+        font-size: 30px;
+        font-weight: 900;
+        color: #141414;
+        text-transform: uppercase;
+        letter-spacing: 0.02em;
+      }
+      .dossier-tag-orange {
+        background: #ff6a1a;
+        color: #141414;
+        font-size: 20px;
+        font-weight: 900;
+        padding: 6px 14px;
+        border-radius: 4px;
+      }
+
+      /* Hàng tag thông số đạt chuẩn tương phản AA (> 9:1) */
+      .dossier-meta-list {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .meta-item-box {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        background: #dcd6c8;
+        border: 2px solid #141414;
+        border-radius: 6px;
+        padding: 10px 18px;
+      }
+      .meta-prefix {
+        font-size: 22px;
+        font-weight: 900;
+        color: #141414;
+        letter-spacing: 0.03em;
+        text-transform: uppercase;
+      }
+      .meta-highlight-text {
+        font-size: 24px;
+        font-weight: 900;
+        color: #141414;
+        letter-spacing: 0.03em;
+        text-transform: uppercase;
+      }
+
+      /* Hộp hiển thị số liệu: 200 GÓI & 30 TRIỆU ĐỒNG */
+      .stats-container {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        margin-top: 2px;
+      }
+
+      /* Khối 200 Gói */
+      .stat-row-sales {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: #e7e3d9;
+        border: 2.5px solid #141414;
+        border-radius: 8px;
+        padding: 14px 22px;
+        opacity: 0;
+      }
+      .sales-info-left {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
+      .sales-icon-wrap {
+        width: 48px;
+        height: 48px;
+        background: #141414;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transform-origin: 50% 50%;
+        opacity: 0;
+      }
+      .sales-label {
+        font-size: 24px;
+        font-weight: 900;
+        color: #141414;
+        text-transform: uppercase;
+      }
+      .sales-number-badge {
+        background: #141414;
+        padding: 8px 22px;
+        border-radius: 6px;
+      }
+      .sales-number-text {
+        color: #ff6a1a;
+        font-size: 36px;
+        font-weight: 900;
+        letter-spacing: 0.03em;
+      }
+
+      /* Khối Punch-phrase: THU 30 TRIỆU ĐỒNG */
+      .punch-phrase-card {
+        background: #141414;
+        border: 3.5px solid #ff6a1a;
+        border-radius: 10px;
+        padding: 20px 24px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        box-shadow: 0 12px 30px rgba(20, 20, 20, 0.4);
+        position: relative;
+        overflow: hidden;
+        opacity: 0;
+      }
+      .punch-label {
+        color: #ff6a1a;
+        font-size: 22px;
+        font-weight: 900;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+      .punch-main-value {
+        color: #f7f4ec;
+        font-size: 54px;
+        font-weight: 900;
+        letter-spacing: 0.02em;
+        line-height: 1.15;
+        text-align: center;
+        text-transform: uppercase;
+      }
+      .punch-accent-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 6px;
+        background: #ff6a1a;
+        transform-origin: 0% 50%;
+      }
+    </style>
+
+    <div data-hf-id="hf-b1ru" id="root" data-composition-id="scene-s06" data-start="0" data-duration="6.79" data-width="1080" data-height="1920" data-layout-allow-overflow="true">
+      <!-- Nền biến thể chart với 4 vạch chuẩn Style DNA -->
+      <div data-hf-id="hf-33aw" class="chart-bg">
+        <div data-hf-id="hf-9f8o" class="chart-grid-pattern"></div>
+        <div data-hf-id="hf-h4y8" class="chart-line chart-line-1"></div>
+        <div data-hf-id="hf-psu3" class="chart-line chart-line-2"></div>
+        <div data-hf-id="hf-luq2" class="chart-line chart-line-3"></div>
+        <div data-hf-id="hf-330d" class="chart-line chart-line-4"></div>
+      </div>
+
+      <!-- Thanh cam cố định nhận diện phong cách Vox -->
+      <div data-hf-id="hf-8g79" class="bottom-brand-bar"></div>
+
+      <!-- Header cố định hồ sơ chứng cứ vụ án -->
+      <header data-hf-id="hf-ex6i" class="scene-header">
+        <div data-hf-id="hf-6jrl" class="header-badge">
+          <span data-hf-id="hf-my9t" class="badge-code">CHỨNG CỨ</span>
+          <span data-hf-id="hf-pvh3" class="badge-title">HỒ SƠ BẢN ÁN 473</span>
+        </div>
+        <div data-hf-id="hf-8lu3" class="header-meta">MỤC S-06</div>
+      </header>
+
+      <!-- ================= SHOT 1 (0.00s -> 3.73s) ================= -->
+      <!-- Video mang data-start="0" & data-duration="3.73", không đặt trong timed ancestor để thỏa mãn triệt để hợp đồng HyperFrames -->
+      <div data-hf-id="hf-d223" class="video-wrapper" id="shot-1-video-wrapper">
+        <video data-hf-id="hf-balo" id="vid-counting" src="assets/vid-02-man-counting-illicit-money.mp4" data-start="0" data-duration="3.73" data-media-start="1.5" data-track-index="0" muted playsinline></video>
+        <div data-hf-id="hf-hwtm" class="video-overlay-frame"></div>
+      </div>
+
+      <!-- Overlay Label: CÙNG CÔNG THỨC (atMs: 36690 -> rel 0.95s, hold 1.8s) -->
+      <div data-hf-id="hf-zq45" id="shot-1-label-formula" class="label-formula-pill">
+        <span data-hf-id="hf-9qxg" class="pill-tag">PHƯƠNG THỨC</span>
+        <span data-hf-id="hf-qets" class="pill-main-text">CÙNG CÔNG THỨC</span>
+      </div>
+
+      <!-- Overlay Icon: Money (atMs: 38810 -> rel 3.07s) -->
+      <div data-hf-id="hf-n293" id="shot-1-icon-money" class="icon-money-badge">
+        <svg data-hf-id="hf-531i" width="44" height="44" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect data-hf-id="hf-fskq" x="4" y="10" width="36" height="24" rx="4" stroke="#FF6A1A" stroke-width="3.5" />
+          <circle data-hf-id="hf-xroc" cx="22" cy="22" r="6" stroke="#FF6A1A" stroke-width="3" />
+          <line data-hf-id="hf-me57" x1="9" y1="16" x2="11" y2="16" stroke="#FF6A1A" stroke-width="3" stroke-linecap="round" />
+          <line data-hf-id="hf-g666" x1="33" y1="28" x2="35" y2="28" stroke="#FF6A1A" stroke-width="3" stroke-linecap="round" />
+        </svg>
+        <span data-hf-id="hf-1cpr">DÒNG TIỀN PHẠM TỘI</span>
+      </div>
+
+      <!-- ================= SHOT 2 (3.73s -> 6.79s) ================= -->
+      <section data-hf-id="hf-fo9q" id="shot-2" class="clip" data-start="3.73" data-duration="3.06" data-track-index="0" data-layout-allow-overflow="true">
+        <div data-hf-id="hf-g6ju" class="shot-2-stage" id="shot-2-stage">
+          <!-- Khung ảnh tang vật Sìn Sú và tiền -->
+          <div data-hf-id="hf-0cjk" class="evidence-photo-box" id="shot-2-photo-box">
+            <img data-hf-id="hf-h1et" id="img-suspect" src="assets/img-02-illegal-goods-trade-sin-su.jpeg" alt="Tang vật vụ án">
+            <div data-hf-id="hf-rjwu" class="evidence-stamp">VẬT CHỨNG THỰC TẾ</div>
+          </div>
+
+          <!-- Hồ sơ số liệu & lời khai -->
+          <div data-hf-id="hf-ykvn" class="dossier-card" id="shot-2-dossier-card" data-layout-allow-overflow="true">
+            <div data-hf-id="hf-h34y" class="dossier-title-bar">
+              <span data-hf-id="hf-n3wf" class="dossier-main-title">KẾT QUẢ ĐIỀU TRA</span>
+              <span data-hf-id="hf-iphx" class="dossier-tag-orange">LỜI KHAI TIẾN</span>
+            </div>
+
+            <!-- Khối metadata -->
+            <div data-hf-id="hf-boag" class="dossier-meta-list">
+              <div data-hf-id="hf-lq0x" class="meta-item-box">
+                <span data-hf-id="hf-no2c" class="meta-prefix">HÀNH VI:</span>
+                <span data-hf-id="hf-h84b" class="meta-highlight-text">PHÂN PHỐI HÀNG CẤM</span>
+              </div>
+              <div data-hf-id="hf-idcl" class="meta-item-box">
+                <span data-hf-id="hf-7x5x" class="meta-prefix">TANG VẬT:</span>
+                <span data-hf-id="hf-abnc" class="meta-highlight-text">DƯỢC LIỆU 'SÌN SÚ' TRÁI PHÉP</span>
+              </div>
+            </div>
+
+            <!-- Lưới số liệu chứng cứ -->
+            <div data-hf-id="hf-2jnn" class="stats-container">
+              <!-- Overlay Label: ĐÃ BÁN: 200 GÓI (atMs: 39910 -> rel 4.17s) -->
+              <div data-hf-id="hf-qc3n" class="stat-row-sales" id="shot-2-stat-sales">
+                <div data-hf-id="hf-k9dx" class="sales-info-left">
+                  <div data-hf-id="hf-0s0r" class="sales-icon-wrap" id="shot-2-icon-scale">
+                    <svg data-hf-id="hf-idfy" width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <line data-hf-id="hf-49s6" x1="16" y1="5" x2="16" y2="27" stroke="#FF6A1A" stroke-width="2.5" stroke-linecap="round" />
+                      <line data-hf-id="hf-kqv2" x1="8" y1="9" x2="24" y2="9" stroke="#FF6A1A" stroke-width="2.5" stroke-linecap="round" />
+                      <path data-hf-id="hf-he9h" d="M5 19L8 9L11 19C11 20.6569 9.65685 22 8 22C6.34315 22 5 20.6569 5 19Z" stroke="#F7F4EC" stroke-width="2" />
+                      <path data-hf-id="hf-m6mo" d="M21 19L24 9L27 19C27 20.6569 25.6569 22 24 22C22.3431 22 21 20.6569 21 19Z" stroke="#F7F4EC" stroke-width="2" />
+                    </svg>
+                  </div>
+                  <span data-hf-id="hf-zosp" class="sales-label">ĐÃ BÁN RA THỊ TRƯỜNG</span>
+                </div>
+                <div data-hf-id="hf-83is" class="sales-number-badge">
+                  <span data-hf-id="hf-32x8" class="sales-number-text">200 GÓI</span>
+                </div>
+              </div>
+
+              <!-- Overlay Punch-phrase: THU 30 TRIỆU ĐỒNG (atMs: 41470 -> rel 5.73s) -->
+              <div data-hf-id="hf-q3w4" class="punch-phrase-card" id="shot-2-punch-card">
+                <div data-hf-id="hf-vx9i" class="punch-label">TỔNG LỢI NHUẬN BẤT CHÍNH</div>
+                <div data-hf-id="hf-5npp" class="punch-main-value">THU 30 TRIỆU ĐỒNG</div>
+                <div data-hf-id="hf-osoy" class="punch-accent-bar" id="punch-accent-bar"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <script>
+      // Khởi tạo GSAP Timeline duy nhất và PAUSED theo hợp đồng HyperFrames
+      const tl = gsap.timeline({ paused: true });
+
+      // ================= TIMELINE CHOREOGRAPHY =================
+      // Scene S06: 35740ms -> 42530ms (Tổng thời lượng: 6.79s)
+      // Easing tuân thủ Style DNA: smooth beats bouncy (power3.out, power2.out, power4.out)
+
+      // --- SHOT 1 (0.00s -> 3.73s) ---
+      // Entrance: punch dứt khoát mở màn khung video (scale 1.12 -> 1.0 trên 0.45s)
+      tl.fromTo(
+        "#shot-1-video-wrapper",
+        { scale: 1.12, opacity: 0 },
+        { scale: 1.0, opacity: 1, duration: 0.45, ease: "power3.out" },
+        0
+      );
+
+      // Camera motion: zoom-in chậm dần liên tục của video bên trong khung (scale 1.0 -> 1.10 trên 3.25s)
+      tl.fromTo(
+        "#vid-counting",
+        { scale: 1.0 },
+        { scale: 1.10, duration: 3.25, ease: "none" },
+        0.45
+      );
+
+      // Overlay 1: CÙNG CÔNG THỨC (atMs: 36690 -> rel 0.95s, hold 1.8s -> kết thúc 2.75s)
+      tl.fromTo(
+        "#shot-1-label-formula",
+        { y: -35, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.35, ease: "power3.out" },
+        0.95
+      );
+      tl.to(
+        "#shot-1-label-formula",
+        { opacity: 0, y: -20, duration: 0.28, ease: "power2.in" },
+        2.75
+      );
+
+      // Overlay 2: Icon Money xuất hiện (atMs: 38810 -> rel 3.07s)
+      tl.fromTo(
+        "#shot-1-icon-money",
+        { scale: 0.7, opacity: 0 },
+        { scale: 1.0, opacity: 1, duration: 0.38, ease: "power3.out" },
+        3.07
+      );
+      tl.to(
+        "#shot-1-icon-money",
+        { opacity: 0, duration: 0.08 },
+        3.70
+      );
+
+      // Khép lại Shot 1 tại mốc 3.73s chuyển sang Shot 2
+      tl.to(
+        "#shot-1-video-wrapper",
+        { opacity: 0, duration: 0.08 },
+        3.70
+      );
+
+      // --- SHOT 2 (3.73s -> 6.79s) ---
+      // TransitionIn: flip 3D lật sang hình tĩnh chốt mốc
+      tl.fromTo(
+        "#shot-2-stage",
+        { rotationY: 25, opacity: 0, scale: 0.95 },
+        { rotationY: 0, opacity: 1, scale: 1.0, duration: 0.44, ease: "power3.out" },
+        3.73
+      );
+
+      // Khung ảnh chứng cứ hạ nhẹ xuống
+      tl.fromTo(
+        "#shot-2-photo-box",
+        { y: -20, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.35, ease: "power3.out" },
+        3.78
+      );
+
+      // Overlay 1: Bảng ĐÃ BÁN: 200 GÓI xuất hiện (atMs: 39910 -> rel 4.17s)
+      tl.fromTo(
+        "#shot-2-stat-sales",
+        { x: -30, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.4, ease: "power3.out" },
+        4.17
+      );
+
+      // Overlay 2: Icon Scale cân đo tang vật (atMs: 40700 -> rel 4.96s)
+      tl.fromTo(
+        "#shot-2-icon-scale",
+        { scale: 0.75, opacity: 0 },
+        { scale: 1.0, opacity: 1, duration: 0.35, ease: "power3.out" },
+        4.96
+      );
+
+      // Overlay 3: Punch-phrase THU 30 TRIỆU ĐỒNG (atMs: 41470 -> rel 5.73s, giữ đến hết scene 6.79s)
+      tl.fromTo(
+        "#shot-2-punch-card",
+        { scale: 0.88, opacity: 0, y: 20 },
+        { scale: 1.0, opacity: 1, y: 0, duration: 0.38, ease: "power4.out" },
+        5.73
+      );
+      tl.fromTo(
+        "#punch-accent-bar",
+        { scaleX: 0 },
+        { scaleX: 1, duration: 0.35, ease: "power2.out" },
+        5.85
+      );
+
+      // Đăng ký timeline chính xác vào registry HyperFrames
+      window.__timelines["scene-s06"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>
