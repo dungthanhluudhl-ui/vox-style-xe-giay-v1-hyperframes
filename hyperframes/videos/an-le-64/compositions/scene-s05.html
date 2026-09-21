@@ -1,0 +1,762 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+      :root {
+        --paper: #e7e3d9;
+        --paper-card: #f5f0e4;
+        --ink: #141414;
+        --orange: #ff6a1a;
+        --cream: #f7f4ec;
+        --grid: rgba(20, 20, 20, 0.32);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        overflow: hidden;
+      }
+
+      body {
+        background: var(--paper);
+        color: var(--ink);
+        font-family: "Be Vietnam Pro", sans-serif;
+      }
+
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        isolation: isolate;
+        background: var(--paper);
+        perspective: 1600px;
+      }
+
+      .clip {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+      }
+
+      .paper-base {
+        position: absolute;
+        inset: 0;
+        z-index: 0;
+        background-color: var(--paper);
+        background-image:
+          linear-gradient(to right, var(--grid) 1.5px, transparent 1.5px),
+          linear-gradient(to bottom, var(--grid) 1.5px, transparent 1.5px);
+        background-size: 84px 84px;
+      }
+
+      .media-layer {
+        display: block;
+        object-fit: cover;
+        object-position: 50% 50%;
+        transform-origin: 50% 50%;
+        will-change: transform, opacity, clip-path;
+      }
+
+      #s05-video {
+        z-index: 2;
+      }
+
+      #s05-alley-one {
+        z-index: 3;
+        object-position: 50% 48%;
+      }
+
+      #s05-alley-two {
+        z-index: 4;
+        object-position: 50% 48%;
+      }
+
+      .surface-treatment {
+        z-index: 10;
+        pointer-events: none;
+      }
+
+      .edge-vignette {
+        position: absolute;
+        inset: 0;
+        background:
+          linear-gradient(
+            to bottom,
+            rgba(10, 10, 10, 0.04) 0%,
+            rgba(10, 10, 10, 0.02) 48%,
+            rgba(10, 10, 10, 0.18) 61%,
+            rgba(10, 10, 10, 0.42) 78%,
+            rgba(10, 10, 10, 0.58) 100%
+          ),
+          radial-gradient(
+            ellipse at 50% 45%,
+            transparent 42%,
+            rgba(20, 20, 20, 0.06) 68%,
+            rgba(20, 20, 20, 0.18) 100%
+          );
+      }
+
+      .grid-wash {
+        position: absolute;
+        inset: 0;
+        opacity: 0.18;
+        mix-blend-mode: multiply;
+        background-image:
+          linear-gradient(to right, var(--grid) 1.5px, transparent 1.5px),
+          linear-gradient(to bottom, var(--grid) 1.5px, transparent 1.5px);
+        background-size: 84px 84px;
+      }
+
+      .grain {
+        position: absolute;
+        inset: 0;
+        opacity: 0.18;
+        mix-blend-mode: multiply;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='36' height='36' viewBox='0 0 36 36'%3E%3Cg fill='%23141414' fill-opacity='.28'%3E%3Ccircle cx='3' cy='5' r='.8'/%3E%3Ccircle cx='12' cy='2' r='.55'/%3E%3Ccircle cx='20' cy='8' r='.7'/%3E%3Ccircle cx='31' cy='4' r='.5'/%3E%3Ccircle cx='7' cy='16' r='.55'/%3E%3Ccircle cx='16' cy='19' r='.75'/%3E%3Ccircle cx='27' cy='14' r='.55'/%3E%3Ccircle cx='34' cy='23' r='.7'/%3E%3Ccircle cx='3' cy='29' r='.5'/%3E%3Ccircle cx='13' cy='34' r='.65'/%3E%3Ccircle cx='24' cy='28' r='.8'/%3E%3Ccircle cx='32' cy='34' r='.5'/%3E%3C/g%3E%3C/svg%3E");
+        background-repeat: repeat;
+      }
+
+      .timeline-overlay {
+        z-index: 30;
+        pointer-events: none;
+      }
+
+      .timeline-paper {
+        position: absolute;
+        left: 48px;
+        right: 48px;
+        top: 1110px;
+        height: 265px;
+        overflow: hidden;
+        border: 2px solid rgba(20, 20, 20, 0.68);
+        background: rgba(245, 240, 228, 0.86);
+        box-shadow: 10px 12px 0 rgba(20, 20, 20, 0.15);
+        transform: rotate(-0.28deg);
+      }
+
+      .timeline-paper::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        opacity: 0.2;
+        background-image:
+          linear-gradient(to right, rgba(20, 20, 20, 0.24) 1px, transparent 1px),
+          linear-gradient(to bottom, rgba(20, 20, 20, 0.24) 1px, transparent 1px);
+        background-size: 42px 42px;
+      }
+
+      .timeline-svg {
+        position: absolute;
+        inset: 0;
+        width: 1080px;
+        height: 1920px;
+        overflow: visible;
+      }
+
+      .timeline-line {
+        fill: none;
+        stroke: var(--ink);
+        stroke-width: 8;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
+      .timeline-thin {
+        fill: none;
+        stroke: var(--ink);
+        stroke-width: 6;
+        stroke-linecap: round;
+      }
+
+      .accent-stroke {
+        fill: none;
+        stroke: var(--orange);
+        stroke-width: 8;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
+      .connector-stroke {
+        fill: none;
+        stroke: var(--orange);
+        stroke-width: 5;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
+      #loan-marker {
+        fill: var(--orange);
+        stroke: var(--ink);
+        stroke-width: 6;
+        transform-box: fill-box;
+        transform-origin: 50% 50%;
+      }
+
+      .money-path {
+        fill: none;
+        stroke: var(--ink);
+        stroke-width: 7;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
+      .money-accent {
+        fill: none;
+        stroke: var(--orange);
+        stroke-width: 7;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
+      .label-clip {
+        z-index: 40;
+        pointer-events: none;
+        display: flex;
+        align-items: flex-start;
+      }
+
+      #debt-label {
+        justify-content: flex-start;
+        padding: 220px 0 0 58px;
+      }
+
+      #trace-label {
+        justify-content: flex-end;
+        padding: 220px 58px 0 0;
+      }
+
+      .tag-inner {
+        display: inline-flex;
+        min-height: 88px;
+        max-width: 470px;
+        align-items: center;
+        padding: 18px 28px;
+        border: 3px solid var(--ink);
+        background: var(--paper-card);
+        box-shadow: 10px 11px 0 var(--orange);
+        color: var(--ink);
+        font-size: 38px;
+        font-weight: 900;
+        line-height: 1.15;
+        letter-spacing: -0.7px;
+        text-transform: uppercase;
+        will-change: transform, opacity;
+      }
+
+      #trace-label .tag-inner {
+        box-shadow: -10px 11px 0 var(--orange);
+      }
+
+      .fixed-orange-bar {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 100;
+        height: 18px;
+        background: var(--orange);
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s05"
+      data-start="0"
+      data-width="1080"
+      data-height="1920"
+      data-duration="6.68"
+      data-fps="30"
+    >
+      <div class="paper-base" aria-hidden="true"></div>
+
+      <video
+        id="s05-video"
+        class="clip media-layer"
+        data-start="0"
+        data-duration="3.68"
+        data-media-start="2.1"
+        data-track-index="0"
+        data-layout-allow-overflow="true"
+        data-layout-allow-overlap="true"
+        src="assets/vid-05-man-demanding-extortion-money.mp4"
+        muted
+        playsinline
+        preload="auto"
+      ></video>
+
+      <img
+        id="s05-alley-one"
+        class="clip media-layer"
+        data-start="3.38"
+        data-duration="2.2"
+        data-track-index="1"
+        data-layout-allow-overflow="true"
+        data-layout-allow-overlap="true"
+        src="assets/img-06-suspect-looking-back-dark-alley.jpeg"
+        alt=""
+      />
+
+      <img
+        id="s05-alley-two"
+        class="clip media-layer"
+        data-start="5.18"
+        data-duration="1.5"
+        data-track-index="2"
+        data-layout-allow-overflow="true"
+        data-layout-allow-overlap="true"
+        src="assets/img-07-suspect-hiding-dark-alley.jpeg"
+        alt=""
+      />
+
+      <div
+        id="surface-treatment"
+        class="clip surface-treatment"
+        data-start="0"
+        data-duration="6.68"
+        data-track-index="3"
+        data-layout-allow-occlusion="true"
+      >
+        <div class="edge-vignette"></div>
+        <div class="grid-wash"></div>
+        <div class="grain"></div>
+      </div>
+
+      <div
+        id="timeline-overlay"
+        class="clip timeline-overlay"
+        data-start="0"
+        data-duration="6.68"
+        data-track-index="4"
+        data-layout-allow-overflow="true"
+        data-layout-allow-overlap="true"
+        data-layout-allow-occlusion="true"
+      >
+        <div class="timeline-paper"></div>
+
+        <svg
+          class="timeline-svg"
+          viewBox="0 0 1080 1920"
+          xmlns="http://www.w3.org/2000/svg"
+          aria-hidden="true"
+        >
+          <path
+            id="loan-line"
+            class="timeline-line"
+            data-draw
+            d="M150 1255 C250 1255 365 1255 490 1255"
+          />
+
+          <path
+            id="chase-line"
+            class="timeline-line"
+            data-draw
+            d="M490 1255 C570 1255 665 1255 760 1255"
+          />
+
+          <line
+            id="demand-tick-1"
+            class="timeline-thin"
+            data-draw
+            x1="535"
+            y1="1215"
+            x2="535"
+            y2="1295"
+          />
+          <path
+            id="demand-slash-1"
+            class="accent-stroke"
+            data-draw
+            d="M520 1208 L551 1225"
+          />
+
+          <line
+            id="demand-tick-2"
+            class="timeline-thin"
+            data-draw
+            x1="605"
+            y1="1205"
+            x2="605"
+            y2="1305"
+          />
+          <path
+            id="demand-slash-2"
+            class="accent-stroke"
+            data-draw
+            d="M589 1198 L622 1217"
+          />
+
+          <line
+            id="demand-tick-3"
+            class="timeline-thin"
+            data-draw
+            x1="680"
+            y1="1195"
+            x2="680"
+            y2="1315"
+          />
+          <path
+            id="demand-slash-3"
+            class="accent-stroke"
+            data-draw
+            d="M663 1188 L699 1208"
+          />
+
+          <path
+            id="broken-line-a"
+            class="timeline-line"
+            data-draw
+            d="M760 1255 L840 1255"
+          />
+          <path
+            id="broken-line-b"
+            class="timeline-line"
+            data-draw
+            d="M875 1255 L975 1255"
+          />
+
+          <path
+            id="trace-connector"
+            class="connector-stroke"
+            data-draw
+            d="M842 344 L972 344 L972 1155 L855 1238"
+          />
+          <path
+            id="trace-pointer"
+            class="connector-stroke"
+            data-draw
+            d="M855 1238 L873 1228 M855 1238 L869 1251"
+          />
+
+          <circle id="loan-marker" cx="150" cy="1255" r="22" />
+
+          <g id="money-icon" transform="translate(103 1142)">
+            <rect
+              class="money-path"
+              data-draw
+              x="0"
+              y="0"
+              width="94"
+              height="62"
+              rx="8"
+            />
+            <path
+              class="money-path"
+              data-draw
+              d="M10 17 C21 17 26 12 26 8 M84 17 C73 17 68 12 68 8 M10 45 C21 45 26 50 26 54 M84 45 C73 45 68 50 68 54"
+            />
+            <ellipse
+              class="money-path"
+              data-draw
+              cx="47"
+              cy="31"
+              rx="15"
+              ry="20"
+            />
+            <path
+              class="money-accent"
+              data-draw
+              d="M47 18 L47 44 M39 24 C43 18 55 19 55 26 C55 34 39 29 39 37 C39 44 51 46 57 39"
+            />
+          </g>
+        </svg>
+      </div>
+
+      <div
+        id="debt-label"
+        class="clip label-clip"
+        data-start="3.68"
+        data-duration="1.5"
+        data-track-index="5"
+        data-layout-allow-overlap="true"
+      >
+        <div id="debt-label-inner" class="tag-inner">KHOẢN NỢ MẮC KẸT</div>
+      </div>
+
+      <div
+        id="trace-label"
+        class="clip label-clip"
+        data-start="5.18"
+        data-duration="1.5"
+        data-track-index="5"
+        data-layout-allow-overlap="true"
+      >
+        <div id="trace-label-inner" class="tag-inner">DẤU VẾT ĐỨT</div>
+      </div>
+
+      <div class="fixed-orange-bar" aria-hidden="true"></div>
+    </div>
+
+    <script>
+      document.querySelectorAll("[data-draw]").forEach((element) => {
+        const length = element.getTotalLength();
+        element.style.strokeDasharray = String(length);
+        element.style.strokeDashoffset = String(length);
+      });
+
+      const tl = gsap.timeline({
+        paused: true,
+        defaults: {
+          ease: "power3.out",
+        },
+      });
+
+      tl.fromTo(
+        "#s05-video",
+        {
+          clipPath: "polygon(0 0, 100% 0, 100% 2%, 0 2%)",
+          rotationX: -8,
+          scale: 1.035,
+          opacity: 1,
+        },
+        {
+          clipPath: "polygon(0 0, 100% 0, 100% 100%, 0 100%)",
+          rotationX: 0,
+          scale: 1,
+          opacity: 1,
+          duration: 0.53,
+          ease: "power4.out",
+        },
+        0,
+      );
+
+      tl.to(
+        "#loan-line",
+        {
+          strokeDashoffset: 0,
+          duration: 0.9,
+          ease: "power2.out",
+        },
+        0.38,
+      );
+
+      tl.fromTo(
+        "#loan-marker",
+        {
+          scale: 0,
+          opacity: 0,
+        },
+        {
+          scale: 1,
+          opacity: 1,
+          duration: 0.46,
+          ease: "power3.out",
+        },
+        0.42,
+      );
+
+      tl.to(
+        "#money-icon [data-draw]",
+        {
+          strokeDashoffset: 0,
+          duration: 0.52,
+          ease: "power2.out",
+          stagger: 0.06,
+        },
+        1.76,
+      );
+
+      tl.fromTo(
+        "#s05-alley-one",
+        {
+          x: 24,
+          scale: 1.08,
+        },
+        {
+          x: -24,
+          scale: 1.13,
+          duration: 2.2,
+          ease: "none",
+        },
+        3.38,
+      );
+
+      tl.fromTo(
+        "#s05-alley-one",
+        {
+          opacity: 0,
+        },
+        {
+          opacity: 1,
+          duration: 0.3,
+          ease: "sine.inOut",
+        },
+        3.38,
+      );
+
+      tl.to(
+        "#s05-video",
+        {
+          opacity: 0,
+          duration: 0.3,
+          ease: "sine.inOut",
+        },
+        3.38,
+      );
+
+      tl.to(
+        "#chase-line",
+        {
+          strokeDashoffset: 0,
+          duration: 0.7,
+          ease: "power2.out",
+        },
+        3.65,
+      );
+
+      tl.fromTo(
+        "#debt-label-inner",
+        {
+          y: -28,
+          scaleY: 0.2,
+          opacity: 0,
+          transformOrigin: "50% 0%",
+        },
+        {
+          y: 0,
+          scaleY: 1,
+          opacity: 1,
+          duration: 0.44,
+          ease: "power4.out",
+        },
+        3.68,
+      );
+
+      tl.to(
+        ["#demand-tick-1", "#demand-slash-1"],
+        {
+          strokeDashoffset: 0,
+          duration: 0.28,
+          ease: "power2.out",
+          stagger: 0.05,
+        },
+        4.36,
+      );
+
+      tl.to(
+        ["#demand-tick-2", "#demand-slash-2"],
+        {
+          strokeDashoffset: 0,
+          duration: 0.28,
+          ease: "power2.out",
+          stagger: 0.05,
+        },
+        4.58,
+      );
+
+      tl.to(
+        ["#demand-tick-3", "#demand-slash-3"],
+        {
+          strokeDashoffset: 0,
+          duration: 0.28,
+          ease: "power2.out",
+          stagger: 0.05,
+        },
+        4.8,
+      );
+
+      tl.to(
+        ["#broken-line-a", "#broken-line-b"],
+        {
+          strokeDashoffset: 0,
+          duration: 0.4,
+          ease: "power2.out",
+          stagger: 0.08,
+        },
+        4.92,
+      );
+
+      tl.fromTo(
+        "#s05-alley-two",
+        {
+          opacity: 0,
+          scale: 1.03,
+        },
+        {
+          opacity: 1,
+          scale: 1.12,
+          duration: 1.5,
+          ease: "sine.inOut",
+        },
+        5.18,
+      );
+
+      tl.fromTo(
+        "#trace-label-inner",
+        {
+          x: 32,
+          opacity: 0,
+          scale: 0.94,
+        },
+        {
+          x: 0,
+          opacity: 1,
+          scale: 1,
+          duration: 0.42,
+          ease: "power3.out",
+        },
+        5.18,
+      );
+
+      tl.to(
+        "#trace-connector",
+        {
+          strokeDashoffset: 0,
+          duration: 0.62,
+          ease: "power2.out",
+        },
+        5.3,
+      );
+
+      tl.to(
+        "#trace-pointer",
+        {
+          strokeDashoffset: 0,
+          duration: 0.24,
+          ease: "power2.out",
+        },
+        5.84,
+      );
+
+      tl.to(
+        "#broken-line-a",
+        {
+          x: 115,
+          y: -10,
+          opacity: 0.35,
+          duration: 0.45,
+          ease: "power3.in",
+        },
+        6.12,
+      );
+
+      tl.to(
+        "#broken-line-b",
+        {
+          x: 190,
+          y: 12,
+          opacity: 0,
+          duration: 0.45,
+          ease: "power3.in",
+        },
+        6.12,
+      );
+
+      window.__timelines["scene-s05"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

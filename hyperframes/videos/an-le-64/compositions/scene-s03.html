@@ -1,0 +1,913 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+      :root {
+        --paper: #e7e3d9;
+        --paper-card: #f5f0e4;
+        --ink: #141414;
+        --orange: #ff6a1a;
+        --on-dark: #f7f4ec;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        overflow: hidden;
+      }
+
+      body {
+        background: var(--ink);
+        color: var(--on-dark);
+        font-family: "Be Vietnam Pro", sans-serif;
+      }
+
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        isolation: isolate;
+        background:
+          radial-gradient(circle at 50% 44%, rgba(231, 227, 217, 0.12) 0%, rgba(20, 20, 20, 0.58) 62%, #141414 100%);
+      }
+
+      #root::after {
+        position: absolute;
+        z-index: 80;
+        inset: 0;
+        pointer-events: none;
+        content: "";
+        opacity: 0.18;
+        mix-blend-mode: multiply;
+        background-image:
+          repeating-linear-gradient(
+            23deg,
+            rgba(20, 20, 20, 0.13) 0,
+            rgba(20, 20, 20, 0.13) 1px,
+            transparent 1px,
+            transparent 7px
+          ),
+          repeating-linear-gradient(
+            117deg,
+            rgba(247, 244, 236, 0.1) 0,
+            rgba(247, 244, 236, 0.1) 1px,
+            transparent 1px,
+            transparent 11px
+          );
+      }
+
+      .clip {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+
+      .shot-shell,
+      .shot-push,
+      .camera,
+      .court-panel {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+      }
+
+      .camera {
+        transform-origin: 50% 55%;
+        will-change: transform;
+      }
+
+      .media-image {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        user-select: none;
+      }
+
+      .shot-one-image {
+        object-position: 50% 54%;
+        filter: contrast(1.12) saturate(0.94) brightness(0.88);
+      }
+
+      .shot-two-image {
+        object-position: 50% 47%;
+        filter: contrast(1.08) saturate(0.9) brightness(0.8);
+      }
+
+      .shot-three-image {
+        object-position: 50% 50%;
+        filter: contrast(1.1) saturate(0.92) brightness(0.82);
+      }
+
+      .spotlight {
+        position: absolute;
+        z-index: 3;
+        inset: 0;
+        pointer-events: none;
+        background:
+          radial-gradient(
+            ellipse at 50% 46%,
+            rgba(20, 20, 20, 0) 20%,
+            rgba(20, 20, 20, 0.2) 53%,
+            rgba(20, 20, 20, 0.78) 100%
+          );
+      }
+
+      .shot-one-edge-darkener {
+        position: absolute;
+        z-index: 4;
+        inset: 0;
+        pointer-events: none;
+        background: linear-gradient(
+          90deg,
+          transparent 0%,
+          transparent 65%,
+          rgba(20, 20, 20, 0.16) 80%,
+          rgba(20, 20, 20, 0.74) 100%
+        );
+      }
+
+      .court-panel {
+        z-index: 6;
+        overflow: hidden;
+        background: var(--ink);
+        box-shadow: -32px 0 0 rgba(20, 20, 20, 0.38);
+        will-change: transform;
+      }
+
+      .court-edge {
+        position: absolute;
+        z-index: 20;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        width: 22px;
+        background:
+          linear-gradient(
+            90deg,
+            var(--orange) 0,
+            var(--orange) 9px,
+            var(--paper-card) 9px,
+            var(--paper-card) 14px,
+            var(--ink) 14px
+          );
+        box-shadow: 14px 0 25px rgba(20, 20, 20, 0.38);
+      }
+
+      .court-shadow {
+        position: absolute;
+        z-index: 4;
+        inset: 0;
+        pointer-events: none;
+        background:
+          linear-gradient(180deg, rgba(20, 20, 20, 0.18) 0%, transparent 32%, rgba(20, 20, 20, 0.28) 100%),
+          radial-gradient(circle at 50% 43%, transparent 18%, rgba(20, 20, 20, 0.52) 100%);
+      }
+
+      #charge-lockup {
+        --charge-size: 70px;
+        position: absolute;
+        z-index: 30;
+        right: 54px;
+        bottom: 486px;
+        left: 54px;
+        padding: 30px 34px 34px;
+        overflow: hidden;
+        border: 3px solid rgba(247, 244, 236, 0.76);
+        border-left: 14px solid var(--orange);
+        background: rgba(10, 10, 10, 0.86);
+        box-shadow: 18px 18px 0 rgba(255, 106, 26, 0.9);
+        transform-origin: 50% 100%;
+        will-change: transform, opacity;
+      }
+
+      .charge-kicker {
+        margin-bottom: 15px;
+        color: var(--orange);
+        font-size: 25px;
+        font-weight: 900;
+        line-height: 1;
+        letter-spacing: 0.13em;
+        text-transform: uppercase;
+      }
+
+      .charge-line {
+        display: block;
+        width: 100%;
+        margin: 0;
+        color: var(--on-dark);
+        font-size: var(--charge-size);
+        font-weight: 900;
+        line-height: 1.34;
+        letter-spacing: 0.01em;
+        text-transform: uppercase;
+        white-space: nowrap;
+        will-change: transform, opacity;
+      }
+
+      .charge-line:first-of-type {
+        color: var(--orange);
+      }
+
+      #charge-rule {
+        display: block;
+        width: 100%;
+        height: 10px;
+        margin-top: 20px;
+        background: var(--orange);
+        transform-origin: 0 50%;
+        will-change: transform;
+      }
+
+      #shot3-visual {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        background: var(--ink);
+        will-change: opacity;
+      }
+
+      #shot3-vignette {
+        position: absolute;
+        z-index: 4;
+        inset: 0;
+        pointer-events: none;
+        background:
+          radial-gradient(
+            ellipse at 50% 43%,
+            rgba(20, 20, 20, 0.02) 15%,
+            rgba(20, 20, 20, 0.22) 51%,
+            rgba(20, 20, 20, 0.82) 100%
+          );
+      }
+
+      #closing-shade {
+        position: absolute;
+        z-index: 5;
+        inset: 0;
+        pointer-events: none;
+        background:
+          linear-gradient(180deg, rgba(20, 20, 20, 0.1), rgba(20, 20, 20, 0.34)),
+          radial-gradient(circle at 50% 48%, transparent 20%, rgba(20, 20, 20, 0.68) 100%);
+      }
+
+      #question-icon {
+        position: absolute;
+        z-index: 15;
+        top: 284px;
+        right: 72px;
+        display: grid;
+        width: 208px;
+        height: 246px;
+        place-items: center;
+        border: 4px solid var(--ink);
+        background: rgba(245, 240, 228, 0.93);
+        box-shadow: 14px 14px 0 var(--orange);
+        transform-origin: 50% 70%;
+        will-change: transform, opacity;
+      }
+
+      #question-icon::before {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        bottom: 12px;
+        left: 12px;
+        border: 2px solid rgba(20, 20, 20, 0.28);
+        content: "";
+      }
+
+      #question-svg {
+        position: relative;
+        z-index: 2;
+        display: block;
+        width: 148px;
+        height: 192px;
+        overflow: visible;
+      }
+
+      .question-stroke {
+        fill: none;
+        stroke: var(--ink);
+        stroke-width: 17;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
+      .question-accent {
+        fill: var(--orange);
+        stroke: var(--ink);
+        stroke-width: 7;
+      }
+
+      #status-flow {
+        position: absolute;
+        z-index: 24;
+        right: 54px;
+        bottom: 486px;
+        left: 54px;
+        padding: 28px 26px 24px;
+        border: 3px solid var(--ink);
+        background: rgba(245, 240, 228, 0.95);
+        box-shadow: 16px 16px 0 rgba(20, 20, 20, 0.78);
+        color: var(--ink);
+        will-change: transform, opacity;
+      }
+
+      .flow-kicker {
+        margin-bottom: 20px;
+        color: var(--ink);
+        font-size: 23px;
+        font-weight: 900;
+        line-height: 1;
+        letter-spacing: 0.13em;
+        text-transform: uppercase;
+      }
+
+      .flow-row {
+        display: grid;
+        grid-template-columns: 1fr 142px 1fr;
+        align-items: center;
+        width: 100%;
+        gap: 8px;
+      }
+
+      .flow-plate {
+        display: grid;
+        min-height: 122px;
+        place-items: center;
+        padding: 16px;
+        border: 4px solid var(--ink);
+        font-weight: 900;
+        line-height: 1.15;
+        text-align: center;
+        text-transform: uppercase;
+        will-change: transform, opacity;
+      }
+
+      #lender-plate {
+        color: var(--ink);
+        background: var(--paper);
+        transform-origin: 100% 50%;
+      }
+
+      #defendant-plate {
+        color: var(--on-dark);
+        background: var(--ink);
+        transform-origin: 0 50%;
+      }
+
+      .lender-label {
+        display: block;
+        font-size: 31px;
+      }
+
+      .defendant-label {
+        display: block;
+        color: var(--orange);
+        font-size: 43px;
+      }
+
+      .flow-arrow {
+        display: block;
+        width: 142px;
+        height: 70px;
+        overflow: visible;
+      }
+
+      #flow-arrow-line {
+        fill: none;
+        stroke: var(--orange);
+        stroke-width: 12;
+        stroke-linecap: square;
+        stroke-linejoin: miter;
+      }
+
+      #verdict-lock {
+        display: block;
+        width: 100%;
+        height: 12px;
+        margin-top: 24px;
+        background: var(--orange);
+        transform-origin: 0 50%;
+        will-change: transform;
+      }
+
+      #bottom-signature {
+        position: absolute;
+        z-index: 200;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        height: 18px;
+        background: var(--orange);
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s03"
+      data-start="0"
+      data-width="1080"
+      data-height="1920"
+      data-duration="9.82"
+      data-fps="30"
+    >
+      <section
+        id="shot-arrest"
+        class="clip"
+        data-start="0"
+        data-duration="1.91"
+        data-track-index="0"
+        data-layout-allow-overlap="true"
+      >
+        <div id="shot1-push" class="shot-push" data-layout-allow-overflow="true">
+          <div id="shot1-rise" class="shot-shell">
+            <div
+              id="shot1-camera"
+              class="camera"
+              data-layout-allow-overflow="true"
+            >
+              <img
+                id="arrest-image"
+                class="media-image shot-one-image"
+                src="assets/img-01-police-arresting-suspect-night.jpeg"
+                alt="Người đàn ông bị hai công an còng tay áp giải trong đêm"
+                draggable="false"
+              />
+            </div>
+
+            <div id="shot1-vignette" class="spotlight" data-layout-ignore></div>
+            <div class="shot-one-edge-darkener" data-layout-ignore></div>
+          </div>
+        </div>
+      </section>
+
+      <section
+        id="shot-court"
+        class="clip"
+        data-start="1.51"
+        data-duration="4.96"
+        data-track-index="0"
+        data-layout-allow-overlap="true"
+      >
+        <div
+          id="court-panel"
+          class="court-panel"
+          data-layout-allow-overflow="true"
+        >
+          <div
+            id="shot2-camera"
+            class="camera"
+            data-layout-allow-overflow="true"
+          >
+            <img
+              id="court-image"
+              class="media-image shot-two-image"
+              src="assets/img-09-terrified-defendant-courtroom-trial.jpeg"
+              alt="Người đàn ông bàng hoàng đứng tại bục khai báo trong phòng xử án"
+              draggable="false"
+            />
+          </div>
+
+          <div class="court-shadow" data-layout-ignore></div>
+          <div class="court-edge" data-layout-ignore></div>
+
+          <div
+            id="charge-lockup"
+            data-layout-allow-overlap="true"
+            data-layout-allow-occlusion="true"
+          >
+            <div class="charge-kicker">TỘI DANH</div>
+            <span class="charge-line">BẮT CÓC</span>
+            <span class="charge-line">NHẰM CHIẾM ĐOẠT</span>
+            <span class="charge-line">TÀI SẢN</span>
+            <span id="charge-rule"></span>
+          </div>
+        </div>
+      </section>
+
+      <section
+        id="shot-justice"
+        class="clip"
+        data-start="6.07"
+        data-duration="3.75"
+        data-track-index="0"
+        data-layout-allow-overlap="true"
+      >
+        <div id="shot3-visual">
+          <div
+            id="shot3-camera"
+            class="camera"
+            data-layout-allow-overflow="true"
+          >
+            <img
+              id="justice-image"
+              class="media-image shot-three-image"
+              src="assets/img-02-police-arrest-suspect-cutout.jpeg"
+              alt="Cảnh còng tay bên dưới hình tượng hệ thống tư pháp"
+              draggable="false"
+            />
+          </div>
+
+          <div id="shot3-vignette" data-layout-ignore></div>
+          <div id="closing-shade" data-layout-ignore></div>
+        </div>
+
+        <div
+          id="question-icon"
+          data-layout-allow-overlap="true"
+          data-layout-allow-occlusion="true"
+          aria-label="Dấu hỏi"
+        >
+          <svg
+            id="question-svg"
+            viewBox="0 0 180 230"
+            xmlns="http://www.w3.org/2000/svg"
+            aria-hidden="true"
+          >
+            <path
+              id="question-hook"
+              class="question-stroke draw-path"
+              d="M38 65 C42 26 72 14 101 18 C137 23 155 45 153 76 C151 104 134 117 111 131 C92 143 86 155 86 174"
+            />
+            <circle
+              id="question-dot"
+              class="question-accent"
+              cx="86"
+              cy="207"
+              r="13"
+            />
+          </svg>
+        </div>
+
+        <div
+          id="status-flow"
+          data-layout-allow-overlap="true"
+          data-layout-allow-occlusion="true"
+        >
+          <div class="flow-kicker">VỊ THẾ BỊ ĐẢO NGƯỢC</div>
+
+          <div class="flow-row">
+            <div id="lender-plate" class="flow-plate">
+              <span class="lender-label">NGƯỜI CHO VAY</span>
+            </div>
+
+            <svg
+              class="flow-arrow"
+              viewBox="0 0 142 70"
+              xmlns="http://www.w3.org/2000/svg"
+              aria-hidden="true"
+            >
+              <path
+                id="flow-arrow-line"
+                class="draw-path"
+                d="M8 35 H118 M91 11 L119 35 L91 59"
+              />
+            </svg>
+
+            <div id="defendant-plate" class="flow-plate">
+              <span class="defendant-label">BỊ CÁO</span>
+            </div>
+          </div>
+
+          <span id="verdict-lock"></span>
+        </div>
+      </section>
+
+      <div id="bottom-signature" data-layout-ignore></div>
+    </div>
+
+    <script>
+      document.fonts.ready.then(() => {
+        const fitChargeText = () => {
+          const lines = Array.from(document.querySelectorAll(".charge-line"));
+          const lockup = document.getElementById("charge-lockup");
+          const canvas = document.createElement("canvas");
+          const context = canvas.getContext("2d");
+          const maxWidth = 858;
+          let size = 70;
+
+          for (; size >= 52; size -= 1) {
+            context.font = `900 ${size}px "Be Vietnam Pro"`;
+
+            const widest = Math.max(
+              ...lines.map((line) => {
+                const text = line.textContent.trim();
+                const letterSpacing = Math.max(0, text.length - 1) * size * 0.01;
+                return context.measureText(text).width + letterSpacing;
+              }),
+            );
+
+            if (widest <= maxWidth) {
+              break;
+            }
+          }
+
+          lockup.style.setProperty("--charge-size", `${size}px`);
+        };
+
+        fitChargeText();
+
+        document.querySelectorAll(".draw-path").forEach((path) => {
+          const length = path.getTotalLength();
+          path.style.strokeDasharray = `${length}`;
+          path.style.strokeDashoffset = `${length}`;
+        });
+
+        const tl = gsap.timeline({
+          paused: true,
+          defaults: {
+            ease: "power3.out",
+          },
+        });
+
+        tl.fromTo(
+          "#shot1-rise",
+          { y: 240 },
+          {
+            y: 0,
+            duration: 0.42,
+            ease: "power4.out",
+          },
+          0,
+        );
+
+        tl.fromTo(
+          "#shot1-camera",
+          { scale: 1.015 },
+          {
+            scale: 1.1,
+            duration: 1.9,
+            ease: "sine.inOut",
+          },
+          0,
+        );
+
+        tl.fromTo(
+          "#shot1-vignette",
+          { opacity: 0.36 },
+          {
+            opacity: 0.7,
+            duration: 1.51,
+            ease: "sine.inOut",
+          },
+          0,
+        );
+
+        tl.to(
+          "#shot1-push",
+          {
+            x: -1080,
+            duration: 0.4,
+            ease: "expo.inOut",
+          },
+          1.51,
+        );
+
+        tl.fromTo(
+          "#court-panel",
+          { x: 1080 },
+          {
+            x: 0,
+            duration: 0.4,
+            ease: "expo.inOut",
+          },
+          1.51,
+        );
+
+        tl.fromTo(
+          "#shot2-camera",
+          { scale: 1.02 },
+          {
+            scale: 1.11,
+            duration: 4.56,
+            ease: "sine.inOut",
+          },
+          1.51,
+        );
+
+        tl.fromTo(
+          "#charge-lockup",
+          {
+            opacity: 0,
+            y: 46,
+            scale: 0.96,
+          },
+          {
+            opacity: 1,
+            y: 0,
+            scale: 1,
+            duration: 0.48,
+            ease: "power4.out",
+          },
+          3,
+        );
+
+        tl.fromTo(
+          ".charge-line",
+          {
+            opacity: 0,
+            y: 24,
+          },
+          {
+            opacity: 1,
+            y: 0,
+            duration: 0.42,
+            stagger: 0.08,
+            ease: "power3.out",
+          },
+          3.04,
+        );
+
+        tl.fromTo(
+          "#charge-rule",
+          { scaleX: 0 },
+          {
+            scaleX: 1,
+            duration: 0.48,
+            ease: "power3.out",
+          },
+          3.28,
+        );
+
+        tl.to(
+          "#charge-lockup",
+          {
+            opacity: 0,
+            y: -18,
+            duration: 0.16,
+            ease: "power2.in",
+          },
+          5.91,
+        );
+
+        tl.fromTo(
+          "#shot3-visual",
+          { opacity: 0 },
+          {
+            opacity: 1,
+            duration: 0.4,
+            ease: "sine.inOut",
+          },
+          6.07,
+        );
+
+        tl.fromTo(
+          "#shot3-camera",
+          { scale: 1.12 },
+          {
+            scale: 1,
+            duration: 3.75,
+            ease: "sine.inOut",
+          },
+          6.07,
+        );
+
+        tl.fromTo(
+          "#closing-shade",
+          { opacity: 0.2 },
+          {
+            opacity: 0.72,
+            duration: 3.5,
+            ease: "sine.inOut",
+          },
+          6.32,
+        );
+
+        tl.fromTo(
+          "#question-icon",
+          {
+            opacity: 0,
+            y: 34,
+            scale: 0.88,
+          },
+          {
+            opacity: 1,
+            y: 0,
+            scale: 1,
+            duration: 0.42,
+            ease: "power3.out",
+          },
+          6.07,
+        );
+
+        tl.to(
+          "#question-hook",
+          {
+            strokeDashoffset: 0,
+            duration: 0.68,
+            ease: "power2.out",
+          },
+          6.13,
+        );
+
+        tl.fromTo(
+          "#question-dot",
+          {
+            opacity: 0,
+            scale: 0,
+            transformOrigin: "50% 50%",
+          },
+          {
+            opacity: 1,
+            scale: 1,
+            duration: 0.3,
+            ease: "power3.out",
+          },
+          6.65,
+        );
+
+        tl.fromTo(
+          "#status-flow",
+          {
+            opacity: 0,
+            y: 54,
+          },
+          {
+            opacity: 1,
+            y: 0,
+            duration: 0.42,
+            ease: "power4.out",
+          },
+          7.98,
+        );
+
+        tl.to(
+          "#flow-arrow-line",
+          {
+            strokeDashoffset: 0,
+            duration: 0.52,
+            ease: "power2.out",
+          },
+          8.05,
+        );
+
+        tl.fromTo(
+          "#lender-plate",
+          {
+            scaleX: 1,
+            opacity: 1,
+          },
+          {
+            scaleX: 0.68,
+            opacity: 0.58,
+            duration: 0.72,
+            ease: "power3.inOut",
+          },
+          8.18,
+        );
+
+        tl.fromTo(
+          "#defendant-plate",
+          {
+            scaleX: 0.58,
+            opacity: 0.72,
+          },
+          {
+            scaleX: 1.06,
+            opacity: 1,
+            duration: 0.72,
+            ease: "power3.inOut",
+          },
+          8.18,
+        );
+
+        tl.fromTo(
+          "#verdict-lock",
+          { scaleX: 0 },
+          {
+            scaleX: 1,
+            duration: 0.48,
+            ease: "power4.out",
+          },
+          8.94,
+        );
+
+        window.__timelines["scene-s03"] = tl;
+
+        if (window.__hfForceTimelineRebind) {
+          window.__hfForceTimelineRebind();
+        }
+      });
+    </script>
+  
+    </template>
+  </body>
+</html>

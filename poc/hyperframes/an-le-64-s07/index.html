@@ -1,0 +1,1114 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <title>S07 — Danh tính mượn</title>
+
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap">
+
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+
+    <style>
+      :root {
+        --paper: #e7e3d9;
+        --cream: #f5f0e4;
+        --ink: #141414;
+        --orange: #ff6a1a;
+        --on-dark: #f7f4ec;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        overflow: hidden;
+        background: var(--cream);
+      }
+
+      body {
+        color: var(--ink);
+        font-family: "Be Vietnam Pro", sans-serif;
+        font-weight: 700;
+      }
+
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        isolation: isolate;
+        background: var(--cream);
+      }
+
+      .base-paper {
+        position: absolute;
+        inset: 0;
+        z-index: 0;
+        background: var(--cream);
+      }
+
+      .clip {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+      }
+
+      .media-clip {
+        overflow: hidden;
+      }
+
+      .media-panel,
+      .media-panel img {
+        position: absolute;
+        display: block;
+      }
+
+      .media-panel {
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        transform-origin: 50% 50%;
+        background: var(--ink);
+      }
+
+      .shot-media {
+        top: -5%;
+        left: -6%;
+        width: 112%;
+        height: 110%;
+        object-fit: cover;
+        object-position: 50% 50%;
+        transform-origin: 50% 50%;
+        will-change: transform, opacity;
+      }
+
+      .media-tone {
+        position: absolute;
+        inset: 0;
+        background:
+          linear-gradient(
+            180deg,
+            rgba(20, 20, 20, 0.2) 0%,
+            rgba(245, 240, 228, 0.05) 42%,
+            rgba(20, 20, 20, 0.28) 100%
+          );
+        pointer-events: none;
+      }
+
+      #shot-1 {
+        z-index: 1;
+      }
+
+      #shot-2 {
+        z-index: 2;
+      }
+
+      #shot-2-image {
+        object-position: 58% 50%;
+      }
+
+      #shot-3-video {
+        position: absolute;
+        inset: 0;
+        z-index: 3;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: 50% 50%;
+        background: var(--ink);
+      }
+
+      .video-tone {
+        position: absolute;
+        inset: 0;
+        z-index: 4;
+        pointer-events: none;
+        background:
+          linear-gradient(
+            180deg,
+            rgba(20, 20, 20, 0.22) 0%,
+            rgba(245, 240, 228, 0.03) 48%,
+            rgba(20, 20, 20, 0.32) 100%
+          );
+      }
+
+      #phone-overlay {
+        z-index: 10;
+        pointer-events: none;
+      }
+
+      .phone-shell {
+        position: absolute;
+        top: 330px;
+        left: 180px;
+        display: block;
+        width: 720px;
+        height: 1050px;
+        transform-origin: 50% 50%;
+        will-change: transform, opacity;
+      }
+
+      .phone-shell svg {
+        display: block;
+        width: 100%;
+        height: 100%;
+        overflow: visible;
+      }
+
+      .phone-glass {
+        fill: rgba(245, 240, 228, 0.34);
+        stroke: var(--ink);
+        stroke-width: 10;
+      }
+
+      .phone-inner-line {
+        fill: none;
+        stroke: rgba(20, 20, 20, 0.72);
+        stroke-width: 3;
+      }
+
+      .phone-speaker {
+        fill: var(--ink);
+      }
+
+      .phone-tab {
+        fill: var(--orange);
+        stroke: var(--ink);
+        stroke-width: 6;
+      }
+
+      #borrowed-label {
+        z-index: 18;
+        pointer-events: none;
+      }
+
+      .borrowed-label-inner {
+        position: absolute;
+        top: 875px;
+        left: 42px;
+        display: flex;
+        align-items: center;
+        width: 342px;
+        min-height: 86px;
+        padding: 16px 22px;
+        border: 5px solid var(--ink);
+        background: var(--cream);
+        box-shadow: 12px 12px 0 var(--orange);
+        font-size: 29px;
+        font-weight: 900;
+        line-height: 1.15;
+        letter-spacing: 0.02em;
+        white-space: nowrap;
+        transform-origin: 0% 50%;
+        will-change: transform, opacity;
+      }
+
+      .borrowed-connector {
+        position: absolute;
+        top: 784px;
+        left: 322px;
+        width: 254px;
+        height: 144px;
+        overflow: visible;
+      }
+
+      .draw-path {
+        fill: none;
+        stroke: var(--orange);
+        stroke-width: 8;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
+      .connector-dot {
+        fill: var(--orange);
+        stroke: var(--ink);
+        stroke-width: 4;
+      }
+
+      #profile-overlay {
+        z-index: 17;
+        pointer-events: none;
+      }
+
+      .profile-card {
+        position: absolute;
+        top: 525px;
+        left: 258px;
+        display: grid;
+        grid-template-columns: 170px 1fr;
+        align-items: center;
+        gap: 28px;
+        width: 564px;
+        min-height: 326px;
+        padding: 42px 34px;
+        border: 6px solid var(--ink);
+        border-radius: 26px;
+        background: rgba(245, 240, 228, 0.92);
+        box-shadow: 14px 14px 0 rgba(20, 20, 20, 0.92);
+        transform-origin: 50% 50%;
+        will-change: transform, opacity;
+      }
+
+      .avatar-wrap {
+        position: relative;
+        display: block;
+        width: 170px;
+        height: 170px;
+        border-radius: 50%;
+        transform-origin: 50% 50%;
+        will-change: transform;
+      }
+
+      .avatar-crop {
+        position: absolute;
+        inset: 12px;
+        display: block;
+        width: 146px;
+        height: 146px;
+        overflow: hidden;
+        border: 5px solid var(--ink);
+        border-radius: 50%;
+        background: var(--paper);
+      }
+
+      .avatar-crop img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: 62% 46%;
+      }
+
+      .avatar-ring {
+        position: absolute;
+        inset: 0;
+        display: block;
+        width: 170px;
+        height: 170px;
+        overflow: visible;
+      }
+
+      .avatar-ring circle {
+        fill: none;
+        stroke: var(--orange);
+        stroke-width: 10;
+        stroke-linecap: round;
+      }
+
+      .profile-copy {
+        min-width: 0;
+      }
+
+      .profile-name {
+        margin: 0 0 14px;
+        font-size: 64px;
+        font-weight: 900;
+        line-height: 1;
+      }
+
+      .profile-lines {
+        display: grid;
+        gap: 13px;
+      }
+
+      .profile-line {
+        display: block;
+        width: 100%;
+        height: 14px;
+        border-radius: 999px;
+        background: rgba(20, 20, 20, 0.78);
+      }
+
+      .profile-line.short {
+        width: 66%;
+        background: var(--orange);
+      }
+
+      #shot-3-ui {
+        z-index: 20;
+        pointer-events: none;
+      }
+
+      #friend-button {
+        z-index: 23;
+        pointer-events: none;
+      }
+
+      .friend-button-inner {
+        position: absolute;
+        top: 770px;
+        left: 355px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 18px;
+        width: 370px;
+        height: 112px;
+        border: 6px solid var(--ink);
+        border-radius: 18px;
+        background: var(--cream);
+        color: var(--ink);
+        box-shadow: 10px 10px 0 rgba(20, 20, 20, 0.9);
+        font-size: 42px;
+        font-weight: 900;
+        line-height: 1;
+        letter-spacing: 0.025em;
+        transform-origin: 50% 50%;
+        will-change: transform, opacity, background-color, color;
+      }
+
+      .check-icon {
+        display: block;
+        width: 48px;
+        height: 48px;
+        overflow: visible;
+      }
+
+      #check-path {
+        fill: none;
+        stroke: var(--ink);
+        stroke-width: 8;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
+      #bait-punch {
+        z-index: 26;
+        pointer-events: none;
+      }
+
+      .bait-punch-inner {
+        position: absolute;
+        top: 188px;
+        left: 233px;
+        display: grid;
+        place-items: center;
+        width: 614px;
+        height: 146px;
+        border: 7px solid var(--ink);
+        background: var(--ink);
+        color: var(--on-dark);
+        box-shadow: 16px 16px 0 var(--orange);
+        font-size: 78px;
+        font-weight: 900;
+        line-height: 1;
+        letter-spacing: 0.035em;
+        transform-origin: 50% 50%;
+        will-change: transform, opacity;
+      }
+
+      #chat-thread {
+        z-index: 24;
+        pointer-events: none;
+      }
+
+      .chat-mechanism {
+        position: absolute;
+        top: 945px;
+        left: 244px;
+        display: block;
+        width: 592px;
+        height: 390px;
+      }
+
+      .source-node {
+        position: absolute;
+        top: 42px;
+        left: 0;
+        display: grid;
+        place-items: center;
+        width: 104px;
+        height: 104px;
+        border: 6px solid var(--ink);
+        border-radius: 50%;
+        background: var(--cream);
+        color: var(--ink);
+        font-size: 52px;
+        font-weight: 900;
+        line-height: 1;
+      }
+
+      .chat-route {
+        position: absolute;
+        top: 61px;
+        left: 96px;
+        display: block;
+        width: 244px;
+        height: 92px;
+        overflow: visible;
+      }
+
+      .recipient-phone {
+        position: absolute;
+        top: 0;
+        right: 0;
+        display: block;
+        width: 188px;
+        height: 322px;
+        border: 6px solid var(--ink);
+        border-radius: 28px;
+        background: rgba(245, 240, 228, 0.94);
+        box-shadow: 10px 10px 0 var(--orange);
+      }
+
+      .recipient-speaker {
+        position: absolute;
+        top: 18px;
+        left: 64px;
+        width: 60px;
+        height: 8px;
+        border-radius: 999px;
+        background: var(--ink);
+      }
+
+      .bubble {
+        position: absolute;
+        right: 20px;
+        display: block;
+        border: 5px solid var(--ink);
+        border-radius: 20px 20px 6px 20px;
+        background: var(--cream);
+        box-shadow: 7px 7px 0 rgba(20, 20, 20, 0.9);
+        transform-origin: 100% 100%;
+        will-change: transform, opacity;
+      }
+
+      .bubble-one {
+        top: 72px;
+        width: 124px;
+        height: 62px;
+        padding: 23px 20px;
+      }
+
+      .bubble-dots {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 9px;
+      }
+
+      .bubble-dots span {
+        display: block;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--ink);
+      }
+
+      .bubble-heart {
+        top: 163px;
+        display: grid;
+        place-items: center;
+        width: 92px;
+        height: 78px;
+        background: var(--orange);
+        color: var(--ink);
+        font-size: 48px;
+        font-weight: 900;
+        line-height: 1;
+      }
+
+      .grain-layer {
+        position: absolute;
+        inset: 0;
+        z-index: 90;
+        width: 100%;
+        height: 100%;
+        opacity: 0.18;
+        mix-blend-mode: multiply;
+        pointer-events: none;
+      }
+
+      .bottom-signature {
+        position: absolute;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        z-index: 100;
+        height: 18px;
+        background: var(--orange);
+        pointer-events: none;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div
+      id="root"
+      data-composition-id="main"
+      data-start="0"
+      data-width="1080"
+      data-height="1920"
+      data-fps="30"
+      data-duration="6.56"
+    >
+      <div class="base-paper" aria-hidden="true"></div>
+
+      <section
+        id="shot-1"
+        class="clip media-clip"
+        data-start="0"
+        data-duration="3"
+        data-track-index="0"
+        data-layout-allow-overflow="true"
+        data-layout-ignore
+      >
+        <div id="shot-1-panel" class="media-panel">
+          <img
+            id="shot-1-image"
+            class="shot-media"
+            src="assets/img-03-man-smartphone-screen-glow-cutout.jpeg"
+            alt=""
+          />
+          <div class="media-tone"></div>
+        </div>
+      </section>
+
+      <section
+        id="shot-2"
+        class="clip media-clip"
+        data-start="2.76"
+        data-duration="1.66"
+        data-track-index="0"
+        data-layout-allow-overflow="true"
+        data-layout-ignore
+      >
+        <div id="shot-2-panel" class="media-panel">
+          <img
+            id="shot-2-image"
+            class="shot-media"
+            src="assets/img-05-online-scam-dating-profile.jpeg"
+            alt=""
+          />
+          <div class="media-tone"></div>
+        </div>
+      </section>
+
+      <video
+        id="shot-3-video"
+        muted
+        playsinline
+        preload="auto"
+        src="assets/vid-04-online-scam-phone-blue-fire.mp4"
+        data-start="4.42"
+        data-duration="2.14"
+        data-media-start="3.7"
+        data-track-index="0"
+        data-layout-allow-overflow="true"
+        data-layout-ignore
+      ></video>
+
+      <section
+        id="shot-3-ui"
+        class="clip"
+        data-start="4.42"
+        data-duration="2.14"
+        data-track-index="1"
+        data-layout-allow-overlap="true"
+        data-layout-allow-occlusion="true"
+      >
+        <div class="video-tone" aria-hidden="true"></div>
+      </section>
+
+      <section
+        id="phone-overlay"
+        class="clip"
+        data-start="1"
+        data-duration="5.56"
+        data-track-index="2"
+        data-layout-allow-overlap="true"
+        data-layout-allow-occlusion="true"
+      >
+        <div id="phone-shell" class="phone-shell">
+          <svg viewBox="0 0 720 1050" aria-hidden="true">
+            <rect class="phone-glass" x="16" y="16" width="688" height="1018" rx="66"></rect>
+            <rect class="phone-inner-line" x="42" y="72" width="636" height="906" rx="34"></rect>
+            <rect class="phone-speaker" x="294" y="42" width="132" height="14" rx="7"></rect>
+            <path class="phone-tab" d="M154 10 H282 L306 54 H154 Z"></path>
+          </svg>
+        </div>
+      </section>
+
+      <section
+        id="borrowed-label"
+        class="clip"
+        data-start="1.24"
+        data-duration="1.52"
+        data-track-index="3"
+        data-layout-allow-overlap="true"
+        data-layout-allow-occlusion="true"
+      >
+        <div id="borrowed-label-inner" class="borrowed-label-inner">DANH TÍNH MƯỢN</div>
+
+        <svg class="borrowed-connector" viewBox="0 0 254 144" aria-hidden="true">
+          <path id="borrowed-path" class="draw-path" d="M8 132 C70 132 67 30 146 30 H236"></path>
+          <circle class="connector-dot" cx="238" cy="30" r="10"></circle>
+        </svg>
+      </section>
+
+      <section
+        id="profile-overlay"
+        class="clip"
+        data-start="2.76"
+        data-duration="1.66"
+        data-track-index="3"
+        data-layout-allow-overlap="true"
+        data-layout-allow-occlusion="true"
+      >
+        <div id="profile-card" class="profile-card">
+          <div id="avatar-wrap" class="avatar-wrap">
+            <div class="avatar-crop">
+              <img src="assets/img-05-online-scam-dating-profile.jpeg" alt="" />
+            </div>
+
+            <svg class="avatar-ring" viewBox="0 0 170 170" aria-hidden="true">
+              <circle id="avatar-ring-path" cx="85" cy="85" r="77"></circle>
+            </svg>
+          </div>
+
+          <div class="profile-copy">
+            <div class="profile-name">L</div>
+            <div class="profile-lines" aria-hidden="true">
+              <span class="profile-line"></span>
+              <span class="profile-line short"></span>
+              <span class="profile-line"></span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section
+        id="friend-button"
+        class="clip"
+        data-start="4.88"
+        data-duration="1.68"
+        data-track-index="4"
+        data-layout-allow-overlap="true"
+        data-layout-allow-occlusion="true"
+      >
+        <div id="friend-button-inner" class="friend-button-inner">
+          <span>KẾT BẠN</span>
+          <svg class="check-icon" viewBox="0 0 48 48" aria-hidden="true">
+            <path id="check-path" d="M7 25 L19 37 L42 10"></path>
+          </svg>
+        </div>
+      </section>
+
+      <section
+        id="bait-punch"
+        class="clip"
+        data-start="4.94"
+        data-duration="1.62"
+        data-track-index="5"
+        data-layout-allow-overlap="true"
+        data-layout-allow-occlusion="true"
+      >
+        <div id="bait-punch-inner" class="bait-punch-inner">MỒI ẢO</div>
+      </section>
+
+      <section
+        id="chat-thread"
+        class="clip"
+        data-start="5.06"
+        data-duration="1.5"
+        data-track-index="5"
+        data-layout-allow-overlap="true"
+        data-layout-allow-occlusion="true"
+      >
+        <div class="chat-mechanism">
+          <div id="source-node" class="source-node">L</div>
+
+          <svg class="chat-route" viewBox="0 0 244 92" aria-hidden="true">
+            <path id="chat-route-path" class="draw-path" d="M8 46 H214"></path>
+            <path class="draw-path" d="M190 22 L218 46 L190 70"></path>
+          </svg>
+
+          <div id="recipient-phone" class="recipient-phone">
+            <div class="recipient-speaker"></div>
+
+            <div id="bubble-one" class="bubble bubble-one">
+              <div class="bubble-dots" aria-hidden="true">
+                <span></span>
+                <span></span>
+                <span></span>
+              </div>
+            </div>
+
+            <div id="bubble-heart" class="bubble bubble-heart" aria-label="Tin nhắn có biểu tượng tim">♥</div>
+          </div>
+        </div>
+      </section>
+
+      <svg class="grain-layer" viewBox="0 0 1080 1920" preserveAspectRatio="none" aria-hidden="true">
+        <filter id="paper-grain" x="0" y="0" width="100%" height="100%">
+          <feTurbulence
+            type="fractalNoise"
+            baseFrequency="0.72"
+            numOctaves="3"
+            seed="17"
+            stitchTiles="stitch"
+          ></feTurbulence>
+          <feColorMatrix type="saturate" values="0"></feColorMatrix>
+        </filter>
+        <rect width="1080" height="1920" filter="url(#paper-grain)" opacity="0.72"></rect>
+      </svg>
+
+      <div class="bottom-signature" aria-hidden="true"></div>
+    </div>
+
+    <script>
+      const prepareDrawPath = (selector) => {
+        const path = document.querySelector(selector);
+        const length = path.getTotalLength();
+        path.style.strokeDasharray = String(length);
+        path.style.strokeDashoffset = String(length);
+        return path;
+      };
+
+      const borrowedPath = prepareDrawPath("#borrowed-path");
+      const avatarRingPath = prepareDrawPath("#avatar-ring-path");
+      const checkPath = prepareDrawPath("#check-path");
+      const chatRoutePath = prepareDrawPath("#chat-route-path");
+
+      const tl = gsap.timeline({
+        paused: true,
+        defaults: {
+          ease: "power3.out"
+        }
+      });
+
+      tl.fromTo(
+        "#shot-1-panel",
+        {
+          scaleY: 0,
+          scaleX: 0.08,
+          opacity: 0
+        },
+        {
+          scaleY: 1,
+          opacity: 1,
+          duration: 0.34,
+          ease: "power4.out"
+        },
+        0
+      );
+
+      tl.to(
+        "#shot-1-panel",
+        {
+          scaleX: 1,
+          duration: 0.38,
+          ease: "power4.out"
+        },
+        0.28
+      );
+
+      tl.fromTo(
+        "#shot-1-image",
+        {
+          scale: 1.04,
+          x: 10,
+          y: 8
+        },
+        {
+          scale: 1.18,
+          x: -14,
+          y: -28,
+          duration: 2.94,
+          ease: "none"
+        },
+        0
+      );
+
+      tl.fromTo(
+        "#phone-shell",
+        {
+          scaleY: 0,
+          scaleX: 0.08,
+          opacity: 0
+        },
+        {
+          scaleY: 1,
+          opacity: 1,
+          duration: 0.34,
+          ease: "power4.out"
+        },
+        1
+      );
+
+      tl.to(
+        "#phone-shell",
+        {
+          scaleX: 1,
+          duration: 0.36,
+          ease: "power4.out"
+        },
+        1.28
+      );
+
+      tl.fromTo(
+        "#borrowed-label-inner",
+        {
+          x: -34,
+          scaleX: 0.78,
+          opacity: 0
+        },
+        {
+          x: 0,
+          scaleX: 1,
+          opacity: 1,
+          duration: 0.42,
+          ease: "power3.out"
+        },
+        1.24
+      );
+
+      tl.to(
+        borrowedPath,
+        {
+          strokeDashoffset: 0,
+          duration: 0.48,
+          ease: "power2.out"
+        },
+        1.38
+      );
+
+      tl.fromTo(
+        "#shot-2-panel",
+        {
+          opacity: 0
+        },
+        {
+          opacity: 1,
+          duration: 0.24,
+          ease: "sine.inOut"
+        },
+        2.76
+      );
+
+      tl.to(
+        "#shot-1-panel",
+        {
+          opacity: 0,
+          duration: 0.24,
+          ease: "sine.inOut"
+        },
+        2.76
+      );
+
+      tl.fromTo(
+        "#shot-2-image",
+        {
+          x: 24,
+          scale: 1.08
+        },
+        {
+          x: -20,
+          scale: 1.1,
+          duration: 1.66,
+          ease: "none"
+        },
+        2.76
+      );
+
+      tl.fromTo(
+        "#profile-card",
+        {
+          y: 24,
+          opacity: 0,
+          scale: 0.96
+        },
+        {
+          y: 0,
+          opacity: 1,
+          scale: 1,
+          duration: 0.42,
+          ease: "power3.out"
+        },
+        2.76
+      );
+
+      tl.to(
+        avatarRingPath,
+        {
+          strokeDashoffset: 0,
+          duration: 0.38,
+          ease: "power2.out"
+        },
+        3.2
+      );
+
+      tl.to(
+        "#avatar-wrap",
+        {
+          scale: 1.06,
+          duration: 0.18,
+          ease: "power3.out"
+        },
+        3.2
+      );
+
+      tl.to(
+        "#avatar-wrap",
+        {
+          scale: 1,
+          duration: 0.22,
+          ease: "power2.out"
+        },
+        3.38
+      );
+
+      tl.fromTo(
+        "#friend-button-inner",
+        {
+          scale: 0.9,
+          y: 20,
+          opacity: 0
+        },
+        {
+          scale: 1,
+          y: 0,
+          opacity: 1,
+          duration: 0.36,
+          ease: "power4.out"
+        },
+        4.88
+      );
+
+      tl.fromTo(
+        "#bait-punch-inner",
+        {
+          scale: 0.88,
+          y: -20,
+          opacity: 0
+        },
+        {
+          scale: 1,
+          y: 0,
+          opacity: 1,
+          duration: 0.38,
+          ease: "power4.out"
+        },
+        4.94
+      );
+
+      tl.to(
+        "#friend-button-inner",
+        {
+          scale: 0.96,
+          backgroundColor: "#FF6A1A",
+          duration: 0.12,
+          ease: "power2.in"
+        },
+        5.16
+      );
+
+      tl.to(
+        "#friend-button-inner",
+        {
+          scale: 1,
+          duration: 0.2,
+          ease: "power3.out"
+        },
+        5.28
+      );
+
+      tl.to(
+        checkPath,
+        {
+          strokeDashoffset: 0,
+          duration: 0.34,
+          ease: "power2.out"
+        },
+        5.24
+      );
+
+      tl.fromTo(
+        "#source-node",
+        {
+          scale: 0,
+          opacity: 0
+        },
+        {
+          scale: 1,
+          opacity: 1,
+          duration: 0.34,
+          ease: "power3.out"
+        },
+        5.06
+      );
+
+      tl.to(
+        chatRoutePath,
+        {
+          strokeDashoffset: 0,
+          duration: 0.46,
+          ease: "power2.out"
+        },
+        5.08
+      );
+
+      tl.fromTo(
+        "#recipient-phone",
+        {
+          scaleY: 0.12,
+          scaleX: 0.82,
+          opacity: 0
+        },
+        {
+          scaleY: 1,
+          scaleX: 1,
+          opacity: 1,
+          duration: 0.42,
+          ease: "power4.out"
+        },
+        5.12
+      );
+
+      tl.fromTo(
+        "#bubble-one",
+        {
+          x: 48,
+          scale: 0.82,
+          opacity: 0
+        },
+        {
+          x: 0,
+          scale: 1,
+          opacity: 1,
+          duration: 0.34,
+          ease: "power3.out"
+        },
+        5.34
+      );
+
+      tl.fromTo(
+        "#bubble-heart",
+        {
+          x: 48,
+          scale: 0.78,
+          opacity: 0
+        },
+        {
+          x: 0,
+          scale: 1,
+          opacity: 1,
+          duration: 0.38,
+          ease: "power4.out"
+        },
+        5.74
+      );
+
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

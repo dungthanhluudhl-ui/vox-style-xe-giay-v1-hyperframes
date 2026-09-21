@@ -1,0 +1,714 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap">
+      <style>
+      :root {
+        --paper: #e7e3d9;
+        --cream: #f7f4ec;
+        --ink: #141414;
+        --orange: #ff6a1a;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        overflow: hidden;
+        background: var(--ink);
+      }
+
+      body {
+        color: var(--cream);
+        font-family: "Be Vietnam Pro", sans-serif;
+      }
+
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        isolation: isolate;
+        background: var(--ink);
+      }
+
+      .clip {
+        position: absolute;
+        inset: 0;
+      }
+
+      .video-stage {
+        position: absolute;
+        inset: 0;
+        z-index: 1;
+        overflow: hidden;
+        background: var(--ink);
+      }
+
+      #video-main {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: 50% 50%;
+        transform-origin: 50% 50%;
+        filter: contrast(1.06) saturate(0.9) brightness(0.83);
+        will-change: transform;
+      }
+
+      .spotlight-vignette {
+        position: absolute;
+        inset: 0;
+        z-index: 2;
+        pointer-events: none;
+        background:
+          linear-gradient(
+            180deg,
+            rgba(20, 20, 20, 0.36) 0%,
+            rgba(20, 20, 20, 0.04) 24%,
+            rgba(20, 20, 20, 0.02) 66%,
+            rgba(20, 20, 20, 0.34) 100%
+          ),
+          radial-gradient(
+            ellipse at 51% 44%,
+            rgba(20, 20, 20, 0) 36%,
+            rgba(20, 20, 20, 0.1) 65%,
+            rgba(20, 20, 20, 0.38) 100%
+          );
+      }
+
+      .paper-grain {
+        position: absolute;
+        inset: 0;
+        z-index: 3;
+        pointer-events: none;
+        opacity: 0.18;
+        mix-blend-mode: multiply;
+        background-size: 220px 220px;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220' viewBox='0 0 220 220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.78' numOctaves='3' seed='17' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.56'/%3E%3C/svg%3E");
+      }
+
+      #scene-overlay {
+        z-index: 5;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+      }
+
+      .route-canvas {
+        position: absolute;
+        inset: 0;
+        display: block;
+        width: 100%;
+        height: 100%;
+        overflow: visible;
+      }
+
+      .route-shadow {
+        fill: none;
+        stroke: rgba(20, 20, 20, 0.7);
+        stroke-width: 20;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
+      .route-path {
+        fill: none;
+        stroke: var(--orange);
+        stroke-width: 11;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
+      #escape-trail {
+        opacity: 0.96;
+      }
+
+      #reverse-route {
+        stroke-width: 13;
+      }
+
+      .run-label {
+        inset: auto;
+        top: 1320px;
+        left: 72px;
+        width: 320px;
+        height: 64px;
+        z-index: 8;
+      }
+
+      .run-label-inner {
+        display: flex;
+        width: 100%;
+        height: 100%;
+        align-items: center;
+        justify-content: center;
+        border: 3px solid var(--ink);
+        border-radius: 8px;
+        background: rgba(247, 244, 236, 0.94);
+        box-shadow: 8px 8px 0 rgba(255, 106, 26, 0.92);
+        color: var(--ink);
+        font-size: 27px;
+        font-weight: 900;
+        letter-spacing: 0.035em;
+        line-height: 1;
+        white-space: nowrap;
+      }
+
+      .punch-slot {
+        inset: auto;
+        top: 238px;
+        left: 70px;
+        width: 940px;
+        height: 168px;
+        z-index: 12;
+      }
+
+      .punch-plate {
+        position: relative;
+        display: flex;
+        width: 100%;
+        height: 142px;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        border: 3px solid rgba(247, 244, 236, 0.9);
+        border-radius: 8px;
+        background: rgba(20, 20, 20, 0.94);
+        box-shadow: 12px 12px 0 rgba(255, 106, 26, 0.9);
+        color: var(--cream);
+        font-size: 72px;
+        font-weight: 900;
+        letter-spacing: -0.035em;
+        line-height: 1;
+        text-align: center;
+        white-space: nowrap;
+        will-change: transform, opacity;
+      }
+
+      .punch-underline {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        display: block;
+        width: 100%;
+        height: 12px;
+        background: var(--orange);
+        transform-origin: 0% 50%;
+        will-change: transform;
+      }
+
+      .arrow-slot,
+      .flow-slot {
+        z-index: 9;
+        width: 100%;
+        height: 100%;
+      }
+
+      #reverse-arrow {
+        fill: var(--orange);
+        stroke: var(--ink);
+        stroke-width: 5;
+        stroke-linejoin: round;
+        transform-origin: 850px 1040px;
+        will-change: transform, opacity;
+      }
+
+      .plan-slot {
+        inset: auto;
+        top: 1197px;
+        width: 220px;
+        height: 172px;
+        z-index: 11;
+      }
+
+      #plan-a {
+        left: 660px;
+      }
+
+      #plan-b {
+        left: 380px;
+      }
+
+      #plan-c {
+        left: 100px;
+      }
+
+      .plan-card-inner {
+        position: relative;
+        display: block;
+        width: 100%;
+        height: 100%;
+        border: 8px solid var(--ink);
+        border-radius: 5px;
+        background: rgba(245, 240, 228, 0.94);
+        box-shadow: 10px 10px 0 rgba(255, 106, 26, 0.9);
+        transform-origin: 50% 50%;
+        will-change: transform, opacity;
+      }
+
+      .plan-card-inner::before {
+        position: absolute;
+        top: -8px;
+        left: -8px;
+        width: 62px;
+        height: 15px;
+        background: var(--orange);
+        content: "";
+      }
+
+      .plan-card-inner::after {
+        position: absolute;
+        right: 15px;
+        bottom: 15px;
+        width: 24px;
+        height: 24px;
+        border-right: 5px solid var(--ink);
+        border-bottom: 5px solid var(--ink);
+        content: "";
+      }
+
+      .bottom-signature {
+        position: absolute;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        z-index: 20;
+        height: 16px;
+        background: var(--orange);
+        pointer-events: none;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s06"
+      data-start="0"
+      data-width="1080"
+      data-height="1920"
+      data-duration="6.18"
+      data-fps="30"
+    >
+      <div class="video-stage">
+        <video
+          id="video-main"
+          class="clip"
+          data-start="0"
+          data-duration="6.18"
+          data-media-start="0.9"
+          data-track-index="0"
+          data-layout-allow-overflow
+          src="assets/vid-02-suspect-looking-back-alley.mp4"
+          muted
+          playsinline
+          preload="auto"
+        ></video>
+      </div>
+
+      <div
+        class="spotlight-vignette"
+        data-layout-ignore
+        aria-hidden="true"
+      ></div>
+
+      <div
+        class="paper-grain"
+        data-layout-ignore
+        aria-hidden="true"
+      ></div>
+
+      <section
+        id="scene-overlay"
+        class="clip"
+        data-start="0"
+        data-duration="6.18"
+        data-track-index="1"
+        data-layout-allow-overlap
+        data-layout-allow-occlusion
+      >
+        <svg
+          class="route-canvas"
+          viewBox="0 0 1080 1920"
+          aria-hidden="true"
+          data-layout-ignore
+        >
+          <path
+            id="escape-trail-shadow"
+            class="route-shadow"
+            d="M 70 1310 C 235 1272, 350 1192, 494 1152 C 626 1115, 736 1072, 850 1040"
+          ></path>
+          <path
+            id="escape-trail"
+            class="route-path"
+            d="M 70 1310 C 235 1272, 350 1192, 494 1152 C 626 1115, 736 1072, 850 1040"
+          ></path>
+        </svg>
+
+        <div
+          id="run-label"
+          class="clip run-label"
+          data-start="0.4"
+          data-duration="1.8"
+          data-track-index="2"
+          data-layout-allow-overlap
+        >
+          <div class="run-label-inner">CÀNG LÚN SÂU</div>
+        </div>
+
+        <div
+          id="punch-phrase"
+          class="clip punch-slot"
+          data-start="3.2"
+          data-duration="1.9"
+          data-track-index="3"
+          data-layout-allow-overlap
+          data-layout-allow-occlusion
+        >
+          <div class="punch-plate">
+            KHÔNG NGỒI CHỜ
+            <span class="punch-underline" aria-hidden="true"></span>
+          </div>
+        </div>
+
+        <div
+          id="arrow-layer"
+          class="clip arrow-slot"
+          data-start="4.18"
+          data-duration="2"
+          data-track-index="4"
+          data-layout-ignore
+        >
+          <svg class="route-canvas" viewBox="0 0 1080 1920" aria-hidden="true">
+            <polygon
+              id="reverse-arrow"
+              points="850,1021 895,1040 850,1059 861,1040"
+            ></polygon>
+          </svg>
+        </div>
+
+        <div
+          id="flow-route-layer"
+          class="clip flow-slot"
+          data-start="4.2"
+          data-duration="1.98"
+          data-track-index="5"
+          data-layout-ignore
+        >
+          <svg class="route-canvas" viewBox="0 0 1080 1920" aria-hidden="true">
+            <path
+              id="reverse-route-shadow"
+              class="route-shadow"
+              d="M 850 1040 C 936 1100, 936 1194, 770 1283 L 490 1283 L 210 1283"
+            ></path>
+            <path
+              id="reverse-route"
+              class="route-path"
+              d="M 850 1040 C 936 1100, 936 1194, 770 1283 L 490 1283 L 210 1283"
+            ></path>
+          </svg>
+        </div>
+
+        <div
+          id="plan-a"
+          class="clip plan-slot"
+          data-start="4.2"
+          data-duration="1.98"
+          data-track-index="6"
+          data-layout-allow-overlap
+        >
+          <div id="plan-a-inner" class="plan-card-inner" aria-hidden="true"></div>
+        </div>
+
+        <div
+          id="plan-b"
+          class="clip plan-slot"
+          data-start="4.52"
+          data-duration="1.66"
+          data-track-index="7"
+          data-layout-allow-overlap
+        >
+          <div id="plan-b-inner" class="plan-card-inner" aria-hidden="true"></div>
+        </div>
+
+        <div
+          id="plan-c"
+          class="clip plan-slot"
+          data-start="4.8"
+          data-duration="1.38"
+          data-track-index="8"
+          data-layout-allow-overlap
+        >
+          <div id="plan-c-inner" class="plan-card-inner" aria-hidden="true"></div>
+        </div>
+      </section>
+
+      <div
+        class="bottom-signature"
+        data-layout-ignore
+        aria-hidden="true"
+      ></div>
+    </div>
+
+    <script>
+      const escapeTrail = document.getElementById("escape-trail");
+      const escapeTrailShadow = document.getElementById("escape-trail-shadow");
+      const reverseRoute = document.getElementById("reverse-route");
+      const reverseRouteShadow = document.getElementById("reverse-route-shadow");
+
+      function prepareDrawPath(path) {
+        const length = path.getTotalLength();
+        path.style.strokeDasharray = `${length}`;
+        path.style.strokeDashoffset = `${length}`;
+        return length;
+      }
+
+      const escapeLength = prepareDrawPath(escapeTrail);
+      const escapeShadowLength = prepareDrawPath(escapeTrailShadow);
+      const reverseLength = prepareDrawPath(reverseRoute);
+      const reverseShadowLength = prepareDrawPath(reverseRouteShadow);
+
+      const tl = gsap.timeline({
+        paused: true,
+        defaults: {
+          ease: "power3.out"
+        }
+      });
+
+      tl.fromTo(
+        "#video-main",
+        {
+          scale: 2.5,
+          x: 160
+        },
+        {
+          scale: 1.12,
+          x: -24,
+          duration: 1.05,
+          ease: "power4.out"
+        },
+        0
+      );
+
+      tl.to(
+        "#video-main",
+        {
+          scale: 1.04,
+          x: -105,
+          duration: 5.13,
+          ease: "none"
+        },
+        1.05
+      );
+
+      tl.fromTo(
+        escapeTrailShadow,
+        {
+          strokeDashoffset: escapeShadowLength
+        },
+        {
+          strokeDashoffset: 0,
+          duration: 3.08,
+          ease: "power2.out"
+        },
+        0.12
+      );
+
+      tl.fromTo(
+        escapeTrail,
+        {
+          strokeDashoffset: escapeLength
+        },
+        {
+          strokeDashoffset: 0,
+          duration: 3.08,
+          ease: "power2.out"
+        },
+        0.12
+      );
+
+      tl.fromTo(
+        ".run-label-inner",
+        {
+          y: 24,
+          opacity: 0
+        },
+        {
+          y: 0,
+          opacity: 1,
+          duration: 0.4,
+          ease: "power3.out"
+        },
+        0.4
+      );
+
+      tl.fromTo(
+        ".punch-plate",
+        {
+          y: -30,
+          scale: 0.9,
+          opacity: 0
+        },
+        {
+          y: 0,
+          scale: 1,
+          opacity: 1,
+          duration: 0.3,
+          ease: "expo.out"
+        },
+        3.2
+      );
+
+      tl.fromTo(
+        ".punch-underline",
+        {
+          scaleX: 0
+        },
+        {
+          scaleX: 1,
+          duration: 0.38,
+          ease: "power4.out"
+        },
+        3.34
+      );
+
+      tl.to(
+        [escapeTrail, escapeTrailShadow],
+        {
+          opacity: 0.34,
+          duration: 0.18,
+          ease: "power2.out"
+        },
+        4.18
+      );
+
+      tl.fromTo(
+        "#reverse-arrow",
+        {
+          opacity: 0,
+          scale: 0.72,
+          rotation: 0,
+          x: 0
+        },
+        {
+          opacity: 1,
+          scale: 1,
+          rotation: 180,
+          x: -20,
+          duration: 0.26,
+          ease: "power4.out"
+        },
+        4.18
+      );
+
+      tl.to(
+        "#reverse-arrow",
+        {
+          x: -8,
+          duration: 0.18,
+          ease: "power2.out"
+        },
+        4.44
+      );
+
+      tl.fromTo(
+        reverseRouteShadow,
+        {
+          strokeDashoffset: reverseShadowLength
+        },
+        {
+          strokeDashoffset: 0,
+          duration: 1.38,
+          ease: "power2.out"
+        },
+        4.22
+      );
+
+      tl.fromTo(
+        reverseRoute,
+        {
+          strokeDashoffset: reverseLength
+        },
+        {
+          strokeDashoffset: 0,
+          duration: 1.38,
+          ease: "power2.out"
+        },
+        4.22
+      );
+
+      tl.fromTo(
+        "#plan-a-inner",
+        {
+          scale: 0.72,
+          opacity: 0,
+          y: 24
+        },
+        {
+          scale: 1,
+          opacity: 1,
+          y: 0,
+          duration: 0.3,
+          ease: "power4.out"
+        },
+        4.2
+      );
+
+      tl.fromTo(
+        "#plan-b-inner",
+        {
+          scale: 0.72,
+          opacity: 0,
+          y: 24
+        },
+        {
+          scale: 1,
+          opacity: 1,
+          y: 0,
+          duration: 0.3,
+          ease: "power4.out"
+        },
+        4.52
+      );
+
+      tl.fromTo(
+        "#plan-c-inner",
+        {
+          scale: 0.72,
+          opacity: 0,
+          y: 24
+        },
+        {
+          scale: 1,
+          opacity: 1,
+          y: 0,
+          duration: 0.3,
+          ease: "power4.out"
+        },
+        4.8
+      );
+
+      tl.to(
+        "#reverse-arrow",
+        {
+          opacity: 0,
+          duration: 0.24,
+          ease: "power1.out"
+        },
+        5.3
+      );
+
+      window.__timelines["scene-s06"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

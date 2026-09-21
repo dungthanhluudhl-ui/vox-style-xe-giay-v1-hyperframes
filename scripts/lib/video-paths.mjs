@@ -44,5 +44,11 @@ export function videoPaths(slug, root = process.cwd()) {
     runLog: path.join(root, "pipeline", "videos", slug, "run-log.md"),
     mediaGenerateLog: path.join(root, "pipeline", "videos", slug, "media-generate-log.md"),
     scenesDir: path.join(root, "src", "videos", slug, "scenes"),
+    // --- HyperFrames (additive, không đổi field cũ ở trên) — xem planning/style-dna-integration.md
+    // và kế hoạch di trú Remotion -> HyperFrames, Giai đoạn B. ---
+    hfProjectDir: path.join(root, "hyperframes", "videos", slug),
+    hfCompositionsDir: path.join(root, "hyperframes", "videos", slug, "compositions"),
+    hfAssetsDir: path.join(root, "hyperframes", "videos", slug, "assets"),
+    hfIndexHtml: path.join(root, "hyperframes", "videos", slug, "index.html"),
   };
 }

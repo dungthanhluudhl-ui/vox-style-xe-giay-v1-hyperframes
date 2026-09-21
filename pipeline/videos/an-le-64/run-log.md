@@ -106,3 +106,77 @@ ISSUES:
 - **2026-09-20T08:00:00.000Z** — Backup checkpoint: `git commit` + `push` lên `origin/main` (commit `685f606`), toàn bộ repo (script pipeline, style DNA, nội dung "Án lệ 64", kiến trúc song song) lần đầu vào git.
 - **2026-09-20T08:15:00.000Z** — Audit toàn diện repo theo yêu cầu người dùng (đối chiếu dự định ban đầu, cấu trúc thư mục/naming/chồng chéo, khả năng sản xuất hàng loạt, đủ tài liệu cho session mới không) — kết quả đầy đủ lưu tại plan `C:\Users\DTL\.claude\plans\b-n-c-th-c-i-vast-dragonfly.md`. Phát hiện chính: pipeline hiện hard-code cho đúng 1 video, cần tham số hoá `--video=<slug>` để sản xuất hàng loạt (chưa làm, việc riêng lớn — Bước C). Đã sửa ngay các lỗi tài liệu nhỏ rủi ro thấp (Bước A): đổi `script/`→`content/` (tránh trùng tên với `scripts/`), đổi `planning/style-dna.md`→`planning/style-dna-integration.md` (tránh trùng tên với thư mục `style-dna/`), cập nhật `planning/README.md`/`responsibility-matrix.md` các chỗ lỗi thời (checklist font, số frame cũ, thiếu mô tả `scripts/08-sync-root.mjs`+`--no-root-sync`, thiếu giải thích vì sao không có `scripts/04-*`), thêm quy tắc "không tự tạo file lưu-lịch-sử thủ công nữa vì đã có git".
 - **2026-09-20T08:45:00.000Z** — **Bước C: tham số hoá pipeline theo `--video=<slug>` để sản xuất hàng loạt, gồm migrate video này vào cấu trúc mới** (quyết định người dùng: di chuyển "an-le-64" vào cấu trúc mới ngay, không giữ legacy). Di chuyển toàn bộ file: `public/audio,captions,media/*` → `public/videos/an-le-64/...`; `content/an-le-64-script.txt` → `content/videos/an-le-64/script.txt`; `planning/scene-plan*,shotlist*` → `planning/videos/an-le-64/...`; `pipeline/media-analysis,transcripts,scene-plan-history,run-log.md,contact-sheet` → `pipeline/videos/an-le-64/...`; `src/scenes/` → `src/videos/an-le-64/scenes/`. Thêm `scripts/lib/video-paths.mjs` (nguồn xác thực duy nhất cho convention đường dẫn theo slug) và `scripts/lib/sync-root-lib.mjs` (logic ráp Root.tsx tất định, hỗ trợ NHIỀU video cùng tồn tại trong 1 Root.tsx qua marker comment `// === VIDEO: <slug> START/END ===`, mỗi video 1 khối `<Composition>` + Timeline component riêng, scene import được alias theo PascalCase(slug) để tránh trùng tên `Scene01` giữa các video). Cập nhật `scripts/03/05/06/07` nhận `--video=<slug>` bắt buộc. **Thay đổi kiến trúc quan trọng ở `scripts/07`**: generator KHÔNG BAO GIỜ viết `src/Root.tsx` nữa (kể cả scene đầu tiên) — `verify()` tự gọi `syncRoot()` (tất định, không AI) trước khi render smoke-test, mỗi lần, trừ chế độ `--no-root-sync`. `src/components/Captions.tsx` đổi từ hardcode đường dẫn caption sang nhận prop `src`. Sau khi sửa 16 chỗ `staticFile("media/...")` và import tương đối trong 7 file scene (do lệch thêm 2 cấp thư mục), `tsc --noEmit` + `eslint src` sạch, render lại `out/an-le-64-full.mp4` xác nhận **49.386667s** (khớp chính xác bản trước migrate) — không mất gì. Cập nhật `planning/README.md`+`responsibility-matrix.md` phản ánh kiến trúc đa-video mới.
+
+- **2026-09-21T06:06:48.054Z** — `scripts/07-codegen.hf.router.mjs --video=an-le-64 --scenes=S01` — Codegen HyperFrames scenes [S01] KHÔNG đạt sau 3 lần thử — cần Claude can thiệp. Verdict cuối:
+VERDICT: FAIL
+ISSUES:
+- Đường dẫn hai ảnh sai quy ước bắt buộc: đang dùng `assets/...`, phải là `../../assets/...`; ảnh có thể không tải khi sub-composition được mount.
+- Chuyển động mở đầu đi từ `scale: 1.34` xuống `1.07`, tạo cảm giác zoom-out, trái với shotlist yêu cầu `zoom-through`/zoom-in vào mảnh giấy.
+
+- **2026-09-21T06:16:44.602Z** — `scripts/07-codegen.hf.router.mjs --video=an-le-64 --scenes=S01` — Codegen HyperFrames scenes [S01] PASS sau 1 lần thử bằng cx/gpt-5.6-sol (review: cx/gpt-5.6-sol-review). Files: compositions/scene-s01.html
+
+- **2026-09-21T06:20:03.930Z** — `scripts/07-codegen.hf.router.mjs --video=an-le-64 --scenes=S04` — Codegen HyperFrames scenes [S04] PASS sau 1 lần thử bằng cx/gpt-5.6-sol (review: cx/gpt-5.6-sol-review). Files: compositions/scene-s04.html
+
+- **2026-09-21T06:20:06.010Z** — `scripts/07-codegen.hf.router.mjs --video=an-le-64 --scenes=S02` — Codegen HyperFrames scenes [S02] PASS sau 1 lần thử bằng cx/gpt-5.6-sol (review: cx/gpt-5.6-sol-review). Files: compositions/scene-s02.html
+
+- **2026-09-21T06:20:14.018Z** — `scripts/07-codegen.hf.router.mjs --video=an-le-64 --scenes=S06` — Codegen HyperFrames scenes [S06] PASS sau 1 lần thử bằng cx/gpt-5.6-sol (review: cx/gpt-5.6-sol-review). Files: compositions/scene-s06.html
+
+- **2026-09-21T06:20:31.330Z** — `scripts/07-codegen.hf.router.mjs --video=an-le-64 --scenes=S03` — Codegen HyperFrames scenes [S03] PASS sau 1 lần thử bằng cx/gpt-5.6-sol (review: cx/gpt-5.6-sol-review). Files: compositions/scene-s03.html
+
+- **2026-09-21T06:22:09.777Z** — `scripts/07-codegen.hf.router.mjs --video=an-le-64 --scenes=S07` — Codegen HyperFrames scenes [S07] PASS sau 1 lần thử bằng cx/gpt-5.6-sol (review: cx/gpt-5.6-sol-review). Files: compositions/scene-s07.html
+
+- **2026-09-21T06:28:19.546Z** — `scripts/07-codegen.hf.router.mjs --video=an-le-64 --scenes=S05` — Codegen HyperFrames scenes [S05] KHÔNG đạt sau 3 lần thử — cần Claude can thiệp. Verdict cuối:
+VERDICT: FAIL
+ISSUES:
+- Nhãn “DẤU VẾT ĐỨT” dùng nền đen/chữ kem, trái shotlist yêu cầu chữ mực đen trên plate giấy kem.
+- Đường timeline dùng nét kem dày 11px kèm bóng nặng, không đúng treatment “đường mảnh màu mực”.
+
+- **2026-09-21T06:33:12.068Z** — `scripts/07-codegen.hf.router.mjs --video=an-le-64 --scenes=S05` — Codegen HyperFrames scenes [S05] PASS sau 1 lần thử bằng cx/gpt-5.6-sol (review: cx/gpt-5.6-sol-review). Files: compositions/scene-s05.html
+
+- **2026-09-21T06:36:30.139Z** — `scripts/07-codegen.hf.router.mjs --video=an-le-64 --scenes=S04` — Codegen HyperFrames scenes [S04] PASS sau 1 lần thử bằng cx/gpt-5.6-sol (review: cx/gpt-5.6-sol-review). Files: compositions/scene-s04.html
+
+- **2026-09-21T06:41:08.213Z** — `scripts/07-codegen.hf.router.mjs --video=an-le-64 --scenes=S07` — Codegen HyperFrames scenes [S07] PASS sau 1 lần thử bằng cx/gpt-5.6-sol (review: cx/gpt-5.6-sol-review). Files: compositions/scene-s07.html
+
+- **2026-09-21T06:49:00.484Z** — `scripts/07-codegen.hf.router.mjs --video=an-le-64 --scenes=S02` — Codegen HyperFrames scenes [S02] PASS sau 1 lần thử bằng cx/gpt-5.6-sol (review: cx/gpt-5.6-sol-review). Files: compositions/scene-s02.html
+
+- **2026-09-21T06:49:11.839Z** — `scripts/07-codegen.hf.router.mjs --video=an-le-64 --scenes=S01` — Codegen HyperFrames scenes [S01] PASS sau 1 lần thử bằng cx/gpt-5.6-sol (review: cx/gpt-5.6-sol-review). Files: compositions/scene-s01.html
+
+- **2026-09-21T06:49:21.195Z** — `scripts/07-codegen.hf.router.mjs --video=an-le-64 --scenes=S04` — Codegen HyperFrames scenes [S04] PASS sau 1 lần thử bằng cx/gpt-5.6-sol (review: cx/gpt-5.6-sol-review). Files: compositions/scene-s04.html
+
+- **2026-09-21T06:49:27.664Z** — `scripts/07-codegen.hf.router.mjs --video=an-le-64 --scenes=S06` — Codegen HyperFrames scenes [S06] PASS sau 1 lần thử bằng cx/gpt-5.6-sol (review: cx/gpt-5.6-sol-review). Files: compositions/scene-s06.html
+
+- **2026-09-21T06:50:07.835Z** — `scripts/07-codegen.hf.router.mjs --video=an-le-64 --scenes=S05` — Codegen HyperFrames scenes [S05] PASS sau 1 lần thử bằng cx/gpt-5.6-sol (review: cx/gpt-5.6-sol-review). Files: compositions/scene-s05.html
+
+- **2026-09-21T06:51:12.601Z** — `scripts/07-codegen.hf.router.mjs --video=an-le-64 --scenes=S07` — Codegen HyperFrames scenes [S07] PASS sau 1 lần thử bằng cx/gpt-5.6-sol (review: cx/gpt-5.6-sol-review). Files: compositions/scene-s07.html
+
+- **2026-09-21T06:57:03.512Z** — `scripts/07-codegen.hf.router.mjs --video=an-le-64 --scenes=S03` — Codegen HyperFrames scenes [S03] PASS sau 1 lần thử bằng cx/gpt-5.6-sol (review: cx/gpt-5.6-sol-review). Files: compositions/scene-s03.html
+
+- **2026-09-21T06:57:49.802Z** — `scripts/07-codegen.hf.router.mjs --video=an-le-64 --scenes=S04` — Codegen HyperFrames scenes [S04] PASS sau 1 lần thử bằng cx/gpt-5.6-sol (review: cx/gpt-5.6-sol-review). Files: compositions/scene-s04.html
+
+- **2026-09-21T07:02:09.571Z** — `scripts/07-codegen.hf.router.mjs --video=an-le-64 --scenes=S04` — Codegen HyperFrames scenes [S04] PASS sau 1 lần thử bằng cx/gpt-5.6-sol (review: cx/gpt-5.6-sol-review). Files: compositions/scene-s04.html
+
+- **2026-09-21T07:08:23.911Z** — `scripts/07-codegen.hf.router.mjs --video=an-le-64 --scenes=S04` — Codegen HyperFrames scenes [S04] PASS sau 1 lần thử bằng cx/gpt-5.6-sol (review: cx/gpt-5.6-sol-review). Files: compositions/scene-s04.html
+
+- **2026-09-21T08:48:20.629Z** — `scripts/07-codegen.hf.router.mjs --video=an-le-64 --scenes=S02` — Codegen HyperFrames scenes [S02] PASS sau 2 lần thử bằng cx/gpt-5.6-sol (review: cx/gpt-5.6-sol-review). Files: compositions/scene-s02.html
+
+- **2026-09-21T09:34:58.155Z** — `scripts/07-codegen.hf.router.mjs --video=an-le-64 --scenes=S07` — Codegen HyperFrames scenes [S07] KHÔNG đạt sau 3 lần thử — cần Claude can thiệp. Verdict cuối:
+VERDICT: FAIL
+ISSUES:
+- `.scene-s07-phone` là overlay nhưng dùng `border: 11px solid #141414` và `box-shadow: 15px 17px 0 rgba(...)`; vi phạm yêu cầu viền cam và bóng cứng màu đặc, không dùng `rgba`.
+- Entrance của `.scene-s07-phone` không theo chuẩn overlay bắt buộc: opacity kéo dài `0.42s` thay vì `0.27s`, scale không đi từ `0.78 → 1` trong `0.33s`.
+
+- **2026-09-21T10:13:28.770Z** — `scripts/07-codegen.hf.router.mjs --video=an-le-64 --scenes=S07` — Codegen HyperFrames scenes [S07] PASS sau 3 lần thử bằng cx/gpt-5.6-sol (review: cx/gpt-5.6-sol-review). Files: compositions/scene-s07.html
+
+- **2026-09-21T11:52:58.886Z** — `scripts/07-codegen.hf.router.mjs --video=an-le-64 --scenes=S07` — Codegen HyperFrames scene [S07] PASS sau 1 lần thử bằng cx/gpt-5.6-sol (review: cx/gpt-5.6-sol-review) — đã chuyển đổi thành compositions/scene-s07.html.
+
+- **2026-09-21T11:58:55.686Z** — `scripts/07-codegen.hf.router.mjs --video=an-le-64 --scenes=S01` — Codegen HyperFrames scene [S01] PASS sau 1 lần thử bằng cx/gpt-5.6-sol (review: cx/gpt-5.6-sol-review) — đã chuyển đổi thành compositions/scene-s01.html.
+
+- **2026-09-21T12:00:08.971Z** — `scripts/07-codegen.hf.router.mjs --video=an-le-64 --scenes=S04` — Codegen HyperFrames scene [S04] PASS sau 1 lần thử bằng cx/gpt-5.6-sol (review: cx/gpt-5.6-sol-review) — đã chuyển đổi thành compositions/scene-s04.html.
+
+- **2026-09-21T12:00:25.633Z** — `scripts/07-codegen.hf.router.mjs --video=an-le-64 --scenes=S03` — Codegen HyperFrames scene [S03] PASS sau 1 lần thử bằng cx/gpt-5.6-sol (review: cx/gpt-5.6-sol-review) — đã chuyển đổi thành compositions/scene-s03.html.
+
+- **2026-09-21T12:00:30.463Z** — `scripts/07-codegen.hf.router.mjs --video=an-le-64 --scenes=S05` — Codegen HyperFrames scene [S05] PASS sau 1 lần thử bằng cx/gpt-5.6-sol (review: cx/gpt-5.6-sol-review) — đã chuyển đổi thành compositions/scene-s05.html.
+
+- **2026-09-21T12:00:48.983Z** — `scripts/07-codegen.hf.router.mjs --video=an-le-64 --scenes=S06` — Codegen HyperFrames scene [S06] PASS sau 1 lần thử bằng cx/gpt-5.6-sol (review: cx/gpt-5.6-sol-review) — đã chuyển đổi thành compositions/scene-s06.html.
+
+- **2026-09-21T12:01:00.081Z** — `scripts/07-codegen.hf.router.mjs --video=an-le-64 --scenes=S02` — Codegen HyperFrames scene [S02] PASS sau 2 lần thử bằng cx/gpt-5.6-sol (review: cx/gpt-5.6-sol-review) — đã chuyển đổi thành compositions/scene-s02.html.

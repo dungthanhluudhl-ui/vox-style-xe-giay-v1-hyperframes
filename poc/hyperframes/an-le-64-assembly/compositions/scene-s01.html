@@ -1,0 +1,664 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+      :root {
+        --paper: #e7e3d9;
+        --card: #f5f0e4;
+        --ink: #141414;
+        --orange: #ff6a1a;
+        --on-dark: #f7f4ec;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        overflow: hidden;
+        background: var(--ink);
+      }
+
+      body {
+        color: var(--ink);
+        font-family: "Be Vietnam Pro", sans-serif;
+      }
+
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        isolation: isolate;
+        background: var(--ink);
+      }
+
+      .clip {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+      }
+
+      .background-stage {
+        z-index: 0;
+        overflow: hidden;
+        background: var(--ink);
+      }
+
+      .photo-layer {
+        position: absolute;
+        inset: -100px;
+        overflow: hidden;
+      }
+
+      .scene-photo {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: 50% 50%;
+        filter: contrast(1.08);
+        will-change: transform, opacity;
+      }
+
+      #bg-debt {
+        opacity: 1;
+      }
+
+      #bg-bait {
+        opacity: 0;
+      }
+
+      .spotlight {
+        position: absolute;
+        inset: 0;
+        z-index: 2;
+        pointer-events: none;
+        background:
+          linear-gradient(
+            180deg,
+            rgba(20, 20, 20, 0.25) 0%,
+            rgba(20, 20, 20, 0.02) 25%,
+            rgba(20, 20, 20, 0.05) 63%,
+            rgba(20, 20, 20, 0.42) 100%
+          ),
+          radial-gradient(
+            ellipse at 52% 44%,
+            rgba(20, 20, 20, 0) 28%,
+            rgba(20, 20, 20, 0.12) 61%,
+            rgba(20, 20, 20, 0.52) 100%
+          );
+      }
+
+      .grain {
+        position: absolute;
+        inset: 0;
+        z-index: 3;
+        pointer-events: none;
+        opacity: 0.18;
+        mix-blend-mode: multiply;
+        background-image:
+          repeating-radial-gradient(
+            circle at 18% 31%,
+            rgba(20, 20, 20, 0.42) 0,
+            rgba(20, 20, 20, 0.42) 0.75px,
+            transparent 0.9px,
+            transparent 4px
+          ),
+          repeating-radial-gradient(
+            circle at 73% 64%,
+            rgba(20, 20, 20, 0.28) 0,
+            rgba(20, 20, 20, 0.28) 0.65px,
+            transparent 0.85px,
+            transparent 5px
+          );
+        background-size:
+          7px 9px,
+          11px 13px;
+      }
+
+      .amount-wrap {
+        position: absolute;
+        top: 270px;
+        left: 70px;
+        z-index: 7;
+        pointer-events: none;
+      }
+
+      .amount-plate {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        min-height: 126px;
+        padding: 16px 28px 20px;
+        overflow: hidden;
+        white-space: nowrap;
+        color: var(--ink);
+        background: var(--card);
+        border: 3px solid var(--ink);
+        box-shadow: 13px 13px 0 var(--orange);
+        transform-origin: 12% 50%;
+        will-change: transform, opacity;
+      }
+
+      .amount-text {
+        position: relative;
+        z-index: 2;
+        font-size: 78px;
+        font-weight: 900;
+        line-height: 1;
+        letter-spacing: -3px;
+      }
+
+      .amount-accent {
+        position: absolute;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        z-index: 1;
+        display: block;
+        width: 100%;
+        height: 11px;
+        background: var(--orange);
+        transform-origin: 0% 50%;
+        will-change: transform;
+      }
+
+      .debt-label-wrap {
+        position: absolute;
+        top: 446px;
+        left: 96px;
+        z-index: 7;
+        pointer-events: none;
+      }
+
+      .debt-label {
+        display: inline-flex;
+        align-items: center;
+        min-height: 64px;
+        padding: 11px 21px 12px;
+        color: var(--on-dark);
+        background: rgba(20, 20, 20, 0.94);
+        border-left: 11px solid var(--orange);
+        font-size: 32px;
+        font-weight: 900;
+        line-height: 1.2;
+        letter-spacing: 0.5px;
+        will-change: transform, opacity;
+      }
+
+      .flow-svg {
+        position: absolute;
+        inset: 0;
+        z-index: 5;
+        width: 100%;
+        height: 100%;
+        overflow: visible;
+        pointer-events: none;
+      }
+
+      .flow-stroke {
+        fill: none;
+        stroke: var(--orange);
+        stroke-width: 15;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        vector-effect: non-scaling-stroke;
+      }
+
+      .flow-shadow {
+        fill: none;
+        stroke: rgba(20, 20, 20, 0.78);
+        stroke-width: 25;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        vector-effect: non-scaling-stroke;
+      }
+
+      .bait-node {
+        opacity: 0;
+        fill: var(--orange);
+        stroke: var(--ink);
+        stroke-width: 8;
+        transform-box: fill-box;
+        transform-origin: center;
+        will-change: transform, opacity;
+      }
+
+      .bait-label-wrap {
+        position: absolute;
+        top: 810px;
+        right: 72px;
+        z-index: 8;
+        pointer-events: none;
+      }
+
+      .bait-label {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 236px;
+        min-height: 88px;
+        padding: 14px 25px;
+        color: var(--ink);
+        background: var(--card);
+        border: 4px solid var(--orange);
+        box-shadow: 10px 10px 0 var(--ink);
+        font-size: 43px;
+        font-weight: 900;
+        line-height: 1;
+        letter-spacing: 0.5px;
+        transform-origin: 100% 50%;
+        will-change: transform, opacity;
+      }
+
+      .trap-label-wrap {
+        position: absolute;
+        top: 1436px;
+        left: 545px;
+        z-index: 9;
+        width: 405px;
+        pointer-events: none;
+      }
+
+      .trap-label {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        min-height: 110px;
+        padding: 18px 24px;
+        color: var(--on-dark);
+        background: var(--ink);
+        border: 5px solid var(--orange);
+        box-shadow: 12px 12px 0 rgba(245, 240, 228, 0.92);
+        font-size: 53px;
+        font-weight: 900;
+        line-height: 1;
+        letter-spacing: 1px;
+        transform-origin: 50% 50%;
+        will-change: transform, opacity;
+      }
+
+      .bottom-signature {
+        position: absolute;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        z-index: 30;
+        height: 16px;
+        pointer-events: none;
+        background: var(--orange);
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s01"
+      data-start="0"
+      data-width="1080"
+      data-height="1920"
+      data-duration="7.8"
+      data-fps="30"
+    >
+      <section
+        id="s01-background"
+        class="clip background-stage"
+        data-start="0"
+        data-duration="7.8"
+      >
+        <div
+          class="photo-layer"
+          data-layout-allow-overflow="true"
+          data-layout-allow-occlusion="true"
+        >
+          <img
+            id="bg-debt"
+            class="scene-photo"
+            src="assets/img-08-extortion-money-demand-cutout.jpeg"
+            alt="Người đàn ông đặt tay lên mảnh giấy ghi khoản tiền 150 triệu"
+          />
+        </div>
+
+        <div
+          class="photo-layer"
+          data-layout-allow-overflow="true"
+          data-layout-allow-occlusion="true"
+        >
+          <img
+            id="bg-bait"
+            class="scene-photo"
+            src="assets/img-04-online-scam-catfish-victim.jpeg"
+            alt="Người đàn ông nhìn hồ sơ Zalo giả trên điện thoại"
+          />
+        </div>
+
+        <div class="spotlight" aria-hidden="true"></div>
+        <div class="grain" aria-hidden="true"></div>
+      </section>
+
+      <section
+        id="amount-overlay"
+        class="clip"
+        data-start="1.08"
+        data-duration="6.72"
+        data-layout-allow-overlap="true"
+      >
+        <div class="amount-wrap">
+          <div id="amount-plate" class="amount-plate">
+            <span class="amount-text">150 TRIỆU</span>
+            <span id="amount-accent" class="amount-accent" aria-hidden="true"></span>
+          </div>
+        </div>
+      </section>
+
+      <section
+        id="debt-label-overlay"
+        class="clip"
+        data-start="2.08"
+        data-duration="2.92"
+        data-layout-allow-overlap="true"
+      >
+        <div class="debt-label-wrap">
+          <div id="debt-label" class="debt-label">KHOẢN NỢ TREO</div>
+        </div>
+      </section>
+
+      <section
+        id="flow-overlay"
+        class="clip"
+        data-start="5"
+        data-duration="2.8"
+        data-layout-allow-overflow="true"
+        data-layout-allow-overlap="true"
+        data-layout-allow-occlusion="true"
+      >
+        <svg
+          class="flow-svg"
+          viewBox="0 0 1080 1920"
+          preserveAspectRatio="none"
+          aria-hidden="true"
+        >
+          <path
+            id="connector-shadow"
+            class="flow-shadow"
+            d="M 638 350 C 760 430 920 630 820 900"
+          ></path>
+          <path
+            id="connector-path"
+            class="flow-stroke"
+            d="M 638 350 C 760 430 920 630 820 900"
+          ></path>
+
+          <path
+            id="trap-shadow"
+            class="flow-shadow"
+            d="M 820 900 L 950 900 L 950 1400 L 545 1400 L 545 760 L 950 760 L 950 900"
+          ></path>
+          <path
+            id="trap-path"
+            class="flow-stroke"
+            d="M 820 900 L 950 900 L 950 1400 L 545 1400 L 545 760 L 950 760 L 950 900"
+          ></path>
+
+          <circle id="bait-node" class="bait-node" cx="820" cy="900" r="21"></circle>
+        </svg>
+      </section>
+
+      <section
+        id="bait-label-overlay"
+        class="clip"
+        data-start="5.22"
+        data-duration="2.58"
+        data-layout-allow-overlap="true"
+      >
+        <div class="bait-label-wrap">
+          <div id="bait-label" class="bait-label">MỒI ẢO</div>
+        </div>
+      </section>
+
+      <section
+        id="trap-label-overlay"
+        class="clip"
+        data-start="6.17"
+        data-duration="1.63"
+        data-layout-allow-overlap="true"
+      >
+        <div class="trap-label-wrap">
+          <div id="trap-label" class="trap-label">BẪY THẬT</div>
+        </div>
+      </section>
+
+      <div class="bottom-signature" aria-hidden="true"></div>
+    </div>
+
+    <script>
+      const connectorPath = document.getElementById("connector-path");
+      const connectorShadow = document.getElementById("connector-shadow");
+      const trapPath = document.getElementById("trap-path");
+      const trapShadow = document.getElementById("trap-shadow");
+
+      function prepareDrawPath(path) {
+        const length = path.getTotalLength();
+        path.style.strokeDasharray = `${length}`;
+        path.style.strokeDashoffset = `${length}`;
+        return length;
+      }
+
+      prepareDrawPath(connectorPath);
+      prepareDrawPath(connectorShadow);
+      prepareDrawPath(trapPath);
+      prepareDrawPath(trapShadow);
+
+      const tl = gsap.timeline({
+        paused: true,
+        defaults: {
+          ease: "power3.out",
+        },
+      });
+
+      tl.fromTo(
+        "#bg-debt",
+        {
+          scale: 1.025,
+          x: 0,
+          y: 0,
+          opacity: 1,
+        },
+        {
+          scale: 1.15,
+          x: -10,
+          y: -18,
+          opacity: 1,
+          duration: 5.2,
+          ease: "none",
+        },
+        0,
+      );
+
+      tl.fromTo(
+        "#bg-bait",
+        {
+          scale: 1.26,
+          x: 32,
+          y: 78,
+        },
+        {
+          scale: 1.16,
+          x: -38,
+          y: 0,
+          duration: 2.98,
+          ease: "none",
+        },
+        4.82,
+      );
+
+      tl.fromTo(
+        "#bg-bait",
+        {
+          opacity: 0,
+        },
+        {
+          opacity: 1,
+          duration: 0.38,
+          ease: "sine.inOut",
+        },
+        4.82,
+      );
+
+      tl.to(
+        "#bg-debt",
+        {
+          opacity: 0,
+          duration: 0.38,
+          ease: "sine.inOut",
+        },
+        4.82,
+      );
+
+      tl.fromTo(
+        "#amount-plate",
+        {
+          y: 32,
+          scale: 0.86,
+          opacity: 0,
+        },
+        {
+          y: 0,
+          scale: 1,
+          opacity: 1,
+          duration: 0.5,
+          ease: "power4.out",
+        },
+        1.08,
+      );
+
+      tl.fromTo(
+        "#amount-accent",
+        {
+          scaleX: 0,
+        },
+        {
+          scaleX: 1,
+          duration: 0.42,
+          ease: "power3.out",
+        },
+        1.3,
+      );
+
+      tl.fromTo(
+        "#debt-label",
+        {
+          x: -44,
+          opacity: 0,
+        },
+        {
+          x: 0,
+          opacity: 1,
+          duration: 0.46,
+          ease: "power3.out",
+        },
+        2.08,
+      );
+
+      tl.to(
+        [connectorShadow, connectorPath],
+        {
+          strokeDashoffset: 0,
+          duration: 0.96,
+          ease: "power2.out",
+        },
+        5.02,
+      );
+
+      tl.fromTo(
+        "#bait-node",
+        {
+          scale: 0,
+          opacity: 0,
+        },
+        {
+          scale: 1,
+          opacity: 1,
+          duration: 0.34,
+          ease: "power3.out",
+          transformOrigin: "50% 50%",
+        },
+        5.76,
+      );
+
+      tl.fromTo(
+        "#bait-label",
+        {
+          x: 58,
+          scale: 0.9,
+          opacity: 0,
+        },
+        {
+          x: 0,
+          scale: 1,
+          opacity: 1,
+          duration: 0.46,
+          ease: "power4.out",
+        },
+        5.22,
+      );
+
+      tl.to(
+        [trapShadow, trapPath],
+        {
+          strokeDashoffset: 0,
+          duration: 1.05,
+          ease: "power2.out",
+        },
+        6.17,
+      );
+
+      tl.fromTo(
+        "#trap-label",
+        {
+          scale: 0.72,
+          y: 28,
+          opacity: 0,
+        },
+        {
+          scale: 1,
+          y: 0,
+          opacity: 1,
+          duration: 0.48,
+          ease: "expo.out",
+        },
+        6.17,
+      );
+
+      tl.fromTo(
+        "#bait-node",
+        {
+          scale: 1,
+        },
+        {
+          scale: 0.72,
+          duration: 0.3,
+          ease: "power3.inOut",
+          transformOrigin: "50% 50%",
+        },
+        6.7,
+      );
+
+      window.__timelines["scene-s01"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

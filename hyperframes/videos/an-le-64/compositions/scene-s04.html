@@ -1,0 +1,706 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+      :root {
+        --paper: #e7e3d9;
+        --paper-card: #f5f0e4;
+        --ink: #141414;
+        --orange: #ff6a1a;
+        --cream: #f7f4ec;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        overflow: hidden;
+        background: var(--paper-card);
+      }
+
+      body {
+        color: var(--ink);
+        font-family: "Be Vietnam Pro", sans-serif;
+      }
+
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: var(--paper-card);
+        perspective: 1800px;
+      }
+
+      .scene-stage {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        transform-style: preserve-3d;
+      }
+
+      .clip {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+      }
+
+      .card-background {
+        position: absolute;
+        inset: 0;
+        background:
+          radial-gradient(circle at 18% 14%, rgba(255, 255, 255, 0.5), transparent 32%),
+          linear-gradient(122deg, rgba(20, 20, 20, 0.025), transparent 34%),
+          var(--paper-card);
+      }
+
+      .paper-grain {
+        position: absolute;
+        inset: 0;
+        z-index: 20;
+        pointer-events: none;
+        opacity: 0.18;
+        mix-blend-mode: multiply;
+        background-image:
+          radial-gradient(circle at 12% 19%, rgba(20, 20, 20, 0.24) 0 0.8px, transparent 1px),
+          radial-gradient(circle at 73% 31%, rgba(20, 20, 20, 0.18) 0 0.7px, transparent 1px),
+          radial-gradient(circle at 36% 78%, rgba(20, 20, 20, 0.2) 0 0.8px, transparent 1px);
+        background-size:
+          13px 17px,
+          19px 23px,
+          29px 31px;
+      }
+
+      #courtroom-video {
+        z-index: 4;
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center;
+        background: var(--ink);
+        transform-origin: 0% 50%;
+        will-change: transform, opacity;
+      }
+
+      #document-layer {
+        z-index: 2;
+      }
+
+      .copies-layer {
+        position: absolute;
+        inset: 0;
+        z-index: 1;
+        pointer-events: none;
+      }
+
+      .copy-anchor {
+        position: absolute;
+        top: 620px;
+        left: 420px;
+        width: 250px;
+        height: 350px;
+      }
+
+      .document-copy {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+        border: 5px solid var(--ink);
+        background: var(--paper-card);
+        box-shadow: 12px 14px 0 rgba(20, 20, 20, 0.12);
+        transform-origin: 50% 50%;
+        will-change: transform, opacity;
+      }
+
+      .document-copy::before {
+        content: "";
+        position: absolute;
+        top: 24px;
+        left: 22px;
+        width: 90px;
+        height: 15px;
+        background: var(--orange);
+      }
+
+      .document-copy::after {
+        content: "";
+        position: absolute;
+        top: 70px;
+        right: 22px;
+        bottom: 30px;
+        left: 22px;
+        background:
+          linear-gradient(var(--ink), var(--ink)) 0 0 / 72% 7px no-repeat,
+          linear-gradient(var(--ink), var(--ink)) 0 42px / 100% 4px no-repeat,
+          linear-gradient(var(--ink), var(--ink)) 0 75px / 88% 4px no-repeat,
+          linear-gradient(var(--ink), var(--ink)) 0 108px / 96% 4px no-repeat,
+          linear-gradient(var(--ink), var(--ink)) 0 141px / 66% 4px no-repeat,
+          linear-gradient(var(--ink), var(--ink)) 0 207px / 100% 4px no-repeat;
+        opacity: 0.56;
+      }
+
+      #case-file {
+        position: absolute;
+        top: 190px;
+        left: 120px;
+        z-index: 2;
+        width: 840px;
+        height: 1240px;
+        overflow: hidden;
+        border: 8px solid var(--ink);
+        background: var(--paper-card);
+        box-shadow:
+          22px 26px 0 rgba(20, 20, 20, 0.13),
+          36px 40px 0 rgba(255, 106, 26, 0.28);
+        transform-origin: 50% 50%;
+        will-change: transform, opacity;
+      }
+
+      #case-file::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 122px;
+        height: 122px;
+        background:
+          linear-gradient(135deg, transparent 49%, var(--ink) 50% 53%, var(--orange) 54%);
+        clip-path: polygon(0 0, 100% 0, 100% 100%);
+      }
+
+      .file-index {
+        position: absolute;
+        top: 28px;
+        left: 34px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        font-size: 20px;
+        font-weight: 900;
+        letter-spacing: 0.13em;
+      }
+
+      .file-index::before {
+        content: "";
+        display: block;
+        width: 76px;
+        height: 14px;
+        background: var(--orange);
+      }
+
+      .file-margin {
+        position: absolute;
+        top: 78px;
+        bottom: 84px;
+        left: 55px;
+        width: 3px;
+        background: rgba(20, 20, 20, 0.38);
+      }
+
+      .file-rules {
+        position: absolute;
+        top: 90px;
+        right: 50px;
+        left: 84px;
+        height: 1030px;
+        opacity: 0.12;
+        background: repeating-linear-gradient(
+          to bottom,
+          transparent 0,
+          transparent 62px,
+          var(--ink) 63px,
+          var(--ink) 65px
+        );
+      }
+
+      .orange-tab {
+        position: absolute;
+        top: 238px;
+        right: 0;
+        width: 34px;
+        height: 184px;
+        background: var(--orange);
+      }
+
+      #video-mat {
+        position: absolute;
+        top: 274px;
+        left: 242px;
+        z-index: 3;
+        width: 596px;
+        height: 1032px;
+        border: 8px solid var(--ink);
+        background: var(--ink);
+        box-shadow: 13px 15px 0 var(--orange);
+        will-change: opacity, transform;
+      }
+
+      #video-mat::before,
+      #video-mat::after {
+        content: "";
+        position: absolute;
+        z-index: 2;
+        width: 116px;
+        height: 32px;
+        background: rgba(231, 227, 217, 0.88);
+        border: 2px solid rgba(20, 20, 20, 0.25);
+      }
+
+      #video-mat::before {
+        top: -24px;
+        left: 38px;
+      }
+
+      #video-mat::after {
+        right: 38px;
+        bottom: -24px;
+      }
+
+      #label-layer {
+        z-index: 5;
+        pointer-events: none;
+      }
+
+      #file-label {
+        position: absolute;
+        top: 1304px;
+        left: 178px;
+        display: flex;
+        width: 724px;
+        height: 78px;
+        align-items: center;
+        justify-content: space-between;
+        border-top: 6px solid var(--ink);
+        color: var(--ink);
+        font-size: 49px;
+        font-weight: 900;
+        letter-spacing: -0.04em;
+        line-height: 1;
+        will-change: transform, opacity;
+      }
+
+      .label-number {
+        display: inline-flex;
+        width: 78px;
+        height: 48px;
+        align-items: center;
+        justify-content: center;
+        background: var(--orange);
+        color: var(--ink);
+        font-size: 21px;
+        font-weight: 900;
+        letter-spacing: 0.08em;
+      }
+
+      #stamp-layer {
+        z-index: 6;
+        pointer-events: none;
+      }
+
+      #precedent-stamp {
+        position: absolute;
+        top: 1040px;
+        left: 610px;
+        display: grid;
+        width: 310px;
+        height: 166px;
+        place-items: center;
+        border: 12px double var(--orange);
+        color: var(--orange);
+        background: rgba(245, 240, 228, 0.76);
+        font-size: 67px;
+        font-weight: 900;
+        letter-spacing: 0.03em;
+        line-height: 1;
+        text-align: center;
+        transform-origin: 50% 50%;
+        will-change: transform, opacity;
+      }
+
+      #precedent-stamp::before {
+        content: "";
+        position: absolute;
+        inset: 11px;
+        border: 3px solid var(--orange);
+      }
+
+      .stamp-mark {
+        position: absolute;
+        width: 13px;
+        height: 13px;
+        border-radius: 50%;
+        background: var(--orange);
+        opacity: 0;
+      }
+
+      #stamp-mark-a {
+        top: 1018px;
+        left: 586px;
+      }
+
+      #stamp-mark-b {
+        top: 1008px;
+        left: 936px;
+      }
+
+      #stamp-mark-c {
+        top: 1220px;
+        left: 604px;
+      }
+
+      #stamp-mark-d {
+        top: 1210px;
+        left: 952px;
+      }
+
+      .bottom-signature {
+        position: absolute;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        z-index: 40;
+        height: 18px;
+        background: var(--orange);
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s04"
+      data-start="0"
+      data-width="1080"
+      data-height="1920"
+      data-duration="6.84"
+      data-fps="30"
+    >
+      <div
+        id="scene-stage"
+        class="scene-stage"
+        data-layout-allow-overflow="true"
+        data-layout-allow-overlap="true"
+        data-layout-allow-occlusion="true"
+      >
+        <div class="card-background" aria-hidden="true"></div>
+
+        <section
+          id="document-layer"
+          class="clip"
+          data-start="0"
+          data-duration="6.84"
+          data-track-index="0"
+          data-layout-allow-overlap="true"
+          data-layout-allow-occlusion="true"
+        >
+          <div
+            class="copies-layer"
+            data-layout-allow-overflow="true"
+            data-layout-allow-overlap="true"
+            data-layout-ignore
+            aria-hidden="true"
+          >
+            <div class="copy-anchor">
+              <div class="document-copy"></div>
+              <div class="document-copy"></div>
+              <div class="document-copy"></div>
+              <div class="document-copy"></div>
+              <div class="document-copy"></div>
+              <div class="document-copy"></div>
+            </div>
+          </div>
+
+          <article id="case-file">
+            <div class="file-index">HỒ SƠ / HĐTP</div>
+            <div class="file-margin" aria-hidden="true"></div>
+            <div class="file-rules" aria-hidden="true"></div>
+            <div class="orange-tab" aria-hidden="true"></div>
+          </article>
+
+          <div id="video-mat" aria-hidden="true"></div>
+        </section>
+
+        <video
+          id="courtroom-video"
+          class="clip"
+          data-start="0"
+          data-duration="6.84"
+          data-media-start="0.58"
+          data-track-index="1"
+          src="assets/vid-03-shocked-defendant-courtroom-verdict.mp4"
+          muted
+          playsinline
+          preload="auto"
+        ></video>
+
+        <section
+          id="label-layer"
+          class="clip"
+          data-start="0"
+          data-duration="6.84"
+          data-track-index="2"
+          data-layout-allow-overlap="true"
+        >
+          <div id="file-label">
+            <span>HỒ SƠ XÉT XỬ</span>
+            <span class="label-number">01</span>
+          </div>
+        </section>
+
+        <section
+          id="stamp-layer"
+          class="clip"
+          data-start="0"
+          data-duration="6.84"
+          data-track-index="3"
+          data-layout-allow-overlap="true"
+          data-layout-allow-occlusion="true"
+        >
+          <div id="precedent-stamp">ÁN LỆ</div>
+          <span id="stamp-mark-a" class="stamp-mark"></span>
+          <span id="stamp-mark-b" class="stamp-mark"></span>
+          <span id="stamp-mark-c" class="stamp-mark"></span>
+          <span id="stamp-mark-d" class="stamp-mark"></span>
+        </section>
+
+        <div class="paper-grain" data-layout-ignore aria-hidden="true"></div>
+      </div>
+
+      <div class="bottom-signature" aria-hidden="true"></div>
+    </div>
+
+    <script>
+      const tl = gsap.timeline({
+        paused: true,
+        defaults: {
+          ease: "power3.out",
+        },
+      });
+
+      tl.fromTo(
+        "#courtroom-video",
+        {
+          rotationY: -88,
+          scale: 1.04,
+          opacity: 0,
+          transformOrigin: "0% 50%",
+        },
+        {
+          rotationY: 0,
+          scale: 1,
+          opacity: 1,
+          duration: 0.56,
+          ease: "power4.out",
+          transformOrigin: "0% 50%",
+        },
+        0,
+      );
+
+      tl.fromTo(
+        "#case-file",
+        {
+          scale: 0.93,
+          opacity: 0,
+        },
+        {
+          scale: 1,
+          opacity: 1,
+          duration: 0.68,
+          ease: "power3.out",
+        },
+        1.27,
+      );
+
+      tl.fromTo(
+        "#video-mat",
+        {
+          scale: 0.92,
+          opacity: 0,
+        },
+        {
+          scale: 1,
+          opacity: 1,
+          duration: 0.66,
+          ease: "power3.out",
+        },
+        1.31,
+      );
+
+      tl.to(
+        "#courtroom-video",
+        {
+          scale: 0.52,
+          y: -170,
+          duration: 0.82,
+          ease: "expo.inOut",
+          transformOrigin: "50% 50%",
+        },
+        1.27,
+      );
+
+      tl.fromTo(
+        "#file-label",
+        {
+          y: 42,
+          opacity: 0,
+        },
+        {
+          y: 0,
+          opacity: 1,
+          duration: 0.54,
+          ease: "power3.out",
+        },
+        2.23,
+      );
+
+      tl.to(
+        "#scene-stage",
+        {
+          y: -4,
+          rotation: 0.12,
+          duration: 1.05,
+          ease: "sine.inOut",
+        },
+        2.25,
+      );
+
+      tl.to(
+        "#scene-stage",
+        {
+          y: 1,
+          rotation: -0.08,
+          duration: 1.08,
+          ease: "sine.inOut",
+        },
+        3.3,
+      );
+
+      tl.fromTo(
+        "#precedent-stamp",
+        {
+          y: -136,
+          scale: 1.56,
+          rotation: -8,
+          opacity: 0,
+        },
+        {
+          y: 0,
+          scale: 0.9,
+          rotation: -4,
+          opacity: 1,
+          duration: 0.2,
+          ease: "power4.in",
+        },
+        4.44,
+      );
+
+      tl.to(
+        "#precedent-stamp",
+        {
+          scale: 1.055,
+          duration: 0.13,
+          ease: "power3.out",
+        },
+        4.64,
+      );
+
+      tl.to(
+        "#precedent-stamp",
+        {
+          scale: 1,
+          duration: 0.18,
+          ease: "power2.out",
+        },
+        4.77,
+      );
+
+      tl.fromTo(
+        ".stamp-mark",
+        {
+          scale: 0,
+          opacity: 0,
+        },
+        {
+          scale: 1,
+          opacity: 0.72,
+          duration: 0.18,
+          stagger: 0.025,
+          ease: "power3.out",
+        },
+        4.61,
+      );
+
+      const copyDestinations = [
+        { x: -360, y: -430, rotation: -12, scale: 0.88 },
+        { x: 350, y: -380, rotation: 10, scale: 0.78 },
+        { x: -420, y: 40, rotation: -7, scale: 0.72 },
+        { x: 405, y: 55, rotation: 13, scale: 0.82 },
+        { x: -290, y: 420, rotation: 8, scale: 0.84 },
+        { x: 300, y: 430, rotation: -10, scale: 0.74 },
+      ];
+
+      gsap.utils.toArray(".document-copy").forEach((copy, index) => {
+        const destination = copyDestinations[index];
+
+        tl.fromTo(
+          copy,
+          {
+            x: 0,
+            y: 0,
+            rotation: index % 2 === 0 ? -2 : 2,
+            scale: 0.42,
+            opacity: 0,
+          },
+          {
+            x: destination.x,
+            y: destination.y,
+            rotation: destination.rotation,
+            scale: destination.scale,
+            opacity: 1,
+            duration: 0.64,
+            ease: "power4.out",
+          },
+          4.96 + index * 0.055,
+        );
+
+        tl.to(
+          copy,
+          {
+            y: destination.y + (index % 2 === 0 ? -7 : 6),
+            rotation: destination.rotation + (index % 2 === 0 ? -0.8 : 0.8),
+            duration: 1.05,
+            ease: "sine.inOut",
+          },
+          5.65 + index * 0.025,
+        );
+      });
+
+      tl.to(
+        "#scene-stage",
+        {
+          y: -2,
+          rotation: 0.04,
+          duration: 1.18,
+          ease: "sine.inOut",
+        },
+        5.48,
+      );
+
+      window.__timelines["scene-s04"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>
