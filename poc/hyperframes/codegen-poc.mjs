@@ -1,34 +1,58 @@
 // POC: sinh code HyperFrames (HTML + GSAP) qua 9router, mirror đúng cơ chế
 // generator -> verify (local, `hyperframes check`) -> reviewer -> auto-retry của
-// scripts/07-codegen.router.mjs (Remotion) để so sánh táo-với-táo.
+// scripts/07-codegen.hf.router.mjs, dùng để so sánh CẶP MODEL generator/reviewer khác nhau
+// trên CÙNG 1 scene thật (xem C:\Users\DTL\.claude\plans\iterative-dazzling-harp.md).
 //
-// KHÔNG đụng gì vào pipeline sản xuất (scripts/, src/, remotion.config.ts) — chỉ đọc
-// scripts/lib/router-client.mjs (đã framework-agnostic) và scripts/model-routing.json
-// (dùng đúng model hiện tại) để so sánh công bằng.
+// KHÔNG đụng gì vào pipeline sản xuất (scripts/, hyperframes/videos/<slug>/,
+// scripts/model-routing.json) — chỉ đọc scripts/lib/router-client.mjs +
+// scripts/lib/video-paths.mjs (đã framework-agnostic) để lấy đúng dữ liệu scene thật, model
+// generator/reviewer luôn override qua CLI để không phụ thuộc/không sửa model-routing.json
+// dùng chung của pipeline sản xuất trong lúc thử nghiệm.
 //
-// Usage: node poc/hyperframes/codegen-poc.mjs --scene=S01
+// Usage: node poc/hyperframes/codegen-poc.mjs --video=ban-an-473-phan-1 --scene=S01
+//          [--gen-model=ag/gemini-3.8-flash-high] [--review-model=ag/claude-sonnet-4-6]
+//          [--gen-max-tokens=16000] [--review-max-tokens=2000]
+// Không truyền --gen-model/--review-model thì mặc định dùng đúng
+// scripts/model-routing.json (reasoning_generator/reasoning_reviewer) — dùng để chạy lại
+// baseline hiện tại qua CHÍNH harness này (đo token/thời gian cùng phương pháp với các cặp mới).
 import fs from "node:fs";
 import path from "node:path";
 import { execSync } from "node:child_process";
 import { callModel, extractText, loadModelRouting } from "../../scripts/lib/router-client.mjs";
+import { videoPaths } from "../../scripts/lib/video-paths.mjs";
 
 const root = process.cwd(); // chạy từ gốc repo
 const routing = loadModelRouting(root);
-const GEN_MODEL = routing.reasoning_generator;
-const REVIEW_MODEL = routing.reasoning_reviewer;
 const MAX_ATTEMPTS = 3;
 
+const videoArg = (process.argv.find((a) => a.startsWith("--video=")) || "--video=ban-an-473-phan-1").split("=")[1];
 const sceneArg = (process.argv.find((a) => a.startsWith("--scene=")) || "--scene=S01").split("=")[1];
-const PROJECT_DIR = path.join(root, "poc", "hyperframes", `an-le-64-${sceneArg.toLowerCase()}`);
-const RESULTS_DIR = path.join(root, "poc", "hyperframes", "poc-results");
+const GEN_MODEL = (process.argv.find((a) => a.startsWith("--gen-model=")) || `--gen-model=${routing.reasoning_generator}`).split("=")[1];
+const REVIEW_MODEL = (process.argv.find((a) => a.startsWith("--review-model=")) || `--review-model=${routing.reasoning_reviewer}`).split("=")[1];
+const GEN_MAX_TOKENS = parseInt(
+  (process.argv.find((a) => a.startsWith("--gen-max-tokens=")) || "--gen-max-tokens=16000").split("=")[1],
+  10,
+);
+const REVIEW_MAX_TOKENS = parseInt(
+  (process.argv.find((a) => a.startsWith("--review-max-tokens=")) || "--review-max-tokens=2000").split("=")[1],
+  10,
+);
+
+const vp = videoPaths(videoArg, root);
+// Tag an toàn cho tên file/thư mục từ 2 model id (vd "ag/gemini-3.8-flash-high" -> "ag-gemini-3-8-flash-high")
+// để chạy song song nhiều cặp model trên CÙNG 1 scene mà không đè project/kết quả của nhau.
+const modelTag = `${GEN_MODEL}_${REVIEW_MODEL}`.replace(/[^a-zA-Z0-9]+/g, "-");
+const PROJECT_DIR = path.join(root, "poc", "hyperframes", "model-compare", `${videoArg}-${sceneArg.toLowerCase()}-${modelTag}`);
+const RESULTS_DIR = path.join(root, "poc", "hyperframes", "poc-results", "model-compare");
 fs.mkdirSync(RESULTS_DIR, { recursive: true });
 
 if (!fs.existsSync(path.join(PROJECT_DIR, "hyperframes.json"))) {
   console.log(`Scaffold project mới: ${PROJECT_DIR}`);
+  fs.mkdirSync(path.dirname(PROJECT_DIR), { recursive: true });
   execSync(
-    `npx hyperframes init "an-le-64-${sceneArg.toLowerCase()}" --resolution portrait --non-interactive`,
+    `npx hyperframes init "${path.basename(PROJECT_DIR)}" --resolution portrait --non-interactive`,
     {
-      cwd: path.join(root, "poc", "hyperframes"),
+      cwd: path.dirname(PROJECT_DIR),
       stdio: "inherit",
       env: { ...process.env, HYPERFRAMES_SKIP_SKILLS: "1" },
     },
@@ -43,10 +67,10 @@ function bytes(s) {
   return Buffer.byteLength(s, "utf8");
 }
 
-// --- Dữ liệu nguồn của scene (dùng lại nguyên vẹn dữ liệu pipeline hiện có) ---
-const scenePlan = JSON.parse(read("planning/videos/an-le-64/scene-plan.json"));
-const shotlist = JSON.parse(read("planning/videos/an-le-64/shotlist.json"));
-const manifest = JSON.parse(read("pipeline/videos/an-le-64/media-analysis/manifest.json"));
+// --- Dữ liệu nguồn của scene (dùng lại nguyên vẹn dữ liệu pipeline hiện có, đúng video thật) ---
+const scenePlan = JSON.parse(fs.readFileSync(vp.scenePlanJson, "utf8"));
+const shotlist = JSON.parse(fs.readFileSync(vp.shotlistJson, "utf8"));
+const manifest = JSON.parse(fs.readFileSync(vp.manifestJson, "utf8"));
 
 const sceneEntry = (Array.isArray(scenePlan) ? scenePlan : scenePlan.scenes).find((s) => s.id === sceneArg);
 const shots = (Array.isArray(shotlist) ? shotlist : shotlist.shots).filter((s) => s.sceneId === sceneArg);
@@ -85,19 +109,24 @@ const skillDocs = skillFiles.map((f) => `### ${f}\n\n${read(f)}`).join("\n\n---\
 const styleTokens = read("planning/style-dna/style-tokens.json");
 const styleDnaCore = read("planning/style-dna/STYLE_DNA.md");
 
-// Rút ra trực tiếp từ CLAUDE.md do `npx hyperframes init` scaffold sẵn (Key Rules) — tương
-// đương vai trò KNOWN_GOTCHAS của 07-codegen.router.mjs, nhưng ở đây là kiến thức MỚI rút ra
-// lần đầu (chưa có tích luỹ lỗi thật qua nhiều lần chạy như bản Remotion).
+// KNOWN_GOTCHAS_HF — đồng bộ NGUYÊN VĂN với scripts/07-codegen.hf.router.mjs (nguồn xác thực
+// duy nhất — sửa ở đó rồi copy lại đây) để test model không bị lệch tín hiệu do prompt cũ hơn/
+// yếu hơn bản sản xuất thật. Đồng bộ lần gần nhất: 2026-09-22 (video "ban-an-473-phan-1").
 const KNOWN_GOTCHAS_HF = `QUY TẮC BẮT BUỘC CỦA COMPOSITION CONTRACT (rút từ scaffold CLAUDE.md + skill docs, vi phạm gây lỗi ÂM THẦM không báo lỗi rõ ràng):
 - Mọi phần tử có thời gian (timed element) PHẢI có data-start + 1 nguồn duration (data-duration, hoặc suy ra từ media). class="clip" không bắt buộc về mặt runtime nhưng lint sẽ cảnh báo nếu thiếu, và CSS .clip có sẵn cho layout full-frame — luôn thêm.
-- BẮT BUỘC đăng ký đúng 1 timeline gốc PAUSED cho composition trên window.__timelines["<composition-id>"]: const tl = gsap.timeline({paused: true}); window.__timelines["main"] = tl;. Thiếu bước này → composition không lỗi console nhưng KHÔNG render đúng (silent failure).
+- BẮT BUỘC đăng ký đúng 1 timeline gốc PAUSED cho composition trên window.__timelines["main"]: const tl = gsap.timeline({paused: true}); window.__timelines["main"] = tl;. Thiếu bước này → composition không lỗi console nhưng KHÔNG render đúng (silent failure).
 - Timeline con (nested/scene) được thêm thủ công vào timeline gốc KHÔNG được tự pause riêng — nếu pause, nó sẽ không tiến khi timeline gốc seek.
-- Video dùng thuộc tính muted trên thẻ <video>, âm thanh tách riêng bằng <audio> riêng.
+- Video dùng thuộc tính muted trên thẻ <video>, âm thanh tách riêng bằng <audio> riêng (scene này KHÔNG cần audio riêng — audio tổng của video đến từ track khác, ngoài phạm vi 1 scene).
 - CHỈ dùng logic tất định — TUYỆT ĐỐI không Date.now(), không Math.random(), không network fetch trong runtime composition (phá vỡ tính deterministic của render theo frame).
-- data-composition-id, data-width, data-height bắt buộc trên root div.
+- data-composition-id="main", data-width, data-height bắt buộc trên root div.
 - Nếu có chồng lấn/overflow/occlusion CÓ CHỦ ĐÍCH (vd hiệu ứng zoom tràn khung, overlay che chữ có tính toán trước), đánh dấu rõ bằng data-layout-allow-overflow / data-layout-allow-overlap / data-layout-allow-occlusion trên đúng phần tử đó — nếu không, "npx hyperframes check" sẽ coi là lỗi layout thật.
 - Ảnh/asset dùng đường dẫn tương đối "assets/<file>" (đã copy sẵn vào thư mục assets/ của project).
-- FONT "Be Vietnam Pro" (weight 700/900): KHÔNG dùng @font-face với local(...) hay trỏ tới file .ttf không có sẵn trong assets/ (sẽ gây lỗi 404 runtime — không tất định, "hyperframes check" sẽ bắt lỗi này). BẮT BUỘC nạp qua Google Fonts CDN bằng đúng 1 thẻ trong <head>: <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap">, rồi dùng font-family: "Be Vietnam Pro", sans-serif trực tiếp trong CSS — không cần @font-face thủ công.`;
+- FONT "Be Vietnam Pro" (weight 700/900): KHÔNG dùng @font-face với local(...) hay trỏ tới file .ttf không có sẵn trong assets/ (sẽ gây lỗi 404 runtime — không tất định, "hyperframes check" sẽ bắt lỗi này). BẮT BUỘC nạp qua Google Fonts CDN bằng đúng 1 thẻ trong <head>: <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap">, rồi dùng font-family: "Be Vietnam Pro", sans-serif trực tiếp trong CSS — không cần @font-face thủ công.
+- Một số TÊN FILE ảnh có chữ "cutout" (vd img-08-extortion-money-demand-cutout.jpeg) — đó chỉ là mô tả phong cách minh hoạ đã có sẵn TRONG chính ảnh AI tạo ra, KHÔNG phải chỉ định phải code thêm xử lý cutout. Dùng ảnh này y như file ảnh thường (nền toàn khung, giữ nguyên màu), không thêm filter grayscale/tách nền/đổ bóng trong code.
+- TUYỆT ĐỐI không dùng biến template literal (vd \`\${compId}\`, \`\${sceneId}\`) bên trong querySelector/CSS selector ở thẻ <script> — trình bundler HTML của HyperFrames parse CSS/selector bằng static analysis và CRASH khi gặp biến nội suy. Luôn hardcode chuỗi cố định (vd document.querySelector('[data-composition-id="main"]'), không phải \`[data-composition-id="\${id}"]\`).
+- Mọi cặp màu chữ/nền PHẢI đạt tối thiểu WCAG AA (tỉ lệ tương phản ≥3:1, ưu tiên ≥4.5:1 cho chữ thường) — "hyperframes check" chấm điểm contrast thật và FAIL cứng nếu không đạt. Không dùng chữ màu cam/vàng nhạt trên nền be/kem sáng (cặp màu tương phản thấp thường gặp) — nếu STYLE_DNA/style-tokens có sẵn cặp màu đã kiểm chứng đạt tương phản, ưu tiên dùng nguyên cặp đó thay vì tự phối màu mới.
+- TUYỆT ĐỐI không dùng giá trị GSAP tương đối (vd y: "+=6") trên 1 thuộc tính nếu có tween khác cũng ghi cùng thuộc tính đó trên cùng phần tử ở khoảng thời gian gần nhau — "hyperframes check" bắt lỗi \`gsap_relative_value_second_writer\` (giá trị tương đối chốt mốc gốc lúc tween khởi tạo, seek tuần tự vs. worker render lẻ frame sẽ ra 2 kết quả khác nhau). Luôn dùng giá trị tuyệt đối cho y/x/scale/rotation, hoặc fromTo() với endpoint tường minh.
+- Kiểm tra kỹ mọi text/chữ KHÔNG bị phần tử khác đè lên (che khuất) tại bất kỳ mốc thời gian nào trong lúc nó đang hiển thị — "hyperframes check" bắt lỗi \`text_occluded\` (chữ bị ẩn dưới 1 phần tử opaque). Nếu che khuất là CÓ CHỦ ĐÍCH (transition, reveal), dùng data-layout-allow-occlusion trên đúng phần tử; nếu không, đổi z-index/vị trí để chữ luôn đọc được khi đang trong khung thời gian hiển thị của nó.`;
 
 function buildPrompt(feedback, previousFiles) {
   const retryFilesBlock = previousFiles
@@ -176,15 +205,21 @@ async function generate(feedback, previousFiles) {
       { role: "user", content: userPrompt },
     ],
     temperature: 0.3,
-    maxTokens: 16000,
+    maxTokens: GEN_MAX_TOKENS,
   });
   const elapsedSec = (Date.now() - startedAt) / 1000;
   const text = extractText(response);
+  const finishReason = response?.choices?.[0]?.finish_reason || null;
   const files = parseFiles(text);
   if (Object.keys(files).length === 0) {
-    throw new Error("Không parse được file nào từ output generator:\n" + text.slice(0, 1000));
+    // finish_reason=length/max_tokens ở đây là dấu hiệu rõ nhất của rủi ro "hidden thinking
+    // tokens" đã ghi nhận với model Gemini (xem plan iterative-dazzling-harp.md) — output bị
+    // cắt cụt giữa chừng nên không parse được block ### FILE nào, không phải model "quên" format.
+    throw new Error(
+      `Không parse được file nào từ output generator (finish_reason=${finishReason}):\n` + text.slice(0, 1000),
+    );
   }
-  return { files, promptBytes, elapsedSec, usage: response.usage || null };
+  return { files, promptBytes, elapsedSec, usage: response.usage || null, finishReason };
 }
 
 function writeFiles(files) {
@@ -254,14 +289,25 @@ ${KNOWN_GOTCHAS_HF}
       { role: "user", content: userPrompt },
     ],
     temperature: 0.2,
-    maxTokens: 2000,
+    maxTokens: REVIEW_MAX_TOKENS,
   });
   const elapsedSec = (Date.now() - startedAt) / 1000;
-  return { text: extractText(response), elapsedSec };
+  const reviewFinishReason = response?.choices?.[0]?.finish_reason || null;
+  if (reviewFinishReason && reviewFinishReason !== "stop") {
+    console.log(`  ⚠ review finish_reason="${reviewFinishReason}" (khác "stop") — verdict có thể bị cắt cụt.`);
+  }
+  return { text: extractText(response), elapsedSec, finishReason: reviewFinishReason };
 }
 
 // --- Vòng lặp chính: generate -> verify -> review -> retry (MAX_ATTEMPTS=3), mirror 07-codegen ---
-const log = { scene: sceneArg, model: { generator: GEN_MODEL, reviewer: REVIEW_MODEL }, attempts: [] };
+const log = {
+  video: videoArg,
+  scene: sceneArg,
+  model: { generator: GEN_MODEL, reviewer: REVIEW_MODEL },
+  genMaxTokens: GEN_MAX_TOKENS,
+  reviewMaxTokens: REVIEW_MAX_TOKENS,
+  attempts: [],
+};
 
 let attempt = 0;
 let feedback = null;
@@ -275,7 +321,15 @@ while (attempt < MAX_ATTEMPTS) {
   const attemptLog = { attempt };
   try {
     const gen = await generate(feedback, previousFiles);
-    attemptLog.generate = { elapsedSec: gen.elapsedSec, promptBytes: gen.promptBytes, usage: gen.usage };
+    attemptLog.generate = {
+      elapsedSec: gen.elapsedSec,
+      promptBytes: gen.promptBytes,
+      usage: gen.usage,
+      finishReason: gen.finishReason,
+    };
+    if (gen.finishReason && gen.finishReason !== "stop") {
+      console.log(`  ⚠ finish_reason="${gen.finishReason}" (khác "stop") — dấu hiệu output có thể bị cắt cụt, kiểm tra kỹ nếu attempt này fail.`);
+    }
     writeFiles(gen.files);
     previousFiles = gen.files;
 
@@ -290,7 +344,7 @@ while (attempt < MAX_ATTEMPTS) {
     console.log("Verify (hyperframes check) PASS.");
 
     const rev = await review(gen.files);
-    attemptLog.review = { elapsedSec: rev.elapsedSec, text: rev.text };
+    attemptLog.review = { elapsedSec: rev.elapsedSec, text: rev.text, finishReason: rev.finishReason };
     console.log("Review result:\n" + rev.text);
     finalFiles = gen.files;
     finalVerdict = rev.text;
@@ -309,7 +363,8 @@ const passed = !!(finalVerdict && /VERDICT:\s*PASS/i.test(finalVerdict));
 log.result = passed ? `PASS sau ${attempt} lần thử` : `KHÔNG đạt sau ${attempt} lần thử`;
 log.finishedAt = new Date().toISOString();
 
-fs.writeFileSync(path.join(RESULTS_DIR, `${sceneArg}.json`), JSON.stringify(log, null, 2), "utf8");
-console.log(`\n${log.result}. Log: poc/hyperframes/poc-results/${sceneArg}.json`);
+const resultFileName = `${videoArg}-${sceneArg.toLowerCase()}-${modelTag}.json`;
+fs.writeFileSync(path.join(RESULTS_DIR, resultFileName), JSON.stringify(log, null, 2), "utf8");
+console.log(`\n${log.result}. Log: poc/hyperframes/poc-results/model-compare/${resultFileName}`);
 
 if (!passed) process.exit(1);

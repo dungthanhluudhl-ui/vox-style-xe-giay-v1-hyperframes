@@ -129,7 +129,7 @@ sub-composition trực tiếp đã bị bác bỏ vì làm giảm điểm khớp
 |---|---|---|
 | 1. Generate: composition standalone cho 1 scene, project tạm riêng | 9router[reasoning_generator] | script tự bundle skill docs HyperFrames + `STYLE_DNA.md`/`style-tokens.json` + shotlist |
 | 2. Verify tự động | Local | `npx hyperframes check --json` chạy TRÊN PROJECT TẠM RIÊNG scene đó (cách ly hoàn toàn, không race khi song song) |
-| 3. Review | 9router[reasoning_reviewer] | `cx/gpt-5.6-sol-review` — verdict PASS/FAIL + danh sách lỗi |
+| 3. Review | 9router[reasoning_reviewer] | `ag/claude-sonnet-4-6` — verdict PASS/FAIL + danh sách lỗi |
 | 4. Nếu FAIL: gửi lỗi lại generator, lặp bước 1–3 | Local orchestration | tối đa 3 lần trước khi escalate |
 | 5. PASS: chuyển đổi tất định standalone → `compositions/scene-sNN.html`, ráp `index.html` | Local, tất định, KHÔNG AI | `scripts/lib/sync-root-hf-lib.mjs` (`standaloneToSubComposition()` + `syncRootHf()`) — gọi tự động, trừ khi `--no-root-sync` |
 | 6. Ghi file + cập nhật `pipeline/videos/<slug>/run-log.md` | Local | — |
@@ -155,6 +155,61 @@ HyperFrames-cụ-thể tổng quát hoá được (contrast, template-literal se
 **Bug thật đã sửa ở tầng ráp (`sync-root-hf-lib.mjs`), áp dụng cho MỌI video:** CSS `.clip` (style mọi slot `data-composition-src` trong `index.html`) phải có `isolation: isolate` — thiếu dòng này, z-index dùng NỘI BỘ trong 1 scene có thể thoát stacking context và đè lên slot khác (kể cả `caption-track` dù luôn nằm sau trong DOM). Xem memory `feedback_incremental_buildout` bài học #5 để biết đầy đủ cách phát hiện + tại sao track-index không liên quan.
 
 Chỉ chạy `scripts/07-codegen.hf.router.mjs` tuần tự/thủ công (không qua orchestrator) khi có lý do cụ thể, ví dụ đang debug/sửa riêng 1 scene bằng `--issue-file`.
+
+### Model generator/reviewer — đã đổi qua POC kiểm chứng (2026-09-22)
+
+Trước đây dùng `cx/gpt-5.6-sol` (generator) + `cx/gpt-5.6-sol-review` (reviewer). Đã chạy POC
+song song 5 cặp model × 3 scene thật của video "ban-an-473-phan-1" (S01 phức tạp/từng fail thật,
+S04 đơn giản/text-only, S06 trung bình) để tìm model rẻ/nhanh hơn nhưng chất lượng tương đương —
+xem đầy đủ dữ liệu + phương pháp tại `poc/hyperframes/codegen-poc.mjs` (đã tham số hoá
+`--video=`/`--gen-model=`/`--review-model=`/`--gen-max-tokens=`/`--review-max-tokens=`),
+`poc/hyperframes/score-render.mjs` (rubric chấm điểm 1-10, tái dùng được cho lần audit sau), và
+kết quả thô tại `poc/hyperframes/poc-results/model-compare/`.
+
+**Kết quả (PASS/3 scene, tổng 3 scene):**
+
+| Cặp | PASS | Tổng attempts | Tổng token | Tổng thời gian | Điểm chấm TB |
+|---|---|---|---|---|---|
+| `ag/gemini-3.1-pro-low` + `ag/claude-sonnet-4-6` | 0/3 ❌ | 9 | 424K | 1052s | — (loại) |
+| `cx/gpt-5.6-sol` + `cx/gpt-5.6-sol-review` (cũ) | 3/3 | 6 | 205K | 1325s | 6.00 |
+| **`ag/gemini-3.8-flash-high` + `ag/claude-sonnet-4-6` (MỚI, mặc định)** | 3/3 | 6 | 322K | 509s (2.6x nhanh hơn) | **6.33** |
+| `ag/gemini-3.8-flash-high` + `ag/gemini-3.8-flash-high` (tự chấm điểm mình) | 3/3 | 7 | 370K | 581s (2.3x nhanh hơn) | 6.00 |
+| `ag/gemini-3.8-flash-high` + `ag/gpt-oss-120b-medium` | 3/3 | 5 (ít nhất) | 254K | 438s (3x nhanh hơn) | 6.00 |
+
+**Kết luận:**
+- **Thời gian**: xác nhận tiết kiệm thật, cả 3 cặp dùng `gemini-3.8-flash-high` làm generator đều
+  nhanh hơn baseline 2.3-3 lần (latency ẩn của reasoning phía `cx/gpt-5.6-sol` rất cao dù token
+  không nhiều hơn).
+- **Token/chi phí $**: KHÔNG xác nhận được là rẻ hơn — các cặp Gemini dùng NHIỀU token hơn
+  baseline (205K → 254-370K). 9router `/v1/models` không trả đơn giá, không có cách kiểm chứng
+  chi phí $ thật từ trong repo — cần tự kiểm tra dashboard nhà cung cấp nếu muốn biết chính xác.
+- **Chất lượng hình ảnh**: ngang nhau giữa 4 cặp PASS (6.00-6.33, chấm bằng `score-render.mjs`
+  so với chính scene đó ở video 5 đã duyệt) — không có bằng chứng model rẻ hơn làm giảm chất
+  lượng.
+- **`ag/gemini-3.1-pro-low` KHÔNG phù hợp vai trò generator** — fail cả 3/3 scene kể cả scene
+  đơn giản nhất (text-only), trái với dự đoán ban đầu dựa trên capability (context/reasoning) —
+  bài học: capability số liệu không thay thế được kiểm chứng thật trên đúng task.
+- **Cặp tự-chấm-điểm-mình** (`gemini-3.8-flash-high` làm cả 2 vai) chạy được nhưng kém hiệu quả
+  nhất trong 3 cặp thành công (nhiều attempts/token nhất) — dùng được khi cần nhưng không phải
+  lựa chọn tối ưu.
+- Người dùng đã tự xem 12 bản render POC (`pipeline/.cache/model-compare-renders/`, không commit
+  — tái tạo được bằng cách chạy lại POC) và xác nhận đạt trước khi đổi.
+
+**Xếp hạng fallback (đổi thủ công bằng cách sửa `scripts/model-routing.json`, không có cơ chế tự
+động — xem `feedback_incremental_buildout`):**
+- **Generator**: 1) `ag/gemini-3.8-flash-high` (mặc định) → 2) `cx/gpt-5.6-sol` (=
+  `reasoning_generator_alt` trong `model-routing.json`, chậm hơn nhưng đã kiểm chứng chắc chắn
+  chạy được). KHÔNG dùng `ag/gemini-3.1-pro-low` (đã loại). Chưa có lựa chọn #3 đã kiểm chứng —
+  cần POC riêng nếu muốn thêm (vd `ag/gemini-pro-agent`, chưa test).
+- **Reviewer**: 1) `ag/claude-sonnet-4-6` (mặc định) → 2) `ag/gpt-oss-120b-medium` (rẻ/nhanh nhất,
+  chất lượng tương đương) → 3) `ag/gemini-3.8-flash-high` (tự chấm điểm mình — dùng được nhưng
+  kém hiệu quả nhất) → 4) `cx/gpt-5.6-sol-review` (cũ, dự phòng cuối cùng).
+
+**2 gotcha mới phát hiện qua POC** (đã thêm vào `KNOWN_GOTCHAS_HF`, chưa từng gặp với
+`cx/gpt-5.6-sol`): `gsap_relative_value_second_writer` (giá trị GSAP tương đối `+=N` xung đột
+writer khác cùng thuộc tính) và `text_occluded` (chữ bị phần tử khác che khuất) — cả 2 đều tự sửa
+được trong ngân sách 3 lần thử, không cần can thiệp tay, nhưng theo dõi qua
+`pipeline/codegen-issues.jsonl` nếu tái diễn nhiều.
 
 ## 7. Preview & QA
 | Task | Ai/gì đảm nhiệm | Công cụ |

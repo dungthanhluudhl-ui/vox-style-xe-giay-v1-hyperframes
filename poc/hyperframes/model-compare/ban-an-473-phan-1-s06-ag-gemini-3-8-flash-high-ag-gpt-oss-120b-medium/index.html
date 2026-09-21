@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=1080, height=1920" />
+  <title>S06 - Vox Style HyperFrames Composition</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background: #E7E3D9;
+      color: #141414;
+      font-family: "Be Vietnam Pro", sans-serif;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    #root {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #E7E3D9;
+      background-image:
+        linear-gradient(rgba(20, 20, 20, 0.18) 1.5px, transparent 1.5px),
+        linear-gradient(90deg, rgba(20, 20, 20, 0.18) 1.5px, transparent 1.5px);
+      background-size: 84px 84px;
+    }
+
+    /* Camera rig handles the entrance grow animation */
+    #camera-rig {
+      position: absolute;
+      inset: 0;
+      transform-origin: 50% 50%;
+      will-change: transform, opacity;
+    }
+
+    /* Video frame */
+    .video-viewport {
+      position: absolute;
+      top: 140px;
+      left: 40px;
+      width: 1000px;
+      height: 1320px;
+      border-radius: 20px;
+      overflow: hidden;
+      border: 4px solid #141414;
+      box-shadow: 12px 14px 0px rgba(20, 20, 20, 0.95);
+      background: #141414;
+    }
+
+    #crowd-video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    /* Tactile paper grain overlay */
+    .paper-grain-overlay {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.18;
+      mix-blend-mode: multiply;
+      background-image: radial-gradient(#141414 1px, transparent 1px);
+      background-size: 4px 4px;
+      z-index: 20;
+    }
+
+    /* Top Editorial Punch Badge */
+    .editorial-header {
+      position: absolute;
+      top: 180px;
+      left: 70px;
+      z-index: 30;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .topic-tag {
+      align-self: flex-start;
+      background: #FF6A1A;
+      color: #141414;
+      font-weight: 900;
+      font-size: 19px;
+      letter-spacing: 0.08em;
+      padding: 6px 14px;
+      border-radius: 6px;
+      text-transform: uppercase;
+      border: 2px solid #141414;
+    }
+
+    .headline-pill {
+      background: rgba(20, 20, 20, 0.92);
+      color: #F7F4EC;
+      font-weight: 900;
+      font-size: 38px;
+      padding: 10px 22px;
+      border-radius: 12px;
+      border-left: 6px solid #FF6A1A;
+      box-shadow: 4px 6px 0px rgba(20, 20, 20, 0.5);
+      line-height: 1.25;
+    }
+
+    /* Sensitive screen censor blur effect over the TV */
+    #tv-censor {
+      position: absolute;
+      top: 600px;
+      left: 140px;
+      width: 250px;
+      height: 180px;
+      border-radius: 14px;
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      background: rgba(20, 20, 20, 0.45);
+      border: 2px dashed #FF6A1A;
+      box-shadow: 0 0 24px rgba(0, 0, 0, 0.55);
+      z-index: 25;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .censor-badge {
+      background: #141414;
+      color: #FF6A1A;
+      font-size: 16px;
+      font-weight: 900;
+      padding: 6px 12px;
+      border-radius: 6px;
+      border: 1px solid #FF6A1A;
+      letter-spacing: 0.06em;
+      text-align: center;
+    }
+
+    /* SVG Flow Arrow Layer */
+    .flow-svg-layer {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 35;
+    }
+
+    #flow-path {
+      fill: none;
+      stroke: #FF6A1A;
+      stroke-width: 8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      filter: drop-shadow(0px 4px 6px rgba(0, 0, 0, 0.7));
+    }
+
+    #flow-arrowhead {
+      fill: #FF6A1A;
+      stroke: #141414;
+      stroke-width: 2;
+      transform-origin: 660px 880px;
+      filter: drop-shadow(0px 4px 6px rgba(0, 0, 0, 0.7));
+      opacity: 0;
+    }
+
+    /* Product Card at Cashier */
+    #product-card {
+      position: absolute;
+      top: 730px;
+      left: 540px;
+      width: 440px;
+      background: #F5F0E4;
+      border: 4px solid #FF6A1A;
+      border-radius: 16px;
+      box-shadow: 8px 10px 0px #141414;
+      padding: 18px 24px;
+      z-index: 40;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      transform-origin: 50% 50%;
+      will-change: transform, opacity;
+      opacity: 0;
+    }
+
+    .card-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: #141414;
+      color: #F7F4EC;
+      font-size: 16px;
+      font-weight: 900;
+      letter-spacing: 0.06em;
+      padding: 4px 10px;
+      border-radius: 6px;
+      width: fit-content;
+    }
+
+    .tag-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: #FF6A1A;
+    }
+
+    .card-main {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .card-icon-wrap {
+      width: 58px;
+      height: 58px;
+      border-radius: 10px;
+      background: #141414;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .card-texts {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .card-title {
+      font-size: 34px;
+      font-weight: 900;
+      color: #141414;
+      line-height: 1.15;
+    }
+
+    .card-subtitle {
+      font-size: 18px;
+      font-weight: 900;
+      color: #141414;
+      opacity: 0.85;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    /* Endpoint Focus Rings */
+    .endpoint-wrap {
+      position: absolute;
+      top: 880px;
+      left: 660px;
+      width: 0;
+      height: 0;
+      z-index: 45;
+      pointer-events: none;
+    }
+
+    .target-ring {
+      position: absolute;
+      top: -36px;
+      left: -36px;
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      border: 4px solid #FF6A1A;
+      box-shadow: 0 0 16px rgba(255, 106, 26, 0.8);
+      transform-origin: 50% 50%;
+      opacity: 0;
+    }
+
+    .target-dot {
+      position: absolute;
+      top: -9px;
+      left: -9px;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #FF6A1A;
+      border: 3px solid #141414;
+      transform-origin: 50% 50%;
+      opacity: 0;
+    }
+
+    /* Bottom Brand Bar */
+    .vox-bottom-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 14px;
+      background: #FF6A1A;
+      z-index: 100;
+    }
+  </style>
+</head>
+<body>
+  <div
+    id="root"
+    data-composition-id="main"
+    data-width="1080"
+    data-height="1920"
+    data-duration="5.96"
+    data-layout-allow-overflow="true"
+  >
+    <div id="camera-rig">
+      <!-- Main video layer -->
+      <div class="video-viewport">
+        <video
+          id="crowd-video"
+          src="assets/vid-03-papercut-crowd-scandal-storefront.mp4"
+          muted
+          playsinline
+          data-start="0"
+          data-duration="5.96"
+          data-media-start="1.5"
+        ></video>
+        <div class="paper-grain-overlay"></div>
+      </div>
+
+      <!-- Editorial headline -->
+      <div id="editorial-header" class="editorial-header">
+        <span class="topic-tag">CHIẾN THUẬT THU HÚT</span>
+        <h1 class="headline-pill">KÉO KHÁCH VÀO TIỆM</h1>
+      </div>
+
+      <!-- Sensitive TV screen censor box -->
+      <div id="tv-censor">
+        <span class="censor-badge">[ PHIM HÚT KHÁCH ]</span>
+      </div>
+
+      <!-- SVG Attention Flow Arrow -->
+      <svg class="flow-svg-layer" viewBox="0 0 1080 1920" xmlns="http://www.w3.org/2000/svg">
+        <path id="flow-path" d="M 270 700 C 330 920, 390 1090, 520 1090 C 620 1090, 650 990, 660 880" />
+        <polygon id="flow-arrowhead" points="660,860 648,890 672,890" />
+      </svg>
+
+      <!-- Product Card at Cashier -->
+      <div id="product-card" data-layout-allow-overflow="true">
+        <div class="card-tag">
+          <span class="tag-dot"></span>
+          <span>QUẦY THU NGÂN</span>
+        </div>
+        <div class="card-main">
+          <div class="card-icon-wrap">
+            <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#FF6A1A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+              <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+              <line x1="12" y1="22.08" x2="12" y2="12"></line>
+            </svg>
+          </div>
+          <div class="card-texts">
+            <h2 class="card-title">HÀNG Ở QUẦY</h2>
+            <span class="card-subtitle">MỤC TIÊU THỰC SỰ</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Endpoint Target Rings -->
+      <div class="endpoint-wrap">
+        <div id="target-ring-1" class="target-ring"></div>
+        <div id="target-ring-2" class="target-ring"></div>
+        <div id="target-dot" class="target-dot"></div>
+      </div>
+    </div>
+
+    <!-- Permanent Bottom Brand Line -->
+    <div class="vox-bottom-bar"></div>
+  </div>
+
+  <script>
+    // Measured path length setup for deterministic SVG path drawing
+    const flowPath = document.getElementById("flow-path");
+    const pathLength = flowPath.getTotalLength();
+    flowPath.style.strokeDasharray = pathLength;
+    flowPath.style.strokeDashoffset = pathLength;
+
+    // Single paused timeline registered on window.__timelines["main"]
+    const tl = gsap.timeline({ paused: true });
+
+    // Phase 1: Scene Transition In (Grow entrance, 0.0s - 0.65s)
+    tl.fromTo(
+      "#camera-rig",
+      { scale: 0.92, opacity: 0 },
+      { scale: 1, opacity: 1, duration: 0.65, ease: "power3.out" },
+      0
+    );
+
+    tl.fromTo(
+      "#editorial-header",
+      { y: -30, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.5, ease: "power3.out" },
+      0.2
+    );
+
+    tl.fromTo(
+      "#tv-censor",
+      { scale: 0.8, opacity: 0 },
+      { scale: 1, opacity: 1, duration: 0.45, ease: "power2.out" },
+      0.35
+    );
+
+    // Phase 2: Flow Arrow drawing from TV through crowd to inside shop (at 1.17s)
+    tl.fromTo(
+      "#flow-path",
+      { strokeDashoffset: pathLength },
+      { strokeDashoffset: 0, duration: 0.85, ease: "power2.out" },
+      1.17
+    );
+
+    // Arrowhead snaps in once the path tip lands at cashier
+    tl.fromTo(
+      "#flow-arrowhead",
+      { scale: 0, opacity: 0 },
+      { scale: 1, opacity: 1, duration: 0.25, ease: "power3.out" },
+      1.95
+    );
+
+    // Phase 3: Product Card Arrival at cashier (at 2.81s)
+    tl.fromTo(
+      "#product-card",
+      { scale: 0, opacity: 0, y: 35 },
+      { scale: 1, opacity: 1, y: 0, duration: 0.55, ease: "power3.out" },
+      2.81
+    );
+
+    // Phase 4: Endpoint Lock and Concentric Attention Rings (at 4.71s)
+    tl.fromTo(
+      "#target-dot",
+      { scale: 0, opacity: 0 },
+      { scale: 1, opacity: 1, duration: 0.2, ease: "power2.out" },
+      4.71
+    );
+
+    tl.fromTo(
+      "#target-ring-1",
+      { scale: 0.4, opacity: 0.95 },
+      { scale: 1.8, opacity: 0, duration: 0.65, ease: "power2.out" },
+      4.71
+    );
+
+    tl.fromTo(
+      "#target-ring-2",
+      { scale: 0.4, opacity: 0.95 },
+      { scale: 2.1, opacity: 0, duration: 0.65, ease: "power2.out" },
+      4.92
+    );
+
+    // Gentle card emphasize pulse on lock (using tl.to to avoid repeated fromTo conflict)
+    tl.to(
+      "#product-card",
+      { scale: 1.05, duration: 0.18, yoyo: true, repeat: 1, ease: "power2.out" },
+      4.71
+    );
+
+    // Bind seekable timeline to HyperFrames runtime
+    window.__timelines["main"] = tl;
+  </script>
+</body>
+</html>

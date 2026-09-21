@@ -1,0 +1,582 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <title>S06 — Luồng chú ý vào quầy thu ngân</title>
+
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap">
+
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/MotionPathPlugin.min.js"></script>
+
+    <style>
+      :root {
+        --paper: #e7e3d9;
+        --card: #f5f0e4;
+        --ink: #141414;
+        --orange: #ff6a1a;
+        --grid-line: rgba(20, 20, 20, 0.32);
+        --on-dark: #f7f4ec;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        overflow: hidden;
+        background: var(--paper);
+      }
+
+      body {
+        color: var(--ink);
+        font-family: "Be Vietnam Pro", sans-serif;
+      }
+
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        isolation: isolate;
+        background-color: var(--paper);
+        background-image:
+          linear-gradient(var(--grid-line) 1.5px, transparent 1.5px),
+          linear-gradient(90deg, var(--grid-line) 1.5px, transparent 1.5px);
+        background-size: 84px 84px;
+      }
+
+      .clip {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+      }
+
+      .media-stage {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+        background: var(--ink);
+        z-index: 1;
+      }
+
+      #s06-video {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center center;
+        transform-origin: 50% 50%;
+        will-change: transform, opacity;
+      }
+
+      .media-vignette {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background:
+          linear-gradient(
+            180deg,
+            rgba(20, 20, 20, 0.16) 0%,
+            transparent 22%,
+            transparent 68%,
+            rgba(20, 20, 20, 0.34) 100%
+          ),
+          linear-gradient(
+            90deg,
+            rgba(20, 20, 20, 0.2) 0%,
+            transparent 23%,
+            transparent 78%,
+            rgba(20, 20, 20, 0.16) 100%
+          );
+      }
+
+      .grain {
+        position: absolute;
+        inset: 0;
+        z-index: 8;
+        pointer-events: none;
+        opacity: 0.18;
+        mix-blend-mode: multiply;
+        background-image:
+          radial-gradient(circle at 12% 18%, rgba(20, 20, 20, 0.34) 0 1px, transparent 1.5px),
+          radial-gradient(circle at 68% 31%, rgba(20, 20, 20, 0.26) 0 1px, transparent 1.5px),
+          radial-gradient(circle at 37% 77%, rgba(20, 20, 20, 0.28) 0 1px, transparent 1.5px),
+          radial-gradient(circle at 89% 63%, rgba(20, 20, 20, 0.22) 0 1px, transparent 1.5px);
+        background-size: 17px 19px, 23px 29px, 31px 27px, 37px 41px;
+      }
+
+      .screen-blur {
+        position: absolute;
+        left: 104px;
+        top: 374px;
+        width: 334px;
+        height: 246px;
+        z-index: 3;
+        overflow: hidden;
+        border: 4px solid rgba(247, 244, 236, 0.38);
+        border-radius: 22px;
+        background: rgba(20, 20, 20, 0.24);
+        backdrop-filter: blur(24px);
+        -webkit-backdrop-filter: blur(24px);
+        box-shadow:
+          0 0 0 7px rgba(20, 20, 20, 0.32),
+          14px 16px 0 rgba(255, 106, 26, 0.28);
+        transform-origin: 50% 50%;
+        will-change: transform, opacity;
+      }
+
+      .screen-blur::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background:
+          repeating-linear-gradient(
+            0deg,
+            rgba(247, 244, 236, 0.1) 0 5px,
+            rgba(20, 20, 20, 0.1) 5px 10px
+          );
+      }
+
+      .flow-layer {
+        z-index: 4;
+        pointer-events: none;
+      }
+
+      .flow-svg {
+        position: absolute;
+        inset: 0;
+        width: 1080px;
+        height: 1920px;
+        overflow: visible;
+      }
+
+      .flow-shadow,
+      .flow-path {
+        fill: none;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
+      .flow-shadow {
+        stroke: rgba(20, 20, 20, 0.72);
+        stroke-width: 31;
+      }
+
+      .flow-path {
+        stroke: var(--orange);
+        stroke-width: 19;
+      }
+
+      .arrow-runner {
+        will-change: transform;
+      }
+
+      .arrow-head {
+        fill: var(--orange);
+        stroke: var(--ink);
+        stroke-width: 10;
+        stroke-linejoin: round;
+        transform-origin: 0 0;
+        will-change: transform, opacity;
+      }
+
+      .product-layer {
+        z-index: 5;
+        pointer-events: none;
+      }
+
+      .product-card {
+        position: absolute;
+        left: 610px;
+        top: 1210px;
+        width: 390px;
+        min-height: 220px;
+        display: flex;
+        align-items: center;
+        gap: 22px;
+        padding: 24px 28px;
+        color: var(--on-dark);
+        background: rgba(20, 20, 20, 0.94);
+        border: 5px solid var(--orange);
+        border-radius: 18px;
+        box-shadow: 16px 18px 0 rgba(255, 106, 26, 0.88);
+        transform-origin: 82% 12%;
+        will-change: transform, opacity;
+      }
+
+      .product-pack {
+        position: relative;
+        flex: 0 0 100px;
+        width: 100px;
+        height: 128px;
+        background: var(--card);
+        border: 5px solid var(--ink);
+        transform: rotate(-4deg);
+      }
+
+      .product-pack::before {
+        content: "";
+        position: absolute;
+        left: 13px;
+        right: 13px;
+        top: 20px;
+        height: 15px;
+        background: var(--orange);
+      }
+
+      .product-pack::after {
+        content: "";
+        position: absolute;
+        left: 13px;
+        right: 28px;
+        top: 53px;
+        height: 48px;
+        border-top: 7px solid var(--ink);
+        border-bottom: 7px solid var(--ink);
+      }
+
+      .product-copy {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      .product-kicker {
+        margin: 0;
+        color: var(--orange);
+        font-size: 24px;
+        font-weight: 900;
+        line-height: 1.2;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .product-title {
+        margin: 0;
+        color: var(--on-dark);
+        font-size: 39px;
+        font-weight: 900;
+        line-height: 1.15;
+        letter-spacing: -0.03em;
+      }
+
+      .endpoint-layer {
+        z-index: 6;
+        pointer-events: none;
+      }
+
+      .endpoint-ring {
+        position: absolute;
+        left: 742px;
+        top: 1218px;
+        width: 126px;
+        height: 126px;
+        border: 13px solid var(--orange);
+        border-radius: 50%;
+        box-shadow: 0 0 0 8px rgba(20, 20, 20, 0.78);
+        transform-origin: 50% 50%;
+        will-change: transform, opacity;
+      }
+
+      .endpoint-dot {
+        position: absolute;
+        left: 790px;
+        top: 1266px;
+        width: 30px;
+        height: 30px;
+        border: 6px solid var(--ink);
+        border-radius: 50%;
+        background: var(--orange);
+        transform-origin: 50% 50%;
+        will-change: transform, opacity;
+      }
+
+      .bottom-signature {
+        position: absolute;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        z-index: 10;
+        height: 18px;
+        background: var(--orange);
+        pointer-events: none;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div
+      id="root"
+      data-composition-id="main"
+      data-start="0"
+      data-width="1080"
+      data-height="1920"
+      data-duration="5.96"
+      data-fps="30"
+    >
+      <div class="media-stage" aria-hidden="true">
+        <video
+          id="s06-video"
+          class="clip"
+          data-start="0"
+          data-duration="5.96"
+          data-media-start="1.5"
+          data-track-index="0"
+          src="assets/vid-03-papercut-crowd-scandal-storefront.mp4"
+          muted
+          playsinline
+          preload="auto"
+        ></video>
+
+        <div class="media-vignette"></div>
+        <div id="s06-screen-blur" class="screen-blur"></div>
+      </div>
+
+      <section
+        id="s06-flow"
+        class="clip flow-layer"
+        data-start="1.17"
+        data-duration="4.79"
+        data-track-index="1"
+      >
+        <svg
+          class="flow-svg"
+          viewBox="0 0 1080 1920"
+          xmlns="http://www.w3.org/2000/svg"
+          aria-hidden="true"
+        >
+          <path
+            id="s06-flow-shadow"
+            class="flow-shadow"
+            d="M 278 600 C 338 708 390 794 474 857 C 552 916 642 939 696 1006 L 696 1128 C 696 1194 736 1238 798 1277"
+          />
+          <path
+            id="s06-flow-path"
+            class="flow-path"
+            d="M 278 600 C 338 708 390 794 474 857 C 552 916 642 939 696 1006 L 696 1128 C 696 1194 736 1238 798 1277"
+          />
+          <g id="s06-arrow-runner" class="arrow-runner">
+            <path
+              id="s06-arrow-head"
+              class="arrow-head"
+              d="M 18 0 L -38 -34 L -27 0 L -38 34 Z"
+            />
+          </g>
+        </svg>
+      </section>
+
+      <section
+        id="s06-product"
+        class="clip product-layer"
+        data-start="2.81"
+        data-duration="3.15"
+        data-track-index="2"
+      >
+        <div id="s06-product-card" class="product-card">
+          <div class="product-pack" aria-hidden="true"></div>
+          <div class="product-copy">
+            <p class="product-kicker">Đích đến thật</p>
+            <p class="product-title">HÀNG Ở QUẦY</p>
+          </div>
+        </div>
+      </section>
+
+      <section
+        id="s06-endpoint"
+        class="clip endpoint-layer"
+        data-start="4.71"
+        data-duration="1.25"
+        data-track-index="3"
+      >
+        <div id="s06-endpoint-ring" class="endpoint-ring"></div>
+        <div id="s06-endpoint-dot" class="endpoint-dot"></div>
+      </section>
+
+      <div class="grain" aria-hidden="true"></div>
+      <div class="bottom-signature" aria-hidden="true"></div>
+    </div>
+
+    <script>
+      gsap.registerPlugin(MotionPathPlugin);
+
+      const flowPath = document.getElementById("s06-flow-path");
+      const flowShadow = document.getElementById("s06-flow-shadow");
+      const flowLength = flowPath.getTotalLength();
+
+      flowPath.style.strokeDasharray = String(flowLength);
+      flowPath.style.strokeDashoffset = String(flowLength);
+      flowShadow.style.strokeDasharray = String(flowLength);
+      flowShadow.style.strokeDashoffset = String(flowLength);
+
+      const tl = gsap.timeline({
+        paused: true,
+        defaults: {
+          ease: "power3.out"
+        }
+      });
+
+      tl.fromTo(
+        "#s06-video",
+        {
+          scale: 0.92,
+          opacity: 0
+        },
+        {
+          scale: 1,
+          opacity: 1,
+          duration: 0.62,
+          ease: "power3.out"
+        },
+        0
+      );
+
+      tl.fromTo(
+        "#s06-screen-blur",
+        {
+          scale: 0.82,
+          opacity: 0
+        },
+        {
+          scale: 1,
+          opacity: 1,
+          duration: 0.48,
+          ease: "power3.out"
+        },
+        0.18
+      );
+
+      tl.to(
+        "#s06-screen-blur",
+        {
+          scale: 1.025,
+          duration: 1.15,
+          ease: "sine.inOut",
+          repeat: 3,
+          yoyo: true
+        },
+        0.66
+      );
+
+      tl.to(
+        "#s06-flow-shadow",
+        {
+          strokeDashoffset: 0,
+          duration: 1.68,
+          ease: "power2.out"
+        },
+        1.17
+      );
+
+      tl.to(
+        "#s06-flow-path",
+        {
+          strokeDashoffset: 0,
+          duration: 1.68,
+          ease: "power2.out"
+        },
+        1.17
+      );
+
+      tl.fromTo(
+        "#s06-arrow-head",
+        {
+          scale: 0.45,
+          opacity: 0
+        },
+        {
+          scale: 1,
+          opacity: 1,
+          duration: 0.24,
+          ease: "power3.out"
+        },
+        1.17
+      );
+
+      tl.to(
+        "#s06-arrow-runner",
+        {
+          duration: 1.68,
+          ease: "power2.out",
+          motionPath: {
+            path: "#s06-flow-path",
+            align: "#s06-flow-path",
+            alignOrigin: [0.5, 0.5],
+            autoRotate: true,
+            start: 0,
+            end: 1
+          }
+        },
+        1.17
+      );
+
+      tl.fromTo(
+        "#s06-product-card",
+        {
+          scale: 0,
+          y: 28,
+          opacity: 0
+        },
+        {
+          scale: 1,
+          y: 0,
+          opacity: 1,
+          duration: 0.58,
+          ease: "power3.out"
+        },
+        2.81
+      );
+
+      tl.fromTo(
+        "#s06-endpoint-ring",
+        {
+          scale: 1.75,
+          opacity: 0
+        },
+        {
+          scale: 1,
+          opacity: 1,
+          duration: 0.36,
+          ease: "power4.out"
+        },
+        4.71
+      );
+
+      tl.fromTo(
+        "#s06-endpoint-dot",
+        {
+          scale: 0,
+          opacity: 0
+        },
+        {
+          scale: 1,
+          opacity: 1,
+          duration: 0.28,
+          ease: "power3.out"
+        },
+        4.82
+      );
+
+      tl.to(
+        "#s06-endpoint-ring",
+        {
+          scale: 0.88,
+          duration: 0.34,
+          ease: "sine.inOut",
+          repeat: 1,
+          yoyo: true
+        },
+        5.08
+      );
+
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

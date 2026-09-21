@@ -1,0 +1,579 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <title>S04 - Quy ước nhân vật</title>
+    <!-- Font Be Vietnam Pro chuẩn Style DNA -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      *, *::before, *::after {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background: #F5F0E4;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: #F5F0E4;
+      }
+
+      /* Nền texture giấy + grain nhẹ */
+      .paper-grain {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        opacity: 0.16;
+        mix-blend-mode: multiply;
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+        z-index: 1;
+      }
+
+      /* Thanh cam thương hiệu cố định mép đáy */
+      .bottom-brand-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 12px;
+        background-color: #FF6A1A;
+        z-index: 100;
+      }
+
+      /* Lớp clip bọc scene toàn khung */
+      .clip {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        z-index: 10;
+      }
+
+      /* Header ngữ cảnh phóng sự điều tra */
+      .scene-header {
+        position: absolute;
+        top: 130px;
+        left: 0;
+        right: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 16px;
+        z-index: 20;
+      }
+
+      .category-pill {
+        background: #141414;
+        color: #F7F4EC;
+        font-size: 24px;
+        font-weight: 900;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        padding: 10px 24px;
+        border-radius: 4px;
+        display: inline-block;
+      }
+
+      .category-dot {
+        width: 10px;
+        height: 10px;
+        background-color: #FF6A1A;
+        border-radius: 50%;
+        display: inline-block;
+      }
+
+      /* Vùng chứa 2 thẻ & liên kết */
+      .cards-stage {
+        position: absolute;
+        top: 250px;
+        bottom: 480px;
+        left: 60px;
+        right: 60px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
+      }
+
+      /* Thẻ 1: TIẾN (Thẻ nhân vật kể chuyện) */
+      .card-item {
+        position: relative;
+        width: 880px;
+        background: #FFFFFF;
+        border: 4px solid #141414;
+        box-shadow: 12px 12px 0px #141414;
+        border-radius: 6px;
+        padding: 34px 44px;
+        transform-origin: center center;
+        will-change: transform, opacity;
+      }
+
+      #card-tien {
+        z-index: 30;
+      }
+
+      .card-topbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 2px dashed rgba(20, 20, 20, 0.35);
+        padding-bottom: 14px;
+        margin-bottom: 20px;
+      }
+
+      .card-meta {
+        font-size: 22px;
+        font-weight: 700;
+        color: #141414;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+      }
+
+      .card-tag {
+        background: #FF6A1A;
+        color: #141414;
+        font-size: 20px;
+        font-weight: 900;
+        padding: 6px 14px;
+        border-radius: 4px;
+        letter-spacing: 1px;
+      }
+
+      .card-body-zone {
+        position: relative;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+      }
+
+      .card-text-zone {
+        max-width: 460px;
+      }
+
+      .card-main-title {
+        font-size: 96px;
+        font-weight: 900;
+        line-height: 1.05;
+        letter-spacing: -2px;
+        color: #141414;
+        margin: 0 0 12px 0;
+        text-transform: uppercase;
+      }
+
+      .card-caption {
+        font-size: 28px;
+        font-weight: 700;
+        line-height: 1.35;
+        color: #141414;
+        margin: 0;
+      }
+
+      /* Punch Phrase: TÊN TỰ ĐẶT */
+      #punch-phrase {
+        position: absolute;
+        top: -28px;
+        left: 40px;
+        background: #141414;
+        color: #F7F4EC;
+        border: 3px solid #FF6A1A;
+        padding: 10px 26px;
+        border-radius: 6px;
+        font-size: 32px;
+        font-weight: 900;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        box-shadow: 6px 6px 0px rgba(255, 106, 26, 0.4);
+        z-index: 45;
+        will-change: transform, opacity;
+      }
+
+      /* Con dấu: NHÃN KỂ CHUYỆN */
+      #stamp-mark {
+        position: absolute;
+        right: 0px;
+        bottom: 0px;
+        border: 4px solid #141414;
+        background: #FF6A1A;
+        color: #141414;
+        padding: 14px 24px;
+        font-size: 28px;
+        font-weight: 900;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        transform: rotate(-8deg);
+        box-shadow: 4px 4px 0px #141414;
+        z-index: 40;
+        will-change: transform, opacity;
+      }
+
+      /* Khu vực broken connector ở giữa */
+      .connector-zone {
+        position: relative;
+        width: 880px;
+        height: 220px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 25;
+      }
+
+      .svg-connector {
+        position: absolute;
+        top: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 80px;
+        height: 220px;
+        overflow: visible;
+      }
+
+      /* Biểu tượng ngắt kết nối chính giữa */
+      .broken-badge {
+        position: relative;
+        background: #141414;
+        border: 4px solid #FF6A1A;
+        padding: 12px 26px;
+        border-radius: 30px;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+        z-index: 35;
+        will-change: transform, opacity;
+      }
+
+      .broken-icon {
+        font-size: 34px;
+        font-weight: 900;
+        color: #FF6A1A;
+        line-height: 1;
+      }
+
+      .broken-text {
+        font-size: 24px;
+        font-weight: 900;
+        color: #F7F4EC;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+      }
+
+      /* Thẻ 2: HỒ SƠ GỐC */
+      #card-legal {
+        background: #EAE4D5;
+        border: 4px dashed #141414;
+        box-shadow: 10px 10px 0px rgba(20, 20, 20, 0.35);
+        z-index: 20;
+      }
+
+      .redaction-bar-group {
+        display: flex;
+        gap: 12px;
+        margin: 16px 0;
+        align-items: center;
+      }
+
+      .redaction-bar {
+        background: #141414;
+        height: 36px;
+        border-radius: 3px;
+      }
+
+      .bar-long {
+        width: 380px;
+      }
+
+      .bar-short {
+        width: 140px;
+      }
+
+      .redaction-note {
+        background: #141414;
+        color: #F7F4EC;
+        font-size: 18px;
+        font-weight: 900;
+        padding: 6px 14px;
+        border-radius: 4px;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+      }
+
+      /* Caption band cố định tại bottom 440px theo Style DNA */
+      .caption-container {
+        position: absolute;
+        bottom: 440px;
+        left: 60px;
+        right: 60px;
+        display: flex;
+        justify-content: center;
+        z-index: 90;
+      }
+
+      .caption-pill {
+        background: rgba(10, 10, 10, 0.92);
+        border: 2px solid rgba(255, 106, 26, 0.4);
+        border-radius: 14px;
+        padding: 14px 32px;
+        min-width: 720px;
+        max-width: 960px;
+        min-height: 72px;
+        display: grid;
+        place-items: center;
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
+      }
+
+      .caption-line {
+        grid-area: 1 / 1;
+        color: #F7F4EC;
+        font-size: 32px;
+        font-weight: 700;
+        line-height: 1.4;
+        margin: 0;
+        text-align: center;
+        will-change: opacity;
+      }
+
+      .caption-highlight {
+        color: #FF6A1A;
+        font-weight: 900;
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      id="root"
+      data-composition-id="main"
+      data-width="1080"
+      data-height="1920"
+      data-duration="6.44"
+    >
+      <!-- Nền texture giấy + grain nhạt chuẩn phong cách Vox -->
+      <div class="paper-grain" data-layout-ignore="true"></div>
+
+      <!-- Timed clip bao trọn cảnh S04 -->
+      <div id="scene-s04" class="clip" data-start="0" data-duration="6.44">
+        <!-- Header ngữ cảnh điều tra -->
+        <div class="scene-header" id="scene-header">
+          <div class="category-pill">Hồ sơ chuyên đề</div>
+          <span class="category-dot"></span>
+          <div class="category-pill" style="background: transparent; color: #141414; border: 2px solid #141414;">Quy ước tên gọi</div>
+        </div>
+
+        <!-- Sân khấu 2 thẻ so sánh -->
+        <div class="cards-stage">
+          <!-- THẺ 1: TIẾN -->
+          <div class="card-item" id="card-tien">
+            <!-- Punch phrase: TÊN TỰ ĐẶT -->
+            <div id="punch-phrase" data-layout-allow-overflow="true">TÊN TỰ ĐẶT</div>
+
+            <div class="card-topbar">
+              <span class="card-meta">Nhân vật trong video</span>
+              <span class="card-tag">BÍ DANH</span>
+            </div>
+
+            <div class="card-body-zone">
+              <div class="card-text-zone">
+                <div class="card-main-title">“TIẾN”</div>
+                <p class="card-caption">Quy ước để tiện theo dõi diễn biến</p>
+              </div>
+
+              <!-- Con dấu: NHÃN KỂ CHUYỆN -->
+              <div id="stamp-mark" data-layout-allow-occlusion="true">NHÃN KỂ CHUYỆN</div>
+            </div>
+          </div>
+
+          <!-- KHU VỰC ĐƯỜNG NỐI BỊ ĐỨT ĐOẠN -->
+          <div class="connector-zone" id="connector-zone">
+            <svg class="svg-connector" viewBox="0 0 80 220" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <!-- Nửa trên vẽ từ thẻ Tiến xuống (cam) -->
+              <path
+                id="wire-top"
+                d="M 40 0 L 40 75"
+                stroke="#FF6A1A"
+                stroke-width="6"
+                stroke-linecap="round"
+              />
+              <!-- Nửa dưới từ thẻ Hồ Sơ Gốc lên (đen đứt quãng) -->
+              <path
+                id="wire-bottom"
+                d="M 40 220 L 40 145"
+                stroke="#141414"
+                stroke-width="6"
+                stroke-linecap="round"
+                stroke-dasharray="10 8"
+              />
+            </svg>
+
+            <!-- Huy hiệu đứt gãy ở chính giữa khoảng hở -->
+            <div class="broken-badge" id="broken-indicator">
+              <span class="broken-icon">≠</span>
+              <span class="broken-text">KHÔNG ĐỒNG NHẤT</span>
+            </div>
+          </div>
+
+          <!-- THẺ 2: HỒ SƠ GỐC -->
+          <div class="card-item" id="card-legal">
+            <div class="card-topbar">
+              <span class="card-meta">Hồ sơ tố tụng chính thức</span>
+              <span class="card-tag" style="background: #141414; color: #F7F4EC;">BẢN ÁN TÒA ÁN</span>
+            </div>
+
+            <div class="card-main-title" style="font-size: 68px; margin-bottom: 6px;">
+              HỒ SƠ GỐC
+            </div>
+
+            <div class="redaction-bar-group">
+              <div class="redaction-bar bar-long"></div>
+              <div class="redaction-bar bar-short"></div>
+              <span class="redaction-note">[ĐÃ BẢO MẬT]</span>
+            </div>
+
+            <p class="card-caption">
+              Tên thật chưa từng công bố công khai
+            </p>
+          </div>
+        </div>
+
+        <!-- Thanh caption đồng bộ giọng đọc (bottom 440px theo Style DNA) -->
+        <div class="caption-container">
+          <div class="caption-pill">
+            <p class="caption-line" id="caption-seg-1">
+              Đây hoàn toàn là <span class="caption-highlight">tên tôi tự đặt</span>
+            </p>
+            <p class="caption-line" id="caption-seg-2" style="opacity: 0;">
+              để chúng ta dễ theo dõi câu chuyện...
+            </p>
+            <p class="caption-line" id="caption-seg-3" style="opacity: 0;">
+              chứ <span class="caption-highlight">không phải tên đầy đủ</span> trong bản án.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Thanh cam cố định mép đáy -->
+      <div class="bottom-brand-bar" data-layout-ignore="true"></div>
+    </div>
+
+    <script>
+      // Khởi tạo GSAP Timeline seekable chuẩn HyperFrames
+      const tl = gsap.timeline({ paused: true });
+
+      // Chuẩn bị các stroke SVG để vẽ progressive
+      const wireTop = document.querySelector("#wire-top");
+      const wireBottom = document.querySelector("#wire-bottom");
+      if (wireTop && wireBottom) {
+        const lenTop = wireTop.getTotalLength();
+        wireTop.style.strokeDasharray = lenTop;
+        wireTop.style.strokeDashoffset = lenTop;
+
+        const lenBottom = wireBottom.getTotalLength();
+        wireBottom.style.strokeDasharray = lenBottom;
+        wireBottom.style.strokeDashoffset = lenBottom;
+      }
+
+      // 1. BEAT 1: Xuất hiện Header & Thẻ "TIẾN" (Flip 3D dứt khoát)
+      tl.fromTo(
+        "#scene-header",
+        { y: -30, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.45, ease: "power2.out" },
+        0.1
+      );
+
+      // Thẻ TIẾN lật theo trục dọc (entranceAnimation: flip)
+      tl.fromTo(
+        "#card-tien",
+        { rotationY: 85, scale: 0.88, opacity: 0 },
+        { rotationY: 0, scale: 1, opacity: 1, duration: 0.65, ease: "power3.out" },
+        0.26
+      );
+
+      // 2. BEAT 2: Punch phrase "TÊN TỰ ĐẶT" nảy ra dứt khoát
+      tl.fromTo(
+        "#punch-phrase",
+        { scale: 0, opacity: 0, y: -20 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.45, ease: "power3.out" },
+        0.91
+      );
+
+      // 3. BEAT 3: Con dấu "NHÃN KỂ CHUYỆN" đóng cộp xuống
+      tl.fromTo(
+        "#stamp-mark",
+        { scale: 2.2, opacity: 0, rotation: 18 },
+        { scale: 1, opacity: 1, rotation: -8, duration: 0.32, ease: "power4.in" },
+        1.32
+      );
+
+      // Thẻ TIẾN rung nhẹ sau cú va chạm đóng dấu
+      tl.to(
+        "#card-tien",
+        { y: 8, duration: 0.08, yoyo: true, repeat: 1, ease: "power1.inOut" },
+        1.64
+      );
+
+      // Chuyển đổi caption nhịp 2 một cách tất định (deterministic seek-safe)
+      tl.to("#caption-seg-1", { opacity: 0, duration: 0.15 }, 2.4);
+      tl.to("#caption-seg-2", { opacity: 1, duration: 0.15 }, 2.45);
+
+      // 4. BEAT 4: Thẻ "HỒ SƠ GỐC" xuất hiện từ dưới lên
+      tl.fromTo(
+        "#card-legal",
+        { y: 50, scale: 0.94, opacity: 0 },
+        { y: 0, scale: 1, opacity: 1, duration: 0.55, ease: "power3.out" },
+        3.98
+      );
+
+      // 5. BEAT 5: Đường connector cam vẽ ra từ 2 đầu nhưng BỊ NGẮT Ở GIỮA
+      tl.to(
+        "#wire-top",
+        { strokeDashoffset: 0, duration: 0.35, ease: "power2.out" },
+        4.14
+      );
+
+      tl.to(
+        "#wire-bottom",
+        { strokeDashoffset: 0, duration: 0.35, ease: "power2.out" },
+        4.22
+      );
+
+      // Biểu tượng đứt gãy "KHÔNG ĐỒNG NHẤT" bật nảy tại khoảng hở
+      tl.fromTo(
+        "#broken-indicator",
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.4, ease: "power3.out" },
+        4.38
+      );
+
+      // Chuyển đổi caption nhịp 3: phản ánh vế đối nghịch bản án
+      tl.to("#caption-seg-2", { opacity: 0, duration: 0.15 }, 4.2);
+      tl.to("#caption-seg-3", { opacity: 1, duration: 0.15 }, 4.25);
+
+      // Chuyển động drift lệch pha giữ nhịp khung hình đến hết scene
+      tl.to(
+        "#card-tien",
+        { y: -6, duration: 1.8, ease: "sine.inOut" },
+        4.6
+      );
+
+      tl.to(
+        "#card-legal",
+        { y: 6, duration: 1.8, ease: "sine.inOut" },
+        4.6
+      );
+
+      // Đăng ký timeline gốc vào window.__timelines bắt buộc của HyperFrames
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

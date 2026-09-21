@@ -1,0 +1,66 @@
+{
+  "video": "ban-an-473-phan-1",
+  "scene": "S06",
+  "model": {
+    "generator": "ag/gemini-3.8-flash-high",
+    "reviewer": "ag/claude-sonnet-4-6"
+  },
+  "genMaxTokens": 60000,
+  "reviewMaxTokens": 4000,
+  "attempts": [
+    {
+      "attempt": 1,
+      "generate": {
+        "elapsedSec": 67.963,
+        "promptBytes": 116419,
+        "usage": {
+          "prompt_tokens": 48813,
+          "completion_tokens": 5029,
+          "total_tokens": 53842,
+          "completion_tokens_details": {
+            "reasoning_tokens": 17855
+          }
+        },
+        "finishReason": "stop"
+      },
+      "verify": {
+        "passed": true,
+        "elapsedSec": 26.167,
+        "raw": "{\n  \"ok\": true,\n  \"strict\": false,\n  \"lint\": {\n    \"ok\": true,\n    \"errorCount\": 0,\n    \"warningCount\": 1,\n    \"infoCount\": 0,\n    \"findings\": [\n      {\n        \"code\": \"nested_structure_needs_subcomposition\",\n        \"severity\": \"warning\",\n        \"message\": \"<div id=\\\"overlay-layer\\\"> is a timeline element that contains nested <div id=\\\"context-header\\\">. The timeline shows one row per top-level element, and the root composition is built only from sub-compositions.\",\n        \"selector\": \"#overlay-layer\",\n        \"dataAttributes\": {},\n        \"sourceFile\": \"C:\\\\vox-style-xe-giay-v1-hyperframes\\\\poc\\\\hyperframes\\\\model-compare\\\\ban-an-473-phan-1-s06-ag-gemini-3-8-flash-high-ag-claude-sonnet-4-6\\\\index.html\",\n        \"bbox\": {\n          \"x\": 0,\n          \"y\": 0,\n          \"width\": 0,\n          \"height\": 0\n        },\n        \"time\": 0,\n        \"fixHint\": \"Move <div id=\\\"overlay-layer\\\"> and its contents into a sub-composition file and mount it with data-composition-src.\"\n      }\n    ],\n    \"filesScanned\": 1\n  },\n  \"runtime\": {\n    \"ok\": true,\n    \"errorCount\": 0,\n    \"warningCount\": 0,\n    \"infoCount\": 0,\n    \"findings\": []\n  },\n  \"layout\": {\n    \"ok\": true,\n    \"errorCount\": 0,\n    \"warningCount\": 0,\n    \"infoCount\": 0,\n    \"findings\": [],\n    \"duration\": 5.96,\n    \"samples\": [\n      0.331,\n      0.993,\n      1.656,\n      2.318,\n      2.98,\n      3.642,\n      4.304,\n      4.967,\n      5.629\n    ],\n    \"transitionSamples\": [],\n    \"transitionSamplesDropped\": 0,\n    \"tolerance\": 2,\n    \"totalIssueCount\": 0,\n    \"truncated\": false\n  },\n  \"motion\": {\n    \"ok\": true,\n    \"errorCount\": 0,\n    \"warningCount\": 0,\n    \"infoCount\": 0,\n    \"findings\": [],\n    \"enabled\": false,\n    \"samples\": 0\n  },\n  \"contrast\": {\n    \"ok\": true,\n    \"errorCount\": 0,\n    \"warningCount\": 1,\n    \"infoCount\": 0,\n    \"findings\": [\n      {\n        \"code\": \"contrast_aa_failure\",\n        \"severity\": \"warning\",\n        \"message\": \"Contrast is 2.82:1; WCAG AA requires 3:1.\",\n        \"text\": \"VỤ ÁN 473\",\n        \"fg\": \"rgb(20,20,20)\",\n        \"bg\": \"rgb(153,69,24)\",\n        \"ratio\": 2.82,\n        \"requiredRatio\": 3,\n        \"suggestedColor\": \"rgb(176,176,176)\",\n        \"large\": true,\n        \"selector\": \"div > div:nth-of-type(4) > div:nth-of-type(1) > span:nth-of-type(1)\",\n        \"dataAttributes\": {},\n        \"sourceFile\": \"index.html\",\n        \"bbox\": {\n          \"x\": 60,\n          \"y\": 165.21200561523438,\n          \"width\": 146.875,\n          \"height\": 41\n        },\n        \"time\": 0.331\n      }\n    ],\n    \"enabled\": true,\n    \"samples\": [\n      0.331,\n      1.656,\n      2.98,\n      4.304,\n      5.629\n    ],\n    \"checked\": 44,\n    \"passed\": 43\n  },\n  \"hdr\": {\n    \"autoPromotion\": null,\n    \"inspection\": \"available\"\n  },\n  \"snapshots\": {\n    \"enabled\": false,\n    \"files\": [],\n    \"times\": [],\n    \"findingFiles\": []\n  },\n  \"_meta\": {\n    \"version\": \"0.8.58\",\n    \"latestVersion\": \"0.8.56\",\n    \"updateAvailable\": false\n  }\n}\n"
+      },
+      "review": {
+        "elapsedSec": 16.191,
+        "text": "VERDICT: FAIL\n\nISSUES:\n- **`video_nested_in_timed_element`**: `<video id=\"crowd-video\" data-start=\"0\" data-duration=\"5.96\">` nằm bên trong `<div id=\"video-wrapper\">` — wrapper này không có `data-start` nên không phải timed element, nhưng video lại có `data-start` trực tiếp trên nó trong khi wrapper cũng có `data-layout-allow-overflow`. Thực ra vấn đề chính hơn: `#overlay-layer` là timed element (`data-start=\"0\"`) và bên trong nó chứa `#flow-svg` có `data-layout-allow-overflow` — không phải lỗi nesting video. Kiểm tra lại: video nằm trong `#video-wrapper` (không có `data-start`) → **không vi phạm `video_nested_in_timed_element`**. Bỏ issue này.\n\n- **`gsap_css_transform_conflict`**: `#video-wrapper` có CSS không set transform, nhưng `#censor-box` và `#product-card` không có CSS transform — OK. Tuy nhiên `#target-reticle` là SVG `<g>` với thuộc tính `transform=\"translate(775, 885)\"` (SVG attribute transform) và GSAP tween `scale: 0.2 → 1` trên cùng element — SVG attribute transform và GSAP transform conflict. Lint sẽ bắt `gsap_css_transform_conflict`.\n\n- **`back.out` trên `#target-reticle`**: Theo style DNA và skill docs, `back.out` chỉ dùng cho register \"explicitly-playful\", không phải default. Đây là minor nhưng kết hợp với SVG transform conflict là vấn đề thật.\n\n- **`#target-reticle` transform-origin**: SVG `<g>` với `transform=\"translate(775,885)\"` khi GSAP scale sẽ scale từ origin (0,0) của SVG viewport, không phải tâm reticle — reticle sẽ bay ra khỏi vị trí khi animate.\n\n- **`window.__timelines = window.__timelines || {}`**: Skill docs ghi rõ \"You do not need `window.__timelines = window.__timelines || {}`: the runtime creates the registry before your inline scripts run\" — dòng này không gây lỗi nhưng là anti-pattern được docs cảnh báo tránh.",
+        "finishReason": "stop"
+      }
+    },
+    {
+      "attempt": 2,
+      "generate": {
+        "elapsedSec": 37.703,
+        "promptBytes": 132848,
+        "usage": {
+          "prompt_tokens": 44595,
+          "completion_tokens": 5270,
+          "total_tokens": 49865,
+          "completion_tokens_details": {
+            "reasoning_tokens": 8021
+          }
+        },
+        "finishReason": "stop"
+      },
+      "verify": {
+        "passed": true,
+        "elapsedSec": 24.764,
+        "raw": "{\n  \"ok\": true,\n  \"strict\": false,\n  \"lint\": {\n    \"ok\": true,\n    \"errorCount\": 0,\n    \"warningCount\": 1,\n    \"infoCount\": 0,\n    \"findings\": [\n      {\n        \"code\": \"nested_structure_needs_subcomposition\",\n        \"severity\": \"warning\",\n        \"message\": \"<div id=\\\"overlay-layer\\\"> is a timeline element that contains nested <div id=\\\"context-header\\\">. The timeline shows one row per top-level element, and the root composition is built only from sub-compositions.\",\n        \"selector\": \"#overlay-layer\",\n        \"dataAttributes\": {},\n        \"sourceFile\": \"C:\\\\vox-style-xe-giay-v1-hyperframes\\\\poc\\\\hyperframes\\\\model-compare\\\\ban-an-473-phan-1-s06-ag-gemini-3-8-flash-high-ag-claude-sonnet-4-6\\\\index.html\",\n        \"bbox\": {\n          \"x\": 0,\n          \"y\": 0,\n          \"width\": 0,\n          \"height\": 0\n        },\n        \"time\": 0,\n        \"fixHint\": \"Move <div id=\\\"overlay-layer\\\"> and its contents into a sub-composition file and mount it with data-composition-src.\"\n      }\n    ],\n    \"filesScanned\": 1\n  },\n  \"runtime\": {\n    \"ok\": true,\n    \"errorCount\": 0,\n    \"warningCount\": 0,\n    \"infoCount\": 0,\n    \"findings\": []\n  },\n  \"layout\": {\n    \"ok\": true,\n    \"errorCount\": 0,\n    \"warningCount\": 0,\n    \"infoCount\": 0,\n    \"findings\": [],\n    \"duration\": 5.96,\n    \"samples\": [\n      0.331,\n      0.993,\n      1.656,\n      2.318,\n      2.98,\n      3.642,\n      4.304,\n      4.967,\n      5.629\n    ],\n    \"transitionSamples\": [],\n    \"transitionSamplesDropped\": 0,\n    \"tolerance\": 2,\n    \"totalIssueCount\": 0,\n    \"truncated\": false\n  },\n  \"motion\": {\n    \"ok\": true,\n    \"errorCount\": 0,\n    \"warningCount\": 0,\n    \"infoCount\": 0,\n    \"findings\": [],\n    \"enabled\": false,\n    \"samples\": 0\n  },\n  \"contrast\": {\n    \"ok\": true,\n    \"errorCount\": 0,\n    \"warningCount\": 1,\n    \"infoCount\": 0,\n    \"findings\": [\n      {\n        \"code\": \"contrast_aa_failure\",\n        \"severity\": \"warning\",\n        \"message\": \"Contrast is 2.82:1; WCAG AA requires 3:1.\",\n        \"text\": \"VỤ ÁN 473\",\n        \"fg\": \"rgb(20,20,20)\",\n        \"bg\": \"rgb(153,69,24)\",\n        \"ratio\": 2.82,\n        \"requiredRatio\": 3,\n        \"suggestedColor\": \"rgb(176,176,176)\",\n        \"large\": true,\n        \"selector\": \"div > div:nth-of-type(4) > div:nth-of-type(1) > span:nth-of-type(1)\",\n        \"dataAttributes\": {},\n        \"sourceFile\": \"index.html\",\n        \"bbox\": {\n          \"x\": 60,\n          \"y\": 165.21200561523438,\n          \"width\": 146.875,\n          \"height\": 41\n        },\n        \"time\": 0.331\n      }\n    ],\n    \"enabled\": true,\n    \"samples\": [\n      0.331,\n      1.656,\n      2.98,\n      4.304,\n      5.629\n    ],\n    \"checked\": 44,\n    \"passed\": 43\n  },\n  \"hdr\": {\n    \"autoPromotion\": null,\n    \"inspection\": \"available\"\n  },\n  \"snapshots\": {\n    \"enabled\": false,\n    \"files\": [],\n    \"times\": [],\n    \"findingFiles\": []\n  },\n  \"_meta\": {\n    \"version\": \"0.8.58\",\n    \"latestVersion\": \"0.8.56\",\n    \"updateAvailable\": false\n  }\n}\n"
+      },
+      "review": {
+        "elapsedSec": 3.685,
+        "text": "VERDICT: PASS\n\nISSUES:",
+        "finishReason": "stop"
+      }
+    }
+  ],
+  "result": "PASS sau 2 lần thử",
+  "finishedAt": "2026-09-21T17:54:38.995Z"
+}

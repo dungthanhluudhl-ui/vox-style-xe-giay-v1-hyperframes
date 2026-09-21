@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=1080, height=1920" />
+  <title>S06 - Vox Style HyperFrames</title>
+  <!-- Google Fonts: Be Vietnam Pro 700 & 900 -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+  <!-- GSAP CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #E7E3D9;
+      color: #141414;
+      font-family: "Be Vietnam Pro", sans-serif;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    #root {
+      position: relative;
+      width: 1080px;
+      height: 1920px;
+      overflow: hidden;
+      background-color: #E7E3D9;
+    }
+
+    /* 1. Nền lưới ô vuông 84px chuẩn Vox DNA */
+    .bg-grid {
+      position: absolute;
+      inset: 0;
+      background-size: 84px 84px;
+      background-image:
+        linear-gradient(to right, rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px),
+        linear-gradient(to bottom, rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px);
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    /* 2. Lớp Grain nhiễu hạt giấy thật (18% opacity, multiply) */
+    .bg-grain {
+      position: absolute;
+      inset: 0;
+      opacity: 0.18;
+      mix-blend-mode: multiply;
+      pointer-events: none;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+      z-index: 2;
+    }
+
+    /* 3. Thanh cam đáy khung hình - Chữ ký thị giác nhận diện */
+    .bottom-orange-bar {
+      position: absolute;
+      left: 0;
+      bottom: 0;
+      width: 1080px;
+      height: 14px;
+      background-color: #FF6A1A;
+      z-index: 50;
+    }
+
+    /* 4. Top Safe Zone Header (y: 60-150px) */
+    .top-header {
+      position: absolute;
+      top: 60px;
+      left: 50px;
+      right: 50px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 20;
+    }
+
+    .pill-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      background: #141414;
+      color: #F7F4EC;
+      padding: 12px 22px;
+      border-radius: 999px;
+      font-size: 22px;
+      font-weight: 900;
+      letter-spacing: 0.5px;
+      box-shadow: 0 6px 16px rgba(20, 20, 20, 0.2);
+    }
+
+    .pill-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background-color: #FF6A1A;
+    }
+
+    .meta-tag {
+      font-size: 20px;
+      font-weight: 900;
+      color: #141414;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    /* 5. Khung chứa video phóng sự / tài liệu */
+    .video-container {
+      position: absolute;
+      left: 50px;
+      top: 160px;
+      width: 980px;
+      height: 1240px;
+      background-color: #141414;
+      border: 4px solid #141414;
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 24px 50px rgba(20, 20, 20, 0.25), 0 6px 16px rgba(20, 20, 20, 0.15);
+      z-index: 10;
+    }
+
+    .video-container video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center;
+      display: block;
+    }
+
+    /* 6. Blur nhạy cảm bám theo màn hình TV ngoài cửa */
+    .censor-box {
+      position: absolute;
+      left: 60px;
+      top: 150px;
+      width: 250px;
+      height: 190px;
+      backdrop-filter: blur(14px) brightness(0.9);
+      -webkit-backdrop-filter: blur(14px) brightness(0.9);
+      background: rgba(231, 227, 217, 0.45);
+      border: 2.5px dashed #FF6A1A;
+      border-radius: 12px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      z-index: 15;
+      pointer-events: none;
+    }
+
+    .censor-badge {
+      background-color: #FF6A1A;
+      color: #141414;
+      font-size: 15px;
+      font-weight: 900;
+      padding: 4px 10px;
+      border-radius: 4px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    .censor-sub {
+      color: #F7F4EC;
+      font-size: 14px;
+      font-weight: 900;
+      background: #141414;
+      padding: 4px 10px;
+      border-radius: 4px;
+      letter-spacing: 0.3px;
+    }
+
+    /* 7. SVG Flow Arrow */
+    .flow-svg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 18;
+      pointer-events: none;
+    }
+
+    /* Nhãn định hướng dòng chảy */
+    .flow-label {
+      position: absolute;
+      left: 360px;
+      top: 920px;
+      background: #141414;
+      color: #F7F4EC;
+      font-size: 18px;
+      font-weight: 900;
+      padding: 8px 16px;
+      border-radius: 8px;
+      border-left: 4px solid #FF6A1A;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.35);
+      z-index: 20;
+      pointer-events: none;
+    }
+
+    /* 8. Product Card: HÀNG Ở QUẦY */
+    .product-card {
+      position: absolute;
+      left: 540px;
+      top: 450px;
+      width: 390px;
+      background: #F5F0E4;
+      border: 4px solid #141414;
+      border-radius: 14px;
+      padding: 22px 24px;
+      box-shadow: 10px 10px 0px #FF6A1A, 0 20px 40px rgba(0, 0, 0, 0.4);
+      z-index: 25;
+    }
+
+    .card-badge {
+      display: inline-block;
+      background: #FF6A1A;
+      color: #141414;
+      font-size: 15px;
+      font-weight: 900;
+      padding: 4px 10px;
+      border-radius: 4px;
+      letter-spacing: 0.5px;
+      margin-bottom: 10px;
+      text-transform: uppercase;
+    }
+
+    .card-title {
+      color: #141414;
+      font-size: 38px;
+      font-weight: 900;
+      line-height: 1.15;
+      margin-bottom: 8px;
+      letter-spacing: -0.5px;
+    }
+
+    .card-sub {
+      color: #141414;
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 14px;
+    }
+
+    .card-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: #141414;
+      color: #F7F4EC;
+      font-size: 15px;
+      font-weight: 900;
+      padding: 6px 14px;
+      border-radius: 4px;
+    }
+
+    .card-tag-dot {
+      width: 8px;
+      height: 8px;
+      background: #FF6A1A;
+      border-radius: 50%;
+    }
+
+    /* 9. Target Lock Ring & Brackets */
+    .target-lock-wrap {
+      position: absolute;
+      left: 515px;
+      top: 425px;
+      width: 440px;
+      height: 250px;
+      z-index: 26;
+      pointer-events: none;
+    }
+
+    .target-bracket {
+      position: absolute;
+      width: 24px;
+      height: 24px;
+      border-color: #FF6A1A;
+      border-style: solid;
+    }
+
+    .target-bracket.b-tl {
+      top: 0;
+      left: 0;
+      border-width: 4px 0 0 4px;
+    }
+
+    .target-bracket.b-tr {
+      top: 0;
+      right: 0;
+      border-width: 4px 4px 0 0;
+    }
+
+    .target-bracket.b-bl {
+      bottom: 0;
+      left: 0;
+      border-width: 0 0 4px 4px;
+    }
+
+    .target-bracket.b-br {
+      bottom: 0;
+      right: 0;
+      border-width: 0 4px 4px 0;
+    }
+
+    .target-pulse-ring {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 140px;
+      height: 140px;
+      margin-left: -70px;
+      margin-top: -70px;
+      border: 3px solid #FF6A1A;
+      border-radius: 50%;
+      pointer-events: none;
+    }
+
+    /* 10. Footnote Safe-zone anchor - Pill nền đen chuẩn tương phản WCAG */
+    .bottom-footnote {
+      position: absolute;
+      bottom: 480px;
+      left: 50px;
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      background: #141414;
+      padding: 9px 20px;
+      border-radius: 999px;
+      box-shadow: 0 4px 14px rgba(20, 20, 20, 0.25);
+      z-index: 20;
+    }
+
+    .footnote-index {
+      font-size: 15px;
+      font-weight: 900;
+      color: #FF6A1A;
+      letter-spacing: 0.5px;
+    }
+
+    .footnote-divider {
+      width: 1px;
+      height: 12px;
+      background: rgba(247, 244, 236, 0.4);
+    }
+
+    .footnote-text {
+      font-size: 15px;
+      font-weight: 700;
+      color: #F7F4EC;
+      letter-spacing: 0.3px;
+    }
+  </style>
+</head>
+<body>
+  <div
+    id="root"
+    data-composition-id="main"
+    data-width="1080"
+    data-height="1920"
+    data-duration="5.96"
+  >
+    <!-- Background Grid & Grain Layers -->
+    <div class="bg-grid"></div>
+    <div class="bg-grain"></div>
+
+    <!-- Header info in top safe zone -->
+    <div class="top-header" id="top-header">
+      <div class="pill-badge">
+        <span class="pill-dot"></span>
+        <span>CHIÊU TRÒ KÉO KHÁCH</span>
+      </div>
+      <div class="meta-tag">CƠ CHẾ ĐIỀU HƯỚNG</div>
+    </div>
+
+    <!-- Video Container (Collage hero frame) -->
+    <div class="video-container" id="video-container">
+      <video
+        id="vid-03"
+        muted
+        playsinline
+        preload="auto"
+        src="assets/vid-03-papercut-crowd-scandal-storefront.mp4"
+        data-start="0"
+        data-duration="5.96"
+        data-media-start="1.5"
+      ></video>
+
+      <!-- TV Screen Censor Blur Overlay -->
+      <div class="censor-box" id="censor-box" data-layout-allow-overlap="true">
+        <div class="censor-badge">PHIM NGOÀI CỬA</div>
+        <div class="censor-sub">CHIẾU KÉO ĐÁM ĐÔNG</div>
+      </div>
+
+      <!-- Flow SVG Path Overlay (vector dẫn hướng đồ họa có timeline riêng) -->
+      <svg
+        class="flow-svg"
+        id="flow-svg"
+        viewBox="0 0 980 1240"
+        preserveAspectRatio="none"
+        data-layout-ignore="true"
+      >
+        <defs>
+          <filter id="orange-glow" x="-20%" y="-20%" width="140%" height="140%">
+            <feDropShadow dx="0" dy="2" stdDeviation="5" flood-color="#141414" flood-opacity="0.6"/>
+          </filter>
+        </defs>
+
+        <!-- Nền bóng của đường dẫn -->
+        <path
+          id="flow-path-bg"
+          data-layout-ignore="true"
+          d="M 185,340 C 185,580 260,920 460,920 C 650,920 740,840 730,680"
+          fill="none"
+          stroke="rgba(20,20,20,0.6)"
+          stroke-width="14"
+          stroke-linecap="round"
+        />
+
+        <!-- Đường vẽ cam dẫn hướng chính -->
+        <path
+          id="flow-path"
+          data-layout-ignore="true"
+          d="M 185,340 C 185,580 260,920 460,920 C 650,920 740,840 730,680"
+          fill="none"
+          stroke="#FF6A1A"
+          stroke-width="8"
+          stroke-linecap="round"
+          filter="url(#orange-glow)"
+        />
+
+        <!-- Chấm tròn xuất phát ở TV -->
+        <circle id="flow-start-dot" data-layout-ignore="true" cx="185" cy="340" r="9" fill="#FF6A1A" stroke="#141414" stroke-width="3" />
+
+        <!-- Đầu mũi tên cam khóa vào quầy -->
+        <polygon id="flow-arrow-head" data-layout-ignore="true" points="716,692 730,660 746,688" fill="#FF6A1A" stroke="#141414" stroke-width="2" />
+      </svg>
+
+      <!-- Nhãn luồng chú ý -->
+      <div class="flow-label" id="flow-label" data-layout-allow-overlap="true">LUỒNG CHÚ Ý</div>
+
+      <!-- Thẻ Sản Phẩm: HÀNG Ở QUẦY -->
+      <div class="product-card" id="product-card" data-layout-allow-overlap="true">
+        <div class="card-badge">MỤC TIÊU THỰC SỰ</div>
+        <div class="card-title">HÀNG Ở QUẦY</div>
+        <div class="card-sub">Quầy thu ngân bên trong tiệm</div>
+        <div class="card-tag">
+          <span class="card-tag-dot"></span>
+          <span>SẢN PHẨM BÁN THẬT</span>
+        </div>
+      </div>
+
+      <!-- Khung ngắm Endpoint Locking Reticle -->
+      <div class="target-lock-wrap" id="target-lock-wrap" data-layout-allow-overlap="true">
+        <div class="target-bracket b-tl"></div>
+        <div class="target-bracket b-tr"></div>
+        <div class="target-bracket b-bl"></div>
+        <div class="target-bracket b-br"></div>
+        <div class="target-pulse-ring" id="target-pulse-ring"></div>
+      </div>
+    </div>
+
+    <!-- Bottom Footnote metadata -->
+    <div class="bottom-footnote" id="bottom-footnote">
+      <span class="footnote-index">FIG 06.1</span>
+      <span class="footnote-divider"></span>
+      <span class="footnote-text">HÀNH VI DẪN DẮT KHÁCH HÀNG VÀO TIỆM THUỐC</span>
+    </div>
+
+    <!-- Fixed Bottom Orange Bar -->
+    <div class="bottom-orange-bar"></div>
+  </div>
+
+  <script>
+    // Khởi tạo Timeline GSAP paused duy nhất cho composition
+    const tl = gsap.timeline({ paused: true });
+
+    // Setup Path đo độ dài thực tế cho hiệu ứng SVG Path Draw
+    const flowPath = document.getElementById("flow-path");
+    const flowPathBg = document.getElementById("flow-path-bg");
+    const pathLength = flowPath.getTotalLength();
+
+    flowPath.style.strokeDasharray = pathLength;
+    flowPath.style.strokeDashoffset = pathLength;
+    flowPathBg.style.strokeDasharray = pathLength;
+    flowPathBg.style.strokeDashoffset = pathLength;
+
+    // Phase 1: Entrance Transition "grow" cho video container & giao diện
+    tl.fromTo(
+      "#video-container",
+      { scale: 0.94, opacity: 0 },
+      { scale: 1, opacity: 1, duration: 0.65, ease: "power3.out" },
+      0.05
+    );
+
+    tl.fromTo(
+      "#top-header",
+      { y: -25, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.5, ease: "power3.out" },
+      0.2
+    );
+
+    tl.fromTo(
+      "#bottom-footnote",
+      { y: 15, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.5, ease: "power2.out" },
+      0.3
+    );
+
+    tl.fromTo(
+      "#censor-box",
+      { scale: 0.85, opacity: 0 },
+      { scale: 1, opacity: 1, duration: 0.45, ease: "power2.out" },
+      0.45
+    );
+
+    // Phase 2: Flow Arrow (Bắt đầu tại 43680ms -> 1.17s từ đầu scene)
+    // Mũi tên cam bắt đầu ở TV, chạy qua đám đông rồi bẻ góc hướng vào phía trong tiệm
+    const ARROW_START = 1.17;
+    const ARROW_DRAW_DUR = 1.25;
+
+    tl.fromTo(
+      "#flow-start-dot",
+      { scale: 0, opacity: 0 },
+      { scale: 1, opacity: 1, duration: 0.25, ease: "power2.out" },
+      ARROW_START
+    );
+
+    tl.to(
+      flowPathBg,
+      { strokeDashoffset: 0, duration: ARROW_DRAW_DUR, ease: "power2.inOut" },
+      ARROW_START
+    );
+
+    tl.to(
+      flowPath,
+      { strokeDashoffset: 0, duration: ARROW_DRAW_DUR, ease: "power2.inOut" },
+      ARROW_START
+    );
+
+    tl.fromTo(
+      "#flow-label",
+      { y: 15, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.4, ease: "power2.out" },
+      ARROW_START + 0.55
+    );
+
+    tl.fromTo(
+      "#flow-arrow-head",
+      { scale: 0, opacity: 0, transformOrigin: "50% 50%" },
+      { scale: 1, opacity: 1, duration: 0.25, ease: "power3.out" },
+      ARROW_START + ARROW_DRAW_DUR - 0.1
+    );
+
+    // Phase 3: Product Card "HÀNG Ở QUẦY" (Bắt đầu tại 45320ms -> 2.81s từ đầu scene)
+    // Thẻ sản phẩm không xuất hiện trước cue món hàng thực sự
+    const CARD_START = 2.81;
+
+    tl.fromTo(
+      "#product-card",
+      { scale: 0.75, opacity: 0, y: 25 },
+      { scale: 1, opacity: 1, y: 0, duration: 0.6, ease: "power3.out" },
+      CARD_START
+    );
+
+    // Phase 4: Endpoint Reticle Lock (Bắt đầu tại 47220ms -> 4.71s từ đầu scene)
+    // Đầu mũi tên khóa vào thẻ sản phẩm bằng một vòng cam co giãn nhẹ
+    const ENDPOINT_START = 4.71;
+
+    tl.fromTo(
+      ".target-bracket",
+      { scale: 1.4, opacity: 0 },
+      { scale: 1.0, opacity: 1, duration: 0.35, ease: "power3.out", stagger: 0.04 },
+      ENDPOINT_START
+    );
+
+    tl.fromTo(
+      "#target-pulse-ring",
+      { scale: 1.8, opacity: 0 },
+      { scale: 1.0, opacity: 1, duration: 0.4, ease: "power2.out" },
+      ENDPOINT_START
+    );
+
+    // Co giãn nhẹ (subtle pulse) hoàn tất khóa mục tiêu
+    tl.to(
+      "#target-pulse-ring",
+      { scale: 1.15, opacity: 0.75, duration: 0.35, ease: "sine.inOut", yoyo: true, repeat: 1 },
+      ENDPOINT_START + 0.4
+    );
+
+    // Đăng ký timeline cho runtime HyperFrames seek
+    window.__timelines["main"] = tl;
+  </script>
+</body>
+</html>

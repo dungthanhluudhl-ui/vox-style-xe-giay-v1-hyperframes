@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <title>S01 - Phương Pháp Khác</title>
+    <!-- Font Be Vietnam Pro chuẩn Vox DNA nạp trực tiếp qua Google Fonts CDN -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+    <!-- GSAP runtime adapter -->
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      :root {
+        --bg-paper: #E7E3D9;
+        --card-bg: #F5F0E4;
+        --ink: #141414;
+        --orange: #FF6A1A;
+        --grid-line: rgba(20, 20, 20, 0.32);
+        --on-dark-text: #F7F4EC;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #0b0f14;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      #root {
+        position: relative;
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+        background-color: var(--bg-paper);
+      }
+
+      /* Timed clip base */
+      .clip {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+
+      /* Nền lưới ô vuông 84px chuẩn Vox DNA */
+      .grid-layer {
+        position: absolute;
+        inset: 0;
+        background-size: 84px 84px;
+        background-image:
+          linear-gradient(to right, var(--grid-line) 1.5px, transparent 1.5px),
+          linear-gradient(to bottom, var(--grid-line) 1.5px, transparent 1.5px);
+        pointer-events: none;
+      }
+
+      /* Lớp grain giấy multiply */
+      .grain-layer {
+        position: absolute;
+        inset: 0;
+        opacity: 0.22;
+        mix-blend-mode: multiply;
+        pointer-events: none;
+      }
+
+      /* Dải cam cố định đáy khung hình - Chữ ký thị giác Vox */
+      #brand-bottom-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 1080px;
+        height: 14px;
+        background-color: var(--orange);
+        z-index: 500;
+      }
+
+      /* Camera motion wrapper cho Shot 1 */
+      #shot1-camera {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        transform-origin: 50% 45%;
+      }
+
+      /* Card chủ đề ở trung tâm Shot 1 */
+      .topic-card {
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 680px;
+        margin-left: auto;
+        margin-right: auto;
+        width: 660px;
+        background: var(--card-bg);
+        border: 4px solid var(--ink);
+        box-shadow: 10px 10px 0px var(--ink);
+        padding: 32px 36px;
+        text-align: center;
+        border-radius: 4px;
+      }
+
+      .topic-tag {
+        display: inline-block;
+        background-color: var(--ink);
+        color: var(--on-dark-text);
+        font-weight: 900;
+        font-size: 24px;
+        letter-spacing: 2px;
+        padding: 6px 18px;
+        margin-bottom: 16px;
+        border-radius: 2px;
+      }
+
+      .topic-title {
+        font-size: 50px;
+        font-weight: 900;
+        color: var(--ink);
+        line-height: 1.25;
+        letter-spacing: -0.5px;
+      }
+
+      /* Các chip phương pháp dạng giấy xé dán */
+      .method-chip {
+        position: absolute;
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        background: var(--card-bg);
+        border: 3.5px solid var(--ink);
+        box-shadow: 8px 8px 0px var(--ink);
+        padding: 22px 30px;
+        border-radius: 4px;
+        color: var(--ink);
+        font-weight: 900;
+        font-size: 36px;
+        letter-spacing: -0.5px;
+      }
+
+      .chip-icon {
+        width: 54px;
+        height: 54px;
+        flex-shrink: 0;
+      }
+
+      /* Vị trí 4 chip quanh tâm safe zone */
+      #chip-ads {
+        left: 60px;
+        top: 450px;
+      }
+
+      #chip-kol {
+        right: 60px;
+        top: 450px;
+      }
+
+      #chip-live {
+        left: 60px;
+        top: 960px;
+      }
+
+      #chip-sale {
+        right: 60px;
+        top: 960px;
+      }
+
+      /* Nét quét cam đẩy các chip ra khỏi khung ở cuối Shot 1 */
+      #wipe-bar {
+        position: absolute;
+        top: -100px;
+        left: -400px;
+        width: 320px;
+        height: 2120px;
+        background: var(--orange);
+        box-shadow: 0 0 50px rgba(20, 20, 20, 0.4);
+        z-index: 100;
+        opacity: 0;
+      }
+
+      /* Shot 2: Video hiển thị nghi phạm */
+      #vid-02-player {
+        position: absolute;
+        inset: 0;
+        width: 1080px;
+        height: 1920px;
+        object-fit: cover;
+        object-position: center 36%;
+      }
+
+      /* Overlay và Vignette cho Shot 2 */
+      .video-vignette {
+        position: absolute;
+        inset: 0;
+        background:
+          radial-gradient(circle at 50% 40%, transparent 35%, rgba(20, 20, 20, 0.6) 88%),
+          linear-gradient(to bottom, rgba(20, 20, 20, 0.5) 0%, transparent 22%, transparent 68%, rgba(20, 20, 20, 0.75) 100%);
+        pointer-events: none;
+      }
+
+      /* Punch Phrase: "MỘT CÁCH KHÁC" */
+      .punch-container {
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 1160px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 16px;
+        z-index: 60;
+      }
+
+      .punch-badge {
+        background-color: var(--orange);
+        color: var(--ink);
+        font-weight: 900;
+        font-size: 26px;
+        letter-spacing: 3px;
+        padding: 8px 24px;
+        border: 3px solid var(--ink);
+        box-shadow: 5px 5px 0px var(--ink);
+        text-transform: uppercase;
+      }
+
+      .punch-title {
+        background-color: var(--ink);
+        color: var(--on-dark-text);
+        font-weight: 900;
+        font-size: 70px;
+        line-height: 1.25;
+        letter-spacing: -1px;
+        padding: 18px 48px;
+        border: 4px solid var(--orange);
+        box-shadow: 10px 10px 0px var(--orange);
+        white-space: nowrap;
+        text-align: center;
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      id="root"
+      data-composition-id="main"
+      data-start="0"
+      data-width="1080"
+      data-height="1920"
+      data-duration="10.68"
+      data-layout-allow-overflow="true"
+    >
+      <!-- Nền lưới giấy ngà dùng chung -->
+      <div class="grid-layer" data-layout-ignore="true"></div>
+
+      <!-- Grain overlay SVG filter chuẩn deterministic -->
+      <div class="grain-layer" data-layout-ignore="true">
+        <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+          <filter id="grain-filter">
+            <feTurbulence type="fractalNoise" baseFrequency="0.75" numOctaves="3" result="noise" />
+            <feColorMatrix type="matrix" values="0.1 0 0 0 0  0 0.1 0 0 0  0 0 0.1 0 0  0 0 0 0.25 0" />
+          </filter>
+          <rect width="100%" height="100%" filter="url(#grain-filter)" />
+        </svg>
+      </div>
+
+      <!-- SHOT 1: Bốn chip phương án thông thường quanh tâm (0s - 7.17s) -->
+      <section id="shot1" class="clip" data-start="0" data-duration="7.17">
+        <div id="shot1-camera">
+          <!-- Chủ đề trung tâm -->
+          <div id="center-topic" class="topic-card">
+            <div class="topic-tag">CÔNG THỨC CHUNG</div>
+            <h1 class="topic-title">BÁN HÀNG ONLINE</h1>
+          </div>
+
+          <!-- Chip 1: Trả phí (Ads) - Xuất hiện ở 2.87s -->
+          <div id="chip-ads" class="method-chip">
+            <svg class="chip-icon" viewBox="0 0 54 54" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="5" y="12" width="44" height="30" rx="4" stroke="#141414" stroke-width="3.5" fill="#FAF7F0" />
+              <circle cx="27" cy="27" r="8" stroke="#FF6A1A" stroke-width="3.5" fill="none" />
+              <path d="M12 18 L12 21 M42 18 L42 21 M12 36 L12 33 M42 36 L42 33" stroke="#141414" stroke-width="3" stroke-linecap="round" />
+            </svg>
+            <span>TRẢ PHÍ</span>
+          </div>
+
+          <!-- Chip 2: Gương mặt (KOL) - Xuất hiện ở 3.90s -->
+          <div id="chip-kol" class="method-chip">
+            <svg class="chip-icon" viewBox="0 0 54 54" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="27" cy="16" r="9" stroke="#141414" stroke-width="3.5" fill="#FAF7F0" />
+              <path d="M10 43 C10 33 18 30 27 30 C36 30 44 33 44 43" stroke="#141414" stroke-width="3.5" stroke-linecap="round" fill="none" />
+              <circle cx="38" cy="14" r="5" fill="#FF6A1A" stroke="#141414" stroke-width="2" />
+            </svg>
+            <span>GƯƠNG MẶT</span>
+          </div>
+
+          <!-- Chip 3: Phát trực tiếp (Livestream) - Xuất hiện ở 4.85s -->
+          <div id="chip-live" class="method-chip">
+            <svg class="chip-icon" viewBox="0 0 54 54" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="15" y="6" width="24" height="42" rx="4" stroke="#141414" stroke-width="3.5" fill="#FAF7F0" />
+              <circle cx="27" cy="42" r="2.5" fill="#141414" />
+              <path d="M22 12 H32" stroke="#141414" stroke-width="3" stroke-linecap="round" />
+              <path d="M43 18 C46 22 46 30 43 34" stroke="#FF6A1A" stroke-width="3" stroke-linecap="round" />
+              <path d="M11 18 C8 22 8 30 11 34" stroke="#FF6A1A" stroke-width="3" stroke-linecap="round" />
+            </svg>
+            <span>PHÁT TRỰC TIẾP</span>
+          </div>
+
+          <!-- Chip 4: Giảm giá (−30%) - Xuất hiện ở 5.50s -->
+          <div id="chip-sale" class="method-chip">
+            <svg class="chip-icon" viewBox="0 0 54 54" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M10 16 L23 29 L33 21 L43 37" stroke="#141414" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+              <path d="M31 37 H43 V25" stroke="#FF6A1A" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+            </svg>
+            <span>−30%</span>
+          </div>
+        </div>
+
+        <!-- Nét quét cam quét ngang đẩy 4 chip ra ngoài (6.72s - 7.17s) -->
+        <div id="wipe-bar" data-layout-ignore="true"></div>
+      </section>
+
+      <!-- SHOT 2: Video nghi phạm thao tác laptop & dàn điện thoại (7.17s - 10.68s) -->
+      <video
+        id="vid-02-player"
+        src="assets/vid-02-cyber-scammer-suspect-profile.mp4"
+        data-start="7.17"
+        data-duration="3.51"
+        data-media-start="2.245"
+        muted
+        playsinline
+      ></video>
+
+      <!-- Overlay & Punch Phrase cho Shot 2 -->
+      <section id="shot2-overlay" class="clip" data-start="7.17" data-duration="3.51">
+        <div id="shot2-vignette" class="video-vignette" data-layout-ignore="true"></div>
+
+        <!-- Punch phrase: "MỘT CÁCH KHÁC" (hiện tại 8.12s) -->
+        <div id="punch-container" class="punch-container">
+          <div id="punch-badge" class="punch-badge">HỒ SƠ ĐỐI TƯỢNG</div>
+          <div id="punch-title" class="punch-title">MỘT CÁCH KHÁC</div>
+        </div>
+      </section>
+
+      <!-- Dải cam đáy thương hiệu cố định -->
+      <div id="brand-bottom-bar" data-layout-ignore="true" data-layout-allow-caption-zone="true"></div>
+    </div>
+
+    <script>
+      // Timeline GSAP seekable duy nhất cho composition
+      const tl = gsap.timeline({ paused: true });
+
+      // === SHOT 1 CHOREOGRAPHY (0s - 7.17s) ===
+
+      // Camera motion: zoom-out chậm suốt Shot 1
+      tl.fromTo(
+        "#shot1-camera",
+        { scale: 1.05 },
+        { scale: 0.98, duration: 6.72, ease: "none" },
+        0
+      );
+
+      // Card chủ đề xuất hiện đầu cảnh (0.2s - 0.75s)
+      tl.fromTo(
+        "#center-topic",
+        { scale: 0.8, opacity: 0, y: 30 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.55, ease: "power3.out" },
+        0.2
+      );
+
+      // Idle float cho card trung tâm: dùng giá trị tuyệt đối, không trùng thời điểm với entrance
+      tl.fromTo(
+        "#center-topic",
+        { y: 0 },
+        { y: 6, duration: 1.35, ease: "sine.inOut", yoyo: true, repeat: 3 },
+        0.85
+      );
+
+      // 1. Chip "TRẢ PHÍ" xuất hiện tại 2.87s (kết thúc ở 3.32s)
+      tl.fromTo(
+        "#chip-ads",
+        { scale: 0, opacity: 0, y: 24 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.45, ease: "power3.out" },
+        2.87
+      );
+      // Bob nhẹ: bắt đầu tại 3.42s (sau khi entrance kết thúc), dùng giá trị tuyệt đối và kết thúc trước wipe
+      tl.fromTo(
+        "#chip-ads",
+        { y: 0 },
+        { y: 6, duration: 1.30, ease: "sine.inOut", yoyo: true, repeat: 1 },
+        3.42
+      );
+
+      // 2. Chip "GƯƠNG MẶT" xuất hiện tại 3.90s (kết thúc ở 4.35s)
+      tl.fromTo(
+        "#chip-kol",
+        { scale: 0, opacity: 0, y: 24 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.45, ease: "power3.out" },
+        3.90
+      );
+      // Bob nhẹ lệch pha: bắt đầu tại 4.45s, dùng giá trị tuyệt đối
+      tl.fromTo(
+        "#chip-kol",
+        { y: 0 },
+        { y: -6, duration: 0.95, ease: "sine.inOut", yoyo: true, repeat: 1 },
+        4.45
+      );
+
+      // 3. Chip "PHÁT TRỰC TIẾP" xuất hiện tại 4.85s (kết thúc ở 5.30s)
+      tl.fromTo(
+        "#chip-live",
+        { scale: 0, opacity: 0, y: 24 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.45, ease: "power3.out" },
+        4.85
+      );
+      // Bob nhẹ: bắt đầu tại 5.40s, dùng giá trị tuyệt đối
+      tl.fromTo(
+        "#chip-live",
+        { y: 0 },
+        { y: 5, duration: 0.55, ease: "sine.inOut", yoyo: true, repeat: 1 },
+        5.40
+      );
+
+      // 4. Chip "−30%" xuất hiện tại 5.50s (kết thúc ở 5.95s)
+      tl.fromTo(
+        "#chip-sale",
+        { scale: 0, opacity: 0, y: 24 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.45, ease: "power3.out" },
+        5.50
+      );
+      // Bob nhẹ lệch pha: bắt đầu tại 6.05s, dùng giá trị tuyệt đối
+      tl.fromTo(
+        "#chip-sale",
+        { y: 0 },
+        { y: -5, duration: 0.28, ease: "sine.inOut", yoyo: true, repeat: 1 },
+        6.05
+      );
+
+      // Nét quét cam (wipe) tại 6.72s đẩy 4 chip sang 2 mép khung
+      tl.fromTo(
+        "#wipe-bar",
+        { x: -400, opacity: 1 },
+        { x: 1550, opacity: 1, duration: 0.45, ease: "power2.inOut" },
+        6.72
+      );
+
+      // Các chip bị đẩy văng theo nét quét (sau khi tất cả bob đã hoàn tất ở 6.61s)
+      tl.to(
+        ["#chip-ads", "#chip-live"],
+        { x: -500, opacity: 0, rotation: -10, duration: 0.36, ease: "power2.in" },
+        6.78
+      );
+      tl.to(
+        ["#chip-kol", "#chip-sale"],
+        { x: 500, opacity: 0, rotation: 10, duration: 0.36, ease: "power2.in" },
+        6.82
+      );
+      tl.to(
+        "#center-topic",
+        { scale: 0.8, opacity: 0, duration: 0.34, ease: "power2.in" },
+        6.80
+      );
+
+      // === SHOT 2 CHOREOGRAPHY (7.17s - 10.68s) ===
+
+      // Camera motion parallax/zoom nhẹ cho video nghi phạm
+      tl.fromTo(
+        "#vid-02-player",
+        { scale: 1.0 },
+        { scale: 1.06, duration: 3.51, ease: "sine.out" },
+        7.17
+      );
+
+      // Dissolve nhẹ cho vignette nội bộ
+      tl.fromTo(
+        "#shot2-vignette",
+        { opacity: 0 },
+        { opacity: 1, duration: 0.35, ease: "power1.out" },
+        7.17
+      );
+
+      // Punch Phrase "MỘT CÁCH KHÁC" xuất hiện tại 8.02s - 8.12s
+      tl.fromTo(
+        "#punch-badge",
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.35, ease: "power3.out" },
+        8.02
+      );
+      tl.fromTo(
+        "#punch-title",
+        { scale: 0.82, opacity: 0, y: 28 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.48, ease: "power3.out" },
+        8.12
+      );
+
+      // Đăng ký timeline cho HyperFrames
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=1080, height=1920">
+  <title>Scene S04</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap">
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+  <style>
+    body {
+      margin: 0;
+      background: #000;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    #root {
+      position: relative;
+      width: 1080px;
+      height: 1920px;
+      background-color: #F5F0E4; /* Card background variant */
+      overflow: hidden;
+      font-family: 'Be Vietnam Pro', sans-serif;
+    }
+
+    .clip {
+      position: absolute;
+    }
+
+    /* Grain effect overlay */
+    .grain {
+      position: absolute;
+      inset: 0;
+      opacity: 0.18;
+      mix-blend-mode: multiply;
+      pointer-events: none;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+      z-index: 0;
+    }
+
+    .bottom-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 24px;
+      background-color: #FF6A1A;
+      z-index: 100;
+    }
+
+    /* Card Styles */
+    .card {
+      background: #F7F4EC;
+      border: 8px solid #141414;
+      border-radius: 24px;
+      padding: 40px 80px;
+      box-shadow: 16px 16px 0px #141414;
+      text-align: center;
+      font-size: 110px;
+      font-weight: 900;
+      color: #141414;
+      line-height: 1.1;
+      text-transform: uppercase;
+      white-space: nowrap;
+      transform-style: preserve-3d;
+      z-index: 20;
+    }
+
+    /* Stamp Style */
+    .stamp {
+      border: 8px solid #FF6A1A;
+      color: #FF6A1A;
+      font-size: 64px;
+      font-weight: 900;
+      padding: 16px 40px;
+      border-radius: 16px;
+      text-transform: uppercase;
+      white-space: nowrap;
+      background: #F7F4EC;
+      box-shadow: 8px 8px 0px rgba(255, 106, 26, 0.2);
+      z-index: 30;
+    }
+
+    /* Punch Phrase Style */
+    .punch-phrase {
+      background: #141414;
+      color: #F7F4EC;
+      font-size: 80px;
+      font-weight: 900;
+      padding: 24px 64px;
+      border-radius: 20px;
+      white-space: nowrap;
+      box-shadow: 12px 12px 0px #FF6A1A;
+      z-index: 40;
+      text-align: center;
+    }
+
+    /* Connector SVG */
+    .connector {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 1080px;
+      height: 1920px;
+      overflow: visible;
+      z-index: 10;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+  <div id="root" data-composition-id="main" data-width="1080" data-height="1920" data-duration="6.44" data-layout-allow-overflow="true">
+    <div class="grain"></div>
+
+    <!-- Untimed SVG for connector -->
+    <svg class="connector" id="conn-line" viewBox="0 0 1080 1920">
+      <path id="conn-line-top" d="M 540 550 L 540 800" stroke="#FF6A1A" stroke-width="16" stroke-linecap="round" fill="none" />
+      <path id="conn-line-bot" d="M 540 1000 L 540 1250" stroke="#FF6A1A" stroke-width="16" stroke-linecap="round" fill="none" />
+    </svg>
+
+    <!-- Card 1: TIẾN -->
+    <div class="clip card centered-x" id="card1" data-start="0.26" data-duration="6.18" style="top: 300px; left: 50%;">TIẾN</div>
+
+    <!-- Stamp -->
+    <div class="clip stamp centered-x" id="stamp1" data-start="1.32" data-duration="5.12" data-layout-allow-overlap="true" data-layout-allow-occlusion="true" style="top: 420px; left: 50%;">NHÃN KỂ CHUYỆN</div>
+
+    <!-- Punch Phrase -->
+    <div class="clip punch-phrase centered-x" id="punch1" data-start="0.91" data-duration="3.07" style="top: 820px; left: 50%;">TÊN TỰ ĐẶT</div>
+
+    <!-- Card 2: HỒ SƠ GỐC -->
+    <div class="clip card centered-x" id="card2" data-start="3.98" data-duration="2.46" style="top: 1250px; left: 50%;">HỒ SƠ GỐC</div>
+
+    <div class="bottom-bar"></div>
+  </div>
+
+  <script>
+    document.fonts.ready.then(() => {
+      const tl = gsap.timeline({ paused: true });
+
+      // Center elements horizontally
+      tl.set(".centered-x", { xPercent: -50 }, 0);
+
+      // Setup SVG drawing paths
+      const paths = ["conn-line-top", "conn-line-bot"];
+      const pathLengths = {};
+      paths.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+          const len = el.getTotalLength();
+          el.style.strokeDasharray = len;
+          pathLengths[id] = len;
+        }
+      });
+
+      // 0.26s: Card 1 flips in (vertical axis)
+      tl.fromTo("#card1",
+        { transformPerspective: 1500, rotationY: -90, opacity: 0 },
+        { rotationY: 0, opacity: 1, duration: 0.8, ease: "power3.out" },
+        0.26
+      );
+
+      // 0.91s: Punch Phrase pops in
+      tl.fromTo("#punch1",
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.6, ease: "power3.out" },
+        0.91
+      );
+
+      // 1.32s: Stamp lands on Card 1
+      tl.fromTo("#stamp1",
+        { scale: 2.5, opacity: 0, rotation: -25 },
+        { scale: 1, opacity: 1, rotation: -8, duration: 0.4, ease: "power4.out" },
+        1.32
+      );
+      
+      // Impact shake on Card 1
+      tl.fromTo("#card1",
+        { y: 0 },
+        { y: 12, duration: 0.1, yoyo: true, repeat: 1, ease: "power1.inOut" },
+        1.32
+      );
+
+      // 3.80s: Punch Phrase fades out before Card 2 appears
+      tl.to("#punch1", { opacity: 0, scale: 0.9, duration: 0.18, ease: "power2.in" }, 3.80);
+
+      // 3.98s: Card 2 slides up
+      tl.fromTo("#card2",
+        { y: 80, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.7, ease: "power3.out" },
+        3.98
+      );
+
+      // 4.14s: Connector draws
+      tl.fromTo("#conn-line-top", 
+        { strokeDashoffset: pathLengths["conn-line-top"] }, 
+        { strokeDashoffset: 0, duration: 0.3, ease: "none" }, 
+        4.14
+      );
+      tl.fromTo("#conn-line-bot", 
+        { strokeDashoffset: pathLengths["conn-line-bot"] }, 
+        { strokeDashoffset: 0, duration: 0.3, ease: "none" }, 
+        4.54
+      );
+
+      // Register timeline
+      window.__timelines["main"] = tl;
+    });
+  </script>
+</body>
+</html>
