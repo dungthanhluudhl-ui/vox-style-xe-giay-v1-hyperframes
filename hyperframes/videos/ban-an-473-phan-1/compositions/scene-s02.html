@@ -1,0 +1,950 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap">
+      <style>
+      :root {
+        --paper: #e7e3d9;
+        --paper-card: #f5f0e4;
+        --ink: #141414;
+        --orange: #ff6a1a;
+        --on-dark: #f7f4ec;
+        --grid-line: rgba(20, 20, 20, 0.32);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        overflow: hidden;
+      }
+
+      body {
+        background: var(--ink);
+        color: var(--ink);
+        font-family: "Be Vietnam Pro", sans-serif;
+      }
+
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        isolation: isolate;
+        background: var(--ink);
+      }
+
+      .clip {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+      }
+
+      .spotlight-background {
+        position: absolute;
+        inset: 0;
+        z-index: 0;
+        overflow: hidden;
+        background:
+          radial-gradient(
+            circle at 50% 46%,
+            rgba(231, 227, 217, 0.96) 0%,
+            rgba(231, 227, 217, 0.84) 34%,
+            rgba(20, 20, 20, 0.36) 72%,
+            rgba(20, 20, 20, 0.78) 100%
+          ),
+          var(--paper);
+      }
+
+      .spotlight-background::before {
+        position: absolute;
+        inset: 0;
+        content: "";
+        background-image:
+          linear-gradient(var(--grid-line) 1.5px, transparent 1.5px),
+          linear-gradient(90deg, var(--grid-line) 1.5px, transparent 1.5px);
+        background-size: 84px 84px;
+        opacity: 0.28;
+      }
+
+      .grain {
+        position: absolute;
+        inset: -40px;
+        z-index: 9;
+        pointer-events: none;
+        opacity: 0.18;
+        mix-blend-mode: multiply;
+        background-image:
+          repeating-radial-gradient(
+            circle at 13% 19%,
+            rgba(20, 20, 20, 0.26) 0,
+            rgba(20, 20, 20, 0.26) 0.8px,
+            transparent 1.2px,
+            transparent 4px
+          ),
+          repeating-linear-gradient(
+            27deg,
+            rgba(20, 20, 20, 0.05) 0,
+            rgba(20, 20, 20, 0.05) 1px,
+            transparent 1px,
+            transparent 7px
+          );
+      }
+
+      #scene-video {
+        z-index: 1;
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: 50% 50%;
+        background: var(--paper);
+        will-change: transform, opacity;
+      }
+
+      .video-vignette {
+        position: absolute;
+        inset: 0;
+        z-index: 2;
+        pointer-events: none;
+        background:
+          linear-gradient(
+            180deg,
+            rgba(20, 20, 20, 0.44) 0%,
+            transparent 15%,
+            transparent 70%,
+            rgba(20, 20, 20, 0.48) 100%
+          ),
+          radial-gradient(
+            circle at 50% 48%,
+            transparent 30%,
+            rgba(20, 20, 20, 0.12) 62%,
+            rgba(20, 20, 20, 0.48) 100%
+          );
+      }
+
+      .safe-censor-layer {
+        position: absolute;
+        inset: 0;
+        z-index: 3;
+        pointer-events: none;
+      }
+
+      .safe-censor {
+        position: absolute;
+        overflow: hidden;
+        border: 2px solid rgba(20, 20, 20, 0.74);
+        border-radius: 10px;
+        background:
+          linear-gradient(
+            90deg,
+            rgba(20, 20, 20, 0.80) 0 12%,
+            rgba(72, 70, 66, 0.86) 12% 25%,
+            rgba(20, 20, 20, 0.78) 25% 42%,
+            rgba(99, 95, 87, 0.86) 42% 58%,
+            rgba(20, 20, 20, 0.84) 58% 77%,
+            rgba(74, 70, 65, 0.88) 77% 100%
+          );
+        background-size: 42px 100%;
+        opacity: 0.88;
+        backdrop-filter: blur(22px);
+      }
+
+      .safe-censor::after {
+        position: absolute;
+        inset: 0;
+        content: "";
+        background:
+          repeating-linear-gradient(
+            0deg,
+            transparent 0 13px,
+            rgba(247, 244, 236, 0.14) 13px 24px
+          ),
+          repeating-linear-gradient(
+            90deg,
+            transparent 0 18px,
+            rgba(0, 0, 0, 0.28) 18px 34px
+          );
+      }
+
+      .safe-censor-a {
+        top: 534px;
+        left: 354px;
+        width: 372px;
+        height: 156px;
+      }
+
+      .safe-censor-b {
+        top: 728px;
+        left: 330px;
+        width: 420px;
+        height: 176px;
+      }
+
+      .safe-censor-c {
+        top: 948px;
+        left: 368px;
+        width: 344px;
+        height: 158px;
+      }
+
+      #replication-layer {
+        z-index: 4;
+        pointer-events: none;
+      }
+
+      .replica {
+        position: absolute;
+        width: 226px;
+        height: 346px;
+        overflow: hidden;
+        border: 7px solid var(--ink);
+        border-radius: 30px;
+        background: rgba(245, 240, 228, 0.94);
+        box-shadow: 10px 12px 0 rgba(255, 106, 26, 0.92);
+        will-change: transform, opacity;
+      }
+
+      .replica::before {
+        position: absolute;
+        top: 13px;
+        left: 50%;
+        width: 78px;
+        height: 12px;
+        border-radius: 999px;
+        content: "";
+        background: var(--ink);
+        transform: translateX(-50%);
+      }
+
+      .replica-left {
+        top: 520px;
+        left: 72px;
+      }
+
+      .replica-right {
+        top: 540px;
+        right: 70px;
+      }
+
+      .replica-mini-left {
+        top: 935px;
+        left: 98px;
+        width: 166px;
+        height: 254px;
+        border-width: 6px;
+        border-radius: 24px;
+        box-shadow: 8px 9px 0 rgba(255, 106, 26, 0.88);
+      }
+
+      .replica-mini-right {
+        top: 952px;
+        right: 92px;
+        width: 166px;
+        height: 254px;
+        border-width: 6px;
+        border-radius: 24px;
+        box-shadow: 8px 9px 0 rgba(255, 106, 26, 0.88);
+      }
+
+      .replica-screen {
+        position: absolute;
+        inset: 42px 12px 16px;
+        overflow: hidden;
+        border: 3px solid var(--ink);
+        border-radius: 14px;
+        background:
+          linear-gradient(
+            180deg,
+            var(--orange) 0 16%,
+            var(--paper-card) 16% 100%
+          );
+      }
+
+      .replica-screen::before {
+        position: absolute;
+        top: 70px;
+        right: 12px;
+        left: 12px;
+        height: 82px;
+        border-radius: 7px;
+        content: "";
+        background:
+          linear-gradient(
+            90deg,
+            var(--ink) 0 18%,
+            #68645d 18% 36%,
+            var(--ink) 36% 58%,
+            #847e73 58% 77%,
+            var(--ink) 77% 100%
+          );
+        background-size: 28px 100%;
+      }
+
+      .replica-screen::after {
+        position: absolute;
+        top: 174px;
+        right: 12px;
+        left: 35px;
+        height: 55px;
+        border: 3px solid var(--ink);
+        border-radius: 10px 10px 2px 10px;
+        content: "";
+        background:
+          repeating-linear-gradient(
+            0deg,
+            rgba(20, 20, 20, 0.86) 0 8px,
+            rgba(111, 106, 97, 0.9) 8px 16px
+          );
+      }
+
+      .replica-mini-left .replica-screen,
+      .replica-mini-right .replica-screen {
+        inset: 35px 9px 12px;
+      }
+
+      .replica-mini-left .replica-screen::before,
+      .replica-mini-right .replica-screen::before {
+        top: 50px;
+        height: 58px;
+      }
+
+      .replica-mini-left .replica-screen::after,
+      .replica-mini-right .replica-screen::after {
+        top: 128px;
+        left: 24px;
+        height: 40px;
+      }
+
+      #censor-layer {
+        z-index: 5;
+        pointer-events: none;
+      }
+
+      .ink-plate {
+        position: absolute;
+        overflow: hidden;
+        border: 4px solid var(--ink);
+        border-radius: 9px;
+        background: var(--ink);
+        box-shadow: 7px 7px 0 rgba(255, 106, 26, 0.94);
+        transform-origin: 0% 50%;
+        will-change: transform, opacity;
+      }
+
+      .ink-plate::before {
+        position: absolute;
+        inset: 10px;
+        content: "";
+        background:
+          linear-gradient(
+            90deg,
+            rgba(247, 244, 236, 0.16) 0 13%,
+            transparent 13% 22%,
+            rgba(247, 244, 236, 0.12) 22% 40%,
+            transparent 40% 53%,
+            rgba(247, 244, 236, 0.18) 53% 69%,
+            transparent 69% 81%,
+            rgba(247, 244, 236, 0.14) 81% 100%
+          );
+        background-size: 46px 100%;
+      }
+
+      .ink-plate-a {
+        top: 528px;
+        left: 346px;
+        width: 388px;
+        height: 169px;
+      }
+
+      .ink-plate-b {
+        top: 721px;
+        left: 321px;
+        width: 438px;
+        height: 189px;
+      }
+
+      .ink-plate-c {
+        top: 940px;
+        left: 359px;
+        width: 362px;
+        height: 173px;
+      }
+
+      #flow-layer {
+        z-index: 6;
+        pointer-events: none;
+      }
+
+      .flow-svg {
+        width: 100%;
+        height: 100%;
+        overflow: visible;
+      }
+
+      #flow-arrow {
+        fill: none;
+        stroke: var(--orange);
+        stroke-width: 13;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
+      #arrow-tip {
+        fill: var(--orange);
+        stroke: var(--ink);
+        stroke-width: 5;
+        transform-origin: center;
+        transform-box: fill-box;
+      }
+
+      .target-ring {
+        fill: rgba(245, 240, 228, 0.16);
+        stroke: var(--orange);
+        stroke-width: 8;
+      }
+
+      .crowd-node {
+        fill: var(--ink);
+        stroke: var(--paper-card);
+        stroke-width: 4;
+        transform-origin: center;
+        transform-box: fill-box;
+        will-change: transform, opacity;
+      }
+
+      .crowd-body {
+        fill: var(--ink);
+        stroke: var(--paper-card);
+        stroke-width: 4;
+        stroke-linejoin: round;
+      }
+
+      #product-layer {
+        z-index: 7;
+        pointer-events: none;
+      }
+
+      #product-card {
+        position: absolute;
+        top: 1230px;
+        left: 174px;
+        display: grid;
+        grid-template-columns: 164px 1fr;
+        align-items: center;
+        width: 732px;
+        min-height: 210px;
+        padding: 26px 34px 26px 28px;
+        overflow: hidden;
+        border: 7px solid var(--ink);
+        border-radius: 22px;
+        background: var(--paper-card);
+        box-shadow: 16px 16px 0 var(--orange);
+        will-change: transform, opacity;
+      }
+
+      #product-card::before {
+        position: absolute;
+        top: 0;
+        right: 0;
+        left: 0;
+        height: 18px;
+        content: "";
+        background: var(--orange);
+      }
+
+      .product-box-wrap {
+        display: grid;
+        place-items: center;
+        width: 138px;
+        height: 146px;
+      }
+
+      .product-box {
+        position: relative;
+        display: grid;
+        place-items: center;
+        width: 100px;
+        height: 126px;
+        border: 5px solid var(--ink);
+        background: var(--orange);
+        color: var(--ink);
+        font-size: 42px;
+        font-weight: 900;
+        line-height: 1;
+        box-shadow: 9px 9px 0 var(--ink);
+        transform: rotate(-4deg);
+      }
+
+      .product-box::after {
+        position: absolute;
+        right: 10px;
+        bottom: 12px;
+        left: 10px;
+        height: 7px;
+        content: "";
+        background: var(--paper-card);
+      }
+
+      .product-copy {
+        display: flex;
+        min-width: 0;
+        flex-direction: column;
+        justify-content: center;
+        gap: 7px;
+      }
+
+      .product-eyebrow {
+        display: inline-flex;
+        align-self: flex-start;
+        padding: 7px 14px 8px;
+        border-radius: 7px;
+        background: var(--orange);
+        color: var(--ink);
+        font-size: 25px;
+        font-weight: 900;
+        line-height: 1.15;
+        letter-spacing: 0.035em;
+      }
+
+      .product-name {
+        margin: 0;
+        color: var(--ink);
+        font-size: 62px;
+        font-weight: 900;
+        line-height: 1.05;
+        letter-spacing: -0.035em;
+      }
+
+      .product-rule {
+        display: block;
+        width: 100%;
+        height: 8px;
+        margin-top: 4px;
+        background: var(--ink);
+        transform-origin: 0% 50%;
+        will-change: transform;
+      }
+
+      .bottom-signature {
+        position: absolute;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        z-index: 10;
+        height: 22px;
+        background: var(--orange);
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s02"
+      data-start="0"
+      data-width="1080"
+      data-height="1920"
+      data-duration="7.64"
+      data-fps="30"
+    >
+      <div class="spotlight-background" aria-hidden="true"></div>
+
+      <video
+        id="scene-video"
+        class="clip"
+        data-start="0"
+        data-duration="7.64"
+        data-media-start="0.18"
+        data-track-index="0"
+        data-layout-allow-overflow="true"
+        muted
+        playsinline
+        preload="auto"
+        src="assets/vid-05-chat-group-crowd-network-cutout.mp4"
+      ></video>
+
+      <div class="video-vignette" aria-hidden="true"></div>
+
+      <div
+        class="safe-censor-layer"
+        data-layout-allow-overlap="true"
+        data-layout-allow-occlusion="true"
+        aria-hidden="true"
+      >
+        <div class="safe-censor safe-censor-a"></div>
+        <div class="safe-censor safe-censor-b"></div>
+        <div class="safe-censor safe-censor-c"></div>
+      </div>
+
+      <section
+        id="replication-layer"
+        class="clip"
+        data-start="1.04"
+        data-duration="6.60"
+        data-track-index="1"
+        data-layout-allow-overlap="true"
+        data-layout-allow-occlusion="true"
+        aria-hidden="true"
+      >
+        <div id="replica-left" class="replica replica-left">
+          <div class="replica-screen"></div>
+        </div>
+
+        <div id="replica-right" class="replica replica-right">
+          <div class="replica-screen"></div>
+        </div>
+
+        <div id="replica-mini-left" class="replica replica-mini-left">
+          <div class="replica-screen"></div>
+        </div>
+
+        <div id="replica-mini-right" class="replica replica-mini-right">
+          <div class="replica-screen"></div>
+        </div>
+      </section>
+
+      <section
+        id="censor-layer"
+        class="clip"
+        data-start="1.98"
+        data-duration="5.66"
+        data-track-index="2"
+        data-layout-allow-overlap="true"
+        data-layout-allow-occlusion="true"
+        aria-hidden="true"
+      >
+        <div class="ink-plate ink-plate-a"></div>
+        <div class="ink-plate ink-plate-b"></div>
+        <div class="ink-plate ink-plate-c"></div>
+      </section>
+
+      <section
+        id="flow-layer"
+        class="clip"
+        data-start="4.69"
+        data-duration="2.95"
+        data-track-index="3"
+        data-layout-allow-overlap="true"
+        data-layout-allow-occlusion="true"
+        aria-hidden="true"
+      >
+        <svg class="flow-svg" viewBox="0 0 1080 1920" xmlns="http://www.w3.org/2000/svg">
+          <path
+            id="flow-arrow"
+            d="M 570 930 C 640 938, 682 1010, 724 1072 C 760 1124, 796 1147, 838 1160"
+          />
+          <polygon id="arrow-tip" points="822,1137 866,1164 820,1187" />
+
+          <circle class="target-ring" cx="846" cy="1162" r="92" />
+
+          <g id="crowd-icon">
+            <circle class="crowd-node" cx="846" cy="1112" r="24" />
+            <path class="crowd-body" d="M 802 1196 Q 806 1143 846 1143 Q 887 1143 891 1196 Z" />
+
+            <circle class="crowd-node" cx="784" cy="1144" r="19" />
+            <path class="crowd-body" d="M 749 1205 Q 752 1168 784 1168 Q 816 1168 819 1205 Z" />
+
+            <circle class="crowd-node" cx="910" cy="1143" r="19" />
+            <path class="crowd-body" d="M 875 1205 Q 878 1167 910 1167 Q 942 1167 945 1205 Z" />
+          </g>
+        </svg>
+      </section>
+
+      <section
+        id="product-layer"
+        class="clip"
+        data-start="6.06"
+        data-duration="1.58"
+        data-track-index="4"
+        data-layout-allow-overlap="true"
+        data-layout-allow-occlusion="true"
+      >
+        <div id="product-card">
+          <div class="product-box-wrap" aria-hidden="true">
+            <div class="product-box">SS</div>
+          </div>
+
+          <div class="product-copy">
+            <div class="product-eyebrow">MÓN BÁN THẬT</div>
+            <h2 class="product-name">SÌN SÚ</h2>
+            <span class="product-rule" aria-hidden="true"></span>
+          </div>
+        </div>
+      </section>
+
+      <div class="grain" aria-hidden="true"></div>
+      <div class="bottom-signature" aria-hidden="true"></div>
+    </div>
+
+    <script>
+      const flowArrow = document.getElementById("flow-arrow");
+      const flowLength = flowArrow.getTotalLength();
+
+      flowArrow.style.strokeDasharray = String(flowLength);
+      flowArrow.style.strokeDashoffset = String(flowLength);
+
+      const tl = gsap.timeline({
+        paused: true,
+        defaults: {
+          ease: "power3.out"
+        }
+      });
+
+      tl.fromTo(
+        "#scene-video",
+        {
+          opacity: 0,
+          scale: 1.18,
+          rotation: -7
+        },
+        {
+          opacity: 1,
+          scale: 1.04,
+          rotation: 0,
+          duration: 0.76,
+          ease: "expo.out"
+        },
+        0
+      );
+
+      tl.fromTo(
+        ".video-vignette",
+        {
+          opacity: 0
+        },
+        {
+          opacity: 1,
+          duration: 0.64,
+          ease: "power2.out"
+        },
+        0.08
+      );
+
+      tl.fromTo(
+        "#replica-left",
+        {
+          opacity: 0,
+          x: 250,
+          y: 36,
+          scale: 0.42,
+          rotation: 18
+        },
+        {
+          opacity: 1,
+          x: 0,
+          y: 0,
+          scale: 1,
+          rotation: -4,
+          duration: 0.62,
+          ease: "power4.out"
+        },
+        1.04
+      );
+
+      tl.fromTo(
+        "#replica-right",
+        {
+          opacity: 0,
+          x: -250,
+          y: -24,
+          scale: 0.42,
+          rotation: -18
+        },
+        {
+          opacity: 1,
+          x: 0,
+          y: 0,
+          scale: 1,
+          rotation: 4,
+          duration: 0.62,
+          ease: "power4.out"
+        },
+        1.12
+      );
+
+      tl.fromTo(
+        "#replica-mini-left",
+        {
+          opacity: 0,
+          x: 258,
+          y: -172,
+          scale: 0.3,
+          rotation: 14
+        },
+        {
+          opacity: 0.94,
+          x: 0,
+          y: 0,
+          scale: 1,
+          rotation: -7,
+          duration: 0.56,
+          ease: "power3.out"
+        },
+        1.54
+      );
+
+      tl.fromTo(
+        "#replica-mini-right",
+        {
+          opacity: 0,
+          x: -258,
+          y: -164,
+          scale: 0.3,
+          rotation: -14
+        },
+        {
+          opacity: 0.94,
+          x: 0,
+          y: 0,
+          scale: 1,
+          rotation: 7,
+          duration: 0.56,
+          ease: "power3.out"
+        },
+        1.62
+      );
+
+      tl.fromTo(
+        ".ink-plate",
+        {
+          opacity: 0,
+          scaleX: 0.16,
+          x: -24
+        },
+        {
+          opacity: 1,
+          scaleX: 1,
+          x: 0,
+          duration: 0.38,
+          stagger: 0.15,
+          ease: "power4.out"
+        },
+        1.98
+      );
+
+      tl.fromTo(
+        "#flow-arrow",
+        {
+          strokeDashoffset: flowLength
+        },
+        {
+          strokeDashoffset: 0,
+          duration: 0.76,
+          ease: "power2.out"
+        },
+        4.69
+      );
+
+      tl.fromTo(
+        "#arrow-tip",
+        {
+          opacity: 0,
+          scale: 0.4
+        },
+        {
+          opacity: 1,
+          scale: 1,
+          duration: 0.24,
+          ease: "power3.out"
+        },
+        5.25
+      );
+
+      tl.fromTo(
+        ".target-ring",
+        {
+          opacity: 0,
+          scale: 0.72,
+          transformOrigin: "50% 50%"
+        },
+        {
+          opacity: 1,
+          scale: 1,
+          duration: 0.4,
+          ease: "power3.out"
+        },
+        5.06
+      );
+
+      tl.fromTo(
+        ".crowd-node",
+        {
+          opacity: 0,
+          scale: 0.3
+        },
+        {
+          opacity: 1,
+          scale: 1,
+          duration: 0.35,
+          stagger: 0.09,
+          ease: "power3.out"
+        },
+        5.12
+      );
+
+      tl.fromTo(
+        ".crowd-body",
+        {
+          opacity: 0,
+          scale: 0.5,
+          transformOrigin: "50% 100%"
+        },
+        {
+          opacity: 1,
+          scale: 1,
+          duration: 0.38,
+          stagger: 0.08,
+          ease: "power3.out"
+        },
+        5.18
+      );
+
+      tl.fromTo(
+        "#product-card",
+        {
+          opacity: 0,
+          x: 390,
+          y: 38,
+          rotation: 5,
+          scale: 0.9
+        },
+        {
+          opacity: 1,
+          x: 0,
+          y: 0,
+          rotation: 0,
+          scale: 1,
+          duration: 0.5,
+          ease: "expo.out"
+        },
+        6.06
+      );
+
+      tl.fromTo(
+        ".product-rule",
+        {
+          scaleX: 0
+        },
+        {
+          scaleX: 1,
+          duration: 0.4,
+          ease: "power3.out"
+        },
+        6.27
+      );
+
+      window.__timelines["scene-s02"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

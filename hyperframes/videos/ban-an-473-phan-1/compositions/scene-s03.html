@@ -1,0 +1,670 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap"
+    />
+      <style>
+      :root {
+        --paper: #e7e3d9;
+        --card: #f5f0e4;
+        --ink: #141414;
+        --orange: #ff6a1a;
+        --cream: #f7f4ec;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        overflow: hidden;
+        background: var(--paper);
+      }
+
+      body {
+        color: var(--ink);
+        font-family: "Be Vietnam Pro", sans-serif;
+      }
+
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: var(--card);
+      }
+
+      .clip {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+
+      .photo-stage {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+        background: var(--ink);
+      }
+
+      .photo-stage img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: 50% 48%;
+        transform-origin: 50% 50%;
+        will-change: transform;
+      }
+
+      .photo-vignette {
+        position: absolute;
+        inset: 0;
+        background:
+          linear-gradient(
+            180deg,
+            rgba(20, 20, 20, 0.34) 0%,
+            rgba(20, 20, 20, 0.04) 28%,
+            rgba(20, 20, 20, 0) 62%,
+            rgba(20, 20, 20, 0.24) 100%
+          );
+        pointer-events: none;
+      }
+
+      .grain {
+        position: absolute;
+        inset: 0;
+        z-index: 20;
+        opacity: 0.18;
+        pointer-events: none;
+        mix-blend-mode: multiply;
+        background-image:
+          radial-gradient(circle at 20% 30%, rgba(20, 20, 20, 0.55) 0 0.7px, transparent 0.9px),
+          radial-gradient(circle at 70% 60%, rgba(20, 20, 20, 0.38) 0 0.65px, transparent 0.9px);
+        background-position:
+          0 0,
+          3px 5px;
+        background-size:
+          8px 8px,
+          11px 11px;
+      }
+
+      .label-stack {
+        position: absolute;
+        z-index: 25;
+        top: 236px;
+        left: 60px;
+        right: 60px;
+        height: 300px;
+        perspective: 1200px;
+      }
+
+      .document-card,
+      .punch-card {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        transform-origin: 50% 0%;
+        will-change: transform, opacity;
+      }
+
+      .document-card {
+        min-height: 280px;
+        padding: 34px 44px 38px;
+        background: var(--card);
+        border: 7px solid var(--ink);
+        box-shadow: 15px 17px 0 rgba(20, 20, 20, 0.9);
+        clip-path: polygon(
+          0 4%,
+          5% 1%,
+          11% 4%,
+          18% 1%,
+          25% 3%,
+          33% 0,
+          42% 3%,
+          51% 1%,
+          60% 4%,
+          70% 1%,
+          79% 3%,
+          88% 0,
+          100% 4%,
+          99% 96%,
+          92% 99%,
+          84% 96%,
+          75% 100%,
+          65% 97%,
+          56% 100%,
+          47% 96%,
+          36% 99%,
+          27% 96%,
+          17% 100%,
+          8% 97%,
+          1% 100%
+        );
+      }
+
+      .document-meta {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 24px;
+        margin-bottom: 26px;
+        font-size: 24px;
+        font-weight: 900;
+        letter-spacing: 0.08em;
+        line-height: 1.2;
+      }
+
+      .document-kicker {
+        display: inline-flex;
+        align-items: center;
+        min-height: 44px;
+        padding: 7px 16px;
+        color: var(--cream);
+        background: var(--ink);
+      }
+
+      .document-code {
+        font-size: 22px;
+        white-space: nowrap;
+      }
+
+      .name-field {
+        position: relative;
+        display: flex;
+        align-items: center;
+        min-height: 94px;
+        border-top: 3px solid var(--ink);
+        border-bottom: 3px solid var(--ink);
+      }
+
+      .name-wrap {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        width: max-content;
+        max-width: 100%;
+        padding: 10px 6px 12px;
+        font-size: 55px;
+        font-weight: 900;
+        line-height: 1.05;
+        letter-spacing: -0.035em;
+        white-space: nowrap;
+      }
+
+      .masked-tail {
+        position: relative;
+        display: inline-block;
+        margin-left: 8px;
+        padding: 0 4px;
+      }
+
+      .redaction {
+        position: absolute;
+        z-index: 3;
+        inset: -7px -10px;
+        display: block;
+        background: var(--ink);
+        transform-origin: 0% 50%;
+        will-change: transform;
+      }
+
+      .orange-strike {
+        position: absolute;
+        z-index: 5;
+        top: 53%;
+        left: -10px;
+        right: -10px;
+        display: block;
+        height: 10px;
+        background: var(--orange);
+        transform-origin: 0% 50%;
+        will-change: transform;
+      }
+
+      .mask-tag {
+        position: absolute;
+        right: 36px;
+        bottom: -30px;
+        display: inline-flex;
+        align-items: center;
+        min-height: 52px;
+        padding: 8px 18px;
+        color: var(--cream);
+        background: var(--ink);
+        border: 3px solid var(--card);
+        font-size: 22px;
+        font-weight: 900;
+        letter-spacing: 0.055em;
+        line-height: 1.15;
+        white-space: nowrap;
+        will-change: transform, opacity;
+      }
+
+      .punch-card {
+        display: flex;
+        min-height: 238px;
+        align-items: center;
+        justify-content: center;
+        padding: 42px 52px;
+        background: var(--orange);
+        border: 8px solid var(--ink);
+        box-shadow: 15px 17px 0 rgba(20, 20, 20, 0.92);
+        clip-path: polygon(
+          0 6%,
+          7% 2%,
+          15% 5%,
+          24% 1%,
+          34% 4%,
+          44% 0,
+          55% 4%,
+          66% 1%,
+          77% 5%,
+          88% 1%,
+          100% 5%,
+          99% 95%,
+          91% 99%,
+          80% 96%,
+          69% 100%,
+          58% 96%,
+          47% 99%,
+          36% 95%,
+          25% 100%,
+          14% 96%,
+          1% 99%
+        );
+      }
+
+      .punch-copy {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 16px;
+        width: 100%;
+        text-align: center;
+      }
+
+      .punch-kicker {
+        display: inline-flex;
+        align-items: center;
+        min-height: 42px;
+        padding: 6px 15px;
+        color: var(--cream);
+        background: var(--ink);
+        font-size: 22px;
+        font-weight: 900;
+        letter-spacing: 0.075em;
+        line-height: 1.15;
+      }
+
+      .punch-title {
+        margin: 0;
+        color: var(--ink);
+        font-size: 78px;
+        font-weight: 900;
+        line-height: 1.05;
+        letter-spacing: -0.045em;
+        white-space: nowrap;
+      }
+
+      .entry-sheet {
+        position: absolute;
+        inset: -30px;
+        z-index: 40;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        background: var(--card);
+        border-right: 22px solid var(--orange);
+        box-shadow: 24px 0 0 rgba(20, 20, 20, 0.9);
+        transform-origin: 100% 50%;
+        will-change: transform;
+      }
+
+      .entry-sheet::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        opacity: 0.18;
+        mix-blend-mode: multiply;
+        background-image:
+          radial-gradient(circle at 22% 31%, rgba(20, 20, 20, 0.52) 0 0.7px, transparent 0.9px),
+          radial-gradient(circle at 74% 67%, rgba(20, 20, 20, 0.38) 0 0.6px, transparent 0.85px);
+        background-size:
+          8px 8px,
+          12px 12px;
+      }
+
+      .entry-mark {
+        position: relative;
+        display: flex;
+        width: 760px;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 18px;
+        padding: 46px 48px;
+        border-top: 10px solid var(--ink);
+        border-bottom: 10px solid var(--ink);
+      }
+
+      .entry-small {
+        color: var(--cream);
+        background: var(--ink);
+        padding: 8px 18px;
+        font-size: 25px;
+        font-weight: 900;
+        letter-spacing: 0.12em;
+      }
+
+      .entry-large {
+        font-size: 116px;
+        font-weight: 900;
+        line-height: 0.96;
+        letter-spacing: -0.055em;
+      }
+
+      .bottom-signature {
+        position: absolute;
+        z-index: 60;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        height: 18px;
+        background: var(--orange);
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s03"
+      data-start="0"
+      data-width="1080"
+      data-height="1920"
+      data-duration="10.88"
+      data-fps="30"
+    >
+      <section
+        id="s03-scene"
+        class="clip"
+        data-start="0"
+        data-duration="10.88"
+        data-track-index="0"
+      >
+        <div
+          id="s03-photo-stage"
+          class="photo-stage"
+          data-layout-allow-overflow="true"
+        >
+          <img
+            id="s03-photo"
+            src="assets/img-04-cyber-criminal-suspect-profile.jpeg"
+            alt="Minh họa nghi phạm công nghệ trước dàn điện thoại"
+            data-layout-allow-overflow="true"
+          />
+          <div class="photo-vignette" data-layout-ignore></div>
+        </div>
+
+        <div
+          id="s03-label-stack"
+          class="label-stack"
+          data-layout-allow-overlap="true"
+        >
+          <article id="s03-document-card" class="document-card">
+            <div class="document-meta">
+              <span class="document-kicker">TRÍCH HỒ SƠ</span>
+              <span class="document-code">MỤC: DANH TÍNH</span>
+            </div>
+
+            <div class="name-field">
+              <div class="name-wrap">
+                <span>NGUYỄN ÍCH</span>
+                <span class="masked-tail">
+                  T█
+                  <span id="s03-redaction" class="redaction"></span>
+                </span>
+                <span id="s03-orange-strike" class="orange-strike"></span>
+              </div>
+            </div>
+
+            <div id="s03-mask-tag" class="mask-tag">MÃ HÓA MỘT PHẦN</div>
+          </article>
+
+          <article id="s03-punch-card" class="punch-card">
+            <div class="punch-copy">
+              <span class="punch-kicker">TÊN KỂ CHUYỆN</span>
+              <h1 class="punch-title">TẠM GỌI: TIẾN</h1>
+            </div>
+          </article>
+        </div>
+
+        <div class="grain" data-layout-ignore></div>
+
+        <div
+          id="s03-entry-sheet"
+          class="entry-sheet"
+          data-layout-allow-overflow="true"
+          data-layout-allow-occlusion="true"
+        >
+          <div class="entry-mark">
+            <span class="entry-small">BẢN ÁN · DANH TÍNH</span>
+            <span class="entry-large">HỒ SƠ 03</span>
+          </div>
+        </div>
+
+        <div class="bottom-signature" data-layout-ignore></div>
+      </section>
+    </div>
+
+    <script>
+      const tl = gsap.timeline({
+        paused: true,
+        defaults: {
+          ease: "power3.out"
+        }
+      });
+
+      tl.set(
+        "#s03-photo",
+        {
+          scale: 1,
+          transformOrigin: "50% 50%"
+        },
+        0
+      );
+
+      tl.set(
+        "#s03-entry-sheet",
+        {
+          xPercent: 0,
+          rotation: 0,
+          skewX: 0
+        },
+        0
+      );
+
+      tl.set(
+        "#s03-document-card",
+        {
+          y: -36,
+          rotation: -1.8,
+          rotationX: 0,
+          scale: 0.98,
+          scaleY: 1,
+          opacity: 0,
+          transformOrigin: "50% 0%"
+        },
+        0
+      );
+
+      tl.set(
+        "#s03-redaction",
+        {
+          scaleX: 0,
+          transformOrigin: "0% 50%"
+        },
+        0
+      );
+
+      tl.set(
+        "#s03-orange-strike",
+        {
+          scaleX: 0,
+          transformOrigin: "0% 50%"
+        },
+        0
+      );
+
+      tl.set(
+        "#s03-mask-tag",
+        {
+          y: 16,
+          rotation: 1.5,
+          opacity: 0
+        },
+        0
+      );
+
+      tl.set(
+        "#s03-punch-card",
+        {
+          y: 24,
+          scale: 0.97,
+          opacity: 0,
+          transformOrigin: "50% 50%"
+        },
+        0
+      );
+
+      tl.to(
+        "#s03-photo",
+        {
+          scale: 1.06,
+          duration: 10.88,
+          ease: "none"
+        },
+        0
+      );
+
+      tl.to(
+        "#s03-entry-sheet",
+        {
+          xPercent: -108,
+          rotation: -3.5,
+          skewX: -2,
+          duration: 0.82,
+          ease: "expo.inOut"
+        },
+        0
+      );
+
+      tl.to(
+        "#s03-document-card",
+        {
+          y: 0,
+          rotation: -0.55,
+          scale: 1,
+          opacity: 1,
+          duration: 0.58,
+          ease: "power3.out"
+        },
+        0.31
+      );
+
+      tl.to(
+        "#s03-redaction",
+        {
+          scaleX: 1,
+          duration: 0.28,
+          ease: "power4.out"
+        },
+        1.84
+      );
+
+      tl.to(
+        "#s03-orange-strike",
+        {
+          scaleX: 1,
+          duration: 0.52,
+          ease: "power3.out"
+        },
+        2.03
+      );
+
+      tl.to(
+        "#s03-mask-tag",
+        {
+          y: 0,
+          rotation: 0,
+          opacity: 1,
+          duration: 0.4,
+          ease: "power3.out"
+        },
+        4.32
+      );
+
+      tl.to(
+        "#s03-redaction",
+        {
+          scaleX: 0.94,
+          duration: 0.16,
+          ease: "power2.inOut"
+        },
+        6.52
+      );
+
+      tl.to(
+        "#s03-redaction",
+        {
+          scaleX: 1,
+          duration: 0.24,
+          ease: "power3.out"
+        },
+        6.68
+      );
+
+      tl.to(
+        "#s03-document-card",
+        {
+          y: -115,
+          rotation: -2.5,
+          rotationX: -84,
+          scaleY: 0.55,
+          opacity: 0,
+          duration: 0.46,
+          ease: "power3.in"
+        },
+        8.84
+      );
+
+      tl.to(
+        "#s03-punch-card",
+        {
+          y: 0,
+          scale: 1,
+          opacity: 1,
+          duration: 0.2,
+          ease: "power4.out"
+        },
+        8.84
+      );
+
+      window.__timelines["scene-s03"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

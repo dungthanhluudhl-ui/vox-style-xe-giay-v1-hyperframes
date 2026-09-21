@@ -73,6 +73,19 @@ Log chi tiết từng bước → `pipeline/videos/<slug>/media-generate-log.md`
 - Mỗi bước `action=wait` từng mặc định/trần khá dài (3000ms/15000ms), cộng thêm độ trễ gọi
   model cho bước kiểm tra tiếp theo khiến tổng thời gian chờ thực tế đo được ~16-23s/lần — đã
   rút xuống 2000ms/6000ms và yêu cầu model ưu tiên chờ ngắn, kiểm tra lại thường xuyên hơn.
+- **Lỗi thật đã gặp (video "ban-an-473-phan-1", 2026-09-21): Flow Agent gộp toàn bộ N prompt
+  thành 1 ảnh khổ NGANG 16:9 duy nhất** (kiểu minh hoạ "danh sách prompt"/collage nhiều cảnh
+  trong 1 ô) thay vì tạo N ảnh dọc 9:16 riêng biệt như 2 video trước đó vẫn tạo đúng — nguyên
+  nhân do `buildScenePromptListMessage()` gửi cả danh sách prompt gộp thành 1 tin nhắn duy nhất
+  cho Flow Agent (AI ngoài tầm kiểm soát của repo) tự diễn giải cách tách ảnh, không có gì đảm
+  bảo tất định. Hậu quả dây chuyền: bước tạo chuyển động (Giai đoạn 2) sau đó tạo video 9:16 từ
+  đúng nguồn ảnh sai khổ ngang này (ép crop), nên cả ảnh lẫn video tải về đều dùng không được.
+  Phát hiện bằng `ffprobe` đo width/height thật (KHÔNG cần xem ảnh trực tiếp) — 4 file cùng
+  1376×768 dù tải 2 lần khác nhau, không phải lỗi tải thiếu file (khác gotcha phía trên). Đã sửa
+  `buildScenePromptListMessage()`: nêu tường minh số ảnh chính xác cần tạo, khổ dọc 9:16, và cấm
+  rõ ràng việc gộp nhiều cảnh vào 1 ảnh — nhưng vì Flow Agent vẫn là AI ngoài tầm kiểm soát, đây
+  chỉ giảm rủi ro chứ không đảm bảo tuyệt đối; nếu tái diễn, kiểm tra lại bằng `ffprobe` (đúng số
+  file + đúng tỉ lệ dọc) trước khi đi tiếp Giai đoạn 2, đừng chỉ tin log "done" của model.
 
 ## 3. Xử lý Media nguồn (ảnh/video)
 Media tới đây từ Stage 2b (tự động qua Google Flow) hoặc copy tay như trước — cả 2 đường đều
@@ -198,6 +211,7 @@ Từ khi repo đã có git backup (2026-09-20), **không** tạo thêm file ki�
 - `scripts/07-codegen.router.mjs`
 - `scripts/07-codegen-parallel.mjs` (local, không gọi AI trực tiếp — orchestrator quản lý tiến trình con, xem mục 6)
 - `scripts/08-sync-root.mjs` (local, không có hậu tố owner vì không gọi AI — script mechanical thuần)
+- `scripts/07-codegen.hf.router.mjs`, `scripts/07-codegen-hf-parallel.mjs`, `scripts/08-sync-root.hf.mjs` — bản HyperFrames song song của 3 script trên (hậu tố `.hf.` phân biệt nhánh framework), cùng kiến trúc/quy tắc, xem `planning/style-dna-integration.md` và kế hoạch di trú Remotion → HyperFrames.
 
 Hậu tố `.local.mjs` / `.router.mjs` cho biết ngay loại xử lý. Mọi script `.router.mjs` dùng chung `scripts/lib/router-client.mjs` và tra model qua `scripts/model-routing.json`.
 

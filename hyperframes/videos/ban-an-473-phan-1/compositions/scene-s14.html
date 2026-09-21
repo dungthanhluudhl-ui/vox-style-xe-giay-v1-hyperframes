@@ -1,0 +1,819 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap">
+      <style>
+      :root {
+        --paper: #f5f0e4;
+        --paper-deep: #e7e3d9;
+        --ink: #141414;
+        --orange: #ff6a1a;
+        --orange-shadow: #ff7a1a;
+        --light: #f7f4ec;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        overflow: hidden;
+      }
+
+      body {
+        background: var(--paper);
+        color: var(--ink);
+        font-family: "Be Vietnam Pro", sans-serif;
+        font-weight: 700;
+      }
+
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background:
+          radial-gradient(circle at 50% 38%, rgba(255, 255, 255, 0.7), rgba(245, 240, 228, 0) 48%),
+          var(--paper);
+        perspective: 1800px;
+      }
+
+      .camera {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        transform-origin: 50% 48%;
+        transform-style: preserve-3d;
+        will-change: transform, opacity;
+      }
+
+      .grain {
+        position: absolute;
+        inset: 0;
+        z-index: 30;
+        opacity: 0.18;
+        pointer-events: none;
+        mix-blend-mode: multiply;
+        background-image:
+          repeating-radial-gradient(circle at 17% 29%, rgba(20, 20, 20, 0.17) 0 0.7px, transparent 0.8px 5px),
+          repeating-radial-gradient(circle at 73% 61%, rgba(20, 20, 20, 0.1) 0 0.6px, transparent 0.8px 7px);
+        background-size: 19px 23px, 27px 31px;
+      }
+
+      .header-chip {
+        position: absolute;
+        top: 174px;
+        left: calc(50% - 245px);
+        z-index: 12;
+        display: flex;
+        width: 490px;
+        min-height: 62px;
+        align-items: center;
+        justify-content: center;
+        border: 4px solid var(--ink);
+        background: var(--orange);
+        box-shadow: 9px 9px 0 var(--ink);
+        color: var(--ink);
+        font-size: 25px;
+        font-weight: 900;
+        letter-spacing: 0.04em;
+        text-align: center;
+      }
+
+      .side-node {
+        position: absolute;
+        top: 350px;
+        z-index: 9;
+        width: 280px;
+        height: 510px;
+        transform-style: preserve-3d;
+        will-change: transform, opacity;
+      }
+
+      .seller-node {
+        left: 80px;
+      }
+
+      .examiner-node {
+        right: 80px;
+      }
+
+      .paper-figure {
+        position: relative;
+        width: 280px;
+        height: 380px;
+      }
+
+      .figure-shadow,
+      .figure-head,
+      .figure-body {
+        position: absolute;
+      }
+
+      .figure-shadow.head {
+        top: 22px;
+        left: 82px;
+        width: 122px;
+        height: 122px;
+        border-radius: 50%;
+        background: var(--orange-shadow);
+      }
+
+      .figure-shadow.body {
+        top: 139px;
+        left: 42px;
+        width: 208px;
+        height: 220px;
+        border-radius: 104px 104px 24px 24px;
+        background: var(--orange-shadow);
+        clip-path: polygon(12% 0, 88% 0, 100% 100%, 0 100%);
+      }
+
+      .figure-head {
+        top: 10px;
+        left: 70px;
+        width: 122px;
+        height: 122px;
+        border: 5px solid var(--ink);
+        border-radius: 50%;
+        background: var(--paper-deep);
+      }
+
+      .figure-body {
+        top: 127px;
+        left: 30px;
+        width: 208px;
+        height: 220px;
+        border: 5px solid var(--ink);
+        border-radius: 104px 104px 24px 24px;
+        background: var(--ink);
+        clip-path: polygon(12% 0, 88% 0, 100% 100%, 0 100%);
+      }
+
+      .seller-face-line {
+        position: absolute;
+        top: 66px;
+        left: 94px;
+        width: 74px;
+        height: 5px;
+        border-radius: 5px;
+        background: var(--ink);
+      }
+
+      .examiner-lens {
+        position: absolute;
+        top: 45px;
+        left: 91px;
+        z-index: 4;
+        width: 82px;
+        height: 82px;
+        border: 8px solid var(--ink);
+        border-radius: 50%;
+        background: var(--light);
+      }
+
+      .examiner-lens::after {
+        content: "";
+        position: absolute;
+        right: -37px;
+        bottom: -28px;
+        width: 48px;
+        height: 9px;
+        border-radius: 7px;
+        background: var(--ink);
+        transform: rotate(45deg);
+        transform-origin: 0 50%;
+      }
+
+      .examiner-question {
+        position: absolute;
+        top: 48px;
+        left: 111px;
+        z-index: 5;
+        display: block;
+        width: 42px;
+        height: 62px;
+        color: var(--ink);
+        font-size: 52px;
+        font-weight: 900;
+        line-height: 62px;
+        text-align: center;
+        transform-origin: 50% 50%;
+        will-change: transform;
+      }
+
+      .node-label {
+        position: absolute;
+        top: 388px;
+        left: 0;
+        display: flex;
+        width: 280px;
+        min-height: 78px;
+        align-items: center;
+        justify-content: center;
+        border: 4px solid var(--ink);
+        background: var(--ink);
+        color: var(--light);
+        font-size: 24px;
+        font-weight: 900;
+        line-height: 1.2;
+        padding: 12px 14px;
+        text-align: center;
+      }
+
+      .node-label::after {
+        content: "";
+        position: absolute;
+        right: -12px;
+        bottom: -12px;
+        z-index: -1;
+        width: 100%;
+        height: 100%;
+        background: var(--orange);
+      }
+
+      .gap-line {
+        position: absolute;
+        top: 690px;
+        left: 290px;
+        z-index: 3;
+        display: block;
+        width: 500px;
+        height: 16px;
+        transform-origin: 50% 50%;
+        will-change: transform, opacity;
+      }
+
+      .gap-line::before {
+        content: "";
+        position: absolute;
+        top: 5px;
+        right: 18px;
+        left: 18px;
+        height: 6px;
+        background: repeating-linear-gradient(90deg, var(--ink) 0 18px, transparent 18px 30px);
+      }
+
+      .gap-arrow {
+        position: absolute;
+        top: -15px;
+        display: block;
+        width: 42px;
+        height: 42px;
+        color: var(--ink);
+        font-size: 42px;
+        font-weight: 900;
+        line-height: 42px;
+      }
+
+      .gap-arrow.left {
+        left: -4px;
+      }
+
+      .gap-arrow.right {
+        right: -4px;
+      }
+
+      .package {
+        position: absolute;
+        top: 495px;
+        left: 400px;
+        z-index: 8;
+        width: 280px;
+        height: 390px;
+        transform-style: preserve-3d;
+        will-change: transform, opacity;
+      }
+
+      .bag-shadow {
+        position: absolute;
+        top: 86px;
+        left: 23px;
+        z-index: 0;
+        width: 258px;
+        height: 279px;
+        background: var(--orange-shadow);
+        clip-path: polygon(8% 0, 92% 0, 100% 14%, 92% 100%, 8% 100%, 0 14%);
+      }
+
+      .bag-body {
+        position: absolute;
+        top: 70px;
+        left: 8px;
+        z-index: 2;
+        width: 258px;
+        height: 279px;
+        border: 5px solid var(--ink);
+        background: var(--paper-deep);
+        clip-path: polygon(8% 0, 92% 0, 100% 14%, 92% 100%, 8% 100%, 0 14%);
+      }
+
+      .bag-body::before,
+      .bag-body::after {
+        content: "";
+        position: absolute;
+        left: 30px;
+        width: 188px;
+        height: 4px;
+        background: var(--ink);
+        opacity: 0.26;
+      }
+
+      .bag-body::before {
+        top: 64px;
+      }
+
+      .bag-body::after {
+        bottom: 44px;
+      }
+
+      .bag-label {
+        position: absolute;
+        top: 156px;
+        left: 45px;
+        z-index: 4;
+        display: flex;
+        width: 168px;
+        height: 60px;
+        align-items: center;
+        justify-content: center;
+        border: 4px solid var(--ink);
+        background: var(--light);
+        color: var(--ink);
+        font-size: 24px;
+        font-weight: 900;
+        letter-spacing: 0.04em;
+      }
+
+      .bag-flap {
+        position: absolute;
+        top: 52px;
+        left: 8px;
+        z-index: 7;
+        width: 258px;
+        height: 104px;
+        border: 5px solid var(--ink);
+        background: var(--paper-deep);
+        clip-path: polygon(0 0, 100% 0, 88% 100%, 12% 100%);
+        transform-origin: 50% 100%;
+        transform-style: preserve-3d;
+        will-change: transform;
+      }
+
+      .bag-flap::after {
+        content: "";
+        position: absolute;
+        top: 23px;
+        left: 50px;
+        width: 150px;
+        height: 5px;
+        background: var(--ink);
+        opacity: 0.38;
+      }
+
+      .bag-inside {
+        position: absolute;
+        top: 93px;
+        left: 30px;
+        z-index: 9;
+        display: flex;
+        width: 214px;
+        height: 156px;
+        align-items: center;
+        justify-content: center;
+        border: 5px solid var(--ink);
+        background: var(--light);
+        box-shadow: inset 0 0 0 10px var(--paper);
+        transform-origin: 50% 100%;
+        will-change: transform, opacity;
+      }
+
+      .open-question {
+        position: relative;
+        z-index: 2;
+        display: block;
+        width: 94px;
+        height: 112px;
+        color: var(--ink);
+        font-size: 98px;
+        font-weight: 900;
+        line-height: 112px;
+        text-align: center;
+        transform-origin: 50% 50%;
+        will-change: transform;
+      }
+
+      .private-card {
+        position: absolute;
+        top: 948px;
+        left: 74px;
+        z-index: 11;
+        width: 370px;
+        height: 174px;
+        border: 5px solid var(--ink);
+        background: var(--orange);
+        box-shadow: 13px 13px 0 var(--ink);
+        color: var(--ink);
+        padding: 24px 54px 20px 26px;
+        transform-origin: 0 50%;
+        transform-style: preserve-3d;
+        will-change: transform, opacity;
+      }
+
+      .private-kicker {
+        display: block;
+        margin-bottom: 12px;
+        color: var(--ink);
+        font-size: 18px;
+        font-weight: 900;
+        letter-spacing: 0.08em;
+      }
+
+      .private-text {
+        display: block;
+        max-width: 280px;
+        color: var(--ink);
+        font-size: 34px;
+        font-weight: 900;
+        line-height: 1.18;
+      }
+
+      .privacy-edge {
+        position: absolute;
+        top: -5px;
+        right: -5px;
+        display: flex;
+        width: 52px;
+        height: 174px;
+        align-items: center;
+        justify-content: center;
+        border-left: 5px solid var(--ink);
+        background: var(--ink);
+      }
+
+      .lock-mark {
+        position: relative;
+        display: block;
+        width: 25px;
+        height: 26px;
+        border: 4px solid var(--light);
+      }
+
+      .lock-mark::before {
+        content: "";
+        position: absolute;
+        top: -19px;
+        left: 2px;
+        width: 13px;
+        height: 17px;
+        border: 4px solid var(--light);
+        border-bottom: 0;
+        border-radius: 10px 10px 0 0;
+      }
+
+      .examiner-note {
+        position: absolute;
+        top: 964px;
+        right: 67px;
+        z-index: 10;
+        display: flex;
+        width: 326px;
+        min-height: 126px;
+        align-items: center;
+        justify-content: center;
+        border: 4px dashed var(--ink);
+        background: var(--light);
+        color: var(--ink);
+        font-size: 27px;
+        font-weight: 900;
+        line-height: 1.25;
+        padding: 20px;
+        text-align: center;
+      }
+
+      .probe-wrap {
+        position: absolute;
+        top: 641px;
+        left: 654px;
+        z-index: 7;
+        width: 145px;
+        height: 12px;
+        transform: rotate(-10deg);
+        transform-origin: 100% 50%;
+      }
+
+      .probe-line {
+        display: block;
+        width: 100%;
+        height: 100%;
+        border-radius: 10px;
+        background: var(--orange);
+        box-shadow: 0 0 0 4px var(--ink);
+        transform-origin: 100% 50%;
+        will-change: transform, opacity;
+      }
+
+      .punch-card {
+        position: absolute;
+        top: 1185px;
+        left: 80px;
+        z-index: 18;
+        display: flex;
+        width: 920px;
+        min-height: 190px;
+        margin: 0;
+        flex-direction: column;
+        align-items: flex-start;
+        justify-content: center;
+        border: 6px solid var(--ink);
+        background: var(--ink);
+        box-shadow: 16px 16px 0 var(--orange);
+        color: var(--light);
+        padding: 30px 42px 34px;
+        transform-origin: 50% 50%;
+        will-change: transform, opacity;
+      }
+
+      .punch-card::before {
+        content: "“";
+        position: absolute;
+        top: -50px;
+        right: 25px;
+        color: var(--orange);
+        font-size: 150px;
+        font-weight: 900;
+        line-height: 1;
+      }
+
+      .punch-kicker {
+        display: inline-flex;
+        min-height: 38px;
+        margin-bottom: 15px;
+        align-items: center;
+        border: 3px solid var(--orange);
+        color: var(--light);
+        font-size: 18px;
+        font-weight: 900;
+        letter-spacing: 0.07em;
+        padding: 5px 13px;
+      }
+
+      .punch-text {
+        display: block;
+        width: 100%;
+        margin: 0;
+        color: var(--light);
+        font-size: 69px;
+        font-weight: 900;
+        line-height: 1.18;
+        letter-spacing: -0.025em;
+        white-space: nowrap;
+      }
+
+      .bottom-signature {
+        position: absolute;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        z-index: 100;
+        height: 20px;
+        background: var(--orange);
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s14"
+      data-start="0"
+      data-width="1080"
+      data-height="1920"
+      data-duration="6.31"
+      data-fps="30"
+    >
+      <main id="s14-camera" class="camera" data-layout-allow-overflow="true">
+        <header id="s14-header" class="header-chip">KHOẢNG CÁCH HIỂU BIẾT</header>
+
+        <article id="s14-seller" class="side-node seller-node">
+          <figure class="paper-figure" aria-hidden="true">
+            <span class="figure-shadow head"></span>
+            <span class="figure-shadow body"></span>
+            <span class="figure-head"></span>
+            <span class="figure-body"></span>
+            <span class="seller-face-line"></span>
+          </figure>
+          <span class="node-label">PHÍA NGƯỜI BÁN</span>
+        </article>
+
+        <span
+          id="s14-gap-line"
+          class="gap-line"
+          data-layout-allow-overlap="true"
+          data-layout-allow-occlusion="true"
+          aria-hidden="true"
+        >
+          <span class="gap-arrow left">←</span>
+          <span class="gap-arrow right">→</span>
+        </span>
+
+        <article id="s14-package" class="package" data-layout-allow-overlap="true">
+          <span class="bag-shadow"></span>
+          <span class="bag-body">
+            <span class="bag-label">GÓI MẪU</span>
+          </span>
+          <span id="s14-flap" class="bag-flap"></span>
+          <span id="s14-inside" class="bag-inside">
+            <span id="s14-open-question" class="open-question">?</span>
+          </span>
+        </article>
+
+        <article id="s14-examiner" class="side-node examiner-node">
+          <figure class="paper-figure" aria-hidden="true">
+            <span class="figure-shadow head"></span>
+            <span class="figure-shadow body"></span>
+            <span class="figure-head"></span>
+            <span class="figure-body"></span>
+            <span class="examiner-lens"></span>
+            <span id="s14-examiner-question" class="examiner-question">?</span>
+          </figure>
+          <span class="node-label">PHÍA GIÁM ĐỊNH</span>
+        </article>
+
+        <span
+          class="probe-wrap"
+          data-layout-allow-overlap="true"
+          data-layout-allow-occlusion="true"
+          aria-hidden="true"
+        >
+          <span id="s14-probe-line" class="probe-line"></span>
+        </span>
+
+        <aside id="s14-private-card" class="private-card">
+          <span class="private-kicker">THÔNG TIN KÍN</span>
+          <span class="private-text">BIẾT BÊN TRONG</span>
+          <span class="privacy-edge" aria-hidden="true">
+            <span class="lock-mark"></span>
+          </span>
+        </aside>
+
+        <aside id="s14-examiner-note" class="examiner-note">HỒ SƠ: TRỐNG</aside>
+
+        <blockquote id="s14-punch" class="punch-card">
+          <span class="punch-kicker">CÂU HỎI CÒN LẠI</span>
+          <p class="punch-text">BÊN TRONG CÓ GÌ?</p>
+        </blockquote>
+
+        <span class="grain" data-layout-ignore="true" aria-hidden="true"></span>
+      </main>
+
+      <span class="bottom-signature" data-layout-ignore="true" aria-hidden="true"></span>
+    </div>
+
+    <script>
+      const tl = gsap.timeline({
+        paused: true,
+        defaults: { ease: "power3.out" }
+      });
+
+      tl.fromTo(
+        "#s14-camera",
+        { opacity: 0, scale: 1.055, rotationY: -13 },
+        { opacity: 1, scale: 1.035, rotationY: 0, duration: 0.58, ease: "power4.out" },
+        0
+      );
+
+      tl.to(
+        "#s14-camera",
+        { scale: 1, duration: 5.64, ease: "sine.inOut" },
+        0.58
+      );
+
+      tl.fromTo(
+        "#s14-header",
+        { opacity: 0, y: -18 },
+        { opacity: 1, y: 0, duration: 0.42 },
+        0.12
+      );
+
+      tl.fromTo(
+        "#s14-seller",
+        { opacity: 0, rotationY: -88, x: -32, transformOrigin: "50% 50%" },
+        { opacity: 1, rotationY: 0, x: 0, duration: 0.58, ease: "power4.out" },
+        0
+      );
+
+      tl.fromTo(
+        "#s14-package",
+        { opacity: 0, rotationY: -82, y: 28, scale: 0.94, transformOrigin: "50% 50%" },
+        { opacity: 1, rotationY: 0, y: 0, scale: 1, duration: 0.55 },
+        0.21
+      );
+
+      tl.to(
+        "#s14-seller",
+        { y: -7, duration: 0.7, ease: "sine.inOut", repeat: 7, yoyo: true },
+        0.65
+      );
+
+      tl.to(
+        "#s14-package",
+        { y: -10, duration: 0.9, ease: "sine.inOut", repeat: 5, yoyo: true },
+        0.82
+      );
+
+      tl.fromTo(
+        "#s14-private-card",
+        { opacity: 0, rotationY: 94, y: 18, transformOrigin: "0% 50%" },
+        { opacity: 1, rotationY: -18, y: 0, duration: 0.62, ease: "power4.out" },
+        1.08
+      );
+
+      tl.to(
+        "#s14-seller",
+        { x: -70, duration: 0.88, ease: "power3.inOut" },
+        2.41
+      );
+
+      tl.fromTo(
+        "#s14-examiner",
+        { opacity: 0, rotationY: 88, x: 0, transformOrigin: "50% 50%" },
+        { opacity: 1, rotationY: 0, x: 70, duration: 0.88, ease: "power4.out" },
+        2.41
+      );
+
+      tl.fromTo(
+        "#s14-gap-line",
+        { opacity: 0, scaleX: 0.72 },
+        { opacity: 1, scaleX: 1, duration: 0.88, ease: "power3.inOut" },
+        2.41
+      );
+
+      tl.fromTo(
+        "#s14-examiner-note",
+        { opacity: 0, y: 18, rotationY: 25 },
+        { opacity: 1, y: 0, rotationY: 0, duration: 0.52 },
+        2.62
+      );
+
+      tl.to(
+        "#s14-examiner",
+        { y: 8, duration: 0.55, ease: "sine.inOut", repeat: 5, yoyo: true },
+        2.95
+      );
+
+      tl.fromTo(
+        "#s14-probe-line",
+        { opacity: 0, scaleX: 0 },
+        { opacity: 1, scaleX: 1, duration: 0.42 },
+        3.12
+      );
+
+      tl.fromTo(
+        "#s14-flap",
+        { rotationX: 0, y: 0 },
+        { rotationX: -126, y: -8, duration: 0.62, ease: "power4.inOut" },
+        3.24
+      );
+
+      tl.fromTo(
+        "#s14-inside",
+        { opacity: 0, y: 20, scale: 0.92 },
+        { opacity: 1, y: 0, scale: 1, duration: 0.48 },
+        3.34
+      );
+
+      tl.fromTo(
+        "#s14-open-question",
+        { scale: 0, rotation: -18 },
+        { scale: 1, rotation: 0, duration: 0.48, ease: "power4.out" },
+        3.44
+      );
+
+      tl.fromTo(
+        "#s14-examiner-question",
+        { scale: 1 },
+        { scale: 1.16, duration: 0.3, repeat: 1, yoyo: true },
+        3.54
+      );
+
+      tl.fromTo(
+        "#s14-punch",
+        { opacity: 0, y: 30, scale: 0.94, rotationX: -18 },
+        { opacity: 1, y: 0, scale: 1, rotationX: 0, duration: 0.58, ease: "power4.out" },
+        4.2
+      );
+
+      window.__timelines["scene-s14"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

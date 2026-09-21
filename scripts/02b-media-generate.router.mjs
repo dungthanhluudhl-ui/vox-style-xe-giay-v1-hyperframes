@@ -23,7 +23,7 @@
 //     avatar account ("More options" → Download project/Product help/..., ĐÚNG — dùng ở giai
 //     đoạn 3 để tải cả project 1 lần dạng zip).
 //
-// Usage: node scripts/02b-media-generate.router.mjs --video=<slug> [--flow-account=<tên>] [--style-notes="..."] [--resume-project=<url>]
+// Usage: node scripts/02b-media-generate.router.mjs --video=<slug> [--flow-account=<tên>] [--style-notes="..."] [--resume-project=<url>] [--retry-animate]
 //   --flow-account=<tên>     Tài khoản Flow để dùng (mặc định "default") — mỗi tên có profile
 //                            Chrome/session đăng nhập riêng dưới pipeline/.flow-profile/<tên>/
 //   --resume-project=<url>   Mở lại project Flow đã tạo trước đó (URL tự lưu vào
@@ -31,6 +31,10 @@
 //                            chạy) thay vì tạo project/ảnh/video mới — bỏ qua hẳn Giai đoạn 1+2,
 //                            chỉ chạy Giai đoạn 3 (tải file). Dùng khi Giai đoạn 3 lỗi (vd tải
 //                            thiếu file) hoặc muốn tải lại mà không tốn credit tạo lại từ đầu.
+//   --retry-animate          Kết hợp với --resume-project=<url>: ảnh Giai đoạn 1 đã đúng, chỉ
+//                            chạy lại Giai đoạn 2 (tạo chuyển động) rồi Giai đoạn 3, KHÔNG tạo
+//                            ảnh mới. Dùng khi Giai đoạn 2 lỗi (vd Flow báo "video failed to
+//                            generate") nhưng ảnh vẫn tốt — tránh tốn credit tạo lại ảnh.
 import fs from "node:fs";
 import path from "node:path";
 import { execFile } from "node:child_process";
@@ -67,6 +71,11 @@ const flowAccount = (process.argv.find((a) => a.startsWith("--flow-account=")) |
 const resumeProjectArg = (process.argv.find((a) => a.startsWith("--resume-project=")) || "").slice(
   "--resume-project=".length,
 );
+// Kết hợp với --resume-project=<url>: chạy LẠI Giai đoạn 2 (tạo chuyển động) trên project đã có
+// sẵn ảnh đúng, thay vì bỏ qua thẳng tới Giai đoạn 3 (tải file) như mặc định của --resume-project.
+// Dùng khi Giai đoạn 2 bị lỗi/fail (vd Flow báo "video failed to generate") nhưng ảnh ở Giai đoạn
+// 1 đã đúng — tránh tốn credit tạo lại ảnh từ đầu.
+const retryAnimateArg = process.argv.includes("--retry-animate");
 
 if (!fs.existsSync(vp.scriptFile)) {
   console.error(`Không tìm thấy kịch bản tại ${vp.scriptFile}. Tạo file này trước khi chạy.`);
@@ -185,7 +194,10 @@ Trả về JSON đúng format: {"prompts": ["prompt phân cảnh 1 bằng tiến
 }
 
 function buildScenePromptListMessage(prompts) {
-  return `Hãy tạo ảnh cho danh sách prompt dưới đây, mỗi dòng trong danh sách sẽ tương ứng với một hình ảnh:\n${prompts.join("\n")}`;
+  return `Hãy tạo ĐÚNG ${prompts.length} ẢNH RIÊNG BIỆT, mỗi ảnh là MỘT FILE ảnh độc lập, khổ dọc 9:16 (vertical), theo đúng ${prompts.length} prompt dưới đây (mỗi dòng = một ảnh, theo đúng thứ tự):
+${prompts.join("\n")}
+
+QUAN TRỌNG: TUYỆT ĐỐI KHÔNG gộp nhiều cảnh vào chung 1 ảnh duy nhất (không tạo dạng lưới/collage/contact-sheet/storyboard nhiều ô trong 1 ảnh, không vẽ minh hoạ "danh sách prompt"). Phải có đủ ${prompts.length} ảnh riêng biệt xuất hiện trong khu vực media, mỗi ảnh khổ dọc 9:16, không phải khổ ngang.`;
 }
 
 function buildAnimatePrompt() {
@@ -447,13 +459,33 @@ async function run() {
   if (resumeProjectArg) {
     // ---- Chế độ truy cập lại project đã có sẵn (vd sau lỗi tải thiếu file) — bỏ qua hẳn
     // Giai đoạn 1 (tạo ảnh) + Giai đoạn 2 (tạo chuyển động), không tốn thời gian/credit tạo lại.
-    logLine(`\nChế độ --resume-project: mở lại ${resumeProjectArg}, bỏ qua Giai đoạn 1+2.`);
+    // Trừ khi --retry-animate: vẫn chạy lại Giai đoạn 2 (ảnh Giai đoạn 1 đã đúng, chỉ cần tạo
+    // lại chuyển động, vd sau khi Flow báo "video failed to generate").
+    logLine(
+      `\nChế độ --resume-project: mở lại ${resumeProjectArg}, bỏ qua Giai đoạn 1${retryAnimateArg ? "" : "+2"}.`,
+    );
     const openResult = await ab(["--profile", PROFILE_DIR, "--headed", "--download-path", STAGE_DIR, "open", resumeProjectArg]);
     if (!openResult.success) {
       logLine(`\n⚠ Không mở được project: ${openResult.error}`);
       process.exit(1);
     }
     logLine(`Đã vào: ${openResult.data.title} (${openResult.data.url})`);
+
+    if (retryAnimateArg) {
+      const phase2 = await runPhase({
+        phaseName: "2-tao-chuyen-dong",
+        phaseGoal:
+          "Điền (fill) đúng tin nhắn được cung cấp bên dưới vào ô chat Agent của project đang mở và gửi đi, để yêu cầu Flow tạo chuyển động/video từ các ảnh đã có sẵn trong project. Đợi Flow tạo xong các clip video. Chỉ được trả done khi video ĐÃ xuất hiện trong khu vực media và không còn dấu hiệu đang xử lý.",
+        messageToSend: buildAnimatePrompt(),
+        maxSteps: 25,
+        downloadedRef,
+      });
+      if (phase2.status !== "done") {
+        stopEarly(phase2, "2-tao-chuyen-dong");
+        return;
+      }
+      logLine(`✓ Giai đoạn 2 xong: ${phase2.reason || ""}`);
+    }
   } else {
     logLine(`Đang chia kịch bản thành các phân cảnh + viết prompt ảnh (qua ${routing.scene_image_prompt_writer})...`);
     const scenePrompts = await generateScenePrompts(scriptText, styleNotesArg);

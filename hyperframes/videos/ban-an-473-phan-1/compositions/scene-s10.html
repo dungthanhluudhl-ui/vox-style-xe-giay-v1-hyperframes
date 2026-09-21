@@ -1,0 +1,795 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+      :root {
+        --paper: #e7e3d9;
+        --card: #f5f0e4;
+        --ink: #141414;
+        --orange: #ff6a1a;
+        --grid: rgba(20, 20, 20, 0.32);
+        --light-grid: rgba(20, 20, 20, 0.16);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        overflow: hidden;
+        background: var(--paper);
+      }
+
+      body {
+        color: var(--ink);
+        font-family: "Be Vietnam Pro", sans-serif;
+        font-weight: 700;
+      }
+
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: var(--paper);
+        isolation: isolate;
+      }
+
+      .clip {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+      }
+
+      .chart-background {
+        position: absolute;
+        inset: 0;
+        z-index: 0;
+        overflow: hidden;
+        background:
+          linear-gradient(90deg, rgba(255, 106, 26, 0.1), transparent 30%),
+          var(--paper);
+      }
+
+      .chart-line {
+        position: absolute;
+        left: 0;
+        width: 100%;
+        height: 2px;
+        background: var(--grid);
+      }
+
+      .chart-line::before {
+        position: absolute;
+        top: -6px;
+        left: 0;
+        width: 34px;
+        height: 14px;
+        content: "";
+        background: var(--orange);
+      }
+
+      .chart-line:nth-child(1) {
+        top: 20%;
+      }
+
+      .chart-line:nth-child(2) {
+        top: 40%;
+      }
+
+      .chart-line:nth-child(3) {
+        top: 60%;
+      }
+
+      .chart-line:nth-child(4) {
+        top: 80%;
+      }
+
+      .grain {
+        position: absolute;
+        inset: 0;
+        z-index: 8;
+        pointer-events: none;
+        opacity: 0.18;
+        mix-blend-mode: multiply;
+        background-image:
+          radial-gradient(circle at 13% 17%, rgba(20, 20, 20, 0.28) 0 0.8px, transparent 1px),
+          radial-gradient(circle at 71% 29%, rgba(20, 20, 20, 0.2) 0 0.7px, transparent 1px),
+          radial-gradient(circle at 35% 83%, rgba(20, 20, 20, 0.24) 0 0.7px, transparent 1px);
+        background-position:
+          0 0,
+          9px 12px,
+          17px 5px;
+        background-size:
+          23px 19px,
+          29px 31px,
+          37px 27px;
+      }
+
+      #s10-video-shell {
+        position: absolute;
+        inset: 0;
+        z-index: 1;
+        overflow: hidden;
+        transform-origin: 50% 50%;
+        will-change: transform;
+      }
+
+      #s10-source-video {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center center;
+        background: var(--paper);
+      }
+
+      #s10-overlay {
+        z-index: 4;
+        pointer-events: none;
+      }
+
+      #s10-route-panel {
+        position: absolute;
+        top: 166px;
+        right: 56px;
+        left: 56px;
+        height: 330px;
+        overflow: hidden;
+        border: 3px solid var(--ink);
+        border-radius: 28px;
+        background: rgba(245, 240, 228, 0.95);
+        box-shadow: 12px 12px 0 rgba(20, 20, 20, 0.94);
+        opacity: 0;
+        will-change: transform, opacity;
+      }
+
+      .route-kicker {
+        position: absolute;
+        top: 18px;
+        left: 24px;
+        display: inline-flex;
+        min-height: 42px;
+        align-items: center;
+        padding: 6px 15px;
+        border-radius: 999px;
+        background: var(--ink);
+        color: var(--card);
+        font-size: 20px;
+        font-weight: 900;
+        letter-spacing: 0.06em;
+      }
+
+      .route-stage {
+        position: absolute;
+        inset: 0;
+      }
+
+      .route-svg {
+        position: absolute;
+        top: 62px;
+        left: 20px;
+        width: calc(100% - 40px);
+        height: 150px;
+        overflow: visible;
+      }
+
+      .route-path {
+        fill: none;
+        stroke: var(--ink);
+        stroke-width: 9;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
+      #s10-route-resale {
+        stroke: var(--orange);
+      }
+
+      .arrow-head {
+        opacity: 0;
+      }
+
+      .node-row {
+        position: absolute;
+        right: 38px;
+        bottom: 22px;
+        left: 38px;
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 26px;
+        align-items: end;
+      }
+
+      .route-node {
+        display: flex;
+        min-width: 0;
+        height: 112px;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        padding: 14px 12px;
+        border: 3px solid var(--ink);
+        border-radius: 18px;
+        background: var(--card);
+        color: var(--ink);
+        opacity: 0;
+        will-change: transform, opacity;
+      }
+
+      .route-node--focus {
+        color: var(--ink);
+        background: var(--orange);
+      }
+
+      .node-icon {
+        display: block;
+        flex: 0 0 48px;
+        width: 48px;
+        height: 48px;
+      }
+
+      .node-icon path,
+      .node-icon circle {
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 5;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
+      .node-initial {
+        display: grid;
+        flex: 0 0 48px;
+        width: 48px;
+        height: 48px;
+        place-items: center;
+        border: 4px solid var(--ink);
+        border-radius: 50%;
+        font-size: 26px;
+        font-weight: 900;
+      }
+
+      .node-label {
+        max-width: 164px;
+        font-size: 19px;
+        font-weight: 900;
+        line-height: 1.18;
+        text-align: center;
+        text-transform: uppercase;
+      }
+
+      #s10-package {
+        position: absolute;
+        top: 116px;
+        left: 148px;
+        width: 58px;
+        height: 50px;
+        border: 4px solid var(--ink);
+        border-radius: 8px;
+        background: var(--card);
+        opacity: 0;
+        will-change: transform, opacity;
+      }
+
+      #s10-package::before {
+        position: absolute;
+        top: -4px;
+        bottom: -4px;
+        left: 20px;
+        width: 12px;
+        content: "";
+        border-right: 3px solid var(--ink);
+        border-left: 3px solid var(--ink);
+        background: var(--orange);
+      }
+
+      #s10-package::after {
+        position: absolute;
+        top: 10px;
+        right: 8px;
+        width: 12px;
+        height: 7px;
+        content: "";
+        border: 2px solid var(--ink);
+        background: var(--card);
+      }
+
+      #s10-price-rail {
+        position: absolute;
+        top: 620px;
+        right: 56px;
+        width: 368px;
+        padding: 18px;
+        border: 3px solid var(--ink);
+        border-radius: 26px;
+        background: rgba(231, 227, 217, 0.93);
+        box-shadow: 10px 10px 0 rgba(20, 20, 20, 0.9);
+      }
+
+      .price-heading {
+        display: flex;
+        height: 54px;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 2px 12px;
+        color: var(--ink);
+        font-size: 20px;
+        font-weight: 900;
+        letter-spacing: 0.05em;
+      }
+
+      .price-heading-mark {
+        display: block;
+        width: 56px;
+        height: 10px;
+        background: var(--orange);
+      }
+
+      .price-list {
+        display: grid;
+        gap: 14px;
+      }
+
+      .price-step {
+        position: relative;
+        display: grid;
+        min-height: 142px;
+        align-content: center;
+        padding: 18px 18px 18px 30px;
+        overflow: hidden;
+        border: 3px solid var(--ink);
+        border-radius: 18px;
+        background: var(--card);
+        opacity: 0;
+        will-change: transform, opacity;
+      }
+
+      .price-step::before {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        width: 12px;
+        content: "";
+        background: var(--orange);
+      }
+
+      .price-step--peak {
+        background: var(--orange);
+      }
+
+      .price-step--peak::before {
+        background: var(--ink);
+      }
+
+      .price-label {
+        margin-bottom: 3px;
+        color: var(--ink);
+        font-size: 18px;
+        font-weight: 900;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .price-value {
+        color: var(--ink);
+        font-size: 49px;
+        font-weight: 900;
+        line-height: 1.05;
+        white-space: nowrap;
+      }
+
+      .bottom-signature {
+        position: absolute;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        z-index: 10;
+        height: 18px;
+        background: var(--orange);
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s10"
+      data-start="0"
+      data-width="1080"
+      data-height="1920"
+      data-duration="8.07"
+      data-fps="30"
+    >
+      <div class="chart-background" aria-hidden="true">
+        <div class="chart-line"></div>
+        <div class="chart-line"></div>
+        <div class="chart-line"></div>
+        <div class="chart-line"></div>
+      </div>
+
+      <div
+        id="s10-video-shell"
+        data-layout-allow-overflow="true"
+        data-layout-allow-occlusion="true"
+      >
+        <video
+          id="s10-source-video"
+          class="clip"
+          data-start="0"
+          data-duration="8.07"
+          data-media-start="0"
+          muted
+          playsinline
+          preload="auto"
+          src="assets/vid-01-drug-dealing-profit-cutout.mp4"
+        ></video>
+      </div>
+
+      <section
+        id="s10-overlay"
+        class="clip"
+        data-start="0"
+        data-duration="8.07"
+        data-layout-allow-overlap="true"
+        data-layout-allow-occlusion="true"
+        aria-label="Sơ đồ dòng chuyển hàng và các mốc giá"
+      >
+        <div
+          id="s10-route-panel"
+          data-layout-allow-overlap="true"
+          data-layout-allow-occlusion="true"
+        >
+          <div class="route-kicker">DÒNG CHUYỂN HÀNG</div>
+
+          <div class="route-stage">
+            <svg
+              class="route-svg"
+              viewBox="0 0 928 150"
+              xmlns="http://www.w3.org/2000/svg"
+              aria-hidden="true"
+            >
+              <path
+                id="s10-route-purchase"
+                class="route-path"
+                d="M145 84 C250 84 360 84 465 84"
+              />
+              <polygon
+                id="s10-purchase-head"
+                class="arrow-head"
+                points="465,84 437,68 437,100"
+                fill="#141414"
+              />
+
+              <path
+                id="s10-route-resale"
+                class="route-path"
+                d="M500 84 C605 84 710 84 815 84"
+              />
+              <polygon
+                id="s10-resale-head"
+                class="arrow-head"
+                points="815,84 787,68 787,100"
+                fill="#FF6A1A"
+              />
+            </svg>
+
+            <div id="s10-package" aria-label="Gói hàng"></div>
+
+            <div class="node-row">
+              <div id="s10-seller" class="route-node">
+                <svg class="node-icon" viewBox="0 0 48 48" aria-hidden="true">
+                  <circle class="seller-draw" cx="24" cy="14" r="8"></circle>
+                  <path class="seller-draw" d="M8 42 C10 29 16 25 24 25 C32 25 38 29 40 42"></path>
+                </svg>
+                <div class="node-label">Người bán online</div>
+              </div>
+
+              <div id="s10-tien" class="route-node route-node--focus">
+                <div class="node-initial">T</div>
+                <div class="node-label">Tiến</div>
+              </div>
+
+              <div id="s10-buyer" class="route-node">
+                <svg class="node-icon" viewBox="0 0 48 48" aria-hidden="true">
+                  <circle cx="24" cy="14" r="8"></circle>
+                  <path d="M8 42 C10 29 16 25 24 25 C32 25 38 29 40 42"></path>
+                </svg>
+                <div class="node-label">Người mua</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <aside
+          id="s10-price-rail"
+          data-layout-allow-overlap="true"
+          data-layout-allow-occlusion="true"
+          aria-label="Thang giá giao dịch"
+        >
+          <div class="price-heading">
+            <span>GIÁ GIAO DỊCH</span>
+            <span class="price-heading-mark"></span>
+          </div>
+
+          <div class="price-list">
+            <div id="s10-price-card-100" class="price-step">
+              <div class="price-label">Giá nhập</div>
+              <div id="s10-price-value-100" class="price-value">0đ</div>
+            </div>
+
+            <div id="s10-price-card-200" class="price-step">
+              <div class="price-label">Bán lại</div>
+              <div id="s10-price-value-200" class="price-value">100.000đ</div>
+            </div>
+
+            <div id="s10-price-card-350" class="price-step price-step--peak">
+              <div class="price-label">Mức cao nhất</div>
+              <div id="s10-price-value-350" class="price-value">200.000đ</div>
+            </div>
+          </div>
+        </aside>
+      </section>
+
+      <div class="grain" aria-hidden="true"></div>
+      <div class="bottom-signature" aria-hidden="true"></div>
+    </div>
+
+    <script>
+      const purchasePath = document.getElementById("s10-route-purchase");
+      const resalePath = document.getElementById("s10-route-resale");
+      const sellerDrawParts = document.querySelectorAll(".seller-draw");
+
+      const purchaseLength = purchasePath.getTotalLength();
+      const resaleLength = resalePath.getTotalLength();
+
+      purchasePath.style.strokeDasharray = String(purchaseLength);
+      purchasePath.style.strokeDashoffset = String(purchaseLength);
+      resalePath.style.strokeDasharray = String(resaleLength);
+      resalePath.style.strokeDashoffset = String(resaleLength);
+
+      sellerDrawParts.forEach(function (part) {
+        const length = part.getTotalLength();
+        part.style.strokeDasharray = String(length);
+        part.style.strokeDashoffset = String(length);
+      });
+
+      function formatPrice(value) {
+        return Math.round(value)
+          .toString()
+          .replace(/\B(?=(\d{3})+(?!\d))/g, ".") + "đ";
+      }
+
+      const price100 = { value: 0 };
+      const price200 = { value: 100000 };
+      const price350 = { value: 200000 };
+
+      const price100Element = document.getElementById("s10-price-value-100");
+      const price200Element = document.getElementById("s10-price-value-200");
+      const price350Element = document.getElementById("s10-price-value-350");
+
+      const tl = gsap.timeline({
+        paused: true,
+        defaults: {
+          ease: "power3.out"
+        }
+      });
+
+      tl.fromTo(
+        "#s10-video-shell",
+        { scale: 1.24 },
+        { scale: 1, duration: 0.72, ease: "expo.out" },
+        0
+      );
+
+      tl.fromTo(
+        "#s10-route-panel",
+        { y: -26, scale: 1.035, opacity: 0 },
+        { y: 0, scale: 1, opacity: 1, duration: 0.54, ease: "power4.out" },
+        0.18
+      );
+
+      tl.fromTo(
+        "#s10-seller",
+        { y: 20, scale: 0.9, opacity: 0 },
+        { y: 0, scale: 1, opacity: 1, duration: 0.5, ease: "power3.out" },
+        0.62
+      );
+
+      tl.to(
+        ".seller-draw",
+        {
+          strokeDashoffset: 0,
+          duration: 0.46,
+          ease: "power2.out",
+          stagger: 0.08
+        },
+        0.68
+      );
+
+      tl.fromTo(
+        "#s10-tien",
+        { y: 18, scale: 0.9, opacity: 0 },
+        { y: 0, scale: 1, opacity: 1, duration: 0.46, ease: "power3.out" },
+        1.34
+      );
+
+      tl.to(
+        "#s10-route-purchase",
+        {
+          strokeDashoffset: 0,
+          duration: 0.62,
+          ease: "power2.out"
+        },
+        2.24
+      );
+
+      tl.fromTo(
+        "#s10-purchase-head",
+        { opacity: 0 },
+        { opacity: 1, duration: 0.16, ease: "power1.out" },
+        2.73
+      );
+
+      tl.fromTo(
+        "#s10-package",
+        { x: 0, scale: 0.86, opacity: 0 },
+        {
+          x: 320,
+          scale: 1,
+          opacity: 1,
+          duration: 0.72,
+          ease: "power3.inOut"
+        },
+        2.24
+      );
+
+      tl.fromTo(
+        "#s10-price-card-100",
+        { x: 54, scale: 0.94, opacity: 0 },
+        { x: 0, scale: 1, opacity: 1, duration: 0.28, ease: "power4.out" },
+        2.45
+      );
+
+      tl.fromTo(
+        price100,
+        { value: 0 },
+        {
+          value: 100000,
+          duration: 0.3,
+          ease: "power3.out",
+          onUpdate: function () {
+            price100Element.textContent = formatPrice(price100.value);
+          }
+        },
+        2.45
+      );
+
+      tl.fromTo(
+        "#s10-buyer",
+        { y: 18, scale: 0.9, opacity: 0 },
+        { y: 0, scale: 1, opacity: 1, duration: 0.42, ease: "power3.out" },
+        4.05
+      );
+
+      tl.to(
+        "#s10-route-resale",
+        {
+          strokeDashoffset: 0,
+          duration: 0.7,
+          ease: "power2.out"
+        },
+        4.32
+      );
+
+      tl.fromTo(
+        "#s10-resale-head",
+        { opacity: 0 },
+        { opacity: 1, duration: 0.16, ease: "power1.out" },
+        4.88
+      );
+
+      tl.fromTo(
+        "#s10-package",
+        { x: 320 },
+        {
+          x: 645,
+          duration: 0.8,
+          ease: "power3.inOut",
+          immediateRender: false
+        },
+        4.32
+      );
+
+      tl.fromTo(
+        "#s10-price-card-200",
+        { x: 54, scale: 0.94, opacity: 0 },
+        { x: 0, scale: 1, opacity: 1, duration: 0.28, ease: "power4.out" },
+        4.73
+      );
+
+      tl.fromTo(
+        price200,
+        { value: 100000 },
+        {
+          value: 200000,
+          duration: 0.59,
+          ease: "power3.out",
+          onUpdate: function () {
+            price200Element.textContent = formatPrice(price200.value);
+          }
+        },
+        4.73
+      );
+
+      tl.fromTo(
+        "#s10-price-card-350",
+        { x: 54, scale: 0.94, opacity: 0 },
+        { x: 0, scale: 1, opacity: 1, duration: 0.24, ease: "power4.out" },
+        6.33
+      );
+
+      tl.fromTo(
+        price350,
+        { value: 200000 },
+        {
+          value: 350000,
+          duration: 0.27,
+          ease: "power3.out",
+          onUpdate: function () {
+            price350Element.textContent = formatPrice(price350.value);
+          }
+        },
+        6.33
+      );
+
+      tl.fromTo(
+        "#s10-price-card-350",
+        { scale: 1 },
+        {
+          scale: 1.035,
+          duration: 0.16,
+          ease: "power2.out",
+          immediateRender: false
+        },
+        6.6
+      );
+
+      tl.to(
+        "#s10-price-card-350",
+        {
+          scale: 1,
+          duration: 0.2,
+          ease: "power2.inOut"
+        },
+        6.76
+      );
+
+      tl.fromTo(
+        "#s10-video-shell",
+        { y: 0 },
+        {
+          y: -2,
+          duration: 0.07,
+          ease: "sine.inOut",
+          immediateRender: false
+        },
+        8
+      );
+
+      window.__timelines["scene-s10"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

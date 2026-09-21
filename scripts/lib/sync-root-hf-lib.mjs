@@ -5,12 +5,14 @@
 // (CLI ráp thủ công, vd sau khi các tiến trình --no-root-sync chạy song song xong).
 //
 // Giai đoạn C: mount thêm <audio> (narration.mp3, copy tất định từ public/videos/<slug>/audio/)
-// + compositions/caption-track.html (Giai đoạn A, chỉ mount nếu file đã tồn tại — video chưa có
-// caption-track vẫn ráp được, chỉ thiếu phụ đề) — tổng quát hoá đúng logic đã kiểm chứng ở
-// poc/hyperframes/assemble-poc.mjs (hoistedLinks, mount 1 lần tất định).
+// + compositions/caption-track.html — SINH TẤT ĐỊNH mỗi lần ráp từ captions.json (xem
+// generate-caption-track-hf.mjs) rồi mount, bỏ qua im lặng nếu video chưa có captions.json —
+// tổng quát hoá đúng logic đã kiểm chứng ở poc/hyperframes/assemble-poc.mjs (hoistedLinks, mount
+// 1 lần tất định).
 import fs from "node:fs";
 import path from "node:path";
 import { videoPaths } from "./video-paths.mjs";
+import { generateCaptionTrackHf } from "./generate-caption-track-hf.mjs";
 
 // Dedup theo href (không theo chuỗi thô) — 2 scene có thể viết cùng 1 link font với cú pháp
 // hơi khác (tự đóng "/>" hay không), vẫn phải coi là trùng. Mirror đúng logic hoistedLinks đã
@@ -104,7 +106,10 @@ export function syncRootHf(slug, root = process.cwd()) {
     };
   });
 
-  // Caption-track (Giai đoạn A) — mount NẾU đã có file, hoist link font của chính nó luôn.
+  // Caption-track (Giai đoạn A) — sinh TẤT ĐỊNH từ captions.json mỗi lần ráp (idempotent, ghi đè)
+  // rồi mount, thay vì chỉ mount NẾU file đã có sẵn (lỗ hổng thật đã gây video hoàn toàn không có
+  // phụ đề — xem generate-caption-track-hf.mjs). Bỏ qua im lặng nếu video chưa có captions.json.
+  generateCaptionTrackHf(slug, totalDurationSec * 1000, root);
   const captionTrackPath = path.join(vp.hfCompositionsDir, "caption-track.html");
   const hasCaptionTrack = fs.existsSync(captionTrackPath);
   if (hasCaptionTrack) {
@@ -170,7 +175,16 @@ export function syncRootHf(slug, root = process.cwd()) {
       * { margin: 0; padding: 0; box-sizing: border-box; }
       html, body { margin: 0; width: 1080px; height: 1920px; overflow: hidden; background: #0a0a0a; }
       #root { width: 100%; height: 100%; position: relative; }
-      .clip { position: absolute; inset: 0; }
+      /* isolation: isolate bắt buộc — mỗi slot .clip (scene hoặc caption-track) PHẢI tự tạo
+         stacking context riêng. Thiếu dòng này, z-index dùng NỘI BỘ trong 1 sub-composition
+         (rất phổ biến, vd overlay/dissolve/punch-card) sẽ "thoát" ra ngoài và cạnh tranh trực
+         tiếp ở stacking context gốc của trang, có thể đè lên slot khác (kể cả caption-track dù
+         nó luôn nằm SAU trong DOM) — lỗi thật đã gặp: caption-track hoàn toàn bị che khuất suốt
+         đúng thời lượng 1 scene (S01) dùng z-index nội bộ tới 20, dù data-track-index của
+         caption-track (1) cao hơn scene (0) — track-index KHÔNG quyết định layering (xem
+         hyperframes-core/references/tracks-and-clips.md), chỉ CSS z-index/stacking context mới
+         quyết định, nên phải chặn rò rỉ ngay ở tầng ráp tất định này. */
+      .clip { position: absolute; inset: 0; isolation: isolate; }
     </style>
   </head>
   <body>

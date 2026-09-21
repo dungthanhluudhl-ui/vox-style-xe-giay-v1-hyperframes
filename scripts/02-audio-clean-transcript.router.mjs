@@ -10,6 +10,7 @@
 //   audio dài 49.343s nhưng whisper gán từ cuối endMs=53680, dư 4.34s không có thật).
 // --video: chỉ dùng để ghi run-log vào đúng pipeline/videos/<slug>/run-log.md, không bắt buộc.
 import fs from "node:fs";
+import path from "node:path";
 import { execSync } from "node:child_process";
 import { callModel, extractText, extractJson, loadModelRouting, appendRunLog } from "./lib/router-client.mjs";
 import { videoPaths } from "./lib/video-paths.mjs";
@@ -288,6 +289,7 @@ if (referenceScript) {
   }
 }
 
+fs.mkdirSync(path.dirname(outputPath), { recursive: true });
 fs.writeFileSync(outputPath, JSON.stringify(cleaned, null, 2), "utf8");
 
 const mode = referenceScript ? "align-với-script-gốc" : "sửa-chính-tả-mù";
