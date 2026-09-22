@@ -17,9 +17,14 @@
 //     nhập sẵn qua `agent-browser --profile <tên>` để bỏ qua bước này — cookie/session copy
 //     KHÔNG mang theo được trạng thái đăng nhập Google thật trên máy này (xem
 //     responsibility-matrix.md mục 2b để biết chi tiết đã kiểm chứng). Không thử lại hướng đó.
-//     Tiện ích double-click thay vì gõ lệnh tay: scripts/flow-profile-open.bat [tên-account]
-//     (mặc định "default") — tự tạo thư mục profile nếu chưa có, mở đúng Chrome+profile đó tại
-//     flow.google.com. Vẫn phải tự đóng hết Chrome trước khi chạy nếu là lần đăng nhập ĐẦU TIÊN.
+//     Tiện ích double-click theo TỪNG ACCOUNT riêng, không cần gõ gì, không thể nhầm account:
+//     scripts/flow-profile-open-default.bat / -flow-02.bat / -flow-03.bat. Script chung
+//     scripts/flow-profile-open.bat [tên-account] vẫn dùng được (gõ lệnh trong Command Prompt),
+//     nhưng double-click KHÔNG kèm tên account giờ HỎI LẠI trước khi mở (không âm thầm mặc định
+//     "default" nữa) — bug thật đã xảy ra (2026-09-22): double-click không tham số từng âm thầm
+//     mở lại đúng profile "default" production đang dùng thật, khiến người dùng tưởng nhầm là
+//     profile mới rồi đăng nhập tài khoản khác đè vào đó. Xem responsibility-matrix.md mục 2b.
+//     Vẫn phải tự đóng hết Chrome trước khi chạy nếu là lần đăng nhập ĐẦU TIÊN cho account MỚI.
 //   - Hết credit/hạn mức tạo ảnh ở 1 tài khoản: thiết lập thêm 1 tài khoản Flow khác (đăng nhập
 //     thủ công 1 lần như trên vào 1 --flow-account=<tên khác>), thêm tên đó vào "priority" của
 //     scripts/flow-accounts.json — từ đó script TỰ ĐỘNG chuyển sang account dự phòng khi gặp lỗi

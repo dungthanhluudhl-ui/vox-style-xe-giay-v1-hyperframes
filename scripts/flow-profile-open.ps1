@@ -49,6 +49,18 @@ if ($isNew) {
   Write-Host "   xong thi dong cua so lai. Sau do them '$Account' vao scripts/flow-accounts.json"
   Write-Host "   (truong 'priority') neu muon dung cho auto-fallback."
 } else {
+  # CANH BAO TO, DE THAY - loi that da xay ra (2026-09-22): nguoi dung tuong day la profile
+  # moi nhung thuc ra la profile "default" da dang nhap san (qua session website, khong phai
+  # tai khoan Chrome cap profile nen khong co dau hieu truc quan), dan toi dang nham tai khoan
+  # khac vao profile production dang dung that.
+  Write-Host ""
+  Write-Host "==================================================================" -ForegroundColor Red
+  Write-Host " DAY LA PROFILE DA CO SAN (KHONG PHAI PROFILE MOI): '$Account'" -ForegroundColor Red
+  Write-Host " Neu ban dinh dang nhap 1 TAI KHOAN MOI, day SAI profile - dong cua" -ForegroundColor Red
+  Write-Host " so lai ngay va kiem tra lai ten account truyen vao." -ForegroundColor Red
+  Write-Host " (vd tai khoan da dung o day co the la tai khoan dang chay production" -ForegroundColor Red
+  Write-Host " that - dang nhap de tai khoan khac vao day se lam hong session dang dung)" -ForegroundColor Red
+  Write-Host "==================================================================" -ForegroundColor Red
   Write-Host "Mo profile da co cua account '$Account' tai $profileDir"
 }
 

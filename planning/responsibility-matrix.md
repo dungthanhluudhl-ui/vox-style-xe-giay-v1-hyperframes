@@ -57,12 +57,35 @@ kịp thêm vào, helper trả về mặc định an toàn `{ priority: ["defaul
 (2026-09-22) file chỉ có `["default"]` vì chưa có account dự phòng nào được setup thật.
 
 **Tạo profile mới / mở lại profile để đăng nhập, quản lý (không cần gõ lệnh tay):**
-`scripts/flow-profile-open.bat [tên-account]` (double-click được, mặc định "default" nếu bỏ
-trống; `-ListAccounts` để xem các profile đã có) — tự tạo `pipeline/.flow-profile/<tên>/` nếu
-chưa có, mở đúng Chrome trỏ profile đó tại flow.google.com, KHÔNG qua agent-browser. Vẫn phải tự
-đóng HẾT Chrome đang chạy (kể cả nền) trước khi chạy nếu là lần đăng nhập ĐẦU TIÊN cho account
-đó — đã xác nhận thật (2026-09-22): nếu Chrome cá nhân đang mở, `--user-data-dir` bị bỏ qua âm
-thầm và trang chỉ mở thành 1 tab trong cửa sổ Chrome hiện có thay vì cửa sổ profile riêng.
+`scripts/flow-profile-open.bat [tên-account]` (double-click được; `-ListAccounts` để xem các
+profile đã có) — tự tạo `pipeline/.flow-profile/<tên>/` nếu chưa có, mở đúng Chrome trỏ profile
+đó tại flow.google.com, KHÔNG qua agent-browser. Vẫn phải tự đóng HẾT Chrome đang chạy (kể cả
+nền) trước khi chạy nếu là lần đăng nhập ĐẦU TIÊN cho account đó — đã xác nhận thật
+(2026-09-22): nếu Chrome cá nhân đang mở, `--user-data-dir` bị bỏ qua âm thầm và trang chỉ mở
+thành 1 tab trong cửa sổ Chrome hiện có thay vì cửa sổ profile riêng.
+
+**Bug thật đã sửa (2026-09-22) — double-click không tham số âm thầm mở NHẦM profile đang dùng
+thật:** double-click file `.bat` trong File Explorer KHÔNG truyền được tham số dòng lệnh — bản
+đầu tiên của script khi đó âm thầm mặc định về `"default"`. Hậu quả thật đã xảy ra: người dùng
+double-click định tạo profile mới cho `flow-02` (account `binhthuan`), nhưng vì không gõ tham
+số, script mở lại đúng profile `default` — vốn ĐÃ đăng nhập sẵn tài khoản `luu` (qua session
+website, KHÔNG phải tài khoản cấp Chrome profile nên không có avatar/dấu hiệu trực quan nào cảnh
+báo "profile này đã có người dùng"). Người dùng tưởng đây là cửa sổ trống nên đăng nhập
+`binhthuan` vào đúng profile production `default` đang dùng thật, có nguy cơ ghi đè/trộn lẫn
+session đang chạy thật. Đã sửa 2 lớp:
+1. `flow-profile-open.bat`: nếu double-click KHÔNG kèm tên account, giờ HỎI LẠI ngay trong cửa
+   sổ console (không âm thầm mặc định) — Enter rỗng = huỷ, không mở gì.
+2. `flow-profile-open.ps1`: khi mở 1 profile ĐÃ CÓ SẴN (không phải profile mới tạo), in cảnh báo
+   to màu đỏ "ĐÂY LÀ PROFILE ĐÃ CÓ SẴN — KHÔNG PHẢI PROFILE MỚI" trước khi mở Chrome.
+3. Thêm sẵn 3 file double-click riêng biệt, không cần gõ gì, không thể nhầm account:
+   `scripts/flow-profile-open-default.bat`, `scripts/flow-profile-open-flow-02.bat`,
+   `scripts/flow-profile-open-flow-03.bat` — mỗi file hardcode đúng 1 tên account.
+
+**Trạng thái cần xử lý sau sự cố (2026-09-22):** profile `default` hiện có thể đang lẫn/đã đổi
+sang session `binhthuan` thay vì `luu` như trước — cần người dùng tự kiểm tra lại trên
+flow.google.com (avatar tài khoản góc phải) trước khi chạy video sản xuất tiếp theo bằng
+`--flow-account=default`, và dùng `scripts/flow-profile-open-flow-02.bat` (KHÔNG phải file
+`.bat` chung) để thiết lập `flow-02` thật sự từ đầu.
 
 **Đã thử và KHÔNG dùng được — tái sử dụng profile Chrome thật đã đăng nhập sẵn (2026-09-22):**
 `agent-browser` có tính năng "Chrome Profile Reuse" (`--profile <tên>`, copy profile Chrome thật
