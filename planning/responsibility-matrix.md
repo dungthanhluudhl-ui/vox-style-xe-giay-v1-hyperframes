@@ -54,7 +54,10 @@ thư mục đang hoạt động thật), account mới từ nay đặt tên tu�
 đầu từ 02 vì `default` coi như #1). File chỉ nên liệt kê account THẬT SỰ đã đăng nhập thủ công
 xong (xem gotcha "Hết credit/hạn mức" phía trên) — nếu file chưa tồn tại hoặc account mới chưa
 kịp thêm vào, helper trả về mặc định an toàn `{ priority: ["default"] }`, không crash. Hiện tại
-(2026-09-22) file chỉ có `["default"]` vì chưa có account dự phòng nào được setup thật.
+(2026-09-22) file đã có `["default", "flow-02", "flow-03"]` — `flow-02` = tài khoản Google
+`taobaobinhthuan1405@gmail.com` ("binhthuan"), `flow-03` = `dtlcloud1@gmail.com` ("cloud1"), cả 2
+đã đăng nhập thủ công xong và xác nhận có gói Google AI Pro (kiểm chứng qua đọc
+`myaccount.google.com` bằng agent-browser, không suy đoán).
 
 **Tạo profile mới / mở lại profile để đăng nhập, quản lý (không cần gõ lệnh tay):**
 `scripts/flow-profile-open.bat [tên-account]` (double-click được; `-ListAccounts` để xem các
@@ -134,13 +137,13 @@ account nào chạy). Hết toàn bộ `candidateAccounts` mà vẫn fail, hoặ
 fallback: dừng hẳn, log đầy đủ lịch sử đã thử (account/giai đoạn/lý do từng lần).
 
 **Trạng thái kiểm chứng (2026-09-22):** đã unit-test `classifyBlockedReason()`/`shouldFallback()`
-với bảng case khớp đúng spec, và xác nhận `candidateAccounts` với `flow-accounts.json` thật hiện
-tại (`{"priority":["default"]}`) chỉ tạo ra `["default"]` — hành vi 1-account y hệt trước khi có
-D2/D3 (không có gì thay đổi cho tới khi thêm account dự phòng thật vào file). **CHƯA kiểm chứng
-end-to-end trên Flow thật** (cả đường thành công lẫn đường fallback thật) vì chưa có account dự
-phòng thứ 2 nào đăng nhập xong — cần setup thêm 1 account qua `scripts/flow-profile-open.bat`
-rồi test trên video sản xuất thật, hoặc giả lập 1 điều kiện fail để buộc nhánh fallback chạy,
-trước khi coi là đã kiểm chứng đầy đủ.
+với bảng case khớp đúng spec, và mô phỏng đầy đủ vòng lặp `main()` với 4 kịch bản (quota-fail rồi
+fallback thành công, CAPTCHA không fallback, hết cả 3 account, chỉ 1 account thành công ngay) —
+cả 4 PASS. Đã setup xong 2 account dự phòng thật (`flow-02`=binhthuan, `flow-03`=cloud1, xem mục
+2b phía trên) và thêm vào `flow-accounts.json`. **CHƯA kiểm chứng end-to-end trên Flow thật** (cả
+đường thành công lẫn đường fallback thật đều chưa chạy qua `02b-media-generate.router.mjs` thật)
+— cần chạy trên video sản xuất kế tiếp, hoặc giả lập 1 điều kiện fail để buộc nhánh fallback
+chạy, trước khi coi là đã kiểm chứng đầy đủ.
 
 **Gotcha môi trường thật đã gặp khi setup (đọc trước khi debug lại, giống tinh thần đoạn
 `--no-root-sync` ở mục 6):**
