@@ -36,8 +36,8 @@ Thay bước tự tay tạo ảnh/video trong Google Flow rồi copy vào `publi
 
 | Task | Ai/gì đảm nhiệm | Công cụ |
 |---|---|---|
-| Chia kịch bản thành phân cảnh + viết prompt ảnh tiếng Anh (tỉ lệ số cảnh theo độ dài kịch bản) | 9router[scene_image_prompt_writer] | `ag/gemini-3.8-flash-high` |
-| Quyết định hành động điều khiển trình duyệt (click/fill/scroll/wait/download/done/blocked) mỗi bước | 9router[browser_agent] | `ag/gemini-3.8-flash-high`, nhìn screenshot đánh số [N] + danh sách accessibility (ref `@eN`) |
+| Chia kịch bản thành phân cảnh + viết prompt ảnh tiếng Anh (tỉ lệ số cảnh theo độ dài kịch bản) | 9router[scene_image_prompt_writer] | `ag/gemini-3.7-flash-medium` (đổi từ `ag/gemini-3.8-flash-high` qua POC B2, xem mục 9) |
+| Quyết định hành động điều khiển trình duyệt (click/fill/scroll/wait/download/done/blocked) mỗi bước | 9router[browser_agent] | `ag/gemini-3.7-flash-medium` (đổi từ `ag/gemini-3.8-flash-high`, áp dụng trực tiếp cho video kế tiếp — CHƯA qua POC riêng, xem mục 9; theo dõi kết quả qua latency ghi trong `media-generate-log.md`), nhìn screenshot đánh số [N] + danh sách accessibility (ref `@eN`) |
 | Thực thi hành động trên Chrome thật qua CDP | Local | `agent-browser` (Vercel Labs, binary native, gọi thẳng không qua shell) |
 | Giải nén zip tải về (nếu có) + phân loại ảnh/video theo đuôi file vào đúng `imagesDir`/`videosDir`, chờ tất định (poll hệ thống file) cho tới khi tải thực sự xong trước khi phân loại | Local | `adm-zip` |
 
@@ -272,7 +272,7 @@ chưa POC / đang POC / PASS-đã đổi / FAIL-giữ nguyên.
 |---|---|---|---|---|
 | `text_cleanup` | 2 | `ag/gemini-3.7-flash-medium` (đã đổi) | dự phòng: `ag/gemini-3.8-flash-medium` = `text_cleanup_alt` | **PASS-đã đổi** — xem POC B1 dưới |
 | `scene_image_prompt_writer` | 2b | `ag/gemini-3.7-flash-medium` (đã đổi) | dự phòng: `ag/gemini-3.8-flash-medium` = `scene_image_prompt_writer_alt` | **PASS-đã đổi** (người dùng đã tự xem 2 bản prompt và xác nhận) — xem POC B2 dưới |
-| `browser_agent` | 2b | `ag/gemini-3.8-flash-high` | `ag/gemini-3.7-flash-medium` (dự phòng: `ag/gemini-3.8-flash-medium` = `browser_agent_alt`) | chưa POC — theo quyết định người dùng, POC trực tiếp trên video sản xuất kế tiếp, không dùng video test riêng (Nhóm C) |
+| `browser_agent` | 2b | `ag/gemini-3.7-flash-medium` (đã đổi) | dự phòng: `ag/gemini-3.8-flash-medium` = `browser_agent_alt`, hoặc revert về `ag/gemini-3.8-flash-high` | **đang theo dõi (Nhóm C)** — theo quyết định người dùng, KHÔNG POC riêng, áp dụng thẳng cho video sản xuất kế tiếp. `runPhase()` trong `02b-media-generate.router.mjs` đã ghi latency thật (`model: NNNms`) vào `media-generate-log.md` mỗi bước (2026-09-22) để so sánh với baseline ~7-10s/lần đo trước đó — kiểm tra log này sau khi video kế tiếp chạy xong Stage 2b. Nếu kết quả kém rõ rệt (nhiều `blocked`/`timeout`/lặp hành động bất thường so với các lần trước): revert `browser_agent` về `ag/gemini-3.8-flash-high`, ghi lý do vào đây. |
 | `vision_media_analyze` | 3 | `ag/gemini-3.8-flash-high` | `ag/gemini-3.8-flash-low` (= `vision_media_analyze_alt`, đã tồn tại thật trong repo — khác rủi ro so với `-flash-medium` hoàn toàn chưa test) | **FAIL-giữ nguyên** — xem POC B3 dưới |
 
 ### Kết quả POC B1 — `text_cleanup` (2026-09-22, video "ban-an-473-phan-2", chế độ align-với-script, 504 từ)
