@@ -32,8 +32,17 @@ if (!BASE_URL || !API_KEY) {
  * @param {Array<{role: string, content: any}>} opts.messages
  * @param {number} [opts.temperature]
  * @param {number} [opts.maxTokens]
+ * @param {number} [opts.timeoutMs=120000] - hủy request nếu 9router không phản hồi trong khoảng
+ *   thời gian này (mặc định 2 phút). Không retry tự động — call site tự xử lý lỗi ném ra.
  */
-export async function callModel({ model, messages, temperature, maxTokens, responseFormat }) {
+export async function callModel({
+  model,
+  messages,
+  temperature,
+  maxTokens,
+  responseFormat,
+  timeoutMs = 120000,
+}) {
   const body = {
     model,
     messages,
@@ -45,6 +54,8 @@ export async function callModel({ model, messages, temperature, maxTokens, respo
 
   const startedAt = Date.now();
   console.log(`  [9router] gọi ${model}... (bắt đầu ${new Date(startedAt).toLocaleTimeString()})`);
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
   let res;
   try {
     res = await fetch(`${BASE_URL}/chat/completions`, {
@@ -54,11 +65,18 @@ export async function callModel({ model, messages, temperature, maxTokens, respo
         Authorization: `Bearer ${API_KEY}`,
       },
       body: JSON.stringify(body),
+      signal: controller.signal,
     });
   } catch (e) {
     const elapsed = ((Date.now() - startedAt) / 1000).toFixed(1);
+    if (e.name === "AbortError") {
+      console.log(`  [9router] TIMEOUT sau ${elapsed}s`);
+      throw new Error(`9router timeout sau ${timeoutMs}ms khi gọi ${model}`);
+    }
     console.log(`  [9router] LỖI sau ${elapsed}s: ${e.message || e}`);
     throw e;
+  } finally {
+    clearTimeout(timeoutId);
   }
   const elapsed = ((Date.now() - startedAt) / 1000).toFixed(1);
 

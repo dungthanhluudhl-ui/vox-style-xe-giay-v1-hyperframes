@@ -17,7 +17,7 @@ import {
 import { getVideoSlug, videoPaths } from "./lib/video-paths.mjs";
 
 const routing = loadModelRouting();
-const model = routing.vision_standard;
+const model = routing.vision_media_analyze;
 
 const slug = getVideoSlug();
 const vp = videoPaths(slug);

@@ -99,22 +99,21 @@ Media tới đây từ Stage 2b (tự động qua Google Flow) hoặc copy tay n
 |---|---|---|
 | Trích metadata (resolution, duration, codec) | Local | ffprobe / sharp |
 | Tạo contact sheet (lưới thumbnail để review) | Local | ffmpeg + sharp |
-| Phân tích nội dung từng ảnh/video (mô tả, gắn tag, đánh giá dùng được) | 9router[vision_cheap] | `ag/gemini-3.8-flash-low` |
-| Đề xuất đoạn cắt/khung hình phù hợp cho từng clip | 9router[vision_standard] | `ag/gemini-3.8-flash-high` |
+| Phân tích nội dung từng ảnh/video (mô tả, gắn tag, đánh giá dùng được, đề xuất đoạn cắt/khung hình) — 1 lời gọi/1 tier duy nhất, không tách 2 bước như bản tài liệu cũ | 9router[vision_media_analyze] | `ag/gemini-3.8-flash-high` |
 | Thực thi cắt/crop/resize theo quyết định đã chọn | Local | ffmpeg |
 
 ## 4. Style DNA (khi nhận tài liệu style)
 | Task | Ai/gì đảm nhiệm | Công cụ |
 |---|---|---|
-| Phân tích ảnh/video mẫu style (màu, texture giấy, cơ chế xé) | 9router[vision_standard] | `ag/gemini-3.8-flash-high` |
+| Phân tích ảnh/video mẫu style (màu, texture giấy, cơ chế xé) | 9router[vision_qa] | `ag/gemini-3.8-flash-high` |
 | Tổng hợp thành design tokens (text/JSON) | 9router[text_cleanup hoặc reasoning_generator nếu phức tạp] | — |
 | Nạp trực tiếp `STYLE_DNA.md`/`style-tokens.json` vào prompt generator mỗi lần codegen (không có file theme trung gian như `theme.ts` bên Remotion) | Local | `scripts/07-codegen.hf.router.mjs` |
 
 ## 5. Lập kế hoạch nội dung
 | Task | Ai/gì đảm nhiệm | Công cụ |
 |---|---|---|
-| Lập Scene Plan | 9router[reasoning_generator] | `ag/gemini-3.8-flash-high` (đổi từ `cx/gpt-5.6-sol` cùng đợt POC Stage 7, xem mục 6) |
-| Lập Shotlist | 9router[reasoning_generator hoặc reasoning_alt] | `ag/gemini-3.8-flash-high` hoặc `cx/gpt-6-astra` |
+| Lập Scene Plan | 9router[reasoning_planning] | `ag/gemini-3.8-flash-high` (đổi từ `cx/gpt-5.6-sol` cùng đợt POC Stage 7, xem mục 6; tách tier riêng khỏi `reasoning_generator` của Stage 7 — cùng giá trị, khác key, để đổi model Stage 5/6 không ảnh hưởng Stage 7) |
+| Lập Shotlist | 9router[reasoning_planning] | `ag/gemini-3.8-flash-high` |
 | Đọc & chốt Scene Plan/Shotlist trước khi dựng code | Claude | — (text, không nặng context) |
 
 ## 6. Dựng video (code HyperFrames)
@@ -239,7 +238,7 @@ sau Stage 6/7.
 | Task | Ai/gì đảm nhiệm | Công cụ |
 |---|---|---|
 | Preview (chỉ khi cần debug/người dùng yêu cầu xem) | Local | `npx hyperframes preview --background` (xem `hyperframes/videos/<slug>/CLAUDE.md`) |
-| Kiểm tra hình ảnh preview có khớp ý đồ/style không (chỉ khi cần, KHÔNG mặc định) | 9router[vision_standard] | `hyperframes snapshot` chụp vài frame gửi review, trả nhận xét text — KHÔNG Claude tự xem |
+| Kiểm tra hình ảnh preview có khớp ý đồ/style không (chỉ khi cần, KHÔNG mặc định) | 9router[vision_qa] | `hyperframes snapshot` chụp vài frame gửi review, trả nhận xét text — KHÔNG Claude tự xem |
 | Sửa code theo phản hồi QA | Claude (hoặc quay lại bước generate ở Stage 6 nếu là lỗi code) | — |
 
 ## 8. Render
@@ -250,7 +249,7 @@ Preview/QA riêng ở giữa** (xem ghi chú mục 7).
 |---|---|---|
 | Render video cuối (chỉ khi được yêu cầu rõ) | Local | `npx hyperframes render --quality looks -o out/<slug>-full.mp4 hyperframes/videos/<slug>` |
 | Kiểm tra file render (duration, resolution, không lỗi) | Local | ffprobe |
-| Xác nhận nội dung hiển thị đúng (vd phụ đề, hiệu ứng xuyên suốt) — CHỈ khi có lý do nghi ngờ cụ thể (không mặc định mọi video) | 9router[vision_standard] | trích frame bằng ffmpeg tại nhiều mốc + gửi vision agent — bài học thật (video 5): `hyperframes check` PASS không đảm bảo mọi lớp nội dung THỰC SỰ hiển thị (vd bug stacking-context ở mục 6). Đây là ghi chú cho 1 trường hợp cụ thể đã xảy ra, KHÔNG phải quy tắc bắt buộc tự động cho mọi video. |
+| Xác nhận nội dung hiển thị đúng (vd phụ đề, hiệu ứng xuyên suốt) — CHỈ khi có lý do nghi ngờ cụ thể (không mặc định mọi video) | 9router[vision_qa] | trích frame bằng ffmpeg tại nhiều mốc + gửi vision agent — bài học thật (video 5): `hyperframes check` PASS không đảm bảo mọi lớp nội dung THỰC SỰ hiển thị (vd bug stacking-context ở mục 6). Đây là ghi chú cho 1 trường hợp cụ thể đã xảy ra, KHÔNG phải quy tắc bắt buộc tự động cho mọi video. |
 
 **Bài học thật (video "ban-an-473-phan-2", 2026-09-22):** sau khi Stage 6 xong và `hyperframes
 check` đã ok=true, Claude tự ý mở `hyperframes preview --background` (không ai yêu cầu xem) và
@@ -261,6 +260,20 @@ phụ đề thiếu), không phải bước mặc định bắt buộc tự đ�
 **Áp dụng từ nay:** sau Stage 6 sạch lỗi → Render thẳng (Stage 8) → chỉ verify bằng
 ffprobe (bắt buộc, rẻ) → vision agent CHỈ khi người dùng report vấn đề cụ thể sau khi xem, hoặc
 Claude có nghi ngờ rõ ràng dựa trên bằng chứng cụ thể (không phải "để chắc ăn").
+
+## 9. Theo dõi POC đổi model tier sang biến thể rẻ hơn (2026-09-22)
+
+Các model `-flash-medium` dưới đây **chưa từng được test ở đâu trong repo** — theo văn hoá dự án
+(không suy đoán từ capability, luôn POC thật trên đúng task trước khi đổi đại trà; xem bài học
+`ag/gemini-3.1-pro-low` bị loại dù "tốt hơn trên giấy" ở mục 6). Cột "Trạng thái":
+chưa POC / đang POC / PASS-đã đổi / FAIL-giữ nguyên.
+
+| Tier | Stage | Model hiện tại | Model ứng viên | Trạng thái |
+|---|---|---|---|---|
+| `text_cleanup` | 2 | `ag/gemini-3.8-flash-high` | `ag/gemini-3.7-flash-medium` (dự phòng: `ag/gemini-3.8-flash-medium` = `text_cleanup_alt`) | chưa POC |
+| `scene_image_prompt_writer` | 2b | `ag/gemini-3.8-flash-high` | `ag/gemini-3.7-flash-medium` (dự phòng: `ag/gemini-3.8-flash-medium` = `scene_image_prompt_writer_alt`) | chưa POC |
+| `browser_agent` | 2b | `ag/gemini-3.8-flash-high` | `ag/gemini-3.7-flash-medium` (dự phòng: `ag/gemini-3.8-flash-medium` = `browser_agent_alt`) | chưa POC — theo quyết định người dùng, POC trực tiếp trên video sản xuất kế tiếp, không dùng video test riêng |
+| `vision_media_analyze` | 3 | `ag/gemini-3.8-flash-high` | `ag/gemini-3.8-flash-low` (= `vision_media_analyze_alt`, đã tồn tại thật trong repo — khác rủi ro so với `-flash-medium` hoàn toàn chưa test) | chưa POC |
 
 ## Lịch sử: pipeline Remotion (archive, 4 video đầu — KHÔNG áp dụng cho video mới)
 

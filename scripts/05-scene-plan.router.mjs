@@ -11,7 +11,7 @@ import { getVideoSlug, videoPaths } from "./lib/video-paths.mjs";
 
 const root = process.cwd();
 const routing = loadModelRouting();
-const model = routing.reasoning_generator;
+const model = routing.reasoning_planning;
 
 const slug = getVideoSlug();
 const vp = videoPaths(slug);
