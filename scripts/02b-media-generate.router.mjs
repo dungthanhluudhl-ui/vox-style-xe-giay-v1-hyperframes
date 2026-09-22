@@ -13,14 +13,19 @@
 //     tái dùng session đã đăng nhập, không bao giờ tự đăng nhập (Google chặn đăng nhập tương
 //     tác qua Chrome bị automation điều khiển). Đây là chi phí một lần cho mỗi tài khoản MỚI —
 //     KHÔNG cần lặp lại cho các lần chạy sau hay khi đổi qua lại giữa các tài khoản đã thiết
-//     lập sẵn.
+//     lập sẵn. ĐÃ THỬ VÀ KHÔNG DÙNG ĐƯỢC (2026-09-22): tái sử dụng profile Chrome thật đã đăng
+//     nhập sẵn qua `agent-browser --profile <tên>` để bỏ qua bước này — cookie/session copy
+//     KHÔNG mang theo được trạng thái đăng nhập Google thật trên máy này (xem
+//     responsibility-matrix.md mục 2b để biết chi tiết đã kiểm chứng). Không thử lại hướng đó.
 //     Tiện ích double-click thay vì gõ lệnh tay: scripts/flow-profile-open.bat [tên-account]
 //     (mặc định "default") — tự tạo thư mục profile nếu chưa có, mở đúng Chrome+profile đó tại
 //     flow.google.com. Vẫn phải tự đóng hết Chrome trước khi chạy nếu là lần đăng nhập ĐẦU TIÊN.
 //   - Hết credit/hạn mức tạo ảnh ở 1 tài khoản: thiết lập thêm 1 tài khoản Flow khác (đăng nhập
-//     thủ công 1 lần như trên vào 1 --flow-account=<tên khác>), sau đó chỉ cần đổi flag
-//     --flow-account= ở lần chạy tiếp theo để chuyển hẳn sang tài khoản đó — không cần đóng
-//     Chrome/đăng nhập lại nữa.
+//     thủ công 1 lần như trên vào 1 --flow-account=<tên khác>), thêm tên đó vào "priority" của
+//     scripts/flow-accounts.json — từ đó script TỰ ĐỘNG chuyển sang account dự phòng khi gặp lỗi
+//     đáng fallback (hết credit/lỗi kỹ thuật/timeout), không cần tự tay đổi --flow-account= hay
+//     canh chừng nữa. Xem classifyBlockedReason()/shouldFallback() bên dưới và
+//     planning/responsibility-matrix.md mục 2b để biết đầy đủ điều kiện kích hoạt.
 //   - Trang project Flow có 2 nút "More options" dễ nhầm: nút cạnh mỗi ảnh ("More options for
 //     the project" → Rename/Trash/Delete, SAI cho việc tải file) và nút ở thanh trên cùng gần
 //     avatar account ("More options" → Download project/Product help/..., ĐÚNG — dùng ở giai
@@ -32,13 +37,18 @@
 //     flow-accounts.json — file này chỉ nên liệt kê account THẬT SỰ đã đăng nhập xong.
 //
 // Usage: node scripts/02b-media-generate.router.mjs --video=<slug> [--flow-account=<tên>] [--style-notes="..."] [--resume-project=<url>] [--retry-animate]
-//   --flow-account=<tên>     Tài khoản Flow để dùng (mặc định "default") — mỗi tên có profile
-//                            Chrome/session đăng nhập riêng dưới pipeline/.flow-profile/<tên>/
+//   --flow-account=<tên>     Tài khoản Flow để THỬ TRƯỚC TIÊN (mặc định "default") — mỗi tên có
+//                            profile Chrome/session đăng nhập riêng dưới pipeline/.flow-profile/<tên>/.
+//                            Nếu account này fail đáng fallback, script tự chuyển sang account kế
+//                            tiếp trong scripts/flow-accounts.json (nếu có).
 //   --resume-project=<url>   Mở lại project Flow đã tạo trước đó (URL tự lưu vào
 //                            pipeline/videos/<slug>/flow-project.json sau Giai đoạn 1 mỗi lần
 //                            chạy) thay vì tạo project/ảnh/video mới — bỏ qua hẳn Giai đoạn 1+2,
 //                            chỉ chạy Giai đoạn 3 (tải file). Dùng khi Giai đoạn 3 lỗi (vd tải
 //                            thiếu file) hoặc muốn tải lại mà không tốn credit tạo lại từ đầu.
+//                            CHỈ áp dụng cho account đầu tiên (--flow-account=) — account fallback
+//                            không có quyền truy cập project do account khác tạo, tự bỏ qua cờ
+//                            này và bắt đầu lại từ Giai đoạn 1.
 //   --retry-animate          Kết hợp với --resume-project=<url>: ảnh Giai đoạn 1 đã đúng, chỉ
 //                            chạy lại Giai đoạn 2 (tạo chuyển động) rồi Giai đoạn 3, KHÔNG tạo
 //                            ảnh mới. Dùng khi Giai đoạn 2 lỗi (vd Flow báo "video failed to
@@ -57,6 +67,7 @@ import {
   appendRunLog,
 } from "./lib/router-client.mjs";
 import { getVideoSlug, videoPaths } from "./lib/video-paths.mjs";
+import { loadFlowAccounts } from "./lib/flow-accounts.mjs";
 
 const execFileAsync = promisify(execFile);
 const root = process.cwd();
@@ -66,16 +77,16 @@ const vp = videoPaths(slug);
 const styleNotesArg = (process.argv.find((a) => a.startsWith("--style-notes=")) || "").slice(
   "--style-notes=".length,
 );
-// Đổi tài khoản Flow khi hết credit/hạn mức: mỗi tên tài khoản có 1 profile Chrome riêng, đăng
-// nhập 1 lần duy nhất (xem README/responsibility-matrix mục 2b), sau đó chỉ cần đổi flag này
-// để chuyển hẳn sang tài khoản khác — KHÔNG cần đóng Chrome/đăng nhập lại (đóng Chrome chỉ cần
-// đúng 1 lần, khi thiết lập tài khoản MỚI lần đầu).
-const flowAccount = (process.argv.find((a) => a.startsWith("--flow-account=")) || "--flow-account=default").slice(
+// Account Flow được CHỈ ĐỊNH qua CLI (hoặc "default") — luôn là candidate ĐẦU TIÊN được thử ở
+// main(). Nếu account này fail theo hướng đáng fallback (xem shouldFallback() bên dưới) và
+// scripts/flow-accounts.json có thêm account dự phòng, vòng lặp tự chuyển sang account kế tiếp.
+const cliFlowAccountArg = (process.argv.find((a) => a.startsWith("--flow-account=")) || "--flow-account=default").slice(
   "--flow-account=".length,
 );
 // Truy cập lại project Flow đã tạo trước đó (vd sau lỗi tải thiếu file, hoặc muốn tải lại) thay
 // vì tạo project mới + tạo lại ảnh/video từ đầu — tốn thời gian/credit không cần thiết. Bỏ qua
 // hẳn Giai đoạn 1+2 (tạo ảnh/chuyển động), mở thẳng URL này rồi vào ngay Giai đoạn 3 (tải file).
+// CHỈ áp dụng cho account ĐẦU TIÊN được thử — xem attemptWithAccount()/skipResume bên dưới.
 const resumeProjectArg = (process.argv.find((a) => a.startsWith("--resume-project=")) || "").slice(
   "--resume-project=".length,
 );
@@ -97,17 +108,22 @@ const MODEL = routing.browser_agent;
 // Binary native, gọi thẳng — KHÔNG qua `npx`/shell (shell:true + mảng tham số không escape
 // đúng, có thể làm hỏng lệnh hoặc mất an toàn khi tham số chứa nội dung do model sinh ra).
 const AGENT_BROWSER_BIN = path.join(root, "node_modules", "agent-browser", "bin", "agent-browser-win32-x64.exe");
-// Profile Chrome dùng CHUNG cho mọi video trong CÙNG 1 tài khoản Flow (session đăng nhập
-// Google, không phải dữ liệu theo từng video) — mỗi tài khoản 1 thư mục con riêng theo
-// --flow-account=, LUÔN đường dẫn tuyệt đối, xem ghi chú đầu file.
-const PROFILE_DIR = path.join(root, "pipeline", ".flow-profile", flowAccount);
-// Thư mục tải tạm theo từng slug — dọn sạch sau khi phân loại xong vào imagesDir/videosDir.
+// Thư mục tải tạm theo từng slug (KHÔNG theo account — dùng chung cho mọi account thử của cùng
+// video này) — dọn sạch sau khi phân loại xong vào imagesDir/videosDir, và dọn lại khi chuyển
+// account để tránh lẫn file dở dang của account trước vào lần thử kế tiếp.
 const STAGE_DIR = path.join(root, "pipeline", ".cache", `flow-media-${slug}`);
 // Lưu URL project Flow của lần chạy gần nhất cho slug này — dùng với --resume-project=<url>
 // để truy cập lại nhanh khi cần (vd lỗi tải thiếu file), không phải file bí mật (chỉ 1 URL).
 const FLOW_PROJECT_FILE = path.join(path.dirname(vp.mediaGenerateLog), "flow-project.json");
 const FLOW_HOME_URL = "https://flow.google.com/";
-const SESSION_NAME = `flow-media-agent-${flowAccount}`;
+
+// ---- Mutable, gắn với account ĐANG THỬ — gán lại ở đầu mỗi attemptWithAccount(). Các hàm bên
+// dưới (ab(), hintBrowserOpen(), reportStop()) đọc 3 biến này tại THỜI ĐIỂM GỌI (không phải lúc
+// định nghĩa), nên luôn phản ánh đúng account đang chạy — an toàn vì các attempt luôn chạy TUẦN
+// TỰ, không bao giờ song song. ----
+let flowAccount = cliFlowAccountArg;
+let PROFILE_DIR = path.join(root, "pipeline", ".flow-profile", flowAccount);
+let SESSION_NAME = `flow-media-agent-${flowAccount}`;
 
 // ---- Log chi tiết từng bước (verbose) → vp.mediaGenerateLog. Log tóm tắt 1 dòng cuối cùng →
 // vp.runLog qua appendRunLog(), đúng convention mọi stage khác đang dùng. ----
@@ -200,6 +216,21 @@ Trả về JSON đúng format: {"prompts": ["prompt phân cảnh 1 bằng tiến
   });
   const parsed = extractJson(extractText(response));
   return parsed.prompts;
+}
+
+// ---- Cache lười (chỉ sinh 1 LẦN DUY NHẤT, dùng chung cho mọi account thử) — prompt ảnh không
+// phụ thuộc account nào đang chạy, chỉ phụ thuộc kịch bản. Không sinh trước nếu --resume-project
+// đang dùng (account đầu có thể resume thành công, không cần prompt); nếu account đó fail đáng
+// fallback và account kế tiếp phải bắt đầu lại từ Giai đoạn 1, hàm này tự sinh đúng lúc cần.
+let scenePromptsCache = null;
+async function getScenePrompts() {
+  if (!scenePromptsCache) {
+    logLine(`Đang chia kịch bản thành các phân cảnh + viết prompt ảnh (qua ${routing.scene_image_prompt_writer})...`);
+    scenePromptsCache = await generateScenePrompts(scriptText, styleNotesArg);
+    logLine(`Đã sinh ${scenePromptsCache.length} prompt ảnh:`);
+    scenePromptsCache.forEach((p, i) => logLine(`  ${i + 1}. ${p}`));
+  }
+  return scenePromptsCache;
 }
 
 function buildScenePromptListMessage(prompts) {
@@ -366,20 +397,72 @@ async function runPhase({ phaseName, phaseGoal, messageToSend, maxSteps, downloa
   return { status: "timeout" };
 }
 
+// ---- Phân loại lý do "blocked" — mirror classifyFailure() ở 07-codegen-hf-parallel.mjs.
+// Danh sách từ khoá là SUY ĐOÁN hợp lý, chưa có case thật nào xác nhận câu "reason" thật khi
+// Flow báo hết credit (xem planning/responsibility-matrix.md mục 2b) — tinh chỉnh khi gặp case
+// thật đầu tiên thay vì đoán thêm bây giờ.
+function classifyBlockedReason(reason) {
+  const r = (reason || "").toLowerCase();
+  const quotaHints = ["credit", "quota", "hạn mức", "hết", "limit", "exceeded", "insufficient", "usage"];
+  const humanNeededHints = [
+    "captcha",
+    "verify",
+    "xác minh",
+    "đăng nhập",
+    "sign in",
+    "login",
+    "security",
+    "bảo mật",
+    "suspicious",
+    "2fa",
+    "two-factor",
+    "otp",
+  ];
+  if (humanNeededHints.some((h) => r.includes(h))) return "human-needed"; // kiểm tra trước quota
+  if (quotaHints.some((h) => r.includes(h))) return "quota";
+  return "unknown";
+}
+
+// ---- Quyết định có đáng chuyển sang account dự phòng khác hay không, dựa trên status/reason
+// của 1 lần thử (xem planning/responsibility-matrix.md mục 2b để biết đầy đủ lý do từng nhánh):
+// - blocked + quota → fallback (tài khoản khác không bị chung giới hạn credit).
+// - blocked + human-needed (CAPTCHA/đăng nhập) → KHÔNG fallback, account khác cũng cần xử lý tay.
+// - blocked + unknown → KHÔNG fallback (an toàn hơn khi chưa chắc account khác giải quyết được).
+// - error/timeout → fallback (có thể do session/account cụ thể, đáng thử account khác).
+// - page-closed → KHÔNG fallback (người dùng tự đóng hoặc lỗi kết nối nghiêm trọng, cần xem tay).
+function shouldFallback(result) {
+  if (result.status === "blocked") return classifyBlockedReason(result.reason) === "quota";
+  if (result.status === "error") return true;
+  if (result.status === "timeout") return true;
+  return false;
+}
+
 function reportStop(result, phaseName) {
   if (result.status === "blocked") {
-    logLine(`\n⚠ AGENT BỊ CHẶN ở giai đoạn "${phaseName}": ${result.reason || "(không rõ lý do)"}`);
-    logLine("Kiểm tra cửa sổ Chrome đang mở và tự xử lý (đăng nhập / giải CAPTCHA / đóng thông báo lỗi).");
-    logLine(
-      `Nếu lý do là hết credit/hạn mức tạo ảnh của tài khoản "${flowAccount}": chạy lại với --flow-account=<tên tài khoản khác> đã thiết lập sẵn, không cần xử lý gì ở cửa sổ này.`,
-    );
+    const kind = classifyBlockedReason(result.reason);
+    logLine(`\n⚠ AGENT BỊ CHẶN ở giai đoạn "${phaseName}" (account "${flowAccount}"): ${result.reason || "(không rõ lý do)"}`);
+    if (kind === "human-needed") {
+      logLine(
+        "Cần CAPTCHA/xác minh/đăng nhập — KHÔNG tự động chuyển account (account khác cũng cần xử lý thủ công riêng). Kiểm tra cửa sổ Chrome đang mở và tự xử lý.",
+      );
+    } else if (kind === "quota") {
+      logLine("Có vẻ hết credit/hạn mức — sẽ tự động thử account dự phòng tiếp theo trong scripts/flow-accounts.json (nếu có).");
+    } else {
+      logLine(
+        "Lý do chưa khớp từ khoá quota/human-needed đã biết — KHÔNG tự động chuyển account để an toàn. Kiểm tra cửa sổ Chrome đang mở và tự xử lý.",
+      );
+    }
     logLine("Nếu là lỗi khác, xử lý xong rồi chạy lại lệnh này — session đã lưu trong profile nên không cần đăng nhập lại lần sau.");
   } else if (result.status === "page-closed") {
-    logLine(`\n⚠ TRÌNH DUYỆT/PHIÊN ĐÃ ĐÓNG giữa giai đoạn "${phaseName}" (người dùng tự đóng, hoặc lỗi kết nối): ${result.reason}`);
+    logLine(
+      `\n⚠ TRÌNH DUYỆT/PHIÊN ĐÃ ĐÓNG giữa giai đoạn "${phaseName}" (account "${flowAccount}", người dùng tự đóng, hoặc lỗi kết nối nghiêm trọng): ${result.reason}. KHÔNG tự động chuyển account.`,
+    );
   } else if (result.status === "timeout") {
-    logLine(`\n⚠ HẾT SỐ BƯỚC cho phép ở giai đoạn "${phaseName}" mà chưa xong. Kiểm tra lại thủ công hoặc chạy lại.`);
+    logLine(
+      `\n⚠ HẾT SỐ BƯỚC cho phép ở giai đoạn "${phaseName}" (account "${flowAccount}") mà chưa xong — sẽ tự động thử account dự phòng tiếp theo (nếu có).`,
+    );
   } else if (result.status === "error") {
-    logLine(`\n⚠ LỖI ở giai đoạn "${phaseName}": ${result.reason}`);
+    logLine(`\n⚠ LỖI ở giai đoạn "${phaseName}" (account "${flowAccount}"): ${result.reason} — sẽ tự động thử account dự phòng tiếp theo (nếu có).`);
   }
 }
 
@@ -472,16 +555,34 @@ function sortDownloadsIntoMedia(stagingDir, imagesDir, videosDir, log) {
   return result;
 }
 
-async function run() {
+// ---- Thử toàn bộ pipeline (Giai đoạn 1-3) với 1 account cụ thể. Trả về { ok: true } khi thành
+// công, hoặc { ok: false, result, phaseName } khi fail — KHÔNG process.exit()/throw trực tiếp,
+// để main() quyết định có fallback account tiếp theo hay dừng hẳn. accountName gán vào các biến
+// mutable flowAccount/PROFILE_DIR/SESSION_NAME ở đầu hàm — mọi hàm dùng chung ở trên (ab(),
+// reportStop(), hintBrowserOpen()) tự động dùng đúng giá trị của account này trong suốt attempt.
+async function attemptWithAccount(accountName, { skipResume }) {
+  flowAccount = accountName;
+  PROFILE_DIR = path.join(root, "pipeline", ".flow-profile", flowAccount);
+  SESSION_NAME = `flow-media-agent-${flowAccount}`;
+
   fs.mkdirSync(PROFILE_DIR, { recursive: true });
   fs.mkdirSync(STAGE_DIR, { recursive: true });
   fs.mkdirSync(path.dirname(vp.mediaGenerateLog), { recursive: true });
 
-  logLine(`\n# Phiên chạy ${new Date().toISOString()} — video=${slug} — model điều khiển: ${MODEL} (qua agent-browser)`);
+  logLine(`\n# Phiên chạy ${new Date().toISOString()} — video=${slug} — account="${flowAccount}" — model điều khiển: ${MODEL} (qua agent-browser)`);
 
   const downloadedRef = { count: 0 };
+  const useResume = Boolean(resumeProjectArg) && !skipResume;
 
-  if (resumeProjectArg) {
+  if (resumeProjectArg && skipResume) {
+    logLine(
+      `\nAccount "${flowAccount}" không phải account đã tạo project Flow ban đầu — bỏ qua --resume-project` +
+        `${retryAnimateArg ? "/--retry-animate" : ""}, bắt đầu lại từ Giai đoạn 1 (project Flow gắn quyền theo` +
+        ` tài khoản Google đã tạo nó, account khác không truy cập được).`,
+    );
+  }
+
+  if (useResume) {
     // ---- Chế độ truy cập lại project đã có sẵn (vd sau lỗi tải thiếu file) — bỏ qua hẳn
     // Giai đoạn 1 (tạo ảnh) + Giai đoạn 2 (tạo chuyển động), không tốn thời gian/credit tạo lại.
     // Trừ khi --retry-animate: vẫn chạy lại Giai đoạn 2 (ảnh Giai đoạn 1 đã đúng, chỉ cần tạo
@@ -491,8 +592,8 @@ async function run() {
     );
     const openResult = await ab(["--profile", PROFILE_DIR, "--headed", "--download-path", STAGE_DIR, "open", resumeProjectArg]);
     if (!openResult.success) {
-      logLine(`\n⚠ Không mở được project: ${openResult.error}`);
-      process.exit(1);
+      logLine(`\n⚠ Không mở được project (account "${flowAccount}"): ${openResult.error}`);
+      return { ok: false, result: { status: "error", reason: openResult.error }, phaseName: "mo-project-resume" };
     }
     logLine(`Đã vào: ${openResult.data.title} (${openResult.data.url})`);
 
@@ -507,26 +608,23 @@ async function run() {
       });
       if (phase2.status !== "done") {
         stopEarly(phase2, "2-tao-chuyen-dong");
-        return;
+        return { ok: false, result: phase2, phaseName: "2-tao-chuyen-dong" };
       }
       logLine(`✓ Giai đoạn 2 xong: ${phase2.reason || ""}`);
     }
   } else {
-    logLine(`Đang chia kịch bản thành các phân cảnh + viết prompt ảnh (qua ${routing.scene_image_prompt_writer})...`);
-    const scenePrompts = await generateScenePrompts(scriptText, styleNotesArg);
-    logLine(`Đã sinh ${scenePrompts.length} prompt ảnh:`);
-    scenePrompts.forEach((p, i) => logLine(`  ${i + 1}. ${p}`));
+    const scenePrompts = await getScenePrompts();
 
     logLine(`\nMở ${FLOW_HOME_URL} (profile: ${PROFILE_DIR}) ...`);
     const openResult = await ab(["--profile", PROFILE_DIR, "--headed", "--download-path", STAGE_DIR, "open", FLOW_HOME_URL]);
     if (!openResult.success) {
       logLine(`\n⚠ Không mở được Flow (tài khoản "${flowAccount}"): ${openResult.error}`);
       logLine(
-        `Nếu đây là lần đầu dùng tài khoản "${flowAccount}": đóng HẾT Chrome (kể cả chạy nền), rồi chạy tay ` +
-          `"C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe" --user-data-dir="${PROFILE_DIR}" --no-first-run, ` +
-          `đăng nhập, đóng lại. Xem planning/responsibility-matrix.md mục 2b.`,
+        `Nếu đây là lần đầu dùng tài khoản "${flowAccount}": chạy scripts/flow-profile-open.bat ${flowAccount} ` +
+          `(double-click được) để đăng nhập thủ công 1 lần. Xem planning/responsibility-matrix.md mục 2b.`,
       );
-      process.exit(1);
+      const result = { status: "error", reason: openResult.error };
+      return { ok: false, result, phaseName: "mo-flow" };
     }
     logLine(`Đã vào: ${openResult.data.title} (${openResult.data.url})`);
 
@@ -540,7 +638,7 @@ async function run() {
     });
     if (phase1.status !== "done") {
       stopEarly(phase1, "1-tao-anh");
-      return;
+      return { ok: false, result: phase1, phaseName: "1-tao-anh" };
     }
     logLine(`✓ Giai đoạn 1 xong: ${phase1.reason || ""}`);
 
@@ -550,9 +648,11 @@ async function run() {
     if (urlResult.success && urlResult.data?.url) {
       fs.writeFileSync(
         FLOW_PROJECT_FILE,
-        JSON.stringify({ url: urlResult.data.url, slug, capturedAt: new Date().toISOString() }, null, 2),
+        JSON.stringify({ url: urlResult.data.url, slug, flowAccount, capturedAt: new Date().toISOString() }, null, 2),
       );
-      logLine(`Đã lưu URL project vào ${FLOW_PROJECT_FILE}. Nếu cần chạy lại chỉ từ Giai đoạn 3: --video=${slug} --resume-project="${urlResult.data.url}"`);
+      logLine(
+        `Đã lưu URL project vào ${FLOW_PROJECT_FILE}. Nếu cần chạy lại chỉ từ Giai đoạn 3: --video=${slug} --flow-account=${flowAccount} --resume-project="${urlResult.data.url}"`,
+      );
     } else {
       logLine(`  ⚠ Không lấy được URL project hiện tại (${urlResult.error || "không rõ lý do"}) — bỏ qua bước lưu resume, không ảnh hưởng phần còn lại.`);
     }
@@ -567,7 +667,7 @@ async function run() {
     });
     if (phase2.status !== "done") {
       stopEarly(phase2, "2-tao-chuyen-dong");
-      return;
+      return { ok: false, result: phase2, phaseName: "2-tao-chuyen-dong" };
     }
     logLine(`✓ Giai đoạn 2 xong: ${phase2.reason || ""}`);
   }
@@ -582,7 +682,7 @@ async function run() {
   });
   if (phase3.status !== "done") {
     stopEarly(phase3, "3-tai-file");
-    return;
+    return { ok: false, result: phase3, phaseName: "3-tai-file" };
   }
   logLine(`✓ Giai đoạn 3 xong (theo model): ${phase3.reason || ""}`);
 
@@ -596,22 +696,68 @@ async function run() {
   );
 
   if (sorted.imagesAdded.length === 0 && sorted.videosAdded.length === 0) {
+    const result = {
+      status: "error",
+      reason: `Giai đoạn 3 báo done nhưng không phân loại được file nào (thư mục tạm: ${STAGE_DIR})`,
+    };
     logLine(
       `\n⚠ KHÔNG có file nào được phân loại dù giai đoạn 3 báo "done" — model có thể đã trả done quá sớm (thấy thông báo bắt đầu tải, chưa phải tải xong) hoặc bấm nhầm nút. GIỮ LẠI ${STAGE_DIR} để kiểm tra tay, KHÔNG ghi tóm tắt vào run-log.md.`,
     );
     hintBrowserOpen();
-    process.exit(1);
+    return { ok: false, result, phaseName: "3-tai-file-phan-loai" };
   }
 
   fs.rmSync(STAGE_DIR, { recursive: true, force: true });
   await ab(["close"]).catch(() => {});
 
-  const summary = `Tạo & tải media qua Google Flow: ${sorted.imagesAdded.length} ảnh + ${sorted.videosAdded.length} video bằng ${MODEL} (prompt viết bởi ${routing.scene_image_prompt_writer}), phân loại vào public/videos/${slug}/media/{images,videos}/`;
+  const summary = `Tạo & tải media qua Google Flow: ${sorted.imagesAdded.length} ảnh + ${sorted.videosAdded.length} video bằng ${MODEL} (prompt viết bởi ${routing.scene_image_prompt_writer}, account "${flowAccount}"), phân loại vào public/videos/${slug}/media/{images,videos}/`;
   console.log(summary);
   appendRunLog(`\`scripts/02b-media-generate.router.mjs\` — ${summary}`, vp.runLog);
+  return { ok: true };
 }
 
-run().catch((e) => {
+// ---- Entrypoint: thử lần lượt candidateAccounts (account chỉ định qua CLI luôn thử trước, sau
+// đó tới các account trong scripts/flow-accounts.json theo đúng thứ tự "priority"), dừng ngay
+// khi 1 account thành công. Khi 1 attempt fail: shouldFallback() quyết định có đáng chuyển
+// account kế tiếp hay dừng hẳn — nếu có, đóng session hiện tại + dọn STAGE_DIR trước khi thử
+// account sau (tránh lẫn file dở dang), account thứ 2 trở đi luôn bỏ qua --resume-project.
+async function main() {
+  const { priority } = loadFlowAccounts(root);
+  const candidateAccounts = [cliFlowAccountArg, ...priority.filter((a) => a !== cliFlowAccountArg)];
+
+  const attemptHistory = []; // {account, phaseName, result}
+  for (let i = 0; i < candidateAccounts.length; i++) {
+    const accountName = candidateAccounts[i];
+    const skipResume = i > 0; // chỉ account ĐẦU TIÊN được phép dùng --resume-project
+
+    const attempt = await attemptWithAccount(accountName, { skipResume });
+    if (attempt.ok) return;
+
+    attemptHistory.push({ account: accountName, phaseName: attempt.phaseName, result: attempt.result });
+
+    const isLast = i === candidateAccounts.length - 1;
+    if (isLast) break;
+
+    if (!shouldFallback(attempt.result)) {
+      logLine(`\nKhông chuyển sang account dự phòng khác (lý do không đáng fallback) — dừng hẳn tại đây.`);
+      break;
+    }
+
+    const nextAccount = candidateAccounts[i + 1];
+    logLine(`\n→ Đóng session "${flowAccount}" và chuyển sang account dự phòng tiếp theo: "${nextAccount}".`);
+    await ab(["close"]).catch(() => {});
+    fs.rmSync(STAGE_DIR, { recursive: true, force: true });
+  }
+
+  logLine(`\n⚠ ĐÃ DỪNG SAU ${attemptHistory.length} LẦN THỬ ACCOUNT:`);
+  for (const h of attemptHistory) {
+    logLine(`  - "${h.account}": giai đoạn "${h.phaseName}" — ${h.result.status}${h.result.reason ? `: ${h.result.reason}` : ""}`);
+  }
+  logLine(`\nLog chi tiết: ${vp.mediaGenerateLog}`);
+  process.exit(1);
+}
+
+main().catch((e) => {
   console.error("Lỗi không xử lý được:", e);
   process.exit(1);
 });

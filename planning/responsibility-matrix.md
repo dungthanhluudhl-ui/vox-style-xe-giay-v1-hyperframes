@@ -78,10 +78,46 @@ session khi phát hiện tín hiệu trình duyệt khác, hoặc lỗi giải m
 tạm khác owner/context). **Không thử lại hướng này** trừ khi có bằng chứng mới (vd agent-browser
 bản mới sửa lỗi) — quay lại cách hiện tại: mỗi account Flow vẫn cần đăng nhập thủ công 1 lần qua
 `scripts/flow-profile-open.bat`, không có cách rút ngắn bước này trên máy Windows hiện tại.
-**Lưu ý trạng thái:** tính đến 2026-09-22, `02b-media-generate.router.mjs` CHƯA đọc file này —
-đây mới là bước chuẩn bị cấu hình (D1 trong kế hoạch model-routing), vòng lặp tự động chuyển
-account khi lỗi (D2/D3) chưa được cài đặt; script vẫn chỉ dùng đúng 1 `--flow-account=` truyền
-qua CLI như trước.
+**Auto-fallback account khi gặp lỗi (D2/D3, đã cài đặt 2026-09-22):** `02b-media-generate.router.mjs`
+giờ thử LẦN LƯỢT `candidateAccounts = [--flow-account (hoặc "default"), ...priority còn lại trong
+flow-accounts.json]` — dừng ngay khi 1 account thành công. `attemptWithAccount(accountName,
+{ skipResume })` bọc toàn bộ logic Giai đoạn 1-3, trả `{ ok: true }` hoặc `{ ok: false, result,
+phaseName }` thay vì `process.exit()` trực tiếp, để vòng lặp ở `main()` quyết định có fallback
+hay không.
+
+Điều kiện kích hoạt fallback (hàm `shouldFallback()` + `classifyBlockedReason()`, mirror
+`classifyFailure()` ở `07-codegen-hf-parallel.mjs`):
+- `status: "blocked"` + lý do khớp từ khoá hết credit/hạn mức (`credit`, `quota`, `hạn mức`,
+  `limit`, `exceeded`...) → **fallback**.
+- `status: "blocked"` + lý do khớp từ khoá cần người (CAPTCHA, đăng nhập, xác minh bảo mật,
+  2FA...) → **KHÔNG fallback** — account khác cũng cần xử lý thủ công riêng, đổi account không
+  giải quyết được.
+- `status: "blocked"` + lý do KHÔNG khớp khoá nào (`unknown`) → **KHÔNG fallback** (an toàn hơn
+  khi chưa chắc account khác giải quyết được).
+- `status: "error"` hoặc `"timeout"` → **fallback** (có thể do session/account cụ thể).
+- `status: "page-closed"` → **KHÔNG fallback** (người dùng tự đóng cửa sổ hoặc lỗi kết nối
+  nghiêm trọng, cần người xem trực tiếp, không tự ý mở hàng loạt profile mới).
+
+Danh sách từ khoá là **suy đoán hợp lý, chưa có case thật nào xác nhận** câu `reason` thật khi
+Flow báo hết credit (repo chưa gặp case này thật) — tinh chỉnh `classifyBlockedReason()` khi gặp
+case thật đầu tiên thay vì đoán thêm bây giờ.
+
+Khi fallback: đóng session hiện tại (`ab(["close"])`), dọn `STAGE_DIR` (tránh lẫn file dở dang
+của account trước), log rõ account chuyển sang, rồi thử account kế tiếp. Account thứ 2 trở đi
+LUÔN bỏ qua `--resume-project`/`--retry-animate` (project Flow gắn quyền theo tài khoản Google
+đã tạo nó, account khác không truy cập được) — tự bắt đầu lại từ Giai đoạn 1, tự sinh lại prompt
+ảnh qua cache `getScenePrompts()` (chỉ sinh 1 lần, dùng chung mọi account vì không phụ thuộc
+account nào chạy). Hết toàn bộ `candidateAccounts` mà vẫn fail, hoặc gặp lý do không đáng
+fallback: dừng hẳn, log đầy đủ lịch sử đã thử (account/giai đoạn/lý do từng lần).
+
+**Trạng thái kiểm chứng (2026-09-22):** đã unit-test `classifyBlockedReason()`/`shouldFallback()`
+với bảng case khớp đúng spec, và xác nhận `candidateAccounts` với `flow-accounts.json` thật hiện
+tại (`{"priority":["default"]}`) chỉ tạo ra `["default"]` — hành vi 1-account y hệt trước khi có
+D2/D3 (không có gì thay đổi cho tới khi thêm account dự phòng thật vào file). **CHƯA kiểm chứng
+end-to-end trên Flow thật** (cả đường thành công lẫn đường fallback thật) vì chưa có account dự
+phòng thứ 2 nào đăng nhập xong — cần setup thêm 1 account qua `scripts/flow-profile-open.bat`
+rồi test trên video sản xuất thật, hoặc giả lập 1 điều kiện fail để buộc nhánh fallback chạy,
+trước khi coi là đã kiểm chứng đầy đủ.
 
 **Gotcha môi trường thật đã gặp khi setup (đọc trước khi debug lại, giống tinh thần đoạn
 `--no-root-sync` ở mục 6):**
