@@ -63,6 +63,21 @@ chưa có, mở đúng Chrome trỏ profile đó tại flow.google.com, KHÔNG q
 đóng HẾT Chrome đang chạy (kể cả nền) trước khi chạy nếu là lần đăng nhập ĐẦU TIÊN cho account
 đó — đã xác nhận thật (2026-09-22): nếu Chrome cá nhân đang mở, `--user-data-dir` bị bỏ qua âm
 thầm và trang chỉ mở thành 1 tab trong cửa sổ Chrome hiện có thay vì cửa sổ profile riêng.
+
+**Đã thử và KHÔNG dùng được — tái sử dụng profile Chrome thật đã đăng nhập sẵn (2026-09-22):**
+`agent-browser` có tính năng "Chrome Profile Reuse" (`--profile <tên>`, copy profile Chrome thật
+thành bản snapshot tạm) tưởng chừng bỏ được bước đăng nhập thủ công. Đã thử THẬT với profile
+`luudungofficial` (đã đăng nhập Google sẵn trên máy) qua cả 2 cách: (1) `--profile
+"luudungofficial" --session ... --restore` mở flow.google.com, và (2) test cô lập không có
+`--restore`, chỉ `--profile "luudungofficial"` mở thẳng `mail.google.com` (đúng ví dụ mẫu trong
+README agent-browser) — CẢ 2 đều bị đá thẳng về trang đăng nhập Google trống trơn
+(`accounts.google.com/v3/signin/...`), không nhận diện được tài khoản nào, dù đã đóng hết Chrome
+trước khi copy. Kết luận: cookie/session copy qua `--profile` KHÔNG mang theo được trạng thái
+đăng nhập Google thật trên máy này (nguyên nhân chưa rõ — có thể do Google chủ động vô hiệu hoá
+session khi phát hiện tín hiệu trình duyệt khác, hoặc lỗi giải mã cookie khi copy sang thư mục
+tạm khác owner/context). **Không thử lại hướng này** trừ khi có bằng chứng mới (vd agent-browser
+bản mới sửa lỗi) — quay lại cách hiện tại: mỗi account Flow vẫn cần đăng nhập thủ công 1 lần qua
+`scripts/flow-profile-open.bat`, không có cách rút ngắn bước này trên máy Windows hiện tại.
 **Lưu ý trạng thái:** tính đến 2026-09-22, `02b-media-generate.router.mjs` CHƯA đọc file này —
 đây mới là bước chuẩn bị cấu hình (D1 trong kế hoạch model-routing), vòng lặp tự động chuyển
 account khi lỗi (D2/D3) chưa được cài đặt; script vẫn chỉ dùng đúng 1 `--flow-account=` truyền
