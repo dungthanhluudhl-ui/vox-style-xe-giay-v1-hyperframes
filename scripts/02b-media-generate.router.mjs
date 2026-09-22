@@ -107,10 +107,11 @@ function logLine(text) {
   console.log(text);
   fs.appendFileSync(vp.mediaGenerateLog, `${text}\n`, "utf8");
 }
-function logStep({ phase, step, action, reasoning, extra }) {
+function logStep({ phase, step, action, reasoning, extra, modelMs }) {
   const time = new Date().toISOString();
+  const extras = [extra, modelMs != null ? `model: ${modelMs}ms` : null].filter(Boolean).join(", ");
   logLine(
-    `- [${time}] [${phase}][bước ${step}] ${action}${reasoning ? ` — ${reasoning}` : ""}${extra ? ` (${extra})` : ""}`,
+    `- [${time}] [${phase}][bước ${step}] ${action}${reasoning ? ` — ${reasoning}` : ""}${extras ? ` (${extras})` : ""}`,
   );
 }
 function hintBrowserOpen() {
@@ -270,6 +271,8 @@ async function runPhase({ phaseName, phaseGoal, messageToSend, maxSteps, downloa
     const userText = `Bước ${step}/${maxSteps} của giai đoạn "${phaseName}". Số file đã tải được tính tới giờ trong toàn bộ phiên chạy: ${downloadedRef.count}.\n\nDanh sách phần tử tương tác hiện tại:\n${formatAnnotations(annotations)}\n\nLịch sử hành động gần đây trong giai đoạn này:\n${historyText}${stuckWarning}\n\nQuan sát ảnh chụp màn hình mới nhất và danh sách trên, cho biết hành động tiếp theo.`;
 
     let action;
+    let modelCallMs;
+    const modelCallStart = Date.now();
     try {
       const response = await callModel({
         model: MODEL,
@@ -286,13 +289,27 @@ async function runPhase({ phaseName, phaseGoal, messageToSend, maxSteps, downloa
         responseFormat: { type: "json_object" },
         temperature: 0,
       });
+      modelCallMs = Date.now() - modelCallStart;
       action = extractJson(extractText(response));
     } catch (e) {
-      logStep({ phase: phaseName, step, action: "lỗi-gọi-model", reasoning: e.message || String(e) });
+      logStep({
+        phase: phaseName,
+        step,
+        action: "lỗi-gọi-model",
+        reasoning: e.message || String(e),
+        modelMs: Date.now() - modelCallStart,
+      });
       return { status: "error", reason: e.message || String(e) };
     }
 
-    logStep({ phase: phaseName, step, action: action.action, reasoning: action.reasoning || action.reason, extra: action.ref });
+    logStep({
+      phase: phaseName,
+      step,
+      action: action.action,
+      reasoning: action.reasoning || action.reason,
+      extra: action.ref,
+      modelMs: modelCallMs,
+    });
     history.push({ step, action: action.action, ref: action.ref, reasoning: action.reasoning || action.reason });
 
     if (action.action === "blocked") return { status: "blocked", reason: action.reason };
