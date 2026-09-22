@@ -152,8 +152,13 @@ if (referenceScript) {
       }
       console.log(`  [align] đoạn ${lo}-${hi} bị tràn token (finish_reason=${finishReason}) — chia đôi và thử lại.`);
       const mid = lo + Math.floor((hi - lo) / 2);
-      const left = await alignWordRange(lo, mid, depth + 1);
-      const right = await alignWordRange(mid, hi, depth + 1);
+      // 2 nửa độc lập hoàn toàn (không đọc/ghi state chung khi đang gọi model, chỉ nối kết quả
+      // sau khi cả 2 xong) — chạy song song thay vì tuần tự để giảm thời gian cho video dài
+      // (kiểm chứng tương tự đã áp dụng cho Stage 7 qua 07-codegen-hf-parallel.mjs).
+      const [left, right] = await Promise.all([
+        alignWordRange(lo, mid, depth + 1),
+        alignWordRange(mid, hi, depth + 1),
+      ]);
       return [...left, ...right];
     }
 

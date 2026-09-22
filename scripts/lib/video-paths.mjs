@@ -54,5 +54,9 @@ export function videoPaths(slug, root = process.cwd()) {
     hfCompositionsDir: path.join(root, "hyperframes", "videos", slug, "compositions"),
     hfAssetsDir: path.join(root, "hyperframes", "videos", slug, "assets"),
     hfIndexHtml: path.join(root, "hyperframes", "videos", slug, "index.html"),
+    // Nguồn xác thực duy nhất cho đường dẫn output render cuối cùng — scripts/09-render.hf.mjs
+    // hardcode dùng field này, không suy đoán lại. Xem planning/README.md bước 10 và
+    // planning/responsibility-matrix.md mục 8.
+    finalOutput: path.join(root, "out", `${slug}-full.mp4`),
   };
 }

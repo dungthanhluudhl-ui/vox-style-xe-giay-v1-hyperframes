@@ -122,6 +122,23 @@ const STAGE_DIR = path.join(root, "pipeline", ".cache", `flow-media-${slug}`);
 const FLOW_PROJECT_FILE = path.join(path.dirname(vp.mediaGenerateLog), "flow-project.json");
 const FLOW_HOME_URL = "https://flow.google.com/";
 
+// ---- Giai đoạn xảy ra SAU KHI project Flow của account đang thử đã được tạo/mở thành công
+// (flow-project.json đã ghi, hoặc đang resume 1 project có sẵn) — lỗi xảy ra trong các giai
+// đoạn này KHÔNG được coi là "đáng đổi account" — project chỉ chính account đó mới truy cập
+// được (account khác không có quyền, sẽ tự tạo project MỚI từ đầu thay vì resume — lãng phí
+// credit/ảnh/video đã tạo xong). Xem planning/responsibility-matrix.md mục 2b ("Sự cố production
+// su-kien-thien-an-mon") — sự cố thật đã xảy ra: timeout ở "2-tao-chuyen-dong" sau khi đã tạo
+// xong 6 ảnh khiến vòng lặp cũ fallback sang account khác, tạo lặp lại từ đầu không cần thiết.
+const POST_PROJECT_PHASES = new Set(["mo-project-resume", "2-tao-chuyen-dong", "3-tai-file", "3-tai-file-phan-loai"]);
+
+function readFlowProjectFile() {
+  try {
+    return JSON.parse(fs.readFileSync(FLOW_PROJECT_FILE, "utf8"));
+  } catch {
+    return null;
+  }
+}
+
 // ---- Mutable, gắn với account ĐANG THỬ — gán lại ở đầu mỗi attemptWithAccount(). Các hàm bên
 // dưới (ab(), hintBrowserOpen(), reportStop()) đọc 3 biến này tại THỜI ĐIỂM GỌI (không phải lúc
 // định nghĩa), nên luôn phản ánh đúng account đang chạy — an toàn vì các attempt luôn chạy TUẦN
@@ -281,6 +298,7 @@ Quy tắc bắt buộc:
 - action=download: chỉ dùng khi thấy RÕ một nút/icon tải xuống cho một item media cụ thể trong danh sách phần tử.
 - action=wait: dùng khi thấy dấu hiệu Flow đang xử lý (spinner, "Generating...", %). Flow's Agent thường tự trả lời báo cáo bằng text khi xong (vd "Đã tạo xong...") — kết hợp dấu hiệu đó với việc không còn spinner để xác nhận đã xong, đừng chỉ dựa vào 1 dấu hiệu. LUÔN chọn "ms" NGẮN (2-4 giây, KHÔNG cần chờ lâu 1 lần) rồi kiểm tra lại bằng ảnh chụp ở bước sau — mỗi bước vốn đã tự chụp ảnh mới, chờ ngắn nhưng kiểm tra thường xuyên rẻ hơn đoán 1 khoảng chờ dài và giúp phát hiện đúng lúc hoàn tất sớm hơn.
 - action=done: CHỈ trả về khi mục tiêu của giai đoạn này (nêu trên) đã đạt được thật sự, không phải mới vừa gửi xong yêu cầu. TRƯỚC KHI trả done cho việc liên quan tới "toàn bộ ảnh/video đã tạo xong": PHẢI cuộn (scroll) qua HẾT khu vực media để xác nhận KHÔNG còn item nào hiển thị dấu hiệu đang xử lý (spinner/%/nút Stop) — chỉ 1 item còn dang dở cũng KHÔNG được trả done. Đây là lỗi thật từng xảy ra: bấm tải cả project khi 1 video chưa render xong, dẫn tới thiếu file.
+- QUAN TRỌNG — lỗi từng phần (KHÁC với "còn đang xử lý" ở trên): nếu chỉ một vài item (không phải toàn bộ) hiển thị lỗi rõ ràng (icon lỗi, thông báo vi phạm chính sách nội dung, lỗi âm thanh, hoặc bất kỳ lỗi nào không phải spinner/%) trong khi phần lớn item khác đã hoàn tất, được phép bấm "Thử lại" cho item đó TỐI ĐA 1 LẦN. Nếu thử lại vẫn lỗi, hoặc thấy đã tốn nhiều bước cho 1 item lỗi trong khi các item khác đã xong: CHẤP NHẬN kết quả hiện tại và trả về done để chuyển sang bước tải file — KHÔNG lặp lại "Thử lại" nhiều lần cho cùng 1 item. Đây là lỗi thật từng xảy ra: agent lặp thử lại 1 video lỗi âm thanh nhiều lần, làm hết ngân sách bước cho phép của giai đoạn dù các video khác đã xong, gây fallback sang tài khoản khác không cần thiết (tốn credit + thời gian tạo lại từ đầu). Chỉ coi là CHƯA xong (không được done) khi phần LỚN hoặc TOÀN BỘ item đều lỗi.
 - action=blocked: khi thấy trang đăng nhập Google, CAPTCHA/xác minh bảo mật, thông báo lỗi, hoặc bất kỳ trạng thái nào bạn KHÔNG chắc chắn nên làm gì tiếp theo. Nêu rõ "reason". TUYỆT ĐỐI không tự đoán bừa khi không chắc — luôn ưu tiên blocked.
 - Nếu danh sách phần tử không có gì phù hợp với việc bạn muốn làm, dùng action=scroll để tìm thêm thay vì đoán một ref không chắc chắn.`;
 }
@@ -429,7 +447,9 @@ function classifyBlockedReason(reason) {
 }
 
 // ---- Quyết định có đáng chuyển sang account dự phòng khác hay không, dựa trên status/reason
-// của 1 lần thử (xem planning/responsibility-matrix.md mục 2b để biết đầy đủ lý do từng nhánh):
+// của 1 lần thử (xem planning/responsibility-matrix.md mục 2b để biết đầy đủ lý do từng nhánh).
+// LƯU Ý: chỉ được gọi khi POST_PROJECT_PHASES KHÔNG khớp phaseName của lần thử (main() đã chặn
+// trường hợp project đã tồn tại ở nhánh riêng phía trên, trước khi tới hàm này):
 // - blocked + quota → fallback (tài khoản khác không bị chung giới hạn credit).
 // - blocked + human-needed (CAPTCHA/đăng nhập) → KHÔNG fallback, account khác cũng cần xử lý tay.
 // - blocked + unknown → KHÔNG fallback (an toàn hơn khi chưa chắc account khác giải quyết được).
@@ -739,6 +759,29 @@ async function main() {
     if (attempt.ok) return;
 
     attemptHistory.push({ account: accountName, phaseName: attempt.phaseName, result: attempt.result });
+
+    // Project của account này đã tồn tại (xem định nghĩa POST_PROJECT_PHASES) — KHÔNG chuyển
+    // account khác dù shouldFallback() có thể vẫn trả true cho status này, vì account khác không
+    // truy cập được project đã tạo, chỉ tạo project mới từ đầu (tốn credit/ảnh/video đã có).
+    // Dừng an toàn, giữ nguyên checkpoint để chạy lại đúng lệnh resume.
+    if (POST_PROJECT_PHASES.has(attempt.phaseName)) {
+      logLine(
+        `\n⚠ Lỗi xảy ra SAU KHI project Flow đã tồn tại (giai đoạn "${attempt.phaseName}", account "${accountName}")` +
+          ` — KHÔNG tự động đổi sang account khác vì project chỉ account "${accountName}" mới truy cập được.` +
+          ` Dừng lại để giữ nguyên ảnh/video đã tạo, tránh tạo lại từ đầu tốn credit.`,
+      );
+      const saved = readFlowProjectFile();
+      if (saved?.url) {
+        const resumeFlag = attempt.phaseName === "2-tao-chuyen-dong" ? " --retry-animate" : "";
+        logLine(
+          `Chạy lại đúng lệnh này để tiếp tục project đó: --video=${slug} --flow-account=${accountName}` +
+            ` --resume-project="${saved.url}"${resumeFlag}`,
+        );
+      } else {
+        logLine(`  ⚠ Không đọc được URL project đã lưu (${FLOW_PROJECT_FILE}) — kiểm tra tay cửa sổ Chrome đang mở.`);
+      }
+      process.exit(1);
+    }
 
     const isLast = i === candidateAccounts.length - 1;
     if (isLast) break;

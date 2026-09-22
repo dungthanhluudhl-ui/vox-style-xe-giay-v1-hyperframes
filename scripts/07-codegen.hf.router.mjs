@@ -97,6 +97,39 @@ if (!fs.existsSync(path.join(vp.hfProjectDir, "hyperframes.json"))) {
     meta.name = slug;
     fs.writeFileSync(metaPath, JSON.stringify(meta, null, 2), "utf8");
   }
+
+  // Lỗi thật đã xảy ra (video "ban-an-35-phan-1", 2026-09-23): CLAUDE.md/AGENTS.md do `hyperframes
+  // init` scaffold sẵn chỉ có hướng dẫn chung của CLI, không nhắc quy ước render RIÊNG của repo
+  // này — agent chỉ có context của project này (không đọc planning/README.md ở repo root) đã tự
+  // render sai cả đường dẫn (rơi về mặc định CLI `renders/<name>.mp4`) lẫn quality (chọn nhầm
+  // `delivery`/`high`). Ghi tất định đoạn quy ước này vào chính CLAUDE.md/AGENTS.md của project
+  // ngay khi scaffold — không phụ thuộc agent nhớ kiểm tra tài liệu ở repo root. Điểm chặn CHÍNH là
+  // `scripts/09-render.hf.mjs` (preflight assertion từ chối lệch convention) — đoạn này chỉ là
+  // lớp nhắc bổ sung phòng khi ai đó gõ tay lệnh CLI thô thay vì dùng script.
+  const renderConventionNote = `
+
+## Quy ước render riêng của repo này (ĐỌC TRƯỚC KHI RENDER — ghi đè mặc định CLI)
+
+Repo \`vox-style-xe-giay-v1-hyperframes\` có quy ước RIÊNG cho việc render, khác mặc định của CLI —
+LUÔN dùng wrapper tất định sau (chạy từ REPO ROOT, không phải từ thư mục project này):
+
+\`\`\`bash
+node scripts/09-render.hf.mjs --video=${slug}
+\`\`\`
+
+Wrapper này tự cố định \`--quality looks\` + output \`out/${slug}-full.mp4\` (KHÔNG PHẢI
+\`renders/<name>.mp4\` mặc định của CLI), tự chạy ffprobe đối chiếu duration với audio thật, và tự
+ghi vào run-log — KHÔNG cần tự gõ lệnh \`npx hyperframes render\` thô. Nếu thật sự cần 1 bản xuất
+đặc biệt khác convention (quality/đường dẫn khác), wrapper sẽ TỪ CHỐI chạy trừ khi thêm cờ
+\`--force-non-default\` — đọc thông báo lỗi của wrapper để biết cú pháp chính xác. Xem
+\`planning/README.md\` bước 10 và \`planning/responsibility-matrix.md\` mục 8 để biết đầy đủ.
+`;
+  for (const docFile of ["CLAUDE.md", "AGENTS.md"]) {
+    const docPath = path.join(vp.hfProjectDir, docFile);
+    if (fs.existsSync(docPath)) {
+      fs.appendFileSync(docPath, renderConventionNote, "utf8");
+    }
+  }
 }
 fs.mkdirSync(vp.hfCompositionsDir, { recursive: true });
 fs.mkdirSync(vp.hfAssetsDir, { recursive: true });

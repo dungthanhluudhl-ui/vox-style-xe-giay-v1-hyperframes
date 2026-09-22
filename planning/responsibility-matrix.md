@@ -34,6 +34,15 @@ giữ nguyên archive tại `archive/remotion-legacy/` — các ghi chú riêng 
 Thay bước tự tay tạo ảnh/video trong Google Flow rồi copy vào `public/videos/<slug>/media/`
 — **không bắt buộc**, vẫn có thể tiếp tục copy tay như trước, đây chỉ là đường tự động thêm vào.
 
+**Chạy song song với Nhánh A (mặc định đã kiểm chứng, video `ban-an-35-phan-1`, 2026-09-22):**
+`02b-media-generate.router.mjs` chỉ đọc `vp.scriptFile` (script gốc), KHÔNG đọc `captionsFile` —
+độc lập hoàn toàn với Stage 1 (whisper)/Stage 2 (align). Stage 3 (`03-media-analyze.router.mjs`)
+cũng chỉ đọc `imagesDir`/`videosDir`, không đọc `captionsFile`. Vì vậy mặc định chạy 2 nhánh song
+song: **Nhánh A** = Stage 1 → Stage 2 (ra `captions.json`); **Nhánh B** = Stage 2b → Stage 3 (ra
+`manifest.json`) — Nhánh B có thể bắt đầu ngay, không chờ Nhánh A, và Stage 3 chạy ngay khi Stage
+2b xong mà không cần đợi Nhánh A. Cả 2 nhánh phải xong trước khi chạy Stage 5 (`05-scene-plan.router.mjs`
+đọc `vp.captionsFile` ở dòng 24) vì đây là điểm hợp nhất đầu tiên cần cả 2 output.
+
 | Task | Ai/gì đảm nhiệm | Công cụ |
 |---|---|---|
 | Chia kịch bản thành phân cảnh + viết prompt ảnh tiếng Anh (tỉ lệ số cảnh theo độ dài kịch bản) | 9router[scene_image_prompt_writer] | `ag/gemini-3.7-flash-medium` (đổi từ `ag/gemini-3.8-flash-high` qua POC B2, xem mục 9) |
@@ -145,6 +154,29 @@ cả 4 PASS. Đã setup xong 2 account dự phòng thật (`flow-02`=binhthuan, 
 — cần chạy trên video sản xuất kế tiếp, hoặc giả lập 1 điều kiện fail để buộc nhánh fallback
 chạy, trước khi coi là đã kiểm chứng đầy đủ.
 
+**Sự cố production cần cải tiến (video `su-kien-thien-an-mon`, 2026-09-22):** `flow-02` đã tạo
+đủ 6 ảnh và đang tạo video; một clip video lỗi rồi retry làm pha `2-tao-chuyen-dong` chạm trần
+25 bước. `runPhase()` trả `timeout`, và luật hiện tại (`status: "timeout"` → fallback) đã đóng
+session `flow-02`, dọn stage tạm, mở `flow-03` rồi tạo lại từ Giai đoạn 1. Đây là fallback sai
+ngữ cảnh: timeout sau khi một Flow project đã được tạo thành công không chứng minh account hiện
+tại hỏng, trong khi project và các asset đang render chỉ truy cập được bởi chính account đó. Hậu
+quả: tốn credit tạo lặp 6 ảnh trên `flow-03`, checkpoint `flow-project.json` bị ghi đè URL của
+`flow-02`, và luồng download asset hợp lệ bị gián đoạn.
+
+**Đã sửa (2026-09-23):** thêm `POST_PROJECT_PHASES` (Set chứa `"mo-project-resume"`,
+`"2-tao-chuyen-dong"`, `"3-tai-file"`, `"3-tai-file-phan-loai"`) trong
+`scripts/02b-media-generate.router.mjs` — `main()` kiểm tra tập này TRƯỚC `shouldFallback()`: nếu
+`phaseName` của lần thử vừa fail nằm trong tập này (nghĩa là project Flow của account đó đã tồn
+tại), dừng hẳn ngay, đọc lại checkpoint qua `readFlowProjectFile()` và in đúng lệnh
+`--flow-account=<owner> --resume-project=<url>` (kèm `--retry-animate` nếu lỗi ở giai đoạn
+"2-tao-chuyen-dong") — KHÔNG chuyển account khác, không tạo lại project từ đầu. Đã kiểm chứng bằng
+bảng case mô phỏng (9/9 PASS): 4 case sau-khi-có-project đều dừng giữ checkpoint đúng, 2 case
+trước-khi-có-project vẫn fallback bình thường như cũ, 1 case "không đáng fallback" vẫn dừng như cũ,
+2 case `readFlowProjectFile()` đọc đúng file thật + trả `null` an toàn khi file không tồn tại.
+**Chưa kiểm chứng end-to-end trên Flow thật** (không mô phỏng được `attemptWithAccount()`/browser
+thật) — quan sát ở video sản xuất kế tiếp nếu gặp lại tình huống timeout/error sau khi project đã
+tạo xong.
+
 **Gotcha môi trường thật đã gặp khi setup (đọc trước khi debug lại, giống tinh thần đoạn
 `--no-root-sync` ở mục 6):**
 - Google chặn đăng nhập tương tác qua Chrome bị automation điều khiển (`navigator.webdriver`).
@@ -188,6 +220,19 @@ chạy, trước khi coi là đã kiểm chứng đầy đủ.
   rõ ràng việc gộp nhiều cảnh vào 1 ảnh — nhưng vì Flow Agent vẫn là AI ngoài tầm kiểm soát, đây
   chỉ giảm rủi ro chứ không đảm bảo tuyệt đối; nếu tái diễn, kiểm tra lại bằng `ffprobe` (đúng số
   file + đúng tỉ lệ dọc) trước khi đi tiếp Giai đoạn 2, đừng chỉ tin log "done" của model.
+- **Đã audit (2026-09-23) — lỗi "Chrome exited early (exit code: 0) without writing
+  DevToolsActivePort" khi mở account "default"** (gặp thật ở video `ban-an-473-phan-3` và
+  `su-kien-thien-an-mon`, KHÔNG gặp ở `ban-an-35-phan-1` chạy cùng ngày): đã đọc trực tiếp
+  `attemptWithAccount()` — script chỉ gọi `ab open` ĐÚNG 1 LẦN/attempt, chạy tuần tự, luôn dùng
+  đúng `PROFILE_DIR` theo account, không có vòng lặp mở lại nhiều lần → **không phải bug trong
+  code router**. Nguyên nhân nhiều khả năng nhất: `user-data-dir` của profile "default" đang bị
+  khoá bởi 1 tiến trình Chrome cũ/zombie chưa thoát hẳn (từ lần chạy trước bị ngắt giữa chừng,
+  hoặc do double-click tay `flow-profile-open.bat` còn mở song song) — giải thích được vì sao
+  không ổn định (chỉ xảy ra khi có tiến trình cũ tồn đọng tại đúng lúc chạy). Cơ chế fallback
+  (`shouldFallback()`, `status: "error"` → fallback) đã xử lý ĐÚNG THIẾT KẾ, tự chuyển "flow-02"
+  thành công ở cả 2 video — đây là lỗi tự phục hồi, mức độ thấp, **không cần sửa code**. Nếu tái
+  diễn thường xuyên, kiểm tra Task Manager có tiến trình `chrome.exe`/`agent-browser*.exe` cũ còn
+  sống trỏ đúng `pipeline/.flow-profile/default/` trước khi chạy lại.
 
 ## 3. Xử lý Media nguồn (ảnh/video)
 Media tới đây từ Stage 2b (tự động qua Google Flow) hoặc copy tay như trước — cả 2 đường đều
@@ -250,6 +295,95 @@ HyperFrames-cụ-thể tổng quát hoá được (contrast, template-literal se
 "cutout"...) — khi Claude xử lý escalation hoặc phát hiện lỗi lặp lại qua `pipeline/codegen-issues.jsonl` (field `framework: "hyperframes"`, dùng chung với Remotion), thêm gotcha mới vào đây thay vì chỉ sửa 1 lần cho scene đang lỗi.
 
 **Bug thật đã sửa ở tầng ráp (`sync-root-hf-lib.mjs`), áp dụng cho MỌI video:** CSS `.clip` (style mọi slot `data-composition-src` trong `index.html`) phải có `isolation: isolate` — thiếu dòng này, z-index dùng NỘI BỘ trong 1 scene có thể thoát stacking context và đè lên slot khác (kể cả `caption-track` dù luôn nằm sau trong DOM). Xem memory `feedback_incremental_buildout` bài học #5 để biết đầy đủ cách phát hiện + tại sao track-index không liên quan.
+
+### Sự cố integration CSS sau Stage 7 — video `su-kien-thien-an-mon`, S10 (2026-09-22)
+
+**Trạng thái:** đã audit và xác nhận nguyên nhân; **chưa sửa code**. Đây là backlog cải tiến cho
+session sau, không được hiểu là pipeline hiện tại đã xử lý lỗi.
+
+Ở bản render cuối, hai overlay của S10 (`#tape-box` và `#scale-card`) bị kéo giãn thành các mảng
+đen gần đầy chiều cao canvas tại khoảng 92–94 giây. Đây không phải overflow thông thường mà là
+**unintended stretching do CSS constraints còn sót lại sau khi ráp composition**.
+
+**Nguyên nhân đã xác nhận:** root project do `syncRootHf()` sinh dùng selector toàn cục:
+
+```css
+.clip {
+  position: absolute;
+  inset: 0;
+  isolation: isolate;
+}
+```
+
+Selector này được tạo trong `scripts/lib/sync-root-hf-lib.mjs` để các slot scene/caption cấp root
+phủ toàn canvas. Tuy nhiên, scene S10 cũng dùng `class="clip"` cho các timed element nội bộ. Khi
+standalone scene được chuyển thành sub-composition, CSS root vẫn match các node nội bộ này:
+
+- `#tape-box.clip` có `top: 230px`, nhưng nhận thêm `bottom: 0` từ `inset: 0`, nên bị kéo từ
+  `top: 230px` xuống đáy canvas.
+- `#scale-card.clip` có `bottom: 500px`, nhưng nhận thêm `top: 0`, nên bị kéo từ đỉnh canvas xuống
+  vị trí cách đáy 500px.
+
+Lỗi không xuất hiện khi Stage 7 kiểm tra composition standalone, vì CSS host/root chỉ được áp sau
+bước `standaloneToSubComposition()` + `syncRootHf()`.
+
+**Reviewer Stage 7 không phát hiện lỗi integration này.** Reviewer và `hyperframes check` của S10
+đã phát hiện các lỗi khác gồm `video_nested_in_timed_element`,
+`gsap_timeline_set_initial_hide`, và `nested_structure_needs_subcomposition`, nhưng không phát
+hiện selector collision `.clip` hoặc kích thước card sai sau assembly. Final assembled check vẫn
+PASS vì các card vẫn nằm trong canvas, có `data-layout-allow-overlap`, và root S10 còn dùng
+`data-layout-allow-overflow="true"`; checker không biết chiều cao thiết kế mong đợi của card nên
+xem hình chữ nhật lớn là layout CSS hợp lệ.
+
+**Các lỗi Stage 7 khác của video này đã có log thô nhưng chưa được tổng hợp đầy đủ thành quy tắc
+pipeline dùng chung:** root/media hardcode kích thước pixel; video và wrapper cùng mang timing;
+initial hide bằng `tl.set(..., 0)`; CSS transform xung đột GSAP transform; `back.out` sai register;
+text/label lệch shotlist; `toLocaleString()` và counter callback không hoàn toàn deterministic;
+repeated `fromTo()` thiếu baseline; tween trực tiếp timed clip; overlay chồng nhau; root-level
+layout exemptions có blast radius quá lớn. Bằng chứng nằm trong `pipeline/codegen-issues.jsonl`,
+`pipeline/videos/su-kien-thien-an-mon/run-log.md`, và các issue file targeted của S01/S05/S14.
+
+**Khoảng trống kiến trúc cần xử lý trong session tương lai:**
+
+1. Stage 7 chỉ verify/review standalone artifact trước conversion, nên chưa kiểm tra đầy đủ tương
+   tác giữa CSS scene và CSS host sau assembly.
+2. Selector `.clip { inset: 0 }` của root có phạm vi quá rộng, có thể làm thay đổi layout nội bộ
+   của mọi scene.
+3. Root-level `data-layout-allow-overflow` có thể che giấu lỗi bố cục thật.
+4. Sparse layout sampling không bảo đảm trúng đúng cue ngắn khi overlay đang hiển thị.
+
+**Hướng cải tiến đề xuất — chưa thực hiện:**
+
+1. Scope CSS slot của root vào direct child, ví dụ `#root > .clip`, hoặc dùng class riêng như
+   `.composition-slot`; không tái sử dụng selector layout nội bộ `.clip` cho host full-frame.
+2. Bảo đảm CSS host chỉ áp lên các slot `data-composition-src`, không áp vào node nội bộ của
+   sub-composition.
+3. Thêm integration check sau `standaloneToSubComposition()` và sau `syncRootHf()`, thay vì chỉ
+   check standalone scene.
+4. Thêm static audit phát hiện selector host có thể match node nội bộ, đặc biệt `.clip`, `#root`,
+   `video` và `[data-start]`.
+5. Cấm hoặc cảnh báo mạnh `data-layout-allow-overflow="true"` trên composition root; exemption
+   phải đặt ở phần tử nhỏ nhất thực sự cần overflow.
+6. Với overlay có cue cụ thể, lấy layout sample tại `atMs` và trong khoảng hold của overlay, không
+   chỉ dùng sparse sampling đều theo scene.
+7. Reviewer integration phải nhận được CSS host/root sau assembly hoặc chạy thêm một lượt review
+   trên assembled artifact.
+
+**Regression test bắt buộc khi sửa:**
+
+- Tạo sub-composition có một `.clip` dùng `top` nhưng không khai báo `bottom`, và một `.clip` dùng
+  `bottom` nhưng không khai báo `top`.
+- Ráp vào root có full-frame scene slots; xác nhận computed style của hai internal clip không nhận
+  cạnh đối diện từ host.
+- Xác nhận scene slot vẫn phủ đúng 1080×1920 và giữ `isolation: isolate`.
+- Chụp/đo layout tại đúng cue hiển thị overlay của S10: `#tape-box` khoảng global 90.8–92.8s và
+  `#scale-card` khoảng global 93.6–95.4s.
+- Test phải fail với selector `.clip { inset: 0 }` hiện tại và PASS sau khi CSS được scope.
+
+**Gotcha cần đưa vào `KNOWN_GOTCHAS_HF` khi triển khai bản sửa:** composition standalone có thể
+PASS nhưng layout thay đổi sau assembly nếu CSS host dùng selector phổ biến như `.clip`. Mọi CSS
+full-frame của host phải được scope vào direct composition slots; không được để `inset: 0` lan vào
+timed elements nội bộ.
 
 **Bug race condition thật đã sửa (video "ban-an-473-phan-2", 2026-09-22), áp dụng cho MỌI video:** trước đây `07-codegen.hf.router.mjs` scaffold PROJECT CHUNG của video (khi `hyperframes.json` của `hfProjectDir` chưa tồn tại) vào một thư mục tạm tên CỐ ĐỊNH `.scaffold-tmp-<slug>` (không gắn sceneId/pid) — khác với project test standalone riêng từng scene vốn đã an toàn. Chạy thẳng ≥2 scene song song NGAY TỪ SCENE ĐẦU (chưa có scene nào bootstrap project chung trước) khiến nhiều process cùng thấy "chưa tồn tại" và cùng ghi/xoá CHUNG một thư mục tạm → 11/18 scene fail với lỗi `hyperframes init`/`ENOENT scandir` (không phải lỗi nội dung). Đã sửa: tên thư mục tạm giờ gắn cả `sceneId` + `process.pid` để luôn unique. Trước bản vá này, quy trình "chạy S01 riêng để bootstrap trước khi vào vòng song song" (xem video ban-an-473-phan-1 bên dưới) ngẫu nhiên né được bug này (project chung đã tồn tại trước khi vòng song song bắt đầu) — nhưng đó không phải lý do chính thức của bước bootstrap riêng (lý do chính thức là phát hiện sớm gotcha nội dung). Từ nay chạy thẳng toàn bộ scene song song ngay từ đầu (không cần bootstrap 1 scene riêng trước) là an toàn.
 
@@ -345,8 +479,8 @@ Preview/QA riêng ở giữa** (xem ghi chú mục 7).
 
 | Task | Ai/gì đảm nhiệm | Công cụ |
 |---|---|---|
-| Render video cuối (chỉ khi được yêu cầu rõ) | Local | `npx hyperframes render --quality looks -o out/<slug>-full.mp4 hyperframes/videos/<slug>` |
-| Kiểm tra file render (duration, resolution, không lỗi) | Local | ffprobe |
+| Render video cuối (chỉ khi được yêu cầu rõ) | Local | `node scripts/09-render.hf.mjs --video=<slug>` — wrapper tất định (2026-09-23), preflight assertion từ chối lệch `--quality`/output convention trừ khi có `--force-non-default`. KHÔNG gõ tay `npx hyperframes render` thô (xem sự cố mục "Nhật ký audit" bên dưới). |
+| Kiểm tra file render (duration, resolution, không lỗi) | Local | ffprobe — đã tích hợp tự động vào `scripts/09-render.hf.mjs`, không cần chạy tay |
 | Xác nhận nội dung hiển thị đúng (vd phụ đề, hiệu ứng xuyên suốt) — CHỈ khi có lý do nghi ngờ cụ thể (không mặc định mọi video) | 9router[vision_qa] | trích frame bằng ffmpeg tại nhiều mốc + gửi vision agent — bài học thật (video 5): `hyperframes check` PASS không đảm bảo mọi lớp nội dung THỰC SỰ hiển thị (vd bug stacking-context ở mục 6). Đây là ghi chú cho 1 trường hợp cụ thể đã xảy ra, KHÔNG phải quy tắc bắt buộc tự động cho mọi video. |
 
 **Bài học thật (video "ban-an-473-phan-2", 2026-09-22):** sau khi Stage 6 xong và `hyperframes
@@ -358,6 +492,206 @@ phụ đề thiếu), không phải bước mặc định bắt buộc tự đ�
 **Áp dụng từ nay:** sau Stage 6 sạch lỗi → Render thẳng (Stage 8) → chỉ verify bằng
 ffprobe (bắt buộc, rẻ) → vision agent CHỈ khi người dùng report vấn đề cụ thể sau khi xem, hoặc
 Claude có nghi ngờ rõ ràng dựa trên bằng chứng cụ thể (không phải "để chắc ăn").
+
+### Nhật ký audit chưa xử lý — session `ban-an-35-phan-1` (2026-09-22)
+
+**Phạm vi và trạng thái:** mục này ghi lại lỗi/vấn đề phát sinh trong đúng session dựng video
+`ban-an-35-phan-1`. **Cập nhật (2026-09-23):** backlog P0 mục 1-4 (wrapper render tất định) ĐÃ
+triển khai — xem chi tiết ở mục 6 bên dưới và mục 8 phía trên. Các mục P1/P2 (Stage 7b integration
+check, caption safe-zone, tách retry network/content, hygiene log) VẪN CHƯA triển khai — không đọc
+các mục đó như đã sửa. Bản MP4 đã render của `ban-an-35-phan-1` vẫn đang ở đường dẫn sai convention
+`renders/ban-an-35-phan-1.mp4` theo yêu cầu người dùng (tự xử lý thủ công, không cần render lại).
+
+#### 1. Kết luận trách nhiệm — lỗi render không phải do quy định mơ hồ
+
+Repo đã quy định rõ và lặp lại lệnh chuẩn tại `README.md`, `planning/README.md` và bảng Stage 8
+ngay phía trên:
+
+```console
+npx hyperframes render --quality looks -o out/<slug>-full.mp4 hyperframes/videos/<slug>
+```
+
+Nhưng session đã chạy `--quality delivery` và ghi vào
+`renders/ban-an-35-phan-1.mp4`. Đây là lỗi tuân thủ của Claude dù chỉ dẫn đã rõ, không phải lỗi do
+pipeline mâu thuẫn. Có ba sai lệch độc lập trong cùng một lệnh:
+
+1. Sai preset: `delivery` thay vì `looks`.
+2. Sai thư mục: `renders/` thay vì `out/`.
+3. Sai tên file: `<slug>.mp4` thay vì `<slug>-full.mp4`.
+
+Nguyên nhân thao tác: Claude để hướng dẫn chung của skill HyperFrames (`delivery` cho final
+delivery, output mặc định dưới `renders/`) lấn át convention cụ thể hơn của repo. Quy tắc cần giữ:
+**chỉ dẫn repo-local cụ thể luôn ưu tiên hơn default của tool/skill**. Không được tự nâng quality
+vì cho rằng đây là "final delivery" khi pipeline đã chốt `looks`.
+
+Hậu quả đo được của lần render sai preset: video 226.4s mất khoảng 938.4s tổng; capture 6792 frame
+mất khoảng 541.6s và encode `delivery/high` mất khoảng 316.4s, output khoảng 242.3MB.
+
+**Đính chính (2026-09-23, audit bằng số liệu thật):** 2 claim ở trên KHÔNG đủ bằng chứng ủng hộ.
+So sánh `ban-an-473-phan-2` (429.1s / 3948 frame, render ĐÚNG `--quality looks`, **cũng dùng CSS 3D
+`perspective` ở 4 scene** s05/s06/s07/s16) = 0.109s/frame, với `ban-an-35-phan-1` (938.4s / 6792
+frame, `delivery/high`) = 0.138s/frame — chỉ chênh ~27%, không phải ~2x như tài liệu CLI mô tả
+chênh lệch giữa `drawElementImage` (fast path) và screenshot capture (slow path). Nhiều khả năng cả
+2 video đều dùng CÙNG đường screenshot capture (mặc định trên máy Windows này), CSS 3D không phải
+thủ phạm riêng của video này. Bitrate ffprobe thật: `ban-an-35-phan-1` (delivery/high) = **8.98
+Mbps** — THẤP HƠN cả 4 video khác dùng đúng `looks` (11.3-15.5 Mbps) — ngược với claim "delivery
+làm encode nặng hơn". Đây là so sánh gián tiếp (khác composition), chưa phải test A/B kiểm soát
+hoàn toàn; người dùng đã xác nhận chấp nhận kết luận này, không cần test A/B thật để xác nhận dứt
+điểm. Bài học: không suy luận nguyên nhân hiệu năng chỉ từ 1 lần đo duy nhất khi có dữ liệu video
+khác để đối chứng.
+
+#### 2. Lỗi thao tác/báo cáo khác trong session
+
+1. **Tự chạy preview không cần thiết:** Claude đã chạy `preview --background`, `preview --status`
+   và `preview --stop` dù mục 7-8 hiện hành yêu cầu assembled check sạch thì đi thẳng tới render,
+   trừ khi có trigger debug cụ thể. Việc này tốn thời gian và sinh thêm `.thumbnails/` /
+   `.waveform-cache/` trong project.
+2. **Kết luận sai về vision QA:** báo cáo audit ban đầu nói chưa chạy vision agent trên MP4 là một
+   thiếu sót. Đính chính: theo mục 8, `ffprobe` là bắt buộc; vision QA chỉ chạy khi người dùng báo
+   lỗi hoặc có nghi ngờ cụ thể dựa trên bằng chứng. Session đã chạy `ffprobe`, nên việc không chạy
+   vision agent không phải lỗi.
+3. **Dùng sai cú pháp CLI một lần:** đã thử `hyperframes check --project <dir>`, trong khi
+   `--project` thuộc contract của lệnh upgrade, không phải `check`. Sau đó đã sửa bằng cách chạy
+   `check` trong project directory. Không làm hỏng artefact nhưng tốn một lượt lệnh.
+4. **Thiếu nhật ký hoàn tất Stage 8:** `pipeline/videos/ban-an-35-phan-1/run-log.md` hiện kết thúc
+   ở lần sửa S02; chưa ghi final assembled check, lệnh/preset/path render, thời gian, dung lượng và
+   kết quả ffprobe. Vì vậy run log không đủ để audit Stage 8 và không ghi lại chính sai lệch
+   output/quality đã xảy ra.
+5. **Đặt log check sai lớp thư mục:** `pipeline-check-final.log` được ghi vào
+   `hyperframes/videos/ban-an-35-phan-1/` thay vì `pipeline/videos/ban-an-35-phan-1/` hoặc chỉ ghi
+   summary vào run log. File vận hành có thể bị lẫn vào project source/publish bundle.
+6. **Báo cáo hoàn tất quá mạnh:** Claude nói pipeline end-to-end đã hoàn tất dù deliverable chưa
+   đạt contract path/name/quality và run log chưa có Stage 8. Render kỹ thuật thành công không đủ
+   để tuyên bố pipeline hoàn tất nếu output contract chưa đạt.
+7. **Cập nhật workflow không cần thiết:** session đã chạy `npx hyperframes skills update
+   general-video` dù repo đã có pipeline riêng đầy đủ. Chưa có bằng chứng lệnh này gây diff/hỏng
+   repo, nhưng đây là biến số và rủi ro không cần thiết trong một yêu cầu nhấn mạnh không tự đổi
+   code. Từ nay không update skill/workflow trong pipeline repo trừ khi tài liệu repo yêu cầu hoặc
+   có blocker đã được xác nhận.
+
+#### 3. Mâu thuẫn tài liệu thật sự phát hiện trong session
+
+Mâu thuẫn này **không biện minh** cho lỗi path/name/quality phía trên, nhưng có liên quan trực tiếp
+đến việc preview và diễn giải vision QA:
+
+- `planning/README.md` bước 9-10 hiện liệt kê Preview rồi Render, và câu cuối bước 10 yêu cầu
+  `ffprobe + vision agent`, khiến cả hai trông như bước mặc định.
+- `planning/responsibility-matrix.md` mục 7-8 (quy định chi tiết và mới hơn) nói ngược lại: không
+  preview mặc định, vision QA không bắt buộc, chỉ `ffprobe` là gate mặc định sau render.
+
+Claude cũng có lỗi vì ban đầu chỉ đọc phần đầu `responsibility-matrix.md`, chưa đọc tới mục 7-8
+trước khi hành động. Hướng đồng bộ tài liệu cần audit ở session sau: sửa `planning/README.md` để
+nêu một đường duy nhất — assembled check PASS → render thẳng → ffprobe bắt buộc; preview/snapshot/
+vision QA chỉ khi có trigger cụ thể.
+
+#### 4. Dependency graph và cơ hội song song bộc lộ trong session
+
+Ban đầu Claude chạy Stage 1 rồi Stage 2 theo cách tuần tự; người dùng phải nhắc Stage 2b độc lập
+với kết quả transcript và Stage 3 chỉ phụ thuộc media từ Stage 2b. Sau khi đọc code, xác nhận DAG
+thực tế là:
+
+```text
+script + audio ─┬─> Stage 1 ─> Stage 2 ─┐
+                └─> Stage 2b ─> Stage 3 ─┴─> Stage 5
+```
+
+Stage 1 và 2b có thể bắt đầu song song ngay sau intake; Stage 3 có thể chạy ngay khi 2b hoàn tất,
+không cần chờ Stage 2. Session đã áp dụng song song an toàn sau khi người dùng nhắc. Đây một phần
+là thiếu sót điều phối của Claude, một phần do tài liệu hiện trình bày danh sách tuyến tính mà chưa
+ghi `depends_on`/DAG. Cần bổ sung bảng dependency để tối ưu này không tiếp tục phụ thuộc trí nhớ
+hoặc người dùng nhắc lại.
+
+#### 5. Khoảng trống integration/retry bộc lộ trong session
+
+1. **Standalone PASS không đồng nghĩa assembled PASS:** 24 scene đã qua verify/reviewer riêng,
+   nhưng final assembled check vẫn bắt lỗi S02/S16 liên quan contrast/collision với caption track.
+   Cần làm rõ một gate riêng sau `syncRootHf()` (đề xuất tên Stage 7b: Assemble + Integration
+   Check), trước Stage 8. Gate phải xác nhận đủ N/N scene, audio/caption track đã mount và
+   `hyperframes check` trên project assembled PASS.
+2. **Standalone verifier không thấy caption safe rail:** scene riêng không mount caption track nên
+   không thể phát hiện text/card xâm lấn vùng caption. Cần audit giải pháp đưa safe-zone contract
+   vào generator/reviewer hoặc mount safe-zone fixture trong verify; không dùng
+   `data-layout-allow-overlap` để che collision ngoài ý muốn.
+3. **Retry S23 chưa phân biệt tốt lỗi mạng với lỗi nội dung:** S23 phải chạy lại nhiều vòng do
+   9router timeout. Cần phân loại riêng generator timeout, verifier timeout, reviewer timeout và
+   content FAIL; network-only retry không nên tiêu ngân sách content attempt hoặc bắt generator
+   viết lại artefact đang tốt.
+
+#### 6. Backlog đề xuất để audit ở session khác — chưa triển khai
+
+**P0 — ngăn lặp lại lỗi deliverable:**
+
+**Đã triển khai (2026-09-23), mục 1-4 xong:**
+
+1. ✅ `scripts/09-render.hf.mjs --video=<slug>` — wrapper tất định (số `09`, không xung đột
+   `08-sync-root.hf.mjs`).
+2. ✅ Wrapper cố định `--quality looks`, output `vp.finalOutput` (`out/<slug>-full.mp4`), tự tạo
+   `out/` nếu thiếu, tự chạy ffprobe đối chiếu duration với `narration.mp3` thật (cảnh báo nếu lệch
+   >1s), append đầy đủ vào run-log qua `appendRunLog()`.
+3. ✅ Thêm `finalOutput: path.join(root, "out", \`${slug}-full.mp4\`)` vào `videoPaths()`
+   (`scripts/lib/video-paths.mjs`) làm nguồn xác thực duy nhất.
+4. ✅ Preflight assertion: nếu `--quality`/`--output` khác mặc định repo, wrapper TỪ CHỐI chạy
+   (exit 1) trừ khi có cờ `--force-non-default` xác nhận chủ đích. Đã kiểm chứng bằng bảng case mô
+   phỏng (6/6 PASS, bao gồm đúng kịch bản lỗi thật: `--quality delivery` không có force → reject).
+   Đã sửa 1 lỗi thật phát hiện qua kiểm chứng: ffprobe trên Windows trả `\r\n`, làm hỏng chuỗi
+   `resolution` (nhiều dòng ghép lại dính `\r` ẩn) — đã thêm `.replace(/\r/g, "")` trong
+   `ffprobeField()`.
+   Đồng thời cập nhật CLAUDE.md/AGENTS.md scaffold (`scripts/07-codegen.hf.router.mjs`) trỏ về
+   đúng wrapper này thay vì lệnh CLI thô, làm lớp nhắc bổ sung phòng khi ai đó vẫn gõ tay.
+   **Chưa kiểm chứng end-to-end bằng 1 lần render thật** (chỉ mô phỏng logic + test trên file đã
+   render sẵn) — xác nhận thêm ở lần render video kế tiếp.
+5. ⬜ Chưa làm (mục riêng, đã tự hoàn thành ở audit khác — xem mục 7 phía trên: README/matrix đã
+   đồng bộ preview/vision QA ngày 2026-09-23).
+
+**P1 — tốc độ và độ tin cậy:**
+
+1. Ghi dependency DAG/bảng `depends_on` cho Stage 1/2/2b/3/5; mặc định chạy Stage 1 + 2b song
+   song, rồi Stage 3 ngay sau 2b.
+2. Chính thức hoá Stage 7b assembled integration check.
+3. Thêm caption safe-zone contract vào generator/reviewer/fixture verify.
+4. Tách retry network khỏi content retry và giữ artefact tốt nhất giữa các attempt.
+5. Ghi capture mode, GPU mode và stage timings của render vào run log để phân biệt chậm do capture
+   với chậm do encode; không suy đoán.
+6. **Xác nhận thật (2026-09-23) qua test render trực tiếp 1 scene** (`scene-s01.html`,
+   `ban-an-35-phan-1` — thất bại vì lý do khác, xem mục 6 dưới, nhưng log kịp in ra trước khi lỗi):
+   cơ chế "1 số CSS feature tắt fast-capture (`drawElementImage`), rơi về screenshot capture" LÀ
+   CÓ THẬT trên máy này — log ghi rõ `Fast capture: composition uses mix-blend-mode — disabling
+   drawElementImage`, khác lý do "CSS 3D" agent trước nêu cho video khác, xác nhận GPU thật được
+   nhận diện (`NVIDIA GeForce GTX 1660 SUPER`, `browserGpuMode: hardware`). Nhiều khả năng phong
+   cách paper-cutout Vox dùng `mix-blend-mode` phổ biến nên HẦU HẾT video đều rơi vào đường
+   screenshot-capture — không phải lỗi riêng của 1 video. **Không nên "sửa" bằng cách bỏ
+   `mix-blend-mode`/CSS 3D** — đây là hiệu ứng thị giác thật của style DNA, đánh đổi chất lượng lấy
+   tốc độ không xứng đáng, và `--experimental-fast-capture` bản thân CLI còn gắn nhãn "experimental"
+   (chưa chắc ổn định). Hướng tối ưu AN TOÀN hơn, CHƯA thử: tinh chỉnh `-w/--workers` bằng
+   `npx hyperframes benchmark` (CLI tự đề xuất công cụ này) — đúng bài học đã kiểm chứng trước đó
+   với Remotion trong repo này (mặc định `concurrency=8` không phải nhanh nhất, `concurrency=4`
+   nhanh hơn thật — xem "Tối ưu render Remotion" trong `planning/README.md`). "Auto workers" của
+   HyperFrames CLI có thể đang chọn số worker không tối ưu cho máy 16-core này; cần đo thật ở lần
+   render video kế tiếp, không đoán trước 1 con số.
+
+**P2 — hygiene/auditability:**
+
+1. Log vận hành/final check phải nằm dưới `pipeline/videos/<slug>/`, không nằm trong project
+   composition.
+2. Audit cách ignore/dọn `.thumbnails/` và `.waveform-cache/` khi preview thực sự được yêu cầu.
+3. Cân nhắc completion manifest chỉ được ghi khi assembled check, render contract và ffprobe đều
+   đạt; tránh tuyên bố end-to-end complete chỉ vì một MP4 bất kỳ đã được tạo.
+
+#### 7. Tiêu chí regression/acceptance đề xuất cho bản sửa tương lai
+
+- Chạy wrapper với một slug test phải chỉ sinh `out/<slug>-full.mp4` bằng quality `looks`.
+- Override path/name/quality sai phải fail trước khi render; override do người dùng yêu cầu phải
+  được log rõ, không âm thầm thay default.
+- Run log phải có check verdict, exact relative output, quality, duration/resolution/fps/codecs,
+  file size và timings.
+- Pipeline scheduler test phải chứng minh Stage 1 và 2b có thể chạy đồng thời; Stage 5 không bắt
+  đầu trước khi cả Stage 2 và Stage 3 hoàn tất.
+- Một scene đặt text trong caption rail phải PASS standalone hiện tại nhưng FAIL integration
+  fixture/gate mới; bản sửa layout phải PASS.
+- Mô phỏng reviewer timeout sau khi composition đã verify: retry reviewer hoặc tiếp tục từ artefact
+  hiện có, không sinh lại scene và không tiêu content-attempt.
+- Tài liệu `README.md`, `planning/README.md` và `responsibility-matrix.md` phải thống nhất về một
+  lệnh render chuẩn và điều kiện preview/vision QA.
 
 ## 9. Theo dõi POC đổi model tier sang biến thể rẻ hơn (2026-09-22)
 

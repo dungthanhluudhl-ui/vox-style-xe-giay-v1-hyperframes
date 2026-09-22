@@ -17,10 +17,20 @@ cuối file) — không migrate lại, không phát triển tiếp trên nhánh 
 - **Style DNA**: dùng CHUNG cho mọi video, đã có sẵn ở `planning/style-dna/` — chỉ cần đọc/điều chỉnh (xem `planning/style-dna-integration.md`), không tạo lại cho từng video.
 
 ## Các bước dựng 1 video (chạy với `--video=<slug>` ở mọi script `.router.mjs`)
-1. `scripts/01-audio-transcribe.local.mjs` — transcribe audio thô (whisper.cpp local).
-2. `scripts/02-audio-clean-transcript.router.mjs --script=... --audio=...` — sửa/align transcript, ghi `public/videos/<slug>/captions/captions.json`.
-3. *(không có sẵn media)* `scripts/02b-media-generate.router.mjs --video=<slug>` — tạo ảnh/video qua Google Flow.
-4. `scripts/03-media-analyze.router.mjs --video=<slug>` — phân tích + chuẩn hoá tên media nguồn, ghi `pipeline/videos/<slug>/media-analysis/manifest.json`.
+
+Bước 1-4 chạy theo **2 nhánh song song** (mặc định đã kiểm chứng thật ở video `ban-an-35-phan-1`,
+xem `planning/responsibility-matrix.md` mục 2b) — Nhánh B không đọc gì từ Nhánh A nên chạy đồng
+thời để rút ngắn tổng thời gian, không cần chờ tuần tự như trước:
+
+- **Nhánh A (transcript)**:
+  1. `scripts/01-audio-transcribe.local.mjs` — transcribe audio thô (whisper.cpp local).
+  2. `scripts/02-audio-clean-transcript.router.mjs --script=... --audio=...` — sửa/align transcript, ghi `public/videos/<slug>/captions/captions.json`.
+- **Nhánh B (media, chạy song song với Nhánh A, không chờ Nhánh A)**:
+  3. *(không có sẵn media)* `scripts/02b-media-generate.router.mjs --video=<slug>` — tạo ảnh/video qua Google Flow.
+  4. `scripts/03-media-analyze.router.mjs --video=<slug>` — chạy NGAY khi bước 3 xong (không chờ Nhánh A) — phân tích + chuẩn hoá tên media nguồn, ghi `pipeline/videos/<slug>/media-analysis/manifest.json`.
+
+Từ bước 5 trở đi cần **cả 2 nhánh đã xong** (Stage 5 đọc cả `captions.json` lẫn `manifest.json`):
+
 5. *(bỏ qua nếu style DNA đã có sẵn/dùng chung — xem ghi chú "Vì sao không có `scripts/04-*`" trong `responsibility-matrix.md`)*
 6. `scripts/05-scene-plan.router.mjs --video=<slug>` — lập Scene Plan, ghi `planning/videos/<slug>/scene-plan.json`/`.md`.
 7. `scripts/06-shotlist.router.mjs --video=<slug>` — lập Shotlist, ghi `planning/videos/<slug>/shotlist.json`/`.md`.
@@ -28,8 +38,19 @@ cuối file) — không migrate lại, không phát triển tiếp trên nhánh 
    - **Mặc định (≥2 scene)**: `node scripts/07-codegen-hf-parallel.mjs --video=<slug> --scenes=S01,S02,...,SNN [--concurrency=10]` — worker-pool song song, tự ráp `index.html` khi tất cả scene PASS.
    - Tuần tự/debug 1 scene riêng: `node scripts/07-codegen.hf.router.mjs --video=<slug> --scenes=SNN [--issue-file=...]`.
    - `caption-track.html` được `syncRootHf()` tự sinh tất định từ `captions.json` mỗi lần ráp (`scripts/lib/generate-caption-track-hf.mjs`) — không cần thao tác tay.
-9. Preview bằng `npx hyperframes preview --background` (xem `hyperframes/videos/<slug>/CLAUDE.md`).
-10. Render bằng `npx hyperframes render --quality looks -o out/<slug>-full.mp4 hyperframes/videos/<slug>` (chỉ khi được yêu cầu render chính thức). Xác minh bằng `ffprobe` (duration khớp audio thật) + vision agent (9router) trên vài khung hình — không chỉ tin log render.
+9. Sau khi Stage 8 ráp xong và `hyperframes check` trên project đã ráp đạt `ok=true`: **đi thẳng
+   sang Render, KHÔNG có bước Preview/QA bắt buộc ở giữa** (xem `planning/responsibility-matrix.md`
+   mục 7-8). Render bằng `node scripts/09-render.hf.mjs --video=<slug>` (chỉ khi được yêu cầu render
+   chính thức) — wrapper tất định tự cố định `--quality looks` + output `out/<slug>-full.mp4`,
+   KHÔNG gõ tay lệnh `npx hyperframes render` thô (sự cố thật đã xảy ra: gõ tay lệch cả preset lẫn
+   đường dẫn, xem `planning/responsibility-matrix.md` mục 8). Script tự chạy **bắt buộc** `ffprobe`
+   (duration khớp audio thật) và tự ghi run-log — đây là gate mặc định duy nhất sau render.
+10. Preview (`npx hyperframes preview --background`, xem `hyperframes/videos/<slug>/CLAUDE.md`) và
+    vision QA (9router chụp vài khung hình, nhận xét text) **chỉ dùng khi có lý do cụ thể**: đang
+    debug 1 vấn đề đã biết, người dùng yêu cầu xem trước, hoặc lần đầu áp dụng kỹ thuật/kiến trúc
+    mới chưa từng kiểm chứng — KHÔNG chạy mặc định cho mọi video (sự cố thật đã xảy ra ở video
+    `ban-an-473-phan-2` khi Claude tự ý làm bước này dù không ai yêu cầu, xem
+    `planning/responsibility-matrix.md` mục 7).
 
 ## Trạng thái hiện tại
 - [x] Scaffold dự án Remotion ban đầu, sau đó di trú toàn bộ sang HyperFrames (xem lịch sử `git log`/mục Archive bên dưới).
