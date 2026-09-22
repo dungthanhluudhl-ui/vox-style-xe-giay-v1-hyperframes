@@ -22,6 +22,11 @@
 //     the project" → Rename/Trash/Delete, SAI cho việc tải file) và nút ở thanh trên cùng gần
 //     avatar account ("More options" → Download project/Product help/..., ĐÚNG — dùng ở giai
 //     đoạn 3 để tải cả project 1 lần dạng zip).
+//   - Quy ước đặt tên account dự phòng (scripts/flow-accounts.json, xem scripts/lib/flow-accounts.mjs):
+//     giữ nguyên "default" (không đổi tên thư mục đang hoạt động thật), account mới từ nay đặt
+//     tên tuần tự "flow-02", "flow-03", ... (bắt đầu từ 02 vì "default" coi như #1). Mỗi tên MỚI
+//     vẫn cần đăng nhập thủ công 1 lần như hướng dẫn trên trước khi thêm vào "priority" của
+//     flow-accounts.json — file này chỉ nên liệt kê account THẬT SỰ đã đăng nhập xong.
 //
 // Usage: node scripts/02b-media-generate.router.mjs --video=<slug> [--flow-account=<tên>] [--style-notes="..."] [--resume-project=<url>] [--retry-animate]
 //   --flow-account=<tên>     Tài khoản Flow để dùng (mặc định "default") — mỗi tên có profile

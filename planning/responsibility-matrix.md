@@ -47,6 +47,19 @@ Script: `scripts/02b-media-generate.router.mjs --video=<slug> [--flow-account=<t
 1+2, chỉ chạy Giai đoạn 3 (tải file) — dùng khi tải lỗi/thiếu file, tránh tốn credit tạo lại.
 Log chi tiết từng bước → `pipeline/videos/<slug>/media-generate-log.md`; 1 dòng tóm tắt cuối → `pipeline/videos/<slug>/run-log.md` (đúng convention chung).
 
+**Danh sách account Flow dự phòng — `scripts/flow-accounts.json`** (đọc qua
+`scripts/lib/flow-accounts.mjs`, mirror `loadModelRouting()`): trường `priority` liệt kê thứ tự
+ưu tiên thử account khi cần chuyển đổi. **Quy ước đặt tên:** giữ nguyên `default` (không đổi tên
+thư mục đang hoạt động thật), account mới từ nay đặt tên tuần tự `flow-02`, `flow-03`, ... (bắt
+đầu từ 02 vì `default` coi như #1). File chỉ nên liệt kê account THẬT SỰ đã đăng nhập thủ công
+xong (xem gotcha "Hết credit/hạn mức" phía trên) — nếu file chưa tồn tại hoặc account mới chưa
+kịp thêm vào, helper trả về mặc định an toàn `{ priority: ["default"] }`, không crash. Hiện tại
+(2026-09-22) file chỉ có `["default"]` vì chưa có account dự phòng nào được setup thật.
+**Lưu ý trạng thái:** tính đến 2026-09-22, `02b-media-generate.router.mjs` CHƯA đọc file này —
+đây mới là bước chuẩn bị cấu hình (D1 trong kế hoạch model-routing), vòng lặp tự động chuyển
+account khi lỗi (D2/D3) chưa được cài đặt; script vẫn chỉ dùng đúng 1 `--flow-account=` truyền
+qua CLI như trước.
+
 **Gotcha môi trường thật đã gặp khi setup (đọc trước khi debug lại, giống tinh thần đoạn
 `--no-root-sync` ở mục 6):**
 - Google chặn đăng nhập tương tác qua Chrome bị automation điều khiển (`navigator.webdriver`).
