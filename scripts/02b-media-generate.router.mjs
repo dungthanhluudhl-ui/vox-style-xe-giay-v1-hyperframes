@@ -14,6 +14,9 @@
 //     tác qua Chrome bị automation điều khiển). Đây là chi phí một lần cho mỗi tài khoản MỚI —
 //     KHÔNG cần lặp lại cho các lần chạy sau hay khi đổi qua lại giữa các tài khoản đã thiết
 //     lập sẵn.
+//     Tiện ích double-click thay vì gõ lệnh tay: scripts/flow-profile-open.bat [tên-account]
+//     (mặc định "default") — tự tạo thư mục profile nếu chưa có, mở đúng Chrome+profile đó tại
+//     flow.google.com. Vẫn phải tự đóng hết Chrome trước khi chạy nếu là lần đăng nhập ĐẦU TIÊN.
 //   - Hết credit/hạn mức tạo ảnh ở 1 tài khoản: thiết lập thêm 1 tài khoản Flow khác (đăng nhập
 //     thủ công 1 lần như trên vào 1 --flow-account=<tên khác>), sau đó chỉ cần đổi flag
 //     --flow-account= ở lần chạy tiếp theo để chuyển hẳn sang tài khoản đó — không cần đóng

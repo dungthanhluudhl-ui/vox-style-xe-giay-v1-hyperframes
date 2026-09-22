@@ -55,6 +55,14 @@ thư mục đang hoạt động thật), account mới từ nay đặt tên tu�
 xong (xem gotcha "Hết credit/hạn mức" phía trên) — nếu file chưa tồn tại hoặc account mới chưa
 kịp thêm vào, helper trả về mặc định an toàn `{ priority: ["default"] }`, không crash. Hiện tại
 (2026-09-22) file chỉ có `["default"]` vì chưa có account dự phòng nào được setup thật.
+
+**Tạo profile mới / mở lại profile để đăng nhập, quản lý (không cần gõ lệnh tay):**
+`scripts/flow-profile-open.bat [tên-account]` (double-click được, mặc định "default" nếu bỏ
+trống; `-ListAccounts` để xem các profile đã có) — tự tạo `pipeline/.flow-profile/<tên>/` nếu
+chưa có, mở đúng Chrome trỏ profile đó tại flow.google.com, KHÔNG qua agent-browser. Vẫn phải tự
+đóng HẾT Chrome đang chạy (kể cả nền) trước khi chạy nếu là lần đăng nhập ĐẦU TIÊN cho account
+đó — đã xác nhận thật (2026-09-22): nếu Chrome cá nhân đang mở, `--user-data-dir` bị bỏ qua âm
+thầm và trang chỉ mở thành 1 tab trong cửa sổ Chrome hiện có thay vì cửa sổ profile riêng.
 **Lưu ý trạng thái:** tính đến 2026-09-22, `02b-media-generate.router.mjs` CHƯA đọc file này —
 đây mới là bước chuẩn bị cấu hình (D1 trong kế hoạch model-routing), vòng lặp tự động chuyển
 account khi lỗi (D2/D3) chưa được cài đặt; script vẫn chỉ dùng đúng 1 `--flow-account=` truyền
