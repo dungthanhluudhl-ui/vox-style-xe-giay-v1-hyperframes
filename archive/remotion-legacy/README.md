@@ -8,6 +8,14 @@ Nguồn Remotion của 4 video đầu (`an-le-64`, `an-le-64-phan-2`, `tham-hoa-
 **Không phát triển video mới ở đây** — chỉ dùng khi cần sửa lỗi phát sinh cho 1 trong 4 video
 archive này.
 
+4 script codegen/ráp Root.tsx của pipeline Remotion (`07-codegen.router.mjs`,
+`07-codegen-parallel.mjs`, `08-sync-root.mjs`, `lib/sync-root-lib.mjs`) nằm tại
+`archive/remotion-legacy/scripts/` (di chuyển từ gốc `scripts/` ngày 2026-09-22 để khớp đúng chú
+thích "archive" đã có từ trước trong tài liệu). Các script này vẫn import 2 thư viện dùng chung
+với pipeline HyperFrames hiện tại (`router-client.mjs`, `video-paths.mjs`) trực tiếp từ
+`scripts/lib/` ở gốc repo qua đường dẫn tương đối (`../../../scripts/lib/...`) — cố ý không copy
+trùng bản để tránh lệch, nên vẫn chạy được nếu môi trường Remotion (xem mục dưới) được khôi phục.
+
 ## Khôi phục môi trường để sửa lỗi
 
 Repo gốc đã gỡ các dependency chỉ phục vụ Remotion/React khỏi `package.json` (giữ lại

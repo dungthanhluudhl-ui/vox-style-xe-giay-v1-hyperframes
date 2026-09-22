@@ -19,7 +19,7 @@
 //
 // Usage: node scripts/07-codegen-parallel.mjs --video=<slug> --scenes=S01,S02,S03,... [--concurrency=3]
 import { spawn } from "node:child_process";
-import { getVideoSlug } from "./lib/video-paths.mjs";
+import { getVideoSlug } from "../../../scripts/lib/video-paths.mjs";
 import { syncRoot } from "./lib/sync-root-lib.mjs";
 
 const slug = getVideoSlug();

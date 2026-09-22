@@ -9,7 +9,7 @@
 // thật đang có trên đĩa của MỖI video. Nhờ vậy không cần splice text phức tạp.
 import fs from "node:fs";
 import path from "node:path";
-import { videoPaths } from "./video-paths.mjs";
+import { videoPaths } from "../../../../scripts/lib/video-paths.mjs";
 
 const FPS = 30;
 const msToFrame = (ms) => Math.round((ms / 1000) * FPS);

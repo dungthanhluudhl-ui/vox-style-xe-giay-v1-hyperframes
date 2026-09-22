@@ -427,7 +427,8 @@ Giữ nguyên để tham khảo/sửa lỗi cho `archive/remotion-legacy/`.
 Mô hình generator → verify → reviewer y hệt tinh thần mục 6, nhưng: generate ghi file scene
 `src/videos/<slug>/scenes/SceneNN.tsx`; verify chạy `tsc --noEmit` + `eslint` + render smoke-test
 (`npx remotion render <CompositionId>` đúng dải frame scene — bắt lỗi runtime-only như
-`interpolate()` output-range sai); ráp `src/Root.tsx` tất định qua `scripts/lib/sync-root-lib.mjs`.
+`interpolate()` output-range sai); ráp `src/Root.tsx` tất định qua
+`archive/remotion-legacy/scripts/lib/sync-root-lib.mjs`.
 Agent qua 9router không tự có quyền truy cập skill Remotion — script phải tự đọc file skill
 (`remotion-best-practices`, `remotion-markup`, `remotion-create/video-layout.md`,
 `remotion-interactivity`, `remotion-captions/display-captions.md`) và nhét vào prompt.
@@ -439,7 +440,7 @@ tạo/mở rộng CHỈ MỘT LẦN CHO CẢ REPO (video đầu tiên tạo nề
 nhiều token, thời gian gọi cộng dồn dễ vượt timeout mạng (`fetch failed`/`HeadersTimeoutError`),
 KHÔNG phải do máy quá tải khi render smoke-test.
 
-**Chạy song song mặc định ≥2 scene**: `scripts/07-codegen-parallel.mjs --video=<slug> --scenes=... [--concurrency=10]`, worker-pool, mỗi tiến trình con `--no-root-sync`.
+**Chạy song song mặc định ≥2 scene**: `archive/remotion-legacy/scripts/07-codegen-parallel.mjs --video=<slug> --scenes=... [--concurrency=10]`, worker-pool, mỗi tiến trình con `--no-root-sync`.
 
 **Bug thật đã sửa (video "tham-hoa-itaewon-phan-2", 16 scene, concurrency=3):** `--no-root-sync`
 KHÔNG loại bỏ hoàn toàn race condition như từng tưởng — `verify()` vẫn chạy `tsc`/`eslint --fix`
@@ -447,7 +448,7 @@ trên TOÀN BỘ `src/`, nên verify() của 1 scene có thể đọc/ghi đè n
 cùng lúc (xác nhận thật: lỗi verify S01 nằm trong file `Scene03.tsx`). Sửa: `verify()` scope
 `eslint` đúng file vừa ghi, lọc output `tsc` chỉ giữ lỗi đúng file đó.
 
-**Render smoke-test KHÔNG chạy trong luồng song song mặc định** — chỉ chạy khi `07-codegen.router.mjs` chạy TUẦN TỰ (video 1). Luồng song song (video 3/4) không render thử trong lúc codegen; an toàn runtime dựa vào review + render final + `codegen-issues.jsonl`.
+**Render smoke-test KHÔNG chạy trong luồng song song mặc định** — chỉ chạy khi `archive/remotion-legacy/scripts/07-codegen.router.mjs` chạy TUẦN TỰ (video 1). Luồng song song (video 3/4) không render thử trong lúc codegen; an toàn runtime dựa vào review + render final + `codegen-issues.jsonl`.
 
 **Concurrency mặc định = 10** (nâng từ 3, kiểm chứng 2026-09-20): 16 scene, 15/16 PASS, 0 lỗi
 mạng/timeout. 5/16 scene lỗi `tsc: Cannot find module` sai ở lần thử đầu (tranh chấp I/O cục bộ
@@ -490,8 +491,13 @@ Từ khi repo đã có git backup (2026-09-20), **không** tạo thêm file ki�
 - `scripts/lib/generate-caption-track-hf.mjs` (local, không gọi AI — sinh `caption-track.html` tất định, gọi tự động bởi `syncRootHf()`)
 - Hậu tố `.hf.`/`-hf-` phân biệt nhánh HyperFrames.
 
-Archive (Remotion, 4 video đầu — không dùng cho video mới): `scripts/07-codegen.router.mjs`,
-`scripts/07-codegen-parallel.mjs`, `scripts/08-sync-root.mjs`.
+Archive (Remotion, 4 video đầu — không dùng cho video mới, đã di chuyển vật lý khỏi `scripts/`
+vào `archive/remotion-legacy/scripts/` ngày 2026-09-22 để khớp đúng chú thích này):
+`archive/remotion-legacy/scripts/07-codegen.router.mjs`,
+`archive/remotion-legacy/scripts/07-codegen-parallel.mjs`,
+`archive/remotion-legacy/scripts/08-sync-root.mjs` (+ `archive/remotion-legacy/scripts/lib/sync-root-lib.mjs`
+dùng chung bởi cả 3 — vẫn import `router-client.mjs`/`video-paths.mjs` từ `scripts/lib/` gốc repo
+qua đường dẫn tương đối, không copy trùng để tránh lệch bản).
 
 Hậu tố `.local.mjs` / `.router.mjs` cho biết ngay loại xử lý. Mọi script `.router.mjs` dùng chung `scripts/lib/router-client.mjs` và tra model qua `scripts/model-routing.json`.
 

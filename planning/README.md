@@ -116,7 +116,9 @@ Giữ lại đúng nguyên trạng để tham khảo/sửa lỗi cho 4 video arc
 
 ### Các bước dựng 1 video bằng Remotion (lịch sử)
 1-6. Giống hệt pipeline HyperFrames ở trên (Stage 1-6 framework-agnostic).
-7. `scripts/07-codegen.router.mjs --video=<slug> --scenes=SNN` (hoặc `07-codegen-parallel.mjs` cho ≥2 scene) — sinh code từng scene, tự ráp `src/Root.tsx` (`scripts/lib/sync-root-lib.mjs`).
+7. `archive/remotion-legacy/scripts/07-codegen.router.mjs --video=<slug> --scenes=SNN` (hoặc
+   `07-codegen-parallel.mjs` cho ≥2 scene, cùng thư mục) — sinh code từng scene, tự ráp
+   `src/Root.tsx` (`archive/remotion-legacy/scripts/lib/sync-root-lib.mjs`).
 8. Preview bằng `npm run dev` (Remotion Studio), chọn đúng composition id (PascalCase của slug, vd `AnLe64`).
 9. Render bằng `npx remotion render <CompositionId> out/<slug>-full.mp4`.
 

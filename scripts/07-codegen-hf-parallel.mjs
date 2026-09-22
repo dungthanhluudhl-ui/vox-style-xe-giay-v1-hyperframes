@@ -1,6 +1,6 @@
 // Điều phối chạy SONG SONG scripts/07-codegen.hf.router.mjs cho nhiều scene của CÙNG 1 video,
 // theo đúng mô hình hàng đợi (worker pool) đã kiểm chứng ở bản Remotion
-// (scripts/07-codegen-parallel.mjs) — không gọi AI trực tiếp, chỉ quản lý tiến trình con.
+// (archive/remotion-legacy/scripts/07-codegen-parallel.mjs) — không gọi AI trực tiếp, chỉ quản lý tiến trình con.
 //
 // Khác biệt an toàn so với bản Remotion: mỗi scene HyperFrames sinh trong 1 project STANDALONE
 // TẠM RIÊNG (hyperframes/.gen-tmp/<slug>-<sceneId>/, xem 07-codegen.hf.router.mjs) nên

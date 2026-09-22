@@ -1,5 +1,5 @@
 // Logic ráp hyperframes/videos/<slug>/index.html — LOCAL, TẤT ĐỊNH, KHÔNG gọi AI. Mirror đúng
-// vai trò của scripts/lib/sync-root-lib.mjs (bản Remotion): dùng chung bởi
+// vai trò của archive/remotion-legacy/scripts/lib/sync-root-lib.mjs (bản Remotion): dùng chung bởi
 // scripts/07-codegen.hf.router.mjs (gọi sau mỗi scene, để verify() luôn `hyperframes check`
 // được trên index.html mới nhất — trừ khi --no-root-sync) và scripts/08-sync-root.hf.mjs
 // (CLI ráp thủ công, vd sau khi các tiến trình --no-root-sync chạy song song xong).

@@ -44,8 +44,9 @@ export function videoPaths(slug, root = process.cwd()) {
     runLog: path.join(root, "pipeline", "videos", slug, "run-log.md"),
     mediaGenerateLog: path.join(root, "pipeline", "videos", slug, "media-generate-log.md"),
     // Archive Remotion (Giai đoạn F, 2026-09-21): src/ di dời sang archive/remotion-legacy/src/
-    // khi HyperFrames thành mặc định — chỉ scripts/07-codegen.router.mjs (Remotion, archive-only)
-    // dùng field này, HyperFrames dùng hfCompositionsDir bên dưới.
+    // khi HyperFrames thành mặc định — chỉ archive/remotion-legacy/scripts/07-codegen.router.mjs
+    // (Remotion, archive-only, di chuyển vật lý 2026-09-22) dùng field này, HyperFrames dùng
+    // hfCompositionsDir bên dưới.
     scenesDir: path.join(root, "archive", "remotion-legacy", "src", "videos", slug, "scenes"),
     // --- HyperFrames (additive, không đổi field cũ ở trên) — xem planning/style-dna-integration.md
     // và kế hoạch di trú Remotion -> HyperFrames, Giai đoạn B. ---

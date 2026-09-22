@@ -3,7 +3,7 @@
 // scripts/07-codegen.router.mjs tự gọi lại logic này sau MỖI scene ở chế độ tuần tự; script
 // này dùng khi cần ráp thủ công (vd sau khi các tiến trình --no-root-sync chạy song song xong).
 // Usage: node scripts/08-sync-root.mjs --video=<slug>
-import { getVideoSlug } from "./lib/video-paths.mjs";
+import { getVideoSlug } from "../../../scripts/lib/video-paths.mjs";
 import { syncRoot } from "./lib/sync-root-lib.mjs";
 
 const slug = getVideoSlug();

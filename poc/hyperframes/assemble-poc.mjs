@@ -1,6 +1,6 @@
 // POC: ráp 2 scene HyperFrames đã sinh (S01, S07) thành 1 composition duy nhất qua cơ chế
 // sub-composition (data-composition-src) — TẤT ĐỊNH, KHÔNG AI, mirror đúng vai trò của
-// scripts/lib/sync-root-lib.mjs (ráp Root.tsx) bên Remotion.
+// archive/remotion-legacy/scripts/lib/sync-root-lib.mjs (ráp Root.tsx) bên Remotion.
 //
 // Usage: node poc/hyperframes/assemble-poc.mjs
 import fs from "node:fs";

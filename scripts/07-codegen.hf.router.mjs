@@ -1,5 +1,5 @@
 // Sinh composition HyperFrames (HTML + GSAP) theo shotlist đã chốt — bản HyperFrames của
-// scripts/07-codegen.router.mjs.
+// archive/remotion-legacy/scripts/07-codegen.router.mjs.
 //
 // KIẾN TRÚC (đã sửa sau khi Checkpoint D phát hiện điểm khớp Style DNA thấp — xem
 // pipeline/codegen-issues.jsonl và lịch sử trao đổi ngày video an-le-64): LLM CHỈ sinh 1

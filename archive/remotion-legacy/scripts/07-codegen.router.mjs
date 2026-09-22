@@ -13,8 +13,8 @@
 import fs from "node:fs";
 import path from "node:path";
 import { execSync } from "node:child_process";
-import { callModel, extractText, loadModelRouting, appendRunLog } from "./lib/router-client.mjs";
-import { getVideoSlug, videoPaths } from "./lib/video-paths.mjs";
+import { callModel, extractText, loadModelRouting, appendRunLog } from "../../../scripts/lib/router-client.mjs";
+import { getVideoSlug, videoPaths } from "../../../scripts/lib/video-paths.mjs";
 import { syncRoot } from "./lib/sync-root-lib.mjs";
 
 const root = process.cwd();

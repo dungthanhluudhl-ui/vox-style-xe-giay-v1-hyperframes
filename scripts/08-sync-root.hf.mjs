@@ -1,5 +1,5 @@
 // Ráp lại hyperframes/videos/<slug>/index.html cho MỘT video — bản HyperFrames của
-// scripts/08-sync-root.mjs. LOCAL, TẤT ĐỊNH, KHÔNG gọi AI.
+// archive/remotion-legacy/scripts/08-sync-root.mjs. LOCAL, TẤT ĐỊNH, KHÔNG gọi AI.
 // scripts/07-codegen.hf.router.mjs tự gọi lại logic này sau MỖI scene ở chế độ tuần tự; script
 // này dùng khi cần ráp thủ công (vd sau khi các tiến trình --no-root-sync chạy song song xong,
 // hoặc để mount audio+caption-track lần đầu sau khi đủ scene).
