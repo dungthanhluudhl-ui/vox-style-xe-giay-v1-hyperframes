@@ -270,10 +270,57 @@ chưa POC / đang POC / PASS-đã đổi / FAIL-giữ nguyên.
 
 | Tier | Stage | Model hiện tại | Model ứng viên | Trạng thái |
 |---|---|---|---|---|
-| `text_cleanup` | 2 | `ag/gemini-3.8-flash-high` | `ag/gemini-3.7-flash-medium` (dự phòng: `ag/gemini-3.8-flash-medium` = `text_cleanup_alt`) | chưa POC |
-| `scene_image_prompt_writer` | 2b | `ag/gemini-3.8-flash-high` | `ag/gemini-3.7-flash-medium` (dự phòng: `ag/gemini-3.8-flash-medium` = `scene_image_prompt_writer_alt`) | chưa POC |
-| `browser_agent` | 2b | `ag/gemini-3.8-flash-high` | `ag/gemini-3.7-flash-medium` (dự phòng: `ag/gemini-3.8-flash-medium` = `browser_agent_alt`) | chưa POC — theo quyết định người dùng, POC trực tiếp trên video sản xuất kế tiếp, không dùng video test riêng |
-| `vision_media_analyze` | 3 | `ag/gemini-3.8-flash-high` | `ag/gemini-3.8-flash-low` (= `vision_media_analyze_alt`, đã tồn tại thật trong repo — khác rủi ro so với `-flash-medium` hoàn toàn chưa test) | chưa POC |
+| `text_cleanup` | 2 | `ag/gemini-3.7-flash-medium` (đã đổi) | dự phòng: `ag/gemini-3.8-flash-medium` = `text_cleanup_alt` | **PASS-đã đổi** — xem POC B1 dưới |
+| `scene_image_prompt_writer` | 2b | `ag/gemini-3.7-flash-medium` (đã đổi) | dự phòng: `ag/gemini-3.8-flash-medium` = `scene_image_prompt_writer_alt` | **PASS-đã đổi** (người dùng đã tự xem 2 bản prompt và xác nhận) — xem POC B2 dưới |
+| `browser_agent` | 2b | `ag/gemini-3.8-flash-high` | `ag/gemini-3.7-flash-medium` (dự phòng: `ag/gemini-3.8-flash-medium` = `browser_agent_alt`) | chưa POC — theo quyết định người dùng, POC trực tiếp trên video sản xuất kế tiếp, không dùng video test riêng (Nhóm C) |
+| `vision_media_analyze` | 3 | `ag/gemini-3.8-flash-high` | `ag/gemini-3.8-flash-low` (= `vision_media_analyze_alt`, đã tồn tại thật trong repo — khác rủi ro so với `-flash-medium` hoàn toàn chưa test) | **FAIL-giữ nguyên** — xem POC B3 dưới |
+
+### Kết quả POC B1 — `text_cleanup` (2026-09-22, video "ban-an-473-phan-2", chế độ align-với-script, 504 từ)
+
+So sánh chéo bằng cách chạy LẠI baseline `ag/gemini-3.8-flash-high` trên đúng input để có mốc so
+sánh công bằng (bản production đã lưu chỉ là 1 lần chạy, không đại diện đủ cho biến thiên tự
+nhiên của model): bản baseline mới chạy khác bản production đã lưu tới 42/504 từ (8.3%, chỉ lệch
+timestamp vài chục-vài trăm ms, không lệch nội dung chữ) — CHÍNH bản thân 1 model chạy 2 lần khác
+nhau đã tạo ra mức nhiễu nền này. `ag/gemini-3.7-flash-medium` khác baseline mới 35/504 từ,
+`ag/gemini-3.8-flash-medium` khác 47/504 từ — cả 2 đều nằm trong đúng dải biến thiên tự nhiên đó,
+không phải dấu hiệu giảm chất lượng. Nội dung chữ (text) luôn khớp 100% với script gốc ở cả 3 lần
+chạy (chế độ align bắt buộc dùng đúng câu chữ script, không có chỗ cho model paraphrase).
+
+Về tốc độ: `-medium` nhanh hơn rõ rệt mỗi lần gọi (27-60s/lần so với 69-103s/lần của
+`flash-high`), dù cả 3 đều bị tràn token (`finish_reason=max_tokens`) ở đoạn 504 từ và phải tự
+chia nhỏ đệ quy (baseline 5 lần gọi/443s tổng, `-medium` 7 lần gọi/236-243s tổng) — hiện tượng
+tràn token này là đặc tính của prompt/độ dài transcript, không phải nhược điểm riêng của
+`-medium`.
+
+**Kết luận: PASS.** Đề xuất `text_cleanup` → `ag/gemini-3.7-flash-medium` (nhỉnh hơn
+`3.8-flash-medium` cả về tốc độ lẫn độ lệch).
+
+### Kết quả POC B2 — `scene_image_prompt_writer` (2026-09-22, video "ban-an-473-phan-2")
+
+Cả 2 model tuân thủ đúng cấu trúc prompt bắt buộc (mở đầu, kết thúc, mô tả chất liệu giấy) và giữ
+nhất quán mô tả ngoại hình nhân vật xuyên suốt các cảnh lặp lại (đúng yêu cầu quan trọng nhất của
+prompt). Số cảnh tự chia khác nhau giữa 2 lần chạy (10 cảnh với `flash-high` mới chạy, 7 cảnh với
+`3.7-flash-medium`) — nhưng bản THẬT của video này khi sản xuất cũng ra đúng 7 cảnh, cho thấy số
+cảnh vốn biến thiên tự nhiên giữa các lần chạy CÙNG 1 model, không phải chỉ báo chất lượng. Nội
+dung/độ chi tiết prompt tiếng Anh ở mức tương đương giữa 2 model qua đọc mắt.
+
+**Kết luận: PASS, nhưng đây là văn bản sáng tạo (đọc mắt chủ quan) — đề nghị người dùng tự xem lại
+2 file kết quả trước khi chốt áp dụng chính thức** (đã lưu tạm, xem phần báo cáo cuối).
+
+### Kết quả POC B3 — `vision_media_analyze` (2026-09-22, video "ban-an-473-phan-2", 3 ảnh: sơ đồ tổ chức, ảnh cutout nhân vật, ảnh cắt dán quán cà phê)
+
+Cả 2 model đều cho `visual_language`/`suggested_slug`/`suitability_notes` hợp lý, mô tả tổng thể
+đúng bối cảnh/hành động. NHƯNG phát hiện khác biệt thật đáng lưu ý: `ag/gemini-3.7-flash-medium`
+có xu hướng **bỏ sót chi tiết chữ/số cụ thể đọc được TRONG ảnh** mà `flash-high` bắt đúng — ảnh sơ
+đồ tổ chức: `flash-high` nêu đúng tên nhân vật "Tiến/Sơn/Đức Huy" đọc từ chữ trong ảnh, `-medium`
+mô tả đúng cấu trúc nhưng bỏ sót tên; ảnh quán cà phê: `flash-high` đọc đúng số tiền "250k/350k"
+ghi trên giấy trong ảnh, `-medium` chỉ nói chung "vẽ sơ đồ tính toán số tiền" không có số cụ thể.
+Khả năng đọc text-trong-ảnh (OCR-như) của `-medium` yếu hơn rõ rệt so với `flash-high`.
+
+**Kết luận: FAIL-giữ nguyên `ag/gemini-3.8-flash-high`.** Mô tả tổng thể vẫn dùng được (không chặn
+việc chọn ảnh minh hoạ), nhưng mất chi tiết cụ thể là rủi ro thật cho tác vụ này (mô tả càng chi
+tiết càng hữu ích cho các giai đoạn sau tra cứu bằng manifest) — không đáng đánh đổi để tiết kiệm
+chi phí ở 1 tier chỉ chạy 1 lần/video (không lặp nhiều lần như `browser_agent`).
 
 ## Lịch sử: pipeline Remotion (archive, 4 video đầu — KHÔNG áp dụng cho video mới)
 
