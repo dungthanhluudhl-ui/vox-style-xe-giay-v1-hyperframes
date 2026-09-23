@@ -180,3 +180,25 @@ ISSUES:
 - **2026-09-21T12:00:48.983Z** — `scripts/07-codegen.hf.router.mjs --video=an-le-64 --scenes=S06` — Codegen HyperFrames scene [S06] PASS sau 1 lần thử bằng cx/gpt-5.6-sol (review: cx/gpt-5.6-sol-review) — đã chuyển đổi thành compositions/scene-s06.html.
 
 - **2026-09-21T12:01:00.081Z** — `scripts/07-codegen.hf.router.mjs --video=an-le-64 --scenes=S02` — Codegen HyperFrames scene [S02] PASS sau 2 lần thử bằng cx/gpt-5.6-sol (review: cx/gpt-5.6-sol-review) — đã chuyển đổi thành compositions/scene-s02.html.
+
+- **2026-09-23T06:35:17.291Z** — `scripts/09-render.hf.mjs` — Render bản đầy đủ: out\an-le-64-full.mp4, 72522497 bytes (69.2MB), 151.1s render time, quality=looks. Xác minh ffprobe: duration=49.367s (khớp audio thật 49.343s), 1080x1920 h264. Capture mode: screenshot (tắt fast-capture do: a CSS 3D rendering context (perspective / preserve-3d / backface-visibility)). GPU mode: hardware (WebGL renderer vendor="Google Inc. (NVIDIA). Stage timing: compile=1.8s, browser_probe=0.6s, video_extract=0.1s, audio_process=3.4s, file_server=0.0s, capture_calibration=4.1s, capture_disk=86.9s, encode=36.7s, assemble=6.9s.
+
+- **2026-09-23T06:38:49.438Z** — `scripts/09-render.hf.mjs` — Render bản đầy đủ: out\an-le-64-full.mp4, 72516378 bytes (69.2MB), 167.0s render time, quality=looks. Xác minh ffprobe: duration=49.367s (khớp audio thật 49.343s), 1080x1920 h264. Capture mode: screenshot (tắt fast-capture do: a CSS 3D rendering context (perspective / preserve-3d / backface-visibility)). GPU mode: hardware (WebGL renderer vendor="Google Inc. (NVIDIA)" renderer="ANGLE (NVIDIA, NVIDIA GeForce GTX 1660 SUPER (0x000021C4) Direct3D11 vs_5_0 ps_5_0, D3D11)"). Stage timing: compile=1.8s, browser_probe=0.6s, video_extract=0.1s, audio_process=3.4s, file_server=0.0s, capture_calibration=4.0s, capture_disk=105.6s, encode=36.5s, assemble=6.9s.
+
+- **2026-09-23T08:24:29.587Z** — `scripts/07b-integration-check.hf.mjs --video=an-le-64` — Stage 7b integration check PASS — 7/7 scene, có audio, có caption-track, hyperframes check ok=true.
+
+- **2026-09-23T08:25:16.670Z** — `scripts/07b-integration-check.hf.mjs --video=an-le-64` — Stage 7b integration check FAIL:
+Thiếu scene: 6/7 đã có code.
+
+- **2026-09-23T08:25:52.230Z** — `scripts/07b-integration-check.hf.mjs --video=an-le-64` — Stage 7b integration check PASS — 7/7 scene, có audio, có caption-track, hyperframes check ok=true.
+
+- **2026-09-23T08:27:20.665Z** — `scripts/07b-integration-check.hf.mjs --video=an-le-64` — Stage 7b integration check PASS — 7/7 scene, có audio, có caption-track, hyperframes check ok=true.
+
+- **2026-09-23T08:30:22.208Z** — `scripts/09-render.hf.mjs` — Render bản đầy đủ: out\an-le-64-full.mp4, 72992020 bytes (69.6MB), 181.1s render time, quality=looks. Xác minh ffprobe: duration=49.367s (khớp audio thật 49.343s), 1080x1920 h264. Capture mode: screenshot (tắt fast-capture do: a CSS 3D rendering context (perspective / preserve-3d / backface-visibility)). GPU mode: hardware (WebGL renderer vendor="Google Inc. (NVIDIA)" renderer="ANGLE (NVIDIA, NVIDIA GeForce GTX 1660 SUPER (0x000021C4) Direct3D11 vs_5_0 ps_5_0, D3D11)"). Stage timing: compile=1.7s, browser_probe=0.6s, video_extract=0.7s, audio_process=3.1s, file_server=0.4s, capture_calibration=4.0s, capture_disk=113.8s, encode=36.4s, assemble=7.0s.
+
+- **2026-09-23T08:31:06.253Z** — `scripts/07b-integration-check.hf.mjs --video=an-le-64` — Stage 7b integration check FAIL:
+Thiếu scene: 6/7 đã có code.
+
+- **2026-09-23T08:31:42.050Z** — `scripts/07b-integration-check.hf.mjs --video=an-le-64` — Stage 7b integration check PASS — 7/7 scene, có audio, có caption-track, hyperframes check ok=true.
+
+- **2026-09-23T08:58:08.262Z** — `scripts/07b-integration-check.hf.mjs --video=an-le-64` — Stage 7b integration check PASS — 7/7 scene, có audio, có caption-track, hyperframes check ok=true.

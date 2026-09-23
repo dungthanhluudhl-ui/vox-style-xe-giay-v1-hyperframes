@@ -29,6 +29,14 @@ import { videoPaths } from "./video-paths.mjs";
 const WORDS_PER_LINE = 4; // CAPTION_STYLE.wordsPerLine trong src/styles/theme.ts (dùng chung mọi video)
 const PAGE_WINDOW_MS = 10_000; // PAGE_WINDOW_MS trong Captions.tsx (combineTokensWithinMilliseconds)
 
+// Đọc toạ độ khung caption từ style-tokens.json thay vì hardcode literal — 1 nguồn xác thực duy
+// nhất, tránh lệch giữa file này/STYLE_DNA.md/caption-zone.mjs mỗi lần đổi vị trí caption (bài học
+// thật: trước khi sửa chỗ này, 440px bị lặp lại thủ công ở 4 nơi khác nhau trong repo).
+function readCaptionPosition(root) {
+  const tokens = JSON.parse(fs.readFileSync(path.join(root, "planning", "style-dna", "style-tokens.json"), "utf8"));
+  return tokens.caption.position;
+}
+
 function applyFourWordPageBreaks(captions) {
   let wordsOnPage = 0;
   return captions.map((caption) => {
@@ -53,6 +61,7 @@ export function generateCaptionTrackHf(slug, totalDurationMs, root = process.cwd
   const vp = videoPaths(slug, root);
   if (!fs.existsSync(vp.captionsFile)) return null;
 
+  const captionPosition = readCaptionPosition(root);
   const rawCaptions = JSON.parse(fs.readFileSync(vp.captionsFile, "utf8"));
   const captions = Array.isArray(rawCaptions) ? rawCaptions : rawCaptions.captions;
   const withBreaks = applyFourWordPageBreaks(captions);
@@ -73,7 +82,13 @@ export function generateCaptionTrackHf(slug, totalDurationMs, root = process.cwd
     return {
       index: i,
       startSec,
-      html: `      <div class="clip caption-page" data-start="${startSec.toFixed(6)}" data-duration="${durationSec.toFixed(6)}">
+      // data-layout-allow-caption-zone: caption-track LÀ nội dung thật sự thuộc caption band —
+      // không có attribute này, `hyperframes check --caption-zone` tự báo caption_zone_collision
+      // trên CHÍNH text caption của nó (xác nhận bằng test thật trên ban-an-473-phan-3: 4 finding
+      // giả, source `compositions/caption-track.html`, text là chính các từ phụ đề như "là"/"tháng").
+      // Áp dụng cho phần tử + mọi con cháu qua `closest` (data-attributes.md:69), nên đặt ở
+      // .caption-page là đủ, không cần lặp lại trên từng <span class="word">.
+      html: `      <div class="clip caption-page" data-start="${startSec.toFixed(6)}" data-duration="${durationSec.toFixed(6)}" data-layout-allow-caption-zone>
         <div class="caption-card">${wordsHtml}</div>
       </div>`,
     };
@@ -103,9 +118,9 @@ export function generateCaptionTrackHf(slug, totalDurationMs, root = process.cwd
         .caption-page {
           position: absolute;
           top: auto;
-          left: 60px;
-          right: 60px;
-          bottom: 440px;
+          left: ${captionPosition.left}px;
+          right: ${captionPosition.right}px;
+          bottom: ${captionPosition.bottom}px;
           display: flex;
           justify-content: center;
           pointer-events: none;

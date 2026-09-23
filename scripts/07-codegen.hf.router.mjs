@@ -32,8 +32,8 @@ import { execSync } from "node:child_process";
 import { callModel, extractText, loadModelRouting, appendRunLog } from "./lib/router-client.mjs";
 import { getVideoSlug, videoPaths } from "./lib/video-paths.mjs";
 import { syncRootHf, standaloneToSubComposition } from "./lib/sync-root-hf-lib.mjs";
-
-const HF_VERSION = "0.8.56"; // pin — khớp version đã kiểm chứng ở poc/hyperframes/ (xem CLAUDE.md scaffold: "Pinned CLI version")
+import { getCaptionZoneArg } from "./lib/caption-zone.mjs";
+import { HF_VERSION, runHyperframesCheck } from "./lib/hf-check.mjs";
 
 const root = process.cwd();
 const routing = loadModelRouting();
@@ -293,11 +293,6 @@ async function generate(feedback, previousFiles) {
   return files;
 }
 
-function categorizeVerifyError(err) {
-  if (err.startsWith("### hyperframes check")) return "verify-hf-check";
-  return "verify-hf-other";
-}
-
 // Dùng CHUNG pipeline/codegen-issues.jsonl với bản Remotion (field `framework` phân biệt) — mục
 // đích audit định kỳ tìm lỗi lặp lại xuyên cả 2 framework, không phân mảnh log.
 function appendCodegenIssue(entries) {
@@ -322,29 +317,13 @@ function writeFiles(files) {
 // verify() — mirror ĐÚNG codegen-poc.mjs: check project STANDALONE tạm, luôn full
 // `hyperframes check` (lint+runtime+layout+motion+contrast) — an toàn chạy song song vì mỗi
 // scene có project riêng, không còn file nào bị race.
+// --caption-zone: check TOẠ ĐỘ HÌNH HỌC thuần tuý (bắt scene tự đặt card/text đè vùng caption dành
+// riêng — bài học thật S02/S16: standalone PASS riêng lẻ vẫn lọt lỗi khi ráp chung với
+// caption-track). Scene standalone ở đây KHÔNG mount caption-track.html nên không dính false
+// positive đã gặp khi test caption-track tự báo lỗi trên chính nó (đã sửa riêng ở
+// generate-caption-track-hf.mjs bằng data-layout-allow-caption-zone).
 function verify() {
-  let raw = "";
-  let ok = false;
-  try {
-    raw = execSync(`npx --yes hyperframes@${HF_VERSION} check --json`, {
-      cwd: tempProjectDir,
-      stdio: "pipe",
-      timeout: 180000,
-    }).toString();
-    ok = true;
-  } catch (e) {
-    raw = e.stdout?.toString() || e.stderr?.toString() || e.message;
-    ok = false;
-  }
-  let parsed = null;
-  try {
-    const jsonStart = raw.indexOf("{");
-    parsed = JSON.parse(jsonStart >= 0 ? raw.slice(jsonStart) : raw);
-  } catch {
-    // giữ raw text để review bằng mắt nếu không parse được
-  }
-  const passed = parsed ? parsed.ok === true : ok;
-  return { passed, raw: raw.slice(0, 6000) };
+  return runHyperframesCheck(tempProjectDir, { extraArgs: [getCaptionZoneArg()] });
 }
 
 async function review(files) {
@@ -406,7 +385,7 @@ while (attempt < MAX_ATTEMPTS) {
     const v = verify();
     if (!v.passed) {
       console.log("Verify (hyperframes check) FAILED:\n" + v.raw.slice(0, 2000));
-      appendCodegenIssue([{ stage: categorizeVerifyError("### hyperframes check"), detail: v.raw.slice(0, 2000) }]);
+      appendCodegenIssue([{ stage: v.infraError ? "verify-infra-error" : "verify-hf-check", detail: v.raw.slice(0, 2000) }]);
       feedback = "hyperframes check FAILED:\n" + v.raw.slice(0, 4000);
       continue;
     }

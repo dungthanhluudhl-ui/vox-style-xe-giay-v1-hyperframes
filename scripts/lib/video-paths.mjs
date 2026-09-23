@@ -43,6 +43,9 @@ export function videoPaths(slug, root = process.cwd()) {
     contactSheetDir: path.join(root, "pipeline", "videos", slug, "contact-sheet"),
     runLog: path.join(root, "pipeline", "videos", slug, "run-log.md"),
     mediaGenerateLog: path.join(root, "pipeline", "videos", slug, "media-generate-log.md"),
+    // Stage 7b (scripts/07b-integration-check.hf.mjs) + completion manifest (scripts/09-render.hf.mjs)
+    integrationCheckLog: path.join(root, "pipeline", "videos", slug, "integration-check.log"),
+    completionManifest: path.join(root, "pipeline", "videos", slug, "completion-manifest.json"),
     // Archive Remotion (Giai đoạn F, 2026-09-21): src/ di dời sang archive/remotion-legacy/src/
     // khi HyperFrames thành mặc định — chỉ archive/remotion-legacy/scripts/07-codegen.router.mjs
     // (Remotion, archive-only, di chuyển vật lý 2026-09-22) dùng field này, HyperFrames dùng

@@ -13,9 +13,10 @@
 //                        này, script TỪ CHỐI chạy nếu --quality/--output khác mặc định.
 import fs from "node:fs";
 import path from "node:path";
-import { execSync } from "node:child_process";
+import { execSync, spawn } from "node:child_process";
 import { getVideoSlug, videoPaths } from "./lib/video-paths.mjs";
 import { appendRunLog } from "./lib/router-client.mjs";
+import { syncRootHf } from "./lib/sync-root-hf-lib.mjs";
 
 const root = process.cwd();
 const slug = getVideoSlug();
@@ -52,6 +53,21 @@ if (deviations.length && !forceNonDefault) {
   process.exit(1);
 }
 
+// Preflight BẮT BUỘC — Stage 7b (assembled integration check): 24 scene PASS riêng lẻ vẫn từng lọt
+// lỗi contrast/va chạm caption-track khi ráp chung (video "ban-an-35-phan-1", S02/S16) vì trước đây
+// không có bước nào verify LẠI project đã ráp trước khi render. Không cho --force bỏ qua bước này —
+// khác preflight quality/output ở trên (chọn thẩm mỹ), đây là gate đúng/sai nội dung thật.
+console.log(`Chạy Stage 7b integration check (bắt buộc trước khi render)...`);
+try {
+  execSync(`node scripts/07b-integration-check.hf.mjs --video=${slug}`, { cwd: root, stdio: "inherit" });
+} catch {
+  console.error(
+    `\n⚠ TỪ CHỐI render: Stage 7b integration check CHƯA PASS — xem log ở trên hoặc ` +
+      `${path.relative(root, vp.integrationCheckLog)}. Sửa lỗi rồi chạy lại, không có cờ bỏ qua bước này.`,
+  );
+  process.exit(1);
+}
+
 fs.mkdirSync(path.dirname(outputPath), { recursive: true });
 
 const extraArgs = [];
@@ -59,9 +75,63 @@ if (flags.fps) extraArgs.push(`--fps=${flags.fps}`);
 
 const cmd = `npx hyperframes render --quality ${quality} -o "${outputPath}" ${extraArgs.join(" ")} "${vp.hfProjectDir}"`;
 console.log(`Đang render: ${cmd}`);
+
+// spawn() (thay vì execSync stdio:"inherit") — vừa in log live ra terminal (process.stdout.write
+// từng chunk) vừa giữ lại toàn bộ log để parse capture mode/GPU mode/stage timing sau khi xong.
+function runRenderCaptured(command) {
+  return new Promise((resolve, reject) => {
+    const child = spawn(command, { cwd: root, shell: true, stdio: ["ignore", "pipe", "pipe"] });
+    let output = "";
+    child.stdout.on("data", (d) => {
+      process.stdout.write(d);
+      output += d.toString();
+    });
+    child.stderr.on("data", (d) => {
+      process.stderr.write(d);
+      output += d.toString();
+    });
+    child.on("close", (code) => {
+      if (code === 0) resolve(output);
+      else reject(new Error(`Lệnh render thoát mã ${code}`));
+    });
+  });
+}
+
+// Parse 3 loại dòng log thật đã xác nhận từ 1 lần render thật trước đây (xem
+// planning/responsibility-matrix.md mục "Backlog" P1.5) — không suy đoán thêm loại dòng nào khác.
+function parseRenderLog(log) {
+  const disableMatch = log.match(/Fast capture: composition uses ([^\n]+?)\s*—\s*disabling drawElementImage/);
+  const captureMode = disableMatch
+    ? `screenshot (tắt fast-capture do: ${disableMatch[1].trim()})`
+    : "không thấy dòng disable fast-capture — giả định fast-capture đang BẬT, CHƯA xác nhận được dòng log khi bật trông ra sao, cần đối chiếu thêm ở lần render tới";
+
+  // Dùng .* tham lam (không phải [^)]*) — dòng log thật có ngoặc LỒNG NHAU bên trong phần chi tiết
+  // (vd `vendor="Google Inc. (NVIDIA)"`), [^)]* sẽ cắt cụt ở dấu ")" đầu tiên gặp phải, sai dữ liệu.
+  const gpuMatch = log.match(/browserGpuMode probe → (\w+)\s*(\(.*\))?\s*$/m);
+  const gpuMode = gpuMatch
+    ? `${gpuMatch[1]}${gpuMatch[2] ? ` ${gpuMatch[2]}` : ""}`
+    : "không xác định (không thấy dòng browserGpuMode probe trong log)";
+
+  const phaseDurations = {};
+  for (const line of log.split("\n")) {
+    const m = line.match(/\[Render:trace\]\s*(\{.*\})/);
+    if (!m) continue;
+    try {
+      const evt = JSON.parse(m[1]);
+      if (evt.status === "end" && evt.phase && typeof evt.durationMs === "number") {
+        phaseDurations[evt.phase] = (phaseDurations[evt.phase] || 0) + evt.durationMs;
+      }
+    } catch {
+      // dòng không phải JSON hợp lệ (log khác lẫn vào) — bỏ qua, không phải lỗi
+    }
+  }
+  return { captureMode, gpuMode, phaseDurations };
+}
+
 const startedAt = Date.now();
-execSync(cmd, { cwd: root, stdio: "inherit" });
+const renderLog = await runRenderCaptured(cmd);
 const renderSeconds = (Date.now() - startedAt) / 1000;
+const parsedLog = parseRenderLog(renderLog);
 
 if (!fs.existsSync(outputPath)) {
   console.error(`\n⚠ Render báo xong nhưng KHÔNG thấy file output tại ${outputPath} — kiểm tra tay.`);
@@ -85,20 +155,47 @@ const resolution = ffprobeField(outputPath, "stream=width,height", "v:0").replac
 const codec = ffprobeField(outputPath, "stream=codec_name", "v:0");
 
 let audioCompareNote = "không có narration.mp3 để đối chiếu";
+let ffprobeOk = true; // không có audio để đối chiếu thì không tự coi là lỗi (video có thể chưa có audio)
 if (fs.existsSync(vp.audioFile)) {
   const audioDurationSec = parseFloat(ffprobeField(vp.audioFile, "format=duration"));
   const diff = Math.abs(videoDurationSec - audioDurationSec);
-  audioCompareNote =
-    diff > 1
-      ? `⚠ LỆCH ${diff.toFixed(3)}s so với audio thật ${audioDurationSec.toFixed(3)}s — KIỂM TRA LẠI`
-      : `khớp audio thật ${audioDurationSec.toFixed(3)}s`;
+  ffprobeOk = diff <= 1;
+  audioCompareNote = ffprobeOk
+    ? `khớp audio thật ${audioDurationSec.toFixed(3)}s`
+    : `⚠ LỆCH ${diff.toFixed(3)}s so với audio thật ${audioDurationSec.toFixed(3)}s — KIỂM TRA LẠI`;
 }
+
+const phaseBreakdown =
+  Object.entries(parsedLog.phaseDurations)
+    .map(([phase, ms]) => `${phase}=${(ms / 1000).toFixed(1)}s`)
+    .join(", ") || "(không parse được dòng stage timing nào từ log)";
 
 const sizeMB = (sizeBytes / (1024 * 1024)).toFixed(1);
 const summary =
   `Render bản đầy đủ: ${path.relative(root, outputPath)}, ${sizeBytes} bytes (${sizeMB}MB), ` +
   `${renderSeconds.toFixed(1)}s render time, quality=${quality}. Xác minh ffprobe: ` +
-  `duration=${videoDurationSec.toFixed(3)}s (${audioCompareNote}), ${resolution} ${codec}.`;
+  `duration=${videoDurationSec.toFixed(3)}s (${audioCompareNote}), ${resolution} ${codec}. ` +
+  `Capture mode: ${parsedLog.captureMode}. GPU mode: ${parsedLog.gpuMode}. ` +
+  `Stage timing: ${phaseBreakdown}.`;
 
 console.log(`\n${summary}`);
 appendRunLog(`\`scripts/09-render.hf.mjs\` — ${summary}`, vp.runLog);
+
+// Completion manifest — P2.3: quy ước chỉ được tuyên bố video "hoàn tất" khi file này tồn tại và
+// mọi field *Ok đều true (tránh lặp lại sự cố "báo xong" chỉ vì có 1 MP4 bất kỳ, đã xảy ra thật với
+// ban-an-473-phan-2/ban-an-35-phan-1). assembledCheckOk luôn true tới được đây — preflight Stage 7b
+// ở trên đã exit 1 nếu FAIL, script không chạy tiếp được nếu chưa PASS.
+const syncResult = syncRootHf(slug, root);
+const manifest = {
+  assembledCheckOk: true,
+  sceneCount: syncResult.sceneCount,
+  totalPlanned: syncResult.totalPlanned,
+  renderOk: true,
+  ffprobeOk,
+  outputPath: path.relative(root, outputPath),
+  quality,
+  timestamp: new Date().toISOString(),
+};
+fs.mkdirSync(path.dirname(vp.completionManifest), { recursive: true });
+fs.writeFileSync(vp.completionManifest, JSON.stringify(manifest, null, 2), "utf8");
+console.log(`Đã ghi ${path.relative(root, vp.completionManifest)}.`);

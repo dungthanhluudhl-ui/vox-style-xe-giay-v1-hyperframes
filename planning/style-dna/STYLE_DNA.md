@@ -51,7 +51,7 @@ luôn trông nhỏ hơn thực tế dù khung chứa nó có to bao nhiêu.
   lại nguyên văn lời thoại** — nó phải bổ sung thông tin, không phải phụ đề thứ hai.
 - **Caption đồng bộ giọng đọc**: 4 từ/dòng, reset ở ranh giới câu, đồng bộ theo timestamp
   cấp từ (word-level, ví dụ từ Whisper) — không tự ước lượng bằng cảm giác. Neo cố định
-  `bottom: 440px`, nền `rgba(10,10,10,0.8)`, bo góc 14px, đệm `12px 24px`. Mount MỘT LẦN ở
+  `bottom: 374px`, nền `rgba(10,10,10,0.8)`, bo góc 14px, đệm `12px 24px`. Mount MỘT LẦN ở
   cấp timeline tổng (không phải theo từng cảnh) bằng frame tuyệt đối, để đọc liền mạch
   xuyên qua các lần chuyển cảnh.
 

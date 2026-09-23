@@ -9,7 +9,16 @@
       * { margin: 0; padding: 0; box-sizing: border-box; }
       html, body { margin: 0; width: 1080px; height: 1920px; overflow: hidden; background: #0a0a0a; }
       #root { width: 100%; height: 100%; position: relative; }
-      .clip { position: absolute; inset: 0; }
+      /* isolation: isolate bắt buộc — mỗi slot .clip (scene hoặc caption-track) PHẢI tự tạo
+         stacking context riêng. Thiếu dòng này, z-index dùng NỘI BỘ trong 1 sub-composition
+         (rất phổ biến, vd overlay/dissolve/punch-card) sẽ "thoát" ra ngoài và cạnh tranh trực
+         tiếp ở stacking context gốc của trang, có thể đè lên slot khác (kể cả caption-track dù
+         nó luôn nằm SAU trong DOM) — lỗi thật đã gặp: caption-track hoàn toàn bị che khuất suốt
+         đúng thời lượng 1 scene (S01) dùng z-index nội bộ tới 20, dù data-track-index của
+         caption-track (1) cao hơn scene (0) — track-index KHÔNG quyết định layering (xem
+         hyperframes-core/references/tracks-and-clips.md), chỉ CSS z-index/stacking context mới
+         quyết định, nên phải chặn rò rỉ ngay ở tầng ráp tất định này. */
+      .clip { position: absolute; inset: 0; isolation: isolate; }
     </style>
   </head>
   <body>

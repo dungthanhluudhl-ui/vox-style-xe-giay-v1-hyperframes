@@ -57,10 +57,17 @@ function runScene(sceneId) {
   });
 }
 
+// Chỉ phân loại trên đoạn log của LẦN THỬ CUỐI CÙNG (cắt từ "=== Attempt N/M ===" cuối cùng, router
+// con tự in dòng này mỗi lần thử) — không phải toàn bộ log gộp mọi attempt. Bài học thật: attempt 1
+// có thể content-fail nhưng attempt cuối (kết quả quyết định thật) là network timeout; match trên
+// toàn log theo thứ tự ưu tiên content>verify-error>network sẽ gắn nhãn sai "content", che khuất tín
+// hiệu network thật (scene S23, video ban-an-35-phan-1, 4 cụm log tách biệt do relaunch từ đầu).
 function classifyFailure(stdout) {
-  if (/VERDICT:\s*FAIL/i.test(stdout)) return "content";
-  if (/Verify \(hyperframes check\) FAILED/i.test(stdout)) return "verify-error";
-  if (/Lỗi khi gọi 9router/i.test(stdout)) return "network";
+  const lastAttemptIdx = stdout.lastIndexOf("=== Attempt");
+  const lastAttemptLog = lastAttemptIdx !== -1 ? stdout.slice(lastAttemptIdx) : stdout;
+  if (/VERDICT:\s*FAIL/i.test(lastAttemptLog)) return "content";
+  if (/Verify \(hyperframes check\) FAILED/i.test(lastAttemptLog)) return "verify-error";
+  if (/Lỗi khi gọi 9router/i.test(lastAttemptLog)) return "network";
   return "unknown";
 }
 

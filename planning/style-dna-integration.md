@@ -14,7 +14,7 @@
 - Màu: nền giấy `#E7E3D9`, mực `#141414`, cam nhấn `#FF6A1A` (màu nhấn DUY NHẤT), card `#F5F0E4`, chữ trên nền tối `#F7F4EC`.
 - Font: **Be Vietnam Pro**, chỉ weight 700/900, hỗ trợ dấu tiếng Việt.
 - Cutout: người → grayscale + bóng cam đổ cứng; vật thể → giữ màu gốc, không bóng.
-- Caption: 4 từ/dòng, neo `bottom: 440px`, mount một lần ở cấp timeline tổng, sync theo timestamp cấp từ.
+- Caption: 4 từ/dòng, neo `bottom: 374px`, mount một lần ở cấp timeline tổng, sync theo timestamp cấp từ.
 - 13 ngôn ngữ thị giác (cutout/map/diagram/timeline/flow/data/...) — không ngôn ngữ nào >50% số cảnh, hầu hết cảnh mạnh xếp chồng ≥2 ngôn ngữ.
 - Nguyên tắc biên tập quan trọng nhất: **"ý nghĩa trước, component sau"** — xác định quan hệ hình ảnh cụ thể cần THẤY HÌNH THÀNH trước khi chọn animation.
 
