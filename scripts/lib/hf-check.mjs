@@ -4,6 +4,8 @@
 // trên project ĐÃ RÁP, không phải scene riêng lẻ) dùng lại đúng 1 logic, không hardcode version lần
 // 2 (rủi ro thật: 2 nơi lệch version nếu chỉ sửa 1 chỗ khi nâng cấp CLI sau này).
 import { execSync } from "node:child_process";
+import fs from "node:fs";
+import path from "node:path";
 
 export const HF_VERSION = "0.8.56"; // pin — khớp version đã kiểm chứng ở poc/hyperframes/ (xem CLAUDE.md scaffold: "Pinned CLI version")
 
@@ -47,4 +49,36 @@ export function runHyperframesCheck(dir, { extraArgs = [] } = {}) {
   // sau (không phải console), cắt ở đây làm mất phần lỗi thật khi lint warning dài đứng trước.
   // Các nơi gọi khác (verify() trong 07-codegen.hf.router.mjs) đã tự cắt riêng cho console/feedback.
   return { passed, raw, infraError };
+}
+
+const ROOT_OVERFLOW_FLAGS = ["data-layout-allow-overflow", "data-layout-allow-overlap", "data-layout-allow-occlusion"];
+
+/** Quét phần tử root (thẻ mở đầu tiên có data-composition-id) trong HTML, trả về danh sách cờ
+ * opt-out layout đang bị đặt SAI chỗ (trên root thay vì đúng phần tử con cần opt-out) — cờ này
+ * dùng closest() nên đặt ở root sẽ tắt audit cho MỌI phần tử con, che khuất lỗi thật khác. */
+export function findRootLayoutFlags(html) {
+  const rootMatch = html.match(/<[a-z]+\b[^>]*\bdata-composition-id="[^"]*"[^>]*>/i);
+  if (!rootMatch) return [];
+  return ROOT_OVERFLOW_FLAGS.filter((f) => rootMatch[0].includes(f));
+}
+
+/** Quét toàn bộ project ĐÃ RÁP (index.html + mọi file compositions/*.html) tìm cờ layout đặt sai
+ * chỗ trên root — dùng ở Stage 7b vì project ráp có nhiều file, không chỉ 1 composition standalone
+ * như Stage 7. */
+export function findRootLayoutFlagsInProject(projectDir) {
+  const violations = [];
+  const indexPath = path.join(projectDir, "index.html");
+  if (fs.existsSync(indexPath)) {
+    const flags = findRootLayoutFlags(fs.readFileSync(indexPath, "utf8"));
+    if (flags.length) violations.push({ file: "index.html", flags });
+  }
+  const compDir = path.join(projectDir, "compositions");
+  if (fs.existsSync(compDir)) {
+    for (const f of fs.readdirSync(compDir)) {
+      if (!f.endsWith(".html")) continue;
+      const flags = findRootLayoutFlags(fs.readFileSync(path.join(compDir, f), "utf8"));
+      if (flags.length) violations.push({ file: `compositions/${f}`, flags });
+    }
+  }
+  return violations;
 }

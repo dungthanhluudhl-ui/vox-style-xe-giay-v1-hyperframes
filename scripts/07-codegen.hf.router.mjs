@@ -33,7 +33,7 @@ import { callModel, extractText, loadModelRouting, appendRunLog } from "./lib/ro
 import { getVideoSlug, videoPaths } from "./lib/video-paths.mjs";
 import { syncRootHf, standaloneToSubComposition } from "./lib/sync-root-hf-lib.mjs";
 import { getCaptionZoneArg } from "./lib/caption-zone.mjs";
-import { HF_VERSION, runHyperframesCheck } from "./lib/hf-check.mjs";
+import { HF_VERSION, runHyperframesCheck, findRootLayoutFlags } from "./lib/hf-check.mjs";
 
 const root = process.cwd();
 const routing = loadModelRouting();
@@ -205,6 +205,8 @@ const KNOWN_GOTCHAS_HF = `QUY TẮC BẮT BUỘC CỦA COMPOSITION CONTRACT (rú
 - CHỈ dùng logic tất định — TUYỆT ĐỐI không Date.now(), không Math.random(), không network fetch trong runtime composition (phá vỡ tính deterministic của render theo frame).
 - data-composition-id="main", data-width, data-height bắt buộc trên root div.
 - Nếu có chồng lấn/overflow/occlusion CÓ CHỦ ĐÍCH (vd hiệu ứng zoom tràn khung, overlay che chữ có tính toán trước), đánh dấu rõ bằng data-layout-allow-overflow / data-layout-allow-overlap / data-layout-allow-occlusion trên đúng phần tử đó — nếu không, "npx hyperframes check" sẽ coi là lỗi layout thật.
+- TUYỆT ĐỐI không đặt data-layout-allow-overflow / data-layout-allow-overlap / data-layout-allow-occlusion trên #root (phần tử data-composition-id="main") — 3 cờ này áp dụng cho MỌI phần tử con qua closest(), tắt HOÀN TOÀN layout audit của cả scene (kể cả lỗi không liên quan tới lý do đặt cờ), che khuất mọi lỗi thật khác thay vì chỉ cho phép đúng 1 trường hợp cố ý. Luôn đặt cờ trên ĐÚNG phần tử con cụ thể cần opt-out, không bao giờ trên root — "hyperframes check" sẽ FAIL cứng nếu phát hiện cờ này trên root (xem phần verify()).
+- Tự định nghĩa .clip với width/height cố định bằng px (vd width:1080px; height:1920px) thay vì đúng quy ước inset:0 (xem hyperframes-core/references/tracks-and-clips.md) có thể gây lỗi tràn khung ẩn: nếu 1 class con chỉ override top mà không override height/bottom, trình duyệt giữ nguyên height kế thừa, khiến khối kéo dài quá xa khung hình (VD lỗi thật đã xảy ra: top:1300px + height:1920px kế thừa = khối cao tới y=3220px, tràn quá đáy khung 1920px tới 1300px). Luôn định nghĩa .clip { position:absolute; inset:0; } (KHÔNG set width/height cứng); nếu 1 overlay/badge muốn cao theo nội dung, phải tự đặt height:auto tường minh để ghi đè.
 - Ảnh/asset dùng đường dẫn tương đối "assets/<file>" (đã copy sẵn vào thư mục assets/ của project).
 - FONT "Be Vietnam Pro" (weight 700/900): KHÔNG dùng @font-face với local(...) hay trỏ tới file .ttf không có sẵn trong assets/ (sẽ gây lỗi 404 runtime — không tất định, "hyperframes check" sẽ bắt lỗi này). BẮT BUỘC nạp qua Google Fonts CDN bằng đúng 1 thẻ trong <head>: <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap">, rồi dùng font-family: "Be Vietnam Pro", sans-serif trực tiếp trong CSS — không cần @font-face thủ công.
 - Một số TÊN FILE ảnh có chữ "cutout" (vd img-08-extortion-money-demand-cutout.jpeg) — đó chỉ là mô tả phong cách minh hoạ đã có sẵn TRONG chính ảnh AI tạo ra, KHÔNG phải chỉ định phải code thêm xử lý cutout. Dùng ảnh này y như file ảnh thường (nền toàn khung, giữ nguyên màu), không thêm filter grayscale/tách nền/đổ bóng trong code.
@@ -328,7 +330,15 @@ function writeFiles(files) {
 // caption-track). Scene standalone ở đây KHÔNG mount caption-track.html nên không dính false
 // positive đã gặp khi test caption-track tự báo lỗi trên chính nó (đã sửa riêng ở
 // generate-caption-track-hf.mjs bằng data-layout-allow-caption-zone).
-function verify() {
+function verify(files) {
+  const rootFlags = findRootLayoutFlags(files["index.html"]);
+  if (rootFlags.length > 0) {
+    return {
+      passed: false,
+      infraError: false,
+      raw: `Phát hiện cờ layout đặt SAI CHỖ trên #root: ${rootFlags.join(", ")}. Các cờ này dùng closest() nên tắt TOÀN BỘ layout audit của cả scene khi đặt ở root — di chuyển xuống ĐÚNG phần tử con cụ thể cần opt-out (không phải root).`,
+    };
+  }
   return runHyperframesCheck(tempProjectDir, { extraArgs: [getCaptionZoneArg()] });
 }
 
@@ -388,7 +398,7 @@ while (attempt < MAX_ATTEMPTS) {
     writeFiles(files);
     previousFiles = files;
 
-    const v = verify();
+    const v = verify(files);
     if (!v.passed) {
       console.log("Verify (hyperframes check) FAILED:\n" + v.raw.slice(0, 2000));
       appendCodegenIssue([{ stage: v.infraError ? "verify-infra-error" : "verify-hf-check", detail: v.raw.slice(0, 2000) }]);

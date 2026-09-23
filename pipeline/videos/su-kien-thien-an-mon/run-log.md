@@ -74,3 +74,6 @@ Project standalone tạm còn giữ tại: C:\vox-style-xe-giay-v1-hyperframes\h
 - **2026-09-22T16:07:59.485Z** — `scripts/07-codegen.hf.router.mjs --video=su-kien-thien-an-mon --scenes=S01` — Codegen HyperFrames scene [S01] PASS sau 1 lần thử bằng ag/gemini-3.8-flash-high (review: ag/claude-sonnet-4-6) — đã chuyển đổi thành compositions/scene-s01.html.
 
 - **2026-09-22T16:09:03.655Z** — `scripts/07-codegen.hf.router.mjs --video=su-kien-thien-an-mon --scenes=S14` — Codegen HyperFrames scene [S14] PASS sau 2 lần thử bằng ag/gemini-3.8-flash-high (review: ag/claude-sonnet-4-6) — đã chuyển đổi thành compositions/scene-s14.html.
+
+- **2026-09-23T13:24:48.358Z** — `scripts/07b-integration-check.hf.mjs --video=su-kien-thien-an-mon` — Stage 7b integration check FAIL:
+Cờ layout đặt sai chỗ trên root: compositions/scene-s02.html (data-layout-allow-overflow); compositions/scene-s03.html (data-layout-allow-overflow); compositions/scene-s08.html (data-layout-allow-overflow); compositions/scene-s09.html (data-layout-allow-overflow); compositions/scene-s10.html (data-layout-allow-overflow); compositions/scene-s11.html (data-layout-allow-overflow); compositions/scene-s14.html (data-layout-allow-overflow) — di chuyển xuống đúng phần tử con cụ thể.

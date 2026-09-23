@@ -9,7 +9,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { getVideoSlug, videoPaths } from "./lib/video-paths.mjs";
 import { syncRootHf } from "./lib/sync-root-hf-lib.mjs";
-import { runHyperframesCheck } from "./lib/hf-check.mjs";
+import { runHyperframesCheck, findRootLayoutFlagsInProject } from "./lib/hf-check.mjs";
 import { getCaptionZoneArg } from "./lib/caption-zone.mjs";
 import { appendRunLog } from "./lib/router-client.mjs";
 
@@ -31,6 +31,12 @@ if (syncResult.sceneCount !== syncResult.totalPlanned) {
 }
 if (!syncResult.hasAudio) errors.push(`Chưa có audio narration.mp3 (${vp.audioFile}).`);
 if (!syncResult.hasCaptionTrack) errors.push(`Chưa có caption-track (thiếu ${vp.captionsFile}?).`);
+const rootFlagViolations = findRootLayoutFlagsInProject(vp.hfProjectDir);
+if (rootFlagViolations.length > 0) {
+  errors.push(
+    `Cờ layout đặt sai chỗ trên root: ${rootFlagViolations.map((v) => `${v.file} (${v.flags.join(", ")})`).join("; ")} — di chuyển xuống đúng phần tử con cụ thể.`,
+  );
+}
 
 const passed = errors.length === 0;
 
