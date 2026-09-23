@@ -38,13 +38,18 @@ Từ bước 5 trở đi cần **cả 2 nhánh đã xong** (Stage 5 đọc cả 
    - **Mặc định (≥2 scene)**: `node scripts/07-codegen-hf-parallel.mjs --video=<slug> --scenes=S01,S02,...,SNN [--concurrency=10]` — worker-pool song song, tự ráp `index.html` khi tất cả scene PASS.
    - Tuần tự/debug 1 scene riêng: `node scripts/07-codegen.hf.router.mjs --video=<slug> --scenes=SNN [--issue-file=...]`.
    - `caption-track.html` được `syncRootHf()` tự sinh tất định từ `captions.json` mỗi lần ráp (`scripts/lib/generate-caption-track-hf.mjs`) — không cần thao tác tay.
-9. Sau khi Stage 8 ráp xong và `hyperframes check` trên project đã ráp đạt `ok=true`: **đi thẳng
-   sang Render, KHÔNG có bước Preview/QA bắt buộc ở giữa** (xem `planning/responsibility-matrix.md`
-   mục 7-8). Render bằng `node scripts/09-render.hf.mjs --video=<slug>` (chỉ khi được yêu cầu render
-   chính thức) — wrapper tất định tự cố định `--quality looks` + output `out/<slug>-full.mp4`,
-   KHÔNG gõ tay lệnh `npx hyperframes render` thô (sự cố thật đã xảy ra: gõ tay lệch cả preset lẫn
-   đường dẫn, xem `planning/responsibility-matrix.md` mục 8). Script tự chạy **bắt buộc** `ffprobe`
-   (duration khớp audio thật) và tự ghi run-log — đây là gate mặc định duy nhất sau render.
+9. Sau khi Stage 8 ráp xong: **đi thẳng sang Render, KHÔNG có bước Preview/QA bắt buộc ở giữa** (xem
+   `planning/responsibility-matrix.md` mục 7-8). Render bằng `node scripts/09-render.hf.mjs
+   --video=<slug>` (chỉ khi được yêu cầu render chính thức) — wrapper tất định tự cố định `--quality
+   looks` + output `out/<slug>-full.mp4`, KHÔNG gõ tay lệnh `npx hyperframes render` thô (sự cố thật
+   đã xảy ra: gõ tay lệch cả preset lẫn đường dẫn, xem `planning/responsibility-matrix.md` mục 8).
+   Trước khi render, wrapper **tự động chạy Stage 7b** (`scripts/07b-integration-check.hf.mjs
+   --video=<slug>`) làm preflight bắt buộc — verify LẠI project đã ráp (không chỉ từng scene riêng lẻ:
+   `hyperframes check` + `--caption-zone`, đủ scene, có audio, có caption-track), từ chối render nếu
+   FAIL, không có cờ bỏ qua. KHÔNG cần tự chạy `hyperframes check` tay trên project đã ráp nữa — script
+   đã bao gồm bước này. Sau render, script tự chạy **bắt buộc** `ffprobe` (duration khớp audio thật)
+   và ghi `pipeline/videos/<slug>/completion-manifest.json` — chỉ được coi video "hoàn tất" khi file
+   này tồn tại và mọi field `*Ok` đều `true` (xem `planning/responsibility-matrix.md` mục P2.3).
 10. Preview (`npx hyperframes preview --background`, xem `hyperframes/videos/<slug>/CLAUDE.md`) và
     vision QA (9router chụp vài khung hình, nhận xét text) **chỉ dùng khi có lý do cụ thể**: đang
     debug 1 vấn đề đã biết, người dùng yêu cầu xem trước, hoặc lần đầu áp dụng kỹ thuật/kiến trúc
@@ -63,6 +68,12 @@ Từ bước 5 trở đi cần **cả 2 nhánh đã xong** (Stage 5 đọc cả 
   (caption-track chưa generalize, z-index rò rỉ stacking context — xem memory
   `feedback_incremental_buildout` bài học #4-5). Giai đoạn F (dọn dẹp Remotion, chuyển HyperFrames
   thành mặc định chính thức) đang thực hiện.
+- [x] **Đóng backlog P1/P2 độ tin cậy pipeline (2026-09-23, commit `91edca2`)** — Stage 7b assembled
+  integration check, caption safe-zone contract (`--caption-zone`, kèm hạ vị trí mặc định phụ đề 15%),
+  parse log render vào run-log, completion manifest, sửa 1 phần phân loại retry lỗi mạng/nội dung.
+  Chi tiết đầy đủ ở `planning/responsibility-matrix.md` mục "Nhật ký audit chưa xử lý". Phần CHƯA
+  xong (tách retry `review()` riêng, không tốn oan ngân sách attempt) hoãn có chủ đích, không phải
+  blocker cho việc dựng video mới.
 
 ### Video "an-le-64" (video đầu tiên, đã hoàn chỉnh và đã migrate vào cấu trúc mới)
 - [x] Nhận script + audio + media + style DNA (2026-09-20). PDF bản án sẽ cung cấp sau, chưa cần cho giai đoạn hiện tại.

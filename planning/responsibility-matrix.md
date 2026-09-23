@@ -497,10 +497,26 @@ Claude có nghi ngờ rõ ràng dựa trên bằng chứng cụ thể (không ph
 
 **Phạm vi và trạng thái:** mục này ghi lại lỗi/vấn đề phát sinh trong đúng session dựng video
 `ban-an-35-phan-1`. **Cập nhật (2026-09-23):** backlog P0 mục 1-4 (wrapper render tất định) ĐÃ
-triển khai — xem chi tiết ở mục 6 bên dưới và mục 8 phía trên. Các mục P1/P2 (Stage 7b integration
-check, caption safe-zone, tách retry network/content, hygiene log) VẪN CHƯA triển khai — không đọc
-các mục đó như đã sửa. Bản MP4 đã render của `ban-an-35-phan-1` vẫn đang ở đường dẫn sai convention
-`renders/ban-an-35-phan-1.mp4` theo yêu cầu người dùng (tự xử lý thủ công, không cần render lại).
+triển khai — xem chi tiết ở mục 6 bên dưới và mục 8 phía trên. Bản MP4 đã render của `ban-an-35-phan-1`
+vẫn đang ở đường dẫn sai convention `renders/ban-an-35-phan-1.mp4` theo yêu cầu người dùng (tự xử lý
+thủ công, không cần render lại).
+
+**Cập nhật (2026-09-23, sau đó cùng ngày) — backlog P1/P2 ĐÃ ĐÓNG, commit `91edca2`:** cả 4 mục nêu ở
+mục 6 bên dưới đã triển khai và xác minh bằng dữ liệu thật (không chỉ đọc code):
+- ✅ P1.2 (Stage 7b assembled integration check) — `scripts/07b-integration-check.hf.mjs`, verify lại
+  PROJECT ĐÃ RÁP (không chỉ scene standalone), giờ là preflight bắt buộc của `09-render.hf.mjs`.
+- ✅ P1.3 (caption safe-zone contract) — `scripts/lib/caption-zone.mjs`, tính `--caption-zone` tất
+  định từ `style-tokens.json`, wire vào `verify()`. Nhân tiện hạ luôn vị trí mặc định phụ đề 15%
+  (bottom 440→374px) theo yêu cầu người dùng, đồng bộ `STYLE_DNA.md`/`style-dna-integration.md`.
+- ✅ P1.5 (log render) — `09-render.hf.mjs` giờ parse capture mode/GPU mode/stage timing vào run-log.
+- ✅ P2.1 (log đúng chỗ) + P2.3 (completion manifest) — `pipeline/videos/<slug>/integration-check.log`
+  + `completion-manifest.json`, quy ước chỉ tuyên bố "hoàn tất" khi mọi field `*Ok` đều `true`.
+- **⚠️ P1.4 CHỈ XONG 1 PHẦN, KHÔNG đọc như đã sửa toàn bộ**: đã làm (c) sửa `classifyFailure()` đọc
+  đúng log lần thử cuối, và (b) `runHyperframesCheck()` thêm field `infraError` phân biệt tool
+  treo/crash vs lỗi nội dung thật. **CHƯA làm** (a) tách retry `review()` riêng khỏi `generate()` để
+  không tốn oan ngân sách `MAX_ATTEMPTS` khi chỉ review() timeout — hoãn theo quyết định người dùng,
+  vẫn còn nguyên trong `07-codegen.hf.router.mjs` vòng lặp attempt hiện tại. Không phải lỗi đúng/sai,
+  chỉ là tối ưu hiệu quả retry, an toàn để dựng video mới trước khi quay lại làm (a).
 
 #### 1. Kết luận trách nhiệm — lỗi render không phải do quy định mơ hồ
 
@@ -645,13 +661,18 @@ hoặc người dùng nhắc lại.
 
 **P1 — tốc độ và độ tin cậy:**
 
-1. Ghi dependency DAG/bảng `depends_on` cho Stage 1/2/2b/3/5; mặc định chạy Stage 1 + 2b song
-   song, rồi Stage 3 ngay sau 2b.
-2. Chính thức hoá Stage 7b assembled integration check.
-3. Thêm caption safe-zone contract vào generator/reviewer/fixture verify.
-4. Tách retry network khỏi content retry và giữ artefact tốt nhất giữa các attempt.
-5. Ghi capture mode, GPU mode và stage timings của render vào run log để phân biệt chậm do capture
-   với chậm do encode; không suy đoán.
+1. ✅ Ghi dependency DAG/bảng `depends_on` cho Stage 1/2/2b/3/5; mặc định chạy Stage 1 + 2b song
+   song, rồi Stage 3 ngay sau 2b. (Đã tài liệu hoá ở mục 2b bên trên.)
+2. ✅ Chính thức hoá Stage 7b assembled integration check. (`scripts/07b-integration-check.hf.mjs`,
+   commit `91edca2`.)
+3. ✅ Thêm caption safe-zone contract vào generator/reviewer/fixture verify. (`scripts/lib/caption-zone.mjs`
+   + wire vào `verify()`, commit `91edca2`.)
+4. ⚠️ **MỘT PHẦN** — đã sửa `classifyFailure()` đọc đúng log lần thử cuối + `runHyperframesCheck()`
+   phân biệt tool treo/crash vs lỗi nội dung thật (commit `91edca2`). **CHƯA làm**: tách hẳn retry
+   `review()` khỏi `generate()` (không tốn oan `MAX_ATTEMPTS` khi chỉ review() timeout) và "giữ
+   artefact tốt nhất giữa các attempt" — cả 2 vẫn treo, hoãn theo quyết định người dùng.
+5. ✅ Ghi capture mode, GPU mode và stage timings của render vào run log để phân biệt chậm do capture
+   với chậm do encode; không suy đoán. (`scripts/09-render.hf.mjs`, commit `91edca2`.)
 6. **Xác nhận thật (2026-09-23) qua test render trực tiếp 1 scene** (`scene-s01.html`,
    `ban-an-35-phan-1` — thất bại vì lý do khác, xem mục 6 dưới, nhưng log kịp in ra trước khi lỗi):
    cơ chế "1 số CSS feature tắt fast-capture (`drawElementImage`), rơi về screenshot capture" LÀ
@@ -671,10 +692,12 @@ hoặc người dùng nhắc lại.
 
 **P2 — hygiene/auditability:**
 
-1. Log vận hành/final check phải nằm dưới `pipeline/videos/<slug>/`, không nằm trong project
-   composition.
-2. Audit cách ignore/dọn `.thumbnails/` và `.waveform-cache/` khi preview thực sự được yêu cầu.
-3. Cân nhắc completion manifest chỉ được ghi khi assembled check, render contract và ffprobe đều
+1. ✅ Log vận hành/final check phải nằm dưới `pipeline/videos/<slug>/`, không nằm trong project
+   composition. (`pipeline/videos/<slug>/integration-check.log`, commit `91edca2`.)
+2. ✅ Audit cách ignore/dọn `.thumbnails/` và `.waveform-cache/` khi preview thực sự được yêu cầu —
+   đã xác nhận (`git check-ignore -v`) cả 2 đã được `.gitignore` đúng từ trước (dòng 33-34), không
+   phải lỗi thật, không cần sửa gì (xác nhận ở session trước commit `91edca2`).
+3. ✅ Cân nhắc completion manifest chỉ được ghi khi assembled check, render contract và ffprobe đều
    đạt; tránh tuyên bố end-to-end complete chỉ vì một MP4 bất kỳ đã được tạo.
 
 #### 7. Tiêu chí regression/acceptance đề xuất cho bản sửa tương lai
