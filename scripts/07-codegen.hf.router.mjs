@@ -40,6 +40,12 @@ const routing = loadModelRouting();
 const GEN_MODEL = routing.reasoning_generator;
 const REVIEW_MODEL = routing.reasoning_reviewer;
 const MAX_ATTEMPTS = 3;
+// Ngân sách RIÊNG cho review() khi bị timeout mạng — tách khỏi MAX_ATTEMPTS chính (P1.4(a)): nếu
+// generate()+verify() đã qua tốt và chỉ review() timeout, thử lại NGAY review() với cùng `files`,
+// không gọi lại generate() từ đầu (tốn oan 1 attempt chính). Tối đa 2 LẦN GỌI review() trong ngân
+// sách này (1 lần đầu + 1 lần thử lại) — hết ngân sách vẫn lỗi thì rơi về hành vi cũ (throw ra catch
+// ngoài, tính vào MAX_ATTEMPTS chính) làm lưới an toàn.
+const MAX_REVIEW_RETRIES = 2;
 
 const slug = getVideoSlug();
 const vp = videoPaths(slug);
@@ -391,7 +397,20 @@ while (attempt < MAX_ATTEMPTS) {
     }
     console.log("Verify (hyperframes check) PASS.");
 
-    const reviewText = await review(files);
+    // review() network-retry RIÊNG — KHÔNG tốn oan generate()+verify() đã qua nếu chỉ review()
+    // timeout mạng. Hết ngân sách riêng (MAX_REVIEW_RETRIES lần gọi) vẫn lỗi -> throw ra catch
+    // ngoài, rơi về đúng hành vi CŨ (tính vào MAX_ATTEMPTS chính) làm lưới an toàn, tránh vòng lặp
+    // không thoát được nếu 9router lỗi liên tục.
+    let reviewText;
+    for (let reviewAttempt = 1; ; reviewAttempt++) {
+      try {
+        reviewText = await review(files);
+        break;
+      } catch (e) {
+        console.log(`Lỗi khi gọi reviewer (sẽ thử lại ${reviewAttempt}/${MAX_REVIEW_RETRIES}): ${e.message || e}`);
+        if (reviewAttempt >= MAX_REVIEW_RETRIES) throw e;
+      }
+    }
     console.log("Review result:\n" + reviewText);
     finalFiles = files;
     finalVerdict = reviewText;

@@ -202,3 +202,5 @@ Thiếu scene: 6/7 đã có code.
 - **2026-09-23T08:31:42.050Z** — `scripts/07b-integration-check.hf.mjs --video=an-le-64` — Stage 7b integration check PASS — 7/7 scene, có audio, có caption-track, hyperframes check ok=true.
 
 - **2026-09-23T08:58:08.262Z** — `scripts/07b-integration-check.hf.mjs --video=an-le-64` — Stage 7b integration check PASS — 7/7 scene, có audio, có caption-track, hyperframes check ok=true.
+
+- **2026-09-23T09:38:27.753Z** — `scripts/07-codegen.hf.router.mjs --video=an-le-64 --scenes=S01` — Codegen HyperFrames scene [S01] PASS sau 3 lần thử bằng ag/gemini-3.8-flash-high (review: ag/claude-sonnet-4-6) — đã chuyển đổi thành compositions/scene-s01.html.
