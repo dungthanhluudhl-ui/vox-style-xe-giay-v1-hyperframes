@@ -1,0 +1,497 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap">
+      <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: #141414;
+      color: #141414;
+      font-family: "Be Vietnam Pro", sans-serif;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Root uses percentage dimensions per HyperFrames core contract */
+    #root {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #F5F0E4;
+    }
+
+    /* Video layers */
+    .media-layer {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transform-origin: center center;
+    }
+
+    /* Vignette & Paper atmosphere overlay */
+    .vignette-overlay {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: radial-gradient(circle at 50% 50%, rgba(245, 240, 228, 0) 45%, rgba(20, 20, 20, 0.45) 100%);
+      mix-blend-mode: multiply;
+      z-index: 10;
+    }
+
+    .paper-grain {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.12;
+      background-image: radial-gradient(#141414 1px, transparent 1px);
+      background-size: 8px 8px;
+      z-index: 11;
+    }
+
+    /* Impact flash elements */
+    .flash-layer {
+      position: absolute;
+      inset: 0;
+      background-color: #FF6A1A;
+      opacity: 0;
+      pointer-events: none;
+      z-index: 50;
+      mix-blend-mode: overlay;
+    }
+
+    /* Clips (containers for timed overlays) */
+    .clip {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 20;
+    }
+
+    /* Label cards */
+    .badge-card {
+      position: absolute;
+      display: inline-flex;
+      align-items: center;
+      gap: 16px;
+      background-color: #141414;
+      color: #F7F4EC;
+      padding: 16px 28px;
+      border-radius: 4px;
+      box-shadow: 8px 8px 0px #FF6A1A;
+      will-change: transform, opacity;
+    }
+
+    .badge-tag {
+      background-color: #FF6A1A;
+      color: #141414;
+      font-weight: 900;
+      font-size: 24px;
+      line-height: 1;
+      padding: 6px 12px;
+      border-radius: 2px;
+      letter-spacing: 0.05em;
+    }
+
+    .badge-text {
+      font-size: 38px;
+      font-weight: 900;
+      line-height: 1.2;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+      color: #F7F4EC;
+    }
+
+    #label-1 {
+      top: 240px;
+      left: 60px;
+      border-left: 8px solid #FF6A1A;
+    }
+
+    #label-2 {
+      top: 400px;
+      right: 60px;
+      border-right: 8px solid #FF6A1A;
+      box-shadow: -8px 8px 0px #FF6A1A;
+    }
+
+    /* Shot 2: Martial Law Official Seal / Stamp */
+    .stamp-container {
+      position: absolute;
+      top: 740px;
+      left: 70px;
+      width: 940px;
+      background-color: #141414;
+      border: 8px solid #FF6A1A;
+      border-radius: 6px;
+      padding: 44px 48px;
+      box-shadow: 18px 22px 0px rgba(255, 106, 26, 0.95);
+      color: #F7F4EC;
+      transform-origin: 50% 50%;
+      will-change: transform, opacity;
+    }
+
+    .stamp-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 3px solid #FF6A1A;
+      padding-bottom: 20px;
+      margin-bottom: 24px;
+    }
+
+    .stamp-header-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .warning-icon-wrap {
+      width: 52px;
+      height: 52px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .warning-svg {
+      width: 48px;
+      height: 48px;
+    }
+
+    #warn-dot {
+      transform-box: fill-box;
+      transform-origin: center;
+    }
+
+    .stamp-meta {
+      font-size: 24px;
+      font-weight: 700;
+      color: #FF6A1A;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+    }
+
+    .stamp-date {
+      font-size: 22px;
+      font-weight: 700;
+      color: #F7F4EC;
+      letter-spacing: 0.1em;
+      background-color: rgba(255, 106, 26, 0.2);
+      padding: 6px 14px;
+      border-radius: 2px;
+      border: 1px solid #FF6A1A;
+    }
+
+    .stamp-title-wrap {
+      margin: 18px 0;
+      text-align: center;
+    }
+
+    .stamp-punch-phrase {
+      font-size: 80px;
+      font-weight: 900;
+      line-height: 1.15;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: #F7F4EC;
+      display: block;
+    }
+
+    .stamp-sub-bar {
+      margin-top: 24px;
+      padding-top: 18px;
+      border-top: 2px dashed rgba(255, 106, 26, 0.5);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .stamp-authority {
+      font-size: 24px;
+      font-weight: 700;
+      color: #F7F4EC;
+      letter-spacing: 0.05em;
+    }
+
+    .stamp-status {
+      font-size: 22px;
+      font-weight: 900;
+      color: #141414;
+      background-color: #FF6A1A;
+      padding: 6px 16px;
+      border-radius: 2px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    /* Fixed brand signature bottom bar */
+    #brand-bottom-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 12px;
+      background-color: #FF6A1A;
+      z-index: 100;
+    }
+  </style>
+
+  <div
+    id="root"
+    data-composition-id="scene-s04"
+    data-width="1080"
+    data-height="1920"
+    data-duration="11"
+  >
+    <!-- Background visual assets: Shot 1 (0s to 5s) -->
+    <video
+      id="vid-shot1"
+      class="media-layer"
+      muted
+      playsinline
+      data-start="0"
+      data-duration="5"
+      data-media-start="0"
+      src="assets/vid-03-tense-dispute-confrontation.mp4"
+    ></video>
+
+    <!-- Background visual assets: Shot 2 Video Action (5s to 8s, trim 5s-8s) -->
+    <video
+      id="vid-shot2"
+      class="media-layer"
+      muted
+      playsinline
+      data-start="5"
+      data-duration="3"
+      data-media-start="5"
+      src="assets/vid-03-tense-dispute-confrontation.mp4"
+    ></video>
+
+    <!-- Background visual assets: Shot 2 Freeze-Frame held at 8s (8s to 11s) -->
+    <video
+      id="vid-shot2-freeze"
+      class="media-layer"
+      muted
+      playsinline
+      data-start="8"
+      data-duration="3"
+      data-media-start="7.96"
+      data-playback-rate="0"
+      src="assets/vid-03-tense-dispute-confrontation.mp4"
+    ></video>
+
+    <!-- Graphic atmosphere overlays -->
+    <div class="vignette-overlay"></div>
+    <div class="paper-grain"></div>
+
+    <!-- Impact flash effects -->
+    <div id="flash-strike" class="flash-layer"></div>
+    <div id="flash-stamp" class="flash-layer"></div>
+
+    <!-- Shot 1 Overlays: 0s to 5s -->
+    <div id="shot1-overlays" class="clip" data-start="0" data-duration="5">
+      <!-- Label 1 (26220ms -> rel 0.72s, hold 2000ms) -->
+      <div id="label-1" class="badge-card" style="opacity: 0;">
+        <span class="badge-tag">17/5</span>
+        <span class="badge-text">NỘI BỘ BẤT HÒA</span>
+      </div>
+
+      <!-- Label 2 (29230ms -> rel 3.73s, hold 1200ms) -->
+      <div id="label-2" class="badge-card" style="opacity: 0;">
+        <span class="badge-text">HẾT KIÊN NHẪN</span>
+      </div>
+    </div>
+
+    <!-- Shot 2 Overlays: 5s to 11s -->
+    <div id="shot2-overlays" class="clip" data-start="5" data-duration="6">
+      <!-- Martial Law Official Stamp / Punch Phrase (33680ms -> rel 8.18s) -->
+      <div id="stamp-martial-law" class="stamp-container" data-layout-allow-overflow style="opacity: 0;">
+        <div class="stamp-header">
+          <div class="stamp-header-left">
+            <div class="warning-icon-wrap">
+              <svg class="warning-svg" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path
+                  id="warn-triangle"
+                  d="M32 8L58 54H6L32 8Z"
+                  stroke="#FF6A1A"
+                  stroke-width="5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+                <path
+                  id="warn-bar"
+                  d="M32 24V38"
+                  stroke="#FF6A1A"
+                  stroke-width="5"
+                  stroke-linecap="round"
+                />
+                <circle
+                  id="warn-dot"
+                  cx="32"
+                  cy="46"
+                  r="3.5"
+                  fill="#FF6A1A"
+                />
+              </svg>
+            </div>
+            <span class="stamp-meta">QUYẾT ĐỊNH BỘ CHÍNH TRỊ</span>
+          </div>
+          <span class="stamp-date">17.05.1989</span>
+        </div>
+
+        <div class="stamp-title-wrap">
+          <span class="stamp-punch-phrase">THIẾT QUÂN LUẬT</span>
+        </div>
+
+        <div class="stamp-sub-bar">
+          <span class="stamp-authority">ĐẶNG TIỂU BÌNH • LẬP LẠI TRẬT TỰ</span>
+          <span class="stamp-status">BAN BỐ</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Permanent signature bottom bar -->
+    <div id="brand-bottom-bar"></div>
+  </div>
+
+  <script>
+    // Prepare SVG stroke lengths deterministically before building timeline
+    const warnTriangle = document.getElementById("warn-triangle");
+    const warnBar = document.getElementById("warn-bar");
+    if (warnTriangle) {
+      const lenTriangle = typeof warnTriangle.getTotalLength === "function" ? warnTriangle.getTotalLength() : 165;
+      warnTriangle.style.strokeDasharray = `${lenTriangle}`;
+      warnTriangle.style.strokeDashoffset = `${lenTriangle}`;
+    }
+    if (warnBar) {
+      const lenBar = typeof warnBar.getTotalLength === "function" ? warnBar.getTotalLength() : 20;
+      warnBar.style.strokeDasharray = `${lenBar}`;
+      warnBar.style.strokeDashoffset = `${lenBar}`;
+    }
+
+    // Single paused master timeline for HyperFrames
+    const tl = gsap.timeline({ paused: true });
+
+    // ==========================================
+    // SHOT 1 (0.0s - 5.0s)
+    // ==========================================
+
+    // Transition In: "strike" entrance slamming down on frame 0
+    tl.fromTo(
+      "#vid-shot1",
+      { scale: 1.08, y: -45 },
+      { scale: 1, y: 0, duration: 0.38, ease: "power4.out" },
+      0
+    );
+
+    // Strike flash impact
+    tl.fromTo(
+      "#flash-strike",
+      { opacity: 0.35 },
+      { opacity: 0, duration: 0.28, ease: "power2.out" },
+      0.02
+    );
+
+    // Overlay 1: "17/5: NỘI BỘ BẤT HÒA" (atMs: 26220 -> rel 0.72s, hold 2000ms -> to 2.72s)
+    tl.fromTo(
+      "#label-1",
+      { x: -50, opacity: 0 },
+      { x: 0, opacity: 1, duration: 0.36, ease: "power3.out" },
+      0.72
+    );
+    tl.to(
+      "#label-1",
+      { opacity: 0, y: -12, duration: 0.22, ease: "power2.in" },
+      2.58
+    );
+
+    // Overlay 2: "HẾT KIÊN NHẪN" (atMs: 29230 -> rel 3.73s, hold 1200ms -> to 4.93s)
+    tl.fromTo(
+      "#label-2",
+      { scale: 0.85, y: 30, opacity: 0 },
+      { scale: 1, y: 0, opacity: 1, duration: 0.32, ease: "power4.out" },
+      3.73
+    );
+    tl.to(
+      "#label-2",
+      { opacity: 0, scale: 0.95, duration: 0.18, ease: "power2.in" },
+      4.82
+    );
+
+    // ==========================================
+    // SHOT 2 (5.0s - 11.0s)
+    // Camera motion: slow cinematic zoom-in 3.0% across Shot 2 (5s to 11s)
+    // ==========================================
+
+    // First half (5.0s to 8.0s): Video action plays while zooming 1.0 -> 1.015
+    tl.fromTo(
+      "#vid-shot2",
+      { scale: 1.0 },
+      { scale: 1.015, duration: 3.0, ease: "none" },
+      5.0
+    );
+
+    // Second half (8.0s to 11.0s): Frame freezes while continuing zoom 1.015 -> 1.03
+    tl.fromTo(
+      "#vid-shot2-freeze",
+      { scale: 1.015 },
+      { scale: 1.03, duration: 3.0, ease: "none" },
+      8.0
+    );
+
+    // Punch-phrase: "THIẾT QUÂN LUẬT" with Warning Icon (atMs: 33680 -> rel 8.18s)
+    // Heavy official stamp strike slamming down into place on the frozen frame
+    tl.fromTo(
+      "#stamp-martial-law",
+      { scale: 2.1, rotation: -16, opacity: 0 },
+      { scale: 1, rotation: -3, opacity: 1, duration: 0.24, ease: "power4.in" },
+      8.18
+    );
+
+    // Stamp landing impact flash at 8.42s
+    tl.fromTo(
+      "#flash-stamp",
+      { opacity: 0.4 },
+      { opacity: 0, duration: 0.25, ease: "power2.out" },
+      8.42
+    );
+
+    // Self-drawing Warning SVG Path right as stamp lands
+    tl.to(
+      "#warn-triangle",
+      { strokeDashoffset: 0, duration: 0.38, ease: "power2.out" },
+      8.44
+    );
+    tl.to(
+      "#warn-bar",
+      { strokeDashoffset: 0, duration: 0.24, ease: "power2.out" },
+      8.60
+    );
+    tl.fromTo(
+      "#warn-dot",
+      { scale: 0 },
+      { scale: 1, duration: 0.18, ease: "power3.out" },
+      8.74
+    );
+
+    // Register paused timeline with HyperFrames runtime
+    window.__timelines["scene-s04"] = tl;
+  </script>
+
+    </template>
+  </body>
+</html>

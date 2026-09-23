@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap">
+      <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+        background: #0d0f12;
+        font-family: "Be Vietnam Pro", sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+      #root {
+        position: relative;
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+        background-color: #e7e3d9;
+      }
+
+      /* Lớp nền phong cách Vox: giấy ngà + lưới ô vuông 84px */
+      .bg-paper-grid {
+        position: absolute;
+        inset: 0;
+        background-color: #e7e3d9;
+        background-image:
+          linear-gradient(rgba(20, 20, 20, 0.16) 1.5px, transparent 1.5px),
+          linear-gradient(90deg, rgba(20, 20, 20, 0.16) 1.5px, transparent 1.5px);
+        background-size: 84px 84px;
+        pointer-events: none;
+      }
+
+      /* Spotlight vignette tạo không khí cảnh báo/nghiêm trọng */
+      .bg-spotlight-vignette {
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(
+          circle at 50% 38%,
+          transparent 32%,
+          rgba(20, 20, 20, 0.42) 72%,
+          rgba(10, 10, 10, 0.78) 100%
+        );
+        pointer-events: none;
+      }
+
+      /* Thanh cam nhận diện thương hiệu cố định ở mép đáy */
+      .brand-bottom-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 1080px;
+        height: 14px;
+        background: #ff6a1a;
+        z-index: 90;
+      }
+
+      /* Clip chính cho scene S02 */
+      .clip {
+        position: absolute;
+        inset: 0;
+        width: 1080px;
+        height: 1920px;
+      }
+
+      /* Top Editorial Tag */
+      .editorial-badge {
+        position: absolute;
+        top: 170px;
+        left: 90px;
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        padding: 8px 18px;
+        background: #141414;
+        border-radius: 6px;
+        box-shadow: 4px 4px 0px #ff6a1a;
+        z-index: 20;
+      }
+      .badge-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: #ff6a1a;
+      }
+      .badge-text {
+        color: #f7f4ec;
+        font-size: 24px;
+        font-weight: 900;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      /* Hero Collage Card (chứa ảnh img-04) - đặt an toàn trong dải Y: 240px - 1040px */
+      .hero-card-container {
+        position: absolute;
+        top: 240px;
+        left: 90px;
+        width: 900px;
+        height: 790px;
+        z-index: 10;
+        transform-origin: 50% 50%;
+      }
+      .hero-card-shadow {
+        position: absolute;
+        inset: 0;
+        background: #ff7a1a;
+        transform: translate(14px, 14px);
+        border: 4px solid #141414;
+      }
+      .hero-card-frame {
+        position: absolute;
+        inset: 0;
+        background: #f5f0e4;
+        border: 4px solid #141414;
+        overflow: hidden;
+      }
+      .hero-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center 20%;
+        display: block;
+        will-change: transform;
+      }
+
+      /* Corner Technical Stamp */
+      .card-corner-stamp {
+        position: absolute;
+        top: 18px;
+        right: 18px;
+        background: #141414;
+        color: #f7f4ec;
+        font-size: 20px;
+        font-weight: 900;
+        padding: 6px 14px;
+        border: 2px solid #ff6a1a;
+        letter-spacing: 0.04em;
+        z-index: 12;
+      }
+
+      /* Overlay 1: Label "BỘ PHẬN GIẢM XÓC" - callout ở góc trên của ảnh (Y: 280px) */
+      .annotation-callout {
+        position: absolute;
+        top: 275px;
+        left: 120px;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        z-index: 25;
+        pointer-events: none;
+      }
+      .callout-box {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        background: #141414;
+        border: 3px solid #ff6a1a;
+        padding: 10px 20px;
+        box-shadow: 6px 6px 0px rgba(20, 20, 20, 0.4);
+      }
+      .callout-indicator {
+        width: 10px;
+        height: 10px;
+        background: #ff6a1a;
+      }
+      .callout-title {
+        color: #f7f4ec;
+        font-size: 28px;
+        font-weight: 900;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+      }
+      .callout-svg-line {
+        width: 140px;
+        height: 48px;
+        overflow: visible;
+      }
+
+      /* Overlay 2: Warning Stamp - xuất hiện đập vào giữa ảnh (Y: 530px - 720px) */
+      .warning-stamp {
+        position: absolute;
+        top: 540px;
+        right: 130px;
+        width: 320px;
+        background: #141414;
+        border: 4px solid #ff6a1a;
+        box-shadow: 10px 10px 0px rgba(10, 10, 10, 0.7);
+        padding: 16px 20px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        z-index: 28;
+        transform-origin: 50% 50%;
+        transform: rotate(-6deg);
+      }
+      .warning-icon-svg {
+        width: 48px;
+        height: 48px;
+        flex-shrink: 0;
+      }
+      .warning-texts {
+        display: flex;
+        flex-direction: column;
+      }
+      .warning-heading {
+        color: #ff6a1a;
+        font-size: 22px;
+        font-weight: 900;
+        letter-spacing: 0.08em;
+      }
+      .warning-sub {
+        color: #f7f4ec;
+        font-size: 20px;
+        font-weight: 700;
+        line-height: 1.25;
+      }
+
+      /* Overlay 3: Punch-phrase "KHÔNG HÓA ĐƠN"
+         Vị trí: top: 1070px, height: 140px, bottom: 1210px.
+         Cách xa vùng caption track (Y >= 1360px) tối thiểu 150px!
+         Tuyệt đối không gây content_overlap với caption rail. */
+      .punch-phrase-wrapper {
+        position: absolute;
+        top: 1070px;
+        left: 90px;
+        width: 900px;
+        height: 144px;
+        z-index: 30;
+        transform-origin: 50% 50%;
+      }
+      .punch-phrase-shadow {
+        position: absolute;
+        inset: 0;
+        background: #ff6a1a;
+        transform: translate(10px, 10px);
+        border: 4px solid #141414;
+      }
+      .punch-phrase-box {
+        position: absolute;
+        inset: 0;
+        background: #141414;
+        border: 4px solid #ff6a1a;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 24px;
+        padding: 0 32px;
+      }
+      .punch-icon-strike {
+        width: 58px;
+        height: 58px;
+        flex-shrink: 0;
+      }
+      .punch-text {
+        color: #f7f4ec;
+        font-size: 64px;
+        font-weight: 900;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        line-height: 1;
+      }
+      .punch-text-accent {
+        color: #ff6a1a;
+      }
+    </style>
+
+    <div data-hf-id="hf-40pv" id="root" data-composition-id="scene-s02" data-start="0" data-duration="8.44" data-width="1080" data-height="1920">
+      <!-- Nền toàn khung: giấy ngà + lưới + spotlight -->
+      <div data-hf-id="hf-6mat" class="bg-paper-grid"></div>
+      <div data-hf-id="hf-ok79" class="bg-spotlight-vignette"></div>
+
+      <!-- Signature orange bottom bar -->
+      <div data-hf-id="hf-v6l5" class="brand-bottom-bar"></div>
+
+      <!-- Scene S02 Main Container -->
+      <section data-hf-id="hf-foa8" id="scene-s02" class="clip" data-start="0" data-duration="8.44" data-track-index="0">
+        <!-- Tag chủ đề phía trên -->
+        <div data-hf-id="hf-8efs" class="editorial-badge" id="editorial-badge">
+          <div data-hf-id="hf-fgmz" class="badge-dot"></div>
+          <span data-hf-id="hf-e3ej" class="badge-text">NGUY CƠ PHÁP LÝ · HÀNG KHÔNG RÕ NGUỒN GỐC</span>
+        </div>
+
+        <!-- Hero Collage Card chứa ảnh giao dịch tiền mặt -->
+        <div data-hf-id="hf-ukm2" class="hero-card-container" id="hero-card">
+          <div data-hf-id="hf-b3bk" class="hero-card-shadow"></div>
+          <div data-hf-id="hf-bd63" class="hero-card-frame">
+            <img data-hf-id="hf-qk20" src="assets/img-04-cash-deal-no-invoice.jpeg" alt="Giao dịch tiền mặt không hóa đơn" class="hero-image" id="hero-img">
+            <div data-hf-id="hf-s72c" class="card-corner-stamp">TÀI LIỆU MINH CHỨNG #04</div>
+          </div>
+        </div>
+
+        <!-- Overlay 1: Annotation Callout "BỘ PHẬN GIẢM XÓC" (2.07s -> 4.27s) -->
+        <div data-hf-id="hf-u1db" class="annotation-callout" id="label-callout">
+          <div data-hf-id="hf-cfvw" class="callout-box">
+            <div data-hf-id="hf-zwlk" class="callout-indicator"></div>
+            <span data-hf-id="hf-n481" class="callout-title">BỘ PHẬN GIẢM XÓC</span>
+          </div>
+          <svg data-hf-id="hf-xkbn" class="callout-svg-line" viewBox="0 0 140 48" fill="none">
+            <path data-hf-id="hf-jtjp" id="callout-line-path" d="M 12 0 L 12 36 L 132 36" stroke="#FF6A1A" stroke-width="4" stroke-linecap="round" />
+          </svg>
+        </div>
+
+        <!-- Overlay 2: Warning Stamp "CẢNH BÁO" (5.54s) -->
+        <div data-hf-id="hf-4oyq" class="warning-stamp" id="warning-stamp">
+          <svg data-hf-id="hf-0uzn" class="warning-icon-svg" viewBox="0 0 24 24" fill="none" stroke="#FF6A1A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path data-hf-id="hf-2l4s" d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
+            <line data-hf-id="hf-0inb" x1="12" y1="9" x2="12" y2="13" />
+            <line data-hf-id="hf-wkov" x1="12" y1="17" x2="12.01" y2="17" />
+          </svg>
+          <div data-hf-id="hf-j2hr" class="warning-texts">
+            <span data-hf-id="hf-a0mb" class="warning-heading">CẢNH BÁO PHÁP LÝ</span>
+            <span data-hf-id="hf-hftf" class="warning-sub">Không phiếu thu · Không chứng từ</span>
+          </div>
+        </div>
+
+        <!-- Overlay 3: Punch-phrase "KHÔNG HÓA ĐƠN" (6.71s -> 8.44s)
+             Y kết thúc tại 1214px, an toàn tuyệt đối trên vùng caption Y=1360px -->
+        <div data-hf-id="hf-u3cg" class="punch-phrase-wrapper" id="punch-phrase">
+          <div data-hf-id="hf-pwpv" class="punch-phrase-shadow"></div>
+          <div data-hf-id="hf-uuy6" class="punch-phrase-box">
+            <svg data-hf-id="hf-s7vx" class="punch-icon-strike" viewBox="0 0 24 24" fill="none" stroke="#FF6A1A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+              <circle data-hf-id="hf-m1lh" cx="12" cy="12" r="10" />
+              <line data-hf-id="hf-t1m1" id="strike-line" x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
+            </svg>
+            <span data-hf-id="hf-a1g1" class="punch-text">KHÔNG <span data-hf-id="hf-14wu" class="punch-text-accent">HÓA ĐƠN</span></span>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <script>
+      // Setup đường kẻ SVG vẽ theo tiến trình
+      const calloutPath = document.getElementById("callout-line-path");
+      if (calloutPath) {
+        const pathLen = calloutPath.getTotalLength();
+        calloutPath.style.strokeDasharray = pathLen;
+        calloutPath.style.strokeDashoffset = pathLen;
+      }
+
+      const strikeLine = document.getElementById("strike-line");
+      if (strikeLine) {
+        const lineLen = strikeLine.getTotalLength();
+        strikeLine.style.strokeDasharray = lineLen;
+        strikeLine.style.strokeDashoffset = lineLen;
+      }
+
+      // Khởi tạo Timeline paused duy nhất cho composition
+      const tl = gsap.timeline({ paused: true });
+
+      // 1. Vào cảnh: Hero Card xuất hiện với hiệu ứng squash-stretch punch (0s - 0.7s)
+      tl.fromTo(
+        "#hero-card",
+        { scale: 0.82, opacity: 0, y: 35 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.65, ease: "power3.out" },
+        0.05
+      );
+
+      tl.fromTo(
+        "#editorial-badge",
+        { opacity: 0, y: -20 },
+        { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" },
+        0.15
+      );
+
+      // Camera motion: pan-right nhẹ trên hình ảnh xuyên suốt scene (0s - 8.44s)
+      tl.fromTo(
+        "#hero-img",
+        { x: -35, scale: 1.08 },
+        { x: 30, scale: 1.08, duration: 8.44, ease: "none" },
+        0
+      );
+
+      // 2. Overlay 1: Label "BỘ PHẬN GIẢM XÓC" (t = 2.07s, kéo dài đến ~4.3s)
+      tl.fromTo(
+        "#label-callout",
+        { opacity: 0, x: -30, scale: 0.92 },
+        { opacity: 1, x: 0, scale: 1, duration: 0.42, ease: "power3.out" },
+        2.07
+      );
+
+      if (calloutPath) {
+        const pathLen = calloutPath.getTotalLength();
+        tl.fromTo(
+          "#callout-line-path",
+          { strokeDashoffset: pathLen },
+          { strokeDashoffset: 0, duration: 0.38, ease: "power2.out" },
+          2.2
+        );
+      }
+
+      // Thu gọn nhạt nhãn callout lúc 4.27s để chuẩn bị nhường nhịp cho bước ngoặt
+      tl.to(
+        "#label-callout",
+        { opacity: 0.2, duration: 0.4, ease: "power2.in" },
+        4.27
+      );
+
+      // 3. Overlay 2: Warning Stamp đập mạnh vào góc ảnh (t = 5.54s)
+      tl.fromTo(
+        "#warning-stamp",
+        { scale: 2.4, opacity: 0, rotation: -22 },
+        { scale: 1, opacity: 1, rotation: -6, duration: 0.45, ease: "power3.out" },
+        5.54
+      );
+
+      // Rung cảnh báo nhẹ, tất định (không dùng +=)
+      tl.to("#warning-stamp", { rotation: -3, duration: 0.1, ease: "power1.inOut" }, 5.99);
+      tl.to("#warning-stamp", { rotation: -6, duration: 0.1, ease: "power1.inOut" }, 6.09);
+
+      // 4. Overlay 3: Punch-phrase "KHÔNG HÓA ĐƠN" bật mạnh vào lúc 6.71s (giữ 1.73s đến hết 8.44s)
+      tl.fromTo(
+        "#punch-phrase",
+        { scale: 0.72, opacity: 0, y: 30 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.48, ease: "power3.out" },
+        6.71
+      );
+
+      if (strikeLine) {
+        const lineLen = strikeLine.getTotalLength();
+        tl.fromTo(
+          "#strike-line",
+          { strokeDashoffset: lineLen },
+          { strokeDashoffset: 0, duration: 0.35, ease: "power2.out" },
+          6.95
+        );
+      }
+
+      // Đăng ký timeline cho HyperFrames seek renderer
+      window.__timelines = window.__timelines || {};
+      window.__timelines["scene-s02"] = tl;
+      tl.seek(0);
+    </script>
+  
+    </template>
+  </body>
+</html>

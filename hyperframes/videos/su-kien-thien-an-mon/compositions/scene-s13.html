@@ -1,0 +1,619 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+      *, *::before, *::after {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        padding: 0;
+        background: #0b0f14;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      /* Root composition 1080x1920 portrait */
+      #root {
+        position: relative;
+        width: 1080px;
+        height: 1920px;
+        background: #E7E3D9;
+        overflow: hidden;
+      }
+
+      /* Lưới ô vuông 84px đặc trưng Vox DNA */
+      .bg-grid {
+        position: absolute;
+        inset: 0;
+        background-image:
+          linear-gradient(to right, rgba(20, 20, 20, 0.22) 1.5px, transparent 1.5px),
+          linear-gradient(to bottom, rgba(20, 20, 20, 0.22) 1.5px, transparent 1.5px);
+        background-size: 84px 84px;
+        pointer-events: none;
+        z-index: 1;
+      }
+
+      /* Biến thể Spotlight: Vignette tối bao quanh khung hình */
+      .spotlight-vignette {
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(circle at 50% 48%, rgba(20, 20, 20, 0.05) 30%, rgba(20, 20, 20, 0.72) 100%);
+        pointer-events: none;
+        z-index: 3;
+      }
+
+      /* Container ảnh tư liệu collage có viền giấy và hiệu ứng camera */
+      #photo-stage {
+        position: absolute;
+        top: 200px;
+        left: 60px;
+        width: 960px;
+        height: 1220px;
+        overflow: hidden;
+        border-radius: 12px;
+        border: 4px solid #141414;
+        box-shadow: 12px 14px 0px rgba(20, 20, 20, 0.85);
+        background: #141414;
+        z-index: 2;
+      }
+
+      #bg-photo {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transform-origin: 50% 45%;
+        filter: contrast(1.1) brightness(0.92);
+      }
+
+      /* Lớp phủ chuyển sắc đỏ cam cảnh báo ở Shot 2 */
+      #emergency-overlay {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(180deg, rgba(216, 58, 20, 0.35) 0%, rgba(20, 20, 20, 0.75) 100%);
+        mix-blend-mode: multiply;
+        opacity: 0;
+        pointer-events: none;
+        z-index: 4;
+      }
+
+      /* Overlay 1 (S13-1): Label QUYẾT ĐỊNH THƯỢNG TẦNG */
+      #top-label-wrap {
+        position: absolute;
+        top: 236px;
+        left: 0;
+        width: 1080px;
+        display: flex;
+        justify-content: center;
+        z-index: 10;
+      }
+
+      .top-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        background: #141414;
+        color: #F7F4EC;
+        border: 3px solid #FF6A1A;
+        padding: 14px 28px;
+        border-radius: 999px;
+        box-shadow: 0px 8px 24px rgba(0, 0, 0, 0.45), 4px 4px 0px #FF6A1A;
+      }
+
+      .badge-dot {
+        width: 14px;
+        height: 14px;
+        background: #FF6A1A;
+        border-radius: 50%;
+        display: inline-block;
+      }
+
+      .badge-text {
+        font-size: 28px;
+        font-weight: 900;
+        letter-spacing: 2.5px;
+        text-transform: uppercase;
+      }
+
+      /* Overlay 2 (S13-1): Sắc lệnh Đặng Tiểu Bình & Lý Bằng */
+      #decree-card-wrap {
+        position: absolute;
+        top: 380px;
+        left: 0;
+        width: 1080px;
+        display: flex;
+        justify-content: center;
+        z-index: 10;
+      }
+
+      .decree-card {
+        width: 820px;
+        background: #141414;
+        border: 4px solid #FF6A1A;
+        border-radius: 8px;
+        padding: 28px 36px;
+        box-shadow: 10px 12px 0px rgba(0, 0, 0, 0.7);
+      }
+
+      .decree-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 2px solid rgba(255, 106, 26, 0.4);
+        padding-bottom: 12px;
+        margin-bottom: 16px;
+      }
+
+      .decree-category {
+        font-size: 22px;
+        font-weight: 900;
+        color: #FF6A1A;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+      }
+
+      .decree-code {
+        font-size: 20px;
+        font-weight: 700;
+        color: #F7F4EC;
+        opacity: 0.9;
+      }
+
+      .decree-title {
+        font-size: 42px;
+        font-weight: 900;
+        color: #F7F4EC;
+        line-height: 1.25;
+        margin-bottom: 18px;
+        text-transform: uppercase;
+      }
+
+      .decree-signatories {
+        display: inline-block;
+        background: rgba(255, 106, 26, 0.18);
+        border-left: 5px solid #FF6A1A;
+        padding: 10px 18px;
+        font-size: 26px;
+        font-weight: 700;
+        color: #F7F4EC;
+        line-height: 1.35;
+      }
+
+      /* Overlay 3 (S13-2): Dấu mộc HIỆU LỰC: 20/5 */
+      #stamp-wrap {
+        position: absolute;
+        top: 700px;
+        left: 0;
+        width: 1080px;
+        display: flex;
+        justify-content: center;
+        z-index: 12;
+      }
+
+      .martial-stamp {
+        background: #141414;
+        border: 4px dashed #FF6A1A;
+        outline: 3px solid #FF6A1A;
+        outline-offset: 8px;
+        padding: 24px 44px;
+        border-radius: 6px;
+        text-align: center;
+        transform-origin: 50% 50%;
+        box-shadow: 0 16px 40px rgba(0, 0, 0, 0.7);
+      }
+
+      .stamp-sub {
+        font-size: 24px;
+        font-weight: 700;
+        letter-spacing: 4px;
+        color: #F7F4EC;
+        margin-bottom: 8px;
+      }
+
+      .stamp-main {
+        font-size: 58px;
+        font-weight: 900;
+        color: #FF6A1A;
+        letter-spacing: 3px;
+        text-transform: uppercase;
+        line-height: 1.15;
+      }
+
+      /* Overlay 4 (S13-2): Biểu tượng đồng hồ & Mốc thời gian */
+      #timeline-marker {
+        position: absolute;
+        top: 960px;
+        left: 0;
+        width: 1080px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 20px;
+        z-index: 11;
+      }
+
+      .clock-widget {
+        position: relative;
+        width: 88px;
+        height: 88px;
+        border-radius: 50%;
+        border: 4px solid #FF6A1A;
+        background: #141414;
+        box-shadow: 4px 4px 0px rgba(20, 20, 20, 0.9);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+
+      .clock-face {
+        position: relative;
+        width: 76px;
+        height: 76px;
+      }
+
+      .clock-tick {
+        position: absolute;
+        background: rgba(247, 244, 236, 0.4);
+      }
+
+      .tick-12 {
+        top: 2px;
+        left: 36px;
+        width: 4px;
+        height: 6px;
+      }
+
+      .tick-3 {
+        top: 36px;
+        right: 2px;
+        width: 6px;
+        height: 4px;
+      }
+
+      .tick-6 {
+        bottom: 2px;
+        left: 36px;
+        width: 4px;
+        height: 6px;
+      }
+
+      .tick-9 {
+        top: 36px;
+        left: 2px;
+        width: 6px;
+        height: 4px;
+      }
+
+      .clock-hand {
+        position: absolute;
+        border-radius: 2px;
+        transform-origin: 50% 100%;
+      }
+
+      .hand-hour {
+        top: 16px;
+        left: 36px;
+        width: 4px;
+        height: 22px;
+        background: #F7F4EC;
+      }
+
+      .hand-min {
+        top: 8px;
+        left: 36.5px;
+        width: 3px;
+        height: 30px;
+        background: #FF6A1A;
+      }
+
+      .clock-center-dot {
+        position: absolute;
+        top: 33px;
+        left: 33px;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: #FF6A1A;
+      }
+
+      .timeline-badge {
+        background: #141414;
+        border: 3px solid #141414;
+        border-radius: 8px;
+        padding: 12px 24px;
+        color: #F7F4EC;
+        box-shadow: 6px 6px 0px #FF6A1A;
+      }
+
+      .timeline-badge-title {
+        font-size: 18px;
+        font-weight: 700;
+        color: #FF6A1A;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+      }
+
+      .timeline-badge-val {
+        font-size: 32px;
+        font-weight: 900;
+        color: #F7F4EC;
+        letter-spacing: 1px;
+      }
+
+      /* Overlay 5 (S13-2): Punch Phrase NGÀY 20 THÁNG 5 */
+      #punch-phrase-wrap {
+        position: absolute;
+        bottom: 490px; /* Nằm an toàn trên vùng caption 440-460px */
+        left: 0;
+        width: 1080px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        z-index: 15;
+      }
+
+      .punch-box {
+        background: #141414;
+        border: 4px solid #FF6A1A;
+        border-radius: 16px;
+        padding: 20px 48px;
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.65), 8px 8px 0px #FF6A1A;
+        text-align: center;
+      }
+
+      .punch-phrase {
+        margin: 0;
+        font-size: 68px;
+        font-weight: 900;
+        color: #F7F4EC;
+        letter-spacing: 2px;
+        line-height: 1.25;
+        text-transform: uppercase;
+      }
+
+      .punch-underline {
+        width: 100%;
+        height: 8px;
+        background: #FF6A1A;
+        margin-top: 14px;
+        border-radius: 4px;
+        transform-origin: 0% 50%;
+      }
+
+      /* Chữ ký thị giác: Thanh cam đáy khung hình cố định */
+      #bottom-accent-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 1080px;
+        height: 14px;
+        background: #FF6A1A;
+        z-index: 100;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s13"
+      data-width="1080"
+      data-height="1920"
+      data-duration="8"
+    >
+      <!-- Nền giấy ngà + Lưới ô vuông 84px Vox DNA -->
+      <div class="bg-grid"></div>
+
+      <!-- Biến thể nền Spotlight -->
+      <div class="spotlight-vignette"></div>
+
+      <!-- Container ảnh tư liệu với camera zoom & pan -->
+      <div id="photo-stage" data-layout-allow-overflow="true">
+        <img
+          id="bg-photo"
+          src="assets/img-02-military-crackdown-martial-law.jpeg"
+          alt="Đoàn xe tăng và trực thăng trên nền báo cũ"
+        />
+        <div id="emergency-overlay"></div>
+      </div>
+
+      <!-- S13-1: Label QUYẾT ĐỊNH THƯỢNG TẦNG -->
+      <div id="top-label-wrap" data-layout-allow-overflow="true">
+        <div id="top-label" class="top-badge">
+          <span class="badge-dot"></span>
+          <span class="badge-text">QUYẾT ĐỊNH THƯỢNG TẦNG</span>
+        </div>
+      </div>
+
+      <!-- S13-1: Sắc lệnh mang chữ ký Đặng Tiểu Bình & Lý Bằng -->
+      <div id="decree-card-wrap" data-layout-allow-overflow="true">
+        <div id="decree-card" class="decree-card">
+          <div class="decree-header">
+            <span class="decree-category">BẮC KINH • SẮC LỆNH KHẨN</span>
+            <span class="decree-code">SỐ: 1989-TL</span>
+          </div>
+          <div class="decree-title">THIẾT QUÂN LUẬT</div>
+          <div class="decree-signatories">
+            Phê chuẩn: Đặng Tiểu Bình &amp; Lý Bằng
+          </div>
+        </div>
+      </div>
+
+      <!-- S13-2: Dấu mộc HIỆU LỰC: 20/5 đóng đè lên bản đồ phố xá -->
+      <div id="stamp-wrap" data-layout-allow-overflow="true">
+        <div id="martial-law-stamp" class="martial-stamp">
+          <div class="stamp-sub">LỆNH QUÂN SỰ ĐẶC BIỆT</div>
+          <div class="stamp-main">HIỆU LỰC: 20/5</div>
+        </div>
+      </div>
+
+      <!-- S13-2: Biểu tượng Đồng hồ + mốc thời gian kích hoạt -->
+      <div id="timeline-marker" data-layout-allow-overflow="true">
+        <div class="clock-widget" data-layout-allow-overflow="true">
+          <div class="clock-face">
+            <div class="clock-tick tick-12"></div>
+            <div class="clock-tick tick-3"></div>
+            <div class="clock-tick tick-6"></div>
+            <div class="clock-tick tick-9"></div>
+            <div id="clock-hour" class="clock-hand hand-hour"></div>
+            <div id="clock-min" class="clock-hand hand-min"></div>
+            <div class="clock-center-dot"></div>
+          </div>
+        </div>
+        <div id="timeline-box" class="timeline-badge">
+          <div class="timeline-badge-title">THỜI ĐIỂM KÍCH HOẠT</div>
+          <div class="timeline-badge-val">00:00 • 20.05.1989</div>
+        </div>
+      </div>
+
+      <!-- S13-2: Punch phrase NGÀY 20 THÁNG 5 -->
+      <div id="punch-phrase-wrap" data-layout-allow-overflow="true">
+        <div id="punch-phrase" class="punch-box">
+          <h1 class="punch-phrase">NGÀY 20 THÁNG 5</h1>
+          <div id="punch-underline" class="punch-underline"></div>
+        </div>
+      </div>
+
+      <!-- Thanh nhận diện thương hiệu cố định mép dưới -->
+      <div id="bottom-accent-bar"></div>
+    </div>
+
+    <script>
+      // Khởi tạo duy nhất 1 GSAP timeline PAUSED theo contract HyperFrames
+      const tl = gsap.timeline({ paused: true });
+
+      // Thiết lập trạng thái baseline ổn định từ t=0
+      tl.set("#photo-stage", { y: 0, opacity: 1 }, 0);
+
+      // ==========================================
+      // SHOT 1 (0.0s -> 4.0s): QUYẾT ĐỊNH THƯỢNG TẦNG
+      // ==========================================
+
+      // 1. Entrance "rise" toàn bộ photo stage
+      tl.fromTo(
+        "#photo-stage",
+        { y: 70, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.7, ease: "power3.out" },
+        0
+      );
+
+      // 2. Camera slow zoom 5% trong Shot 1
+      tl.fromTo(
+        "#bg-photo",
+        { scale: 1, x: 0 },
+        { scale: 1.05, x: 0, duration: 4.0, ease: "none" },
+        0
+      );
+
+      // 3. Label "QUYẾT ĐỊNH THƯỢNG TẦNG" (Xuất hiện tương ứng 112570ms = rel 1.07s, hold ~2s)
+      tl.fromTo(
+        "#top-label",
+        { scale: 0.85, opacity: 0, y: -20 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.45, ease: "power3.out" },
+        1.07
+      );
+      tl.to(
+        "#top-label",
+        { opacity: 0, y: -15, duration: 0.35, ease: "power2.in" },
+        3.2
+      );
+
+      // 4. Diagram "Sắc lệnh Đặng Tiểu Bình & Lý Bằng" (Xuất hiện 113460ms = rel 1.96s, hold ~2s)
+      tl.fromTo(
+        "#decree-card",
+        { y: 40, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.55, ease: "power3.out" },
+        1.96
+      );
+      tl.to(
+        "#decree-card",
+        { y: -25, opacity: 0, duration: 0.35, ease: "power2.in" },
+        3.9
+      );
+
+      // ==========================================
+      // SHOT 2 (4.0s -> 8.0s): THIẾT QUÂN LUẬT & NGÀY 20/5
+      // ==========================================
+
+      // 5. Chuyển cảnh sang Shot 2: Pan camera sang trái + zoom tiếp + đổi sắc đỏ cảnh báo
+      tl.to(
+        "#bg-photo",
+        { x: -36, scale: 1.12, duration: 4.0, ease: "power1.out" },
+        4.0
+      );
+      tl.fromTo(
+        "#emergency-overlay",
+        { opacity: 0 },
+        { opacity: 0.55, duration: 0.7, ease: "power2.out" },
+        4.0
+      );
+
+      // 6. Đóng dấu mộc đỏ cam 'HIỆU LỰC: 20/5' với cú đập impact mạnh
+      tl.fromTo(
+        "#martial-law-stamp",
+        { scale: 2.2, opacity: 0, rotation: 16 },
+        { scale: 1, opacity: 1, rotation: -6, duration: 0.45, ease: "power4.out" },
+        4.4
+      );
+
+      // Rung nhẹ khung ảnh khi đóng dấu sắc lệnh (dùng .to() để tránh xung đột baseline)
+      tl.to(
+        "#photo-stage",
+        { y: -6, duration: 0.06, yoyo: true, repeat: 1, ease: "power1.out" },
+        4.85
+      );
+
+      // 7. Icon Clock + Hộp mốc thời gian (Xuất hiện 116620ms = rel 5.12s)
+      tl.fromTo(
+        "#timeline-marker",
+        { y: 30, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.4, ease: "power3.out" },
+        5.12
+      );
+
+      // Xoay kim giờ & kim phút kích hoạt mốc thời gian 00:00
+      tl.fromTo(
+        "#clock-hour",
+        { rotation: 0 },
+        { rotation: 120, duration: 0.75, ease: "power3.out" },
+        5.3
+      );
+      tl.fromTo(
+        "#clock-min",
+        { rotation: 0 },
+        { rotation: 280, duration: 0.9, ease: "power3.out" },
+        5.3
+      );
+
+      // 8. Punch Phrase "NGÀY 20 THÁNG 5" (Xuất hiện 6.2s, giữ đủ >1.6s đến cuối scene 8.0s)
+      tl.fromTo(
+        "#punch-phrase",
+        { scale: 0.88, opacity: 0, y: 30 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.48, ease: "power3.out" },
+        6.2
+      );
+      // Gạch chân màu cam nở rộng nhấn mạnh điểm cao trào
+      tl.fromTo(
+        "#punch-underline",
+        { scaleX: 0 },
+        { scaleX: 1, duration: 0.4, ease: "power3.out" },
+        6.45
+      );
+
+      // Đăng ký timeline gốc duy nhất cho HyperFrames render engine
+      window.__timelines = window.__timelines || {};
+      window.__timelines["scene-s13"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

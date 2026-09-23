@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap">
+      <style>
+      *, *::before, *::after {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #E7E3D9;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      /* Root canvas 1080x1920 */
+      #root {
+        position: relative;
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+        background-color: #E7E3D9;
+      }
+
+      .clip {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+      }
+
+      /* Lưới ô vuông 84px theo Style DNA */
+      .grid-bg {
+        position: absolute;
+        inset: 0;
+        background-image:
+          linear-gradient(to right, rgba(20, 20, 20, 0.14) 1.5px, transparent 1.5px),
+          linear-gradient(to bottom, rgba(20, 20, 20, 0.14) 1.5px, transparent 1.5px);
+        background-size: 84px 84px;
+        pointer-events: none;
+      }
+
+      /* Lớp nhiễu hạt grain 18% opacity, multiply */
+      .grain-overlay {
+        position: absolute;
+        inset: 0;
+        opacity: 0.18;
+        mix-blend-mode: multiply;
+        pointer-events: none;
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+      }
+
+      /* Dải cam cố định đáy khung hình - Signature Vox DNA */
+      .bottom-brand-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 14px;
+        background-color: #FF6A1A;
+        z-index: 100;
+      }
+
+      /* ==================== HEADER ZONE (Y: 180px - 340px) ==================== */
+      .header-zone {
+        position: absolute;
+        top: 180px;
+        left: 60px;
+        right: 60px;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+
+      .meta-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        align-self: flex-start;
+        background-color: #141414;
+        color: #F7F4EC;
+        padding: 8px 18px;
+        border-radius: 6px;
+        font-weight: 700;
+        font-size: 22px;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+      }
+
+      .meta-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background-color: #FF6A1A;
+      }
+
+      .scene-title {
+        font-weight: 900;
+        font-size: 52px;
+        line-height: 1.25;
+        color: #141414;
+        margin: 0;
+        letter-spacing: -0.5px;
+      }
+
+      /* Title highlight badge: đảm bảo WCAG AA với màu chữ kem #F7F4EC trên nền #141414 (16.7:1) */
+      .title-highlight {
+        background-color: #141414;
+        color: #F7F4EC;
+        border: 2px solid #FF6A1A;
+        padding: 2px 14px;
+        border-radius: 8px;
+        display: inline-block;
+      }
+
+      /* ==================== DIAGRAM ZONE (Y: 380px - 1200px) ==================== */
+      .diagram-area {
+        position: absolute;
+        top: 380px;
+        left: 60px;
+        width: 960px;
+        height: 820px;
+      }
+
+      /* --- RAY 2: ĐƯỜNG RAY SỔ SÁCH (TRÊN CAO, ACTIVE) --- */
+      .ray-track-top {
+        position: absolute;
+        top: 20px;
+        left: 0;
+        width: 100%;
+        height: 440px;
+        border-radius: 16px;
+        background-color: #F5F0E4;
+        border: 2px dashed rgba(20, 20, 20, 0.4);
+        padding: 24px;
+      }
+
+      .track-header-row {
+        position: relative;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        height: 60px;
+      }
+
+      /* Overlay 1: RAY 2: SỔ SÁCH */
+      .badge-ray2 {
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        background-color: #141414;
+        color: #F7F4EC;
+        padding: 10px 24px;
+        border-radius: 8px;
+        font-weight: 900;
+        font-size: 28px;
+        letter-spacing: 1px;
+        border-left: 6px solid #FF6A1A;
+      }
+
+      /* Overlay 2: ICON DOC BADGE */
+      .doc-icon-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        background-color: #141414;
+        color: #F7F4EC;
+        border-radius: 8px;
+        padding: 8px 18px;
+        border: 2px solid #FF6A1A;
+        box-shadow: 4px 4px 0px rgba(20, 20, 20, 0.4);
+      }
+
+      .doc-icon-badge .icon-title {
+        font-weight: 900;
+        font-size: 22px;
+        color: #F7F4EC;
+        letter-spacing: 0.5px;
+      }
+
+      .doc-icon svg {
+        width: 34px;
+        height: 38px;
+        display: block;
+      }
+
+      /* Rail Line Graphic SVG */
+      .rail-line-svg {
+        position: absolute;
+        top: 104px;
+        left: 20px;
+        width: 920px;
+        height: 48px;
+      }
+
+      /* Document Conveyor sliding on Ray 2 */
+      .document-conveyor {
+        position: absolute;
+        top: 148px;
+        left: 20px;
+        right: 20px;
+        height: 250px;
+        display: flex;
+        align-items: center;
+        gap: 28px;
+      }
+
+      /* Thẻ hóa đơn VAT Công ty Đ: chia 2 nửa độc lập để tránh overlap text */
+      .invoice-card {
+        position: relative;
+        width: 630px;
+        height: 236px;
+        background-color: #FFFFFF;
+        border: 3px solid #141414;
+        border-radius: 12px;
+        padding: 18px 24px;
+        box-shadow: 8px 8px 0px rgba(20, 20, 20, 0.9);
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+
+      .invoice-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 2px solid #141414;
+        padding-bottom: 8px;
+      }
+
+      .invoice-title {
+        font-weight: 900;
+        font-size: 23px;
+        color: #141414;
+      }
+
+      /* Invoice ID: nền kem viền mực, chữ đen đạt WCAG AA 12:1 */
+      .invoice-id {
+        font-weight: 700;
+        font-size: 18px;
+        color: #141414;
+        background-color: #F5F0E4;
+        padding: 4px 10px;
+        border-radius: 4px;
+        border: 1px solid #141414;
+      }
+
+      /* Main body: Giới hạn width 340px ở nửa trái để nửa phải hoàn toàn cho con dấu */
+      .invoice-body-split {
+        position: relative;
+        display: flex;
+        height: 140px;
+        align-items: center;
+      }
+
+      .invoice-details {
+        width: 350px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .invoice-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 19px;
+        color: #141414;
+      }
+
+      .invoice-label {
+        font-weight: 700;
+        color: #141414;
+      }
+
+      .invoice-val {
+        font-weight: 900;
+        color: #141414;
+      }
+
+      .invoice-val.target-co {
+        background-color: #F5F0E4;
+        padding: 2px 8px;
+        border-radius: 4px;
+        border: 1px solid #141414;
+      }
+
+      /* Trạng thái hóa đơn: nền tối #141414, chữ kem #F7F4EC (16.7:1 WCAG AA) */
+      .invoice-status {
+        background-color: #141414;
+        color: #F7F4EC;
+        padding: 3px 8px;
+        border-radius: 4px;
+        font-weight: 900;
+        font-size: 17px;
+      }
+
+      /* Khu vực con dấu độc lập ở nửa phải hóa đơn */
+      .invoice-stamp-zone {
+        position: absolute;
+        right: 0;
+        top: 0;
+        bottom: 0;
+        width: 230px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      /* Con dấu xuất khống: nền tối viền cam, chữ kem #F7F4EC đạt 16.7:1 WCAG AA */
+      .fake-stamp {
+        background-color: #141414;
+        border: 3px solid #FF6A1A;
+        border-radius: 8px;
+        color: #F7F4EC;
+        font-weight: 900;
+        font-size: 20px;
+        padding: 8px 14px;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        box-shadow: 4px 4px 0px rgba(255, 106, 26, 0.4);
+        transform-origin: center center;
+        text-align: center;
+        line-height: 1.3;
+      }
+
+      .fake-stamp span {
+        display: block;
+        color: #F7F4EC;
+        opacity: 0.9;
+        font-size: 14px;
+        letter-spacing: 1px;
+      }
+
+      /* Thẻ hóa đơn phụ chạy phía sau */
+      .invoice-card-secondary {
+        width: 250px;
+        height: 236px;
+        background-color: #F5F0E4;
+        border: 2px dashed rgba(20, 20, 20, 0.45);
+        border-radius: 12px;
+        padding: 18px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .secondary-text {
+        font-weight: 700;
+        font-size: 20px;
+        color: #141414;
+        text-align: center;
+      }
+
+      /* Secondary sub: chữ mực #141414 trên nền kem đạt 12:1 WCAG AA */
+      .secondary-sub {
+        font-size: 16px;
+        font-weight: 900;
+        color: #141414;
+        text-align: center;
+        background-color: rgba(20, 20, 20, 0.08);
+        padding: 2px 8px;
+        border-radius: 4px;
+      }
+
+      /* --- DẢI NGĂN CÁCH KỸ THUẬT (SEPARATION BARRIER) --- */
+      .separation-barrier {
+        position: absolute;
+        top: 480px;
+        left: 0;
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 16px;
+      }
+
+      .barrier-line {
+        flex: 1;
+        height: 2px;
+        background: repeating-linear-gradient(to right, #FF6A1A 0, #FF6A1A 14px, transparent 14px, transparent 24px);
+      }
+
+      .barrier-tag {
+        background-color: #141414;
+        border: 2px solid #FF6A1A;
+        padding: 6px 18px;
+        border-radius: 20px;
+        color: #F7F4EC;
+        font-weight: 900;
+        font-size: 18px;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+      }
+
+      /* --- RAY 1: ĐƯỜNG RAY HÀNG HÓA THỰC TẾ (PHÍA DƯỚI) --- */
+      .ray-track-bottom {
+        position: absolute;
+        top: 540px;
+        left: 0;
+        width: 100%;
+        height: 240px;
+        border-radius: 16px;
+        background-color: #F5F0E4;
+        border: 2px solid rgba(20, 20, 20, 0.25);
+        padding: 24px;
+      }
+
+      .badge-ray1 {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        background-color: #141414;
+        color: #F7F4EC;
+        padding: 6px 18px;
+        border-radius: 6px;
+        font-weight: 700;
+        font-size: 22px;
+        letter-spacing: 0.5px;
+      }
+
+      .cargo-track-row {
+        margin-top: 24px;
+        display: flex;
+        align-items: center;
+        gap: 24px;
+      }
+
+      .cargo-box {
+        width: 170px;
+        height: 84px;
+        background-color: #FFFFFF;
+        border: 2px dashed #141414;
+        border-radius: 8px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        font-weight: 700;
+        color: #141414;
+      }
+
+      .cargo-box .sub-label {
+        font-size: 14px;
+        font-weight: 700;
+        color: #141414;
+        background-color: #E7E3D9;
+        padding: 1px 6px;
+        border-radius: 3px;
+        margin-top: 3px;
+      }
+
+      .cargo-alert {
+        font-weight: 900;
+        font-size: 20px;
+        color: #141414;
+        background-color: #FFFFFF;
+        padding: 10px 18px;
+        border: 2px solid #141414;
+        border-left: 6px solid #FF6A1A;
+        border-radius: 6px;
+        box-shadow: 4px 4px 0px rgba(20, 20, 20, 0.15);
+      }
+
+      /* ==================== PUNCH-PHRASE ZONE (Y: 1240px - 1420px) ==================== */
+      .punch-phrase-wrapper {
+        position: absolute;
+        top: 1240px;
+        left: 0;
+        width: 1080px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        pointer-events: none;
+      }
+
+      .punch-card {
+        background-color: #141414;
+        color: #F7F4EC;
+        padding: 24px 44px;
+        border-radius: 16px;
+        box-shadow: 10px 10px 0px #FF6A1A;
+        border: 2px solid #141414;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        transform-origin: center center;
+      }
+
+      .punch-text {
+        font-weight: 900;
+        font-size: 64px;
+        line-height: 1.15;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        color: #F7F4EC;
+        margin: 0;
+        text-align: center;
+      }
+
+      /* Punch subtext: chữ kem #F7F4EC trên nền tối #141414 (16.7:1 WCAG AA) */
+      .punch-subtext {
+        font-weight: 700;
+        font-size: 24px;
+        color: #F7F4EC;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        margin: 0;
+        text-align: center;
+        opacity: 0.95;
+      }
+    </style>
+
+    <!-- Root composition: 1080x1920 portrait, duration 6.06s (182 frames @ 30fps) -->
+    <div data-hf-id="hf-6nec" id="root" data-composition-id="scene-s18" data-width="1080" data-height="1920" data-duration="6.06">
+      <!-- Background & Visual Texture -->
+      <div data-hf-id="hf-q4u8" class="grid-bg"></div>
+      <div data-hf-id="hf-k01a" class="grain-overlay"></div>
+
+      <!-- Main Scene Clip -->
+      <section data-hf-id="hf-d1g9" id="scene-s18" class="clip" data-start="0" data-duration="6.06">
+        
+        <!-- HEADER ZONE -->
+        <header data-hf-id="hf-iqmy" class="header-zone" id="header-zone">
+          <div data-hf-id="hf-u1x4" class="meta-tag">
+            <span data-hf-id="hf-y6kw" class="meta-dot"></span>
+            <span data-hf-id="hf-b0g8">CƠ CHẾ TUỒN HÀNG // GIAI ĐOẠN 2</span>
+          </div>
+          <h1 data-hf-id="hf-rq4m" class="scene-title">
+            ĐƯỜNG RAY <span data-hf-id="hf-zfzs" class="title-highlight">SỔ SÁCH</span> KẾ TOÁN
+          </h1>
+        </header>
+
+        <!-- DIAGRAM ZONE -->
+        <main data-hf-id="hf-so4y" class="diagram-area" id="diagram-area">
+
+          <!-- RAY 2: TOP TRACK (ACTIVE PAPER TRAIL) -->
+          <div data-hf-id="hf-8tum" class="ray-track-top" id="ray-track-top">
+            <div data-hf-id="hf-91xq" class="track-header-row">
+              <!-- Overlay 1: RAY 2: SỔ SÁCH (atMs: 166850 -> 0.55s) -->
+              <div data-hf-id="hf-jjwa" class="badge-ray2" id="overlay-label-ray2">
+                <span data-hf-id="hf-9y0f">RAY 2: SỔ SÁCH</span>
+              </div>
+
+              <!-- Overlay 2: ICON DOC (atMs: 169580 -> 3.28s) nằm riêng ở góc phải -->
+              <div data-hf-id="hf-ghzr" class="doc-icon-badge" id="overlay-icon-doc">
+                <div data-hf-id="hf-mhv0" class="doc-icon">
+                  <svg data-hf-id="hf-hkqv" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path data-hf-id="hf-cl5y" class="doc-path" d="M 22 10 L 62 10 L 82 30 L 82 90 L 22 90 Z" stroke="#F7F4EC" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" />
+                    <path data-hf-id="hf-8zg5" class="doc-path" d="M 62 10 L 62 30 L 82 30" stroke="#FF6A1A" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" />
+                    <path data-hf-id="hf-ry8o" class="doc-path" d="M 34 46 L 70 46" stroke="#F7F4EC" stroke-width="5" stroke-linecap="round" />
+                    <path data-hf-id="hf-h63g" class="doc-path" d="M 34 62 L 70 62" stroke="#F7F4EC" stroke-width="5" stroke-linecap="round" />
+                    <path data-hf-id="hf-r93i" class="doc-path" d="M 34 76 L 56 76" stroke="#FF6A1A" stroke-width="5" stroke-linecap="round" />
+                  </svg>
+                </div>
+                <span data-hf-id="hf-jbiu" class="icon-title">CHỨNG TỪ KẾ TOÁN</span>
+              </div>
+            </div>
+
+            <!-- Graphic Rail SVG -->
+            <svg data-hf-id="hf-zg7z" class="rail-line-svg" viewBox="0 0 920 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <line data-hf-id="hf-ylsl" id="rail-line-1" x1="0" y1="14" x2="920" y2="14" stroke="#141414" stroke-width="4" />
+              <line data-hf-id="hf-qlxi" id="rail-line-2" x1="0" y1="34" x2="920" y2="34" stroke="#141414" stroke-width="4" />
+              <line data-hf-id="hf-y45f" id="rail-line-glow" x1="0" y1="24" x2="920" y2="24" stroke="#FF6A1A" stroke-width="3" stroke-dasharray="16 12" />
+              <g data-hf-id="hf-gicv" id="rail-ties" stroke="#141414" stroke-width="3" opacity="0.6">
+                <line data-hf-id="hf-4zre" x1="60" y1="6" x2="60" y2="42" />
+                <line data-hf-id="hf-8w7e" x1="140" y1="6" x2="140" y2="42" />
+                <line data-hf-id="hf-h0qw" x1="220" y1="6" x2="220" y2="42" />
+                <line data-hf-id="hf-5axm" x1="300" y1="6" x2="300" y2="42" />
+                <line data-hf-id="hf-bodm" x1="380" y1="6" x2="380" y2="42" />
+                <line data-hf-id="hf-puzo" x1="460" y1="6" x2="460" y2="42" />
+                <line data-hf-id="hf-kpjm" x1="540" y1="6" x2="540" y2="42" />
+                <line data-hf-id="hf-0l0w" x1="620" y1="6" x2="620" y2="42" />
+                <line data-hf-id="hf-nx6a" x1="700" y1="6" x2="700" y2="42" />
+                <line data-hf-id="hf-yyki" x1="780" y1="6" x2="780" y2="42" />
+                <line data-hf-id="hf-oyac" x1="860" y1="6" x2="860" y2="42" />
+              </g>
+            </svg>
+
+            <!-- Conveyor Documents -->
+            <div data-hf-id="hf-cgn1" class="document-conveyor" id="doc-conveyor">
+              <!-- Primary Invoice Card (Công ty Đ) -->
+              <div data-hf-id="hf-gnl7" class="invoice-card" id="main-invoice">
+                <div data-hf-id="hf-k8m2" class="invoice-card-header">
+                  <span data-hf-id="hf-fn38" class="invoice-title">HÓA ĐƠN GIÁ TRỊ GIA TĂNG</span>
+                  <span data-hf-id="hf-xs57" class="invoice-id">SỐ: 0048291</span>
+                </div>
+                
+                <div data-hf-id="hf-74yt" class="invoice-body-split">
+                  <!-- Cột bên trái: Chi tiết văn bản -->
+                  <div data-hf-id="hf-dn6w" class="invoice-details">
+                    <div data-hf-id="hf-rlre" class="invoice-row">
+                      <span data-hf-id="hf-x690" class="invoice-label">BÊN BÁN:</span>
+                      <span data-hf-id="hf-sa5x" class="invoice-val target-co">CÔNG TY Đ</span>
+                    </div>
+                    <div data-hf-id="hf-nz5a" class="invoice-row">
+                      <span data-hf-id="hf-vzef" class="invoice-label">MẶT HÀNG:</span>
+                      <span data-hf-id="hf-16x4" class="invoice-val">LÔ PHỤ TÙNG</span>
+                    </div>
+                    <div data-hf-id="hf-odgb" class="invoice-row">
+                      <span data-hf-id="hf-qkpo" class="invoice-label">TRẠNG THÁI:</span>
+                      <span data-hf-id="hf-n3nu" class="invoice-val invoice-status">ĐÃ XUẤT HÓA ĐƠN</span>
+                    </div>
+                  </div>
+
+                  <!-- Cột bên phải: Con dấu độc lập, không giao nhau với chữ -->
+                  <div data-hf-id="hf-weam" class="invoice-stamp-zone">
+                    <div data-hf-id="hf-hm5f" class="fake-stamp" id="fake-stamp" data-layout-allow-overlap="true">
+                      XUẤT KHỐNG
+                      <span data-hf-id="hf-bojz">CHỨNG TỪ GIẢ</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Secondary invoice card trailing -->
+              <div data-hf-id="hf-5ao1" class="invoice-card-secondary" id="secondary-invoice">
+                <span data-hf-id="hf-gggf" class="secondary-text">CHỨNG TỪ KÈM THEO</span>
+                <span data-hf-id="hf-laj8" class="secondary-sub">PHIẾU XUẤT KHO #Đ-92</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- SEPARATION BARRIER (Ranh giới ngăn cách 2 đường ray) -->
+          <div data-hf-id="hf-qcua" class="separation-barrier" id="separation-barrier">
+            <div data-hf-id="hf-8qqo" class="barrier-line"></div>
+            <div data-hf-id="hf-a333" class="barrier-tag">TÁCH BIỆT HOÀN TOÀN KHỎI KHO</div>
+            <div data-hf-id="hf-iq1k" class="barrier-line"></div>
+          </div>
+
+          <!-- RAY 1: BOTTOM TRACK (REAL PHYSICAL GOODS) -->
+          <div data-hf-id="hf-jg6q" class="ray-track-bottom" id="ray-track-bottom">
+            <div data-hf-id="hf-ltsv" class="badge-ray1">
+              <span data-hf-id="hf-dcki">RAY 1: HÀNG HÓA THỰC TẾ (BỊ CÔ LẬP)</span>
+            </div>
+            <div data-hf-id="hf-jpih" class="cargo-track-row">
+              <div data-hf-id="hf-eofw" class="cargo-box">
+                <span data-hf-id="hf-dn62">KIỆN HÀNG #01</span>
+                <span data-hf-id="hf-x0es" class="sub-label">KHÔNG HÓA ĐƠN</span>
+              </div>
+              <div data-hf-id="hf-vctw" class="cargo-box">
+                <span data-hf-id="hf-e1h3">KIỆN HÀNG #02</span>
+                <span data-hf-id="hf-rvmf" class="sub-label">TUỒN TRỰC TIẾP</span>
+              </div>
+              <div data-hf-id="hf-viss" class="cargo-alert">
+                ⚠ HÀNG ĐI ĐƯỜNG KHÁC, KHÔNG QUA CÔNG TY Đ
+              </div>
+            </div>
+          </div>
+
+        </main>
+
+        <!-- PUNCH-PHRASE ZONE: Overlay 3: GIẢ LẬP MUA BÁN (atMs: 170680 -> 4.38s) -->
+        <div data-hf-id="hf-coas" class="punch-phrase-wrapper">
+          <div data-hf-id="hf-nzw6" class="punch-card" id="punch-card">
+            <h2 data-hf-id="hf-w43f" class="punch-text">GIẢ LẬP MUA BÁN</h2>
+            <p data-hf-id="hf-22qf" class="punch-subtext">XUẤT HÓA ĐƠN NHƯ THỂ HÀNG ĐƯỢC MUA TỪ Đ</p>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- Signature Vox Orange Bar -->
+      <div data-hf-id="hf-8g79" class="bottom-brand-bar"></div>
+    </div>
+
+    <!-- GSAP Master Timeline Animation Script -->
+    <script>
+      // Khởi tạo timeline paused bắt buộc theo chuẩn HyperFrames
+      const tl = gsap.timeline({ paused: true });
+
+      // Chuẩn bị đường nét tự vẽ cho icon doc
+      const docPaths = document.querySelectorAll(".doc-path");
+      docPaths.forEach(function (path) {
+        const len = path.getTotalLength();
+        path.style.strokeDasharray = len;
+        path.style.strokeDashoffset = len;
+      });
+
+      // 1. GIAI ĐOẠN 0.0s - 0.5s: Setup nền tảng kỹ thuật & Header
+      tl.fromTo(
+        "#header-zone",
+        { y: -24, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.5, ease: "power3.out" },
+        0.1
+      );
+
+      tl.fromTo(
+        "#ray-track-bottom",
+        { opacity: 0, y: 30 },
+        { opacity: 1, y: 0, duration: 0.6, ease: "power2.out" },
+        0.2
+      );
+
+      tl.fromTo(
+        "#separation-barrier",
+        { opacity: 0, scaleX: 0.8 },
+        { opacity: 1, scaleX: 1, duration: 0.5, ease: "power2.out" },
+        0.3
+      );
+
+      // 2. GIAI ĐOẠN 0.4s - 0.9s: ĐƯỜNG RAY 2 MỞ RỘNG (transitionIn: grow)
+      tl.fromTo(
+        "#ray-track-top",
+        { scaleX: 0.88, opacity: 0, transformOrigin: "left center" },
+        { scaleX: 1, opacity: 1, duration: 0.6, ease: "power3.out" },
+        0.35
+      );
+
+      tl.fromTo(
+        "#rail-line-1",
+        { scaleX: 0, transformOrigin: "left center" },
+        { scaleX: 1, duration: 0.6, ease: "power3.out" },
+        0.45
+      );
+
+      tl.fromTo(
+        "#rail-line-2",
+        { scaleX: 0, transformOrigin: "left center" },
+        { scaleX: 1, duration: 0.6, ease: "power3.out" },
+        0.50
+      );
+
+      // 3. OVERLAY 1: LABEL "RAY 2: SỔ SÁCH" (atMs: 166850 -> 0.55s)
+      tl.fromTo(
+        "#overlay-label-ray2",
+        { scale: 0.6, opacity: 0, y: -10 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.45, ease: "power3.out" },
+        0.55
+      );
+
+      // 4. GIAI ĐOẠN 0.8s - 2.0s: XẤP HÓA ĐƠN CỦA CÔNG TY Đ LƯỚT VÀO ĐƯỜNG RAY
+      tl.fromTo(
+        "#main-invoice",
+        { x: -160, opacity: 0, rotation: -2 },
+        { x: 0, opacity: 1, rotation: 0, duration: 0.7, ease: "power3.out" },
+        0.85
+      );
+
+      tl.fromTo(
+        "#secondary-invoice",
+        { x: -100, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.6, ease: "power3.out" },
+        1.1
+      );
+
+      // Con dấu dập mạnh vào góc phải của hóa đơn
+      tl.fromTo(
+        "#fake-stamp",
+        { scale: 2.2, opacity: 0, rotation: -22 },
+        { scale: 1, opacity: 1, rotation: -7, duration: 0.35, ease: "power4.out" },
+        1.75
+      );
+
+      // Camera motion: pan-right nhẹ xuyên qua đường ray
+      tl.to(
+        "#doc-conveyor",
+        { x: 26, duration: 3.5, ease: "sine.inOut" },
+        1.9
+      );
+
+      // 5. OVERLAY 2: ICON "DOC" TỰ VẼ SVG (atMs: 169580 -> 3.28s)
+      tl.fromTo(
+        "#overlay-icon-doc",
+        { scale: 0, opacity: 0, y: 12 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.4, ease: "power3.out" },
+        3.28
+      );
+
+      docPaths.forEach(function (path, i) {
+        tl.to(
+          path,
+          { strokeDashoffset: 0, duration: 0.45, ease: "power2.out" },
+          3.38 + i * 0.08
+        );
+      });
+
+      // 6. OVERLAY 3: PUNCH-PHRASE "GIẢ LẬP MUA BÁN" (atMs: 170680 -> 4.38s)
+      tl.fromTo(
+        "#punch-card",
+        { scale: 0.75, opacity: 0, y: 35 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.48, ease: "power3.out" },
+        4.38
+      );
+
+      // Đăng ký timeline duy nhất trên window.__timelines["scene-s18"]
+      window.__timelines = window.__timelines || {};
+      window.__timelines["scene-s18"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

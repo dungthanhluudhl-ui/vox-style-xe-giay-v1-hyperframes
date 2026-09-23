@@ -1,0 +1,632 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+        background: #0b0f14;
+        font-family: "Be Vietnam Pro", sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      #root {
+        position: relative;
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+        background: #e7e3d9;
+      }
+
+      /* Background Chart Lines & Subtle Grid */
+      .chart-background {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        z-index: 1;
+      }
+
+      .chart-grid-pattern {
+        position: absolute;
+        inset: 0;
+        background-image:
+          linear-gradient(to right, rgba(20, 20, 20, 0.12) 1px, transparent 1px),
+          linear-gradient(to bottom, rgba(20, 20, 20, 0.12) 1px, transparent 1px);
+        background-size: 84px 84px;
+      }
+
+      .chart-rule {
+        position: absolute;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: rgba(20, 20, 20, 0.28);
+      }
+
+      .chart-rule::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: -6px;
+        width: 18px;
+        height: 14px;
+        background: #ff6a1a;
+      }
+
+      .chart-rule-20 { top: 384px; }
+      .chart-rule-40 { top: 768px; }
+      .chart-rule-60 { top: 1152px; }
+      .chart-rule-80 { top: 1536px; }
+
+      /* Video Viewport & Decoupled Camera Pan / Zoom Rigs */
+      .video-viewport {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        z-index: 2;
+      }
+
+      .camera-pan {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        will-change: transform;
+      }
+
+      .camera-zoom {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        transform-origin: 50% 50%;
+        will-change: transform;
+      }
+
+      .s14-video {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+        filter: contrast(1.08) saturate(0.92);
+      }
+
+      /* Dark Vignette Overlay for Shot 2 */
+      .spotlight-vignette {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background: radial-gradient(circle at 50% 48%, rgba(20, 20, 20, 0.12) 30%, rgba(10, 10, 10, 0.8) 100%);
+        opacity: 0.12;
+        z-index: 3;
+        mix-blend-mode: multiply;
+      }
+
+      /* Flow Graphics Layer: 23 Military Convergence Arrows */
+      .flow-layer {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        z-index: 4;
+      }
+
+      .flow-center-target {
+        position: absolute;
+        left: 540px;
+        top: 960px;
+        width: 140px;
+        height: 140px;
+        margin-left: -70px;
+        margin-top: -70px;
+        border: 2px dashed rgba(255, 106, 26, 0.85);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(20, 20, 20, 0.45);
+      }
+
+      .flow-center-dot {
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: #ff6a1a;
+        box-shadow: 0 0 12px #ff6a1a;
+      }
+
+      /* Overlays Layer */
+      .overlays-layer {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        z-index: 5;
+      }
+
+      /* Punch Phrase 1 */
+      .punch-badge-1 {
+        position: absolute;
+        top: 220px;
+        left: 60px;
+        right: 60px;
+        background: #141414;
+        border: 3px solid #ff6a1a;
+        border-radius: 6px;
+        padding: 24px 32px;
+        box-shadow: 0 16px 36px rgba(0, 0, 0, 0.45);
+        opacity: 0;
+      }
+
+      .punch-tag-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 10px;
+      }
+
+      .punch-tag {
+        background: #ff6a1a;
+        color: #141414;
+        font-weight: 900;
+        font-size: 20px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        padding: 4px 12px;
+        border-radius: 3px;
+      }
+
+      .punch-tag-sub {
+        color: #f7f4ec;
+        font-size: 20px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        opacity: 0.9;
+      }
+
+      .punch-title-1 {
+        color: #f7f4ec;
+        font-size: 60px;
+        font-weight: 900;
+        line-height: 1.22;
+        letter-spacing: -0.01em;
+        text-transform: uppercase;
+      }
+
+      /* Warning Badge */
+      .warning-badge {
+        position: absolute;
+        top: 450px;
+        left: 60px;
+        background: #141414;
+        border: 2px solid #ff6a1a;
+        border-radius: 8px;
+        padding: 16px 24px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        box-shadow: 0 12px 28px rgba(0, 0, 0, 0.4);
+        opacity: 0;
+      }
+
+      .warning-icon-svg {
+        width: 44px;
+        height: 44px;
+        flex-shrink: 0;
+      }
+
+      .warning-text-wrap {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .warning-title {
+        color: #ff6a1a;
+        font-size: 24px;
+        font-weight: 900;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+      }
+
+      .warning-desc {
+        color: #f7f4ec;
+        font-size: 22px;
+        font-weight: 700;
+      }
+
+      /* Label 1: Xe Tăng & Trực Thăng */
+      .label-badge-1 {
+        position: absolute;
+        top: 1120px;
+        left: 60px;
+        background: rgba(20, 20, 20, 0.94);
+        border-left: 6px solid #ff6a1a;
+        border-radius: 0 6px 6px 0;
+        padding: 18px 28px;
+        box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
+        opacity: 0;
+      }
+
+      .label-text-1 {
+        color: #f7f4ec;
+        font-size: 34px;
+        font-weight: 900;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+
+      /* Punch Phrase 2: Tiến Vào Bắc Kinh */
+      .punch-badge-2 {
+        position: absolute;
+        top: 240px;
+        left: 60px;
+        right: 60px;
+        background: #141414;
+        border: 4px solid #ff6a1a;
+        border-radius: 8px;
+        padding: 28px 36px;
+        box-shadow: 0 20px 48px rgba(0, 0, 0, 0.5);
+        opacity: 0;
+      }
+
+      .punch-tag-2 {
+        display: inline-block;
+        background: #ff6a1a;
+        color: #141414;
+        font-size: 20px;
+        font-weight: 900;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        padding: 4px 14px;
+        border-radius: 4px;
+        margin-bottom: 12px;
+      }
+
+      .punch-title-2 {
+        color: #f7f4ec;
+        font-size: 68px;
+        font-weight: 900;
+        line-height: 1.2;
+        letter-spacing: -0.01em;
+        text-transform: uppercase;
+      }
+
+      .punch-title-2 span {
+        color: #ff6a1a;
+      }
+
+      /* Diagram 2: Vành Đai Thiết Quân Luật */
+      .diagram-wrap {
+        position: absolute;
+        top: 940px;
+        left: 60px;
+        right: 60px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        opacity: 0;
+      }
+
+      .diagram-badge {
+        background: rgba(20, 20, 20, 0.94);
+        border: 2px solid rgba(255, 106, 26, 0.9);
+        border-radius: 8px;
+        padding: 20px 28px;
+        max-width: 920px;
+        text-align: center;
+        box-shadow: 0 14px 32px rgba(0, 0, 0, 0.45);
+      }
+
+      .diagram-title {
+        color: #ff6a1a;
+        font-size: 22px;
+        font-weight: 900;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        margin-bottom: 6px;
+      }
+
+      .diagram-desc {
+        color: #f7f4ec;
+        font-size: 26px;
+        font-weight: 700;
+        line-height: 1.34;
+      }
+
+      /* Signature Vox Brand Bar at canvas bottom */
+      .bottom-orange-bar {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 10px;
+        background: #ff6a1a;
+        z-index: 99;
+        pointer-events: none;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s14"
+      data-start="0"
+      data-duration="10"
+      data-width="1080"
+      data-height="1920"
+      data-layout-allow-overflow="true"
+    >
+      <!-- Background Chart Lines & 84px Grid -->
+      <div class="chart-background" data-layout-allow-overflow="true">
+        <div class="chart-grid-pattern"></div>
+        <div class="chart-rule chart-rule-20"></div>
+        <div class="chart-rule chart-rule-40"></div>
+        <div class="chart-rule chart-rule-60"></div>
+        <div class="chart-rule chart-rule-80"></div>
+      </div>
+
+      <!-- Video Viewport: Timed video owned by HyperFrames with separate pan/zoom camera containers -->
+      <div id="video-viewport" class="video-viewport" data-layout-allow-overflow="true">
+        <div id="camera-pan" class="camera-pan" data-layout-allow-overflow="true">
+          <div id="camera-zoom" class="camera-zoom" data-layout-allow-overflow="true">
+            <video
+              id="s14-video"
+              class="s14-video"
+              data-start="0"
+              data-duration="10"
+              src="assets/vid-01-martial-law-military-advance.mp4"
+              muted
+              playsinline
+              preload="auto"
+            ></video>
+          </div>
+        </div>
+        <!-- Spotlight Vignette for Shot 2 mood -->
+        <div id="spotlight-vignette" class="spotlight-vignette"></div>
+      </div>
+
+      <!-- Flow Layer: Tactical military convergence (23 arrows representing 23 divisions) -->
+      <div id="flow-layer" class="flow-layer" data-layout-allow-overflow="true">
+        <svg id="arrows-svg" viewBox="0 0 1080 1920" width="1080" height="1920" style="position: absolute; inset: 0;">
+          <defs>
+            <marker id="arrow-head" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M 0 1 L 10 5 L 0 9 z" fill="#ff6a1a" />
+            </marker>
+          </defs>
+          <g id="arrows-group" opacity="0">
+            <!-- Top Quadrant (5 arrows) -->
+            <line x1="200" y1="140" x2="460" y2="800" stroke="#ff6a1a" stroke-width="5" stroke-dasharray="14 10" marker-end="url(#arrow-head)" />
+            <line x1="360" y1="100" x2="490" y2="810" stroke="#ff6a1a" stroke-width="6" stroke-dasharray="14 10" marker-end="url(#arrow-head)" />
+            <line x1="540" y1="80" x2="540" y2="800" stroke="#ff6a1a" stroke-width="8" stroke-dasharray="16 10" marker-end="url(#arrow-head)" />
+            <line x1="720" y1="100" x2="590" y2="810" stroke="#ff6a1a" stroke-width="6" stroke-dasharray="14 10" marker-end="url(#arrow-head)" />
+            <line x1="880" y1="140" x2="620" y2="800" stroke="#ff6a1a" stroke-width="5" stroke-dasharray="14 10" marker-end="url(#arrow-head)" />
+            <!-- Left Quadrant (6 arrows) -->
+            <line x1="60" y1="480" x2="420" y2="870" stroke="#ff6a1a" stroke-width="5" stroke-dasharray="14 10" marker-end="url(#arrow-head)" />
+            <line x1="50" y1="660" x2="410" y2="910" stroke="#ff6a1a" stroke-width="6" stroke-dasharray="14 10" marker-end="url(#arrow-head)" />
+            <line x1="40" y1="840" x2="410" y2="940" stroke="#ff6a1a" stroke-width="7" stroke-dasharray="15 10" marker-end="url(#arrow-head)" />
+            <line x1="40" y1="1020" x2="410" y2="980" stroke="#ff6a1a" stroke-width="7" stroke-dasharray="15 10" marker-end="url(#arrow-head)" />
+            <line x1="50" y1="1200" x2="410" y2="1010" stroke="#ff6a1a" stroke-width="6" stroke-dasharray="14 10" marker-end="url(#arrow-head)" />
+            <line x1="60" y1="1380" x2="420" y2="1050" stroke="#ff6a1a" stroke-width="5" stroke-dasharray="14 10" marker-end="url(#arrow-head)" />
+            <!-- Right Quadrant (6 arrows) -->
+            <line x1="1020" y1="480" x2="660" y2="870" stroke="#ff6a1a" stroke-width="5" stroke-dasharray="14 10" marker-end="url(#arrow-head)" />
+            <line x1="1030" y1="660" x2="670" y2="910" stroke="#ff6a1a" stroke-width="6" stroke-dasharray="14 10" marker-end="url(#arrow-head)" />
+            <line x1="1040" y1="840" x2="670" y2="940" stroke="#ff6a1a" stroke-width="7" stroke-dasharray="15 10" marker-end="url(#arrow-head)" />
+            <line x1="1040" y1="1020" x2="670" y2="980" stroke="#ff6a1a" stroke-width="7" stroke-dasharray="15 10" marker-end="url(#arrow-head)" />
+            <line x1="1030" y1="1200" x2="670" y2="1010" stroke="#ff6a1a" stroke-width="6" stroke-dasharray="14 10" marker-end="url(#arrow-head)" />
+            <line x1="1020" y1="1380" x2="660" y2="1050" stroke="#ff6a1a" stroke-width="5" stroke-dasharray="14 10" marker-end="url(#arrow-head)" />
+            <!-- Bottom Quadrant (6 arrows) -->
+            <line x1="180" y1="1720" x2="450" y2="1120" stroke="#ff6a1a" stroke-width="5" stroke-dasharray="14 10" marker-end="url(#arrow-head)" />
+            <line x1="340" y1="1780" x2="480" y2="1130" stroke="#ff6a1a" stroke-width="6" stroke-dasharray="14 10" marker-end="url(#arrow-head)" />
+            <line x1="480" y1="1820" x2="520" y2="1140" stroke="#ff6a1a" stroke-width="8" stroke-dasharray="16 10" marker-end="url(#arrow-head)" />
+            <line x1="600" y1="1820" x2="560" y2="1140" stroke="#ff6a1a" stroke-width="8" stroke-dasharray="16 10" marker-end="url(#arrow-head)" />
+            <line x1="740" y1="1780" x2="600" y2="1130" stroke="#ff6a1a" stroke-width="6" stroke-dasharray="14 10" marker-end="url(#arrow-head)" />
+            <line x1="900" y1="1720" x2="630" y2="1120" stroke="#ff6a1a" stroke-width="5" stroke-dasharray="14 10" marker-end="url(#arrow-head)" />
+          </g>
+
+          <!-- Cordon ring for diagram in Shot 2 -->
+          <circle
+            id="cordon-ring"
+            cx="540"
+            cy="960"
+            r="180"
+            fill="none"
+            stroke="#ff6a1a"
+            stroke-width="5"
+            stroke-dasharray="16 12"
+            opacity="0"
+          />
+        </svg>
+        <div id="center-target" class="flow-center-target" style="opacity: 0;">
+          <div class="flow-center-dot"></div>
+        </div>
+      </div>
+
+      <!-- Overlays Layer -->
+      <div class="overlays-layer" data-layout-allow-overflow="true">
+        <!-- Shot 1: Punch Phrase 1 (0s - 2.4s) -->
+        <div id="punch-1" class="punch-badge-1">
+          <div class="punch-tag-row">
+            <span class="punch-tag">Binh Lực</span>
+            <span class="punch-tag-sub">Lệnh Khẩn Cấp Số 1</span>
+          </div>
+          <h1 class="punch-title-1">23 Sư Đoàn Vũ Trang</h1>
+        </div>
+
+        <!-- Shot 1: Warning Icon (1.28s - 3.48s) -->
+        <div id="warning-badge" class="warning-badge">
+          <svg class="warning-icon-svg" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 2L1 21H23L12 2Z" stroke="#ff6a1a" stroke-width="2.5" stroke-linejoin="round" fill="rgba(255, 106, 26, 0.15)" />
+            <line x1="12" y1="9" x2="12" y2="14" stroke="#ff6a1a" stroke-width="2.5" stroke-linecap="round" />
+            <circle cx="12" cy="17.5" r="1.5" fill="#ff6a1a" />
+          </svg>
+          <div class="warning-text-wrap">
+            <span class="warning-title">Báo Động Cấp 1</span>
+            <span class="warning-desc">Phong Tỏa Toàn Diện</span>
+          </div>
+        </div>
+
+        <!-- Shot 1: Label (4.54s - 6.04s) -->
+        <div id="label-1" class="label-badge-1">
+          <div class="label-text-1">Xe Tăng & Trực Thăng</div>
+        </div>
+
+        <!-- Shot 2: Punch Phrase 2 (7.28s - 10s) -->
+        <div id="punch-2" class="punch-badge-2">
+          <span class="punch-tag-2">Mục Tiêu Tối Hậu</span>
+          <h1 class="punch-title-2">Tiến Vào <span>Bắc Kinh</span></h1>
+        </div>
+
+        <!-- Shot 2: Diagram (8.03s - 10s) -->
+        <div id="diagram-wrap" class="diagram-wrap">
+          <div class="diagram-badge">
+            <div class="diagram-title">Vành Đai Thiết Quân Luật</div>
+            <div class="diagram-desc">Phong tỏa trung tâm quảng trường Thiên An Môn</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Fixed Vox Signature Bottom Orange Bar -->
+      <div class="bottom-orange-bar"></div>
+    </div>
+
+    <script>
+      // Single paused GSAP timeline registered to window.__timelines["scene-s14"]
+      const tl = gsap.timeline({ paused: true });
+
+      // SHOT 1 (0.0s - 5.56s):
+      // TransitionIn: Zoom-through entrance into steady zoom-in
+      // Non-overlapping tweens on #camera-zoom (zoom rig)
+      tl.fromTo(
+        "#camera-zoom",
+        { scale: 1.28 },
+        { scale: 1.08, duration: 1.18, ease: "power3.out" },
+        0
+      );
+      tl.to(
+        "#camera-zoom",
+        { scale: 1.18, duration: 4.34, ease: "none" },
+        1.20
+      );
+
+      // Flow convergence arrows (0.4s - 2.5s)
+      tl.fromTo(
+        "#arrows-group",
+        { opacity: 0, scale: 1.06 },
+        { opacity: 0.9, scale: 1, duration: 0.58, ease: "power2.out" },
+        0.4
+      );
+      tl.fromTo(
+        "#center-target",
+        { opacity: 0, scale: 0.5 },
+        { opacity: 1, scale: 1, duration: 0.48, ease: "back.out(1.5)" },
+        0.6
+      );
+      tl.to(
+        "#arrows-group",
+        { opacity: 0, duration: 0.42, ease: "power2.in" },
+        2.5
+      );
+      tl.to(
+        "#center-target",
+        { opacity: 0, scale: 0.8, duration: 0.35, ease: "power2.in" },
+        2.6
+      );
+
+      // Overlay 1: Punch Phrase 1 (0.1s - 2.4s)
+      tl.fromTo(
+        "#punch-1",
+        { opacity: 0, y: 32 },
+        { opacity: 1, y: 0, duration: 0.45, ease: "power3.out" },
+        0.1
+      );
+      tl.to(
+        "#punch-1",
+        { opacity: 0, y: -20, duration: 0.28, ease: "power2.in" },
+        2.12
+      );
+
+      // Overlay 2: Warning Icon (1.28s - 3.48s)
+      tl.fromTo(
+        "#warning-badge",
+        { opacity: 0, scale: 0.6, y: 16 },
+        { opacity: 1, scale: 1, y: 0, duration: 0.42, ease: "power3.out" },
+        1.28
+      );
+      tl.to(
+        "#warning-badge",
+        { opacity: 0, scale: 0.85, duration: 0.28, ease: "power2.in" },
+        3.20
+      );
+
+      // Overlay 3: Label 1 (4.54s - 6.04s)
+      tl.fromTo(
+        "#label-1",
+        { opacity: 0, x: -36 },
+        { opacity: 1, x: 0, duration: 0.38, ease: "power3.out" },
+        4.54
+      );
+      tl.to(
+        "#label-1",
+        { opacity: 0, x: -16, duration: 0.25, ease: "power2.in" },
+        5.79
+      );
+
+      // SHOT 2 (5.56s - 10.0s):
+      // Camera Motion: Pan rig animates x, zoom rig gently eases
+      tl.to(
+        "#camera-pan",
+        { x: -48, duration: 4.40, ease: "sine.out" },
+        5.56
+      );
+      tl.to(
+        "#camera-zoom",
+        { scale: 1.15, duration: 4.40, ease: "sine.out" },
+        5.56
+      );
+      tl.to(
+        "#spotlight-vignette",
+        { opacity: 0.65, duration: 0.85, ease: "power2.out" },
+        5.56
+      );
+
+      // Overlay 4: Punch Phrase 2 (7.28s - 10.0s)
+      tl.fromTo(
+        "#punch-2",
+        { opacity: 0, y: 28, scale: 0.96 },
+        { opacity: 1, y: 0, scale: 1, duration: 0.52, ease: "power3.out" },
+        7.28
+      );
+
+      // Overlay 5: Diagram & Cordon Ring (8.03s - 10.0s)
+      tl.fromTo(
+        "#cordon-ring",
+        { opacity: 0, scale: 0.6 },
+        { opacity: 0.85, scale: 1, duration: 0.68, ease: "power2.out" },
+        8.03
+      );
+      tl.fromTo(
+        "#diagram-wrap",
+        { opacity: 0, y: 22 },
+        { opacity: 1, y: 0, duration: 0.44, ease: "power3.out" },
+        8.15
+      );
+
+      // Register timeline strictly to window.__timelines["scene-s14"]
+      window.__timelines["scene-s14"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

@@ -1,0 +1,557 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap"
+    />
+      <style>
+      * {
+        box-sizing: border-box;
+      }
+      body,
+      html {
+        margin: 0;
+        padding: 0;
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+        background-color: #e7e3d9;
+        font-family: "Be Vietnam Pro", sans-serif;
+        color: #141414;
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: #e7e3d9;
+      }
+      .clip {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+
+      /* Background Grid (84px square cells, Vox style) */
+      .bg-grid {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        background-image:
+          linear-gradient(to right, rgba(20, 20, 20, 0.2) 1.5px, transparent 1.5px),
+          linear-gradient(to bottom, rgba(20, 20, 20, 0.2) 1.5px, transparent 1.5px);
+        background-size: 84px 84px;
+        pointer-events: none;
+        z-index: 1;
+      }
+
+      /* Subtle paper grain overlay */
+      .bg-grain {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        opacity: 0.18;
+        mix-blend-mode: multiply;
+        pointer-events: none;
+        z-index: 2;
+        background-image: radial-gradient(rgba(20, 20, 20, 0.45) 1px, transparent 0);
+        background-size: 4px 4px;
+      }
+
+      /* Signature Orange bottom bar (pinned to bottom edge) */
+      .signature-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 12px;
+        background-color: #ff6a1a;
+        z-index: 100;
+      }
+
+      /* Scene Content Layer */
+      .scene-content {
+        position: absolute;
+        inset: 0;
+        z-index: 10;
+        padding: 0 50px;
+      }
+
+      /* Header Zone (Safe zone top: 160px) */
+      .header-zone {
+        position: absolute;
+        top: 175px;
+        left: 60px;
+        right: 60px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        z-index: 30;
+      }
+      .category-row {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+      }
+      .category-pill {
+        display: inline-flex;
+        align-items: center;
+        background-color: #141414;
+        color: #f7f4ec;
+        font-size: 24px;
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        padding: 8px 18px;
+        border-radius: 4px;
+        border-left: 6px solid #ff6a1a;
+      }
+      .sub-pill {
+        display: inline-flex;
+        align-items: center;
+        background-color: #f5f0e4;
+        color: #141414;
+        font-size: 22px;
+        font-weight: 700;
+        padding: 8px 16px;
+        border-radius: 4px;
+        border: 2px solid #141414;
+      }
+      .punch-phrase {
+        font-size: 60px;
+        font-weight: 900;
+        line-height: 1.18;
+        color: #141414;
+        text-transform: uppercase;
+        letter-spacing: -0.01em;
+        margin: 0;
+      }
+      .punch-box {
+        display: inline-block;
+        background-color: #141414;
+        color: #f7f4ec;
+        padding: 2px 14px;
+        border-radius: 4px;
+        border-left: 8px solid #ff6a1a;
+      }
+
+      /* Hero Photo Frame (Wobble-drop entrance) */
+      .hero-frame-wrap {
+        position: absolute;
+        top: 360px;
+        left: 60px;
+        width: 960px;
+        height: 1040px;
+        z-index: 20;
+        transform-origin: 50% 25%;
+      }
+      .hero-card {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        background-color: #f5f0e4;
+        border: 4px solid #141414;
+        box-shadow: 14px 14px 0px rgba(20, 20, 20, 0.95);
+        overflow: hidden;
+      }
+      .hero-image-container {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+      }
+      .hero-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: 26% 45%; /* Focus on left scale pan containing medals & documents */
+        display: block;
+        transform-origin: 26% 45%;
+      }
+
+      /* Corner decorative paper tape */
+      .corner-tape {
+        position: absolute;
+        width: 95px;
+        height: 32px;
+        background-color: rgba(255, 106, 26, 0.9);
+        z-index: 25;
+        border: 1.5px solid #141414;
+      }
+      .tape-tl {
+        top: -12px;
+        left: -20px;
+        transform: rotate(-18deg);
+      }
+      .tape-tr {
+        top: -12px;
+        right: -20px;
+        transform: rotate(18deg);
+      }
+
+      /* Overlay 1: Scale Icon Card */
+      .scale-icon-card {
+        position: absolute;
+        top: 395px;
+        right: 85px;
+        width: 250px;
+        background-color: #f5f0e4;
+        border: 3px solid #141414;
+        box-shadow: 6px 6px 0px #141414;
+        padding: 16px 14px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        z-index: 35;
+        opacity: 0;
+      }
+      .scale-icon-label {
+        font-size: 19px;
+        font-weight: 900;
+        color: #141414;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        text-align: center;
+      }
+      .scale-svg {
+        width: 130px;
+        height: 100px;
+      }
+      .scale-svg path,
+      .scale-svg line {
+        fill: none;
+        stroke: #141414;
+        stroke-width: 4;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+      .scale-svg .accent-stroke {
+        stroke: #ff6a1a;
+        stroke-width: 4.5;
+      }
+
+      /* Left Pan Target Pulse */
+      .pan-target-zone {
+        position: absolute;
+        top: 890px;
+        left: 170px;
+        width: 110px;
+        height: 110px;
+        z-index: 24;
+        pointer-events: none;
+      }
+      .pan-pulse-ring {
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        border: 4px dashed #ff6a1a;
+        background-color: rgba(255, 106, 26, 0.2);
+        opacity: 0;
+      }
+
+      /* Evidence Labels (Positioned safely above bottom 460px caption safe line) */
+      .evidence-label {
+        position: absolute;
+        top: 1180px;
+        left: 85px;
+        background-color: #f5f0e4;
+        border: 3.5px solid #141414;
+        box-shadow: 8px 8px 0px #ff6a1a;
+        padding: 18px 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        z-index: 40;
+        opacity: 0;
+        max-width: 540px;
+      }
+      .label-badge {
+        align-self: flex-start;
+        background-color: #141414;
+        color: #f7f4ec;
+        font-size: 17px;
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        padding: 4px 10px;
+        border-radius: 2px;
+        border-left: 4px solid #ff6a1a;
+      }
+      .label-title {
+        font-size: 36px;
+        font-weight: 900;
+        color: #141414;
+        line-height: 1.15;
+        text-transform: uppercase;
+        margin: 0;
+      }
+      .label-desc {
+        font-size: 21px;
+        font-weight: 700;
+        color: #2a2a2a;
+        margin: 0;
+      }
+
+      /* Weight Shift Tag */
+      .weight-shift-tag {
+        position: absolute;
+        top: 1335px;
+        right: 85px;
+        background-color: #141414;
+        color: #f7f4ec;
+        border-left: 6px solid #ff6a1a;
+        padding: 12px 18px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        z-index: 35;
+        opacity: 0;
+      }
+      .weight-arrow {
+        color: #ff6a1a;
+        font-size: 26px;
+        font-weight: 900;
+      }
+      .weight-text {
+        font-size: 20px;
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s19"
+      data-start="0"
+      data-width="1080"
+      data-height="1920"
+      data-duration="7.31"
+      data-layout-allow-overflow="true"
+    >
+      <!-- Persistent Canvas Background -->
+      <div class="bg-grid"></div>
+      <div class="bg-grain"></div>
+      <div class="signature-bar"></div>
+
+      <!-- Main Scene Clip (Duration: 7.31s) -->
+      <section
+        id="scene-s19"
+        class="clip"
+        data-start="0"
+        data-duration="7.31"
+        data-layout-allow-overflow="true"
+      >
+        <div class="scene-content">
+          <!-- Header Area -->
+          <div class="header-zone" id="header-zone">
+            <div class="category-row">
+              <div class="category-pill" id="cat-pill">Tình tiết giảm nhẹ</div>
+              <div class="sub-pill" id="sub-pill">Hồ sơ bổ sung</div>
+            </div>
+            <h1 class="punch-phrase" id="punch-phrase">
+              Cán cân <span class="punch-box">lượng hình</span>
+            </h1>
+          </div>
+
+          <!-- Hero Frame Card (Wobble-drop entrance) -->
+          <div class="hero-frame-wrap" id="hero-frame-wrap">
+            <div class="corner-tape tape-tl"></div>
+            <div class="corner-tape tape-tr"></div>
+            <div class="hero-card">
+              <div class="hero-image-container">
+                <img
+                  id="hero-image"
+                  class="hero-image"
+                  src="assets/img-05-justice-scale-sentencing-mitigation.jpeg"
+                  alt="Cán cân công lý"
+                />
+              </div>
+
+              <!-- Pulse ring target on the left scale pan -->
+              <div class="pan-target-zone" id="pan-target-zone">
+                <div class="pan-pulse-ring" id="pan-pulse-ring"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Overlay 1: Scale Icon (Self-drawing SVG path, atMs 159200 -> t = 1.20s, hold 1.6s) -->
+          <div class="scale-icon-card" id="scale-icon-card">
+            <svg class="scale-svg" viewBox="0 0 130 100" xmlns="http://www.w3.org/2000/svg">
+              <!-- Base & Central Post -->
+              <line class="draw-path" x1="15" y1="94" x2="115" y2="94" />
+              <line class="draw-path" x1="65" y1="94" x2="65" y2="16" />
+              <circle cx="65" cy="16" r="3.5" fill="#141414" />
+              <!-- Tilted beam: left side tilted down receiving evidence -->
+              <line class="draw-path accent-stroke" x1="15" y1="28" x2="115" y2="14" />
+              <!-- Left strings and lower pan -->
+              <line class="draw-path" x1="15" y1="28" x2="3" y2="60" />
+              <line class="draw-path" x1="15" y1="28" x2="27" y2="60" />
+              <path class="draw-path accent-stroke" d="M 2 60 Q 15 70 28 60 Z" />
+              <!-- Right strings and upper pan -->
+              <line class="draw-path" x1="115" y1="14" x2="103" y2="46" />
+              <line class="draw-path" x1="115" y1="14" x2="127" y2="46" />
+              <path class="draw-path" d="M 102 46 Q 115 56 128 46 Z" />
+            </svg>
+            <div class="scale-icon-label">Cán cân công lý</div>
+          </div>
+
+          <!-- Overlay 2: Label "Có công cách mạng" (atMs 160660 -> t = 2.66s, hold 2.2s -> 4.86s) -->
+          <div class="evidence-label" id="label-cong-cach-mang">
+            <div class="label-badge">Tài liệu 1</div>
+            <div class="label-title">Có công cách mạng</div>
+            <div class="label-desc">Huân chương & Khen thưởng</div>
+          </div>
+
+          <!-- Weight Shift Indicator -->
+          <div class="weight-shift-tag" id="weight-tag">
+            <span class="weight-arrow">↓</span>
+            <span class="weight-text">Sức nặng giảm nhẹ</span>
+          </div>
+
+          <!-- Overlay 3: Label "Lao động chính" (atMs 164210 -> t = 6.21s, hold 1.8s -> 7.31s) -->
+          <div class="evidence-label" id="label-lao-dong-chinh">
+            <div class="label-badge">Tài liệu 2 & 3</div>
+            <div class="label-title">Lao động chính</div>
+            <div class="label-desc">Gia cảnh khó khăn</div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <script>
+      // Setup SVG paths for progressive self-drawing
+      const paths = document.querySelectorAll(".draw-path");
+      paths.forEach((p) => {
+        if (typeof p.getTotalLength === "function") {
+          const length = p.getTotalLength();
+          p.style.strokeDasharray = length;
+          p.style.strokeDashoffset = length;
+        }
+      });
+
+      // Synchronous Paused GSAP Timeline
+      const tl = gsap.timeline({ paused: true });
+
+      // 1. Header Entrances (t = 0.1s -> 0.6s)
+      tl.fromTo(
+        "#cat-pill",
+        { y: -25, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.45, ease: "power3.out" },
+        0.1
+      );
+      tl.fromTo(
+        "#sub-pill",
+        { y: -25, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.45, ease: "power3.out" },
+        0.2
+      );
+      tl.fromTo(
+        "#punch-phrase",
+        { y: 30, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.55, ease: "power3.out" },
+        0.25
+      );
+
+      // Wobble-drop entrance for hero-frame-wrap (t = 0.15s -> 0.85s)
+      tl.fromTo(
+        "#hero-frame-wrap",
+        { y: -120, rotation: -3, opacity: 0, scale: 0.95 },
+        { y: 0, rotation: 0, opacity: 1, scale: 1, duration: 0.7, ease: "power3.out" },
+        0.15
+      );
+
+      // Ken Burns Slow Zoom: 1.0 -> 1.09 throughout full duration (7.31s)
+      tl.fromTo(
+        "#hero-image",
+        { scale: 1.0, x: 0 },
+        { scale: 1.09, x: -25, duration: 7.31, ease: "none" },
+        0
+      );
+
+      // 2. Overlay: Icon "scale" (atMs 159200 -> t = 1.20s, hold 1.6s -> 2.80s)
+      tl.fromTo(
+        "#scale-icon-card",
+        { scale: 0.75, opacity: 0, y: -20 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.4, ease: "power3.out" },
+        1.2
+      );
+      // Staggered path draws for the scale icon
+      paths.forEach((p, idx) => {
+        tl.to(
+          p,
+          { strokeDashoffset: 0, duration: 0.5, ease: "power2.out" },
+          1.25 + idx * 0.035
+        );
+      });
+      // Icon exits at 2.60s (faded out by 2.80s)
+      tl.to(
+        "#scale-icon-card",
+        { opacity: 0, scale: 0.9, y: -15, duration: 0.2, ease: "power2.in" },
+        2.6
+      );
+
+      // 3. Overlay: Label "Có công cách mạng" (atMs 160660 -> t = 2.66s, hold 2.2s -> 4.86s)
+      tl.fromTo(
+        "#label-cong-cach-mang",
+        { scale: 0.85, opacity: 0, y: 35 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.45, ease: "power3.out" },
+        2.66
+      );
+
+      // Weight shift downward indicator tag appears alongside label 1
+      tl.fromTo(
+        "#weight-tag",
+        { opacity: 0, x: 30 },
+        { opacity: 1, x: 0, duration: 0.4, ease: "power3.out" },
+        2.85
+      );
+
+      // Pulse ring on left pan
+      tl.fromTo(
+        "#pan-pulse-ring",
+        { scale: 0.6, opacity: 0.9 },
+        { scale: 1.4, opacity: 0, duration: 1.1, ease: "power2.out" },
+        2.7
+      );
+
+      // Label 1 exits at 4.56s (cleared before 4.86s)
+      tl.to(
+        "#label-cong-cach-mang",
+        { opacity: 0, y: -20, scale: 0.95, duration: 0.3, ease: "power2.in" },
+        4.56
+      );
+
+      // 4. Overlay: Label "Lao động chính" (atMs 164210 -> t = 6.21s, hold 1.8s -> 7.31s)
+      tl.fromTo(
+        "#label-lao-dong-chinh",
+        { scale: 0.85, opacity: 0, y: 35 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.4, ease: "power3.out" },
+        6.21
+      );
+
+      // Second pulse ring on left pan for final evidence landing
+      tl.fromTo(
+        "#pan-pulse-ring",
+        { scale: 0.6, opacity: 0.9 },
+        { scale: 1.45, opacity: 0, duration: 0.9, ease: "power2.out" },
+        6.25
+      );
+
+      // Register timeline synchronously on window.__timelines
+      window.__timelines = window.__timelines || {};
+      window.__timelines["scene-s19"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

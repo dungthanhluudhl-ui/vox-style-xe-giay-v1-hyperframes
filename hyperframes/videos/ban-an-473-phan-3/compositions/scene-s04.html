@@ -1,0 +1,643 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background: #E7E3D9;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: #E7E3D9;
+      }
+
+      /* Lưới nền ô vuông 84px đặc trưng Vox */
+      .bg-grid {
+        position: absolute;
+        inset: 0;
+        background-size: 84px 84px;
+        background-image:
+          linear-gradient(to right, rgba(20, 20, 20, 0.12) 1.5px, transparent 1.5px),
+          linear-gradient(to bottom, rgba(20, 20, 20, 0.12) 1.5px, transparent 1.5px);
+        pointer-events: none;
+        z-index: 1;
+      }
+
+      /* Lớp phủ vignette hữu cơ */
+      .bg-vignette {
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(circle at 50% 45%, transparent 60%, rgba(20, 20, 20, 0.18) 100%);
+        pointer-events: none;
+        z-index: 2;
+      }
+
+      /* Thanh cam nhận diện thương hiệu cố định ở đáy */
+      #bottom-accent-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 12px;
+        background: #FF6A1A;
+        z-index: 1000;
+      }
+
+      /* Định dạng clip cho từng shot */
+      .clip {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+        z-index: 10;
+      }
+
+      /* Header hồ sơ kỹ thuật số */
+      .dossier-header {
+        position: absolute;
+        top: 150px;
+        left: 60px;
+        right: 60px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        z-index: 50;
+      }
+      .dossier-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        background: #141414;
+        padding: 10px 20px;
+        border-radius: 8px;
+      }
+      .badge-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: #FF6A1A;
+      }
+      .badge-text {
+        color: #F7F4EC;
+        font-size: 22px;
+        font-weight: 900;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+      }
+      .dossier-case {
+        color: #141414;
+        font-size: 22px;
+        font-weight: 700;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        border-bottom: 2px solid rgba(20, 20, 20, 0.4);
+        padding-bottom: 4px;
+      }
+
+      /* Khung ảnh chứng cứ phóng sự điều tra */
+      .photo-viewport {
+        position: absolute;
+        top: 240px;
+        left: 60px;
+        width: 960px;
+        height: 1120px;
+        background: #F5F0E4;
+        border: 4px solid #141414;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 24px 60px rgba(0, 0, 0, 0.22);
+      }
+      .photo-inner {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+      }
+      .evidence-photo {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transform-origin: center center;
+      }
+
+      /* Thước ngắm và dấu góc kỹ thuật */
+      .corner-tick {
+        position: absolute;
+        width: 28px;
+        height: 28px;
+        z-index: 30;
+        pointer-events: none;
+      }
+      .tick-tl { top: 16px; left: 16px; border-top: 3px solid #FF6A1A; border-left: 3px solid #FF6A1A; }
+      .tick-tr { top: 16px; right: 16px; border-top: 3px solid #FF6A1A; border-right: 3px solid #FF6A1A; }
+      .tick-bl { bottom: 16px; left: 16px; border-bottom: 3px solid #FF6A1A; border-left: 3px solid #FF6A1A; }
+      .tick-br { bottom: 16px; right: 16px; border-bottom: 3px solid #FF6A1A; border-right: 3px solid #FF6A1A; }
+
+      /* Điểm ngắm thiết bị điện thoại - căn giữa bằng margin âm, KHÔNG dùng CSS transform để tránh xung đột GSAP */
+      .crosshair-target {
+        position: absolute;
+        top: 670px;
+        left: 450px;
+        width: 64px;
+        height: 64px;
+        margin-top: -32px;
+        margin-left: -32px;
+        z-index: 35;
+      }
+      .crosshair-ring {
+        position: absolute;
+        inset: 0;
+        border: 2px dashed #FF6A1A;
+        border-radius: 50%;
+      }
+      .crosshair-center {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 12px;
+        height: 12px;
+        margin-top: -6px;
+        margin-left: -6px;
+        background: #FF6A1A;
+        border-radius: 50%;
+      }
+
+      /* Đường dẫn nối tới nhãn chú thích */
+      .pointer-svg {
+        position: absolute;
+        top: 670px;
+        left: 280px;
+        width: 220px;
+        height: 180px;
+        z-index: 34;
+        pointer-events: none;
+      }
+      .pointer-path {
+        fill: none;
+        stroke: #FF6A1A;
+        stroke-width: 3;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
+      /* Thẻ nhãn chú thích: Trích xuất thiết bị */
+      .annotation-card {
+        position: absolute;
+        top: 840px;
+        left: 90px;
+        width: 540px;
+        background: #141414;
+        border-left: 8px solid #FF6A1A;
+        border-radius: 8px;
+        padding: 24px 28px;
+        display: flex;
+        align-items: center;
+        gap: 22px;
+        box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
+        z-index: 40;
+      }
+      .icon-container {
+        flex-shrink: 0;
+        width: 60px;
+        height: 60px;
+        display: grid;
+        place-items: center;
+        background: rgba(255, 106, 26, 0.12);
+        border-radius: 8px;
+      }
+      .annotation-content {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+      .annotation-sub {
+        font-size: 18px;
+        font-weight: 700;
+        color: #FF6A1A;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+      }
+      .annotation-title {
+        font-size: 34px;
+        font-weight: 900;
+        color: #F7F4EC;
+        margin: 0;
+        line-height: 1.2;
+      }
+
+      /* Shot 2: Vùng quét vệt sáng cam làm nổi bật bảng dữ liệu */
+      .scan-overlay {
+        position: absolute;
+        top: 360px;
+        left: 0;
+        width: 100%;
+        height: 280px;
+        background: linear-gradient(180deg, rgba(255, 106, 26, 0) 0%, rgba(255, 106, 26, 0.35) 50%, rgba(255, 106, 26, 0) 100%);
+        border-top: 2px solid #FF6A1A;
+        border-bottom: 2px solid #FF6A1A;
+        pointer-events: none;
+        z-index: 25;
+      }
+      .scan-tag {
+        position: absolute;
+        bottom: 12px;
+        right: 24px;
+        font-size: 16px;
+        font-weight: 700;
+        color: #F7F4EC;
+        background: #141414;
+        padding: 4px 12px;
+        border-radius: 4px;
+        letter-spacing: 1px;
+      }
+
+      /* Nhãn phân loại đối tượng: Nhóm của Tiến */
+      .group-tag-card {
+        position: absolute;
+        top: 280px;
+        left: 90px;
+        background: #141414;
+        border: 2px solid #FF6A1A;
+        border-radius: 8px;
+        padding: 16px 28px;
+        z-index: 40;
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+      }
+      .group-tag-sub {
+        font-size: 16px;
+        font-weight: 700;
+        color: #FF6A1A;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        margin-bottom: 4px;
+      }
+      .group-tag-title {
+        font-size: 38px;
+        font-weight: 900;
+        color: #F7F4EC;
+        margin: 0;
+      }
+
+      /* Khối Punch Phrase: 2.056 TỆP TIN */
+      .punch-container {
+        position: absolute;
+        top: 860px;
+        left: 90px;
+        width: 780px;
+        background: #141414;
+        border-left: 10px solid #FF6A1A;
+        border-radius: 12px;
+        padding: 36px 44px;
+        box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+        z-index: 45;
+      }
+      .punch-category {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 18px;
+        font-weight: 700;
+        color: #FF6A1A;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        margin-bottom: 12px;
+      }
+      .punch-dot {
+        width: 10px;
+        height: 10px;
+        background: #FF6A1A;
+        border-radius: 50%;
+      }
+      .punch-main {
+        display: flex;
+        align-items: baseline;
+        gap: 20px;
+        margin-bottom: 8px;
+      }
+      .punch-number {
+        font-size: 96px;
+        font-weight: 900;
+        color: #FF6A1A;
+        line-height: 1;
+        letter-spacing: -2px;
+        font-variant-numeric: tabular-nums;
+      }
+      .punch-label {
+        font-size: 58px;
+        font-weight: 900;
+        color: #F7F4EC;
+        line-height: 1;
+        letter-spacing: 1px;
+      }
+      .punch-desc {
+        font-size: 22px;
+        font-weight: 700;
+        color: rgba(247, 244, 236, 0.75);
+        margin: 0;
+        letter-spacing: 1px;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s04"
+      data-start="0"
+      data-width="1080"
+      data-height="1920"
+      data-duration="9.57"
+      data-layout-allow-overflow
+    >
+      <!-- Các lớp nền thẩm mỹ tổng thể -->
+      <div class="bg-grid"></div>
+      <div class="bg-vignette"></div>
+      <div id="bottom-accent-bar"></div>
+
+      <!-- SHOT 1: Trích xuất thiết bị (start: 0s, duration: 5.38s) -->
+      <section id="shot-1" class="clip" data-start="0" data-duration="5.38" data-track-index="0">
+        <header class="dossier-header" id="s1-header">
+          <div class="dossier-badge">
+            <span class="badge-dot"></span>
+            <span class="badge-text">GIÁM ĐỊNH KỸ THUẬT SỐ</span>
+          </div>
+          <div class="dossier-case">VỤ ÁN 473 // TÀI LIỆU SỐ</div>
+        </header>
+
+        <div class="photo-viewport" id="s1-card">
+          <div class="corner-tick tick-tl"></div>
+          <div class="corner-tick tick-tr"></div>
+          <div class="corner-tick tick-bl"></div>
+          <div class="corner-tick tick-br"></div>
+          
+          <div class="photo-inner">
+            <img
+              id="s1-img"
+              src="assets/img-07-digital-forensics-evidence-extraction.jpeg"
+              alt="Cán bộ điều tra kết nối cáp trích xuất điện thoại"
+              class="evidence-photo"
+            />
+          </div>
+
+          <!-- Điểm ngắm vị trí cáp kết nối điện thoại -->
+          <div class="crosshair-target" id="s1-target">
+            <div class="crosshair-ring"></div>
+            <div class="crosshair-center"></div>
+          </div>
+
+          <!-- Đường chỉ dẫn kỹ thuật -->
+          <svg class="pointer-svg" id="s1-pointer">
+            <path pathLength="100" class="pointer-path" id="s1-pointer-line" d="M170 10 L100 80 L20 80" />
+          </svg>
+
+          <!-- Nhãn chú thích: Trích xuất thiết bị -->
+          <div class="annotation-card" id="s1-annotation">
+            <div class="icon-container">
+              <!-- Icon doc tự vẽ theo style DNA -->
+              <svg id="s1-doc-icon" viewBox="0 0 64 64" width="44" height="44" fill="none" stroke="#FF6A1A" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round">
+                <path id="doc-outline" pathLength="100" d="M16 8 H38 L50 20 V56 H16 Z" />
+                <path id="doc-fold" pathLength="100" d="M38 8 V20 H50" />
+                <line class="doc-line" pathLength="100" x1="24" y1="30" x2="42" y2="30" />
+                <line class="doc-line" pathLength="100" x1="24" y1="38" x2="38" y2="38" />
+                <line class="doc-line" pathLength="100" x1="24" y1="46" x2="32" y2="46" />
+              </svg>
+            </div>
+            <div class="annotation-content">
+              <span class="annotation-sub">THAO TÁC NGHIỆP VỤ</span>
+              <h3 class="annotation-title">Trích xuất thiết bị</h3>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SHOT 2: Cận cảnh màn hình thống kê dữ liệu (start: 5.38s, duration: 4.19s) -->
+      <section id="shot-2" class="clip" data-start="5.38" data-duration="4.19" data-track-index="0">
+        <header class="dossier-header" id="s2-header">
+          <div class="dossier-badge">
+            <span class="badge-dot"></span>
+            <span class="badge-text">DỮ LIỆU ĐIỀU TRA</span>
+          </div>
+          <div class="dossier-case">THỐNG KÊ TỆP TIN CHỨNG CỨ</div>
+        </header>
+
+        <div class="photo-viewport" id="s2-card">
+          <div class="corner-tick tick-tl"></div>
+          <div class="corner-tick tick-tr"></div>
+          <div class="corner-tick tick-bl"></div>
+          <div class="corner-tick tick-br"></div>
+
+          <div class="photo-inner">
+            <img
+              id="s2-img"
+              src="assets/img-07-digital-forensics-evidence-extraction.jpeg"
+              alt="Màn hình thông số trích xuất dữ liệu"
+              class="evidence-photo"
+            />
+          </div>
+
+          <!-- Vệt sáng cam quét bảng thông số -->
+          <div class="scan-overlay" id="s2-scan">
+            <span class="scan-tag">FORENSIC DATA // VERIFIED</span>
+          </div>
+
+          <!-- Nhãn: Nhóm của Tiến -->
+          <div class="group-tag-card" id="s2-group-badge">
+            <div class="group-tag-sub">ĐỐI TƯỢNG ĐIỀU TRA</div>
+            <h3 class="group-tag-title">Nhóm của Tiến</h3>
+          </div>
+
+          <!-- Punch phrase: 2.056 TỆP TIN -->
+          <div class="punch-container" id="s2-punch">
+            <div class="punch-category">
+              <span class="punch-dot"></span>
+              <span>KẾT QUẢ KHAI THÁC DỮ LIỆU</span>
+            </div>
+            <div class="punch-main">
+              <span class="punch-number" id="counter-display">2056</span>
+              <span class="punch-label">TỆP TIN</span>
+            </div>
+            <p class="punch-desc">HÌNH ẢNH & VIDEO TRONG NHÓM CHAT</p>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <script>
+      // Khởi tạo và thiết lập trạng thái ban đầu cho các nét vẽ SVG
+      const docOutline = document.getElementById("doc-outline");
+      const docFold = document.getElementById("doc-fold");
+      const docLines = document.querySelectorAll(".doc-line");
+      const pointerLine = document.getElementById("s1-pointer-line");
+
+      if (docOutline) {
+        docOutline.style.strokeDasharray = "100";
+        docOutline.style.strokeDashoffset = "100";
+      }
+      if (docFold) {
+        docFold.style.strokeDasharray = "100";
+        docFold.style.strokeDashoffset = "100";
+      }
+      docLines.forEach(function (l) {
+        l.style.strokeDasharray = "100";
+        l.style.strokeDashoffset = "100";
+      });
+      if (pointerLine) {
+        pointerLine.style.strokeDasharray = "100";
+        pointerLine.style.strokeDashoffset = "100";
+      }
+
+      // Timeline duy nhất của composition (paused: true)
+      const tl = gsap.timeline({ paused: true });
+
+      // ==========================================
+      // SHOT 1 CHOREOGRAPHY (0.00s -> 5.38s)
+      // ==========================================
+
+      // 1. Vào cảnh kiểu "rise"
+      tl.fromTo(
+        "#s1-card",
+        { y: 70, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.8, ease: "power3.out" },
+        0.0
+      );
+      tl.fromTo(
+        "#s1-header",
+        { y: -30, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.6, ease: "power3.out" },
+        0.15
+      );
+
+      // 2. Camera pan-left chậm rãi qua khu vực thiết bị
+      tl.fromTo(
+        "#s1-img",
+        { scale: 1.15, x: 50, y: 10 },
+        { scale: 1.22, x: -35, y: -10, duration: 5.38, ease: "none" },
+        0.0
+      );
+
+      // 3. Điểm ngắm thiết bị xuất hiện (power3.out mượt mà, không overshoot)
+      tl.fromTo(
+        "#s1-target",
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.45, ease: "power3.out" },
+        2.2
+      );
+
+      // 4. Đường chỉ dẫn vẽ ra (t = 3.05s)
+      tl.fromTo(
+        "#s1-pointer-line",
+        { strokeDashoffset: 100 },
+        { strokeDashoffset: 0, duration: 0.4, ease: "power2.out" },
+        3.05
+      );
+
+      // 5. Thẻ chú thích "Trích xuất thiết bị" xuất hiện
+      tl.fromTo(
+        "#s1-annotation",
+        { x: -30, opacity: 0, scale: 0.92 },
+        { x: 0, opacity: 1, scale: 1, duration: 0.5, ease: "power3.out" },
+        3.05
+      );
+
+      // 6. Icon doc tự vẽ (t = 3.65s)
+      tl.fromTo(
+        "#doc-outline",
+        { strokeDashoffset: 100 },
+        { strokeDashoffset: 0, duration: 0.55, ease: "power2.out" },
+        3.65
+      );
+      tl.fromTo(
+        "#doc-fold",
+        { strokeDashoffset: 100 },
+        { strokeDashoffset: 0, duration: 0.3, ease: "power2.out" },
+        3.95
+      );
+      tl.fromTo(
+        ".doc-line",
+        { strokeDashoffset: 100 },
+        { strokeDashoffset: 0, duration: 0.35, stagger: 0.08, ease: "power2.out" },
+        4.10
+      );
+
+      // ==========================================
+      // SHOT 2 CHOREOGRAPHY (5.38s -> 9.57s)
+      // ==========================================
+
+      // 1. Chuyển cảnh "cut" sắc bén, khung ảnh xuất hiện tức thì
+      tl.fromTo(
+        "#s2-header",
+        { opacity: 0 },
+        { opacity: 1, duration: 0.2, ease: "none" },
+        5.38
+      );
+
+      // 2. Camera zoom-in cận cảnh vào màn hình bảng thông số
+      tl.fromTo(
+        "#s2-img",
+        { scale: 1.45, x: -40, y: -60 },
+        { scale: 1.68, x: -90, y: -110, duration: 4.19, ease: "power1.out" },
+        5.38
+      );
+
+      // 3. Vệt sáng cam phủ màn hình
+      tl.fromTo(
+        "#s2-scan",
+        { opacity: 0, scaleY: 0.4 },
+        { opacity: 1, scaleY: 1, duration: 0.6, ease: "power2.out" },
+        5.50
+      );
+
+      // 4. Nhãn "Nhóm của Tiến" xuất hiện (t = 5.38s, giữ 1.8s đến ~7.15s)
+      tl.fromTo(
+        "#s2-group-badge",
+        { y: -25, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.4, ease: "power3.out" },
+        5.38
+      );
+      tl.to(
+        "#s2-group-badge",
+        { opacity: 0, y: -15, duration: 0.25, ease: "power2.in" },
+        7.15
+      );
+
+      // 5. Punch phrase: "2.056 TỆP TIN" xuất hiện mạnh mẽ (t = 7.27s)
+      tl.fromTo(
+        "#s2-punch",
+        { scale: 0.86, opacity: 0, y: 35 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.5, ease: "power3.out" },
+        7.27
+      );
+
+      // 6. Hiệu ứng số đếm tăng tốc chạm mốc 2056 - trực tiếp trên DOM element với innerText và snap (tất định, seek-safe tuyệt đối)
+      tl.fromTo(
+        "#counter-display",
+        { innerText: 0 },
+        {
+          innerText: 2056,
+          snap: { innerText: 1 },
+          duration: 0.75,
+          ease: "power2.out"
+        },
+        7.27
+      );
+
+      // Đăng ký timeline duy nhất vào registry của HyperFrames
+      window.__timelines["scene-s04"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

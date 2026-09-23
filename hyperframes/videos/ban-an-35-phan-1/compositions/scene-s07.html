@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap">
+      <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background: #F5F0E4;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: #F5F0E4;
+      }
+      .clip {
+        position: absolute;
+        inset: 0;
+      }
+
+      /* Nền dạng card với texture hạt nhẹ theo chuẩn Vox DNA */
+      .card-bg {
+        position: absolute;
+        inset: 0;
+        background-color: #F5F0E4;
+        background-image: radial-gradient(rgba(20, 20, 20, 0.05) 1px, transparent 0);
+        background-size: 24px 24px;
+        pointer-events: none;
+      }
+      .grain-overlay {
+        position: absolute;
+        inset: 0;
+        opacity: 0.14;
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+        mix-blend-mode: multiply;
+        pointer-events: none;
+      }
+
+      /* Camera rig phục vụ chuyển động zoom-out chậm rãi */
+      #camera-rig {
+        position: absolute;
+        inset: 0;
+        transform-origin: 540px 960px;
+        will-change: transform;
+      }
+
+      /* Thanh cam thương hiệu cố định mép đáy */
+      .brand-bottom-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 10px;
+        background-color: #FF6A1A;
+        z-index: 100;
+      }
+
+      /* Header section (Safe Zone Top: 160px) */
+      #header-section {
+        position: absolute;
+        top: 175px;
+        left: 60px;
+        right: 60px;
+        z-index: 30;
+      }
+      .tracker-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        background-color: #141414;
+        color: #F7F4EC;
+        padding: 8px 18px;
+        border-radius: 4px;
+        border-left: 4px solid #FF6A1A;
+        font-size: 18px;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+      }
+      .tracker-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background-color: #FF6A1A;
+      }
+      .main-title {
+        margin: 18px 0 0 0;
+        font-size: 50px;
+        font-weight: 900;
+        line-height: 1.25;
+        color: #141414;
+        text-transform: uppercase;
+        letter-spacing: -0.01em;
+      }
+      /* Đảm bảo tương phản WCAG AA tuyệt đối: dùng badge nền tối cho cụm từ nhấn */
+      .title-highlight-pill {
+        display: inline-block;
+        background-color: #141414;
+        color: #FF6A1A;
+        padding: 2px 14px;
+        border-radius: 6px;
+        letter-spacing: 0.02em;
+      }
+
+      /* Sân khấu Hero Stage (chứa đúng 1 thẻ img duy nhất) */
+      #hero-stage {
+        position: absolute;
+        top: 365px;
+        left: 60px;
+        width: 960px;
+        height: 750px;
+        perspective: 1400px;
+        z-index: 10;
+      }
+      #hero-card {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        border-radius: 12px;
+        overflow: hidden;
+        background: #141414;
+        border: 3px solid #141414;
+        box-shadow: 0 18px 42px rgba(20, 20, 20, 0.22);
+        transform-origin: center center;
+        will-change: transform, opacity;
+      }
+      #hero-img {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center;
+        pointer-events: none;
+      }
+
+      /* Nhãn phân loại hai cột luồng trên ảnh */
+      .stage-col-tag {
+        position: absolute;
+        top: 18px;
+        padding: 8px 16px;
+        background: rgba(20, 20, 20, 0.92);
+        color: #F7F4EC;
+        font-size: 17px;
+        font-weight: 900;
+        letter-spacing: 0.04em;
+        border-radius: 6px;
+        z-index: 5;
+        border-left: 4px solid #FF6A1A;
+      }
+      #tag-left-col {
+        left: 18px;
+      }
+      #tag-right-col {
+        right: 18px;
+      }
+
+      /* Khung viền phát sáng active cho 2 nửa */
+      .half-highlight-border {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 480px;
+        border: 4px solid #FF6A1A;
+        opacity: 0;
+        pointer-events: none;
+        z-index: 6;
+      }
+      #border-left-highlight {
+        left: 0;
+        border-radius: 10px 0 0 10px;
+      }
+      #border-right-highlight {
+        right: 0;
+        border-radius: 0 10px 10px 0;
+      }
+
+      /* Đường rạn nứt phân chia trung tâm chạy dọc xuyên qua ảnh */
+      #center-seam {
+        position: absolute;
+        top: 0;
+        left: 478px;
+        width: 4px;
+        height: 100%;
+        background: repeating-linear-gradient(to bottom, #FF6A1A 0, #FF6A1A 14px, transparent 14px, transparent 24px);
+        transform-origin: center top;
+        z-index: 15;
+        pointer-events: none;
+      }
+
+      /* Diagram Overlay: CẦU NỐI ĐỨT GÃY (atMs: 65090) */
+      #diagram-bridge-break {
+        position: absolute;
+        top: 740px;
+        left: 540px;
+        transform: translate(-50%, -50%);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        z-index: 40;
+      }
+      .break-pill-row {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
+      .break-badge {
+        background-color: #141414;
+        border: 3px solid #FF6A1A;
+        border-radius: 10px;
+        padding: 12px 26px;
+        box-shadow: 0 14px 32px rgba(0, 0, 0, 0.45);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .break-icon {
+        width: 26px;
+        height: 26px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .break-text {
+        font-size: 28px;
+        font-weight: 900;
+        color: #F7F4EC;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+      .break-subtext {
+        margin-top: 8px;
+        background-color: #FF6A1A;
+        color: #141414;
+        font-size: 15px;
+        font-weight: 900;
+        padding: 4px 14px;
+        border-radius: 4px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+      }
+      /* Mũi tên SVG thuần đồ họa — giải quyết triệt để lỗi text occlusion */
+      .split-arrow {
+        pointer-events: none;
+        will-change: transform, opacity;
+      }
+
+      /* Callout Cards bên dưới (Safe Zone Bottom: 1460px) */
+      #callouts-row {
+        position: absolute;
+        top: 1145px;
+        left: 60px;
+        right: 60px;
+        display: flex;
+        justify-content: space-between;
+        z-index: 30;
+      }
+      .callout-box {
+        width: 468px;
+        background: #141414;
+        border-radius: 12px;
+        padding: 22px 24px;
+        box-shadow: 0 16px 36px rgba(20, 20, 20, 0.18);
+        border-top: 6px solid #FF6A1A;
+        will-change: transform, opacity;
+      }
+      .callout-tag {
+        font-size: 15px;
+        font-weight: 700;
+        color: #FF6A1A;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+      }
+      .callout-title {
+        margin-top: 6px;
+        font-size: 32px;
+        font-weight: 900;
+        color: #F7F4EC;
+        text-transform: uppercase;
+        line-height: 1.15;
+      }
+      .callout-desc {
+        margin-top: 10px;
+        font-size: 18px;
+        font-weight: 700;
+        color: #D5CFC3;
+        line-height: 1.35;
+      }
+
+      /* Dấu mộc khống đóng sập vào góc chứng từ */
+      #fake-stamp {
+        position: absolute;
+        top: 1085px;
+        right: 80px;
+        padding: 8px 18px;
+        border: 4px dashed #FF6A1A;
+        border-radius: 6px;
+        background: rgba(20, 20, 20, 0.96);
+        color: #FF6A1A;
+        font-size: 20px;
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        z-index: 45;
+        transform-origin: center center;
+        will-change: transform, opacity;
+      }
+    </style>
+
+    <div data-hf-id="hf-7k9a" id="root" data-composition-id="scene-s07" data-width="1080" data-height="1920" data-duration="7.84" data-layout-allow-overflow="true">
+      <section data-hf-id="hf-s0rc" id="scene-s07" class="clip" data-start="0" data-duration="7.84">
+        <!-- Nền tone card giấy theo Vox DNA -->
+        <div data-hf-id="hf-p152" class="card-bg"></div>
+        <div data-hf-id="hf-k01a" class="grain-overlay"></div>
+
+        <!-- Camera Rig: bao bọc chuyển động zoom-out êm ái -->
+        <div data-hf-id="hf-iu6l" id="camera-rig">
+          <!-- Phần tiêu đề và định hướng thị giác -->
+          <div data-hf-id="hf-af3s" id="header-section">
+            <div data-hf-id="hf-o38e" class="tracker-badge">
+              <span data-hf-id="hf-rs75" class="tracker-dot"></span>
+              <span data-hf-id="hf-79v2">BẢN CHẤT GIAN LẬN // CƠ CHẾ TÁCH ĐÔI</span>
+            </div>
+            <h1 data-hf-id="hf-ezld" class="main-title">
+              HAI THỰC THỂ <span data-hf-id="hf-ciul" class="title-highlight-pill">HOÀN TOÀN KHÁC NHAU</span>
+            </h1>
+          </div>
+
+          <!-- Hero Stage: Khung hình ảnh infographic xé dán chia đôi màn hình -->
+          <div data-hf-id="hf-mnt0" id="hero-stage">
+            <div data-hf-id="hf-25u0" id="hero-card">
+              <!-- DUY NHẤT 1 THẺ IMG để tránh duplicate_media_discovery_risk -->
+              <img data-hf-id="hf-m1m9" id="hero-img" src="assets/img-02-fake-invoice-unverified-origins.jpeg" alt="Đồ họa chia đôi: Luồng hàng gara và Luồng hóa đơn Công ty Đ">
+
+              <!-- Hai nhãn định danh cột trên ảnh -->
+              <div data-hf-id="hf-kf21" id="tag-left-col" class="stage-col-tag">01. LUỒNG VẬT CHẤT</div>
+              <div data-hf-id="hf-qszu" id="tag-right-col" class="stage-col-tag">02. LUỒNG CHỨNG TỪ</div>
+
+              <!-- Lớp viền highlight active -->
+              <div data-hf-id="hf-6484" id="border-left-highlight" class="half-highlight-border"></div>
+              <div data-hf-id="hf-zlj9" id="border-right-highlight" class="half-highlight-border"></div>
+
+              <!-- Đường phân cách nứt vỡ trung tâm -->
+              <div data-hf-id="hf-5mft" id="center-seam"></div>
+            </div>
+          </div>
+
+          <!-- Diagram Overlay: CẦU NỐI ĐỨT GÃY (atMs: 65090) -->
+          <div data-hf-id="hf-gavs" id="diagram-bridge-break">
+            <div data-hf-id="hf-xv7c" class="break-pill-row">
+              <!-- Mũi tên SVG bên trái (không phải text node -> không lỗi occlusion) -->
+              <svg data-hf-id="hf-d5t7" id="arrow-left-svg" class="split-arrow" width="38" height="24" viewBox="0 0 38 24" fill="none">
+                <path data-hf-id="hf-qrom" d="M12 4L4 12L12 20M6 12H34" stroke="#FF6A1A" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+
+              <div data-hf-id="hf-7xz3" class="break-badge">
+                <div data-hf-id="hf-tahl" class="break-icon">
+                  <svg data-hf-id="hf-qgg4" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FF6A1A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                    <path data-hf-id="hf-79cc" d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+                    <path data-hf-id="hf-v8sj" d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+                    <line data-hf-id="hf-nwju" x1="2" y1="2" x2="22" y2="22" stroke="#FF6A1A" stroke-width="3" />
+                  </svg>
+                </div>
+                <div data-hf-id="hf-k8k9" class="break-text">CẦU NỐI ĐỨT GÃY</div>
+              </div>
+
+              <!-- Mũi tên SVG bên phải (không phải text node -> không lỗi occlusion) -->
+              <svg data-hf-id="hf-cglu" id="arrow-right-svg" class="split-arrow" width="38" height="24" viewBox="0 0 38 24" fill="none">
+                <path data-hf-id="hf-u3tx" d="M26 4L34 12L26 20M32 12H4" stroke="#FF6A1A" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+            </div>
+            <div data-hf-id="hf-8jkm" class="break-subtext">KHÔNG GIAO ĐIỂM THỰC TẾ</div>
+          </div>
+
+          <!-- Callout Row: VẬT CHẤT CÓ THẬT & CHỨNG TỪ KHÔNG THẬT -->
+          <div data-hf-id="hf-d7od" id="callouts-row">
+            <div data-hf-id="hf-5ruu" id="left-callout" class="callout-box">
+              <div data-hf-id="hf-z300" class="callout-tag">THỰC ĐỊA // GARA Ô TÔ</div>
+              <div data-hf-id="hf-vwwy" class="callout-title">VẬT CHẤT CÓ THẬT</div>
+              <div data-hf-id="hf-d479" class="callout-desc">Phụ tùng ô tô trôi nổi thực tế trong kho bãi</div>
+            </div>
+
+            <div data-hf-id="hf-kavz" id="right-callout" class="callout-box">
+              <div data-hf-id="hf-rkzx" class="callout-tag">GIẤY TỜ // CÔNG TY Đ</div>
+              <div data-hf-id="hf-efyt" class="callout-title">CHỨNG TỪ KHÔNG THẬT</div>
+              <div data-hf-id="hf-az6x" class="callout-desc">Hóa đơn mua bán khống hợp thức hóa trên hồ sơ</div>
+            </div>
+          </div>
+
+          <!-- Con dấu khẳng định tính chất khống -->
+          <div data-hf-id="hf-7mcs" id="fake-stamp">HÓA ĐƠN KHỐNG</div>
+        </div>
+
+        <!-- Chữ ký thị giác: thanh cam mỏng ở mép đáy -->
+        <div data-hf-id="hf-v6l5" class="brand-bottom-bar"></div>
+      </section>
+    </div>
+
+    <script>
+      const tl = gsap.timeline({ paused: true });
+
+      // 1. Chuyển động máy quay: Zoom-out nhẹ từ 1.05 về 1.00 trong suốt thời lượng scene
+      tl.fromTo(
+        "#camera-rig",
+        { scale: 1.05 },
+        { scale: 1.0, duration: 7.84, ease: "none" },
+        0
+      );
+
+      // 2. Chuyển cảnh vào (unfold): Khung hero stage mở xoay nhẹ 3D mượt mà
+      tl.fromTo(
+        "#hero-card",
+        { rotationX: 18, scale: 0.92, opacity: 0 },
+        { rotationX: 0, scale: 1.0, opacity: 1, duration: 0.8, ease: "power3.out" },
+        0.05
+      );
+
+      // 3. Header thông tin đáp xuống chắc chắn
+      tl.fromTo(
+        "#header-section",
+        { y: -30, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.6, ease: "power3.out" },
+        0.2
+      );
+
+      // 4. Nhãn tên từng cột xuất hiện sau khi card mở ra
+      tl.fromTo(
+        "#tag-left-col",
+        { y: -16, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.45, ease: "power2.out" },
+        0.5
+      );
+      tl.fromTo(
+        "#tag-right-col",
+        { y: -16, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.45, ease: "power2.out" },
+        0.5
+      );
+
+      // 5. Đường phân ranh nứt dọc rạch đôi bức ảnh
+      tl.fromTo(
+        "#center-seam",
+        { scaleY: 0, opacity: 0 },
+        { scaleY: 1, opacity: 1, duration: 0.4, ease: "power2.out" },
+        1.8
+      );
+
+      // 6. Overlay Diagram: CẦU NỐI ĐỨT GÃY (t = 1.97s, tương ứng atMs 65090)
+      tl.fromTo(
+        "#diagram-bridge-break",
+        { scale: 0.4, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.5, ease: "power3.out" },
+        1.97
+      );
+      tl.fromTo(
+        "#arrow-left-svg",
+        { x: 15, opacity: 0 },
+        { x: -8, opacity: 1, duration: 0.4, ease: "power2.out" },
+        2.15
+      );
+      tl.fromTo(
+        "#arrow-right-svg",
+        { x: -15, opacity: 0 },
+        { x: 8, opacity: 1, duration: 0.4, ease: "power2.out" },
+        2.15
+      );
+
+      // 7. Overlay Label: VẬT CHẤT CÓ THẬT (t = 5.32s, tương ứng atMs 68440)
+      tl.fromTo(
+        "#left-callout",
+        { scale: 0.92, opacity: 0, y: 24 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.45, ease: "power3.out" },
+        5.32
+      );
+      tl.fromTo(
+        "#border-left-highlight",
+        { opacity: 0 },
+        { opacity: 1, duration: 0.35, ease: "power1.out" },
+        5.32
+      );
+
+      // 8. Overlay Label: CHỨNG TỪ KHÔNG THẬT (t = 6.17s, tương ứng atMs 69290)
+      tl.fromTo(
+        "#right-callout",
+        { scale: 0.92, opacity: 0, y: 24 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.45, ease: "power3.out" },
+        6.17
+      );
+      tl.fromTo(
+        "#border-right-highlight",
+        { opacity: 0 },
+        { opacity: 1, duration: 0.35, ease: "power1.out" },
+        6.17
+      );
+
+      // 9. Con dấu HÓA ĐƠN KHỐNG đóng sập vào tài liệu bên phải
+      tl.fromTo(
+        "#fake-stamp",
+        { scale: 1.8, opacity: 0, rotation: -24 },
+        { scale: 1, opacity: 1, rotation: -12, duration: 0.3, ease: "power3.out" },
+        6.35
+      );
+
+      // BẮT BUỘC: Đăng ký timeline paused vào window.__timelines["scene-s07"]
+      window.__timelines["scene-s07"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

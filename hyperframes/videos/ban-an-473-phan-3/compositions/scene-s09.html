@@ -1,0 +1,462 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap"
+    />
+      <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #0d0e10;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: #e7e3d9;
+      }
+
+      /* Video clip styling */
+      .bg-video {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center;
+        will-change: transform;
+      }
+
+      /* Base clip container cho overlays */
+      .clip {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        pointer-events: none;
+      }
+
+      /* Nền Spotlight: dark radial vignette chuẩn cho cảnh cảnh báo/hệ quả */
+      .spotlight-vignette {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background: radial-gradient(
+          circle at 50% 48%,
+          rgba(20, 20, 20, 0.05) 30%,
+          rgba(20, 20, 20, 0.55) 75%,
+          rgba(20, 20, 20, 0.88) 100%
+        );
+        z-index: 15;
+      }
+
+      /* Lưới ô vuông 84px chuẩn Vox DNA */
+      .grid-layer {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background-image:
+          linear-gradient(to right, rgba(20, 20, 20, 0.12) 1.5px, transparent 1.5px),
+          linear-gradient(to bottom, rgba(20, 20, 20, 0.12) 1.5px, transparent 1.5px);
+        background-size: 84px 84px;
+        z-index: 16;
+        opacity: 0.75;
+      }
+
+      /* Lớp grain 18% multiply */
+      .grain-overlay {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        opacity: 0.18;
+        mix-blend-mode: multiply;
+        z-index: 17;
+        background: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+      }
+
+      /* Top Header Tag - Safe zone top: 160px -> top: 176px */
+      .header-tag-wrap {
+        position: absolute;
+        top: 176px;
+        left: 0;
+        right: 0;
+        display: flex;
+        justify-content: center;
+        z-index: 30;
+        pointer-events: none;
+      }
+      .header-tag {
+        background: #141414;
+        color: #f7f4ec;
+        font-weight: 700;
+        font-size: 22px;
+        letter-spacing: 3px;
+        text-transform: uppercase;
+        padding: 12px 28px;
+        border-radius: 6px;
+        border-left: 6px solid #ff6a1a;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+      }
+
+      /* Shot 1: Question Icon badge */
+      .question-badge {
+        position: absolute;
+        top: 720px;
+        left: 90px;
+        z-index: 35;
+        will-change: transform, opacity;
+      }
+
+      /* Shot 1: Label "Bán hàng online?" */
+      .label-online-card {
+        position: absolute;
+        top: 860px;
+        left: 90px;
+        background: #f5f0e4;
+        color: #141414;
+        padding: 18px 32px;
+        border: 3.5px solid #141414;
+        box-shadow: 8px 8px 0px #ff6a1a;
+        border-radius: 12px;
+        z-index: 35;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        will-change: transform, opacity;
+      }
+      .label-online-text {
+        font-weight: 900;
+        font-size: 38px;
+        letter-spacing: 0.5px;
+      }
+      .label-online-indicator {
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background-color: #ff6a1a;
+      }
+
+      /* Shot 2: Dấu X cam dày đè lên gói Sìn Sú */
+      .cross-wrap {
+        position: absolute;
+        top: 600px;
+        left: 70px;
+        width: 440px;
+        height: 440px;
+        z-index: 34;
+        pointer-events: none;
+      }
+      .cross-svg {
+        width: 100%;
+        height: 100%;
+        filter: drop-shadow(4px 6px 0px rgba(20, 20, 20, 0.65));
+      }
+
+      /* Shot 2: Punch Phrase Card (Safe zone bottom: 460px -> Y max: 1460px) */
+      .punch-card-wrap {
+        position: absolute;
+        left: 60px;
+        right: 60px;
+        top: 1080px;
+        z-index: 40;
+        will-change: transform, opacity;
+      }
+      .punch-card {
+        background: #141414;
+        border: 4px solid #ff6a1a;
+        border-radius: 16px;
+        padding: 34px 40px;
+        box-shadow:
+          12px 12px 0px #ff6a1a,
+          0 24px 50px rgba(0, 0, 0, 0.65);
+      }
+      .punch-eyebrow {
+        color: #ff6a1a;
+        font-weight: 700;
+        font-size: 22px;
+        letter-spacing: 2.5px;
+        text-transform: uppercase;
+        margin-bottom: 12px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .punch-eyebrow::before {
+        content: "";
+        display: inline-block;
+        width: 18px;
+        height: 4px;
+        background: #ff6a1a;
+      }
+      .punch-headline {
+        color: #f7f4ec;
+        font-weight: 900;
+        font-size: 66px;
+        line-height: 1.15;
+        text-transform: uppercase;
+        margin: 0 0 16px 0;
+        letter-spacing: -0.5px;
+      }
+      .punch-sub {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        padding-top: 14px;
+        border-top: 1.5px solid rgba(247, 244, 236, 0.15);
+      }
+      .punch-sub-text {
+        color: #ff6a1a;
+        font-weight: 900;
+        font-size: 32px;
+        letter-spacing: 1px;
+      }
+
+      /* Thanh cam đáy khung hình - Chữ ký thị giác Vox DNA */
+      .brand-bottom-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 12px;
+        background-color: #ff6a1a;
+        z-index: 100;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s09"
+      data-width="1080"
+      data-height="1920"
+      data-duration="8.44"
+      data-layout-allow-overflow="true"
+    >
+      <!-- Shot 1: Video (0s - 5.0s, trimStart: 0s) đặt trực tiếp dưới root để tránh lỗi video_nested_in_timed_element -->
+      <video
+        id="vid-shot1"
+        class="bg-video"
+        data-start="0"
+        data-duration="5.0"
+        data-media-start="0"
+        src="assets/vid-01-sin-su-penal-code-326.mp4"
+        muted
+        playsinline
+      ></video>
+
+      <!-- Shot 2: Video (5.0s - 8.44s, trimStart: 4.5s) -->
+      <video
+        id="vid-shot2"
+        class="bg-video"
+        data-start="5.0"
+        data-duration="3.44"
+        data-media-start="4.5"
+        src="assets/vid-01-sin-su-penal-code-326.mp4"
+        muted
+        playsinline
+      ></video>
+
+      <!-- Lớp phủ ánh sáng & chất liệu Vox -->
+      <div class="spotlight-vignette"></div>
+      <div class="grid-layer"></div>
+      <div class="grain-overlay"></div>
+
+      <!-- Header Tag chung cho toàn cảnh -->
+      <div class="header-tag-wrap" id="header-tag-box">
+        <div class="header-tag">HỒ SƠ VỤ ÁN #473 • ĐẢO CHIỀU NHẬN THỨC</div>
+      </div>
+
+      <!-- Overlays cho Shot 1 (0s - 5.0s) -->
+      <section id="shot1-overlays" class="clip" data-start="0" data-duration="5.0">
+        <!-- Icon question tự vẽ dần -->
+        <div id="badge-question" class="question-badge">
+          <svg width="120" height="120" viewBox="0 0 120 120" fill="none">
+            <rect
+              x="6"
+              y="6"
+              width="108"
+              height="108"
+              rx="22"
+              fill="#F5F0E4"
+              stroke="#141414"
+              stroke-width="5"
+            />
+            <path
+              id="path-question"
+              d="M 44 46 C 44 32, 76 32, 76 46 C 76 57, 60 62, 60 72"
+              stroke="#FF6A1A"
+              stroke-width="9"
+              stroke-linecap="round"
+              fill="none"
+            />
+            <circle id="dot-question" cx="60" cy="88" r="5.5" fill="#FF6A1A" />
+          </svg>
+        </div>
+
+        <!-- Label: Bán hàng online? -->
+        <div id="label-online" class="label-online-card">
+          <span class="label-online-indicator"></span>
+          <span class="label-online-text">Bán hàng online?</span>
+        </div>
+      </section>
+
+      <!-- Overlays cho Shot 2 (5.0s - 8.44s) -->
+      <section id="shot2-overlays" class="clip" data-start="5.0" data-duration="3.44">
+        <!-- Nét cọ cam dày gạch chéo hình chữ X -->
+        <div class="cross-wrap">
+          <svg class="cross-svg" viewBox="0 0 400 400" fill="none">
+            <path
+              id="cross-line-1"
+              d="M 60 60 L 340 340"
+              stroke="#FF6A1A"
+              stroke-width="32"
+              stroke-linecap="square"
+            />
+            <path
+              id="cross-line-2"
+              d="M 340 60 L 60 340"
+              stroke="#FF6A1A"
+              stroke-width="32"
+              stroke-linecap="square"
+            />
+          </svg>
+        </div>
+
+        <!-- Punch phrase card: KHÔNG PHẢI SÌN SÚ! -->
+        <div class="punch-card-wrap" id="punch-card">
+          <div class="punch-card">
+            <div class="punch-eyebrow">ĐÍNH CHÍNH PHÁP LÝ</div>
+            <h1 class="punch-headline">KHÔNG PHẢI SÌN SÚ!</h1>
+            <div class="punch-sub">
+              <!-- Icon ban chuẩn Vox -->
+              <svg width="44" height="44" viewBox="0 0 44 44" fill="none">
+                <circle cx="22" cy="22" r="18" stroke="#FF6A1A" stroke-width="4.5" />
+                <line
+                  x1="9"
+                  y1="9"
+                  x2="35"
+                  y2="35"
+                  stroke="#FF6A1A"
+                  stroke-width="4.5"
+                  stroke-linecap="round"
+                />
+              </svg>
+              <span class="punch-sub-text">ÁP DỤNG ĐIỀU 326 BLHS</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Thanh cam cố định nhận diện thương hiệu -->
+      <div class="brand-bottom-bar"></div>
+    </div>
+
+    <script>
+      // Thiết lập đo độ dài nét vẽ SVG để vẽ dần chuẩn tất định
+      const pathQ = document.getElementById("path-question");
+      if (pathQ) {
+        const lenQ = pathQ.getTotalLength();
+        pathQ.style.strokeDasharray = lenQ;
+        pathQ.style.strokeDashoffset = lenQ;
+      }
+      const line1 = document.getElementById("cross-line-1");
+      const line2 = document.getElementById("cross-line-2");
+      if (line1 && line2) {
+        const l1 = line1.getTotalLength();
+        const l2 = line2.getTotalLength();
+        line1.style.strokeDasharray = l1;
+        line1.style.strokeDashoffset = l1;
+        line2.style.strokeDasharray = l2;
+        line2.style.strokeDashoffset = l2;
+      }
+
+      // Khởi tạo GSAP timeline chính, PAUSED theo quy tắc HyperFrames
+      const tl = gsap.timeline({ paused: true });
+
+      // 1. Header Tag xuất hiện đầu cảnh
+      tl.fromTo(
+        "#header-tag-box",
+        { y: -30, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.55, ease: "power3.out" },
+        0.2,
+      );
+
+      // 2. Shot 1 (0.0s - 5.0s): Camera zoom nhẹ tập trung vào gói bột Sìn Sú
+      tl.fromTo(
+        "#vid-shot1",
+        { scale: 1.05, x: 0 },
+        { scale: 1.24, x: -55, duration: 5.0, ease: "sine.inOut" },
+        0,
+      );
+
+      // 3. Shot 1 - Icon Question (xuất hiện tại 1.70s, hold đến 3.50s)
+      tl.fromTo(
+        "#badge-question",
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.4, ease: "power3.out" },
+        1.7,
+      );
+      if (pathQ) {
+        tl.to("#path-question", { strokeDashoffset: 0, duration: 0.5, ease: "power2.out" }, 1.85);
+      }
+      // Dùng power3.out nghiêm túc, đúng chuẩn style DNA cho chủ đề pháp lý
+      tl.fromTo(
+        "#dot-question",
+        { scale: 0 },
+        { scale: 1, duration: 0.25, ease: "power3.out" },
+        2.25,
+      );
+      tl.to("#badge-question", { opacity: 0, y: -20, duration: 0.35, ease: "power2.in" }, 3.5);
+
+      // 4. Shot 1 - Label "Bán hàng online?" (xuất hiện tại 3.72s, giữ tới gần cut)
+      tl.fromTo(
+        "#label-online",
+        { y: 35, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.42, ease: "power3.out" },
+        3.72,
+      );
+      tl.to("#label-online", { opacity: 0, scale: 0.95, duration: 0.25, ease: "power2.in" }, 4.75);
+
+      // 5. Shot 2 (5.0s - 8.44s): Cut sang búa thẩm phán giáng mạnh
+      tl.fromTo(
+        "#vid-shot2",
+        { scale: 1.0 },
+        { scale: 1.14, duration: 3.44, ease: "power2.out" },
+        5.0,
+      );
+
+      // Dấu X cam gạch chéo gói Sìn Sú vẽ dứt khoát tại thời điểm búa giáng
+      if (line1 && line2) {
+        tl.to("#cross-line-1", { strokeDashoffset: 0, duration: 0.22, ease: "power3.out" }, 5.42);
+        tl.to("#cross-line-2", { strokeDashoffset: 0, duration: 0.22, ease: "power3.out" }, 5.56);
+      }
+
+      // 6. Punch phrase card giáng mạnh dứt khoát với impact tối đa tại 6.20s (giữ 2.24s > 1.6s)
+      tl.fromTo(
+        "#punch-card",
+        { scale: 0.7, opacity: 0, y: 50 },
+        { scale: 1.0, opacity: 1, y: 0, duration: 0.48, ease: "power4.out" },
+        6.2,
+      );
+
+      // Đăng ký timeline cho HyperFrames seek runtime
+      window.__timelines["scene-s09"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

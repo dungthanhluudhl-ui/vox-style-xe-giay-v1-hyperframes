@@ -1,0 +1,1288 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap"
+    />
+      <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        padding: 0;
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+        background-color: #e7e3d9;
+        color: #141414;
+        font-family: "Be Vietnam Pro", -apple-system, BlinkMacSystemFont, sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+
+      .clip {
+        position: absolute;
+        inset: 0;
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+      }
+
+      #camera {
+        position: absolute;
+        inset: 0;
+        width: 1080px;
+        height: 1920px;
+        transform-origin: 50% 50%;
+        will-change: transform;
+      }
+
+      #stage {
+        position: absolute;
+        inset: 0;
+        width: 1080px;
+        height: 1920px;
+        will-change: transform;
+      }
+
+      /* === BACKGROUND: CHART VARIANT === */
+      .bg-layer {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+      }
+
+      .grid-vertical {
+        position: absolute;
+        inset: 0;
+        background-image: repeating-linear-gradient(
+          to right,
+          rgba(20, 20, 20, 0.08) 0px,
+          rgba(20, 20, 20, 0.08) 1.5px,
+          transparent 1.5px,
+          transparent 84px
+        );
+      }
+
+      .chart-line {
+        position: absolute;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background-color: rgba(20, 20, 20, 0.28);
+      }
+      .chart-line-1 {
+        top: 384px;
+      }
+      .chart-line-2 {
+        top: 768px;
+      }
+      .chart-line-3 {
+        top: 1152px;
+      }
+      .chart-line-4 {
+        top: 1536px;
+      }
+
+      .chart-tick {
+        position: absolute;
+        left: 0;
+        width: 22px;
+        height: 8px;
+        background-color: #ff6a1a;
+      }
+      .chart-tick-1 {
+        top: 381px;
+      }
+      .chart-tick-2 {
+        top: 765px;
+      }
+      .chart-tick-3 {
+        top: 1149px;
+      }
+      .chart-tick-4 {
+        top: 1533px;
+      }
+
+      .grain-overlay {
+        position: absolute;
+        inset: 0;
+        opacity: 0.18;
+        mix-blend-mode: multiply;
+        pointer-events: none;
+        background-image: radial-gradient(rgba(20, 20, 20, 0.65) 1px, transparent 0);
+        background-size: 8px 8px;
+      }
+
+      #spotlight-overlay {
+        position: absolute;
+        inset: 0;
+        opacity: 0;
+        background: radial-gradient(
+          circle at 50% 48%,
+          rgba(231, 227, 217, 0.1) 0%,
+          rgba(20, 20, 20, 0.55) 60%,
+          rgba(20, 20, 20, 0.92) 100%
+        );
+        mix-blend-mode: multiply;
+        pointer-events: none;
+      }
+
+      #cut-flash {
+        position: absolute;
+        inset: 0;
+        background: #141414;
+        opacity: 0;
+        pointer-events: none;
+        z-index: 120;
+      }
+
+      #bottom-orange-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 1080px;
+        height: 14px;
+        background-color: #ff6a1a;
+        z-index: 1000;
+      }
+
+      /* === HEADER TAG === */
+      .header-tag {
+        position: absolute;
+        top: 180px;
+        left: 60px;
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        background: #141414;
+        color: #f7f4ec;
+        padding: 10px 24px;
+        border-radius: 6px;
+        font-size: 24px;
+        font-weight: 900;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        box-shadow: 6px 6px 0px rgba(20, 20, 20, 0.2);
+        z-index: 80;
+      }
+
+      .header-pip {
+        width: 12px;
+        height: 12px;
+        background-color: #ff6a1a;
+        border-radius: 2px;
+      }
+
+      /* === SHOT 1: THE INITIAL PACKAGE CARD === */
+      #package-card {
+        position: absolute;
+        top: 480px;
+        left: 200px;
+        width: 680px;
+        background-color: #f5f0e4;
+        border: 5px solid #141414;
+        border-radius: 14px;
+        padding: 40px 48px;
+        box-shadow: 16px 16px 0px #ff7a1a;
+        will-change: transform, opacity;
+        z-index: 40;
+        opacity: 0;
+      }
+
+      .package-badge {
+        display: inline-block;
+        background-color: #ff6a1a;
+        color: #141414;
+        font-size: 22px;
+        font-weight: 900;
+        padding: 6px 16px;
+        border-radius: 4px;
+        text-transform: uppercase;
+        margin-bottom: 24px;
+      }
+
+      .package-row {
+        display: flex;
+        align-items: center;
+        gap: 32px;
+      }
+
+      .package-icon-svg {
+        width: 140px;
+        height: 140px;
+        flex-shrink: 0;
+      }
+
+      .package-info {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .package-price {
+        font-size: 64px;
+        font-weight: 900;
+        line-height: 1.1;
+        color: #141414;
+      }
+
+      .package-sub {
+        margin-top: 10px;
+        font-size: 26px;
+        font-weight: 700;
+        color: #2b2b2b;
+      }
+
+      /* === SPROUTING ZALO NETWORK === */
+      #network-layer {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        z-index: 30;
+      }
+
+      .network-svg {
+        position: absolute;
+        inset: 0;
+        width: 1080px;
+        height: 1920px;
+      }
+
+      .conn-line {
+        stroke: #141414;
+        stroke-width: 4;
+        stroke-dasharray: 8 8;
+        fill: none;
+      }
+
+      .zalo-node {
+        position: absolute;
+        width: 420px;
+        background-color: #f5f0e4;
+        border: 4px solid #141414;
+        border-radius: 12px;
+        padding: 16px 22px;
+        box-shadow: 8px 8px 0px rgba(20, 20, 20, 0.25);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        will-change: transform, opacity;
+        opacity: 0;
+      }
+
+      .node-left {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+      }
+
+      .node-icon {
+        width: 36px;
+        height: 36px;
+        background-color: #141414;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #ff6a1a;
+        font-size: 20px;
+        font-weight: 900;
+      }
+
+      .node-name {
+        font-size: 22px;
+        font-weight: 900;
+        color: #141414;
+      }
+
+      .node-badge {
+        background-color: #ff6a1a;
+        color: #141414;
+        font-size: 19px;
+        font-weight: 900;
+        padding: 4px 10px;
+        border-radius: 6px;
+        white-space: nowrap;
+      }
+
+      #node-1 {
+        top: 310px;
+        left: 60px;
+      }
+      #node-2 {
+        top: 310px;
+        right: 60px;
+      }
+      #node-3 {
+        top: 560px;
+        left: 60px;
+      }
+      #node-4 {
+        top: 560px;
+        right: 60px;
+      }
+      #node-5 {
+        top: 810px;
+        left: 60px;
+      }
+      #node-6 {
+        top: 810px;
+        right: 60px;
+      }
+
+      /* === SHOT 2: DIGITAL DELUGE === */
+      #deluge-layer {
+        position: absolute;
+        top: 420px;
+        left: 90px;
+        right: 90px;
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+        z-index: 35;
+        will-change: transform, opacity;
+        opacity: 0;
+      }
+
+      .data-card {
+        background-color: #f5f0e4;
+        border: 4px solid #141414;
+        border-radius: 10px;
+        padding: 16px 26px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        box-shadow: 10px 10px 0px rgba(20, 20, 20, 0.3);
+        will-change: transform, opacity;
+        opacity: 0;
+      }
+
+      .data-file-left {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
+
+      .file-pill {
+        background-color: #141414;
+        color: #f7f4ec;
+        font-size: 18px;
+        font-weight: 900;
+        padding: 4px 10px;
+        border-radius: 4px;
+        letter-spacing: 0.5px;
+      }
+
+      .file-title {
+        font-size: 24px;
+        font-weight: 900;
+        color: #141414;
+      }
+
+      .file-size-badge {
+        background-color: #141414;
+        color: #ff6a1a;
+        font-size: 19px;
+        font-weight: 900;
+        padding: 4px 12px;
+        border-radius: 6px;
+        letter-spacing: 0.5px;
+      }
+
+      #data-counter-box {
+        margin-top: 16px;
+        background-color: #141414;
+        border: 4px solid #ff6a1a;
+        border-radius: 12px;
+        padding: 26px 36px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        box-shadow: 14px 14px 0px rgba(255, 106, 26, 0.4);
+        opacity: 0;
+      }
+
+      .counter-label-wrap {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .counter-tag {
+        font-size: 20px;
+        font-weight: 900;
+        color: #ff6a1a;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+
+      .counter-sub {
+        font-size: 30px;
+        font-weight: 900;
+        color: #f7f4ec;
+      }
+
+      .counter-number {
+        font-size: 72px;
+        font-weight: 900;
+        color: #ff6a1a;
+        line-height: 1;
+      }
+
+      /* === OVERLAYS: LABELS & ICONS === */
+      .overlay-label-container {
+        position: absolute;
+        left: 0;
+        right: 0;
+        display: flex;
+        justify-content: center;
+        pointer-events: none;
+        z-index: 90;
+      }
+
+      .vox-label-pill {
+        background-color: #ff6a1a;
+        color: #141414;
+        font-size: 30px;
+        font-weight: 900;
+        padding: 12px 34px;
+        border-radius: 8px;
+        border: 3px solid #141414;
+        box-shadow: 6px 6px 0px #141414;
+        text-transform: uppercase;
+        will-change: transform, opacity;
+        opacity: 0;
+      }
+
+      #label-pack-wrap {
+        top: 980px;
+      }
+      #label-clips-wrap {
+        top: 310px;
+      }
+
+      .vox-icon-badge {
+        position: absolute;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #141414;
+        border: 4px solid #ff6a1a;
+        border-radius: 50%;
+        box-shadow: 8px 8px 0px rgba(20, 20, 20, 0.4);
+        will-change: transform, opacity;
+        z-index: 95;
+        opacity: 0;
+      }
+
+      #icon-crowd-box {
+        top: 1040px;
+        left: 490px;
+        width: 100px;
+        height: 100px;
+      }
+
+      #icon-fall-stamp {
+        top: 560px;
+        left: 480px;
+        width: 120px;
+        height: 120px;
+        background-color: #ff6a1a;
+        border-color: #141414;
+        box-shadow: 8px 8px 0px #141414;
+        z-index: 520;
+      }
+
+      /* === PUNCH PHRASES === */
+      #punch-groups-container {
+        position: absolute;
+        top: 680px;
+        left: 80px;
+        right: 80px;
+        display: flex;
+        justify-content: center;
+        pointer-events: none;
+        z-index: 110;
+        will-change: transform, opacity;
+        opacity: 0;
+      }
+
+      .punch-groups-box {
+        width: 100%;
+        background-color: #141414;
+        border-left: 16px solid #ff6a1a;
+        border-radius: 12px;
+        padding: 30px 48px;
+        box-shadow: 18px 18px 0px #ff7a1a;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .punch-groups-tag {
+        color: #ff6a1a;
+        font-size: 24px;
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        margin-bottom: 8px;
+      }
+
+      .punch-groups-text {
+        color: #f7f4ec;
+        font-size: 72px;
+        font-weight: 900;
+        line-height: 1.1;
+        letter-spacing: -1px;
+      }
+
+      #punch-prison-container {
+        position: absolute;
+        top: 720px;
+        left: 60px;
+        right: 60px;
+        display: flex;
+        justify-content: center;
+        pointer-events: none;
+        z-index: 500;
+        will-change: transform, opacity;
+        opacity: 0;
+      }
+
+      .punch-prison-box {
+        width: 100%;
+        background-color: #ff6a1a;
+        border: 7px solid #141414;
+        border-radius: 16px;
+        padding: 38px 44px;
+        box-shadow: 20px 20px 0px #141414;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+      }
+
+      .punch-prison-tag {
+        background-color: #141414;
+        color: #f7f4ec;
+        font-size: 24px;
+        font-weight: 900;
+        padding: 8px 24px;
+        border-radius: 6px;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        margin-bottom: 16px;
+      }
+
+      .punch-prison-text {
+        color: #141414;
+        font-size: 86px;
+        font-weight: 900;
+        line-height: 1.05;
+        letter-spacing: -2px;
+      }
+
+      .punch-prison-sub {
+        margin-top: 14px;
+        color: #141414;
+        font-size: 28px;
+        font-weight: 900;
+      }
+
+      /* === PRISON BARS LAYER === */
+      #prison-layer {
+        position: absolute;
+        inset: 0;
+        width: 1080px;
+        height: 1920px;
+        pointer-events: none;
+        z-index: 400;
+      }
+
+      .prison-bar {
+        position: absolute;
+        top: 0;
+        width: 72px;
+        height: 1920px;
+        background: #141414;
+        box-shadow: 12px 0px 0px #ff7a1a;
+        will-change: transform;
+        opacity: 0;
+      }
+
+      .prison-bar::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 12px;
+        width: 10px;
+        height: 100%;
+        background-color: #454545;
+      }
+
+      #bar-1 {
+        left: 210px;
+      }
+      #bar-2 {
+        left: 504px;
+      }
+      #bar-3 {
+        left: 798px;
+      }
+
+      .crossbar {
+        position: absolute;
+        left: 0;
+        width: 1080px;
+        height: 48px;
+        background: #141414;
+        border-top: 4px solid #454545;
+        border-bottom: 4px solid #ff7a1a;
+        will-change: transform, opacity;
+        opacity: 0;
+      }
+      .crossbar-top {
+        top: 380px;
+      }
+      .crossbar-bottom {
+        top: 1400px;
+      }
+
+      .rivet {
+        position: absolute;
+        width: 26px;
+        height: 26px;
+        background-color: #f7f4ec;
+        border: 4px solid #141414;
+        border-radius: 50%;
+        top: 11px;
+      }
+      .rivet-1 {
+        left: 233px;
+      }
+      .rivet-2 {
+        left: 527px;
+      }
+      .rivet-3 {
+        left: 821px;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s28"
+      data-start="0"
+      data-width="1080"
+      data-height="1920"
+      data-duration="10.63"
+    >
+      <section
+        id="scene-s28"
+        class="clip"
+        data-start="0"
+        data-duration="10.63"
+        data-layout-allow-overflow="true"
+        data-layout-allow-occlusion="true"
+        data-layout-allow-overlap="true"
+      >
+        <div id="camera">
+          <div id="stage">
+            <!-- Background Layer -->
+            <div class="bg-layer">
+              <div class="grid-vertical"></div>
+              <div class="chart-line chart-line-1"></div>
+              <div class="chart-line chart-line-2"></div>
+              <div class="chart-line chart-line-3"></div>
+              <div class="chart-line chart-line-4"></div>
+              <div class="chart-tick chart-tick-1"></div>
+              <div class="chart-tick chart-tick-2"></div>
+              <div class="chart-tick chart-tick-3"></div>
+              <div class="chart-tick chart-tick-4"></div>
+            </div>
+
+            <div class="grain-overlay"></div>
+            <div id="spotlight-overlay"></div>
+            <div id="cut-flash"></div>
+
+            <div class="header-tag" data-layout-allow-overlap="true">
+              <div class="header-pip"></div>
+              <span>Chuỗi Hệ Quả Pháp Lý</span>
+            </div>
+
+            <!-- SHOT 1: THE INITIAL PACKAGE -->
+            <div
+              id="package-card"
+              data-layout-allow-occlusion="true"
+              data-layout-allow-overlap="true"
+            >
+              <div class="package-badge">Khởi đầu giao dịch</div>
+              <div class="package-row">
+                <svg class="package-icon-svg" viewBox="0 0 140 140" fill="none">
+                  <polygon
+                    points="70,15 125,45 70,75 15,45"
+                    fill="#E7E3D9"
+                    stroke="#141414"
+                    stroke-width="6"
+                    stroke-linejoin="round"
+                  />
+                  <polygon
+                    points="15,45 70,75 70,125 15,95"
+                    fill="#D8D3C5"
+                    stroke="#141414"
+                    stroke-width="6"
+                    stroke-linejoin="round"
+                  />
+                  <polygon
+                    points="125,45 70,75 70,125 125,95"
+                    fill="#C8C2B2"
+                    stroke="#141414"
+                    stroke-width="6"
+                    stroke-linejoin="round"
+                  />
+                  <polygon points="50,26 90,47 90,62 50,40" fill="#FF6A1A" opacity="0.95" />
+                  <line
+                    x1="70"
+                    y1="75"
+                    x2="70"
+                    y2="125"
+                    stroke="#FF6A1A"
+                    stroke-width="6"
+                    stroke-linecap="round"
+                  />
+                </svg>
+                <div class="package-info">
+                  <div class="package-price">Vài Trăm Nghìn</div>
+                  <div class="package-sub">1 Gói Hàng Ban Đầu</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- SPROUTING ZALO NETWORK -->
+            <div
+              id="network-layer"
+              data-layout-allow-occlusion="true"
+              data-layout-allow-overlap="true"
+            >
+              <svg class="network-svg">
+                <path class="conn-line" id="line-1" d="M 400 520 L 270 380" />
+                <path class="conn-line" id="line-2" d="M 680 520 L 810 380" />
+                <path class="conn-line" id="line-3" d="M 330 600 L 270 630" />
+                <path class="conn-line" id="line-4" d="M 750 600 L 810 630" />
+                <path class="conn-line" id="line-5" d="M 400 680 L 270 880" />
+                <path class="conn-line" id="line-6" d="M 680 680 L 810 880" />
+              </svg>
+
+              <div
+                class="zalo-node"
+                id="node-1"
+                data-layout-allow-occlusion="true"
+                data-layout-allow-overlap="true"
+              >
+                <div class="node-left">
+                  <div class="node-icon">Z</div>
+                  <div class="node-name">Nhóm VIP Kín #01</div>
+                </div>
+                <div class="node-badge">350 TV</div>
+              </div>
+
+              <div
+                class="zalo-node"
+                id="node-2"
+                data-layout-allow-occlusion="true"
+                data-layout-allow-overlap="true"
+              >
+                <div class="node-left">
+                  <div class="node-icon">Z</div>
+                  <div class="node-name">Hội Chia Sẻ #04</div>
+                </div>
+                <div class="node-badge">520 TV</div>
+              </div>
+
+              <div
+                class="zalo-node"
+                id="node-3"
+                data-layout-allow-occlusion="true"
+                data-layout-allow-overlap="true"
+              >
+                <div class="node-left">
+                  <div class="node-icon">Z</div>
+                  <div class="node-name">Kho Clip Dữ Liệu</div>
+                </div>
+                <div class="node-badge">840 TV</div>
+              </div>
+
+              <div
+                class="zalo-node"
+                id="node-4"
+                data-layout-allow-occlusion="true"
+                data-layout-allow-overlap="true"
+              >
+                <div class="node-left">
+                  <div class="node-icon">Z</div>
+                  <div class="node-name">Kênh Phát Tán 02</div>
+                </div>
+                <div class="node-badge">690 TV</div>
+              </div>
+
+              <div
+                class="zalo-node"
+                id="node-5"
+                data-layout-allow-occlusion="true"
+                data-layout-allow-overlap="true"
+              >
+                <div class="node-left">
+                  <div class="node-icon">Z</div>
+                  <div class="node-name">Mạng Lưới Miền Bắc</div>
+                </div>
+                <div class="node-badge">1.200 TV</div>
+              </div>
+
+              <div
+                class="zalo-node"
+                id="node-6"
+                data-layout-allow-occlusion="true"
+                data-layout-allow-overlap="true"
+              >
+                <div class="node-left">
+                  <div class="node-icon">Z</div>
+                  <div class="node-name">Nhóm Tổng Toàn Quốc</div>
+                </div>
+                <div class="node-badge">2.500 TV</div>
+              </div>
+            </div>
+
+            <!-- SHOT 2: DIGITAL DELUGE -->
+            <div
+              id="deluge-layer"
+              data-layout-allow-occlusion="true"
+              data-layout-allow-overlap="true"
+            >
+              <div
+                class="data-card"
+                id="file-1"
+                data-layout-allow-occlusion="true"
+                data-layout-allow-overlap="true"
+              >
+                <div class="data-file-left">
+                  <div class="file-pill">MP4</div>
+                  <div class="file-title">Tập_tin_phát_tán_0812.mp4</div>
+                </div>
+                <div class="file-size-badge">450 MB</div>
+              </div>
+
+              <div
+                class="data-card"
+                id="file-2"
+                data-layout-allow-occlusion="true"
+                data-layout-allow-overlap="true"
+              >
+                <div class="data-file-left">
+                  <div class="file-pill">ZIP</div>
+                  <div class="file-title">Kho_dữ_liệu_nhạy_cảm.rar</div>
+                </div>
+                <div class="file-size-badge">3.8 GB</div>
+              </div>
+
+              <div
+                class="data-card"
+                id="file-3"
+                data-layout-allow-occlusion="true"
+                data-layout-allow-overlap="true"
+              >
+                <div class="data-file-left">
+                  <div class="file-pill">MOV</div>
+                  <div class="file-title">Giao_dịch_nội_bộ_clip.mov</div>
+                </div>
+                <div class="file-size-badge">820 MB</div>
+              </div>
+
+              <div
+                id="data-counter-box"
+                data-layout-allow-occlusion="true"
+                data-layout-allow-overlap="true"
+              >
+                <div class="counter-label-wrap">
+                  <div class="counter-tag">Khối Lượng Phát Tán</div>
+                  <div class="counter-sub">Hàng Nghìn Nội Dung</div>
+                </div>
+                <div class="counter-number">+8.500</div>
+              </div>
+            </div>
+
+            <!-- OVERLAYS -->
+            <div class="overlay-label-container" id="label-pack-wrap">
+              <div class="vox-label-pill" id="label-pack" data-layout-allow-overlap="true">
+                Gói vài trăm nghìn
+              </div>
+            </div>
+
+            <div class="overlay-label-container" id="label-clips-wrap">
+              <div class="vox-label-pill" id="label-clips" data-layout-allow-overlap="true">
+                Hàng nghìn clip tải
+              </div>
+            </div>
+
+            <div class="vox-icon-badge" id="icon-crowd-box" data-layout-allow-overlap="true">
+              <svg width="56" height="56" viewBox="0 0 56 56" fill="none">
+                <circle cx="28" cy="18" r="7" fill="#FF6A1A" />
+                <path
+                  d="M16 38 C16 31 21 28 28 28 C35 28 40 31 40 38"
+                  stroke="#FF6A1A"
+                  stroke-width="4"
+                  stroke-linecap="round"
+                />
+                <circle cx="14" cy="22" r="5" fill="#F7F4EC" opacity="0.8" />
+                <path
+                  d="M6 40 C6 35 10 32 15 32"
+                  stroke="#F7F4EC"
+                  stroke-width="3"
+                  stroke-linecap="round"
+                  opacity="0.8"
+                />
+                <circle cx="42" cy="22" r="5" fill="#F7F4EC" opacity="0.8" />
+                <path
+                  d="M50 40 C50 35 46 32 41 32"
+                  stroke="#F7F4EC"
+                  stroke-width="3"
+                  stroke-linecap="round"
+                  opacity="0.8"
+                />
+              </svg>
+            </div>
+
+            <!-- PUNCH 1: HÀNG TRĂM NHÓM -->
+            <div
+              id="punch-groups-container"
+              data-layout-allow-occlusion="true"
+              data-layout-allow-overlap="true"
+            >
+              <div class="punch-groups-box">
+                <div class="punch-groups-tag">Quy Mô Leo Thang</div>
+                <div class="punch-groups-text">HÀNG TRĂM NHÓM</div>
+              </div>
+            </div>
+
+            <!-- PRISON BARS LAYER -->
+            <div
+              id="prison-layer"
+              data-layout-allow-overflow="true"
+              data-layout-allow-occlusion="true"
+              data-layout-allow-overlap="true"
+            >
+              <div class="prison-bar" id="bar-1"></div>
+              <div class="prison-bar" id="bar-2"></div>
+              <div class="prison-bar" id="bar-3"></div>
+              <div class="crossbar crossbar-top">
+                <div class="rivet rivet-1"></div>
+                <div class="rivet rivet-2"></div>
+                <div class="rivet rivet-3"></div>
+              </div>
+              <div class="crossbar crossbar-bottom">
+                <div class="rivet rivet-1"></div>
+                <div class="rivet rivet-2"></div>
+                <div class="rivet rivet-3"></div>
+              </div>
+            </div>
+
+            <!-- PUNCH 2: BA BẢN ÁN TÙ -->
+            <div
+              id="punch-prison-container"
+              data-layout-allow-occlusion="true"
+              data-layout-allow-overlap="true"
+            >
+              <div class="punch-prison-box">
+                <div class="punch-prison-tag">KẾT CỤC TẤT YẾU</div>
+                <div class="punch-prison-text">BA BẢN ÁN TÙ</div>
+                <div class="punch-prison-sub">Chấm Dứt Hoàn Toàn Mạng Lưới</div>
+              </div>
+            </div>
+
+            <!-- ICON FALL / PADLOCK -->
+            <div class="vox-icon-badge" id="icon-fall-stamp" data-layout-allow-overlap="true">
+              <svg width="68" height="68" viewBox="0 0 68 68" fill="none">
+                <rect
+                  x="16"
+                  y="28"
+                  width="36"
+                  height="30"
+                  rx="6"
+                  fill="#141414"
+                  stroke="#141414"
+                  stroke-width="4"
+                />
+                <path
+                  d="M24 28 V18 C24 12.5 28.5 8 34 8 C39.5 8 44 12.5 44 18 V28"
+                  stroke="#141414"
+                  stroke-width="6"
+                  stroke-linecap="round"
+                />
+                <circle cx="34" cy="41" r="4" fill="#FF6A1A" />
+                <line
+                  x1="34"
+                  y1="45"
+                  x2="34"
+                  y2="50"
+                  stroke="#FF6A1A"
+                  stroke-width="4"
+                  stroke-linecap="round"
+                />
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <div id="bottom-orange-bar"></div>
+      </section>
+    </div>
+
+    <!-- GSAP Seekable Orchestration Timeline -->
+    <script>
+      // 1. Initial visual setup
+      gsap.set("#package-card", { scale: 0, opacity: 0, y: -260, rotation: -6 });
+      gsap.set("#label-pack", { scale: 0, opacity: 0 });
+      gsap.set(".zalo-node", { scale: 0, opacity: 0 });
+      gsap.set("#punch-groups-container", { scale: 0.8, opacity: 0 });
+      gsap.set("#icon-crowd-box", { scale: 0, opacity: 0 });
+
+      gsap.set("#deluge-layer", { opacity: 0 });
+      gsap.set(".data-card", { x: -60, opacity: 0 });
+      gsap.set("#data-counter-box", { scale: 0.85, opacity: 0 });
+      gsap.set("#label-clips", { scale: 0, opacity: 0 });
+
+      gsap.set("#bar-1", { y: -1920, opacity: 0 });
+      gsap.set("#bar-2", { y: -1920, opacity: 0 });
+      gsap.set("#bar-3", { y: -1920, opacity: 0 });
+      gsap.set(".crossbar", { scaleX: 0, opacity: 0 });
+      gsap.set("#punch-prison-container", { scale: 0.4, opacity: 0, rotation: -3 });
+      gsap.set("#icon-fall-stamp", { scale: 0, opacity: 0 });
+
+      // Measure SVG dashed lines
+      const connLines = [
+        document.getElementById("line-1"),
+        document.getElementById("line-2"),
+        document.getElementById("line-3"),
+        document.getElementById("line-4"),
+        document.getElementById("line-5"),
+        document.getElementById("line-6"),
+      ];
+
+      connLines.forEach((p) => {
+        if (p && p.getTotalLength) {
+          const len = Math.ceil(p.getTotalLength());
+          p.style.strokeDasharray = `${len}`;
+          p.style.strokeDashoffset = `${len}`;
+        }
+      });
+
+      // 2. Initialize master paused timeline
+      const tl = gsap.timeline({ paused: true });
+
+      // ==========================================
+      // BEAT 1: GÓI HÀNG BAN ĐẦU (0.0s - 3.2s)
+      // ==========================================
+      tl.to(
+        "#package-card",
+        {
+          y: 0,
+          scale: 1,
+          opacity: 1,
+          rotation: 0,
+          duration: 0.75,
+          ease: "power3.out",
+        },
+        0.2,
+      );
+
+      tl.to("#package-card", { rotation: 2.2, duration: 0.2, ease: "sine.inOut" }, 0.95);
+      tl.to("#package-card", { rotation: 0, duration: 0.18, ease: "sine.out" }, 1.15);
+
+      tl.to("#camera", { scale: 1.05, duration: 4.6, ease: "power1.out" }, 0.2);
+
+      // Overlay Label: "Gói vài trăm nghìn" at t = 1.14s, hold 2.0s
+      tl.to("#label-pack", { scale: 1, opacity: 1, duration: 0.38, ease: "power3.out" }, 1.14);
+      tl.to("#label-pack", { opacity: 0, scale: 0.85, duration: 0.25, ease: "power2.in" }, 3.14);
+
+      // ==========================================
+      // BEAT 2: PHÌNH TO THÀNH MẠNG LƯỚI ZALO (3.2s - 4.85s)
+      // ==========================================
+      tl.to(
+        "#package-card",
+        {
+          y: -190,
+          scale: 0.65,
+          duration: 0.65,
+          ease: "power3.inOut",
+        },
+        3.2,
+      );
+
+      connLines.forEach((p, idx) => {
+        if (p) {
+          tl.to(
+            p,
+            { strokeDashoffset: 0, duration: 0.5, ease: "power2.out" },
+            3.35 + idx * 0.05,
+          );
+        }
+      });
+
+      tl.to(
+        ".zalo-node",
+        {
+          scale: 1,
+          opacity: 1,
+          duration: 0.42,
+          ease: "power3.out",
+          stagger: 0.08,
+        },
+        3.5,
+      );
+
+      // ==========================================
+      // BEAT 3: PUNCH 1 "HÀNG TRĂM NHÓM" (4.85s - 6.4s)
+      // ==========================================
+      // Clean handoff: fade out network & package card as punch arrives
+      tl.to("#network-layer", { opacity: 0, duration: 0.3, ease: "power2.in" }, 4.75);
+      tl.to("#package-card", { opacity: 0, duration: 0.3, ease: "power2.in" }, 4.75);
+
+      // Punch 1 at t = 4.85s, hold 1.55s (to 6.4s)
+      tl.to(
+        "#punch-groups-container",
+        {
+          scale: 1,
+          opacity: 1,
+          duration: 0.42,
+          ease: "power3.out",
+        },
+        4.85,
+      );
+
+      // Transition cut flash at t = 5.1s
+      tl.to("#cut-flash", { opacity: 0.85, duration: 0.08, ease: "none" }, 5.1);
+      tl.to("#cut-flash", { opacity: 0, duration: 0.22, ease: "power2.out" }, 5.18);
+
+      // Darkening vignette for consequence beat
+      tl.to("#spotlight-overlay", { opacity: 0.88, duration: 0.7, ease: "power2.out" }, 5.1);
+
+      // Chart lines turn urgent
+      tl.to(
+        ".chart-line",
+        { backgroundColor: "rgba(255,106,26,0.45)", duration: 0.5 },
+        5.1,
+      );
+
+      // Camera zooms out for macro scope
+      tl.to("#camera", { scale: 0.96, duration: 3.5, ease: "power2.out" }, 5.1);
+
+      // Overlay Icon: "crowd" at t = 6.2s, hold 1.4s
+      tl.to("#icon-crowd-box", { scale: 1, opacity: 1, duration: 0.35, ease: "power3.out" }, 6.2);
+      tl.to("#icon-crowd-box", { opacity: 0, scale: 0.7, duration: 0.25 }, 7.6);
+
+      // Fade out Punch 1 at 6.4s
+      tl.to(
+        "#punch-groups-container",
+        { opacity: 0, scale: 0.9, duration: 0.25, ease: "power2.in" },
+        6.4,
+      );
+
+      // ==========================================
+      // BEAT 4: DIGITAL DELUGE (6.4s - 8.8s)
+      // ==========================================
+      tl.to("#deluge-layer", { opacity: 1, duration: 0.1 }, 6.45);
+      tl.to(
+        ".data-card",
+        {
+          x: 0,
+          opacity: 1,
+          duration: 0.38,
+          ease: "power3.out",
+          stagger: 0.08,
+        },
+        6.5,
+      );
+
+      tl.to(
+        "#data-counter-box",
+        {
+          scale: 1,
+          opacity: 1,
+          duration: 0.45,
+          ease: "power3.out",
+        },
+        6.8,
+      );
+
+      // Overlay Label: "Hàng nghìn clip tải" at t = 7.59s, hold 2.0s
+      tl.to("#label-clips", { scale: 1, opacity: 1, duration: 0.36, ease: "power3.out" }, 7.59);
+      tl.to("#label-clips", { opacity: 0, scale: 0.85, duration: 0.24 }, 9.59);
+
+      // ==========================================
+      // BEAT 5: BA BẢN ÁN TÙ - SONG SẮT ĐÓNG SẬP (8.8s - 10.63s)
+      // ==========================================
+      // Deluge layer fades out cleanly before bars slam shut
+      tl.to("#deluge-layer", { opacity: 0, duration: 0.15, ease: "power2.in" }, 8.75);
+
+      // Bar 1 slams at 8.80s
+      tl.to("#bar-1", { y: 0, opacity: 1, duration: 0.28, ease: "power4.in" }, 8.8);
+      tl.to("#stage", { y: -16, duration: 0.06, ease: "power2.out" }, 9.08);
+      tl.to("#stage", { y: 0, duration: 0.1, ease: "power2.inOut" }, 9.15);
+
+      // Bar 2 slams at 9.02s
+      tl.to("#bar-2", { y: 0, opacity: 1, duration: 0.28, ease: "power4.in" }, 9.02);
+      tl.to("#stage", { y: 14, duration: 0.06, ease: "power2.out" }, 9.3);
+      tl.to("#stage", { y: 0, duration: 0.1, ease: "power2.inOut" }, 9.37);
+
+      // Bar 3 slams at 9.24s
+      tl.to("#bar-3", { y: 0, opacity: 1, duration: 0.28, ease: "power4.in" }, 9.24);
+      tl.to("#stage", { y: -20, duration: 0.07, ease: "power2.out" }, 9.52);
+      tl.to("#stage", { y: 0, duration: 0.12, ease: "power2.inOut" }, 9.6);
+
+      // Crossbars lock in
+      tl.to(".crossbar", { scaleX: 1, opacity: 1, duration: 0.26, ease: "power3.out" }, 9.45);
+
+      // Punch 2: "BA BẢN ÁN TÙ" at t = 9.84s (holds to end)
+      tl.to(
+        "#punch-prison-container",
+        {
+          scale: 1,
+          opacity: 1,
+          rotation: 0,
+          duration: 0.38,
+          ease: "power4.out",
+        },
+        9.84,
+      );
+
+      // Overlay Icon: "fall" / Padlock stamp at t = 10.2s, hold to end
+      tl.to(
+        "#icon-fall-stamp",
+        {
+          scale: 1,
+          opacity: 1,
+          duration: 0.25,
+          ease: "power4.out",
+        },
+        10.2,
+      );
+
+      // 3. Register master timeline
+      window.__timelines["scene-s28"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

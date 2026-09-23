@@ -1,0 +1,596 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+      *, *::before, *::after {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #E7E3D9;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      /* Khung root tuân thủ HyperFrames contract: width & height 100% */
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: #E7E3D9;
+      }
+
+      /* Lớp nền phong cách Vox: Lưới 84px + Spotlight vignette */
+      .bg-grid {
+        position: absolute;
+        inset: 0;
+        background-size: 84px 84px;
+        background-image:
+          linear-gradient(to right, rgba(20, 20, 20, 0.16) 1.5px, transparent 1.5px),
+          linear-gradient(to bottom, rgba(20, 20, 20, 0.16) 1.5px, transparent 1.5px);
+        pointer-events: none;
+        z-index: 1;
+      }
+
+      .bg-spotlight {
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(circle at 50% 48%, rgba(231, 227, 217, 0.2) 0%, rgba(20, 20, 20, 0.45) 75%, rgba(10, 10, 10, 0.82) 100%);
+        pointer-events: none;
+        z-index: 2;
+      }
+
+      /* Thanh cam nhận diện thương hiệu cố định mép đáy */
+      .brand-bottom-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 10px;
+        background-color: #FF6A1A;
+        z-index: 999;
+      }
+
+      /* Clip layout contract: inset 0, full viewport */
+      .clip {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+
+      /* Khung camera motion */
+      .camera-viewport {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+      }
+
+      .camera-inner {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        will-change: transform;
+      }
+
+      .media-photo {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+
+      /* Khung phát sóng truyền hình (Broadcast HUD) */
+      .broadcast-hud {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        z-index: 10;
+      }
+
+      .corner-bracket {
+        position: absolute;
+        width: 44px;
+        height: 44px;
+        border-color: rgba(247, 244, 236, 0.85);
+        border-style: solid;
+        border-width: 0;
+      }
+      .bracket-tl { top: 160px; left: 50px; border-top-width: 4px; border-left-width: 4px; }
+      .bracket-tr { top: 160px; right: 50px; border-top-width: 4px; border-right-width: 4px; }
+      .bracket-bl { bottom: 460px; left: 50px; border-bottom-width: 4px; border-left-width: 4px; }
+      .bracket-br { bottom: 460px; right: 50px; border-bottom-width: 4px; border-right-width: 4px; }
+
+      /* Thanh trạng thái phát sóng trực tiếp */
+      .live-status-bar {
+        position: absolute;
+        top: 172px;
+        left: 70px;
+        right: 70px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .rec-indicator {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        background: rgba(18, 18, 18, 0.9);
+        padding: 8px 18px;
+        border-radius: 8px;
+        border: 1.5px solid rgba(247, 244, 236, 0.3);
+      }
+
+      .rec-dot {
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background-color: #E02424;
+        box-shadow: 0 0 10px #E02424;
+      }
+
+      .rec-text {
+        color: #F7F4EC;
+        font-weight: 900;
+        font-size: 24px;
+        letter-spacing: 2px;
+      }
+
+      .broadcast-clock {
+        background: rgba(18, 18, 18, 0.9);
+        color: #F7F4EC;
+        font-size: 22px;
+        font-weight: 700;
+        padding: 8px 18px;
+        border-radius: 8px;
+        border: 1.5px solid rgba(247, 244, 236, 0.3);
+        letter-spacing: 1px;
+      }
+
+      /* Nhãn thông tin chuẩn Vox (Label) */
+      .vox-label {
+        position: absolute;
+        background: #141414;
+        color: #F7F4EC;
+        border-radius: 8px;
+        padding: 14px 28px;
+        display: inline-flex;
+        align-items: center;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.55);
+        border: 2px solid #FF6A1A;
+        z-index: 20;
+      }
+
+      .vox-label-text {
+        font-weight: 900;
+        font-size: 32px;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+      }
+
+      /* Punch Phrase: CẢ NƯỚC DÕI THEO */
+      .punch-phrase-card {
+        position: absolute;
+        top: 720px;
+        left: 60px;
+        right: 60px;
+        background: #141414;
+        border-left: 14px solid #FF6A1A;
+        border-radius: 14px;
+        padding: 38px 42px;
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.65);
+        z-index: 25;
+      }
+
+      .punch-phrase-title {
+        color: #F7F4EC;
+        font-size: 66px;
+        font-weight: 900;
+        line-height: 1.2;
+        margin: 0;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+      }
+
+      /* Shot 2: Annotation overlay & Reticle */
+      .annotation-layer {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        z-index: 30;
+      }
+
+      .medical-reticle {
+        position: absolute;
+        top: 480px;
+        left: 360px;
+        width: 80px;
+        height: 80px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .reticle-ring {
+        position: absolute;
+        width: 72px;
+        height: 72px;
+        border: 3px dashed #FF6A1A;
+        border-radius: 50%;
+      }
+
+      .reticle-center {
+        width: 14px;
+        height: 14px;
+        background: #FF6A1A;
+        border-radius: 50%;
+        box-shadow: 0 0 12px #FF6A1A;
+      }
+
+      /* Icon Warning chuẩn hóa từ Icon Vocabulary */
+      /* Căn giữa bằng flex container để tránh xung đột transform với GSAP scale tween */
+      .vox-icon-wrapper {
+        position: absolute;
+        bottom: 520px;
+        left: 0;
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        pointer-events: none;
+        z-index: 40;
+      }
+
+      .vox-icon-badge {
+        background: rgba(20, 20, 20, 0.94);
+        border: 2.5px solid #FF6A1A;
+        border-radius: 20px;
+        padding: 24px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 20px 45px rgba(0, 0, 0, 0.6);
+      }
+
+      /* Chớp cut chuyển cảnh giữa 2 shot */
+      .cut-flash {
+        position: absolute;
+        inset: 0;
+        background: #F7F4EC;
+        pointer-events: none;
+        z-index: 50;
+        opacity: 0;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s09"
+      data-start="0"
+      data-width="1080"
+      data-height="1920"
+      data-duration="11"
+      data-layout-allow-overflow="true"
+    >
+      <!-- Lớp nền đồ hoạ Vox Grid + Spotlight Vignette -->
+      <div class="bg-grid"></div>
+      <div class="bg-spotlight"></div>
+
+      <!-- SHOT 1 (0.0s -> 5.0s): Toàn cảnh phòng đối thoại, khung phát sóng truyền hình trực tiếp -->
+      <section
+        id="shot-1"
+        class="clip"
+        data-start="0"
+        data-duration="5"
+        data-track-index="0"
+        data-layout-allow-overflow="true"
+      >
+        <div class="camera-viewport" data-layout-allow-overflow="true">
+          <div class="camera-inner s1-camera" data-layout-allow-overflow="true">
+            <img
+              class="media-photo"
+              src="assets/img-03-tense-negotiation-confrontation-cutout.jpeg"
+              alt="Cuộc đối thoại truyền hình trực tiếp"
+            />
+          </div>
+        </div>
+
+        <!-- Khung viền REC phát sóng truyền hình -->
+        <div class="broadcast-hud">
+          <div class="corner-bracket bracket-tl"></div>
+          <div class="corner-bracket bracket-tr"></div>
+          <div class="corner-bracket bracket-bl"></div>
+          <div class="corner-bracket bracket-br"></div>
+
+          <div class="live-status-bar">
+            <div class="rec-indicator">
+              <div class="rec-dot s1-rec-dot"></div>
+              <span class="rec-text">REC • LIVE</span>
+            </div>
+            <div class="broadcast-clock">18:32:40 BẮC KINH</div>
+          </div>
+        </div>
+
+        <!-- Label: TRUYỀN HÌNH TRỰC TIẾP (xuất hiện 1.03s, giữ 2.2s -> mờ đi ở 3.23s) -->
+        <div class="vox-label s1-label" style="top: 260px; left: 70px;">
+          <span class="vox-label-text">TRUYỀN HÌNH TRỰC TIẾP</span>
+        </div>
+
+        <!-- Punch Phrase: CẢ NƯỚC DÕI THEO (xuất hiện 2.89s, giữ 1.8s đến 4.69s) -->
+        <div class="punch-phrase-card s1-punch-card">
+          <h1 class="punch-phrase-title">CẢ NƯỚC DÕI THEO</h1>
+        </div>
+      </section>
+
+      <!-- SHOT 2 (5.0s -> 11.0s): Cận cảnh sinh viên đồ bệnh nhân & ống oxy đối mặt quan chức -->
+      <section
+        id="shot-2"
+        class="clip"
+        data-start="5"
+        data-duration="6"
+        data-track-index="0"
+        data-layout-allow-overflow="true"
+      >
+        <div class="camera-viewport" data-layout-allow-overflow="true">
+          <div class="camera-inner s2-camera" data-layout-allow-overflow="true">
+            <img
+              class="media-photo"
+              src="assets/img-03-tense-negotiation-confrontation-cutout.jpeg"
+              alt="Cận cảnh Ngô Khải và ống thở oxy"
+            />
+          </div>
+        </div>
+
+        <!-- Khung HUD phát sóng góc viền tối giản cho shot cận -->
+        <div class="broadcast-hud">
+          <div class="corner-bracket bracket-tl"></div>
+          <div class="corner-bracket bracket-tr"></div>
+          <div class="corner-bracket bracket-bl"></div>
+          <div class="corner-bracket bracket-br"></div>
+        </div>
+
+        <!-- Lớp chỉ thị đồ thị y tế / vết thương (Annotated Visual Language) -->
+        <div class="annotation-layer s2-annotation">
+          <!-- Label: ỐNG OXY & VẾT THƯƠNG (xuất hiện 6.17s, giữ 2.4s -> 8.57s) -->
+          <div class="vox-label s2-label" style="top: 280px; left: 70px;">
+            <span class="vox-label-text">ỐNG OXY &amp; VẾT THƯƠNG</span>
+          </div>
+
+          <!-- SVG đường chỉ thị kết nối nhãn tới vị trí Ngô Khải -->
+          <svg
+            style="position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none;"
+            viewBox="0 0 1080 1920"
+          >
+            <path
+              id="s2-callout-line"
+              d="M 380 340 L 450 430 L 420 500"
+              fill="none"
+              stroke="#FF6A1A"
+              stroke-width="5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+
+          <!-- Điểm hồng tâm nhắm vào vị trí chấn thương -->
+          <div class="medical-reticle s2-reticle">
+            <div class="reticle-ring"></div>
+            <div class="reticle-center"></div>
+          </div>
+        </div>
+
+        <!-- Icon Warning chuẩn hóa từ Icon Vocabulary (xuất hiện 8.50s, giữ 2.2s -> 10.70s) -->
+        <div class="vox-icon-wrapper">
+          <div class="vox-icon-badge s2-warning-icon">
+            <svg width="120" height="120" viewBox="0 0 100 100" fill="none">
+              <!-- Tam giác cảnh báo vẽ từng nét (self-drawing stroke) -->
+              <path
+                id="warning-triangle"
+                d="M 50 14 L 88 82 L 12 82 Z"
+                fill="none"
+                stroke="#FF6A1A"
+                stroke-width="7"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <!-- Dấu chấm than bên trong gom thành nhóm SVG để tween opacity chuẩn xác -->
+              <g id="warning-mark" opacity="0">
+                <line
+                  x1="50"
+                  y1="38"
+                  x2="50"
+                  y2="58"
+                  stroke="#F7F4EC"
+                  stroke-width="7"
+                  stroke-linecap="round"
+                />
+                <circle
+                  cx="50"
+                  cy="70"
+                  r="4.5"
+                  fill="#F7F4EC"
+                />
+              </g>
+            </svg>
+          </div>
+        </div>
+
+        <!-- Chớp sáng chuyển shot -->
+        <div class="cut-flash s2-flash"></div>
+      </section>
+
+      <!-- Dải cam đáy cố định nhận diện thương hiệu -->
+      <div class="brand-bottom-bar"></div>
+    </div>
+
+    <script>
+      // Khởi tạo đo đạc SVG path để hiệu ứng stroke drawing chuẩn xác
+      const calloutPath = document.getElementById("s2-callout-line");
+      if (calloutPath) {
+        const len = calloutPath.getTotalLength();
+        calloutPath.style.strokeDasharray = len + "px";
+        calloutPath.style.strokeDashoffset = len + "px";
+      }
+
+      const warningPath = document.getElementById("warning-triangle");
+      if (warningPath) {
+        const tLen = warningPath.getTotalLength();
+        warningPath.style.strokeDasharray = tLen + "px";
+        warningPath.style.strokeDashoffset = tLen + "px";
+      }
+
+      // Xây dựng GSAP Timeline duy nhất và bắt buộc paused: true
+      const tl = gsap.timeline({ paused: true });
+
+      // ==========================================
+      // CHOREOGRAPHY CHO SHOT 1 (0.0s - 5.0s)
+      // ==========================================
+
+      // 1. Camera Zoom-Through vào căn phòng truyền hình
+      tl.fromTo(
+        "#shot-1 .s1-camera",
+        { scale: 1.4, x: 0, y: -40 },
+        { scale: 1.15, x: 0, y: 0, duration: 1.1, ease: "power2.out" },
+        0
+      );
+      tl.to(
+        "#shot-1 .s1-camera",
+        { scale: 1.08, y: 30, duration: 3.9, ease: "sine.inOut" },
+        1.1
+      );
+
+      // 2. Nhấp nháy đèn REC phát sóng (hữu hạn, kết thúc ở 4.6s trước khi hết shot 1)
+      tl.fromTo(
+        "#shot-1 .s1-rec-dot",
+        { opacity: 1 },
+        { opacity: 0.2, duration: 0.45, repeat: 9, yoyo: true, ease: "steps(1)" },
+        0.1
+      );
+
+      // 3. Label "TRUYỀN HÌNH TRỰC TIẾP" (Xuất hiện 1.03s, giữ 2.2s -> mờ đi ở 3.23s)
+      tl.fromTo(
+        "#shot-1 .s1-label",
+        { opacity: 0, scale: 0.85, y: -25 },
+        { opacity: 1, scale: 1, y: 0, duration: 0.48, ease: "power3.out" },
+        1.03
+      );
+      tl.to(
+        "#shot-1 .s1-label",
+        { opacity: 0, y: -15, duration: 0.35, ease: "power2.in" },
+        3.23
+      );
+
+      // 4. Punch Phrase "CẢ NƯỚC DÕI THEO" (Xuất hiện 2.89s, giữ 1.8s đến 4.69s)
+      tl.fromTo(
+        "#shot-1 .s1-punch-card",
+        { opacity: 0, scale: 0.92, y: 50 },
+        { opacity: 1, scale: 1, y: 0, duration: 0.55, ease: "power3.out" },
+        2.89
+      );
+      tl.to(
+        "#shot-1 .s1-punch-card",
+        { opacity: 0, duration: 0.31, ease: "power2.in" },
+        4.69
+      );
+
+      // ==========================================
+      // CHOREOGRAPHY CHO SHOT 2 (5.0s - 11.0s)
+      // ==========================================
+
+      // 1. Chớp sáng nhanh tạo cú cắt truyền hình sắc bén (Hard Cut)
+      tl.fromTo(
+        "#shot-2 .s2-flash",
+        { opacity: 0.45 },
+        { opacity: 0, duration: 0.22, ease: "power2.out" },
+        5.0
+      );
+
+      // 2. Camera cận cảnh & Pan chậm sang phải phơi bày thế đối lập
+      tl.fromTo(
+        "#shot-2 .s2-camera",
+        { scale: 1.85, x: 90, y: -60 },
+        { scale: 1.78, x: -110, y: -40, duration: 6.0, ease: "power1.inOut" },
+        5.0
+      );
+
+      // 3. Label "ỐNG OXY & VẾT THƯƠNG" xuất hiện ở 6.17s, giữ 2.4s -> mờ đi ở 8.57s
+      tl.fromTo(
+        "#shot-2 .s2-label",
+        { opacity: 0, scale: 0.88, x: -35 },
+        { opacity: 1, scale: 1, x: 0, duration: 0.5, ease: "power3.out" },
+        6.17
+      );
+
+      // 4. Đồ thị chỉ thị y tế vẽ đường stroke nối đến vị trí chấn thương (power3.out chuẩn mực)
+      tl.fromTo(
+        "#shot-2 .s2-reticle",
+        { opacity: 0, scale: 0 },
+        { opacity: 1, scale: 1, duration: 0.4, ease: "power3.out" },
+        6.28
+      );
+      tl.to(
+        "#s2-callout-line",
+        { strokeDashoffset: 0, duration: 0.55, ease: "power2.out" },
+        6.38
+      );
+
+      // Mờ dần nhãn y tế và đồ thị chỉ thị khi hết thời gian giữ (8.57s)
+      tl.to(
+        ["#shot-2 .s2-label", "#shot-2 .s2-annotation svg", "#shot-2 .s2-reticle"],
+        { opacity: 0, duration: 0.3, ease: "power2.in" },
+        8.57
+      );
+
+      // 5. Icon Warning xuất hiện ở 8.50s, giữ 2.2s -> mờ đi ở 10.70s
+      tl.fromTo(
+        "#shot-2 .s2-warning-icon",
+        { opacity: 0, scale: 0.7 },
+        { opacity: 1, scale: 1, duration: 0.45, ease: "power3.out" },
+        8.50
+      );
+
+      // Tự vẽ tam giác cảnh báo SVG
+      tl.to(
+        "#warning-triangle",
+        { strokeDashoffset: 0, duration: 0.55, ease: "power2.out" },
+        8.65
+      );
+      // Fade in dấu chấm than an toàn, không xung đột transform trên SVG elements
+      tl.to(
+        "#warning-mark",
+        { opacity: 1, duration: 0.35, ease: "power2.out" },
+        9.05
+      );
+
+      // Mờ dần icon warning ở 10.70s trước khi kết thúc scene
+      tl.to(
+        "#shot-2 .s2-warning-icon",
+        { opacity: 0, scale: 0.85, duration: 0.3, ease: "power2.in" },
+        10.70
+      );
+
+      // Đăng ký timeline duy nhất vào HyperFrames runtime
+      window.__timelines["scene-s09"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

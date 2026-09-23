@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap">
+      <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #e7e3d9;
+        color: #141414;
+        font-family: "Be Vietnam Pro", system-ui, -apple-system, sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+      .clip {
+        position: absolute;
+        inset: 0;
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+      }
+
+      /* Nền spotlight & lưới ô vuông 84px đặc trưng phong cách Vox */
+      .bg-layer {
+        position: absolute;
+        inset: 0;
+        background-color: #e7e3d9;
+        background-image: 
+          radial-gradient(circle at 50% 42%, rgba(231, 227, 217, 0.15) 0%, rgba(20, 20, 20, 0.28) 100%),
+          linear-gradient(to right, rgba(20, 20, 20, 0.18) 1.5px, transparent 1.5px),
+          linear-gradient(to bottom, rgba(20, 20, 20, 0.18) 1.5px, transparent 1.5px);
+        background-size: 100% 100%, 84px 84px, 84px 84px;
+        pointer-events: none;
+      }
+
+      /* Lớp hạt nhiễu grain mô phỏng chất liệu báo in giấy mộc */
+      .grain-overlay {
+        position: absolute;
+        inset: 0;
+        opacity: 0.18;
+        pointer-events: none;
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+      }
+
+      /* Thanh cam thương hiệu cố định mép đáy */
+      #bottom-brand-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 14px;
+        background-color: #ff6a1a;
+        z-index: 999;
+      }
+
+      /* Khung camera di chuyển */
+      #camera-stage {
+        position: absolute;
+        inset: 0;
+        transform-origin: 50% 45%;
+        will-change: transform;
+      }
+
+      /* Phần đầu đề hồ sơ điều tra */
+      #header-block {
+        position: absolute;
+        top: 170px;
+        left: 80px;
+        width: 920px;
+        opacity: 0;
+      }
+      .badge-tracker {
+        display: inline-flex;
+        align-items: center;
+        background-color: #141414;
+        color: #f7f4ec;
+        font-size: 22px;
+        font-weight: 900;
+        letter-spacing: 2px;
+        padding: 8px 20px;
+        border-radius: 4px;
+        text-transform: uppercase;
+      }
+      .badge-dot {
+        width: 10px;
+        height: 10px;
+        background-color: #ff6a1a;
+        border-radius: 50%;
+        margin-right: 12px;
+      }
+      .header-title {
+        margin: 18px 0 0 0;
+        font-size: 52px;
+        font-weight: 900;
+        line-height: 1.24;
+        color: #141414;
+        letter-spacing: -0.5px;
+      }
+      .header-divider {
+        margin-top: 16px;
+        width: 100%;
+        height: 3.5px;
+        background-color: #141414;
+      }
+
+      /* Sơ đồ luồng giao thương 3 bước */
+      #diagram-flow {
+        position: absolute;
+        top: 345px;
+        left: 80px;
+        width: 920px;
+      }
+
+      .step-wrapper {
+        position: relative;
+        width: 920px;
+      }
+
+      /* Thẻ mắt xích giao dịch */
+      .step-card {
+        position: relative;
+        width: 920px;
+        height: 160px;
+        background-color: #f5f0e4;
+        border: 3.5px solid #141414;
+        border-radius: 8px;
+        box-shadow: 8px 8px 0px #141414;
+        display: flex;
+        align-items: center;
+        padding: 0 28px;
+        overflow: hidden;
+        opacity: 0;
+      }
+
+      /* Số thứ tự mắt xích */
+      .step-index-box {
+        position: relative;
+        z-index: 4;
+        width: 80px;
+        height: 80px;
+        background-color: #141414;
+        color: #f7f4ec;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 38px;
+        font-weight: 900;
+        flex-shrink: 0;
+      }
+
+      /* Nội dung chữ */
+      .step-content {
+        position: relative;
+        z-index: 4;
+        margin-left: 28px;
+        flex: 1;
+      }
+
+      .step-title {
+        font-size: 36px;
+        font-weight: 900;
+        color: #141414;
+        line-height: 1.2;
+        letter-spacing: -0.2px;
+      }
+
+      .step-desc {
+        font-size: 22px;
+        font-weight: 700;
+        color: #222222;
+        margin-top: 6px;
+      }
+
+      .step-icon-box {
+        position: relative;
+        z-index: 4;
+        width: 76px;
+        height: 76px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        opacity: 0;
+      }
+
+      /* Đường mũi tên kết nối dọc */
+      .flow-connector {
+        position: relative;
+        width: 100%;
+        height: 44px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        opacity: 0;
+      }
+
+      .connector-line {
+        width: 4px;
+        height: 30px;
+        background-color: #141414;
+      }
+
+      .connector-arrow {
+        width: 0;
+        height: 0;
+        border-left: 9px solid transparent;
+        border-right: 9px solid transparent;
+        border-top: 14px solid #141414;
+      }
+
+      /* Vết gạch chéo strike phủ định */
+      .strike-line {
+        position: absolute;
+        top: 50%;
+        left: -20px;
+        width: 960px;
+        height: 12px;
+        background-color: #b81d13;
+        transform: translateY(-50%) rotate(-3.5deg);
+        transform-origin: left center;
+        z-index: 2;
+        box-shadow: 0 2px 6px rgba(184, 29, 19, 0.4);
+        opacity: 0;
+      }
+
+      /* Dấu mộc phủ định dập nổi ở góc phải */
+      .void-stamp {
+        position: absolute;
+        right: 32px;
+        top: 24px;
+        background-color: #141414;
+        border: 3.5px solid #ff6a1a;
+        color: #f7f4ec;
+        font-size: 24px;
+        font-weight: 900;
+        letter-spacing: 1.5px;
+        padding: 8px 18px;
+        border-radius: 6px;
+        box-shadow: 4px 4px 0px rgba(255, 106, 26, 0.5);
+        z-index: 10;
+        transform-origin: center center;
+        opacity: 0;
+      }
+
+      /* Khối Punch-phrase chính: CHUỖI GIAO DỊCH ẢO */
+      #punch-card {
+        position: absolute;
+        top: 950px;
+        left: 80px;
+        width: 920px;
+        height: 285px;
+        background-color: #141414;
+        border: 4px solid #ff6a1a;
+        border-radius: 10px;
+        box-shadow: 12px 12px 0px #ff6a1a;
+        padding: 30px 36px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        z-index: 30;
+        opacity: 0;
+      }
+
+      .punch-tag-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .punch-eyebrow {
+        color: #ff6a1a;
+        font-size: 22px;
+        font-weight: 900;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+      }
+
+      .punch-status {
+        background-color: rgba(255, 106, 26, 0.22);
+        color: #f7f4ec;
+        border: 1.5px solid #ff6a1a;
+        font-size: 19px;
+        font-weight: 700;
+        padding: 4px 14px;
+        border-radius: 4px;
+      }
+
+      .punch-headline {
+        margin: 16px 0 0 0;
+        font-size: 64px;
+        font-weight: 900;
+        line-height: 1.18;
+        color: #f7f4ec;
+        letter-spacing: -0.5px;
+      }
+
+      #punch-accent-bar {
+        margin-top: 18px;
+        width: 100%;
+        height: 6px;
+        background-color: #ff6a1a;
+        transform-origin: left center;
+        transform: scaleX(0);
+      }
+
+      .punch-subtext {
+        margin-top: 12px;
+        font-size: 22px;
+        font-weight: 700;
+        color: #f7f4ec;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+    </style>
+
+    <div data-hf-id="hf-2a0l" id="root" data-composition-id="scene-s15" data-width="1080" data-height="1920" data-start="0" data-duration="6.94" data-layout-allow-overflow="true" data-layout-allow-overlap="true" data-layout-allow-occlusion="true">
+      <section data-hf-id="hf-26og" id="scene-s15" class="clip" data-start="0" data-duration="6.94" data-layout-allow-overflow="true" data-layout-allow-overlap="true" data-layout-allow-occlusion="true">
+        <!-- Nền spotlight & Grain -->
+        <div data-hf-id="hf-nar4" class="bg-layer" data-layout-ignore="true"></div>
+        <div data-hf-id="hf-rf63" class="grain-overlay" data-layout-ignore="true"></div>
+
+        <!-- Camera Stage -->
+        <div data-hf-id="hf-lrac" id="camera-stage" data-layout-allow-overflow="true" data-layout-allow-overlap="true" data-layout-allow-occlusion="true">
+          <!-- Phần đầu đề hồ sơ -->
+          <div data-hf-id="hf-g02e" id="header-block" data-layout-allow-overlap="true">
+            <div data-hf-id="hf-hezz" class="badge-tracker">
+              <span data-hf-id="hf-nrck" class="badge-dot"></span>
+              SƠ ĐỒ THƯƠNG MẠI
+            </div>
+            <h1 data-hf-id="hf-id46" class="header-title">CÓ THỰC SỰ GIAO NHẬN HÀNG HÓA?</h1>
+            <div data-hf-id="hf-o41n" class="header-divider"></div>
+          </div>
+
+          <!-- Sơ đồ luồng 3 bước -->
+          <div data-hf-id="hf-r4jo" id="diagram-flow" data-layout-allow-overflow="true" data-layout-allow-overlap="true" data-layout-allow-occlusion="true">
+            <!-- Bước 1: Giao hàng -->
+            <div data-hf-id="hf-465c" class="step-wrapper" id="step-wrap-1" data-layout-allow-overflow="true" data-layout-allow-overlap="true" data-layout-allow-occlusion="true">
+              <div data-hf-id="hf-p0gi" class="step-card" id="card-1" data-layout-allow-overflow="true" data-layout-allow-overlap="true" data-layout-allow-occlusion="true">
+                <div data-hf-id="hf-05xu" class="strike-line" id="strike-1" data-layout-allow-overflow="true" data-layout-allow-overlap="true" data-layout-allow-occlusion="true"></div>
+                <div data-hf-id="hf-l5d4" class="step-index-box" data-layout-allow-overlap="true" data-layout-allow-occlusion="true">01</div>
+                <div data-hf-id="hf-8v2o" class="step-content" data-layout-allow-overlap="true" data-layout-allow-occlusion="true">
+                  <div data-hf-id="hf-9kbp" class="step-title" id="title-1" data-layout-allow-overlap="true" data-layout-allow-occlusion="true">1. GIAO HÀNG (ẢO)</div>
+                  <div data-hf-id="hf-zesh" class="step-desc" data-layout-allow-overlap="true" data-layout-allow-occlusion="true">Công ty Đ vận chuyển &amp; bàn giao lô hàng</div>
+                </div>
+                <div data-hf-id="hf-7rwp" class="step-icon-box" id="icon-1" data-layout-allow-overlap="true" data-layout-allow-occlusion="true">
+                  <!-- Biểu tượng Xe tải giao hàng -->
+                  <svg data-hf-id="hf-8acc" width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="#141414" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <rect data-hf-id="hf-h72q" x="1" y="3" width="15" height="13" />
+                    <polygon data-hf-id="hf-635h" points="16 8 20 8 23 11 23 16 16 16 16 8" />
+                    <circle data-hf-id="hf-4zel" cx="5.5" cy="18.5" r="2.5" />
+                    <circle data-hf-id="hf-p0i3" cx="18.5" cy="18.5" r="2.5" />
+                  </svg>
+                </div>
+              </div>
+              <div data-hf-id="hf-5nbz" class="void-stamp" id="stamp-1" data-layout-allow-overlap="true" data-layout-allow-occlusion="true">✖ KHÔNG GIAO</div>
+            </div>
+
+            <!-- Mũi tên kết nối 1 -->
+            <div data-hf-id="hf-kt93" class="flow-connector" id="arrow-1" data-layout-allow-overlap="true">
+              <div data-hf-id="hf-v474" class="connector-line"></div>
+              <div data-hf-id="hf-fts5" class="connector-arrow"></div>
+            </div>
+
+            <!-- Bước 2: Nhận hàng -->
+            <div data-hf-id="hf-cu17" class="step-wrapper" id="step-wrap-2" data-layout-allow-overflow="true" data-layout-allow-overlap="true" data-layout-allow-occlusion="true">
+              <div data-hf-id="hf-l2ch" class="step-card" id="card-2" data-layout-allow-overflow="true" data-layout-allow-overlap="true" data-layout-allow-occlusion="true">
+                <div data-hf-id="hf-w7tt" class="strike-line" id="strike-2" data-layout-allow-overflow="true" data-layout-allow-overlap="true" data-layout-allow-occlusion="true"></div>
+                <div data-hf-id="hf-jyg1" class="step-index-box" data-layout-allow-overlap="true" data-layout-allow-occlusion="true">02</div>
+                <div data-hf-id="hf-bf3c" class="step-content" data-layout-allow-overlap="true" data-layout-allow-occlusion="true">
+                  <div data-hf-id="hf-n7sl" class="step-title" id="title-2" data-layout-allow-overlap="true" data-layout-allow-occlusion="true">2. NHẬN HÀNG (ẢO)</div>
+                  <div data-hf-id="hf-s6yx" class="step-desc" data-layout-allow-overlap="true" data-layout-allow-occlusion="true">Doanh nghiệp V kiểm đếm &amp; nhập kho</div>
+                </div>
+                <div data-hf-id="hf-bq0q" class="step-icon-box" id="icon-2" data-layout-allow-overlap="true" data-layout-allow-occlusion="true">
+                  <!-- Biểu tượng Kho bãi -->
+                  <svg data-hf-id="hf-2x5g" width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="#141414" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path data-hf-id="hf-hoyo" d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                    <polyline data-hf-id="hf-d1au" points="9 22 9 12 15 12 15 22" />
+                  </svg>
+                </div>
+              </div>
+              <div data-hf-id="hf-zkxo" class="void-stamp" id="stamp-2" data-layout-allow-overlap="true" data-layout-allow-occlusion="true">✖ KHÔNG NHẬN</div>
+            </div>
+
+            <!-- Mũi tên kết nối 2 -->
+            <div data-hf-id="hf-9xrg" class="flow-connector" id="arrow-2" data-layout-allow-overlap="true">
+              <div data-hf-id="hf-h6uw" class="connector-line"></div>
+              <div data-hf-id="hf-uspl" class="connector-arrow"></div>
+            </div>
+
+            <!-- Bước 3: Xuất hóa đơn -->
+            <div data-hf-id="hf-8vx6" class="step-wrapper" id="step-wrap-3" data-layout-allow-overflow="true" data-layout-allow-overlap="true" data-layout-allow-occlusion="true">
+              <div data-hf-id="hf-i32w" class="step-card" id="card-3" data-layout-allow-overflow="true" data-layout-allow-overlap="true" data-layout-allow-occlusion="true">
+                <div data-hf-id="hf-t8k8" class="strike-line" id="strike-3" data-layout-allow-overflow="true" data-layout-allow-overlap="true" data-layout-allow-occlusion="true"></div>
+                <div data-hf-id="hf-kcr2" class="step-index-box" data-layout-allow-overlap="true" data-layout-allow-occlusion="true">03</div>
+                <div data-hf-id="hf-a869" class="step-content" data-layout-allow-overlap="true" data-layout-allow-occlusion="true">
+                  <div data-hf-id="hf-otzv" class="step-title" id="title-3" data-layout-allow-overlap="true" data-layout-allow-occlusion="true">3. XUẤT HÓA ĐƠN</div>
+                  <div data-hf-id="hf-9904" class="step-desc" data-layout-allow-overlap="true" data-layout-allow-occlusion="true">Công ty Đ xuất hóa đơn cho đúng lô hàng</div>
+                </div>
+                <div data-hf-id="hf-fo4r" class="step-icon-box" id="icon-3" data-layout-allow-overlap="true" data-layout-allow-occlusion="true">
+                  <!-- Biểu tượng Văn bản Hóa đơn -->
+                  <svg data-hf-id="hf-1q8d" width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="#141414" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path data-hf-id="hf-e4lr" d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                    <polyline data-hf-id="hf-5bqq" points="14 2 14 8 20 8" />
+                    <line data-hf-id="hf-x9lb" x1="16" y1="13" x2="8" y2="13" />
+                    <line data-hf-id="hf-msun" x1="16" y1="17" x2="8" y2="17" />
+                  </svg>
+                </div>
+              </div>
+              <div data-hf-id="hf-ycg5" class="void-stamp" id="stamp-3" data-layout-allow-overlap="true" data-layout-allow-occlusion="true">✖ HÓA ĐƠN KHỐNG</div>
+            </div>
+          </div>
+
+          <!-- Punch phrase: CHUỖI GIAO DỊCH ẢO -->
+          <div data-hf-id="hf-1pof" id="punch-card" data-layout-allow-overflow="true" data-layout-allow-overlap="true" data-layout-allow-occlusion="true">
+            <div data-hf-id="hf-m9ym" class="punch-tag-row" data-layout-allow-overlap="true">
+              <span data-hf-id="hf-wauw" class="punch-eyebrow">PHÁT HIỆN ĐIỀU TRA</span>
+              <span data-hf-id="hf-kfip" class="punch-status">CƠ CHẾ BỊ PHÁ VỠ</span>
+            </div>
+            <div data-hf-id="hf-i04s" class="punch-headline" data-layout-allow-overlap="true">CHUỖI GIAO DỊCH ẢO</div>
+            <div data-hf-id="hf-wh7u" id="punch-accent-bar" data-layout-allow-overlap="true"></div>
+            <div data-hf-id="hf-lafi" class="punch-subtext" data-layout-allow-overlap="true">
+              <span data-hf-id="hf-cz3k">KHÔNG CÓ HÀNG HÓA</span>
+              <span data-hf-id="hf-ozax">•</span>
+              <span data-hf-id="hf-fyem">KHÔNG CÓ VẬN CHUYỂN</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Thanh cam nhận diện cố định ở mép đáy -->
+        <div data-hf-id="hf-to5l" id="bottom-brand-bar" data-layout-ignore="true"></div>
+      </section>
+    </div>
+
+    <script>
+      // Khởi tạo Timeline GSAP paused cho composition "scene-s15"
+      const tl = gsap.timeline({ paused: true });
+
+      // 1. Tiêu đề hồ sơ xuất hiện tại t=0.2s
+      tl.fromTo(
+        "#header-block",
+        { y: -25, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.5, ease: "power3.out" },
+        0.2
+      );
+
+      // 2. Mắt xích 1: "1. GIAO HÀNG (ẢO)" xuất hiện tại 1.64s
+      tl.fromTo(
+        "#card-1",
+        { y: 30, opacity: 0, scale: 0.96 },
+        { y: 0, opacity: 1, scale: 1, duration: 0.5, ease: "power3.out" },
+        1.64
+      );
+      tl.fromTo(
+        "#icon-1",
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.35, ease: "power3.out" },
+        1.82
+      );
+
+      // 3. Mắt xích 2: "2. NHẬN HÀNG (ẢO)" xuất hiện tại 3.16s
+      tl.fromTo(
+        "#arrow-1",
+        { scaleY: 0, opacity: 0, transformOrigin: "top center" },
+        { scaleY: 1, opacity: 1, duration: 0.25, ease: "power2.out" },
+        2.95
+      );
+      tl.fromTo(
+        "#card-2",
+        { y: 30, opacity: 0, scale: 0.96 },
+        { y: 0, opacity: 1, scale: 1, duration: 0.5, ease: "power3.out" },
+        3.16
+      );
+      tl.fromTo(
+        "#icon-2",
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.35, ease: "power3.out" },
+        3.34
+      );
+
+      // 4. Mắt xích 3: "3. XUẤT HÓA ĐƠN" xuất hiện tại 4.56s
+      tl.fromTo(
+        "#arrow-2",
+        { scaleY: 0, opacity: 0, transformOrigin: "top center" },
+        { scaleY: 1, opacity: 1, duration: 0.25, ease: "power2.out" },
+        4.35
+      );
+      tl.fromTo(
+        "#card-3",
+        { y: 30, opacity: 0, scale: 0.96 },
+        { y: 0, opacity: 1, scale: 1, duration: 0.5, ease: "power3.out" },
+        4.56
+      );
+      tl.fromTo(
+        "#icon-3",
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.35, ease: "power3.out" },
+        4.74
+      );
+
+      // 5. CÚ STRIKE & PUNCH PHRASE tại 5.33s - Lời thoại: "Không."
+      // Camera zoom-in tạo điểm nhấn kịch tính
+      tl.fromTo(
+        "#camera-stage",
+        { scale: 1, y: 0 },
+        { scale: 1.035, y: 0, duration: 0.25, ease: "power4.out" },
+        5.33
+      );
+
+      // Gạch chéo mắt xích 1 & Đóng dấu mộc KHÔNG GIAO
+      tl.fromTo(
+        "#strike-1",
+        { scaleX: 0, opacity: 0 },
+        { scaleX: 1, opacity: 1, duration: 0.16, ease: "power4.out" },
+        5.33
+      );
+      tl.fromTo(
+        "#stamp-1",
+        { scale: 1.7, opacity: 0, rotation: -16 },
+        { scale: 1, opacity: 1, rotation: -6, duration: 0.24, ease: "power3.out" },
+        5.38
+      );
+
+      // Gạch chéo mắt xích 2 & Đóng dấu mộc KHÔNG NHẬN
+      tl.fromTo(
+        "#strike-2",
+        { scaleX: 0, opacity: 0 },
+        { scaleX: 1, opacity: 1, duration: 0.16, ease: "power4.out" },
+        5.42
+      );
+      tl.fromTo(
+        "#stamp-2",
+        { scale: 1.7, opacity: 0, rotation: 12 },
+        { scale: 1, opacity: 1, rotation: 4, duration: 0.24, ease: "power3.out" },
+        5.47
+      );
+
+      // Gạch chéo mắt xích 3 & Đóng dấu mộc HÓA ĐƠN KHỐNG
+      tl.fromTo(
+        "#strike-3",
+        { scaleX: 0, opacity: 0 },
+        { scaleX: 1, opacity: 1, duration: 0.16, ease: "power4.out" },
+        5.51
+      );
+      tl.fromTo(
+        "#stamp-3",
+        { scale: 1.7, opacity: 0, rotation: -12 },
+        { scale: 1, opacity: 1, rotation: -4, duration: 0.24, ease: "power3.out" },
+        5.56
+      );
+
+      // Chuyển màu sắc các thẻ và tiêu đề biểu đạt cơ chế giao thương bị vô hiệu hóa
+      tl.fromTo(
+        [".step-card"],
+        { backgroundColor: "#f5f0e4", borderColor: "#141414" },
+        { backgroundColor: "#ece7dc", borderColor: "#777777", duration: 0.25, ease: "power2.out" },
+        5.45
+      );
+      tl.fromTo(
+        ["#title-1", "#title-2", "#title-3"],
+        { color: "#141414" },
+        { color: "#444444", duration: 0.25, ease: "power2.out" },
+        5.45
+      );
+
+      // Khối Punch card "CHUỖI GIAO DỊCH ẢO" giáng đòn quyết định tại 5.33s
+      tl.fromTo(
+        "#punch-card",
+        { scale: 0.9, y: 35, opacity: 0 },
+        { scale: 1, y: 0, opacity: 1, duration: 0.4, ease: "power4.out" },
+        5.33
+      );
+      tl.fromTo(
+        "#punch-accent-bar",
+        { scaleX: 0, transformOrigin: "left center" },
+        { scaleX: 1, duration: 0.35, ease: "power3.out" },
+        5.55
+      );
+
+      // Camera drift nhẹ giữ nhịp đến hết scene (6.94s)
+      tl.fromTo(
+        "#camera-stage",
+        { scale: 1.035, y: 0 },
+        { scale: 1.05, y: -6, duration: 1.36, ease: "sine.inOut" },
+        5.58
+      );
+
+      // Đăng ký timeline cho HyperFrames render engine
+      window.__timelines["scene-s15"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

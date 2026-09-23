@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap">
+      <style>
+      *, *::before, *::after {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        background-color: #E7E3D9;
+        font-family: "Be Vietnam Pro", sans-serif;
+        color: #141414;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      #root {
+        position: relative;
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+        background-color: #E7E3D9;
+      }
+
+      /* 1. Lớp nền giấy ngà + Lưới ô vuông 84px chuẩn Vox DNA */
+      .grid-layer {
+        position: absolute;
+        inset: 0;
+        background-image:
+          linear-gradient(to right, rgba(20, 20, 20, 0.22) 1.5px, transparent 1.5px),
+          linear-gradient(to bottom, rgba(20, 20, 20, 0.22) 1.5px, transparent 1.5px);
+        background-size: 84px 84px;
+        pointer-events: none;
+        z-index: 1;
+      }
+
+      /* 2. Lớp hạt giấy (Paper Grain) blend multiply 18% */
+      .grain-layer {
+        position: absolute;
+        inset: 0;
+        opacity: 0.18;
+        mix-blend-mode: multiply;
+        pointer-events: none;
+        z-index: 2;
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+      }
+
+      /* 3. Dải nhận diện cam cố định ở đáy khung hình */
+      .brand-bottom-bar {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 12px;
+        background-color: #FF6A1A;
+        z-index: 100;
+      }
+
+      /* 4. Khung nội dung chính - Giữ nghiêm ngặt trong Safe Zone Y [160, 1460] */
+      .scene-content {
+        position: absolute;
+        top: 160px;
+        left: 60px;
+        right: 60px;
+        height: 1260px;
+        display: flex;
+        flex-direction: column;
+        z-index: 10;
+      }
+
+      /* Phần tiêu đề và tag phân tích */
+      .header-zone {
+        width: 100%;
+        margin-bottom: 20px;
+      }
+
+      .meta-tag-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        background-color: #141414;
+        color: #F7F4EC;
+        padding: 8px 18px;
+        border-radius: 4px;
+        font-size: 20px;
+        font-weight: 700;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        margin-bottom: 12px;
+      }
+
+      .meta-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background-color: #FF6A1A;
+      }
+
+      .title-container {
+        position: relative;
+      }
+
+      .main-title {
+        margin: 0;
+        font-size: 64px;
+        font-weight: 900;
+        line-height: 1.15;
+        letter-spacing: -0.5px;
+        color: #141414;
+        text-transform: uppercase;
+      }
+
+      /* Subtitle dạng badge chuẩn Vox - Đạt tương phản cao WCAG AAA */
+      .subtitle-pill {
+        margin-top: 8px;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .subtitle-tag {
+        background-color: #FF6A1A;
+        color: #141414;
+        font-size: 18px;
+        font-weight: 900;
+        padding: 3px 8px;
+        border-radius: 3px;
+        letter-spacing: 1px;
+      }
+
+      .subtitle-text {
+        font-size: 22px;
+        font-weight: 900;
+        color: #141414;
+        text-transform: uppercase;
+        letter-spacing: 1.2px;
+      }
+
+      /* 5. Sơ đồ hai đường ray (Diagram Strip) */
+      .rail-diagram-strip {
+        width: 100%;
+        background-color: #F5F0E4;
+        border: 3.5px solid #141414;
+        box-shadow: 6px 6px 0px #141414;
+        padding: 14px 22px;
+        margin-bottom: 22px;
+        position: relative;
+      }
+
+      .diagram-caption-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+        border-bottom: 1.5px dashed rgba(20, 20, 20, 0.35);
+        padding-bottom: 6px;
+      }
+
+      .diagram-caption-text {
+        font-size: 19px;
+        font-weight: 900;
+        color: #141414;
+        text-transform: uppercase;
+        letter-spacing: 1.2px;
+      }
+
+      .diagram-state-tag {
+        background-color: #FF6A1A;
+        color: #141414;
+        font-size: 15px;
+        font-weight: 900;
+        padding: 4px 10px;
+        border-radius: 3px;
+        letter-spacing: 0.5px;
+      }
+
+      .rail-svg-container {
+        width: 100%;
+        height: 76px;
+        display: block;
+      }
+
+      /* 6. Thẻ Hero Photo: Kho phụ tùng trôi nổi trên ray */
+      .hero-card {
+        position: relative;
+        width: 100%;
+        flex: 1;
+        background-color: #F5F0E4;
+        border: 4px solid #141414;
+        box-shadow: 10px 10px 0px #141414;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+
+      /* Header kỹ thuật đầu thẻ */
+      .hero-card-header {
+        height: 44px;
+        background-color: #141414;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 20px;
+        color: #F7F4EC;
+        font-size: 18px;
+        font-weight: 700;
+        letter-spacing: 1px;
+      }
+
+      .header-code {
+        color: #FF6A1A;
+        font-family: monospace;
+        font-size: 19px;
+      }
+
+      /* Khung chứa ảnh collage */
+      .hero-image-wrapper {
+        position: relative;
+        width: 100%;
+        flex: 1;
+        overflow: hidden;
+        background-color: #d8d4c9;
+      }
+
+      .hero-photo {
+        position: absolute;
+        top: -5%;
+        left: -5%;
+        width: 110%;
+        height: 110%;
+        object-fit: cover;
+        object-position: center;
+        will-change: transform;
+      }
+
+      /* Footer thông số kỹ thuật */
+      .hero-card-footer {
+        background-color: #F5F0E4;
+        border-top: 3px solid #141414;
+        padding: 14px 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .footer-item {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+
+      .footer-label {
+        font-size: 14px;
+        font-weight: 700;
+        color: #333333;
+        text-transform: uppercase;
+      }
+
+      .footer-val {
+        font-size: 20px;
+        font-weight: 900;
+        color: #141414;
+      }
+
+      .footer-badge {
+        display: inline-block;
+        background-color: #141414;
+        color: #FF6A1A;
+        font-size: 16px;
+        font-weight: 900;
+        padding: 3px 8px;
+        border-radius: 3px;
+        letter-spacing: 0.5px;
+      }
+
+      /* 7. Overlay Nhãn "RAY 1: HÀNG THỰC" (t = 4.52s) */
+      .ray1-callout-badge {
+        position: absolute;
+        top: 24px;
+        left: 24px;
+        background-color: #FF6A1A;
+        color: #141414;
+        border: 3.5px solid #141414;
+        box-shadow: 6px 6px 0px #141414;
+        padding: 14px 22px;
+        border-radius: 4px;
+        z-index: 25;
+        transform-origin: 0% 50%;
+        will-change: transform, opacity;
+      }
+
+      .ray1-callout-title {
+        font-size: 34px;
+        font-weight: 900;
+        line-height: 1.1;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+      }
+
+      .ray1-callout-sub {
+        font-size: 18px;
+        font-weight: 700;
+        color: #141414;
+        margin-top: 4px;
+        letter-spacing: 0.8px;
+      }
+
+      /* 8. Overlay Icon "ban" (Cấm / Không hóa đơn - t = 7.59s) */
+      .ban-stamp-overlay {
+        position: absolute;
+        right: 24px;
+        bottom: 24px;
+        width: 300px;
+        background-color: #141414;
+        border: 3.5px solid #FF6A1A;
+        box-shadow: 8px 8px 0px rgba(255, 106, 26, 0.8);
+        border-radius: 8px;
+        padding: 18px 16px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 30;
+        transform-origin: 50% 50%;
+        will-change: transform, opacity;
+      }
+
+      .ban-icon-svg {
+        width: 80px;
+        height: 80px;
+        margin-bottom: 8px;
+      }
+
+      .ban-stamp-text {
+        color: #F7F4EC;
+        font-size: 24px;
+        font-weight: 900;
+        text-align: center;
+        line-height: 1.2;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+      }
+
+      .ban-stamp-sub {
+        color: #FF6A1A;
+        font-size: 15px;
+        font-weight: 700;
+        letter-spacing: 1.2px;
+        margin-top: 4px;
+      }
+
+      /* Thước đo góc trang trí kỹ thuật */
+      .corner-tick {
+        position: absolute;
+        width: 14px;
+        height: 14px;
+        border-color: #141414;
+        border-style: solid;
+        pointer-events: none;
+      }
+      .tick-tl { top: 6px; left: 6px; border-width: 2.5px 0 0 2.5px; }
+      .tick-tr { top: 6px; right: 6px; border-width: 2.5px 2.5px 0 0; }
+      .tick-bl { bottom: 6px; left: 6px; border-width: 0 0 2.5px 2.5px; }
+      .tick-br { bottom: 6px; right: 6px; border-width: 0 2.5px 2.5px 0; }
+    </style>
+
+    <div data-hf-id="hf-c6gh" id="root" data-composition-id="scene-s17" data-width="1080" data-height="1920" data-duration="8.67" data-layout-allow-overflow="true">
+      <!-- Background grid + Paper grain -->
+      <div data-hf-id="hf-3rbk" class="grid-layer"></div>
+      <div data-hf-id="hf-s2bh" class="grain-layer"></div>
+
+      <!-- Main Scene Content Container -->
+      <div data-hf-id="hf-gfqr" class="scene-content" id="scene-container" data-layout-allow-overflow="true">
+        
+        <!-- Header Zone: Tag phân tích & Tiêu đề chính -->
+        <div data-hf-id="hf-be8y" class="header-zone" id="header-zone">
+          <div data-hf-id="hf-wqb3" class="meta-tag-pill" id="meta-pill">
+            <span data-hf-id="hf-y6kw" class="meta-dot"></span>
+            <span data-hf-id="hf-ii9e">PHÂN TÍCH CƠ CHẾ • HỒ SƠ 35</span>
+          </div>
+
+          <div data-hf-id="hf-ouqw" class="title-container" id="title-block">
+            <h1 data-hf-id="hf-c32v" class="main-title">MÔ HÌNH HAI RAY</h1>
+            <div data-hf-id="hf-l2tk" class="subtitle-pill">
+              <span data-hf-id="hf-p9dp" class="subtitle-tag">RAY 1</span>
+              <span data-hf-id="hf-iyno" class="subtitle-text">DÒNG HÀNG THỰC TẾ</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Strip Diagram: Biểu đồ kỹ thuật 2 đường ray song song -->
+        <div data-hf-id="hf-7hqb" class="rail-diagram-strip" id="diagram-strip">
+          <div data-hf-id="hf-dbjv" class="corner-tick tick-tl"></div>
+          <div data-hf-id="hf-344l" class="corner-tick tick-tr"></div>
+          <div data-hf-id="hf-kba5" class="corner-tick tick-bl"></div>
+          <div data-hf-id="hf-jjib" class="corner-tick tick-br"></div>
+
+          <div data-hf-id="hf-r71l" class="diagram-caption-row">
+            <span data-hf-id="hf-7q05" class="diagram-caption-text">SƠ ĐỒ PHÂN TÁCH HAI DÒNG VẬN HÀNH</span>
+            <span data-hf-id="hf-12e5" class="diagram-state-tag" id="diagram-state">TRỌNG TÂM: RAY 1</span>
+          </div>
+
+          <!-- SVG 2 Đường ray kỹ thuật -->
+          <svg data-hf-id="hf-dsyo" class="rail-svg-container" viewBox="0 0 910 76" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <!-- RAY 1 (TRÊN - HÀNG THỰC): Màu cam rực rỡ, nét đậm -->
+            <g data-hf-id="hf-1kor" id="rail-1-group">
+              <!-- Tà vẹt ray 1 -->
+              <line data-hf-id="hf-arwb" x1="40" y1="12" x2="40" y2="30" stroke="#FF6A1A" stroke-width="4" stroke-linecap="round" />
+              <line data-hf-id="hf-x1kj" x1="120" y1="12" x2="120" y2="30" stroke="#FF6A1A" stroke-width="4" stroke-linecap="round" />
+              <line data-hf-id="hf-ucix" x1="200" y1="12" x2="200" y2="30" stroke="#FF6A1A" stroke-width="4" stroke-linecap="round" />
+              <line data-hf-id="hf-r5m1" x1="280" y1="12" x2="280" y2="30" stroke="#FF6A1A" stroke-width="4" stroke-linecap="round" />
+              <line data-hf-id="hf-lo2f" x1="360" y1="12" x2="360" y2="30" stroke="#FF6A1A" stroke-width="4" stroke-linecap="round" />
+              <line data-hf-id="hf-hbcx" x1="440" y1="12" x2="440" y2="30" stroke="#FF6A1A" stroke-width="4" stroke-linecap="round" />
+              <line data-hf-id="hf-zyuj" x1="520" y1="12" x2="520" y2="30" stroke="#FF6A1A" stroke-width="4" stroke-linecap="round" />
+              <line data-hf-id="hf-cgtd" x1="600" y1="12" x2="600" y2="30" stroke="#FF6A1A" stroke-width="4" stroke-linecap="round" />
+              <line data-hf-id="hf-vvr5" x1="680" y1="12" x2="680" y2="30" stroke="#FF6A1A" stroke-width="4" stroke-linecap="round" />
+              <!-- 2 thanh thép Ray 1 -->
+              <path data-hf-id="hf-hmjk" id="rail-1-track-top" d="M 20 16 L 890 16" stroke="#141414" stroke-width="4.5" stroke-linecap="round" />
+              <path data-hf-id="hf-x89u" id="rail-1-track-bot" d="M 20 26 L 890 26" stroke="#FF6A1A" stroke-width="4.5" stroke-linecap="round" />
+              <!-- Nhãn ray 1 -->
+              <text data-hf-id="hf-0ao1" x="690" y="24" font-family="'Be Vietnam Pro', sans-serif" font-weight="900" font-size="14" fill="#141414" letter-spacing="1">RAY 1: HÀNG THỰC TẾ</text>
+            </g>
+
+            <!-- RAY 2 (DƯỚI - CHỨNG TỪ ẢO) -->
+            <g data-hf-id="hf-a19n" id="rail-2-group" opacity="0.5">
+              <line data-hf-id="hf-kt6w" x1="40" y1="50" x2="40" y2="68" stroke="#141414" stroke-width="3" stroke-linecap="round" stroke-dasharray="4 4" />
+              <line data-hf-id="hf-ytdc" x1="120" y1="50" x2="120" y2="68" stroke="#141414" stroke-width="3" stroke-linecap="round" stroke-dasharray="4 4" />
+              <line data-hf-id="hf-nuq2" x1="200" y1="50" x2="200" y2="68" stroke="#141414" stroke-width="3" stroke-linecap="round" stroke-dasharray="4 4" />
+              <line data-hf-id="hf-c48a" x1="280" y1="50" x2="280" y2="68" stroke="#141414" stroke-width="3" stroke-linecap="round" stroke-dasharray="4 4" />
+              <line data-hf-id="hf-aj04" x1="360" y1="50" x2="360" y2="68" stroke="#141414" stroke-width="3" stroke-linecap="round" stroke-dasharray="4 4" />
+              <line data-hf-id="hf-ynwa" x1="440" y1="50" x2="440" y2="68" stroke="#141414" stroke-width="3" stroke-linecap="round" stroke-dasharray="4 4" />
+              <line data-hf-id="hf-g45s" x1="520" y1="50" x2="520" y2="68" stroke="#141414" stroke-width="3" stroke-linecap="round" stroke-dasharray="4 4" />
+              <line data-hf-id="hf-ctwi" x1="600" y1="50" x2="600" y2="68" stroke="#141414" stroke-width="3" stroke-linecap="round" stroke-dasharray="4 4" />
+              <line data-hf-id="hf-omci" x1="680" y1="50" x2="680" y2="68" stroke="#141414" stroke-width="3" stroke-linecap="round" stroke-dasharray="4 4" />
+              <path data-hf-id="hf-opiq" id="rail-2-track" d="M 20 59 L 890 59" stroke="#141414" stroke-width="3.5" stroke-linecap="round" stroke-dasharray="14 8" />
+              <text data-hf-id="hf-34v7" x="690" y="64" font-family="'Be Vietnam Pro', sans-serif" font-weight="700" font-size="13" fill="#141414" letter-spacing="1">RAY 2: HÓA ĐƠN KHỐNG</text>
+            </g>
+          </svg>
+        </div>
+
+        <!-- Hero Card: Kho phụ tùng rỉ sét (img-01) -->
+        <div data-hf-id="hf-0ga0" class="hero-card" id="hero-card">
+          <!-- Header kỹ thuật -->
+          <div data-hf-id="hf-0l6r" class="hero-card-header">
+            <span data-hf-id="hf-0qgy">TANG VẬT: LINH KIỆN &amp; PHỤ TÙNG Ô TÔ</span>
+            <span data-hf-id="hf-qibd" class="header-code">REC_ID #35-AUTO</span>
+          </div>
+
+          <!-- Ảnh collage phụ tùng -->
+          <div data-hf-id="hf-jg2j" class="hero-image-wrapper" data-layout-allow-overflow="true">
+            <img data-hf-id="hf-hbtf" id="hero-img" class="hero-photo" src="assets/img-01-auto-parts-fraud-valuation.jpeg" alt="Phụ tùng ô tô trôi nổi rỉ sét" data-layout-allow-overflow="true">
+
+            <!-- Overlay Label: RAY 1: HÀNG THỰC (xuất hiện tại t = 4.52s) -->
+            <div data-hf-id="hf-vhkf" class="ray1-callout-badge" id="callout-ray1" data-layout-allow-overflow="true" data-layout-allow-overlap="true">
+              <div data-hf-id="hf-kk78" class="ray1-callout-title">RAY 1: HÀNG THỰC</div>
+              <div data-hf-id="hf-2rr1" class="ray1-callout-sub">PHỤ TÙNG TRÔI NỔI NGOÀI ĐỜI</div>
+            </div>
+
+            <!-- Overlay Icon: ban (Cấm/Không chứng từ - xuất hiện tại t = 7.59s) -->
+            <div data-hf-id="hf-lnrm" class="ban-stamp-overlay" id="ban-stamp" data-layout-allow-overflow="true" data-layout-allow-overlap="true">
+              <svg data-hf-id="hf-6i1m" class="ban-icon-svg" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <!-- Vòng tròn đỏ cam -->
+                <circle data-hf-id="hf-vvvr" id="ban-circle" cx="50" cy="50" r="40" stroke="#FF6A1A" stroke-width="8" />
+                <!-- Đường gạch chéo cấm -->
+                <line data-hf-id="hf-8q30" id="ban-slash" x1="22" y1="22" x2="78" y2="78" stroke="#FF6A1A" stroke-width="8" stroke-linecap="round" />
+              </svg>
+              <div data-hf-id="hf-x4h9" class="ban-stamp-text">KHÔNG HÓA ĐƠN</div>
+              <div data-hf-id="hf-5nrj" class="ban-stamp-sub">NGUỒN TRÔI NỔI • VÔ DANH</div>
+            </div>
+          </div>
+
+          <!-- Footer thông số thẻ -->
+          <div data-hf-id="hf-knph" class="hero-card-footer">
+            <div data-hf-id="hf-xek3" class="footer-item">
+              <span data-hf-id="hf-5mxl" class="footer-label">Tình trạng vật lý</span>
+              <span data-hf-id="hf-fyjb" class="footer-val">Cũ hỏng • Rỉ sét</span>
+            </div>
+            <div data-hf-id="hf-ttn7" class="footer-item">
+              <span data-hf-id="hf-nhm7" class="footer-label">Chứng từ kèm theo</span>
+              <span data-hf-id="hf-1zdn" class="footer-badge" id="footer-badge-1">KHÔNG HÓA ĐƠN</span>
+            </div>
+            <div data-hf-id="hf-tfc6" class="footer-item">
+              <span data-hf-id="hf-bbrp" class="footer-label">Đầu vào thực tế</span>
+              <span data-hf-id="hf-gtxf" class="footer-val">Chợ trời • Thu gom lẻ</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Signature Orange Bottom Bar -->
+      <div data-hf-id="hf-v6l5" class="brand-bottom-bar"></div>
+    </div>
+
+    <!-- GSAP Seekable Timeline Script -->
+    <script>
+      // 1. Khởi tạo paused timeline duy nhất theo hợp đồng HyperFrames
+      const tl = gsap.timeline({ paused: true });
+
+      // 2. Chuẩn bị hiệu ứng vẽ SVG path cho Ban Icon & Rail Tracks
+      const banCircle = document.getElementById("ban-circle");
+      const banSlash = document.getElementById("ban-slash");
+      if (banCircle) {
+        const lenCircle = banCircle.getTotalLength();
+        banCircle.style.strokeDasharray = lenCircle;
+        banCircle.style.strokeDashoffset = lenCircle;
+      }
+      if (banSlash) {
+        const lenSlash = banSlash.getTotalLength();
+        banSlash.style.strokeDasharray = lenSlash;
+        banSlash.style.strokeDashoffset = lenSlash;
+      }
+
+      const rail1Top = document.getElementById("rail-1-track-top");
+      const rail1Bot = document.getElementById("rail-1-track-bot");
+      if (rail1Top && rail1Bot) {
+        const len1 = rail1Top.getTotalLength();
+        rail1Top.style.strokeDasharray = len1;
+        rail1Top.style.strokeDashoffset = len1;
+        rail1Bot.style.strokeDasharray = len1;
+        rail1Bot.style.strokeDashoffset = len1;
+      }
+
+      // ==========================================
+      // CHOREOGRAPHY THEO SHOTLIST S17 (8.67s)
+      // ==========================================
+
+      // [0.05s - 0.80s] Transition In: "rise" cho toàn bộ cấu trúc cảnh trong safe-zone
+      tl.fromTo(
+        "#scene-container",
+        { y: 40, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.75, ease: "power3.out" },
+        0.05
+      );
+
+      // Camera motion: pan-right chậm trên ảnh hero (img-01) xuyên suốt thời lượng
+      tl.fromTo(
+        "#hero-img",
+        { scale: 1.06, x: -25 },
+        { scale: 1.14, x: 25, duration: 8.6, ease: "none" },
+        0.05
+      );
+
+      // Đường ray SVG vẽ mở rộng ra theo chiều ngang
+      if (rail1Top && rail1Bot) {
+        tl.to(rail1Top, { strokeDashoffset: 0, duration: 1.0, ease: "power2.out" }, 0.30);
+        tl.to(rail1Bot, { strokeDashoffset: 0, duration: 1.0, ease: "power2.out" }, 0.40);
+      }
+
+      // [t = 2.90s] (160530ms relative): OVERLAY DIAGRAM - "MÔ HÌNH HAI RAY"
+      tl.fromTo(
+        "#title-block",
+        { scale: 0.96, opacity: 0.8 },
+        { scale: 1, opacity: 1, duration: 0.40, ease: "power3.out" },
+        2.90
+      );
+      tl.fromTo(
+        "#diagram-strip",
+        { borderColor: "#141414" },
+        { borderColor: "#FF6A1A", duration: 0.35, ease: "power2.out" },
+        2.90
+      );
+      tl.fromTo(
+        "#diagram-state",
+        { scale: 0.7, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.35, ease: "power3.out" },
+        3.05
+      );
+
+      // [t = 4.52s] (162150ms relative): OVERLAY LABEL - "RAY 1: HÀNG THỰC"
+      tl.fromTo(
+        "#callout-ray1",
+        { scale: 0, opacity: 0, x: -15 },
+        { scale: 1, opacity: 1, x: 0, duration: 0.50, ease: "power3.out" },
+        4.52
+      );
+
+      // [t = 6.00s] Pacing bridge (tránh khoảng lặng thị giác >3s): Nhấn mạnh badge "KHÔNG HÓA ĐƠN"
+      tl.fromTo(
+        "#footer-badge-1",
+        { scale: 0.92, backgroundColor: "#141414", color: "#FF6A1A" },
+        { scale: 1.08, backgroundColor: "#FF6A1A", color: "#141414", duration: 0.35, ease: "power2.out" },
+        6.00
+      );
+      tl.to(
+        "#footer-badge-1",
+        { scale: 1.0, duration: 0.20, ease: "power2.out" },
+        6.35
+      );
+
+      // [t = 7.59s] (165220ms relative): OVERLAY ICON - "ban" (CẤM / KHÔNG HÓA ĐƠN)
+      tl.fromTo(
+        "#ban-stamp",
+        { scale: 1.5, opacity: 0, rotation: -12 },
+        { scale: 1, opacity: 1, rotation: -3, duration: 0.38, ease: "power3.out" },
+        7.59
+      );
+
+      // Tự vẽ nét tròn và gạch chéo của ban icon
+      if (banCircle && banSlash) {
+        tl.to(banCircle, { strokeDashoffset: 0, duration: 0.38, ease: "power2.out" }, 7.68);
+        tl.to(banSlash, { strokeDashoffset: 0, duration: 0.26, ease: "power2.out" }, 7.86);
+      }
+
+      // 3. Đăng ký timeline paused vào window.__timelines["scene-s17"]
+      window.__timelines["scene-s17"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

@@ -1,0 +1,608 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+      *, *::before, *::after {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #E7E3D9;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: #E7E3D9;
+        perspective: 1400px;
+      }
+
+      /* 1. Nền lưới ô vuông 84px & hạt giấy (grain) */
+      .bg-grid {
+        position: absolute;
+        inset: 0;
+        background-image:
+          linear-gradient(rgba(20, 20, 20, 0.22) 1.5px, transparent 1.5px),
+          linear-gradient(90deg, rgba(20, 20, 20, 0.22) 1.5px, transparent 1.5px);
+        background-size: 84px 84px;
+        background-position: -1.5px -1.5px;
+        pointer-events: none;
+        z-index: 1;
+      }
+      .bg-grain {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        z-index: 2;
+        mix-blend-mode: multiply;
+        opacity: 0.18;
+      }
+
+      /* 2. Thanh cam thương hiệu cố định mép đáy */
+      .brand-bottom-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 1080px;
+        height: 12px;
+        background-color: #FF6A1A;
+        z-index: 999;
+      }
+
+      /* 3. Clip chính toàn scene */
+      .scene-clip {
+        position: absolute;
+        inset: 0;
+        z-index: 10;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      /* 4. Khung tư liệu truyền hình trực tiếp (Broadcast Viewfinder) */
+      .broadcast-header {
+        position: absolute;
+        top: 160px;
+        left: 60px;
+        right: 60px;
+        height: 56px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        z-index: 30;
+      }
+      .rec-badge {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        background-color: #141414;
+        padding: 8px 18px;
+        border-radius: 6px;
+        border-left: 5px solid #FF6A1A;
+      }
+      .rec-dot {
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background-color: #FF6A1A;
+      }
+      .rec-text {
+        font-size: 20px;
+        font-weight: 900;
+        letter-spacing: 2px;
+        color: #F7F4EC;
+        text-transform: uppercase;
+      }
+      .location-tag {
+        font-size: 20px;
+        font-weight: 900;
+        color: #141414;
+        background-color: #F5F0E4;
+        padding: 8px 16px;
+        border: 2px solid #141414;
+        border-radius: 6px;
+        letter-spacing: 1px;
+      }
+
+      /* 5. Khung tranh Hero Collage (Split đàm phán) */
+      .hero-card-wrapper {
+        position: absolute;
+        top: 236px;
+        left: 60px;
+        width: 960px;
+        height: 1200px;
+        transform-origin: 50% 50%;
+        transform-style: preserve-3d;
+        z-index: 20;
+      }
+      /* Đổ bóng cam đặc đúng quy chuẩn Style DNA */
+      .hero-card-shadow {
+        position: absolute;
+        inset: 0;
+        background-color: #ff7a1a;
+        transform: translate(12px, 12px);
+        border: 3px solid #141414;
+        z-index: 1;
+      }
+      .hero-card {
+        position: absolute;
+        inset: 0;
+        background-color: #F5F0E4;
+        border: 4px solid #141414;
+        overflow: hidden;
+        z-index: 2;
+      }
+      .hero-image-pan-box {
+        position: absolute;
+        inset: -20px;
+        width: 1000px;
+        height: 1240px;
+        transform-origin: 25% 50%;
+      }
+      .hero-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+
+      /* Viewfinder Corner Brackets */
+      .vf-bracket {
+        position: absolute;
+        width: 28px;
+        height: 28px;
+        border-color: #141414;
+        border-style: solid;
+        pointer-events: none;
+        z-index: 10;
+      }
+      .vf-top-left {
+        top: 16px;
+        left: 16px;
+        border-width: 4px 0 0 4px;
+      }
+      .vf-top-right {
+        top: 16px;
+        right: 16px;
+        border-width: 4px 4px 0 0;
+      }
+      .vf-bottom-left {
+        bottom: 16px;
+        left: 16px;
+        border-width: 0 0 4px 4px;
+      }
+      .vf-bottom-right {
+        bottom: 16px;
+        right: 16px;
+        border-width: 0 4px 4px 0;
+      }
+
+      /* Đường phân ranh đối đầu (Split Line) giữa bàn đàm phán (không kèm text để tránh lỗi contrast khi zoom) */
+      .split-indicator {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 50%;
+        width: 2px;
+        border-left: 3px dashed #FF6A1A;
+        pointer-events: none;
+        z-index: 5;
+      }
+
+      /* 6. Overlays & Badges */
+      .overlay-container {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        z-index: 40;
+      }
+
+      /* Label 1: 18/5: ĐỐI CHẤT LỊCH SỬ */
+      .label-box-1 {
+        position: absolute;
+        top: 260px;
+        left: 84px;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        opacity: 0;
+      }
+      .badge-date {
+        background-color: #FF6A1A;
+        color: #141414;
+        font-size: 22px;
+        font-weight: 900;
+        padding: 6px 16px;
+        letter-spacing: 1.5px;
+        border: 2px solid #141414;
+        border-bottom: none;
+      }
+      .title-banner {
+        background-color: #141414;
+        color: #F7F4EC;
+        font-size: 44px;
+        font-weight: 900;
+        padding: 14px 28px;
+        letter-spacing: 1.5px;
+        border: 3px solid #141414;
+        box-shadow: 6px 6px 0px #FF6A1A;
+        line-height: 1.2;
+      }
+
+      /* Label 2: LÝ BẰNG GẶP SINH VIÊN */
+      .label-box-2 {
+        position: absolute;
+        top: 260px;
+        right: 84px;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        opacity: 0;
+      }
+      .badge-meeting {
+        background-color: #FF6A1A;
+        color: #141414;
+        font-size: 20px;
+        font-weight: 900;
+        padding: 6px 16px;
+        letter-spacing: 1.5px;
+        border: 2px solid #141414;
+        border-bottom: none;
+      }
+      .title-banner-right {
+        background-color: #141414;
+        color: #F7F4EC;
+        font-size: 40px;
+        font-weight: 900;
+        padding: 14px 28px;
+        letter-spacing: 1.5px;
+        border: 3px solid #141414;
+        box-shadow: -6px 6px 0px #FF6A1A;
+        line-height: 1.2;
+        text-align: right;
+      }
+
+      /* Label 3 (Shot 2): VƯƠNG ĐAN - NGÔ KHẢI */
+      .label-box-3 {
+        position: absolute;
+        bottom: 500px; /* An toàn trên vùng caption 440px */
+        left: 84px;
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        background-color: #141414;
+        border: 3px solid #FF6A1A;
+        padding: 16px 24px;
+        box-shadow: 8px 8px 0px #141414;
+        opacity: 0;
+      }
+      .person-icon-wrap {
+        width: 54px;
+        height: 54px;
+        background-color: #FF6A1A;
+        border: 2px solid #141414;
+        display: grid;
+        place-items: center;
+        flex-shrink: 0;
+      }
+      .person-svg {
+        width: 34px;
+        height: 34px;
+      }
+      .person-svg path,
+      .person-svg circle {
+        fill: none;
+        stroke: #141414;
+        stroke-width: 4;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+      .leader-info {
+        display: flex;
+        flex-direction: column;
+      }
+      .leader-title {
+        font-size: 32px;
+        font-weight: 900;
+        color: #F7F4EC;
+        letter-spacing: 1px;
+        line-height: 1.2;
+      }
+      .leader-sub {
+        font-size: 19px;
+        font-weight: 700;
+        color: #E7E3D9;
+        letter-spacing: 1px;
+        margin-top: 4px;
+        text-transform: uppercase;
+      }
+
+      /* Focus Reticle vòng ngắm mục tiêu (Shot 2) */
+      .focus-reticle {
+        position: absolute;
+        top: 680px;
+        left: 170px;
+        width: 140px;
+        height: 140px;
+        border: 2px dashed #FF6A1A;
+        border-radius: 50%;
+        opacity: 0;
+        pointer-events: none;
+        z-index: 35;
+      }
+      .focus-reticle-dot {
+        position: absolute;
+        inset: 50%;
+        width: 10px;
+        height: 10px;
+        transform: translate(-50%, -50%);
+        background-color: #FF6A1A;
+        border-radius: 50%;
+      }
+    </style>
+
+    <!-- SVG Grain Filter definition -->
+    <svg style="position: absolute; width: 0; height: 0;" aria-hidden="true">
+      <filter id="vox-grain">
+        <feTurbulence type="fractalNoise" baseFrequency="0.75" numOctaves="3" result="noise" />
+        <feColorMatrix type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 0.22 0" />
+      </filter>
+    </svg>
+
+    <!-- Composition Root -->
+    <div
+      id="root"
+      data-composition-id="scene-s08"
+      data-width="1080"
+      data-height="1920"
+      data-start="0"
+      data-duration="9"
+      data-layout-allow-overflow="true"
+    >
+      <!-- Background elements -->
+      <div class="bg-grid"></div>
+      <div class="bg-grain" style="filter: url(#vox-grain);"></div>
+      <div class="brand-bottom-bar"></div>
+
+      <!-- Main Scene Clip -->
+      <div class="clip scene-clip" id="scene-s08" data-start="0" data-duration="9">
+        <!-- Broadcast HUD Header -->
+        <div class="broadcast-header" id="broadcast-header">
+          <div class="rec-badge">
+            <div class="rec-dot" id="rec-dot"></div>
+            <span class="rec-text">TRUYỀN HÌNH TRỰC TIẾP</span>
+          </div>
+          <div class="location-tag">ĐẠI LỄ ĐƯỜNG NHÂN DÂN</div>
+        </div>
+
+        <!-- Hero Card (Split Collage) -->
+        <div class="hero-card-wrapper" id="hero-card-wrapper">
+          <div class="hero-card-shadow"></div>
+          <div class="hero-card">
+            <div class="hero-image-pan-box" id="hero-image-pan-box">
+              <img
+                src="assets/img-05-split-negotiation-confrontation-table.jpeg"
+                alt="Bàn đàm phán đối đầu giữa Lý Bằng và sinh viên"
+                class="hero-image"
+              />
+            </div>
+            <!-- Split Line thể hiện sự phân cách đối đầu -->
+            <div class="split-indicator" id="split-line"></div>
+            <!-- Corner brackets -->
+            <div class="vf-bracket vf-top-left"></div>
+            <div class="vf-bracket vf-top-right"></div>
+            <div class="vf-bracket vf-bottom-left"></div>
+            <div class="vf-bracket vf-bottom-right"></div>
+          </div>
+        </div>
+
+        <!-- Vòng ngắm nhận diện lãnh đạo sinh viên (Shot 2) -->
+        <div class="focus-reticle" id="focus-reticle">
+          <div class="focus-reticle-dot"></div>
+        </div>
+
+        <!-- Overlays Layer -->
+        <div class="overlay-container">
+          <!-- Overlay 1 (Shot 1, t = 0.49s - 2.49s) -->
+          <div class="label-box-1" id="label-box-1">
+            <span class="badge-date">18.05.1989</span>
+            <span class="title-banner">ĐỐI CHẤT LỊCH SỬ</span>
+          </div>
+
+          <!-- Overlay 2 (Shot 1, t = 2.71s - 4.71s) -->
+          <div class="label-box-2" id="label-box-2">
+            <span class="badge-meeting">ĐÀM PHÁN CẤP CAO</span>
+            <span class="title-banner-right">LÝ BẰNG GẶP SINH VIÊN</span>
+          </div>
+
+          <!-- Overlay 3 & 4 (Shot 2, t = 5.63s - 7.85s) -->
+          <div class="label-box-3" id="label-box-3">
+            <div class="person-icon-wrap">
+              <svg class="person-svg" viewBox="0 0 64 64">
+                <circle id="person-head" cx="32" cy="20" r="11" />
+                <path id="person-body" d="M 12 54 C 12 40 21 35 32 35 C 43 35 52 40 52 54" />
+              </svg>
+            </div>
+            <div class="leader-info">
+              <span class="leader-title">VƯƠNG ĐAN - NGÔ KHẢI</span>
+              <span class="leader-sub">LÃNH ĐẠO ĐẠI DIỆN SINH VIÊN</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- GSAP Script -->
+    <script>
+      // Khởi tạo GSAP Timeline paused theo đúng quy chuẩn HyperFrames
+      const tl = gsap.timeline({ paused: true });
+
+      // Chuẩn bị stroke dash cho icon person tự vẽ
+      const personHead = document.getElementById("person-head");
+      const personBody = document.getElementById("person-body");
+      const headLen = (personHead && personHead.getTotalLength) ? personHead.getTotalLength() : 70;
+      const bodyLen = (personBody && personBody.getTotalLength) ? personBody.getTotalLength() : 90;
+
+      if (personHead) {
+        personHead.style.strokeDasharray = headLen + "px";
+        personHead.style.strokeDashoffset = headLen + "px";
+      }
+      if (personBody) {
+        personBody.style.strokeDasharray = bodyLen + "px";
+        personBody.style.strokeDashoffset = bodyLen + "px";
+      }
+
+      /* ---------------------------------------------------------------------
+         GIAI ĐOẠN 1: SHOT S08-1 (0.0s -> 5.0s)
+         - Transition in: "flip" xoay lật 90 độ mở ra khung cảnh
+         - Overlay 1: 18/5: ĐỐI CHẤT LỊCH SỬ (at 0.49s, hold 2.0s)
+         - Overlay 2: LÝ BẰNG GẶP SINH VIÊN (at 2.71s, hold 2.0s)
+         --------------------------------------------------------------------- */
+
+      // 1. Flip entrance mở ra khung cảnh bàn đàm phán (t = 0.0s -> 0.75s)
+      tl.fromTo(
+        "#hero-card-wrapper",
+        {
+          rotationY: -85,
+          scale: 0.88,
+          opacity: 0,
+          y: 20
+        },
+        {
+          rotationY: 0,
+          scale: 1,
+          opacity: 1,
+          y: 0,
+          duration: 0.75,
+          ease: "power3.out"
+        },
+        0.0
+      );
+
+      // HUD xuất hiện ngay sau cú flip
+      tl.fromTo(
+        "#broadcast-header",
+        { opacity: 0, y: -20 },
+        { opacity: 1, y: 0, duration: 0.4, ease: "power2.out" },
+        0.25
+      );
+
+      // REC dot nhấp nháy tuần hoàn tất định
+      tl.to("#rec-dot", { opacity: 0.2, duration: 0.45, repeat: 9, yoyo: true, ease: "steps(1)" }, 0.3);
+
+      // 2. Overlay 1: "18/5: ĐỐI CHẤT LỊCH SỬ" (t = 0.49s, hold 2.0s -> biến mất tại 2.49s)
+      tl.fromTo(
+        "#label-box-1",
+        { opacity: 0, x: -35, scale: 0.95 },
+        { opacity: 1, x: 0, scale: 1, duration: 0.38, ease: "power3.out" },
+        0.49
+      );
+      tl.to(
+        "#label-box-1",
+        { opacity: 0, x: -20, duration: 0.24, ease: "power2.in" },
+        2.49
+      );
+
+      // 3. Overlay 2: "LÝ BẰNG GẶP SINH VIÊN" (t = 2.71s, hold 2.0s -> biến mất tại 4.71s)
+      tl.fromTo(
+        "#label-box-2",
+        { opacity: 0, x: 35, scale: 0.95 },
+        { opacity: 1, x: 0, scale: 1, duration: 0.38, ease: "power3.out" },
+        2.71
+      );
+      tl.to(
+        "#label-box-2",
+        { opacity: 0, x: 20, duration: 0.24, ease: "power2.in" },
+        4.71
+      );
+
+      /* ---------------------------------------------------------------------
+         GIAI ĐOẠN 2: SHOT S08-2 (5.0s -> 9.0s)
+         - Transition: "cut" / zoom pan-left sang phía đại diện sinh viên
+         - Focus reticle xuất hiện
+         - Overlay 3 & 4: VƯƠNG ĐAN - NGÔ KHẢI + Person Icon (at 5.63s, hold 2.2s)
+         --------------------------------------------------------------------- */
+
+      // 4. Camera pan-left & zoom in vào hai thủ lĩnh sinh viên bên trái (bắt đầu tại 5.0s)
+      tl.to(
+        "#hero-image-pan-box",
+        {
+          scale: 1.45,
+          x: 175,
+          y: -10,
+          duration: 0.75,
+          ease: "power3.inOut"
+        },
+        5.0
+      );
+
+      // Biến mất split line giữa bàn khi chuyển sang cận cảnh sinh viên
+      tl.to("#split-line", { opacity: 0, duration: 0.35, ease: "power2.out" }, 5.0);
+
+      // 5. Vòng ngắm reticle xuất hiện quanh vị trí sinh viên (t = 5.45s)
+      tl.fromTo(
+        "#focus-reticle",
+        { opacity: 0, scale: 1.35 },
+        { opacity: 1, scale: 1, duration: 0.4, ease: "power2.out" },
+        5.45
+      );
+
+      // 6. Overlay 3 & 4: "VƯƠNG ĐAN - NGÔ KHẢI" + Icon person (t = 5.63s, hold 2.2s -> kết thúc tại 7.83s)
+      tl.fromTo(
+        "#label-box-3",
+        { opacity: 0, y: 35, scale: 0.94 },
+        { opacity: 1, y: 0, scale: 1, duration: 0.42, ease: "power3.out" },
+        5.63
+      );
+
+      // Icon person nét tự vẽ chuẩn seekable fromTo
+      tl.fromTo(
+        "#person-head",
+        { strokeDashoffset: headLen },
+        { strokeDashoffset: 0, duration: 0.35, ease: "power2.out" },
+        5.7
+      );
+      tl.fromTo(
+        "#person-body",
+        { strokeDashoffset: bodyLen },
+        { strokeDashoffset: 0, duration: 0.4, ease: "power2.out" },
+        5.85
+      );
+
+      // Outro cho nhãn và reticle (t = 7.83s)
+      tl.to(
+        "#label-box-3",
+        { opacity: 0, y: 20, duration: 0.28, ease: "power2.in" },
+        7.83
+      );
+      tl.to(
+        "#focus-reticle",
+        { opacity: 0, scale: 0.9, duration: 0.28, ease: "power2.in" },
+        7.83
+      );
+
+      // Nhịp chậm ổn định những giây cuối trước khi cắt sang scene kế tiếp (8.0s -> 9.0s)
+      tl.to(
+        "#hero-image-pan-box",
+        { x: 185, duration: 1.0, ease: "none" },
+        8.0
+      );
+
+      // BẮT BUỘC: Đăng ký timeline paused vào window.__timelines["scene-s08"]
+      window.__timelines["scene-s08"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

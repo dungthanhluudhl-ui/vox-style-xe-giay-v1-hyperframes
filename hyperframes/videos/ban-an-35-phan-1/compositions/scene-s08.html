@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap">
+      <style>
+      *, *::before, *::after {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: #F5F0E4;
+        font-family: "Be Vietnam Pro", sans-serif;
+        color: #141414;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: #F5F0E4;
+      }
+
+      /* Subtle paper texture overlay */
+      .paper-grain {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background-image: radial-gradient(#141414 0.75px, transparent 0.75px);
+        background-size: 24px 24px;
+        opacity: 0.14;
+        mix-blend-mode: multiply;
+        z-index: 1;
+      }
+
+      /* Camera motion container with intentional zoom overflow */
+      #camera-rig {
+        position: absolute;
+        inset: 0;
+        transform-origin: 540px 880px;
+        will-change: transform;
+        z-index: 2;
+      }
+
+      /* Permanent brand signature bar */
+      #permanent-bottom-bar {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 14px;
+        background-color: #FF6A1A;
+        z-index: 99;
+      }
+
+      /* Top editorial header - safely inside top zone */
+      .top-meta {
+        position: absolute;
+        top: 170px;
+        left: 70px;
+        right: 70px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 2px solid #141414;
+        padding-bottom: 12px;
+      }
+
+      .meta-tag {
+        font-size: 20px;
+        font-weight: 900;
+        letter-spacing: 2px;
+        color: #141414;
+        text-transform: uppercase;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .meta-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background-color: #FF6A1A;
+        display: inline-block;
+      }
+
+      .meta-code {
+        font-size: 19px;
+        font-weight: 900;
+        color: #141414;
+        letter-spacing: 1px;
+      }
+
+      /* Main Document Wrapper */
+      #doc-wrapper {
+        position: absolute;
+        top: 240px;
+        left: 70px;
+        width: 940px;
+        height: 1010px;
+        background-color: #FCFBF8;
+        border: 3px solid #141414;
+        box-shadow: 12px 14px 0px rgba(20, 20, 20, 0.2);
+        padding: 48px 46px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        will-change: transform, opacity;
+      }
+
+      /* Document National Header */
+      .doc-header {
+        text-align: center;
+        border-bottom: 3px double #141414;
+        padding-bottom: 22px;
+        position: relative;
+      }
+
+      .doc-national-title {
+        font-size: 20px;
+        font-weight: 900;
+        letter-spacing: 1.5px;
+        margin: 0 0 6px 0;
+        text-transform: uppercase;
+        color: #141414;
+      }
+
+      .doc-national-sub {
+        font-size: 18px;
+        font-weight: 700;
+        letter-spacing: 1px;
+        margin: 0;
+        color: #141414;
+      }
+
+      .doc-court-title {
+        margin-top: 22px;
+        font-size: 22px;
+        font-weight: 900;
+        color: #141414;
+        text-transform: uppercase;
+      }
+
+      .doc-main-title {
+        margin: 8px 0 4px 0;
+        font-size: 40px;
+        font-weight: 900;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        color: #141414;
+      }
+
+      .doc-case-number {
+        font-size: 18px;
+        font-weight: 700;
+        color: #141414;
+      }
+
+      /* Rubber Stamp Overlay */
+      #doc-stamp {
+        position: absolute;
+        top: 15px;
+        right: 10px;
+        border: 4px solid #141414;
+        background-color: #141414;
+        color: #F7F4EC;
+        padding: 10px 18px;
+        font-size: 22px;
+        font-weight: 900;
+        letter-spacing: 3px;
+        text-transform: uppercase;
+        box-shadow: 4px 5px 0px #FF6A1A;
+        transform-origin: center center;
+        will-change: transform, opacity;
+      }
+
+      /* Document Body Content */
+      .doc-body {
+        margin-top: 24px;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        font-size: 22px;
+        font-weight: 700;
+        line-height: 1.45;
+      }
+
+      .doc-row {
+        display: flex;
+        align-items: baseline;
+        gap: 12px;
+      }
+
+      .doc-label {
+        font-weight: 900;
+        color: #141414;
+        min-width: 190px;
+        font-size: 20px;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+      }
+
+      .doc-value {
+        font-weight: 700;
+        color: #141414;
+        flex: 1;
+      }
+
+      /* Encoded Name Row (Focal Zone) */
+      .encoded-row-container {
+        position: relative;
+        margin: 16px 0;
+        padding: 22px 20px;
+        background-color: rgba(20, 20, 20, 0.04);
+        border: 2px dashed rgba(20, 20, 20, 0.4);
+        border-radius: 4px;
+      }
+
+      .encoded-row {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
+
+      .encoded-text-block {
+        display: inline-flex;
+        align-items: center;
+        gap: 14px;
+      }
+
+      .encoded-name {
+        font-size: 38px;
+        font-weight: 900;
+        letter-spacing: 2px;
+        color: #141414;
+        background-color: #E7E3D9;
+        padding: 4px 16px;
+        border-radius: 4px;
+        border: 2px solid #141414;
+        will-change: opacity;
+      }
+
+      .encoded-badge {
+        font-size: 17px;
+        font-weight: 900;
+        color: #141414;
+        border: 2px solid #141414;
+        padding: 4px 10px;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+      }
+
+      /* Orange Sticker Tape Overlay - Slaps down over the encoded name */
+      #hung-sticker {
+        position: absolute;
+        top: 8px;
+        left: 170px;
+        width: 580px;
+        background-color: #FF6A1A;
+        border: 3px solid #141414;
+        box-shadow: 8px 8px 0px #141414;
+        padding: 16px 28px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        transform-origin: 20% 50%;
+        z-index: 10;
+        will-change: transform, opacity;
+      }
+
+      /* Decorative tape edges */
+      .tape-edge-left, .tape-edge-right {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 12px;
+        pointer-events: none;
+      }
+      .tape-edge-left {
+        left: -8px;
+        background: linear-gradient(135deg, transparent 4px, #FF6A1A 4px);
+      }
+      .tape-edge-right {
+        right: -8px;
+        background: linear-gradient(-45deg, transparent 4px, #FF6A1A 4px);
+      }
+
+      .sticker-name {
+        font-size: 58px;
+        font-weight: 900;
+        letter-spacing: 3px;
+        color: #141414;
+        text-transform: uppercase;
+        line-height: 1;
+      }
+
+      .sticker-tag {
+        background-color: #141414;
+        color: #F7F4EC;
+        font-size: 20px;
+        font-weight: 900;
+        letter-spacing: 1.5px;
+        padding: 8px 14px;
+        border-radius: 4px;
+        text-transform: uppercase;
+      }
+
+      /* Document Footer / Official seal area */
+      .doc-footer {
+        border-top: 2px solid #141414;
+        padding-top: 18px;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+      }
+
+      .doc-notice {
+        font-size: 15px;
+        font-weight: 700;
+        color: #141414;
+        max-width: 540px;
+        line-height: 1.4;
+      }
+
+      .doc-seal-mockup {
+        width: 110px;
+        height: 110px;
+        border: 3px dashed #141414;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        font-size: 14px;
+        font-weight: 900;
+        color: #141414;
+        text-align: center;
+        letter-spacing: 1px;
+      }
+
+      /* Punch Phrase Banner - Safely inside usable zone (top: 1285px, bottom: 1409px) */
+      #punch-banner {
+        position: absolute;
+        top: 1285px;
+        left: 70px;
+        right: 70px;
+        height: 124px;
+        background-color: #141414;
+        border: 3px solid #FF6A1A;
+        box-shadow: 10px 12px 0px rgba(20, 20, 20, 0.25);
+        padding: 16px 36px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        will-change: transform, opacity;
+      }
+
+      .punch-left {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      .punch-label-top {
+        font-size: 18px;
+        font-weight: 700;
+        color: #FF6A1A;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+      }
+
+      .punch-title {
+        margin: 0;
+        font-size: 42px;
+        font-weight: 900;
+        letter-spacing: 1.5px;
+        color: #F7F4EC;
+        text-transform: uppercase;
+        line-height: 1;
+      }
+
+      /* Icon Person SVG container */
+      #icon-person-box {
+        width: 82px;
+        height: 82px;
+        background-color: rgba(255, 255, 255, 0.08);
+        border-radius: 10px;
+        border: 2px solid #FF6A1A;
+        display: grid;
+        place-items: center;
+      }
+
+      #icon-person {
+        width: 54px;
+        height: 54px;
+      }
+
+      #icon-person path,
+      #icon-person circle {
+        fill: none;
+        stroke: #FF6A1A;
+        stroke-width: 4;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+    </style>
+
+    <div data-hf-id="hf-ek1v" id="root" data-composition-id="scene-s08" data-width="1080" data-height="1920" data-duration="9.03">
+      <!-- Paper Texture overlay -->
+      <div data-hf-id="hf-osr0" class="paper-grain"></div>
+
+      <!-- Camera rig with intentional scaling overflow allowance -->
+      <div data-hf-id="hf-nlcs" id="camera-rig" data-layout-allow-overflow="true">
+        <!-- Top Metadata Bar -->
+        <div data-hf-id="hf-epk5" class="top-meta">
+          <div data-hf-id="hf-ow93" class="meta-tag">
+            <span data-hf-id="hf-y6kw" class="meta-dot"></span>
+            TƯ LIỆU TỐ TỤNG // TRÍCH LỤC
+          </div>
+          <div data-hf-id="hf-z0fb" class="meta-code">HỒ SƠ SỐ: 42/HS-ST</div>
+        </div>
+
+        <!-- Main Document Sheet -->
+        <div data-hf-id="hf-udzh" id="doc-wrapper" data-layout-allow-occlusion="true">
+          <!-- Document Header -->
+          <div data-hf-id="hf-23bw" class="doc-header">
+            <p data-hf-id="hf-mpkw" class="doc-national-title">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</p>
+            <p data-hf-id="hf-7sv8" class="doc-national-sub">Độc lập - Tự do - Hạnh phúc</p>
+            <div data-hf-id="hf-97cn" class="doc-court-title">TÒA ÁN NHÂN DÂN THÀNH PHỐ H.</div>
+            <h1 data-hf-id="hf-wxcx" class="doc-main-title">BẢN ÁN HÌNH SỰ SƠ THẨM</h1>
+            <div data-hf-id="hf-ma8c" class="doc-case-number">Số vụ án: 42/2023/HS-ST • Ngày 18/09/2023</div>
+
+            <!-- Rubber Stamp Overlay -->
+            <div data-hf-id="hf-0lrh" id="doc-stamp" class="clip" data-start="1.6" data-duration="2.2" data-layout-allow-overlap="true" data-layout-allow-occlusion="true">HỒ SƠ BẢN ÁN</div>
+          </div>
+
+          <!-- Document Content Lines -->
+          <div data-hf-id="hf-qvab" class="doc-body">
+            <div data-hf-id="hf-wihp" class="doc-row">
+              <span data-hf-id="hf-pcqc" class="doc-label">Về hành vi:</span>
+              <span data-hf-id="hf-5fp9" class="doc-value">Lừa đảo chiếm đoạt tài sản qua mạng viễn thông</span>
+            </div>
+            <div data-hf-id="hf-y2ep" class="doc-row">
+              <span data-hf-id="hf-kd0u" class="doc-label">Căn cứ:</span>
+              <span data-hf-id="hf-z2mg" class="doc-value">Khoản 4 Điều 174 Bộ luật Hình sự</span>
+            </div>
+
+            <!-- Encoded Subject Focal Area -->
+            <div data-hf-id="hf-313x" class="encoded-row-container" data-layout-allow-overlap="true" data-layout-allow-occlusion="true">
+              <div data-hf-id="hf-gzoh" class="encoded-row">
+                <span data-hf-id="hf-pr08" class="doc-label">Bị cáo:</span>
+                <div data-hf-id="hf-t1yy" class="encoded-text-block">
+                  <span data-hf-id="hf-2ra0" class="encoded-name" id="original-name" data-layout-allow-overlap="true" data-layout-allow-occlusion="true">NGUYỄN DANH H.</span>
+                  <span data-hf-id="hf-tr8z" class="encoded-badge">[MÃ HÓA]</span>
+                </div>
+              </div>
+
+              <!-- Orange Sticker Tape that slaps down over the encoded name -->
+              <div data-hf-id="hf-0brp" id="hung-sticker" data-layout-allow-overlap="true" data-layout-allow-occlusion="true">
+                <div data-hf-id="hf-m7bc" class="tape-edge-left"></div>
+                <div data-hf-id="hf-txqv" class="tape-edge-right"></div>
+                <span data-hf-id="hf-afqc" class="sticker-name" data-layout-allow-overlap="true" data-layout-allow-occlusion="true">HÙNG</span>
+                <span data-hf-id="hf-56n4" class="sticker-tag" data-layout-allow-overlap="true" data-layout-allow-occlusion="true">TÊN GIẢ QUY ƯỚC</span>
+              </div>
+            </div>
+
+            <div data-hf-id="hf-z9bs" class="doc-row">
+              <span data-hf-id="hf-zctm" class="doc-label">Năm sinh:</span>
+              <span data-hf-id="hf-c4ar" class="doc-value">198x • Nơi cư trú: [BẢO MẬT THEO LUẬT]</span>
+            </div>
+            <div data-hf-id="hf-yv0r" class="doc-row">
+              <span data-hf-id="hf-4c32" class="doc-label">Tình trạng:</span>
+              <span data-hf-id="hf-xzmj" class="doc-value">Đã tuyên án • Có hiệu lực pháp luật</span>
+            </div>
+          </div>
+
+          <!-- Document Bottom Seal Area -->
+          <div data-hf-id="hf-o8pu" class="doc-footer">
+            <div data-hf-id="hf-y7ay" class="doc-notice">
+              * Tên đương sự trong bản án gốc được viết tắt mã hóa để bảo vệ quyền nhân thân. Tên gọi trong video mang tính quy ước phục vụ truyền thông.
+            </div>
+            <div data-hf-id="hf-79yr" class="doc-seal-mockup">
+              CON DẤU<br data-hf-id="hf-x5px">TÒA ÁN
+            </div>
+          </div>
+        </div>
+
+        <!-- Bottom Punch Phrase Banner -->
+        <div data-hf-id="hf-8n9e" id="punch-banner" class="clip" data-start="5.32" data-duration="3.71">
+          <div data-hf-id="hf-hr0i" class="punch-left">
+            <span data-hf-id="hf-v42q" class="punch-label-top">QUY ƯỚC DANH XƯNG</span>
+            <h2 data-hf-id="hf-vhxs" class="punch-title">QUY ƯỚC: ÔNG HÙNG</h2>
+          </div>
+          <div data-hf-id="hf-243o" id="icon-person-box">
+            <svg data-hf-id="hf-hmg4" id="icon-person" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+              <!-- Person head -->
+              <circle data-hf-id="hf-grbh" cx="50" cy="32" r="18" />
+              <!-- Person body/shoulders -->
+              <path data-hf-id="hf-mw6k" d="M 20 85 C 20 62, 35 56, 50 56 C 65 56, 80 62, 80 85" />
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- Permanent bottom brand accent bar -->
+      <div data-hf-id="hf-plkn" id="permanent-bottom-bar"></div>
+    </div>
+
+    <script>
+      const tl = gsap.timeline({ paused: true });
+
+      // Progressive SVG path draw preparation for the Person icon
+      const personElements = document.querySelectorAll("#icon-person path, #icon-person circle");
+      personElements.forEach((el) => {
+        const len = el.getTotalLength();
+        el.style.strokeDasharray = len;
+        el.style.strokeDashoffset = len;
+      });
+
+      // 0.0s - 9.03s: Smooth continuous camera zoom-in
+      tl.fromTo(
+        "#camera-rig",
+        { scale: 1 },
+        { scale: 1.03, duration: 9.03, ease: "none" },
+        0
+      );
+
+      // 0.2s: Peel/rise entrance for the legal document card
+      tl.fromTo(
+        "#doc-wrapper",
+        { y: 70, opacity: 0, scale: 0.96 },
+        { y: 0, opacity: 1, scale: 1, duration: 0.75, ease: "power3.out" },
+        0.2
+      );
+
+      // 1.60s: Overlay label "HỒ SƠ BẢN ÁN" stamps down with force
+      tl.fromTo(
+        "#doc-stamp",
+        { scale: 2.2, opacity: 0, rotation: 12 },
+        { scale: 1, opacity: 1, rotation: -4, duration: 0.35, ease: "power4.out" },
+        1.60
+      );
+
+      // 3.55s: Overlay label "HỒ SƠ BẢN ÁN" exits smoothly after 2.2s hold duration
+      tl.to(
+        "#doc-stamp",
+        { opacity: 0, scale: 0.85, duration: 0.22, ease: "power2.in" },
+        3.55
+      );
+
+      // 5.00s: Orange sticker tape "HÙNG (TÊN GIẢ QUY ƯỚC)" slaps down covering "NGUYỄN DANH H."
+      tl.fromTo(
+        "#hung-sticker",
+        { scale: 1.45, y: -45, rotation: 8, opacity: 0 },
+        { scale: 1, y: 0, rotation: -2.5, opacity: 1, duration: 0.32, ease: "power4.out" },
+        5.00
+      );
+
+      // 5.02s: Tactile impact thud on document wrapper (explicit fromTo boundaries)
+      tl.fromTo(
+        "#doc-wrapper",
+        { y: 0 },
+        { y: -4, duration: 0.07, ease: "power1.in" },
+        5.02
+      );
+      tl.fromTo(
+        "#doc-wrapper",
+        { y: -4 },
+        { y: 0, duration: 0.12, ease: "power2.out" },
+        5.09
+      );
+
+      // 5.10s: Hide underlying original encoded name completely once the opaque sticker is fully pressed
+      tl.to("#original-name", { opacity: 0, duration: 0.05 }, 5.10);
+
+      // 5.32s: Punch phrase banner arrives
+      tl.fromTo(
+        "#punch-banner",
+        { y: 35, opacity: 0, scale: 0.96 },
+        { y: 0, opacity: 1, scale: 1, duration: 0.45, ease: "power3.out" },
+        5.32
+      );
+
+      // 7.75s: Icon "person" draws progressively
+      tl.to(
+        personElements,
+        { strokeDashoffset: 0, duration: 0.65, ease: "power2.out", stagger: 0.12 },
+        7.75
+      );
+
+      window.__timelines["scene-s08"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

@@ -1,0 +1,706 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap"
+    />
+      <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background: #E7E3D9;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        -webkit-font-smoothing: antialiased;
+        overflow: hidden;
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: #F5F0E4;
+      }
+      .clip {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+      }
+
+      /* Camera push-in container */
+      #content-stage {
+        position: absolute;
+        inset: 0;
+        transform-origin: 540px 720px;
+        will-change: transform;
+      }
+
+      /* Background surface & header */
+      .bg-card-surface {
+        position: absolute;
+        inset: 0;
+        background-color: #F5F0E4;
+      }
+      .bg-ruler-line {
+        position: absolute;
+        left: 70px;
+        top: 0;
+        bottom: 0;
+        width: 1px;
+        background-color: rgba(20, 20, 20, 0.08);
+      }
+      .bg-top-bar {
+        position: absolute;
+        top: 60px;
+        left: 70px;
+        right: 70px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 2px solid rgba(20, 20, 20, 0.15);
+        padding-bottom: 16px;
+      }
+      .bg-dossier-id {
+        font-size: 20px;
+        font-weight: 700;
+        letter-spacing: 3px;
+        text-transform: uppercase;
+        color: #141414;
+      }
+      .bg-dossier-status {
+        font-size: 17px;
+        font-weight: 900;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        color: #141414;
+        background: #FF6A1A;
+        padding: 6px 14px;
+        border-radius: 6px;
+      }
+
+      /* Legal Document Card */
+      #doc-card {
+        position: absolute;
+        left: 70px;
+        top: 160px;
+        width: 940px;
+        height: 1040px;
+        background: #FAF8F3;
+        border: 2px solid #141414;
+        border-radius: 18px;
+        box-shadow: 12px 14px 0px #141414;
+        padding: 42px 48px;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+        will-change: transform, opacity;
+      }
+
+      /* Document Meta & Seal */
+      .doc-meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 20px;
+        padding-bottom: 18px;
+        border-bottom: 2px dashed rgba(20, 20, 20, 0.25);
+      }
+      .doc-seal-group {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        max-width: 680px;
+      }
+      .doc-state-title {
+        font-size: 19px;
+        font-weight: 900;
+        letter-spacing: 1.2px;
+        text-transform: uppercase;
+        color: #141414;
+      }
+      .doc-code-ref {
+        font-size: 17px;
+        font-weight: 700;
+        color: #2B2925;
+        letter-spacing: 1px;
+      }
+
+      /* SVG Icon "doc" drawing slot */
+      #doc-icon-wrap {
+        width: 64px;
+        height: 64px;
+        opacity: 0;
+        flex-shrink: 0;
+      }
+      .doc-svg {
+        width: 100%;
+        height: 100%;
+        overflow: visible;
+      }
+      .doc-svg path {
+        fill: none;
+        stroke: #141414;
+        stroke-width: 4;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+      .doc-svg .accent-path {
+        stroke: #FF6A1A;
+        stroke-width: 5;
+      }
+
+      /* Article Main Heading */
+      .doc-article-title {
+        font-size: 52px;
+        font-weight: 900;
+        color: #141414;
+        line-height: 1.15;
+        margin-bottom: 4px;
+        letter-spacing: -0.5px;
+      }
+      .doc-article-subtitle {
+        font-size: 24px;
+        font-weight: 700;
+        color: #2B2925;
+        margin-bottom: 20px;
+      }
+
+      /* Clauses section */
+      .clauses-container {
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+      }
+
+      .clause-muted {
+        font-size: 20px;
+        font-weight: 700;
+        line-height: 1.45;
+        color: #2B2925;
+        background: rgba(20, 20, 20, 0.05);
+        padding: 12px 18px;
+        border-radius: 10px;
+        border-left: 4px solid #141414;
+      }
+
+      /* Clause 2 Header - restricted width to prevent collision with callout */
+      .clause-header {
+        font-size: 24px;
+        font-weight: 900;
+        color: #141414;
+        line-height: 1.35;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        max-width: 520px;
+      }
+      .clause-header-num {
+        background: #141414;
+        color: #F7F4EC;
+        font-size: 18px;
+        font-weight: 900;
+        padding: 4px 10px;
+        border-radius: 6px;
+        flex-shrink: 0;
+      }
+      .clause-header-text {
+        color: #141414;
+      }
+
+      /* Point G active card */
+      #point-g-card {
+        position: relative;
+        background: #FFFFFF;
+        border: 2px solid #141414;
+        border-radius: 14px;
+        padding: 20px 22px;
+        box-shadow: 6px 6px 0px rgba(255, 106, 26, 0.85);
+      }
+
+      .point-g-row {
+        display: flex;
+        align-items: flex-start;
+        gap: 16px;
+      }
+
+      #point-badge {
+        flex-shrink: 0;
+        background: #141414;
+        color: #F7F4EC;
+        font-size: 22px;
+        font-weight: 900;
+        padding: 8px 16px;
+        border-radius: 8px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+
+      .point-text-wrap {
+        position: relative;
+        flex: 1;
+      }
+
+      /* Point text width restricted to ensure 100% clean clearance from right side callout */
+      .point-text {
+        position: relative;
+        font-size: 25px;
+        font-weight: 900;
+        line-height: 1.42;
+        color: #141414;
+        max-width: 480px;
+        z-index: 2;
+      }
+
+      /* Highlighter pen sweep */
+      #highlighter-stripe {
+        position: absolute;
+        inset: -4px -8px;
+        background: #FF6A1A;
+        opacity: 0.35;
+        border-radius: 6px;
+        transform-origin: left center;
+        transform: scaleX(0);
+        z-index: 1;
+        pointer-events: none;
+      }
+
+      /* Technical callout label - placed cleanly in the dedicated right margin */
+      #tech-callout {
+        position: absolute;
+        right: 48px;
+        top: 670px;
+        width: 270px;
+        background: #141414;
+        border: 2px solid #FF6A1A;
+        border-radius: 12px;
+        padding: 12px 18px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.25);
+        z-index: 30;
+        opacity: 0;
+        will-change: transform, opacity;
+      }
+      .callout-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background-color: #FF6A1A;
+        flex-shrink: 0;
+      }
+      .callout-title {
+        font-size: 20px;
+        font-weight: 900;
+        color: #F7F4EC;
+        letter-spacing: 0.5px;
+        line-height: 1.25;
+      }
+
+      /* Pointer line connecting callout to Point G */
+      #callout-line {
+        position: absolute;
+        right: 318px;
+        top: 698px;
+        width: 90px;
+        height: 3px;
+        background: #FF6A1A;
+        transform-origin: right center;
+        transform: scaleX(0);
+        z-index: 25;
+      }
+
+      /* Penalty alert box */
+      #penalty-box {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: 16px;
+        background: #141414;
+        border: 2px solid #141414;
+        border-radius: 12px;
+        padding: 16px 24px;
+        will-change: transform;
+      }
+      .penalty-label {
+        font-size: 19px;
+        font-weight: 900;
+        color: #F7F4EC;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+      .penalty-years {
+        font-size: 26px;
+        font-weight: 900;
+        color: #141414;
+        background: #FF6A1A;
+        padding: 4px 14px;
+        border-radius: 6px;
+        letter-spacing: 1px;
+      }
+
+      /* Punch Card Overlay */
+      #punch-card {
+        position: absolute;
+        left: 70px;
+        top: 1240px;
+        width: 940px;
+        height: 175px;
+        background: #141414;
+        border: 2px solid #FF6A1A;
+        border-radius: 18px;
+        padding: 24px 36px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-shadow: 12px 14px 0px rgba(255, 106, 26, 0.95);
+        z-index: 20;
+        opacity: 0;
+        will-change: transform, opacity;
+      }
+      .punch-left {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .punch-tag-badge {
+        align-self: flex-start;
+        background: #FF6A1A;
+        color: #141414;
+        font-size: 17px;
+        font-weight: 900;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        padding: 4px 12px;
+        border-radius: 6px;
+      }
+      .punch-headline {
+        font-size: 50px;
+        font-weight: 900;
+        color: #F7F4EC;
+        letter-spacing: -0.5px;
+        line-height: 1.1;
+      }
+      .punch-divider {
+        width: 2px;
+        height: 96px;
+        background: rgba(255, 255, 255, 0.2);
+      }
+      .punch-right {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 8px;
+      }
+      .punch-subtag {
+        font-size: 16px;
+        font-weight: 700;
+        color: #F7F4EC;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+      }
+      .punch-value-badge {
+        font-size: 38px;
+        font-weight: 900;
+        color: #141414;
+        background: #FF6A1A;
+        padding: 4px 18px;
+        border-radius: 8px;
+        letter-spacing: 0.5px;
+      }
+
+      /* Permanent Bottom Orange Bar */
+      .brand-bottom-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 14px;
+        background-color: #FF6A1A;
+        z-index: 999;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s14"
+      data-width="1080"
+      data-height="1920"
+      data-duration="8.9"
+      data-layout-allow-overflow="true"
+    >
+      <div
+        id="scene-s14"
+        class="clip"
+        data-start="0"
+        data-duration="8.9"
+        data-layout-allow-overflow="true"
+      >
+        <!-- Stage wrapper for camera push-in motion -->
+        <div id="content-stage" data-layout-allow-overflow="true">
+          <!-- Background surface -->
+          <div id="bg-surface" class="bg-card-surface"></div>
+          <div id="bg-ruler" class="bg-ruler-line"></div>
+
+          <!-- Top filing header -->
+          <div id="top-bar" class="bg-top-bar">
+            <div id="dossier-id" class="bg-dossier-id">VĂN BẢN PHÁP LUẬT • BLHS 2015</div>
+            <div id="dossier-status" class="bg-dossier-status">TĂNG NẶNG ĐỊNH KHUNG</div>
+          </div>
+
+          <!-- Document Paper Card -->
+          <div id="doc-card">
+            <!-- Meta & Document Icon -->
+            <div class="doc-meta">
+              <div class="doc-seal-group">
+                <div class="doc-state-title">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</div>
+                <div class="doc-code-ref">BỘ LUẬT HÌNH SỰ • SỐ 100/2015/QH13</div>
+              </div>
+
+              <!-- Icon "doc" (Progressive SVG Path) -->
+              <div id="doc-icon-wrap">
+                <svg id="doc-svg" class="doc-svg" viewBox="0 0 64 64">
+                  <!-- Document outline -->
+                  <path
+                    id="doc-path-body"
+                    class="draw-path"
+                    d="M 12 4 L 40 4 L 54 18 L 54 60 L 12 60 Z"
+                  />
+                  <!-- Folded corner -->
+                  <path
+                    id="doc-path-fold"
+                    class="draw-path"
+                    d="M 40 4 L 40 18 L 54 18"
+                  />
+                  <!-- Internal text lines -->
+                  <path
+                    id="doc-path-line1"
+                    class="draw-path"
+                    d="M 20 28 L 46 28"
+                  />
+                  <path
+                    id="doc-path-line2"
+                    class="draw-path"
+                    d="M 20 38 L 46 38"
+                  />
+                  <!-- Checkmark seal accent -->
+                  <path
+                    id="doc-path-seal"
+                    class="draw-path accent-path"
+                    d="M 20 49 L 28 55 L 46 43"
+                  />
+                </svg>
+              </div>
+            </div>
+
+            <!-- Article Title -->
+            <div class="doc-article-title">ĐIỀU 326</div>
+            <div class="doc-article-subtitle">Tội truyền bá văn hóa phẩm đồi trụy</div>
+
+            <!-- Clauses -->
+            <div class="clauses-container">
+              <!-- Clause 1 (Muted Context) -->
+              <div class="clause-muted">
+                1. Người nào làm ra, sao chép, lưu hành, tàng trữ nhằm phổ biến... thì bị phạt tiền từ 10.000.000đ đến 100.000.000đ, phạt cải tạo không giam giữ...
+              </div>
+
+              <!-- Clause 2 Heading -->
+              <div
+                class="clause-header"
+                data-layout-allow-occlusion="true"
+                data-layout-allow-overlap="true"
+              >
+                <span class="clause-header-num">Khoản 2</span>
+                <span class="clause-header-text">Phạm tội thuộc một trong các trường hợp sau đây:</span>
+              </div>
+
+              <!-- Point G (Target Focus) -->
+              <div
+                id="point-g-card"
+                data-layout-allow-occlusion="true"
+                data-layout-allow-overlap="true"
+              >
+                <div class="point-g-row">
+                  <div id="point-badge">Điểm g</div>
+                  <div class="point-text-wrap">
+                    <div class="point-text" id="point-text-content">
+                      Sử dụng mạng internet, mạng máy tính, mạng viễn thông hoặc phương tiện điện tử để phạm tội;
+                    </div>
+                    <!-- Highlighter pen sweep -->
+                    <div
+                      id="highlighter-stripe"
+                      data-layout-allow-overlap="true"
+                    ></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Penalty alert box -->
+              <div id="penalty-box">
+                <span class="penalty-label">HÌNH PHẠT TÙ CỐ ĐỊNH:</span>
+                <span class="penalty-years">03 ĐẾN 10 NĂM</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Technical Callout Label (Overlay atMs: 118400 -> t=1.6s) -->
+          <div
+            id="tech-callout"
+            data-layout-allow-occlusion="true"
+            data-layout-allow-overlap="true"
+          >
+            <div class="callout-dot"></div>
+            <div class="callout-title">Mạng máy tính viễn thông</div>
+          </div>
+          <div
+            id="callout-line"
+            data-layout-allow-occlusion="true"
+            data-layout-allow-overlap="true"
+          ></div>
+
+          <!-- Punch Card (Overlay atMs: 123110 -> t=6.31s) -->
+          <div
+            id="punch-card"
+            data-layout-allow-occlusion="true"
+            data-layout-allow-overlap="true"
+          >
+            <div class="punch-left">
+              <div class="punch-tag-badge">ĐỊNH KHUNG TĂNG NẶNG</div>
+              <div class="punch-headline">ĐIỂM G KHOẢN 2</div>
+            </div>
+            <div class="punch-divider"></div>
+            <div class="punch-right">
+              <div class="punch-subtag">MỨC ÁN ÁP DỤNG</div>
+              <div class="punch-value-badge">03 – 10 NĂM</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Permanent Orange Bottom Bar -->
+        <div id="brand-bar" class="brand-bottom-bar"></div>
+      </div>
+    </div>
+
+    <script>
+      // Initialize SVG paths for progressive drawing
+      document.querySelectorAll(".draw-path").forEach((path) => {
+        const length = path.getTotalLength();
+        path.style.strokeDasharray = `${length}`;
+        path.style.strokeDashoffset = `${length}`;
+      });
+
+      // Master seekable paused timeline
+      const tl = gsap.timeline({ paused: true });
+
+      // 0.0s - 8.9s: Smooth subtle push-in camera motion
+      tl.fromTo(
+        "#content-stage",
+        { scale: 1, y: 0 },
+        { scale: 1.03, y: -10, duration: 8.9, ease: "sine.inOut" },
+        0
+      );
+
+      // 0.1s: Document card entrance punch
+      tl.fromTo(
+        "#doc-card",
+        { scale: 0.92, opacity: 0, y: 35 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.5, ease: "power3.out" },
+        0.1
+      );
+
+      // 1.6s: Technical callout overlay arrives with merged opacity entrance
+      tl.fromTo(
+        "#tech-callout",
+        { scale: 0.88, x: 20, opacity: 0 },
+        { scale: 1, x: 0, opacity: 1, duration: 0.4, ease: "power3.out" },
+        1.6
+      );
+      tl.fromTo(
+        "#callout-line",
+        { scaleX: 0 },
+        { scaleX: 1, duration: 0.35, ease: "power2.out" },
+        1.75
+      );
+
+      // 3.2s: Voice reaches "sử dụng mạng Internet..." -> Highlighter pen sweep over Point g
+      tl.fromTo(
+        "#highlighter-stripe",
+        { scaleX: 0 },
+        { scaleX: 1, duration: 0.85, ease: "power2.out" },
+        3.2
+      );
+      tl.to(
+        "#point-badge",
+        { backgroundColor: "#FF6A1A", color: "#141414", duration: 0.3, ease: "power1.out" },
+        3.3
+      );
+
+      // 4.8s: Deterministic two-step emphasis on penalty box without yoyo/implicit baseline
+      tl.fromTo(
+        "#penalty-box",
+        { scale: 1 },
+        { scale: 1.02, duration: 0.25, ease: "power2.out" },
+        4.8
+      );
+      tl.fromTo(
+        "#penalty-box",
+        { scale: 1.02 },
+        { scale: 1, duration: 0.25, ease: "power2.in" },
+        5.05
+      );
+
+      // 6.31s (123110ms): Punch phrase arrives with merged opacity entrance
+      tl.fromTo(
+        "#punch-card",
+        { scale: 0.9, y: 25, opacity: 0 },
+        { scale: 1, y: 0, opacity: 1, duration: 0.4, ease: "power3.out" },
+        6.31
+      );
+
+      // 7.64s (124440ms): SVG Icon "doc" draws path and checkmark seal
+      tl.to(
+        "#doc-icon-wrap",
+        { opacity: 1, duration: 0.15, ease: "power1.out" },
+        7.64
+      );
+      tl.to(
+        "#doc-path-body",
+        { strokeDashoffset: 0, duration: 0.45, ease: "power2.out" },
+        7.64
+      );
+      tl.to(
+        "#doc-path-fold",
+        { strokeDashoffset: 0, duration: 0.25, ease: "power2.out" },
+        7.85
+      );
+      tl.to(
+        "#doc-path-line1",
+        { strokeDashoffset: 0, duration: 0.2, ease: "power2.out" },
+        7.95
+      );
+      tl.to(
+        "#doc-path-line2",
+        { strokeDashoffset: 0, duration: 0.2, ease: "power2.out" },
+        8.05
+      );
+      tl.to(
+        "#doc-path-seal",
+        { strokeDashoffset: 0, duration: 0.3, ease: "power2.out" },
+        8.15
+      );
+
+      // Register timeline for HyperFrames deterministic renderer
+      window.__timelines["scene-s14"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

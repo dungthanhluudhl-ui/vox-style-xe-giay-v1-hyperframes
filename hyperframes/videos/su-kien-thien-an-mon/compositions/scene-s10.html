@@ -1,0 +1,635 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+      *, *::before, *::after {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        padding: 0;
+        background: #E7E3D9;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: #E7E3D9;
+      }
+
+      /* Lưới nền 84px chuẩn Vox-style DNA */
+      .grid-layer {
+        position: absolute;
+        inset: 0;
+        background-color: #E7E3D9;
+        background-image:
+          linear-gradient(to right, rgba(20, 20, 20, 0.28) 1.5px, transparent 1.5px),
+          linear-gradient(to bottom, rgba(20, 20, 20, 0.28) 1.5px, transparent 1.5px);
+        background-size: 84px 84px;
+        z-index: 1;
+        pointer-events: none;
+      }
+
+      /* Lớp hạt nhiễu grain 18% multiply */
+      .grain-layer {
+        position: absolute;
+        inset: 0;
+        z-index: 2;
+        opacity: 0.18;
+        mix-blend-mode: multiply;
+        pointer-events: none;
+      }
+
+      /* Thanh cam nhận diện thương hiệu cố định ở đáy khung hình */
+      .bottom-brand-bar {
+        position: absolute;
+        left: 0;
+        bottom: 0;
+        width: 100%;
+        height: 14px;
+        background: #FF6A1A;
+        z-index: 999;
+      }
+
+      /* Khung hiển thị cho video và các clip */
+      .clip {
+        position: absolute;
+      }
+
+      .video-frame {
+        left: 50px;
+        top: 190px;
+        width: 980px;
+        height: 1240px;
+        border: 4px solid #141414;
+        border-radius: 8px;
+        background: #141414;
+        box-shadow: 14px 18px 0px rgba(20, 20, 20, 0.85);
+        object-fit: cover;
+        object-position: center;
+        z-index: 5;
+        transform-origin: 50% 50%;
+        will-change: transform;
+        display: block;
+      }
+
+      /* Vết rách giấy trang trí mép trên khung video */
+      .paper-tear-strip {
+        left: 50px;
+        top: 190px;
+        width: 980px;
+        height: 22px;
+        background: repeating-linear-gradient(
+          -45deg,
+          #E7E3D9,
+          #E7E3D9 10px,
+          transparent 10px,
+          transparent 20px
+        );
+        border-top-left-radius: 8px;
+        border-top-right-radius: 8px;
+        opacity: 0.8;
+        z-index: 6;
+        pointer-events: none;
+        transform-origin: 50% 50%;
+      }
+
+      /* Punch Phrase: CẮT LỜI THỦ TƯỚNG (Shot 1) */
+      .punch-phrase-box {
+        top: 230px;
+        left: 80px;
+        width: 800px;
+        background: #141414;
+        border-left: 12px solid #FF6A1A;
+        border-top: 3px solid #141414;
+        border-right: 3px solid #141414;
+        border-bottom: 3px solid #141414;
+        box-shadow: 10px 14px 0px rgba(20, 20, 20, 0.9);
+        padding: 24px 32px;
+        transform-origin: 0% 50%;
+        opacity: 0;
+        z-index: 20;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      .punch-phrase-sub {
+        font-size: 22px;
+        font-weight: 700;
+        color: #FF6A1A;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        margin: 0;
+        line-height: 1.3;
+      }
+
+      .punch-phrase-title {
+        font-size: 56px;
+        font-weight: 900;
+        line-height: 1.22;
+        color: #F7F4EC;
+        text-transform: uppercase;
+        margin: 0;
+      }
+
+      /* Diagram: Dải sóng âm phản bác dội sang Lý Bằng (Shot 1) */
+      .diagram-box {
+        top: 480px;
+        left: 80px;
+        width: 920px;
+        background: rgba(20, 20, 20, 0.95);
+        border: 3px solid #333333;
+        border-top: 5px solid #FF6A1A;
+        box-shadow: 12px 16px 0px rgba(20, 20, 20, 0.85);
+        padding: 24px 28px;
+        border-radius: 6px;
+        opacity: 0;
+        z-index: 22;
+      }
+
+      .diagram-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 16px;
+      }
+
+      .diagram-pill-left {
+        background: #FF6A1A;
+        color: #141414;
+        font-size: 20px;
+        font-weight: 900;
+        padding: 6px 14px;
+        border-radius: 4px;
+        letter-spacing: 1px;
+      }
+
+      .diagram-arrow-text {
+        font-size: 22px;
+        font-weight: 900;
+        color: #F7F4EC;
+        letter-spacing: 2px;
+      }
+
+      .diagram-pill-right {
+        background: #2B2B2B;
+        color: #F7F4EC;
+        font-size: 20px;
+        font-weight: 700;
+        padding: 6px 14px;
+        border-radius: 4px;
+        border: 1px solid #555555;
+      }
+
+      .diagram-wave-wrap {
+        width: 100%;
+        height: 110px;
+        background: #0E0E0E;
+        border: 2px solid #282828;
+        border-radius: 4px;
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 16px;
+        overflow: hidden;
+      }
+
+      .wave-bar {
+        width: 12px;
+        background: #FF6A1A;
+        border-radius: 2px;
+        transform-origin: 50% 50%;
+        transform: scaleY(0.08);
+        will-change: transform;
+      }
+
+      .wave-bar.dark-bar {
+        background: #F7F4EC;
+      }
+
+      .clash-impact-arrow {
+        position: absolute;
+        right: 18px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 0;
+        height: 0;
+        border-top: 18px solid transparent;
+        border-bottom: 18px solid transparent;
+        border-left: 28px solid #FF6A1A;
+        filter: drop-shadow(2px 2px 0px #141414);
+      }
+
+      .diagram-footer {
+        margin-top: 14px;
+        font-size: 22px;
+        font-weight: 700;
+        color: #F7F4EC;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .diagram-footer-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: #FF6A1A;
+      }
+
+      /* Tape Label: KHÔNG NHƯỢNG BỘ (Shot 2) */
+      .tape-label-box {
+        top: 230px;
+        left: 80px;
+        width: auto;
+        max-width: 820px;
+        background: #141414;
+        border: 4px solid #141414;
+        border-left: 14px solid #FF6A1A;
+        box-shadow: 10px 14px 0px rgba(20, 20, 20, 0.9);
+        padding: 22px 36px;
+        transform-origin: 0% 50%;
+        opacity: 0;
+        z-index: 20;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      .tape-label-sub {
+        font-size: 20px;
+        font-weight: 700;
+        color: #FF6A1A;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        margin: 0;
+        line-height: 1.3;
+      }
+
+      .tape-label-title {
+        font-size: 54px;
+        font-weight: 900;
+        line-height: 1.25;
+        color: #F7F4EC;
+        text-transform: uppercase;
+        margin: 0;
+      }
+
+      /* Icon Cán Cân (Scale) tự vẽ biểu thị bế tắc (Shot 2) */
+      .scale-icon-card {
+        bottom: 500px;
+        left: 80px;
+        width: 480px;
+        background: rgba(20, 20, 20, 0.95);
+        border: 3px solid #2B2B2B;
+        border-top: 5px solid #FF6A1A;
+        box-shadow: 10px 14px 0px rgba(20, 20, 20, 0.85);
+        padding: 22px 26px;
+        border-radius: 6px;
+        opacity: 0;
+        transform-origin: 50% 50%;
+        z-index: 22;
+      }
+
+      .scale-card-header {
+        font-size: 20px;
+        font-weight: 700;
+        color: #FF6A1A;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        margin-bottom: 14px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .scale-card-header-dot {
+        width: 8px;
+        height: 8px;
+        background: #FF6A1A;
+        border-radius: 50%;
+      }
+
+      .scale-svg-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin: 8px 0;
+      }
+
+      .draw-stroke {
+        fill: none;
+        stroke: #F7F4EC;
+        stroke-width: 4.5;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
+      .draw-stroke.accent-stroke {
+        stroke: #FF6A1A;
+        stroke-width: 5.5;
+      }
+
+      .scale-card-footer {
+        margin-top: 10px;
+        font-size: 26px;
+        font-weight: 900;
+        color: #F7F4EC;
+        text-align: center;
+        letter-spacing: 1px;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s10"
+      data-start="0"
+      data-width="1080"
+      data-height="1920"
+      data-duration="11"
+      data-layout-allow-overflow="true"
+    >
+      <!-- Nền giấy ngà + lưới ô vuông 84px -->
+      <div class="grid-layer"></div>
+
+      <!-- Lớp hạt nhiễu grain SVG -->
+      <svg class="grain-layer" width="100%" height="100%">
+        <filter id="grainFilter">
+          <feTurbulence type="fractalNoise" baseFrequency="0.75" numOctaves="3" stitchTiles="stitch" />
+          <feColorMatrix type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 0.5 0" />
+        </filter>
+        <rect width="100%" height="100%" filter="url(#grainFilter)" />
+      </svg>
+
+      <!-- Thanh cam cố định mép dưới cùng -->
+      <div class="bottom-brand-bar"></div>
+
+      <!-- SHOT 1 VIDEO (0s - 6s): Đặt trực tiếp làm top-level clip element -->
+      <video
+        id="video-shot-1"
+        class="clip video-frame"
+        src="assets/vid-04-tense-confrontation-negotiation-cutout.mp4"
+        muted
+        playsinline
+        preload="auto"
+        data-start="0"
+        data-duration="6"
+        data-media-start="0"
+      ></video>
+      <div id="shot-1-tear" class="clip paper-tear-strip" data-start="0" data-duration="6"></div>
+
+      <!-- SHOT 1 OVERLAYS: Đặt trực tiếp ở top-level tránh nested clip warning -->
+      <!-- Punch Phrase: CẮT LỜI THỦ TƯỚNG (at 3.18s, hold 2s) -->
+      <div
+        id="punch-box"
+        class="clip punch-phrase-box"
+        data-start="0"
+        data-duration="6"
+        data-layout-allow-overlap="true"
+      >
+        <div class="punch-phrase-sub" data-layout-allow-overlap="true">ĐỐI ĐẦU TRỰC DIỆN</div>
+        <h1 class="punch-phrase-title" data-layout-allow-overlap="true">CẮT LỜI THỦ TƯỚNG</h1>
+      </div>
+
+      <!-- Diagram: Dải sóng âm phản bác dội sang Lý Bằng (at 3.78s, hold 2.2s) -->
+      <div
+        id="diagram-box"
+        class="clip diagram-box"
+        data-start="0"
+        data-duration="6"
+        data-layout-allow-overlap="true"
+      >
+        <div class="diagram-header">
+          <span class="diagram-pill-left">NGÔ KHẢI</span>
+          <span class="diagram-arrow-text">PHẢN BÁC GAY GẮT ➔</span>
+          <span class="diagram-pill-right">LÝ BẰNG</span>
+        </div>
+        <div class="diagram-wave-wrap">
+          <!-- 24 thanh sóng âm định sẵn độ cao tất định (deterministic) -->
+          <div class="wave-bar" style="height: 30px;"></div>
+          <div class="wave-bar dark-bar" style="height: 52px;"></div>
+          <div class="wave-bar" style="height: 78px;"></div>
+          <div class="wave-bar dark-bar" style="height: 94px;"></div>
+          <div class="wave-bar" style="height: 60px;"></div>
+          <div class="wave-bar dark-bar" style="height: 84px;"></div>
+          <div class="wave-bar" style="height: 102px;"></div>
+          <div class="wave-bar dark-bar" style="height: 72px;"></div>
+          <div class="wave-bar" style="height: 48px;"></div>
+          <div class="wave-bar dark-bar" style="height: 88px;"></div>
+          <div class="wave-bar" style="height: 98px;"></div>
+          <div class="wave-bar dark-bar" style="height: 66px;"></div>
+          <div class="wave-bar" style="height: 82px;"></div>
+          <div class="wave-bar dark-bar" style="height: 95px;"></div>
+          <div class="wave-bar" style="height: 70px;"></div>
+          <div class="wave-bar dark-bar" style="height: 54px;"></div>
+          <div class="wave-bar" style="height: 90px;"></div>
+          <div class="wave-bar dark-bar" style="height: 104px;"></div>
+          <div class="wave-bar" style="height: 76px;"></div>
+          <div class="wave-bar dark-bar" style="height: 62px;"></div>
+          <div class="wave-bar" style="height: 86px;"></div>
+          <div class="wave-bar dark-bar" style="height: 98px;"></div>
+          <div class="wave-bar" style="height: 58px;"></div>
+          <div class="wave-bar dark-bar" style="height: 44px;"></div>
+          <div class="clash-impact-arrow"></div>
+        </div>
+        <div class="diagram-footer">
+          <span class="diagram-footer-dot"></span>
+          <span>Dải sóng âm tranh cãi dội thẳng sang phía Lý Bằng</span>
+        </div>
+      </div>
+
+      <!-- SHOT 2 VIDEO (6s - 11s): Đặt trực tiếp làm top-level clip element -->
+      <video
+        id="video-shot-2"
+        class="clip video-frame"
+        src="assets/vid-04-tense-confrontation-negotiation-cutout.mp4"
+        muted
+        playsinline
+        preload="auto"
+        data-start="6"
+        data-duration="5"
+        data-media-start="6"
+      ></video>
+      <div id="shot-2-tear" class="clip paper-tear-strip" data-start="6" data-duration="5"></div>
+
+      <!-- SHOT 2 OVERLAYS: Đặt trực tiếp ở top-level tránh nested clip warning -->
+      <!-- Tape Label: KHÔNG NHƯỢNG BỘ (at 6.3s, hold 2s) -->
+      <div
+        id="tape-box"
+        class="clip tape-label-box"
+        data-start="6"
+        data-duration="5"
+        data-layout-allow-overlap="true"
+      >
+        <div class="tape-label-sub" data-layout-allow-overlap="true">THÁI ĐỘ SINH VIÊN</div>
+        <h2 class="tape-label-title" data-layout-allow-overlap="true">KHÔNG NHƯỢNG BỘ</h2>
+      </div>
+
+      <!-- Icon Cán Cân (Scale) tự vẽ biểu thị bế tắc thỏa hiệp (at 9.1s, hold 1.8s) -->
+      <div
+        id="scale-card"
+        class="clip scale-icon-card"
+        data-start="6"
+        data-duration="5"
+        data-layout-allow-overlap="true"
+      >
+        <div class="scale-card-header">
+          <span class="scale-card-header-dot"></span>
+          <span>BẾ TẮC ĐỐI THOẠI</span>
+        </div>
+        <div class="scale-svg-container">
+          <svg id="scale-svg" viewBox="0 0 200 200" width="180" height="170">
+            <!-- Đế cán cân -->
+            <path class="draw-stroke" id="path-base" d="M 40 175 L 160 175" />
+            <!-- Trụ đứng -->
+            <path class="draw-stroke" id="path-pillar" d="M 100 175 L 100 45" />
+            <!-- Chốt xoay đỉnh -->
+            <circle class="draw-stroke" id="path-pivot" cx="100" cy="40" r="7" />
+            <!-- Đòn cân nghiêng lệch mạnh thể hiện mâu thuẫn đỉnh điểm -->
+            <path class="draw-stroke accent-stroke" id="path-beam" d="M 25 80 L 175 35" />
+            <!-- Đĩa cân trái bị đè nặng -->
+            <path class="draw-stroke" id="path-str-l" d="M 25 80 L 10 125 M 25 80 L 40 125" />
+            <path class="draw-stroke accent-stroke" id="path-pan-l" d="M 5 125 Q 25 145 45 125 Z" />
+            <!-- Đĩa cân phải bị hất bổng lên cao -->
+            <path class="draw-stroke" id="path-str-r" d="M 175 35 L 160 80 M 175 35 L 190 80" />
+            <path class="draw-stroke" id="path-pan-r" d="M 155 80 Q 175 100 195 80 Z" />
+          </svg>
+        </div>
+        <div class="scale-card-footer">CÁN CÂN ĐỔ VỠ</div>
+      </div>
+    </div>
+
+    <script>
+      // Khởi tạo đo đạc stroke SVG path tự-vẽ-dần tất định (deterministic)
+      const strokeElements = document.querySelectorAll(".draw-stroke");
+      strokeElements.forEach(function (el) {
+        if (typeof el.getTotalLength === "function") {
+          const len = Math.ceil(el.getTotalLength());
+          el.style.strokeDasharray = len + " " + len;
+          el.style.strokeDashoffset = len;
+          el.dataset.len = len;
+        }
+      });
+
+      // BẮT BUỘC: Tạo duy nhất một GSAP timeline paused cho composition
+      const tl = gsap.timeline({ paused: true });
+
+      // ==========================================
+      // SHOT 1 CHOREOGRAPHY (0.0s - 6.0s)
+      // ==========================================
+
+      // Punch entrance: dứt khoát scale 1.12 -> 1.0 (dùng fromTo an toàn cho seek)
+      tl.fromTo(
+        "#video-shot-1, #shot-1-tear",
+        { scale: 1.12 },
+        { scale: 1.0, duration: 0.45, ease: "power4.out" },
+        0
+      );
+
+      // Rung chấn giấy xao động nhẹ tinh tế trong lúc tranh cãi leo thang (0.8s - 3.0s)
+      tl.to("#video-shot-1, #shot-1-tear", { rotation: 0.4, duration: 0.8, ease: "sine.inOut" }, 0.8);
+      tl.to("#video-shot-1, #shot-1-tear", { rotation: -0.3, duration: 0.9, ease: "sine.inOut" }, 1.6);
+      tl.to("#video-shot-1, #shot-1-tear", { rotation: 0, duration: 0.7, ease: "sine.inOut" }, 2.5);
+
+      // Punch Phrase: "CẮT LỜI THỦ TƯỚNG" (xuất hiện tại 3.18s, giữ 2.0s)
+      tl.fromTo(
+        "#punch-box",
+        { opacity: 0, scale: 0.85, y: 24 },
+        { opacity: 1, scale: 1.0, y: 0, duration: 0.35, ease: "power3.out" },
+        3.18
+      );
+      tl.to(
+        "#punch-box",
+        { opacity: 0, y: -20, duration: 0.25, ease: "power2.in" },
+        5.18
+      );
+
+      // Diagram: Dải sóng âm phản bác dội sang Lý Bằng (xuất hiện tại 3.78s, giữ 2.2s)
+      tl.fromTo(
+        "#diagram-box",
+        { opacity: 0, x: -50 },
+        { opacity: 1, x: 0, duration: 0.38, ease: "power3.out" },
+        3.78
+      );
+
+      // Các cột sóng âm dâng cao dồn dập
+      tl.fromTo(
+        "#diagram-box .wave-bar",
+        { scaleY: 0.08 },
+        { scaleY: 1.0, duration: 0.4, stagger: 0.015, ease: "power2.out" },
+        3.84
+      );
+
+      // Diagram mờ đi trước khi chuyển sang Shot 2
+      tl.to(
+        "#diagram-box",
+        { opacity: 0, duration: 0.22, ease: "power2.in" },
+        5.88
+      );
+
+      // ==========================================
+      // SHOT 2 CHOREOGRAPHY (6.0s - 11.0s)
+      // ==========================================
+
+      // Camera push-in chậm 4% vào biểu cảm sượng sùng (từ 6.0s đến 11.0s)
+      tl.fromTo(
+        "#video-shot-2, #shot-2-tear",
+        { scale: 1.0 },
+        { scale: 1.04, duration: 5.0, ease: "none" },
+        6.0
+      );
+
+      // Tape Label: "KHÔNG NHƯỢNG BỘ" (xuất hiện tại 6.3s, giữ 2.0s - không xoay góc tránh va chạm layout)
+      tl.fromTo(
+        "#tape-box",
+        { opacity: 0, scale: 0.88, y: 20 },
+        { opacity: 1, scale: 1.0, y: 0, duration: 0.35, ease: "power3.out" },
+        6.3
+      );
+      tl.to(
+        "#tape-box",
+        { opacity: 0, scale: 0.95, duration: 0.25, ease: "power2.in" },
+        8.3
+      );
+
+      // Icon Cán Cân (Scale): xuất hiện và tự vẽ SVG strokes (tại 9.1s, giữ 1.8s)
+      tl.fromTo(
+        "#scale-card",
+        { opacity: 0, scale: 0.85, y: 24 },
+        { opacity: 1, scale: 1.0, y: 0, duration: 0.38, ease: "power3.out" },
+        9.1
+      );
+
+      // Hiệu ứng vẽ từng nét của cán cân lệch
+      tl.fromTo(
+        "#scale-card .draw-stroke",
+        { strokeDashoffset: (i, target) => target.dataset.len || 200 },
+        { strokeDashoffset: 0, duration: 0.55, stagger: 0.05, ease: "power2.out" },
+        9.18
+      );
+
+      // Đòn cân hơi nhấp nhô nhẹ nhấn mạnh sự mất cân bằng
+      tl.to("#path-beam", { rotation: -2, transformOrigin: "100px 57px", duration: 0.35, ease: "sine.inOut" }, 9.7);
+      tl.to("#path-beam", { rotation: 0, transformOrigin: "100px 57px", duration: 0.45, ease: "sine.inOut" }, 10.05);
+
+      // BẮT BUỘC: Đăng ký timeline paused vào window.__timelines["scene-s10"]
+      window.__timelines["scene-s10"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

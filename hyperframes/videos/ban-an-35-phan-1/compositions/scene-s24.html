@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap">
+      <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background: #e7e3d9;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: #e7e3d9;
+      }
+
+      /* NỀN CHART CỦA VOX STYLE (STYLE TOKENS: 4 ĐƯỜNG KẺ NGANG + CAM TICK MARK) */
+      .bg-chart-layer {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+      }
+      .bg-chart-grid {
+        position: absolute;
+        inset: 0;
+        background-image:
+          linear-gradient(to right, rgba(20, 20, 20, 0.08) 1px, transparent 1px),
+          linear-gradient(to bottom, rgba(20, 20, 20, 0.08) 1px, transparent 1px);
+        background-size: 84px 84px;
+      }
+      .chart-rule {
+        position: absolute;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background-color: rgba(20, 20, 20, 0.32);
+      }
+      .chart-rule-tick {
+        position: absolute;
+        left: 0;
+        width: 28px;
+        height: 6px;
+        background-color: #ff6a1a;
+        transform: translateY(-2px);
+      }
+
+      /* NOISE GRAIN LỚP PHỦ MULTIPLY 18% */
+      .grain-layer {
+        position: absolute;
+        inset: 0;
+        opacity: 0.18;
+        mix-blend-mode: multiply;
+        pointer-events: none;
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+      }
+
+      /* CHỮ KÝ THƯƠNG HIỆU: THANH CAM ĐÁY CỐ ĐỊNH */
+      .bottom-brand-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 12px;
+        background-color: #ff6a1a;
+        z-index: 100;
+      }
+
+      /* HEADER GHI CHÚ TÀI LIỆU */
+      .dossier-header {
+        position: absolute;
+        top: 80px;
+        left: 90px;
+        right: 90px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 2px solid #141414;
+        padding-bottom: 12px;
+        z-index: 30;
+      }
+      .dossier-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 22px;
+        font-weight: 900;
+        letter-spacing: 1.5px;
+        color: #141414;
+        text-transform: uppercase;
+      }
+      .dossier-dot {
+        width: 10px;
+        height: 10px;
+        background-color: #ff6a1a;
+        border-radius: 50%;
+      }
+      .dossier-code {
+        font-size: 20px;
+        font-weight: 900;
+        letter-spacing: 2px;
+        color: #141414;
+      }
+
+      /* CAMERA RIG & STAGE CHỨA VIDEO B-ROLL */
+      .camera-rig-container {
+        position: absolute;
+        top: 180px;
+        left: 90px;
+        width: 900px;
+        height: 1250px;
+        z-index: 20;
+        transform-origin: 50% 50%;
+      }
+      .stage-wrapper {
+        position: absolute;
+        inset: 0;
+        transform-origin: 50% 50%;
+        opacity: 0;
+      }
+      .video-card {
+        position: absolute;
+        inset: 0;
+        background: #f5f0e4;
+        border: 4px solid #141414;
+        border-radius: 6px;
+        box-shadow: 14px 18px 0px rgba(20, 20, 20, 0.32);
+        overflow: hidden;
+      }
+      .video-element {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+      .video-torn-tape {
+        position: absolute;
+        top: -14px;
+        left: 40px;
+        background: #141414;
+        color: #ff6a1a;
+        font-size: 18px;
+        font-weight: 900;
+        letter-spacing: 1.5px;
+        padding: 6px 18px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        border: 2px solid #ff6a1a;
+        z-index: 25;
+      }
+
+      /* OVERLAY 1: WARNING BADGE */
+      .warning-overlay {
+        position: absolute;
+        top: 220px;
+        right: 120px;
+        background: #141414;
+        border: 3px solid #ff6a1a;
+        border-radius: 8px;
+        padding: 16px 24px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        box-shadow: 8px 12px 24px rgba(0, 0, 0, 0.4);
+        z-index: 40;
+        transform-origin: 100% 0%;
+        opacity: 0;
+      }
+      .warning-text-group {
+        display: flex;
+        flex-direction: column;
+      }
+      .warning-sub {
+        font-size: 16px;
+        font-weight: 700;
+        color: #ff6a1a;
+        letter-spacing: 1.5px;
+      }
+      .warning-main {
+        font-size: 26px;
+        font-weight: 900;
+        color: #f7f4ec;
+        letter-spacing: 0.5px;
+      }
+
+      /* OVERLAY 2: TAPE LABEL ĐƯA VÀO HỆ THỐNG */
+      .system-label-overlay {
+        position: absolute;
+        bottom: 530px;
+        left: 120px;
+        background: #141414;
+        border-left: 8px solid #ff6a1a;
+        border-top: 2px solid rgba(255, 255, 255, 0.15);
+        border-right: 2px solid rgba(255, 255, 255, 0.15);
+        border-bottom: 2px solid rgba(255, 255, 255, 0.15);
+        padding: 18px 32px;
+        border-radius: 4px;
+        box-shadow: 10px 14px 28px rgba(0, 0, 0, 0.45);
+        z-index: 40;
+        transform-origin: 0% 50%;
+        opacity: 0;
+      }
+      .system-label-sub {
+        font-size: 18px;
+        font-weight: 700;
+        color: #ff6a1a;
+        letter-spacing: 2px;
+        margin-bottom: 4px;
+      }
+      .system-label-main {
+        font-size: 42px;
+        font-weight: 900;
+        color: #f7f4ec;
+        letter-spacing: 1px;
+      }
+
+      /* OVERLAY 3: PUNCH PHRASE THẤT THOÁT NGÂN SÁCH */
+      .punch-phrase-overlay {
+        position: absolute;
+        top: 210px;
+        left: 70px;
+        right: 70px;
+        background: #141414;
+        border: 4px solid #ff6a1a;
+        border-radius: 12px;
+        padding: 30px 40px;
+        box-shadow: 0 20px 48px rgba(0, 0, 0, 0.5);
+        text-align: center;
+        z-index: 50;
+        transform-origin: 50% 50%;
+        opacity: 0;
+      }
+      .punch-tag {
+        font-size: 22px;
+        font-weight: 700;
+        color: #ff6a1a;
+        letter-spacing: 3px;
+        text-transform: uppercase;
+        margin-bottom: 8px;
+      }
+      .punch-title {
+        font-size: 64px;
+        font-weight: 900;
+        color: #f7f4ec;
+        line-height: 1.25;
+        letter-spacing: 0.5px;
+        margin: 0;
+      }
+
+      /* OVERLAY 4: CON DẤU ÁP VÀO ÁN HÙNG (CÁC VÙNG CHỮ TÁCH BẠCH BẰNG FLEXBOX) */
+      .verdict-stamp-overlay {
+        position: absolute;
+        bottom: 510px;
+        right: 100px;
+        background: #141414;
+        border: 4px solid #ff6a1a;
+        border-radius: 8px;
+        padding: 24px 36px;
+        box-shadow: 8px 14px 32px rgba(0, 0, 0, 0.55);
+        z-index: 55;
+        transform-origin: 50% 50%;
+        opacity: 0;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 16px;
+      }
+      .stamp-header {
+        font-size: 18px;
+        font-weight: 700;
+        line-height: 1.3;
+        color: #f7f4ec;
+        letter-spacing: 2px;
+        border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+        padding-bottom: 12px;
+        width: 100%;
+        margin: 0;
+        display: block;
+      }
+      .stamp-main {
+        font-size: 40px;
+        font-weight: 900;
+        line-height: 1.25;
+        color: #ff6a1a;
+        letter-spacing: 1.5px;
+        margin: 0;
+        padding: 4px 0;
+        display: block;
+        white-space: nowrap;
+      }
+      .stamp-code {
+        font-size: 16px;
+        font-weight: 700;
+        line-height: 1.3;
+        color: #f7f4ec;
+        letter-spacing: 1px;
+        border-top: 1px dashed rgba(255, 255, 255, 0.2);
+        padding-top: 12px;
+        width: 100%;
+        margin: 0;
+        display: block;
+      }
+    </style>
+
+    <div data-hf-id="hf-fo8y" id="root" data-composition-id="scene-s24" data-width="1080" data-height="1920" data-duration="10.9" data-layout-allow-overflow="true">
+      <!-- NỀN CHART BIỂU ĐỒ KINH TẾ (THIẾT KẾ ĐẠT CHUẨN STYLE TOKENS) -->
+      <div data-hf-id="hf-ohab" class="bg-chart-layer" data-layout-ignore="true">
+        <div data-hf-id="hf-qphb" class="bg-chart-grid"></div>
+        <!-- 4 ĐƯỜNG KẺ NGANG BIỂU ĐỒ TẠI 20%, 40%, 60%, 80% CHIỀU CAO + TICK CAM -->
+        <div data-hf-id="hf-hbk2" class="chart-rule" style="top: 384px;">
+          <div data-hf-id="hf-46bv" class="chart-rule-tick"></div>
+        </div>
+        <div data-hf-id="hf-cxng" class="chart-rule" style="top: 768px;">
+          <div data-hf-id="hf-g31n" class="chart-rule-tick"></div>
+        </div>
+        <div data-hf-id="hf-d3g6" class="chart-rule" style="top: 1152px;">
+          <div data-hf-id="hf-foqm" class="chart-rule-tick"></div>
+        </div>
+        <div data-hf-id="hf-09e8" class="chart-rule" style="top: 1536px;">
+          <div data-hf-id="hf-fafl" class="chart-rule-tick"></div>
+        </div>
+      </div>
+
+      <!-- LỚP NHIỄU GIẤY GRAIN TỰ NHIÊN -->
+      <div data-hf-id="hf-kwv4" class="grain-layer" data-layout-ignore="true"></div>
+
+      <!-- DẢI CAM NHẬN DIỆN THƯƠNG HIỆU CỐ ĐỊNH Ở ĐÁY -->
+      <div data-hf-id="hf-5prc" class="bottom-brand-bar" data-layout-ignore="true"></div>
+
+      <!-- TIÊU ĐỀ HỒ SƠ VỤ ÁN -->
+      <div data-hf-id="hf-t65f" class="dossier-header" data-layout-allow-overlap="true">
+        <div data-hf-id="hf-4rqw" class="dossier-tag">
+          <span data-hf-id="hf-x9xy" class="dossier-dot"></span>
+          <span data-hf-id="hf-487d">BẢN ÁN 35 // KẾT LUẬN TẬP 1</span>
+        </div>
+        <div data-hf-id="hf-84ln" class="dossier-code">HỒ SƠ: S24-VAT</div>
+      </div>
+
+      <!-- CAMERA RIG CHỨA VIDEO B-ROLL CARD -->
+      <div data-hf-id="hf-y7od" id="camera-rig" class="camera-rig-container" data-layout-allow-overflow="true">
+        <div data-hf-id="hf-dr1r" id="stage" class="stage-wrapper" data-layout-allow-overflow="true">
+          <div data-hf-id="hf-rgo0" class="video-card">
+            <video data-hf-id="hf-10e0" id="video-player" class="video-element" data-start="0" data-duration="10.9" src="assets/vid-05-vat-tax-fraud-calculation.mp4" muted playsinline></video>
+          </div>
+          <div data-hf-id="hf-ogd9" class="video-torn-tape" data-layout-allow-overlap="true">TÀI LIỆU GIÁM ĐỊNH</div>
+        </div>
+      </div>
+
+      <!-- OVERLAY 1: WARNING ICON + CALLOUT (SHOT 1) -->
+      <div data-hf-id="hf-hwaq" id="warning-badge" class="warning-overlay" data-layout-allow-overlap="true" data-layout-allow-occlusion="true" data-layout-allow-overflow="true">
+        <svg data-hf-id="hf-l3re" viewBox="0 0 48 48" width="46" height="46">
+          <path data-hf-id="hf-1qxp" id="warn-triangle" d="M 24 6 L 44 42 L 4 42 Z" fill="none" stroke="#FF6A1A" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
+          <line data-hf-id="hf-mqci" id="warn-stem" x1="24" y1="18" x2="24" y2="28" stroke="#FF6A1A" stroke-width="4" stroke-linecap="round" />
+          <circle data-hf-id="hf-qdc7" id="warn-dot" cx="24" cy="35" r="2.5" fill="#FF6A1A" />
+        </svg>
+        <div data-hf-id="hf-049i" class="warning-text-group">
+          <span data-hf-id="hf-5fa8" class="warning-sub">PHÁT HIỆN SAI PHẠM</span>
+          <span data-hf-id="hf-xn4d" class="warning-main">HÓA ĐƠN KHỐNG</span>
+        </div>
+      </div>
+
+      <!-- OVERLAY 2: LABEL ĐƯA VÀO HỆ THỐNG (SHOT 1) -->
+      <div data-hf-id="hf-8n6w" id="system-label" class="system-label-overlay" data-layout-allow-overlap="true" data-layout-allow-occlusion="true" data-layout-allow-overflow="true">
+        <div data-hf-id="hf-hpnp" class="system-label-sub">QUY TRÌNH KÊ KHAI THUẾ</div>
+        <div data-hf-id="hf-f2mc" class="system-label-main">ĐƯA VÀO HỆ THỐNG</div>
+      </div>
+
+      <!-- OVERLAY 3: PUNCH PHRASE THẤT THOÁT NGÂN SÁCH (SHOT 2) -->
+      <div data-hf-id="hf-xzc4" id="punch-phrase" class="punch-phrase-overlay" data-layout-allow-overlap="true" data-layout-allow-occlusion="true" data-layout-allow-overflow="true">
+        <div data-hf-id="hf-vq6u" class="punch-tag">HẬU QUẢ PHÁP LÝ</div>
+        <h1 data-hf-id="hf-gtx1" class="punch-title">THẤT THOÁT NGÂN SÁCH</h1>
+      </div>
+
+      <!-- OVERLAY 4: CON DẤU ÁP VÀO ÁN HÙNG (SHOT 2) -->
+      <div data-hf-id="hf-fej6" id="verdict-stamp" class="verdict-stamp-overlay" data-layout-allow-occlusion="true" data-layout-allow-overflow="true">
+        <div data-hf-id="hf-tf66" class="stamp-header">HỒ SƠ TRUY CỨU TRÁCH NHIỆM</div>
+        <div data-hf-id="hf-5pbu" class="stamp-main">ÁP VÀO ÁN HÙNG</div>
+        <div data-hf-id="hf-fwqc" class="stamp-code">THIỆT HẠI: 352.000.000 ĐỒNG</div>
+      </div>
+    </div>
+
+    <script>
+      // THIẾT LẬP ĐO ĐƯỜNG NÉT SVG PATH DRAW CHUẨN XÁC
+      const warnTri = document.getElementById("warn-triangle");
+      const warnStem = document.getElementById("warn-stem");
+      if (warnTri && warnStem) {
+        const triLen = warnTri.getTotalLength();
+        warnTri.style.strokeDasharray = `${triLen}`;
+        warnTri.style.strokeDashoffset = `${triLen}`;
+
+        const stemLen = warnStem.getTotalLength();
+        warnStem.style.strokeDasharray = `${stemLen}`;
+        warnStem.style.strokeDashoffset = `${stemLen}`;
+      }
+
+      // KHỞI TẠO DUY NHẤT 1 TIMELINE PAUSED CHO HYPERFRAMES COMPOSITION
+      const tl = gsap.timeline({ paused: true });
+
+      // ==========================================
+      // SHOT 1: 0s -> 7.01s (ENTRANCE: STRIKE & CAMERA ZOOM-IN)
+      // ==========================================
+
+      // 1. Strike Entrance: Giáng xuống từ trên với lực nén mạnh mẽ dùng fromTo (không dùng tl.set tại 0)
+      tl.fromTo(
+        "#stage",
+        { scale: 1.16, y: -40, opacity: 0 },
+        { scale: 1.0, y: 0, opacity: 1, duration: 0.45, ease: "power4.out" },
+        0
+      );
+
+      // Camera motion: Zoom-in nhẹ nhàng kéo dài suốt Shot 1 qua camera-rig độc lập (0.45s -> 7.01s)
+      tl.to(
+        "#camera-rig",
+        { scale: 1.06, duration: 6.56, ease: "sine.inOut" },
+        0.45
+      );
+
+      // 2. Overlay 1: Warning Badge xuất hiện tại 0.84s (giữ 2.0s đến 2.84s)
+      tl.fromTo(
+        "#warning-badge",
+        { scale: 0, opacity: 0, x: 20 },
+        { scale: 1, opacity: 1, x: 0, duration: 0.38, ease: "power3.out" },
+        0.84
+      );
+      // SVG stroke draw đồng bộ
+      tl.to("#warn-triangle", { strokeDashoffset: 0, duration: 0.35, ease: "power2.out" }, 0.88);
+      tl.to("#warn-stem", { strokeDashoffset: 0, duration: 0.25, ease: "power2.out" }, 1.05);
+
+      // Warning Badge biến mất lúc 2.84s
+      tl.to(
+        "#warning-badge",
+        { opacity: 0, y: -20, duration: 0.3, ease: "power2.in" },
+        2.84
+      );
+
+      // 3. Overlay 2: Label "ĐƯA VÀO HỆ THỐNG" xuất hiện tại 3.61s (giữ 2.2s đến 5.81s)
+      tl.fromTo(
+        "#system-label",
+        { x: -50, opacity: 0, scale: 0.9 },
+        { x: 0, opacity: 1, scale: 1, duration: 0.45, ease: "power3.out" },
+        3.61
+      );
+      // Label biến mất lúc 5.81s
+      tl.to(
+        "#system-label",
+        { opacity: 0, x: -30, duration: 0.35, ease: "power2.in" },
+        5.81
+      );
+
+      // ==========================================
+      // SHOT 2: 7.01s -> 10.9s (TRANSITION: GROW & KẾT ÁN)
+      // ==========================================
+
+      // 4. Transition In: Grow pop bùng nổ khi video dừng ở ngôi sao 352 triệu
+      tl.fromTo(
+        "#stage",
+        { scale: 0.94 },
+        { scale: 1.0, duration: 0.48, ease: "power3.out", immediateRender: false },
+        7.01
+      );
+
+      // 5. Overlay 3: Punch-phrase "THẤT THOÁT NGÂN SÁCH" xuất hiện tại 7.38s (giữ đến 9.20s)
+      tl.fromTo(
+        "#punch-phrase",
+        { scale: 0.8, opacity: 0, y: -30 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.48, ease: "power3.out" },
+        7.38
+      );
+      // Punch-phrase thu gọn lúc 9.20s nhường sự tập trung tối đa cho con dấu kết án
+      tl.to(
+        "#punch-phrase",
+        { opacity: 0, scale: 0.95, duration: 0.2, ease: "power2.in" },
+        9.14
+      );
+
+      // 6. Overlay 4: Con dấu mộc "ÁP VÀO ÁN HÙNG" đóng dấu đanh thép dứt khoát tại 9.34s (giữ tới hết scene 10.9s)
+      tl.fromTo(
+        "#verdict-stamp",
+        { scale: 1.8, opacity: 0 },
+        { scale: 1.0, opacity: 1, duration: 0.28, ease: "power4.out" },
+        9.34
+      );
+
+      // ĐĂNG KÝ TIMELINE VÀO GLOBAL WINDOW OBJECT
+      window.__timelines["scene-s24"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

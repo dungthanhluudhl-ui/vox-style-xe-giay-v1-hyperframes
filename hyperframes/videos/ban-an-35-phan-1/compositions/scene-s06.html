@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap">
+      <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #E7E3D9;
+      color: #141414;
+      font-family: "Be Vietnam Pro", sans-serif;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    #root {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #E7E3D9;
+    }
+
+    /* Nền lưới ô vuông 84px chuẩn Vox DNA */
+    .bg-grid {
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(to right, rgba(20, 20, 20, 0.12) 1.5px, transparent 1.5px),
+        linear-gradient(to bottom, rgba(20, 20, 20, 0.12) 1.5px, transparent 1.5px);
+      background-size: 84px 84px;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    /* Biến thể nền Spotlight: Dark Radial Vignette */
+    .bg-spotlight {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 50% 42%, rgba(231, 227, 217, 0.2) 20%, rgba(20, 20, 20, 0.45) 85%);
+      mix-blend-mode: multiply;
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    .bg-grain {
+      position: absolute;
+      inset: 0;
+      opacity: 0.18;
+      mix-blend-mode: multiply;
+      pointer-events: none;
+      z-index: 3;
+    }
+
+    /* Thanh cam đáy khung hình - Chữ ký nhận diện thương hiệu Vox */
+    .bottom-brand-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 16px;
+      background-color: #FF6A1A;
+      z-index: 100;
+    }
+
+    /* Header thông tin tư liệu vụ án (Top Safe Zone) */
+    .case-header {
+      position: absolute;
+      top: 70px;
+      left: 80px;
+      right: 80px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 20;
+    }
+
+    .case-tag {
+      background-color: #141414;
+      color: #F7F4EC;
+      font-size: 20px;
+      font-weight: 900;
+      padding: 8px 18px;
+      letter-spacing: 2px;
+      border-radius: 4px;
+      display: inline-block;
+    }
+
+    .case-number {
+      font-size: 20px;
+      font-weight: 700;
+      color: #141414;
+      letter-spacing: 1px;
+      opacity: 0.85;
+    }
+
+    /* Sân khấu 3D Perspective cho hiệu ứng Flip */
+    .stage-container {
+      position: absolute;
+      inset: 0;
+      perspective: 1200px;
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    .shot-wrapper {
+      position: absolute;
+      top: 190px;
+      left: 80px;
+      width: 920px;
+      height: 1180px;
+      transform-origin: center center;
+      will-change: transform, opacity;
+      pointer-events: auto;
+    }
+
+    /* Khung video phong cách cắt dán báo chí */
+    .video-card {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      background-color: #141414;
+      border: 6px solid #141414;
+      border-radius: 12px;
+      box-shadow: 14px 14px 0px #FF6A1A;
+      overflow: hidden;
+    }
+
+    .video-viewport {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      transform-origin: center 40%;
+      will-change: transform;
+    }
+
+    .video-viewport video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    /* Băng dính góc phong cách collage */
+    .paper-tape {
+      position: absolute;
+      width: 140px;
+      height: 38px;
+      background-color: rgba(245, 240, 228, 0.92);
+      border: 1px dashed rgba(20, 20, 20, 0.4);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      z-index: 15;
+    }
+
+    .tape-top-left {
+      top: -16px;
+      left: 40px;
+      transform: rotate(-12deg);
+    }
+
+    .tape-top-right {
+      top: -16px;
+      right: 40px;
+      transform: rotate(10deg);
+    }
+
+    /* Overlays của Shot 1: Label "CON SỐ TRỌNG YẾU" */
+    .badge-important {
+      position: absolute;
+      top: 240px;
+      left: 110px;
+      display: inline-flex;
+      align-items: center;
+      background-color: #FF6A1A;
+      color: #141414;
+      padding: 12px 24px;
+      border-radius: 8px;
+      border: 3px solid #141414;
+      box-shadow: 6px 6px 0px #141414;
+      z-index: 30;
+      opacity: 0;
+      transform-origin: left center;
+      will-change: transform, opacity;
+    }
+
+    .badge-important .tag {
+      background-color: #141414;
+      color: #F7F4EC;
+      font-size: 18px;
+      font-weight: 900;
+      padding: 4px 10px;
+      border-radius: 4px;
+      margin-right: 14px;
+      letter-spacing: 1px;
+    }
+
+    .badge-important .text {
+      font-size: 26px;
+      font-weight: 900;
+      letter-spacing: 1.5px;
+    }
+
+    /* Badge Checkmark "ĐÃ THỪA NHẬN HÀNH VI" */
+    .admission-badge {
+      position: absolute;
+      bottom: 50px;
+      right: 36px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background-color: rgba(20, 20, 20, 0.95);
+      border: 3px solid #FF6A1A;
+      padding: 14px 24px;
+      border-radius: 50px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+      z-index: 25;
+      opacity: 0;
+      transform-origin: right center;
+      will-change: transform, opacity;
+    }
+
+    .admission-badge .icon-box {
+      width: 44px;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .admission-badge .label {
+      color: #F7F4EC;
+      font-size: 22px;
+      font-weight: 900;
+      letter-spacing: 1px;
+    }
+
+    /* Khung trích dẫn lời khai tại tòa (Quote Card) */
+    .quote-card {
+      position: absolute;
+      bottom: 30px;
+      left: 24px;
+      right: 24px;
+      background-color: rgba(20, 20, 20, 0.94);
+      border: 3px solid #FF6A1A;
+      border-radius: 12px;
+      padding: 24px 28px;
+      color: #F7F4EC;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
+      z-index: 20;
+      opacity: 0;
+      will-change: transform, opacity;
+    }
+
+    .quote-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .quote-mark {
+      color: #FF6A1A;
+      font-size: 38px;
+      font-weight: 900;
+      line-height: 1;
+    }
+
+    .quote-sub {
+      font-size: 18px;
+      font-weight: 700;
+      color: #FF6A1A;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+    }
+
+    .quote-content {
+      font-size: 30px;
+      font-weight: 900;
+      line-height: 1.38;
+      color: #F7F4EC;
+      margin: 0;
+    }
+
+    .quote-content span.highlight {
+      color: #FF6A1A;
+    }
+
+    /* Punch phrase: BỊ CÁO KÊU OAN (Căn giữa tuyệt đối bằng pixel để tránh xung đột GSAP transform) */
+    .punch-container {
+      position: absolute;
+      top: 480px;
+      left: 130px;
+      width: 820px;
+      background-color: #141414;
+      border: 5px solid #FF6A1A;
+      border-radius: 14px;
+      padding: 22px 20px;
+      text-align: center;
+      box-shadow: 12px 12px 0px rgba(255, 106, 26, 0.4), 0 16px 36px rgba(0, 0, 0, 0.6);
+      z-index: 40;
+      opacity: 0;
+      transform-origin: center center;
+      will-change: transform, opacity;
+    }
+
+    .punch-label {
+      display: inline-block;
+      background-color: #FF6A1A;
+      color: #141414;
+      font-size: 20px;
+      font-weight: 900;
+      padding: 4px 16px;
+      border-radius: 4px;
+      letter-spacing: 2px;
+      margin-bottom: 10px;
+    }
+
+    .punch-title {
+      font-size: 64px;
+      font-weight: 900;
+      color: #F7F4EC;
+      letter-spacing: 3px;
+      line-height: 1.2;
+      margin: 0;
+      text-transform: uppercase;
+    }
+
+    /* Question Icon Badge: VẬY AI ĐÚNG? */
+    .question-callout-wrapper {
+      position: absolute;
+      top: 760px;
+      left: 0;
+      right: 0;
+      display: flex;
+      justify-content: center;
+      z-index: 45;
+      pointer-events: none;
+    }
+
+    .question-callout {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      opacity: 0;
+      transform-origin: center center;
+      will-change: transform, opacity;
+    }
+
+    .question-circle {
+      width: 130px;
+      height: 130px;
+      background-color: #FF6A1A;
+      border: 6px solid #141414;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 8px 8px 0px #141414;
+      margin-bottom: 16px;
+    }
+
+    .question-pill {
+      background-color: #141414;
+      color: #FF6A1A;
+      border: 3px solid #FF6A1A;
+      font-size: 32px;
+      font-weight: 900;
+      letter-spacing: 2px;
+      padding: 10px 32px;
+      border-radius: 50px;
+      box-shadow: 6px 6px 0px rgba(20, 20, 20, 0.4);
+      white-space: nowrap;
+    }
+  </style>
+
+  <div data-hf-id="hf-3dj1" id="root" data-composition-id="scene-s06" data-width="1080" data-height="1920" data-duration="11.44">
+    <!-- Lớp nền chuẩn Vox DNA -->
+    <div data-hf-id="hf-yqqm" class="bg-grid"></div>
+    <div data-hf-id="hf-0rvu" class="bg-spotlight"></div>
+    
+    <!-- SVG Grain Texture Filter -->
+    <svg data-hf-id="hf-chcn" class="bg-grain" width="100%" height="100%">
+      <filter data-hf-id="hf-26fg" id="grain-filter">
+        <feturbulence data-hf-id="hf-2yt5" type="fractalNoise" baseFrequency="0.8" numOctaves="3" stitchTiles="stitch" />
+        <fecolormatrix data-hf-id="hf-mcnv" type="matrix" values="0 0 0 0 0   0 0 0 0 0   0 0 0 0 0  0 0 0 0.5 0" />
+      </filter>
+      <rect data-hf-id="hf-5tkj" width="100%" height="100%" filter="url(#grain-filter)" />
+    </svg>
+
+    <!-- Header hồ sơ phiên tòa -->
+    <header data-hf-id="hf-fxlq" class="case-header">
+      <div data-hf-id="hf-1xw3" class="case-tag">HỒ SƠ XÉT XỬ</div>
+      <div data-hf-id="hf-aa77" class="case-number">BẢN ÁN SỐ 35/2024/HS-ST</div>
+    </header>
+
+    <!-- Khung chính hiển thị tư liệu video và trích dẫn -->
+    <div data-hf-id="hf-ncuk" class="stage-container">
+      <div data-hf-id="hf-g5c3" id="shot-card" class="shot-wrapper">
+        <div data-hf-id="hf-us5b" class="paper-tape tape-top-left"></div>
+        <div data-hf-id="hf-0ctu" class="paper-tape tape-top-right"></div>
+        
+        <div data-hf-id="hf-rgo0" class="video-card">
+          <div data-hf-id="hf-d3uz" id="video-zoom-container" class="video-viewport">
+            <video data-hf-id="hf-586t" id="vid-defendant" src="assets/vid-04-nervous-defendant-court-sentencing.mp4" data-start="0" data-duration="11.44" muted playsinline></video>
+          </div>
+
+          <!-- Overlay của Shot 1: Icon Checkmark "ĐÃ THỪA NHẬN" -->
+          <div data-hf-id="hf-5830" id="badge-admission" class="admission-badge">
+            <div data-hf-id="hf-mb27" class="icon-box">
+              <svg data-hf-id="hf-vqq2" width="40" height="40" viewBox="0 0 40 40" fill="none">
+                <circle data-hf-id="hf-3me7" cx="20" cy="20" r="18" fill="#FF6A1A" />
+                <path data-hf-id="hf-fvax" id="check-path" d="M 11 20 L 17 26 L 29 14" fill="none" stroke="#141414" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+            </div>
+            <div data-hf-id="hf-y4hb" class="label">ĐÃ THỪA NHẬN HÀNH VI</div>
+          </div>
+
+          <!-- Overlay của Shot 2: Khung trích dẫn lời khai tại tòa -->
+          <div data-hf-id="hf-t5je" id="quote-card" class="quote-card">
+            <div data-hf-id="hf-zr26" class="quote-header">
+              <span data-hf-id="hf-gpdt" class="quote-mark">“</span>
+              <span data-hf-id="hf-c8p1" class="quote-sub">Lời khai tại phiên tòa</span>
+            </div>
+            <p data-hf-id="hf-j0x6" class="quote-content">
+              Thừa nhận mọi việc mình làm… nhưng <span data-hf-id="hf-10sh" class="highlight">không nhận tội trốn thuế</span>!
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Overlay 1: Label "CON SỐ TRỌNG YẾU" -->
+    <div data-hf-id="hf-wx9a" id="label-con-so" class="badge-important">
+      <span data-hf-id="hf-b6kw" class="tag">MÂU THUẪN</span>
+      <span data-hf-id="hf-7zq4" class="text">CON SỐ TRỌNG YẾU</span>
+    </div>
+
+    <!-- Overlay 2 (Shot 2): Punch Phrase "BỊ CÁO KÊU OAN" -->
+    <div data-hf-id="hf-zunr" id="punch-keu-oan" class="punch-container">
+      <div data-hf-id="hf-nrga" class="punch-label">NGHỊCH LÝ PHÁP LÝ</div>
+      <h2 data-hf-id="hf-b8fj" class="punch-title">BỊ CÁO KÊU OAN</h2>
+    </div>
+
+    <!-- Overlay 3 (Shot 2): Question Callout "VẬY AI ĐÚNG?" -->
+    <div data-hf-id="hf-x6i1" class="question-callout-wrapper">
+      <div data-hf-id="hf-sbqk" id="callout-question" class="question-callout">
+        <div data-hf-id="hf-v4bt" class="question-circle">
+          <svg data-hf-id="hf-24vi" width="80" height="80" viewBox="0 0 80 80">
+            <path data-hf-id="hf-vkhk" id="question-path" d="M 28 30 C 28 18 40 14 50 20 C 58 25 56 36 44 42 L 44 50" fill="none" stroke="#141414" stroke-width="7" stroke-linecap="round" />
+            <circle data-hf-id="hf-02pd" id="question-dot" cx="44" cy="62" r="4.5" fill="#141414" />
+          </svg>
+        </div>
+        <div data-hf-id="hf-4jvr" class="question-pill">VẬY AI ĐÚNG?</div>
+      </div>
+    </div>
+
+    <!-- Thanh cam cố định mép đáy -->
+    <div data-hf-id="hf-8g79" class="bottom-brand-bar"></div>
+  </div>
+
+  <script>
+    // Chuẩn bị đường vẽ SVG Path cho các biểu tượng
+    const checkPath = document.getElementById("check-path");
+    const checkLen = checkPath.getTotalLength();
+    checkPath.style.strokeDasharray = checkLen;
+    checkPath.style.strokeDashoffset = checkLen;
+
+    const questionPath = document.getElementById("question-path");
+    const questionLen = questionPath.getTotalLength();
+    questionPath.style.strokeDasharray = questionLen;
+    questionPath.style.strokeDashoffset = questionLen;
+
+    // Khởi tạo Timeline Paused duy nhất theo hợp đồng của HyperFrames
+    const tl = gsap.timeline({ paused: true });
+
+    /* ----------------------------------------------------
+       GIAI ĐOẠN 1: SHOT S06-1 (0.00s -> 7.86s)
+       ---------------------------------------------------- */
+    // Transition In: 3D Flip hé lộ bị cáo toát mồ hôi tại phiên xét xử
+    tl.fromTo(
+      "#shot-card",
+      { rotationY: -38, rotationX: 12, scale: 0.88, opacity: 0 },
+      { rotationY: 0, rotationX: 0, scale: 1, opacity: 1, duration: 0.75, ease: "power3.out" },
+      0.08
+    );
+
+    // Camera Motion: Slow Zoom-in vào biểu cảm hoảng sợ, căng thẳng
+    tl.fromTo(
+      "#video-zoom-container",
+      { scale: 1 },
+      { scale: 1.08, duration: 7.78, ease: "none" },
+      0.08
+    );
+
+    // Overlay 1: "CON SỐ TRỌNG YẾU" (at 2.35s = 54030ms - 51680ms, hold 1.8s -> hết lúc 4.15s)
+    tl.fromTo(
+      "#label-con-so",
+      { scale: 0.6, opacity: 0, y: -20 },
+      { scale: 1, opacity: 1, y: 0, duration: 0.45, ease: "power3.out" },
+      2.35
+    );
+    tl.to(
+      "#label-con-so",
+      { opacity: 0, y: -15, duration: 0.3, ease: "power2.in" },
+      4.15
+    );
+
+    // Overlay 2: Badge Check "ĐÃ THỪA NHẬN HÀNH VI" (at 5.98s = 57660ms - 51680ms, hold 1.8s)
+    tl.fromTo(
+      "#badge-admission",
+      { scale: 0.7, opacity: 0, x: 20 },
+      { scale: 1, opacity: 1, x: 0, duration: 0.4, ease: "power3.out" },
+      5.98
+    );
+    tl.fromTo(
+      "#check-path",
+      { strokeDashoffset: checkLen },
+      { strokeDashoffset: 0, duration: 0.42, ease: "power2.out" },
+      6.12
+    );
+    tl.to(
+      "#badge-admission",
+      { opacity: 0, scale: 0.9, duration: 0.25, ease: "power2.in" },
+      7.60
+    );
+
+    /* ----------------------------------------------------
+       GIAI ĐOẠN 2: SHOT S06-2 (7.86s -> 11.44s)
+       Khung hình video freeze, xuất hiện trích dẫn lời khai và cao trào
+       ---------------------------------------------------- */
+    // Overlay 1 (Shot 2): Khung trích dẫn lời khai tại tòa xuất hiện
+    tl.fromTo(
+      "#quote-card",
+      { y: 40, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.5, ease: "power3.out" },
+      7.86
+    );
+
+    // Overlay 2 (Shot 2): Punch Phrase "BỊ CÁO KÊU OAN" (at 9.20s = 60880ms - 51680ms, hold > 1.6s)
+    tl.fromTo(
+      "#punch-keu-oan",
+      { scale: 0.75, opacity: 0, y: 30 },
+      { scale: 1, opacity: 1, y: 0, duration: 0.5, ease: "power3.out" },
+      9.20
+    );
+
+    // Overlay 3 (Shot 2): Question Callout "VẬY AI ĐÚNG?" (at 10.84s = 62520ms - 51680ms, giữ tới hết scene)
+    tl.fromTo(
+      "#callout-question",
+      { scale: 0, opacity: 0, rotation: -6 },
+      { scale: 1, opacity: 1, rotation: 0, duration: 0.4, ease: "power3.out" },
+      10.84
+    );
+    tl.fromTo(
+      "#question-path",
+      { strokeDashoffset: questionLen },
+      { strokeDashoffset: 0, duration: 0.32, ease: "power2.out" },
+      10.94
+    );
+    tl.fromTo(
+      "#question-dot",
+      { scale: 0, opacity: 0, transformOrigin: "44px 62px" },
+      { scale: 1, opacity: 1, duration: 0.18, ease: "back.out(1.7)" },
+      11.16
+    );
+
+    // Đăng ký timeline cho HyperFrames seek controller
+    window.__timelines = window.__timelines || {};
+    window.__timelines["scene-s06"] = tl;
+  </script>
+
+    </template>
+  </body>
+</html>

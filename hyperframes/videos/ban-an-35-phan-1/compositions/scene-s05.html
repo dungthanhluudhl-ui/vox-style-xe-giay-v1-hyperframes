@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap">
+      <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      width: 1080px;
+      height: 1920px;
+      background-color: #E7E3D9;
+      color: #141414;
+      font-family: "Be Vietnam Pro", sans-serif;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    #root {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #E7E3D9;
+    }
+
+    /* Paper grain simulation */
+    .paper-grain {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 20;
+      opacity: 0.16;
+      mix-blend-mode: multiply;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+    }
+
+    /* Chart Background Variant (STYLE_DNA: ruled lines + orange ticks) */
+    .chart-background {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .chart-line {
+      position: absolute;
+      left: 0;
+      width: 100%;
+      height: 2px;
+      background-color: rgba(20, 20, 20, 0.28);
+    }
+
+    .chart-line::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: -4px;
+      width: 20px;
+      height: 10px;
+      background-color: #FF6A1A;
+    }
+
+    .chart-line-1 { top: 380px; }
+    .chart-line-2 { top: 760px; }
+    .chart-line-3 { top: 1140px; }
+    .chart-line-4 { top: 1520px; }
+
+    /* Permanent bottom signature bar */
+    #bottom-accent-bar {
+      position: absolute;
+      left: 0;
+      bottom: 0;
+      width: 100%;
+      height: 14px;
+      background-color: #FF6A1A;
+      z-index: 100;
+    }
+
+    /* Full-height scene stage */
+    .clip {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      z-index: 5;
+    }
+
+    #scene-stage {
+      position: absolute;
+      top: 180px;
+      left: 60px;
+      right: 60px;
+      height: 1240px;
+      display: flex;
+      flex-direction: column;
+      gap: 22px;
+    }
+
+    /* Header badges */
+    .badge-wrapper {
+      position: relative;
+      height: 48px;
+    }
+
+    .category-badge {
+      position: absolute;
+      top: 0;
+      left: 0;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background-color: #141414;
+      color: #F7F4EC;
+      font-size: 21px;
+      font-weight: 900;
+      letter-spacing: 1.5px;
+      padding: 10px 22px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      box-shadow: 4px 6px 0 rgba(20, 20, 20, 0.15);
+    }
+
+    .category-badge .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background-color: #FF6A1A;
+    }
+
+    #badge-shot2 {
+      opacity: 0;
+    }
+
+    /* Photo collage frame */
+    .photo-collage-frame {
+      position: relative;
+      width: 100%;
+      height: 620px;
+      background-color: #141414;
+      border: 4px solid #141414;
+      box-shadow: 14px 16px 0px rgba(20, 20, 20, 0.85);
+      overflow: hidden;
+      border-radius: 6px;
+    }
+
+    .photo-inner-wrapper {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      transform-origin: 50% 35%;
+      will-change: transform;
+    }
+
+    .photo-inner-wrapper img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: 50% 25%;
+      display: block;
+    }
+
+    /* Paper tape effect */
+    .paper-tape {
+      position: absolute;
+      top: -10px;
+      right: 48px;
+      width: 130px;
+      height: 32px;
+      background-color: rgba(245, 240, 228, 0.9);
+      border: 1px dashed rgba(20, 20, 20, 0.35);
+      transform: rotate(3deg);
+      z-index: 15;
+    }
+
+    /* Tag badge inside frame (Shot 1) */
+    #tag-invoice-count {
+      position: absolute;
+      top: 24px;
+      left: 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background-color: #F5F0E4;
+      border: 2px solid #141414;
+      padding: 10px 18px;
+      border-radius: 4px;
+      box-shadow: 4px 5px 0px #141414;
+      z-index: 10;
+    }
+
+    #tag-invoice-count svg {
+      width: 28px;
+      height: 28px;
+    }
+
+    .tag-title {
+      font-size: 22px;
+      font-weight: 900;
+      color: #141414;
+      letter-spacing: 0.5px;
+    }
+
+    /* Courtroom vignette (Shot 2) */
+    #court-vignette {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0;
+      background: radial-gradient(circle at 50% 40%, rgba(20,20,20,0.05) 30%, rgba(20,20,20,0.8) 100%);
+      z-index: 8;
+    }
+
+    /* Defendant tag inside frame (Shot 2) */
+    #tag-defendant-role {
+      position: absolute;
+      bottom: 24px;
+      left: 24px;
+      right: 24px;
+      background-color: rgba(20, 20, 20, 0.94);
+      border: 2px solid #FF6A1A;
+      padding: 14px 18px;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      z-index: 10;
+      opacity: 0;
+    }
+
+    #tag-defendant-role svg {
+      width: 32px;
+      height: 32px;
+      flex-shrink: 0;
+    }
+
+    .defendant-desc {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .role-subtitle {
+      font-size: 15px;
+      font-weight: 700;
+      color: #FF6A1A;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+    }
+
+    .role-title {
+      font-size: 23px;
+      font-weight: 900;
+      color: #F7F4EC;
+    }
+
+    /* Lower Section: Dynamic Area for Shot 1 and Shot 2 */
+    .lower-display-area {
+      position: relative;
+      width: 100%;
+      height: 520px;
+    }
+
+    /* Shot 1 Lower UI */
+    #shot1-info {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .data-metric-panel {
+      position: relative;
+      background-color: #F5F0E4;
+      border: 4px solid #141414;
+      border-radius: 6px;
+      padding: 26px 32px;
+      box-shadow: 12px 14px 0px rgba(20, 20, 20, 0.85);
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .metric-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 2px dashed rgba(20, 20, 20, 0.25);
+      padding-bottom: 10px;
+    }
+
+    .metric-title {
+      font-size: 22px;
+      font-weight: 900;
+      color: #141414;
+      letter-spacing: 0.8px;
+    }
+
+    .metric-status {
+      font-size: 17px;
+      font-weight: 900;
+      color: #FF6A1A;
+      background-color: #141414;
+      padding: 4px 12px;
+      border-radius: 3px;
+    }
+
+    .counter-display {
+      display: flex;
+      align-items: baseline;
+      gap: 14px;
+    }
+
+    .counter-number {
+      font-size: 94px;
+      line-height: 0.95;
+      font-weight: 900;
+      color: #141414;
+      letter-spacing: -2px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .counter-unit-badge {
+      font-size: 28px;
+      font-weight: 900;
+      color: #141414;
+      letter-spacing: 0.5px;
+    }
+
+    .data-gauge-bar {
+      position: relative;
+      width: 100%;
+      height: 18px;
+      background-color: #E7E3D9;
+      border: 2px solid #141414;
+      border-radius: 9px;
+      overflow: hidden;
+    }
+
+    .data-gauge-fill {
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #141414 0%, #FF6A1A 100%);
+    }
+
+    .punch-box-shot1 {
+      background-color: #141414;
+      color: #F7F4EC;
+      padding: 22px 30px;
+      border-radius: 6px;
+      border-left: 12px solid #FF6A1A;
+      box-shadow: 10px 12px 0px rgba(20, 20, 20, 0.4);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .punch-sub {
+      font-size: 19px;
+      font-weight: 700;
+      color: #FF6A1A;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    .punch-main {
+      font-size: 50px;
+      font-weight: 900;
+      line-height: 1.15;
+      color: #F7F4EC;
+    }
+
+    /* Shot 2 Lower UI */
+    #shot2-info {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      opacity: 0;
+    }
+
+    .sentence-punch-box {
+      background-color: #141414;
+      border: 5px solid #FF6A1A;
+      padding: 40px 32px;
+      border-radius: 6px;
+      box-shadow: 14px 16px 0px rgba(20, 20, 20, 0.85);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 16px;
+      transform-origin: 50% 50%;
+    }
+
+    .sentence-label {
+      font-size: 21px;
+      font-weight: 900;
+      color: #FF6A1A;
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      background-color: rgba(255, 106, 26, 0.12);
+      padding: 6px 18px;
+      border-radius: 4px;
+    }
+
+    .sentence-main {
+      font-size: 68px;
+      font-weight: 900;
+      line-height: 1.1;
+      color: #F7F4EC;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .sentence-foot {
+      font-size: 20px;
+      font-weight: 700;
+      color: rgba(247, 244, 236, 0.75);
+      letter-spacing: 0.5px;
+    }
+  </style>
+
+  <div data-hf-id="hf-3khy" id="root" data-composition-id="scene-s05" data-start="0" data-width="1080" data-height="1920" data-duration="10.49">
+    <!-- Paper texture overlay -->
+    <div data-hf-id="hf-osr0" class="paper-grain"></div>
+
+    <!-- Chart variant background grid (ignored from layout audit to prevent false overlap findings) -->
+    <div data-hf-id="hf-ates" class="chart-background" data-layout-ignore="">
+      <div data-hf-id="hf-h4y8" class="chart-line chart-line-1"></div>
+      <div data-hf-id="hf-psu3" class="chart-line chart-line-2"></div>
+      <div data-hf-id="hf-luq2" class="chart-line chart-line-3"></div>
+      <div data-hf-id="hf-330d" class="chart-line chart-line-4"></div>
+    </div>
+
+    <!-- Persistent brand bottom bar -->
+    <div data-hf-id="hf-0fdr" id="bottom-accent-bar"></div>
+
+    <!-- Main visual composition clip -->
+    <div data-hf-id="hf-cci5" id="main-scene-clip" class="clip" data-start="0" data-duration="10.49" data-track-index="0">
+      <div data-hf-id="hf-kpi9" id="scene-stage" data-layout-allow-overflow="">
+        <!-- Top category badges -->
+        <div data-hf-id="hf-7d0v" class="badge-wrapper">
+          <div data-hf-id="hf-dkwr" id="badge-shot1" class="category-badge">
+            <span data-hf-id="hf-9gry" class="dot"></span>
+            <span data-hf-id="hf-ox4n">CHỨNG CỨ VI PHẠM THUẾ</span>
+          </div>
+          <div data-hf-id="hf-2pf4" id="badge-shot2" class="category-badge">
+            <span data-hf-id="hf-zcc2" class="dot"></span>
+            <span data-hf-id="hf-l82x">BẢN ÁN HÌNH SỰ</span>
+          </div>
+        </div>
+
+        <!-- Central Photo Frame (Single img node to avoid duplicate media discovery) -->
+        <div data-hf-id="hf-fdtk" class="photo-collage-frame">
+          <div data-hf-id="hf-er7j" class="paper-tape"></div>
+
+          <div data-hf-id="hf-v0bv" id="photo-wrapper" class="photo-inner-wrapper">
+            <img data-hf-id="hf-wpgc" id="hero-court-img" src="assets/img-07-defendant-verdict-prison-sentence.jpeg" alt="Bị cáo trước bục khai báo phiên tòa">
+          </div>
+
+          <!-- Courtroom dark vignette (activates in Shot 2) -->
+          <div data-hf-id="hf-2dd5" id="court-vignette"></div>
+
+          <!-- Tag 1: 10 tờ hóa đơn khống (Shot 1) -->
+          <div data-hf-id="hf-f9sb" id="tag-invoice-count">
+            <svg data-hf-id="hf-h071" viewBox="0 0 48 48" fill="none">
+              <path data-hf-id="hf-9ow0" id="svg-doc-path" d="M10 6 H30 L38 14 V42 H10 Z M30 6 V14 H38 M16 22 H32 M16 30 H32 M16 36 H26" stroke="#FF6A1A" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+            <span data-hf-id="hf-ar0l" class="tag-title">10 TỜ HÓA ĐƠN KHỐNG</span>
+          </div>
+
+          <!-- Tag 2: Bị cáo chủ doanh nghiệp (Shot 2) -->
+          <div data-hf-id="hf-2szk" id="tag-defendant-role">
+            <svg data-hf-id="hf-o5zl" viewBox="0 0 48 48" fill="none">
+              <circle data-hf-id="hf-gh7u" id="svg-person-head" cx="24" cy="14" r="7" stroke="#FF6A1A" stroke-width="3.5" />
+              <path data-hf-id="hf-qb57" id="svg-person-body" d="M10 40 c0 -8 6 -13 14 -13 s14 5 14 13" stroke="#FF6A1A" stroke-width="3.5" stroke-linecap="round" />
+            </svg>
+            <div data-hf-id="hf-9dqb" class="defendant-desc">
+              <span data-hf-id="hf-oz6m" class="role-subtitle">ĐỐI TƯỢNG XÉT XỬ</span>
+              <span data-hf-id="hf-hij5" class="role-title">CHỦ DOANH NGHIỆP SỬA Ô TÔ</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Lower Information Area -->
+        <div data-hf-id="hf-xy7k" class="lower-display-area">
+          <!-- Shot 1 UI: Data counter + Punch phrase -->
+          <div data-hf-id="hf-akv3" id="shot1-info">
+            <div data-hf-id="hf-4kqu" id="data-metric-panel" class="data-metric-panel">
+              <div data-hf-id="hf-nwim" class="metric-header">
+                <span data-hf-id="hf-kcbi" class="metric-title">THUẾ GTGT ĐÃ KHẤU TRỪ</span>
+                <span data-hf-id="hf-o0hu" class="metric-status">GÂY THIỆT HẠI</span>
+              </div>
+
+              <div data-hf-id="hf-sgp5" class="counter-display">
+                <span data-hf-id="hf-4cqv" id="tax-counter-val" class="counter-number">0</span>
+                <span data-hf-id="hf-ewgl" class="counter-unit-badge">TRIỆU ĐỒNG</span>
+              </div>
+
+              <div data-hf-id="hf-qv02" class="data-gauge-bar">
+                <div data-hf-id="hf-7ue6" id="data-gauge-fill" class="data-gauge-fill"></div>
+              </div>
+            </div>
+
+            <div data-hf-id="hf-yx3m" id="punch-box-1" class="punch-box-shot1">
+              <span data-hf-id="hf-qlqe" class="punch-sub">HẬU QUẢ TÀI CHÍNH</span>
+              <span data-hf-id="hf-a265" class="punch-main">352 TRIỆU KHẤU TRỪ</span>
+            </div>
+          </div>
+
+          <!-- Shot 2 UI: Criminal Sentence Punch Box -->
+          <div data-hf-id="hf-1b9m" id="shot2-info">
+            <div data-hf-id="hf-l1me" id="sentence-punch-box" class="sentence-punch-box">
+              <span data-hf-id="hf-2zlq" class="sentence-label">HÌNH PHẠT HÌNH SỰ</span>
+              <span data-hf-id="hf-yetw" class="sentence-main">9 THÁNG TÙ GIAM</span>
+              <span data-hf-id="hf-okl7" class="sentence-foot">TRÁCH NHIỆM CHO HÀNH VI MUA HÓA ĐƠN</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Initialize single paused timeline
+    const tl = gsap.timeline({ paused: true });
+
+    // Setup self-drawing SVG icons
+    const docPath = document.getElementById("svg-doc-path");
+    if (docPath) {
+      const docLen = docPath.getTotalLength ? docPath.getTotalLength() : 180;
+      docPath.style.strokeDasharray = docLen;
+      docPath.style.strokeDashoffset = docLen;
+    }
+
+    const personHead = document.getElementById("svg-person-head");
+    if (personHead) {
+      const headLen = 2 * Math.PI * 7;
+      personHead.style.strokeDasharray = headLen;
+      personHead.style.strokeDashoffset = headLen;
+    }
+
+    const personBody = document.getElementById("svg-person-body");
+    if (personBody) {
+      const bodyLen = personBody.getTotalLength ? personBody.getTotalLength() : 120;
+      personBody.style.strokeDasharray = bodyLen;
+      personBody.style.strokeDashoffset = bodyLen;
+    }
+
+    // ==========================================
+    // SHOT 1: 0.00s -> 6.41s
+    // ==========================================
+
+    // Entrance: Spring-pop/grow entrance for scene stage
+    tl.fromTo(
+      "#scene-stage",
+      { scale: 0.9, opacity: 0 },
+      { scale: 1, opacity: 1, duration: 0.6, ease: "power3.out" },
+      0.0
+    );
+
+    // Camera Motion: Slow cinematic zoom into courtroom dock
+    tl.fromTo(
+      "#photo-wrapper",
+      { scale: 1.0, x: 0, y: 0 },
+      { scale: 1.06, x: -10, y: 0, duration: 6.41, ease: "none" },
+      0.0
+    );
+
+    // t = 0.20s: Tag "10 TỜ HÓA ĐƠN KHỐNG" arrives
+    tl.fromTo(
+      "#tag-invoice-count",
+      { scale: 0.8, opacity: 0, y: -14 },
+      { scale: 1, opacity: 1, y: 0, duration: 0.45, ease: "power3.out" },
+      0.20
+    );
+
+    if (docPath) {
+      tl.to(
+        "#svg-doc-path",
+        { strokeDashoffset: 0, duration: 0.65, ease: "power2.out" },
+        0.30
+      );
+    }
+
+    // t = 0.90s: Data metric box appears
+    tl.fromTo(
+      "#data-metric-panel",
+      { y: 24, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.5, ease: "power3.out" },
+      0.90
+    );
+
+    // t = 1.15s -> 2.75s: Counter climbs to 352 triệu & Gauge fills
+    const counterObj = { val: 0 };
+    tl.to(
+      counterObj,
+      {
+        val: 352,
+        duration: 1.6,
+        ease: "power2.out",
+        onUpdate: () => {
+          const el = document.getElementById("tax-counter-val");
+          if (el) el.innerText = Math.round(counterObj.val).toString();
+        }
+      },
+      1.15
+    );
+
+    tl.to(
+      "#data-gauge-fill",
+      { width: "100%", duration: 1.6, ease: "power2.out" },
+      1.15
+    );
+
+    // t = 2.95s: Punch phrase 1 appears ("352 TRIỆU KHẤU TRỪ")
+    tl.fromTo(
+      "#punch-box-1",
+      { scale: 0.92, opacity: 0, y: 20 },
+      { scale: 1, opacity: 1, y: 0, duration: 0.5, ease: "power3.out" },
+      2.95
+    );
+
+    // ==========================================
+    // SHOT CUT AT 6.41s: TRANSITION TO SHOT 2
+    // ==========================================
+
+    // Hide Shot 1 UI at 6.41s
+    tl.to(
+      "#shot1-info",
+      { opacity: 0, duration: 0.15, ease: "power1.in" },
+      6.26
+    );
+
+    tl.to(
+      "#tag-invoice-count",
+      { opacity: 0, duration: 0.15, ease: "power1.in" },
+      6.26
+    );
+
+    tl.to(
+      "#badge-shot1",
+      { opacity: 0, duration: 0.15, ease: "power1.in" },
+      6.26
+    );
+
+    // Switch badges
+    tl.to(
+      "#badge-shot2",
+      { opacity: 1, duration: 0.2, ease: "power1.out" },
+      6.41
+    );
+
+    // Camera jump-cut + tracking on defendant's face
+    tl.fromTo(
+      "#photo-wrapper",
+      { scale: 1.34, x: 20, y: -24 },
+      { scale: 1.40, x: -24, y: -24, duration: 4.08, ease: "none" },
+      6.41
+    );
+
+    // Activate dramatic courtroom spotlight vignette
+    tl.to(
+      "#court-vignette",
+      { opacity: 0.75, duration: 0.35, ease: "power2.out" },
+      6.41
+    );
+
+    // t = 6.60s: Defendant role tag appears with self-drawing person icon
+    tl.fromTo(
+      "#tag-defendant-role",
+      { y: 20, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.45, ease: "power3.out" },
+      6.60
+    );
+
+    if (personHead && personBody) {
+      tl.to(
+        "#svg-person-head",
+        { strokeDashoffset: 0, duration: 0.4, ease: "power2.out" },
+        6.75
+      );
+      tl.to(
+        "#svg-person-body",
+        { strokeDashoffset: 0, duration: 0.5, ease: "power2.out" },
+        6.90
+      );
+    }
+
+    // Shot 2 lower container activates
+    tl.to(
+      "#shot2-info",
+      { opacity: 1, duration: 0.1 },
+      6.41
+    );
+
+    // t = 8.80s: Final sentence punch box "9 THÁNG TÙ GIAM" strikes down
+    tl.fromTo(
+      "#sentence-punch-box",
+      { scale: 1.25, opacity: 0 },
+      { scale: 1, opacity: 1, duration: 0.35, ease: "power4.out" },
+      8.80
+    );
+
+    // Register paused timeline with HyperFrames runtime
+    window.__timelines["scene-s05"] = tl;
+  </script>
+
+    </template>
+  </body>
+</html>

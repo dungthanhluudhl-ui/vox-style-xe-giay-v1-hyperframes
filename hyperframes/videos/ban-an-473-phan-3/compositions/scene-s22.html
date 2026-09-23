@@ -1,0 +1,468 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap"
+    />
+      <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: #F5F0E4;
+        font-family: "Be Vietnam Pro", sans-serif;
+      }
+
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: #F5F0E4;
+      }
+
+      /* Lớp nền phong cách thẻ hồ sơ (card variant) */
+      .paper-layer {
+        position: absolute;
+        inset: 0;
+        background: #F5F0E4;
+        pointer-events: none;
+      }
+
+      /* Đường kẻ hồ sơ pháp đình tinh tế */
+      .ruled-lines {
+        position: absolute;
+        inset: 0;
+        background-size: 100% 48px;
+        background-image: linear-gradient(
+          to bottom,
+          rgba(20, 20, 20, 0.04) 1.5px,
+          transparent 1.5px
+        );
+        pointer-events: none;
+      }
+
+      /* Texture hạt giấy (grain) hòa trộn multiply */
+      .grain-layer {
+        position: absolute;
+        inset: 0;
+        opacity: 0.16;
+        mix-blend-mode: multiply;
+        pointer-events: none;
+        background: radial-gradient(circle at 50% 40%, rgba(20, 20, 20, 0.18), transparent 75%);
+      }
+
+      /* Clip toàn cảnh của scene */
+      .clip {
+        position: absolute;
+        inset: 0;
+      }
+
+      .content-wrapper {
+        position: absolute;
+        inset: 0;
+        perspective: 1200px;
+      }
+
+      /* Nhóm tiêu đề trên cùng (Y: 160px - 310px, an toàn tuyệt đối trong safe-zone) */
+      .header-group {
+        position: absolute;
+        top: 160px;
+        left: 60px;
+        right: 60px;
+        z-index: 10;
+      }
+
+      .dossier-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        padding: 6px 18px;
+        background: #141414;
+        color: #F7F4EC;
+        font-size: 20px;
+        font-weight: 700;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        border-radius: 4px;
+        margin-bottom: 16px;
+      }
+
+      .dossier-tag-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: #FF6A1A;
+      }
+
+      .headline-text {
+        font-size: 52px;
+        font-weight: 900;
+        line-height: 1.2;
+        color: #141414;
+        text-transform: uppercase;
+        letter-spacing: -0.02em;
+      }
+
+      /* Khung thẻ hồ sơ chính (Y: 330px - 1010px) */
+      .dossier-card {
+        position: absolute;
+        top: 330px;
+        left: 60px;
+        width: 960px;
+        height: 680px;
+        background: #E7E3D9;
+        border: 3.5px solid #141414;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 14px 14px 0 #141414;
+        z-index: 5;
+        transform-origin: 50% 15%;
+      }
+
+      .card-media-viewport {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+      }
+
+      .scale-image {
+        position: absolute;
+        top: -40px;
+        left: -30px;
+        width: 1100px;
+        height: 800px;
+        object-fit: cover;
+        object-position: 55% 45%;
+        transform-origin: 65% 50%;
+      }
+
+      /* Gradient phủ tạo chiều sâu tương phản */
+      .card-gradient-overlay {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(
+          to bottom,
+          rgba(245, 240, 228, 0.1) 0%,
+          rgba(20, 20, 20, 0.45) 100%
+        );
+        pointer-events: none;
+      }
+
+      /* Badge icon Cán cân công lý (scale) */
+      .scale-icon-badge {
+        position: absolute;
+        top: 24px;
+        right: 24px;
+        width: 84px;
+        height: 84px;
+        background: #141414;
+        border: 2px solid #FF6A1A;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 8px 22px rgba(0, 0, 0, 0.35);
+        z-index: 8;
+        transform-origin: 50% 50%;
+      }
+
+      .scale-icon-svg {
+        width: 48px;
+        height: 48px;
+      }
+
+      /* Con dấu phán quyết: "GIỮ NGUYÊN 38 THÁNG" đặt độc lập đè lên hồ sơ (Y: 710px - 970px) */
+      .verdict-stamp {
+        position: absolute;
+        top: 710px;
+        left: 80px;
+        width: 920px;
+        min-height: 250px;
+        padding: 24px 32px;
+        background: #FFFDF8;
+        border: 6px double #991B1B;
+        border-radius: 10px;
+        box-shadow: 0 18px 40px rgba(0, 0, 0, 0.4);
+        z-index: 20;
+        transform-origin: 50% 50%;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        gap: 14px;
+      }
+
+      .stamp-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-bottom: 2px solid rgba(153, 27, 27, 0.35);
+        padding-bottom: 8px;
+      }
+
+      .stamp-subtext {
+        font-size: 19px;
+        font-weight: 700;
+        color: #991B1B;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        line-height: 1.2;
+      }
+
+      .stamp-main-text {
+        font-size: 58px;
+        font-weight: 900;
+        line-height: 1.15;
+        color: #991B1B;
+        text-transform: uppercase;
+        letter-spacing: -0.01em;
+        text-align: center;
+        padding: 4px 0;
+      }
+
+      .stamp-footer {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding-top: 8px;
+        border-top: 2px dashed rgba(153, 27, 27, 0.35);
+      }
+
+      .stamp-footer-text {
+        font-size: 19px;
+        font-weight: 700;
+        color: #141414;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        line-height: 1.2;
+      }
+
+      /* Nhãn "Hành vi nghiêm trọng" (Y: 1050px - 1130px, an toàn phía trên mốc bottom 1460px) */
+      .gravity-label {
+        position: absolute;
+        top: 1050px;
+        left: 60px;
+        display: inline-flex;
+        align-items: center;
+        gap: 16px;
+        padding: 16px 28px;
+        background: #141414;
+        border-left: 8px solid #FF6A1A;
+        border-radius: 0 8px 8px 0;
+        box-shadow: 6px 6px 0 rgba(20, 20, 20, 0.4);
+        z-index: 15;
+      }
+
+      .gravity-label-text {
+        color: #F7F4EC;
+        font-size: 32px;
+        font-weight: 900;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+      }
+
+      /* Thanh cam thương hiệu Vox cố định ở sát đáy khung hình */
+      .vox-bottom-bar {
+        position: absolute;
+        left: 0;
+        bottom: 0;
+        width: 100%;
+        height: 8px;
+        background: #FF6A1A;
+        z-index: 50;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s22"
+      data-start="0"
+      data-duration="7.86"
+      data-width="1080"
+      data-height="1920"
+    >
+      <div class="paper-layer"></div>
+      <div class="ruled-lines"></div>
+      <div class="grain-layer"></div>
+
+      <section
+        id="scene-s22"
+        class="clip"
+        data-start="0"
+        data-duration="7.86"
+        data-track-index="0"
+      >
+        <div class="content-wrapper">
+          <!-- Nhóm Tiêu đề & Thông tin cơ quan xét xử -->
+          <div id="header-group" class="header-group">
+            <div class="dossier-tag">
+              <span class="dossier-tag-dot"></span>
+              <span>Hội đồng xét xử phúc thẩm</span>
+            </div>
+            <h1 class="headline-text">Tính chất &amp; mức độ hành vi</h1>
+          </div>
+
+          <!-- Card chứa hình ảnh cán cân công lý img-05 -->
+          <div id="dossier-card" class="dossier-card">
+            <div class="card-media-viewport" data-layout-allow-overflow="true">
+              <img
+                id="scale-image"
+                class="scale-image"
+                src="assets/img-05-justice-scale-sentencing-mitigation.jpeg"
+                alt="Cán cân công lý và búa thẩm phán"
+                data-layout-allow-overflow="true"
+              />
+              <div class="card-gradient-overlay"></div>
+            </div>
+
+            <!-- Icon scale (cán cân công lý) -->
+            <div id="scale-icon-badge" class="scale-icon-badge">
+              <svg
+                class="scale-icon-svg"
+                viewBox="0 0 48 48"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path d="M24 6V42" stroke="#F7F4EC" stroke-width="3.5" stroke-linecap="round" />
+                <path
+                  d="M12 14L24 10L36 14"
+                  stroke="#FF6A1A"
+                  stroke-width="3.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+                <path
+                  d="M7 26L12 14L17 26"
+                  stroke="#F7F4EC"
+                  stroke-width="2.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+                <path
+                  d="M7 26C7 28.5 9.2 30.5 12 30.5C14.8 30.5 17 28.5 17 26H7Z"
+                  fill="#FF6A1A"
+                  stroke="#FF6A1A"
+                  stroke-width="2"
+                />
+                <path
+                  d="M31 22L36 14L41 22"
+                  stroke="#F7F4EC"
+                  stroke-width="2.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+                <path
+                  d="M31 22C31 24.5 33.2 26.5 36 26.5C38.8 26.5 41 24.5 41 22H31Z"
+                  fill="#FF6A1A"
+                  stroke="#FF6A1A"
+                  stroke-width="2"
+                />
+                <path d="M16 42H32" stroke="#F7F4EC" stroke-width="3.5" stroke-linecap="round" />
+              </svg>
+            </div>
+          </div>
+
+          <!-- Con dấu phán quyết đóng đanh thép: "GIỮ NGUYÊN 38 THÁNG" đè lên hồ sơ -->
+          <div id="verdict-stamp" class="verdict-stamp" data-layout-allow-overlap="true">
+            <div class="stamp-header">
+              <span class="stamp-subtext">Phán quyết toà án</span>
+              <span class="stamp-subtext">Án sơ thẩm</span>
+            </div>
+            <div class="stamp-main-text">Giữ nguyên 38 tháng</div>
+            <div class="stamp-footer">
+              <span class="stamp-footer-text">Bác kháng cáo • Không giảm nhẹ hình phạt</span>
+            </div>
+          </div>
+
+          <!-- Nhãn chú thích: "Hành vi nghiêm trọng" -->
+          <div id="gravity-label" class="gravity-label">
+            <span class="gravity-label-text">Hành vi nghiêm trọng</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Thanh thương hiệu cam cố định sát mép đáy -->
+      <div class="vox-bottom-bar"></div>
+    </div>
+
+    <script>
+      const tl = gsap.timeline({ paused: true });
+
+      // 1. Entrance: Thẻ hồ sơ lật 3D (flip) vào vị trí lúc 0s
+      tl.fromTo(
+        "#dossier-card",
+        { rotateX: 22, opacity: 0, y: 40 },
+        { rotateX: 0, opacity: 1, y: 0, duration: 0.8, ease: "power3.out" },
+        0
+      );
+
+      tl.fromTo(
+        "#header-group",
+        { y: -25, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.65, ease: "power3.out" },
+        0.15
+      );
+
+      // 2. Camera pan-right: dịch chuyển và zoom nhẹ vào góc đĩa cân phải (búa thẩm phán)
+      tl.fromTo(
+        "#scale-image",
+        { x: 20, scale: 1.05 },
+        { x: -85, scale: 1.15, duration: 7.86, ease: "none" },
+        0
+      );
+
+      // 3. Icon Cán cân công lý (scale) xuất hiện lúc 1.2s (tone pháp đình: power3.out, không dùng bounce)
+      tl.fromTo(
+        "#scale-icon-badge",
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.5, ease: "power3.out" },
+        1.2
+      );
+
+      // 4. Con dấu phán quyết đóng đanh thép lúc 2.1s (atMs 182380)
+      tl.fromTo(
+        "#verdict-stamp",
+        { scale: 1.9, opacity: 0, rotation: -12 },
+        { scale: 1, opacity: 1, rotation: -3, duration: 0.28, ease: "power4.in" },
+        2.1
+      );
+
+      // Nẩy nhẹ thẻ hồ sơ khi con dấu đóng xuống (dứt khoát, giá trị tuyệt đối, deterministic)
+      tl.to(
+        "#dossier-card",
+        { y: 4, duration: 0.04, ease: "power1.in" },
+        2.38
+      ).to(
+        "#dossier-card",
+        { y: 0, duration: 0.08, ease: "power2.out" },
+        2.42
+      );
+
+      // 5. Thẻ nhãn "Hành vi nghiêm trọng" xuất hiện lúc 5.18s (atMs 185460)
+      tl.fromTo(
+        "#gravity-label",
+        { x: -40, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.45, ease: "power3.out" },
+        5.18
+      );
+
+      window.__timelines["scene-s22"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

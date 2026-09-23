@@ -1,0 +1,452 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      margin: 0;
+      width: 1080px;
+      height: 1920px;
+      overflow: hidden;
+      background-color: #E7E3D9;
+      font-family: "Be Vietnam Pro", sans-serif;
+      color: #141414;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    #root {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #E7E3D9;
+    }
+
+    .clip {
+      position: absolute;
+      inset: 0;
+      width: 1080px;
+      height: 1920px;
+      overflow: hidden;
+    }
+
+    /* Lớp nền giấy hạt grain kiểu Vox collage */
+    .paper-texture {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 1;
+      opacity: 0.18;
+      mix-blend-mode: multiply;
+      background-image: radial-gradient(#141414 1px, transparent 1px);
+      background-size: 8px 8px;
+    }
+
+    /* Container camera điều khiển hiệu ứng zoom và chuyển động */
+    .camera-frame {
+      position: absolute;
+      inset: 0;
+      width: 1080px;
+      height: 1920px;
+      transform-origin: 540px 960px;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Khung chứa ảnh sơ đồ trung tâm */
+    .diagram-holder {
+      position: absolute;
+      top: 140px;
+      left: 60px;
+      width: 960px;
+      height: 1540px;
+      border: 3px solid #141414;
+      border-radius: 20px;
+      background-color: #F5F0E4;
+      box-shadow: 10px 10px 0px #141414;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .diagram-image {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center top;
+      display: block;
+    }
+
+    /* Sơ đồ nhánh SVG nối các vị trí */
+    .branch-network-svg {
+      position: absolute;
+      inset: 0;
+      width: 1080px;
+      height: 1920px;
+      pointer-events: none;
+      z-index: 3;
+    }
+
+    /* Overlay Punch: CÔNG THỨC CHUNG */
+    .punch-container {
+      position: absolute;
+      top: 200px;
+      left: 100px;
+      right: 100px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      z-index: 10;
+      transform-origin: 50% 50%;
+      opacity: 0;
+    }
+
+    .punch-badge {
+      display: inline-block;
+      background-color: #FF6A1A;
+      color: #141414;
+      font-size: 24px;
+      font-weight: 900;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      padding: 6px 20px;
+      border-radius: 6px 6px 0 0;
+      border: 3px solid #141414;
+      border-bottom: none;
+    }
+
+    .punch-card {
+      background-color: #141414;
+      padding: 16px 36px;
+      border-radius: 12px;
+      border: 3px solid #141414;
+      box-shadow: 6px 6px 0px #FF6A1A;
+      text-align: center;
+    }
+
+    .punch-title {
+      color: #F7F4EC;
+      font-size: 58px;
+      font-weight: 900;
+      line-height: 1.2;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    /* Overlay Icon: Icon người/đầu mối phân quyền */
+    .icon-node-container {
+      position: absolute;
+      top: 760px;
+      left: 80px;
+      z-index: 12;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      opacity: 0;
+      transform-origin: 0% 50%;
+    }
+
+    .icon-badge {
+      width: 86px;
+      height: 86px;
+      background-color: #141414;
+      border: 3px solid #FF6A1A;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 4px 4px 0px #141414;
+    }
+
+    .icon-badge svg {
+      width: 48px;
+      height: 48px;
+      fill: #FF6A1A;
+    }
+
+    .icon-label-pill {
+      background-color: #141414;
+      color: #F7F4EC;
+      border: 2px solid #FF6A1A;
+      border-radius: 8px;
+      padding: 10px 20px;
+      box-shadow: 4px 4px 0px rgba(20,20,20,0.5);
+    }
+
+    .icon-label-text {
+      font-size: 28px;
+      font-weight: 900;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    /* Overlay Label: Cửa hàng độc lập */
+    .shop-label-container {
+      position: absolute;
+      top: 1280px;
+      left: 100px;
+      right: 100px;
+      display: flex;
+      justify-content: center;
+      z-index: 15;
+      opacity: 0;
+      transform-origin: 50% 50%;
+    }
+
+    .shop-label-card {
+      background-color: #F5F0E4;
+      border: 3px solid #141414;
+      border-radius: 16px;
+      padding: 18px 32px;
+      box-shadow: 8px 8px 0px #FF6A1A;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .shop-icon-box {
+      width: 64px;
+      height: 64px;
+      background-color: #FF6A1A;
+      border: 2px solid #141414;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .shop-icon-box svg {
+      width: 36px;
+      height: 36px;
+      fill: #141414;
+    }
+
+    .shop-text-group {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .shop-title {
+      font-size: 42px;
+      font-weight: 900;
+      color: #141414;
+      line-height: 1.2;
+      text-transform: uppercase;
+    }
+
+    .shop-subtitle {
+      font-size: 24px;
+      font-weight: 700;
+      color: #141414;
+      opacity: 0.85;
+      letter-spacing: 0.5px;
+    }
+
+    /* Thanh màu cam cố định ở mép dưới cùng theo phong cách DNA */
+    .bottom-accent-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 12px;
+      background-color: #FF6A1A;
+      z-index: 100;
+    }
+  </style>
+
+  <div
+    id="root"
+    data-composition-id="scene-s02"
+    data-width="1080"
+    data-height="1920"
+    data-duration="5.13"
+    data-start="0"
+  >
+    <section id="scene-s02" class="clip" data-start="0" data-duration="5.13">
+      <!-- Lớp texture giấy -->
+      <div class="paper-texture"></div>
+
+      <!-- Khung camera chuyển động -->
+      <div id="camera-box" class="camera-frame">
+        <div class="diagram-holder">
+          <img
+            id="diagram-asset"
+            class="diagram-image"
+            src="assets/img-08-independent-crime-network-diagram.jpeg"
+            alt="Sơ đồ 3 nhánh mạng lưới độc lập"
+          />
+        </div>
+      </div>
+
+      <!-- Sơ đồ đường nét minh họa phân phối công thức -->
+      <svg class="branch-network-svg" viewBox="0 0 1080 1920" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <!-- Nhánh nối trung tâm sang các hướng -->
+        <path
+          id="connector-line-left"
+          d="M 540 380 L 260 620 L 260 760"
+          stroke="#FF6A1A"
+          stroke-width="5"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-dasharray="600"
+          stroke-dashoffset="600"
+        />
+        <path
+          id="connector-line-right"
+          d="M 540 380 L 820 620 L 820 760"
+          stroke="#FF6A1A"
+          stroke-width="5"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-dasharray="600"
+          stroke-dashoffset="600"
+        />
+        <path
+          id="connector-line-mid"
+          d="M 540 380 L 540 820"
+          stroke="#141414"
+          stroke-width="4"
+          stroke-linecap="round"
+          stroke-dasharray="8 8"
+        />
+      </svg>
+
+      <!-- Overlay 1: Punch Phrase "CÔNG THỨC CHUNG" (t = 0.52s -> 2.32s) -->
+      <div id="punch-formula" class="punch-container">
+        <span class="punch-badge">BÀN GIAO QUY TRÌNH</span>
+        <div class="punch-card">
+          <h1 class="punch-title">CÔNG THỨC CHUNG</h1>
+        </div>
+      </div>
+
+      <!-- Overlay 2: Icon Person (t = 2.08s -> 3.88s) -->
+      <div id="icon-person" class="icon-node-container">
+        <div class="icon-badge">
+          <svg viewBox="0 0 24 24">
+            <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+          </svg>
+        </div>
+        <div class="icon-label-pill">
+          <span class="icon-label-text">3 ĐẦU MỐI ĐỘC LẬP</span>
+        </div>
+      </div>
+
+      <!-- Overlay 3: Label "Cửa hàng độc lập" (t = 2.88s -> 4.98s) -->
+      <div id="label-shop" class="shop-label-container">
+        <div class="shop-label-card">
+          <div class="shop-icon-box">
+            <svg viewBox="0 0 24 24">
+              <path d="M20 4H4v2h16V4zm1 10v-2l-1-5H4l-1 5v2h1v6h10v-6h4v6h2v-6h1zm-9 4H6v-4h6v4z" />
+            </svg>
+          </div>
+          <div class="shop-text-group">
+            <h2 class="shop-title">CỬA HÀNG ĐỘC LẬP</h2>
+            <p class="shop-subtitle">Tự mở &amp; Tự vận hành</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Thanh màu cam đáy khung hình đặc trưng phong cách Vox -->
+      <div class="bottom-accent-bar"></div>
+    </section>
+  </div>
+
+  <script>
+    // Khởi tạo GSAP Timeline với trạng thái paused: true theo chuẩn HyperFrames
+    const tl = gsap.timeline({ paused: true });
+
+    // 1. Camera Animation: Zoom-through vào cảnh, sau đó Ken Burns tiến dần
+    // Giai đoạn vào (0s - 0.7s): Zoom-through từ 1.25 về 1.0
+    tl.fromTo(
+      "#camera-box",
+      { scale: 1.25 },
+      { scale: 1.0, duration: 0.7, ease: "power2.out" },
+      0
+    );
+
+    // Giai đoạn giữ nhịp (0.7s - 5.13s): Zoom chậm vào tâm 1.0 -> 1.08
+    tl.to(
+      "#camera-box",
+      { scale: 1.08, duration: 4.43, ease: "none" },
+      0.7
+    );
+
+    // 2. Stroke Animation: Tự động vẽ các nhánh phân tách công thức
+    tl.to(
+      "#connector-line-left",
+      { strokeDashoffset: 0, duration: 0.9, ease: "power2.out" },
+      1.1
+    );
+
+    tl.to(
+      "#connector-line-right",
+      { strokeDashoffset: 0, duration: 0.9, ease: "power2.out" },
+      1.25
+    );
+
+    // 3. Overlay Punch Phrase: "CÔNG THỨC CHUNG"
+    // Xuất hiện lúc 0.52s, giữ 1.8s (đến 2.32s), sau đó thoát
+    tl.fromTo(
+      "#punch-formula",
+      { opacity: 0, y: -40, scale: 0.9 },
+      { opacity: 1, y: 0, scale: 1.0, duration: 0.45, ease: "power3.out" },
+      0.52
+    );
+
+    tl.to(
+      "#punch-formula",
+      { opacity: 0, y: -20, duration: 0.22, ease: "power2.in" },
+      2.32
+    );
+
+    // 4. Overlay Icon Person: "3 ĐẦU MỐI ĐỘC LẬP"
+    // Xuất hiện lúc 2.08s, giữ 1.8s (đến 3.88s), sau đó thoát
+    tl.fromTo(
+      "#icon-person",
+      { opacity: 0, x: -50, scale: 0.8 },
+      { opacity: 1, x: 0, scale: 1.0, duration: 0.45, ease: "power3.out" },
+      2.08
+    );
+
+    tl.to(
+      "#icon-person",
+      { opacity: 0, scale: 0.9, duration: 0.2, ease: "power2.in" },
+      3.88
+    );
+
+    // 5. Overlay Label: "CỬA HÀNG ĐỘC LẬP"
+    // Xuất hiện lúc 2.88s, giữ 2.1s (đến 4.98s), sau đó thoát
+    tl.fromTo(
+      "#label-shop",
+      { opacity: 0, y: 40, scale: 0.92 },
+      { opacity: 1, y: 0, scale: 1.0, duration: 0.5, ease: "power3.out" },
+      2.88
+    );
+
+    tl.to(
+      "#label-shop",
+      { opacity: 0, y: 15, duration: 0.25, ease: "power2.in" },
+      4.98
+    );
+
+    // Bắt buộc: Đăng ký timeline paused vào window.__timelines["scene-s02"]
+    window.__timelines["scene-s02"] = tl;
+  </script>
+
+    </template>
+  </body>
+</html>

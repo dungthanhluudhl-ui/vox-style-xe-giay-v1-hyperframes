@@ -1,0 +1,636 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap"
+    />
+      <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        padding: 0;
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+        background-color: #f5f0e4;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: #f5f0e4;
+      }
+
+      .clip {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+      }
+
+      /* Paper Grain Texture */
+      .grain-overlay {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: 80;
+        mix-blend-mode: multiply;
+        opacity: 0.18;
+      }
+
+      /* Viewport wrapper for strike entrance & camera shake */
+      #scene-viewport {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        transform-origin: center center;
+      }
+
+      /* Image Pan Layer (Ken Burns Pan-Right) */
+      .image-viewport {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+
+      #pan-layer {
+        position: absolute;
+        top: -60px;
+        left: -120px;
+        width: 1320px;
+        height: 2040px;
+        transform-origin: center center;
+      }
+
+      #pan-layer img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+
+      /* Split Screen Dimmer & Separator */
+      .left-dimmer {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 54%;
+        height: 100%;
+        background: linear-gradient(
+          90deg,
+          rgba(20, 20, 20, 0.88) 0%,
+          rgba(20, 20, 20, 0.72) 70%,
+          rgba(20, 20, 20, 0) 100%
+        );
+        pointer-events: none;
+        z-index: 5;
+      }
+
+      /* Center Split Paper Edge Accent */
+      .split-seam {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 50%;
+        width: 3px;
+        background: repeating-linear-gradient(
+          to bottom,
+          #ff6a1a,
+          #ff6a1a 16px,
+          transparent 16px,
+          transparent 26px
+        );
+        z-index: 6;
+        opacity: 0.6;
+      }
+
+      /* Header Docket Badge (Top Safe Zone: top: 170px) */
+      .case-docket {
+        position: absolute;
+        top: 170px;
+        left: 48px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        z-index: 20;
+      }
+
+      .docket-badge {
+        background-color: #141414;
+        color: #f7f4ec;
+        font-weight: 900;
+        font-size: 24px;
+        letter-spacing: 1.5px;
+        padding: 8px 20px;
+        border-radius: 4px;
+        box-shadow: 4px 4px 0px #ff6a1a;
+      }
+
+      .docket-tag {
+        background-color: #f5f0e4;
+        color: #141414;
+        font-weight: 700;
+        font-size: 20px;
+        letter-spacing: 1px;
+        padding: 6px 14px;
+        border: 2px solid #141414;
+        border-radius: 4px;
+      }
+
+      /* Left Side Label (Contrasting action vs legal charge) */
+      .left-contrast-label {
+        position: absolute;
+        top: 680px;
+        left: 48px;
+        width: 400px;
+        background-color: rgba(20, 20, 20, 0.92);
+        border-left: 6px solid #ff6a1a;
+        padding: 20px 24px;
+        border-radius: 4px;
+        z-index: 10;
+        box-shadow: 6px 6px 0px rgba(0, 0, 0, 0.35);
+      }
+
+      .left-contrast-label .label-tag {
+        color: #ff6a1a;
+        font-size: 18px;
+        font-weight: 900;
+        letter-spacing: 1.5px;
+        margin-bottom: 6px;
+      }
+
+      .left-contrast-label .label-title {
+        color: #f7f4ec;
+        font-size: 32px;
+        font-weight: 900;
+        line-height: 1.25;
+      }
+
+      .left-contrast-label .label-note {
+        color: #e7e3d9;
+        font-size: 19px;
+        font-weight: 700;
+        margin-top: 8px;
+        opacity: 0.85;
+      }
+
+      /* Overlay 1: Legal Article Punch Card (atMs: 81780 -> 2.5s) */
+      .legal-card-wrapper {
+        position: absolute;
+        top: 360px;
+        right: 48px;
+        width: 540px;
+        z-index: 30;
+      }
+
+      .legal-badge {
+        background-color: #141414;
+        border: 4px solid #ff6a1a;
+        box-shadow: 12px 12px 0px #ff6a1a;
+        border-radius: 8px;
+        padding: 32px;
+        color: #f7f4ec;
+      }
+
+      .badge-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+      }
+
+      .badge-pill {
+        background-color: #ff6a1a;
+        color: #141414;
+        font-weight: 900;
+        font-size: 18px;
+        letter-spacing: 1.5px;
+        padding: 4px 14px;
+        border-radius: 3px;
+      }
+
+      .badge-subcode {
+        color: #e7e3d9;
+        font-size: 18px;
+        font-weight: 700;
+        letter-spacing: 1px;
+      }
+
+      .legal-badge-title {
+        font-size: 58px;
+        font-weight: 900;
+        color: #f7f4ec;
+        line-height: 1.15;
+        margin: 8px 0 16px 0;
+        letter-spacing: 1px;
+      }
+
+      .badge-divider {
+        height: 3px;
+        background-color: rgba(255, 106, 26, 0.4);
+        margin: 18px 0;
+      }
+
+      .scale-row {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+      }
+
+      .scale-svg {
+        flex-shrink: 0;
+      }
+
+      .scale-path {
+        fill: none;
+        stroke: #ff6a1a;
+        stroke-width: 4;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
+      #scale-pivot {
+        fill: #ff6a1a;
+        transform-origin: 75px 24px;
+      }
+
+      .scale-text-col {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .scale-text-top {
+        color: #ff6a1a;
+        font-size: 17px;
+        font-weight: 900;
+        letter-spacing: 1.2px;
+      }
+
+      .scale-text-title {
+        color: #f7f4ec;
+        font-size: 24px;
+        font-weight: 900;
+        line-height: 1.25;
+        margin-top: 4px;
+      }
+
+      /* Overlay 3: Punch Phrase Banner (atMs: 85760 -> 6.48s) */
+      .crime-banner-wrapper {
+        position: absolute;
+        bottom: 500px;
+        left: 48px;
+        right: 48px;
+        z-index: 40;
+      }
+
+      .crime-banner {
+        background-color: #141414;
+        border: 4px solid #ff6a1a;
+        box-shadow: 14px 14px 0px #ff6a1a;
+        border-radius: 10px;
+        padding: 38px 42px;
+        transform-origin: center center;
+      }
+
+      .crime-header-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 18px;
+      }
+
+      .crime-pill {
+        background-color: #ff6a1a;
+        color: #141414;
+        font-size: 20px;
+        font-weight: 900;
+        letter-spacing: 2px;
+        padding: 6px 18px;
+        border-radius: 4px;
+      }
+
+      .crime-law-ref {
+        color: #e7e3d9;
+        font-size: 20px;
+        font-weight: 700;
+        letter-spacing: 1px;
+      }
+
+      .crime-headline {
+        font-size: 64px;
+        font-weight: 900;
+        line-height: 1.18;
+        color: #f7f4ec;
+        letter-spacing: 1px;
+        margin: 12px 0 20px 0;
+      }
+
+      .crime-headline .highlight {
+        color: #ff6a1a;
+      }
+
+      .crime-desc-row {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        padding-top: 16px;
+        border-top: 2px solid rgba(247, 244, 236, 0.15);
+      }
+
+      .crime-desc-badge {
+        background-color: #ff6a1a;
+        color: #141414;
+        font-size: 16px;
+        font-weight: 900;
+        padding: 4px 12px;
+        border-radius: 3px;
+        letter-spacing: 1px;
+      }
+
+      .crime-desc-text {
+        color: #f7f4ec;
+        font-size: 22px;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+      }
+
+      /* Fixed Signature Bottom Orange Bar */
+      .bottom-orange-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 14px;
+        background-color: #ff6a1a;
+        z-index: 100;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s10"
+      data-start="0"
+      data-duration="8.28"
+      data-width="1080"
+      data-height="1920"
+      data-layout-allow-overflow="true"
+    >
+      <!-- Fixed signature bottom bar -->
+      <div class="bottom-orange-bar"></div>
+
+      <!-- Base Scene Container: full duration 8.28s -->
+      <div
+        id="scene-base"
+        class="clip"
+        data-start="0"
+        data-duration="8.28"
+        data-layout-allow-overflow="true"
+      >
+        <!-- Paper Grain Filter -->
+        <svg class="grain-overlay" xmlns="http://www.w3.org/2000/svg">
+          <filter id="paper-noise">
+            <feTurbulence
+              type="fractalNoise"
+              baseFrequency="0.65"
+              numOctaves="3"
+              stitchTiles="stitch"
+              seed="42"
+            />
+            <feColorMatrix type="matrix" values="0 0 0 0 0   0 0 0 0 0   0 0 0 0 0  0 0 0 1 0" />
+          </filter>
+          <rect width="100%" height="100%" filter="url(#paper-noise)" />
+        </svg>
+
+        <!-- Scene Viewport for strike entrance & camera shake -->
+        <div id="scene-viewport" data-layout-allow-overflow="true">
+          <!-- Split-screen image with Ken Burns Pan-Right -->
+          <div class="image-viewport" data-layout-allow-overflow="true">
+            <div id="pan-layer">
+              <img
+                src="assets/img-01-sin-su-legal-penalty-split.jpeg"
+                alt="Split screen: herbal powder vs legal penal gavel"
+              />
+            </div>
+          </div>
+
+          <!-- Left half darkening mask (dims herbal powder side) -->
+          <div class="left-dimmer"></div>
+
+          <!-- Vertical split seam accent line -->
+          <div class="split-seam"></div>
+
+          <!-- Case Docket Header (Top Safe Zone) -->
+          <div class="case-docket">
+            <div class="docket-badge">BẢN ÁN 473</div>
+            <div class="docket-tag">HỒ SƠ HÌNH SỰ</div>
+          </div>
+
+          <!-- Left Contrast Label -->
+          <div class="left-contrast-label">
+            <div class="label-tag">HÀNH VI BAN ĐẦU</div>
+            <div class="label-title">BUÔN BÁN SÌN SÚ</div>
+            <div class="label-note">Không phải nguyên nhân xét xử hình sự</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Overlay 1 & 2: Legal Article & Scale Icon (start 2.5s, duration 2.2s -> ends 4.7s) -->
+      <div id="overlay-punch" class="clip" data-start="2.5" data-duration="2.2">
+        <div class="legal-card-wrapper">
+          <div class="legal-badge">
+            <div class="badge-header">
+              <span class="badge-pill">CĂN CỨ TRUY TỐ</span>
+              <span class="badge-subcode">BỘ LUẬT HÌNH SỰ</span>
+            </div>
+            <h1 class="legal-badge-title">ĐIỀU 326 BLHS</h1>
+            <div class="badge-divider"></div>
+            <div class="scale-row">
+              <svg
+                class="scale-svg"
+                viewBox="0 0 150 140"
+                width="110"
+                height="100"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <!-- Central vertical pillar -->
+                <path class="scale-path" d="M 75,24 L 75,124" />
+                <!-- Base stand -->
+                <path class="scale-path" d="M 45,124 L 105,124" />
+                <!-- Horizontal beam -->
+                <path class="scale-path" d="M 25,48 L 125,48" />
+                <!-- Left pan strings & pan -->
+                <path class="scale-path" d="M 25,48 L 12,82" />
+                <path class="scale-path" d="M 25,48 L 38,82" />
+                <path class="scale-path" d="M 8,82 Q 25,98 42,82 Z" />
+                <!-- Right pan strings & pan (tilted lower: gravity of law) -->
+                <path class="scale-path" d="M 125,48 L 110,90" />
+                <path class="scale-path" d="M 125,48 L 140,90" />
+                <path class="scale-path" d="M 106,90 Q 125,106 144,90 Z" />
+                <!-- Pivot circle -->
+                <circle id="scale-pivot" cx="75" cy="24" r="6" />
+              </svg>
+              <div class="scale-text-col">
+                <span class="scale-text-top">CHẾ TÀI HÌNH SỰ</span>
+                <span class="scale-text-title">Xét xử hành vi phát tán</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Overlay 3: Crime Label Banner (start 6.48s, duration 1.8s -> ends 8.28s) -->
+      <div id="overlay-crime" class="clip" data-start="6.48" data-duration="1.8">
+        <div class="crime-banner-wrapper">
+          <div class="crime-banner">
+            <div class="crime-header-row">
+              <div class="crime-pill">TỘI DANH XÉT XỬ</div>
+              <div class="crime-law-ref">BLHS 2015 • ĐIỀU 326</div>
+            </div>
+            <div class="crime-headline">
+              TRUYỀN BÁ <span class="highlight">ĐỒI TRỤY</span>
+            </div>
+            <div class="crime-desc-row">
+              <span class="crime-desc-badge">TỘI PHẠM MẠNG</span>
+              <span class="crime-desc-text">Phát tán video khiêu dâm trên không gian số</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Animation Runtime Script -->
+    <script>
+      // 1. Prepare SVG scale icon geometry paths
+      document.querySelectorAll(".scale-path").forEach((p) => {
+        const len = p.getTotalLength();
+        p.style.strokeDasharray = `${len}`;
+        p.style.strokeDashoffset = `${len}`;
+      });
+
+      // 2. Build seekable paused GSAP timeline
+      const tl = gsap.timeline({ paused: true });
+
+      // [0.00s - 0.52s] Strike Entrance: scene slams down with impact settle
+      tl.fromTo(
+        "#scene-viewport",
+        { y: -70, scale: 1.04 },
+        { y: 0, scale: 1.0, duration: 0.36, ease: "power4.in" },
+        0
+      );
+      // Gavel impact shockwave settling
+      tl.to("#scene-viewport", { y: 10, duration: 0.07, ease: "power1.out" }, 0.36);
+      tl.to("#scene-viewport", { y: -4, duration: 0.05, ease: "power1.inOut" }, 0.43);
+      tl.to("#scene-viewport", { y: 0, duration: 0.06, ease: "power1.out" }, 0.48);
+
+      // [0.00s - 8.28s] Ken Burns Camera Pan-Right: shifts focus from powder to legal gavel
+      tl.fromTo(
+        "#pan-layer",
+        { x: 50, scale: 1.04 },
+        { x: -75, scale: 1.1, duration: 8.28, ease: "sine.inOut" },
+        0
+      );
+
+      // [0.45s - 0.90s] Case docket tag drops in
+      tl.fromTo(
+        ".case-docket",
+        { y: -30, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.45, ease: "power3.out" },
+        0.45
+      );
+
+      // [0.70s - 1.15s] Left contrast label appears
+      tl.fromTo(
+        ".left-contrast-label",
+        { x: -40, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.45, ease: "power3.out" },
+        0.7
+      );
+
+      // [1.50s - 3.40s] Voiceover shifts: left side dims away as focus moves to the crime
+      tl.fromTo(".left-dimmer", { opacity: 0.3 }, { opacity: 0.88, duration: 1.9, ease: "power2.inOut" }, 1.5);
+      tl.to(".left-contrast-label", { opacity: 0.35, duration: 1.6, ease: "power2.out" }, 1.8);
+
+      // [2.50s - 4.70s] Overlay 1: Legal Card ("ĐIỀU 326 BLHS") punches in
+      tl.fromTo(
+        ".legal-badge",
+        { scale: 0.72, opacity: 0, y: 25 },
+        { scale: 1.0, opacity: 1, y: 0, duration: 0.44, ease: "power3.out" },
+        2.5
+      );
+
+      // [3.01s - 3.65s] Overlay 2: Scale icon draws self-drawing paths
+      tl.to(
+        ".scale-path",
+        {
+          strokeDashoffset: 0,
+          duration: 0.58,
+          stagger: 0.05,
+          ease: "power2.out",
+        },
+        3.01
+      );
+      tl.fromTo(
+        "#scale-pivot",
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.22, ease: "power3.out" },
+        3.06
+      );
+      tl.fromTo(
+        ".scale-text-col",
+        { opacity: 0, x: -10 },
+        { opacity: 1, x: 0, duration: 0.35, ease: "power2.out" },
+        3.28
+      );
+
+      // [4.36s - 4.66s] Legal Card smoothly transitions out
+      tl.to(
+        ".legal-badge",
+        { scale: 0.94, opacity: 0, y: -20, duration: 0.3, ease: "power2.in" },
+        4.36
+      );
+
+      // [6.48s - 8.28s] Overlay 3: Punch Phrase Banner ("TRUYỀN BÁ ĐỒI TRỤY") strikes down
+      tl.fromTo(
+        ".crime-banner",
+        { scale: 1.24, opacity: 0, y: -36 },
+        { scale: 1.0, opacity: 1, y: 0, duration: 0.34, ease: "power4.out" },
+        6.48
+      );
+      // Impact thud on punch phrase strike
+      tl.to("#scene-viewport", { y: 6, duration: 0.06, ease: "power1.out" }, 6.52);
+      tl.to("#scene-viewport", { y: 0, duration: 0.08, ease: "power1.in" }, 6.58);
+
+      // Desc row details reveal
+      tl.fromTo(
+        ".crime-desc-row",
+        { opacity: 0, y: 14 },
+        { opacity: 1, y: 0, duration: 0.3, ease: "power3.out" },
+        6.72
+      );
+
+      // 3. Register timeline on window.__timelines
+      window.__timelines["scene-s10"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

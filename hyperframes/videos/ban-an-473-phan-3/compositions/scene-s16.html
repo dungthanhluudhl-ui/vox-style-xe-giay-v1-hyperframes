@@ -1,0 +1,624 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap">
+      <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      width: 1080px;
+      height: 1920px;
+      background-color: #F5F0E4;
+      font-family: "Be Vietnam Pro", sans-serif;
+      overflow: hidden;
+      color: #141414;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    #root {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #F5F0E4;
+    }
+
+    /* Lớp họa tiết nền card giấy điều tra */
+    .bg-card-texture {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 1;
+      opacity: 0.4;
+      background-image:
+        linear-gradient(rgba(20, 20, 20, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(20, 20, 20, 0.05) 1px, transparent 1px);
+      background-size: 84px 84px;
+    }
+
+    /* Thanh cam nhận diện thương hiệu cố định mép dưới */
+    #brand-bottom-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 1080px;
+      height: 16px;
+      background-color: #FF6A1A;
+      z-index: 100;
+    }
+
+    /* Clip layout */
+    .clip {
+      position: absolute;
+      inset: 0;
+      width: 1080px;
+      height: 1920px;
+      overflow: hidden;
+      z-index: 2;
+    }
+
+    .shot-container {
+      position: absolute;
+      inset: 0;
+      width: 1080px;
+      height: 1920px;
+      perspective: 1200px;
+    }
+
+    /* Băng đề mục chung phía trên */
+    .header-panel {
+      position: absolute;
+      top: 180px;
+      left: 60px;
+      width: 960px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      z-index: 10;
+    }
+
+    .header-badge {
+      align-self: flex-start;
+      background-color: #FF6A1A;
+      color: #141414;
+      font-size: 26px;
+      font-weight: 900;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      padding: 8px 20px;
+      border: 2px solid #141414;
+      box-shadow: 4px 4px 0px #141414;
+    }
+
+    .header-title {
+      font-size: 46px;
+      font-weight: 900;
+      line-height: 1.25;
+      color: #141414;
+      text-transform: uppercase;
+      letter-spacing: -0.5px;
+    }
+
+    /* Khung ảnh phong cách collage giấy cắt dán */
+    .photo-frame {
+      position: absolute;
+      top: 340px;
+      left: 60px;
+      width: 960px;
+      height: 720px;
+      border: 4px solid #141414;
+      background-color: #141414;
+      box-shadow: 12px 12px 0px rgba(20, 20, 20, 0.25);
+      overflow: hidden;
+      z-index: 5;
+    }
+
+    .photo-inner-img {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    /* Mẩu băng keo dán góc tài liệu */
+    .tape-corner {
+      position: absolute;
+      width: 120px;
+      height: 32px;
+      background-color: rgba(231, 227, 217, 0.85);
+      border: 1px dashed rgba(20, 20, 20, 0.4);
+      z-index: 15;
+      transform: rotate(-12deg);
+      top: -10px;
+      left: -20px;
+    }
+
+    /* Tag ghim tên trên ảnh */
+    .photo-tag {
+      position: absolute;
+      bottom: 24px;
+      left: 24px;
+      background-color: #141414;
+      color: #F7F4EC;
+      font-size: 28px;
+      font-weight: 900;
+      padding: 10px 22px;
+      border-left: 6px solid #FF6A1A;
+      box-shadow: 4px 4px 0px rgba(0, 0, 0, 0.3);
+      z-index: 10;
+    }
+
+    /* Vùng diễn giải đồ họa & chú thích (Top 1100px - 1440px) */
+    .annotation-box {
+      position: absolute;
+      top: 1100px;
+      left: 60px;
+      width: 960px;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    /* Thẻ so sánh / thẻ thông tin */
+    .info-card {
+      background-color: #141414;
+      border: 3px solid #141414;
+      padding: 24px 32px;
+      box-shadow: 8px 8px 0px #FF6A1A;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .info-card-content {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .info-label {
+      font-size: 24px;
+      font-weight: 700;
+      color: #FF6A1A;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .info-main-text {
+      font-size: 44px;
+      font-weight: 900;
+      color: #F7F4EC;
+      line-height: 1.2;
+    }
+
+    .info-sub-text {
+      font-size: 24px;
+      font-weight: 700;
+      color: rgba(247, 244, 236, 0.75);
+    }
+
+    /* Sơ đồ trực quan (Diagram Flow) */
+    .flow-diagram-wrapper {
+      background-color: #FFFFFF;
+      border: 3px solid #141414;
+      padding: 24px;
+      box-shadow: 8px 8px 0px rgba(20, 20, 20, 0.15);
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      gap: 16px;
+    }
+
+    .flow-node {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 6px;
+    }
+
+    .flow-node-badge {
+      background-color: #F5F0E4;
+      border: 2px solid #141414;
+      padding: 10px 18px;
+      font-size: 24px;
+      font-weight: 900;
+      color: #141414;
+    }
+
+    .flow-node-sub {
+      font-size: 20px;
+      font-weight: 700;
+      color: #666;
+    }
+
+    /* Mũi tên & Icon SVG */
+    .svg-anim-container {
+      width: 120px;
+      height: 70px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Shot 2: Punch Banner */
+    .punch-banner {
+      background-color: #FF6A1A;
+      border: 4px solid #141414;
+      padding: 22px 30px;
+      box-shadow: 8px 8px 0px #141414;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .punch-text {
+      font-size: 48px;
+      font-weight: 900;
+      color: #141414;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .tag-highlight {
+      background-color: #141414;
+      color: #F7F4EC;
+      padding: 6px 14px;
+      font-size: 22px;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    .contrast-box {
+      background-color: #FFFFFF;
+      border: 3px solid #141414;
+      padding: 24px 30px;
+      box-shadow: 8px 8px 0px rgba(20, 20, 20, 0.2);
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+
+    .contrast-icon-wrap {
+      width: 80px;
+      height: 80px;
+      background-color: #F5F0E4;
+      border: 2px solid #141414;
+      display: grid;
+      place-items: center;
+      flex-shrink: 0;
+    }
+
+    .contrast-desc {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .contrast-title {
+      font-size: 34px;
+      font-weight: 900;
+      color: #141414;
+    }
+
+    .contrast-detail {
+      font-size: 22px;
+      font-weight: 700;
+      color: #555555;
+      line-height: 1.35;
+    }
+  </style>
+
+  <div
+    id="root"
+    data-composition-id="scene-s16"
+    data-start="0"
+    data-width="1080"
+    data-height="1920"
+    data-duration="8.22"
+  >
+    <!-- Họa tiết nền phong cách tài liệu -->
+    <div class="bg-card-texture"></div>
+
+    <!-- Thanh cam chữ ký nhận diện đáy màn hình -->
+    <div id="brand-bottom-bar"></div>
+
+    <!-- ==================== SHOT 1: S16-1 (0s -> 3.48s) ==================== -->
+    <section id="shot-1" class="clip" data-start="0" data-duration="3.48">
+      <div id="shot1-inner" class="shot-container">
+        
+        <!-- Header thông tin -->
+        <div class="header-panel">
+          <div class="header-badge">HỒ SƠ KHÁNG CÁO</div>
+          <div class="header-title">TIẾN & SƠN: XIN GIẢM ÁN TÙ</div>
+        </div>
+
+        <!-- Khung ảnh phóng to Tiến & Sơn (nửa trái ảnh) -->
+        <div class="photo-frame">
+          <div class="tape-corner"></div>
+          <img
+            id="shot1-img"
+            class="photo-inner-img"
+            src="assets/img-09-defendants-sentencing-courtroom-appeal.jpeg"
+            alt="Bị cáo Tiến và Sơn tại phiên tòa"
+            style="object-position: 18% 28%; transform: scale(1.35);"
+          >
+          <div class="photo-tag">BỊ CÁO TIẾN & SƠN</div>
+        </div>
+
+        <!-- Chú thích đồ họa & Biểu tượng giảm án (fall) -->
+        <div id="shot1-overlay" class="annotation-box">
+          <div class="info-card">
+            <div class="info-card-content">
+              <div class="info-label">NGUYỆN VỌNG KHÁNG CÁO</div>
+              <div class="info-main-text">Tiến & Sơn: Giảm án</div>
+              <div class="info-sub-text">Xin giảm thời hạn chấp hành hình phạt tù</div>
+            </div>
+            <!-- Icon SVG 'fall' (mũi tên dốc xuống giảm án) -->
+            <div class="svg-anim-container">
+              <svg width="84" height="84" viewBox="0 0 84 84" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="42" cy="42" r="38" stroke="#FF6A1A" stroke-width="4" fill="rgba(255, 106, 26, 0.1)"/>
+                <path
+                  id="arrow-fall-path"
+                  d="M 24 28 L 52 56 M 52 56 L 36 56 M 52 56 L 52 40"
+                  stroke="#FF6A1A"
+                  stroke-width="5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </div>
+          </div>
+
+          <!-- Sơ đồ hạ mức án -->
+          <div class="flow-diagram-wrapper">
+            <div class="flow-node">
+              <div class="flow-node-badge">36 - 38 THÁNG</div>
+              <div class="flow-node-sub">Án sơ thẩm</div>
+            </div>
+            
+            <div class="svg-anim-container" style="width: 160px;">
+              <svg width="150" height="40" viewBox="0 0 150 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path
+                  id="flow-arrow-1"
+                  d="M 10 20 L 130 20 M 115 10 L 135 20 L 115 30"
+                  stroke="#141414"
+                  stroke-width="4"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-dasharray="6 6"
+                />
+              </svg>
+            </div>
+
+            <div class="flow-node">
+              <div class="flow-node-badge" style="background-color: #FF6A1A; color: #141414;">GIẢM THÁNG TÙ</div>
+              <div class="flow-node-sub">Đơn xin giảm nhẹ</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ==================== SHOT 2: S16-2 (3.48s -> 8.22s) ==================== -->
+    <section id="shot-2" class="clip" data-start="3.48" data-duration="4.74">
+      <div id="shot2-inner" class="shot-container">
+
+        <!-- Header thông tin Đức Huy -->
+        <div class="header-panel">
+          <div class="header-badge" style="background-color: #141414; color: #FF6A1A;">ĐẶC BIỆT: ĐỨC HUY</div>
+          <div class="header-title">ĐỨC HUY: ĐI XA HƠN MỘT BƯỚC</div>
+        </div>
+
+        <!-- Khung ảnh pan vào Đức Huy (nửa phải ảnh) -->
+        <div class="photo-frame">
+          <div class="tape-corner" style="left: auto; right: -20px; transform: rotate(12deg);"></div>
+          <img
+            id="shot2-img"
+            class="photo-inner-img"
+            src="assets/img-09-defendants-sentencing-courtroom-appeal.jpeg"
+            alt="Bị cáo Đức Huy tại phiên tòa"
+            style="object-position: 82% 28%; transform: scale(1.4);"
+          >
+          <div class="photo-tag" style="border-left-color: #FF6A1A;">BỊ CÁO ĐỨC HUY</div>
+        </div>
+
+        <!-- Chú thích đồ họa Đức Huy: Punch Phrase + Án treo ngoài xã hội -->
+        <div id="shot2-overlay" class="annotation-box">
+          
+          <!-- Punch phrase: HUY: XIN ÁN TREO -->
+          <div id="punch-huy" class="punch-banner">
+            <div class="punch-text">HUY: XIN ÁN TREO</div>
+            <div class="tag-highlight">KHÁC BIỆT</div>
+          </div>
+
+          <!-- Label: Cải tạo ngoài xã hội & Sơ đồ rẽ nhánh thoát khỏi cổng trại -->
+          <div id="label-caitao" class="contrast-box">
+            <div class="contrast-icon-wrap">
+              <!-- Icon SVG ngôi nhà / tự do ngoài xã hội -->
+              <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M 8 22 L 24 8 L 40 22 V 40 H 10 Z" stroke="#141414" stroke-width="3.5" stroke-linejoin="round"/>
+                <path d="M 20 40 V 26 H 28 V 40" stroke="#FF6A1A" stroke-width="3.5" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <div class="contrast-desc">
+              <div class="contrast-title">Cải tạo ngoài xã hội</div>
+              <div class="contrast-detail">Không phải đi chấp hành án phạt tù, chịu giám sát tại địa phương</div>
+            </div>
+          </div>
+
+          <!-- Sơ đồ rẽ nhánh: Trại giam vs Ở nhà -->
+          <div id="shot2-diagram" class="flow-diagram-wrapper" style="background-color: #F5F0E4; border-color: #141414;">
+            <div class="flow-node">
+              <div class="flow-node-badge" style="background-color: #E7E3D9; text-decoration: line-through; opacity: 0.7;">TRẠI GIAM</div>
+              <div class="flow-node-sub">Cách ly xã hội</div>
+            </div>
+
+            <!-- SVG Mũi tên rẽ nhánh thoát ra ngoài -->
+            <div class="svg-anim-container" style="width: 140px;">
+              <svg width="130" height="50" viewBox="0 0 130 50" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path
+                  id="branch-arrow-path"
+                  d="M 10 38 Q 65 38 75 18 L 120 18 M 105 8 L 122 18 L 105 28"
+                  stroke="#FF6A1A"
+                  stroke-width="4.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </div>
+
+            <div class="flow-node">
+              <div class="flow-node-badge" style="background-color: #141414; color: #FF6A1A; border-color: #FF6A1A;">Ở NHÀ / XÃ HỘI</div>
+              <div class="flow-node-sub">Hưởng án treo</div>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </section>
+
+  </div>
+
+  <script>
+    // Khởi tạo Timeline GSAP độc lập ở trạng thái paused cho HyperFrames seek
+    const tl = gsap.timeline({ paused: true });
+
+    // Đo đạc hình học SVG chính xác để animate nét vẽ stroke-dashoffset
+    const arrowFallPath = document.getElementById("arrow-fall-path");
+    if (arrowFallPath) {
+      const lenFall = arrowFallPath.getTotalLength();
+      arrowFallPath.style.strokeDasharray = lenFall;
+      arrowFallPath.style.strokeDashoffset = lenFall;
+    }
+
+    const branchArrowPath = document.getElementById("branch-arrow-path");
+    if (branchArrowPath) {
+      const lenBranch = branchArrowPath.getTotalLength();
+      branchArrowPath.style.strokeDasharray = lenBranch;
+      branchArrowPath.style.strokeDashoffset = lenBranch;
+    }
+
+    // ==================== GSAP CHOREOGRAPHY ====================
+
+    // --- SHOT 1: Tiến & Sơn xin giảm án (0s -> 3.48s) ---
+    // Transition In: Flip 3D nhẹ nhàng
+    tl.fromTo(
+      "#shot1-inner",
+      { opacity: 0, rotationY: -16, scale: 0.94 },
+      { opacity: 1, rotationY: 0, scale: 1, duration: 0.65, ease: "power3.out" },
+      0
+    );
+
+    // Pan camera nhẹ trên ảnh Tiến & Sơn (pan-left)
+    tl.fromTo(
+      "#shot1-img",
+      { x: 25 },
+      { x: -30, duration: 3.48, ease: "none" },
+      0
+    );
+
+    // Overlay Tiến & Sơn: Giảm án (atMs: 135410 -> 0.81s)
+    tl.fromTo(
+      "#shot1-overlay",
+      { opacity: 0, y: 36 },
+      { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" },
+      0.81
+    );
+
+    // Animate nét vẽ SVG mũi tên fall
+    if (arrowFallPath) {
+      const lenFall = arrowFallPath.getTotalLength();
+      tl.fromTo(
+        arrowFallPath,
+        { strokeDashoffset: lenFall },
+        { strokeDashoffset: 0, duration: 0.6, ease: "power2.out" },
+        0.95
+      );
+    }
+
+    // Kết thúc hiển thị overlay shot 1 trước khi chuyển cảnh (holdMs: 2200 -> 3.01s)
+    tl.to(
+      "#shot1-overlay",
+      { opacity: 0, y: -16, duration: 0.35, ease: "power2.in" },
+      3.01
+    );
+
+
+    // --- SHOT 2: Đức Huy xin án treo (3.48s -> 8.22s) ---
+    // Transition In: Cut sang nửa phải (Đức Huy)
+    tl.fromTo(
+      "#shot2-inner",
+      { opacity: 0.3 },
+      { opacity: 1, duration: 0.15, ease: "power1.out" },
+      3.48
+    );
+
+    // Pan camera nhẹ trên ảnh Đức Huy (pan-right)
+    tl.fromTo(
+      "#shot2-img",
+      { x: -20 },
+      { x: 35, duration: 4.74, ease: "none" },
+      3.48
+    );
+
+    // Punch Phrase: HUY: XIN ÁN TREO (atMs: 138400 -> 3.80s)
+    tl.fromTo(
+      "#punch-huy",
+      { scale: 0.85, opacity: 0, y: 24 },
+      { scale: 1, opacity: 1, y: 0, duration: 0.5, ease: "power3.out" },
+      3.80
+    );
+
+    // Sơ đồ phân nhánh xuất hiện kèm mũi tên rẽ nhánh
+    tl.fromTo(
+      "#shot2-diagram",
+      { opacity: 0, y: 20 },
+      { opacity: 1, y: 0, duration: 0.45, ease: "power3.out" },
+      4.10
+    );
+
+    if (branchArrowPath) {
+      const lenBranch = branchArrowPath.getTotalLength();
+      tl.fromTo(
+        branchArrowPath,
+        { strokeDashoffset: lenBranch },
+        { strokeDashoffset: 0, duration: 0.7, ease: "power2.out" },
+        4.30
+      );
+    }
+
+    // Label: Cải tạo ngoài xã hội (atMs: 140030 -> 5.43s)
+    tl.fromTo(
+      "#label-caitao",
+      { scale: 0.9, opacity: 0, y: 20 },
+      { scale: 1, opacity: 1, y: 0, duration: 0.5, ease: "power3.out" },
+      5.43
+    );
+
+    // Thoái trào nhẹ nhàng ở cuối scene trước khi cắt sang scene kế tiếp (7.7s)
+    tl.to(
+      ["#punch-huy", "#label-caitao", "#shot2-diagram"],
+      { opacity: 0.3, duration: 0.45, ease: "power2.in" },
+      7.70
+    );
+
+    // Đăng ký timeline chính vào registry của HyperFrames
+    window.__timelines["scene-s16"] = tl;
+  </script>
+
+    </template>
+  </body>
+</html>

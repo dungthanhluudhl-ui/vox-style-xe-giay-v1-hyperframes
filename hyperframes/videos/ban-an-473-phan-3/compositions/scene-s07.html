@@ -1,0 +1,625 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #141414;
+      color: #141414;
+      font-family: "Be Vietnam Pro", sans-serif;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Root tuân thủ composition contract: kích thước theo pixel do data-width/data-height quy định */
+    #root {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      background-color: #E7E3D9; /* Màu nền Ivory giấy chuẩn Vox */
+      overflow: hidden;
+    }
+
+    /* Biến thể nền: Chart (4 vạch ngang ở 20/40/60/80% kèm tick cam bên trái) */
+    .bg-chart-line {
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background-color: rgba(20, 20, 20, 0.18);
+      z-index: 1;
+    }
+    .bg-chart-line::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: -6px;
+      width: 16px;
+      height: 14px;
+      background-color: #FF6A1A;
+    }
+
+    /* Lưới ô vuông 84px chuẩn Vox */
+    .bg-grid {
+      position: absolute;
+      inset: 0;
+      background-image: 
+        linear-gradient(to right, rgba(20, 20, 20, 0.06) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(20, 20, 20, 0.06) 1px, transparent 1px);
+      background-size: 84px 84px;
+      z-index: 2;
+      pointer-events: none;
+    }
+
+    /* Thanh cam nhận diện thương hiệu cố định mép đáy */
+    .brand-bottom-bar {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 14px;
+      background-color: #FF6A1A;
+      z-index: 100;
+    }
+
+    /* Clip container toàn khung có class và timing attributes chuẩn */
+    .clip {
+      position: absolute;
+      inset: 0;
+      z-index: 10;
+    }
+
+    /* Header nhãn tài liệu pháp lý */
+    .header-tag {
+      position: absolute;
+      top: 175px;
+      left: 60px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background: #F5F0E4;
+      border: 3px solid #141414;
+      padding: 10px 24px;
+      box-shadow: 6px 6px 0px #141414;
+      z-index: 20;
+    }
+
+    .doc-icon-svg {
+      width: 32px;
+      height: 32px;
+      stroke: #141414;
+      stroke-width: 2.5;
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .header-text {
+      font-size: 24px;
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #141414;
+    }
+
+    .badge-evidence {
+      background: #FF6A1A;
+      color: #141414;
+      font-size: 16px;
+      font-weight: 900;
+      padding: 4px 12px;
+      border-radius: 4px;
+      letter-spacing: 0.05em;
+    }
+
+    /* Khung 3D phối cảnh cho hiệu ứng Flip hồ sơ (căn giữa 1080px bằng left: 60px) */
+    .perspective-wrapper {
+      position: absolute;
+      top: 260px;
+      left: 60px;
+      width: 960px;
+      height: 590px;
+      perspective: 1400px;
+      transform-style: preserve-3d;
+      z-index: 15;
+    }
+
+    /* Thẻ hồ sơ giám định chứa ảnh img-02 */
+    .dossier-card {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      background: #F5F0E4;
+      border: 4px solid #141414;
+      box-shadow: 14px 14px 0px rgba(20, 20, 20, 0.95);
+      overflow: hidden;
+      transform-origin: 50% 50%;
+      transform-style: preserve-3d;
+    }
+
+    .dossier-image-container {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+    }
+
+    .dossier-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center 38%;
+      transform-origin: center center;
+    }
+
+    /* Hai dải quét highlight độc lập để tránh xung đột timeline */
+    .scanner-beam {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 6px;
+      background-color: #FF6A1A;
+      box-shadow: 0 0 24px 8px rgba(255, 106, 26, 0.85);
+      z-index: 5;
+      opacity: 0;
+      will-change: transform, opacity;
+    }
+
+    /* Dấu mộc giám định điện tử góc ảnh */
+    .stamp-overlay {
+      position: absolute;
+      top: 24px;
+      right: 24px;
+      border: 3px dashed #FF6A1A;
+      background: #141414;
+      color: #F7F4EC;
+      padding: 10px 18px;
+      font-size: 20px;
+      font-weight: 900;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      z-index: 6;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .stamp-overlay .stamp-sub {
+      font-size: 13px;
+      color: #FF6A1A;
+      letter-spacing: 0.12em;
+    }
+
+    /* Vùng phân tách số đếm (căn giữa 1080px bằng left: 60px) */
+    .data-breakdown-row {
+      position: absolute;
+      top: 885px;
+      left: 60px;
+      width: 960px;
+      display: flex;
+      justify-content: space-between;
+      gap: 28px;
+      z-index: 25;
+    }
+
+    .data-card {
+      flex: 1;
+      background: #F5F0E4;
+      border: 3px solid #141414;
+      padding: 24px 20px;
+      box-shadow: 8px 8px 0px #141414;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+    }
+
+    .data-card::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 8px;
+      background: #FF6A1A;
+    }
+
+    .data-number-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .data-count {
+      font-size: 80px;
+      font-weight: 900;
+      line-height: 1;
+      color: #141414;
+    }
+
+    .data-unit-badge {
+      background-color: #141414;
+      color: #FF6A1A;
+      font-size: 20px;
+      font-weight: 900;
+      padding: 4px 12px;
+      border-radius: 4px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .data-label {
+      margin-top: 14px;
+      font-size: 22px;
+      font-weight: 900;
+      color: #141414;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      text-align: center;
+    }
+
+    .data-sublabel {
+      margin-top: 6px;
+      font-size: 15px;
+      font-weight: 700;
+      color: #141414;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    /* Punch phrase: 3,11 GIGABYTE (căn giữa 1080px bằng left: 60px) */
+    .punch-container {
+      position: absolute;
+      top: 1140px;
+      left: 60px;
+      width: 960px;
+      background: #141414;
+      border: 3px solid #FF6A1A;
+      border-left: 14px solid #FF6A1A;
+      padding: 22px 32px;
+      box-shadow: 10px 10px 0px rgba(255, 106, 26, 0.35);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 30;
+    }
+
+    .punch-title-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .punch-tag {
+      font-size: 18px;
+      font-weight: 900;
+      color: #FF6A1A;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .punch-label {
+      font-size: 28px;
+      font-weight: 900;
+      color: #F7F4EC;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+    }
+
+    .punch-metric {
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+      background: #000000;
+      padding: 10px 24px;
+      border: 2px solid #FF6A1A;
+      border-radius: 6px;
+    }
+
+    .punch-number {
+      font-size: 64px;
+      font-weight: 900;
+      color: #FF6A1A;
+      line-height: 1;
+    }
+
+    .punch-gb {
+      font-size: 30px;
+      font-weight: 900;
+      color: #F7F4EC;
+      text-transform: uppercase;
+    }
+  </style>
+
+  <div
+    id="root"
+    data-composition-id="scene-s07"
+    data-width="1080"
+    data-height="1920"
+    data-duration="8.98"
+  >
+    <!-- Background variant: Chart 4 đường định mức -->
+    <div class="bg-chart-line" style="top: 20%;"></div>
+    <div class="bg-chart-line" style="top: 40%;"></div>
+    <div class="bg-chart-line" style="top: 60%;"></div>
+    <div class="bg-chart-line" style="top: 80%;"></div>
+    <div class="bg-grid"></div>
+
+    <!-- Clip cảnh duy nhất của Scene S07 -->
+    <div id="scene-s07" class="clip" data-start="0" data-duration="8.98">
+      
+      <!-- 1. Header nhãn tài liệu & icon doc -->
+      <div id="header-tag" class="header-tag">
+        <svg class="doc-icon-svg" viewBox="0 0 24 24">
+          <path id="doc-outline" d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+          <polyline id="doc-corner" points="14 2 14 8 20 8"></polyline>
+          <line id="doc-line-1" x1="16" y1="13" x2="8" y2="13"></line>
+          <line id="doc-line-2" x1="16" y1="17" x2="8" y2="17"></line>
+        </svg>
+        <span class="header-text">GIÁM ĐỊNH KỸ THUẬT SỐ</span>
+        <span class="badge-evidence">TÀI KHOẢN TIẾN</span>
+      </div>
+
+      <!-- 2. Thẻ hồ sơ giám định trung tâm (Flip 3D in + Ken Burns zoom) -->
+      <div id="perspective-wrapper" class="perspective-wrapper">
+        <div id="dossier-card" class="dossier-card">
+          <div class="dossier-image-container">
+            <img
+              id="dossier-img"
+              class="dossier-img"
+              src="assets/img-02-digital-evidence-case-files.jpeg"
+              alt="Hồ sơ giám định kỹ thuật số"
+            />
+          </div>
+
+          <!-- Dải quét laser cam (tách thành 2 beam độc lập để seek-safe tuyệt đối) -->
+          <div id="scanner-beam-1" class="scanner-beam"></div>
+          <div id="scanner-beam-2" class="scanner-beam"></div>
+
+          <!-- Mộc niêm phong điện tử -->
+          <div id="stamp-overlay" class="stamp-overlay">
+            <span class="stamp-sub">TRÍCH XUẤT PHÁP Y</span>
+            <span>CHỨNG CỨ SỐ</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. Phân nhánh số đếm: 266 video & 52 hình ảnh -->
+      <div id="data-breakdown-row" class="data-breakdown-row">
+        <!-- Nhánh Video -->
+        <div id="card-video" class="data-card">
+          <div class="data-number-row">
+            <span id="count-video" class="data-count">0</span>
+            <span class="data-unit-badge">CLIP</span>
+          </div>
+          <div class="data-label">VIDEO ĐỒI TRỤY</div>
+          <div class="data-sublabel">ĐÃ ĐĂNG TẢI PHÁT TÁN</div>
+        </div>
+
+        <!-- Nhánh Ảnh -->
+        <div id="card-photo" class="data-card">
+          <div class="data-number-row">
+            <span id="count-photo" class="data-count">0</span>
+            <span class="data-unit-badge">ẢNH</span>
+          </div>
+          <div class="data-label">HÌNH ẢNH NHẠY CẢM</div>
+          <div class="data-sublabel">LƯU TRỮ VÀ PHÁT TÁN</div>
+        </div>
+      </div>
+
+      <!-- 4. Punch phrase: 3,11 GIGABYTE (nằm an toàn trong vùng safe zone) -->
+      <div id="punch-card" class="punch-container">
+        <div class="punch-title-group">
+          <div class="punch-tag">TỔNG DUNG LƯỢNG CHỨNG CỨ</div>
+          <div class="punch-label">KẾT LUẬN GIÁM ĐỊNH</div>
+        </div>
+        <div class="punch-metric">
+          <span class="punch-number">3,11</span>
+          <span class="punch-gb">GIGABYTE</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Thanh cam cố định mép đáy -->
+    <div class="brand-bottom-bar"></div>
+  </div>
+
+  <script>
+    // Khởi tạo timeline chính paused theo đúng contract
+    const tl = gsap.timeline({ paused: true });
+
+    // 1. Chuẩn bị hiệu ứng vẽ nét SVG cho icon doc
+    const docPaths = document.querySelectorAll("#header-tag path, #header-tag polyline, #header-tag line");
+    docPaths.forEach(function (path) {
+      if (typeof path.getTotalLength === "function") {
+        const len = path.getTotalLength();
+        path.style.strokeDasharray = len;
+        path.style.strokeDashoffset = len;
+      }
+    });
+
+    // 2. Camera Ken Burns zoom chậm toàn bộ thời lượng 8.98s
+    tl.fromTo("#dossier-img", {
+      scale: 1.0
+    }, {
+      scale: 1.10,
+      duration: 8.98,
+      ease: "none"
+    }, 0);
+
+    // 3. Vào cảnh: Dossier flip 3D (0.05s -> 0.85s)
+    tl.fromTo("#dossier-card", {
+      rotationY: 45,
+      rotationX: 10,
+      scale: 0.88,
+      opacity: 0
+    }, {
+      rotationY: 0,
+      rotationX: 0,
+      scale: 1.0,
+      opacity: 1,
+      duration: 0.8,
+      ease: "power3.out"
+    }, 0.05);
+
+    // Dấu mộc giám định đóng xuống
+    tl.fromTo("#stamp-overlay", {
+      scale: 1.35,
+      opacity: 0
+    }, {
+      scale: 1.0,
+      opacity: 1,
+      duration: 0.35,
+      ease: "power2.out"
+    }, 0.55);
+
+    // 4. Header & icon doc xuất hiện (tương ứng atMs: 51200ms -> offset ~1.14s)
+    tl.fromTo("#header-tag", {
+      y: -35,
+      opacity: 0
+    }, {
+      y: 0,
+      opacity: 1,
+      duration: 0.45,
+      ease: "power3.out"
+    }, 1.14);
+
+    // Nét vẽ icon doc
+    docPaths.forEach(function (path, idx) {
+      const len = typeof path.getTotalLength === "function" ? path.getTotalLength() : 50;
+      tl.fromTo(path, {
+        strokeDashoffset: len
+      }, {
+        strokeDashoffset: 0,
+        duration: 0.35,
+        ease: "power2.out"
+      }, 1.25 + idx * 0.08);
+    });
+
+    // 5. Quét dải highlight cam qua tài liệu bằng 2 beam riêng biệt (seek-safe, không ghi đè thuộc tính)
+    // Lần quét 1 (1.5s -> 2.7s)
+    tl.fromTo("#scanner-beam-1", {
+      y: 20,
+      opacity: 0
+    }, {
+      opacity: 0.9,
+      duration: 0.15,
+      ease: "power1.in"
+    }, 1.5);
+    tl.fromTo("#scanner-beam-1", {
+      y: 20
+    }, {
+      y: 520,
+      duration: 1.2,
+      ease: "power2.inOut"
+    }, 1.5);
+    tl.to("#scanner-beam-1", {
+      opacity: 0,
+      duration: 0.2,
+      ease: "power1.out"
+    }, 2.5);
+
+    // 6. Data breakdown: 266 video & 52 hình ảnh (atMs: 52850ms -> offset ~2.79s)
+    tl.fromTo("#card-video", {
+      y: 40,
+      opacity: 0
+    }, {
+      y: 0,
+      opacity: 1,
+      duration: 0.5,
+      ease: "power3.out"
+    }, 2.79);
+
+    tl.fromTo("#card-photo", {
+      y: 40,
+      opacity: 0
+    }, {
+      y: 0,
+      opacity: 1,
+      duration: 0.5,
+      ease: "power3.out"
+    }, 2.92);
+
+    // Đếm số dữ liệu tất định (dùng fromTo trên proxy object đảm bảo seek ngược trả về 0)
+    const counterObj = { video: 0, photo: 0 };
+    const elVideo = document.getElementById("count-video");
+    const elPhoto = document.getElementById("count-photo");
+
+    tl.fromTo(counterObj, {
+      video: 0
+    }, {
+      video: 266,
+      duration: 1.3,
+      ease: "power2.out",
+      onUpdate: function () {
+        elVideo.innerText = Math.round(counterObj.video);
+      }
+    }, 2.85);
+
+    tl.fromTo(counterObj, {
+      photo: 0
+    }, {
+      photo: 52,
+      duration: 1.0,
+      ease: "power2.out",
+      onUpdate: function () {
+        elPhoto.innerText = Math.round(counterObj.photo);
+      }
+    }, 2.95);
+
+    // Lần quét 2 (4.5s -> 5.7s) củng cố nội dung giám định
+    tl.fromTo("#scanner-beam-2", {
+      y: 60,
+      opacity: 0
+    }, {
+      opacity: 0.85,
+      duration: 0.15,
+      ease: "power1.in"
+    }, 4.5);
+    tl.fromTo("#scanner-beam-2", {
+      y: 60
+    }, {
+      y: 530,
+      duration: 1.2,
+      ease: "power2.inOut"
+    }, 4.5);
+    tl.to("#scanner-beam-2", {
+      opacity: 0,
+      duration: 0.2,
+      ease: "power1.out"
+    }, 5.5);
+
+    // 7. Punch phrase: 3,11 GIGABYTE (atMs: 57440ms -> offset ~7.38s, hold 1.6s đến hết 8.98s)
+    tl.fromTo("#punch-card", {
+      scale: 0.9,
+      y: 24,
+      opacity: 0
+    }, {
+      scale: 1.0,
+      y: 0,
+      opacity: 1,
+      duration: 0.45,
+      ease: "power3.out"
+    }, 7.38);
+
+    // Đăng ký duy nhất timeline paused cho root composition "scene-s07"
+    window.__timelines["scene-s07"] = tl;
+  </script>
+
+    </template>
+  </body>
+</html>

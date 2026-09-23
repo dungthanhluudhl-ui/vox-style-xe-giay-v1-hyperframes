@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap">
+      <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #0b0f14;
+      overflow: hidden;
+      font-family: 'Be Vietnam Pro', sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Composition root theo contract: width/height 100%, không hardcode pixel */
+    #root {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #E7E3D9;
+      color: #141414;
+    }
+
+    /* Lớp lưới ô vuông 84px đặc trưng Vox DNA */
+    .bg-grid {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      background-image: 
+        linear-gradient(to right, rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px),
+        linear-gradient(to bottom, rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px);
+      background-size: 84px 84px;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    /* Grain hạt giấy 18% opacity blend multiply */
+    .bg-grain {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0.18;
+      mix-blend-mode: multiply;
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    /* Dải cam cố định ở chân trang (brand signature) */
+    .bottom-brand-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 16px;
+      background-color: #FF6A1A;
+      z-index: 100;
+    }
+
+    /* Định dạng clip toàn khung */
+    .clip {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      z-index: 10;
+    }
+
+    /* Header thanh dữ liệu trong vùng an toàn (top: 160px) */
+    .scene-header {
+      position: absolute;
+      top: 160px;
+      left: 60px;
+      right: 60px;
+      height: 52px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 30;
+    }
+
+    .header-tag {
+      font-size: 24px;
+      font-weight: 900;
+      letter-spacing: 2px;
+      color: #141414;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .header-tag-dot {
+      width: 14px;
+      height: 14px;
+      background-color: #FF6A1A;
+      border-radius: 50%;
+    }
+
+    .header-badge {
+      background-color: #141414;
+      color: #F7F4EC;
+      font-size: 22px;
+      font-weight: 900;
+      padding: 6px 18px;
+      border-radius: 6px;
+      letter-spacing: 1px;
+    }
+
+    /* Khung ảnh trung tâm dạng hồ sơ dán (collage card) */
+    .hero-frame {
+      position: absolute;
+      top: 236px;
+      left: 60px;
+      width: 960px;
+      height: 840px;
+      background-color: #F5F0E4;
+      border: 4px solid #141414;
+      border-radius: 12px;
+      box-shadow: 12px 12px 0px #FF6A1A, 12px 12px 0px 4px #141414;
+      overflow: hidden;
+      z-index: 20;
+    }
+
+    .hero-img-container {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .hero-image {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    /* Vạch tem kiểm tra hồ sơ (stamped sticker) */
+    .card-stamp {
+      position: absolute;
+      top: 24px;
+      right: 24px;
+      border: 3px solid #FF6A1A;
+      background: rgba(20, 20, 20, 0.92);
+      color: #F7F4EC;
+      padding: 6px 16px;
+      border-radius: 6px;
+      font-size: 20px;
+      font-weight: 900;
+      letter-spacing: 1.5px;
+      z-index: 25;
+    }
+
+    /* Nhãn Shot 1 - Năm sinh 1975 */
+    .badge-birthyear {
+      position: absolute;
+      top: 290px;
+      left: 100px;
+      display: flex;
+      border: 3px solid #141414;
+      border-radius: 8px;
+      box-shadow: 8px 8px 0px rgba(20, 20, 20, 0.35);
+      overflow: hidden;
+      z-index: 40;
+      opacity: 0;
+    }
+
+    .badge-segment-orange {
+      background-color: #FF6A1A;
+      color: #141414;
+      font-size: 26px;
+      font-weight: 900;
+      padding: 10px 18px;
+    }
+
+    .badge-segment-dark {
+      background-color: #141414;
+      color: #F7F4EC;
+      font-size: 26px;
+      font-weight: 900;
+      padding: 10px 22px;
+    }
+
+    /* Nhãn Shot 1 - Doanh nghiệp tư nhân V Hải Phòng (đạt tương phản WCAG AA) */
+    .callout-dntn {
+      position: absolute;
+      top: 940px;
+      left: 90px;
+      right: 90px;
+      background-color: #F5F0E4;
+      border: 4px solid #141414;
+      border-radius: 10px;
+      box-shadow: 10px 10px 0px #FF6A1A, 10px 10px 0px 4px #141414;
+      padding: 22px 28px;
+      z-index: 40;
+      opacity: 0;
+    }
+
+    .callout-subtitle-badge {
+      display: inline-block;
+      background-color: #FF6A1A;
+      color: #141414;
+      font-size: 18px;
+      font-weight: 900;
+      letter-spacing: 1.5px;
+      padding: 4px 12px;
+      border-radius: 4px;
+      margin-bottom: 8px;
+    }
+
+    .callout-title {
+      font-size: 40px;
+      font-weight: 900;
+      color: #141414;
+      line-height: 1.2;
+    }
+
+    /* Thẻ thông tin bổ trợ phía dưới trong dải an toàn (Y: 1110px - 1330px) */
+    .info-footer-card {
+      position: absolute;
+      top: 1110px;
+      left: 60px;
+      right: 60px;
+      background-color: #141414;
+      border: 4px solid #141414;
+      border-radius: 12px;
+      padding: 28px 36px;
+      box-shadow: 10px 10px 0px #FF6A1A;
+      z-index: 25;
+    }
+
+    .info-footer-tag {
+      display: inline-block;
+      background-color: #FF6A1A;
+      color: #141414;
+      font-size: 20px;
+      font-weight: 900;
+      padding: 4px 14px;
+      border-radius: 4px;
+      margin-bottom: 12px;
+      letter-spacing: 1px;
+    }
+
+    .info-footer-title {
+      color: #F7F4EC;
+      font-size: 34px;
+      font-weight: 900;
+      line-height: 1.3;
+      margin-bottom: 8px;
+    }
+
+    .info-footer-desc {
+      color: #E7E3D9;
+      font-size: 24px;
+      font-weight: 700;
+      line-height: 1.35;
+    }
+
+    /* Shot 2 - Biểu tượng Clock và cấp phép từ 2005 */
+    .clock-banner {
+      position: absolute;
+      top: 280px;
+      left: 90px;
+      right: 90px;
+      background-color: #141414;
+      border: 4px solid #FF6A1A;
+      border-radius: 10px;
+      padding: 20px 26px;
+      box-shadow: 10px 10px 0px rgba(20, 20, 20, 0.4);
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      z-index: 40;
+      opacity: 0;
+    }
+
+    .clock-svg-box {
+      width: 64px;
+      height: 64px;
+      flex-shrink: 0;
+    }
+
+    .clock-text-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .clock-tag {
+      color: #FF6A1A;
+      font-size: 22px;
+      font-weight: 900;
+      letter-spacing: 1.5px;
+    }
+
+    .clock-headline {
+      color: #F7F4EC;
+      font-size: 32px;
+      font-weight: 900;
+      line-height: 1.25;
+    }
+
+    /* Shot 2 - Vòng tròn tiêu điểm dấu mộc thuế */
+    .reticle-focus {
+      position: absolute;
+      bottom: 60px;
+      right: 70px;
+      width: 280px;
+      height: 280px;
+      border: 4px dashed #FF6A1A;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 30;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .reticle-label {
+      background: rgba(20, 20, 20, 0.92);
+      border: 2px solid #FF6A1A;
+      color: #F7F4EC;
+      font-size: 18px;
+      font-weight: 900;
+      padding: 4px 12px;
+      border-radius: 4px;
+      letter-spacing: 1px;
+    }
+
+    /* Shot 2 - Thẻ Punch Phrase 'PHƯƠNG PHÁP KHẤU TRỪ' */
+    .punch-card {
+      position: absolute;
+      top: 1100px;
+      left: 60px;
+      right: 60px;
+      background-color: #141414;
+      border: 4px solid #FF6A1A;
+      border-radius: 14px;
+      padding: 34px 38px;
+      box-shadow: 14px 14px 0px #FF6A1A, 14px 14px 0px 4px #141414;
+      z-index: 45;
+      opacity: 0;
+    }
+
+    .punch-badge {
+      display: inline-block;
+      background-color: #FF6A1A;
+      color: #141414;
+      font-size: 22px;
+      font-weight: 900;
+      padding: 6px 18px;
+      border-radius: 6px;
+      letter-spacing: 1.5px;
+      margin-bottom: 16px;
+    }
+
+    .punch-headline {
+      color: #F7F4EC;
+      font-size: 58px;
+      font-weight: 900;
+      line-height: 1.2;
+      letter-spacing: -0.5px;
+      margin-bottom: 12px;
+    }
+
+    .punch-footer-note {
+      color: #E7E3D9;
+      font-size: 22px;
+      font-weight: 700;
+      line-height: 1.35;
+      border-top: 2px solid rgba(255, 106, 26, 0.4);
+      padding-top: 12px;
+    }
+  </style>
+
+  <div data-hf-id="hf-jhpc" id="root" data-composition-id="scene-s09" data-start="0" data-width="1080" data-height="1920" data-duration="12.73" data-layout-allow-overflow="true">
+    <!-- Nền kẻ ô vuông 84px ngà giấy -->
+    <div data-hf-id="hf-yqqm" class="bg-grid"></div>
+
+    <!-- Hạt nhiễu grain texture SVG -->
+    <svg data-hf-id="hf-49ts" class="bg-grain" width="1080" height="1920" xmlns="http://www.w3.org/2000/svg">
+      <filter data-hf-id="hf-0u86" id="noise">
+        <feturbulence data-hf-id="hf-yhp5" type="fractalNoise" baseFrequency="0.75" numOctaves="3" stitchTiles="stitch" />
+        <fecolormatrix data-hf-id="hf-gc4t" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.18 0" />
+      </filter>
+      <rect data-hf-id="hf-0cjv" width="100%" height="100%" filter="url(#noise)" />
+    </svg>
+
+    <!-- Dải cam cố định đáy khung hình -->
+    <div data-hf-id="hf-8g79" class="bottom-brand-bar"></div>
+
+    <!-- SHOT 1 (0.00s - 6.54s): Nhân thân giám đốc & DNTN V Hải Phòng -->
+    <div data-hf-id="hf-7h2f" id="shot-1" class="clip" data-start="0" data-duration="6.54">
+      <!-- Header phân loại hồ sơ -->
+      <div data-hf-id="hf-lb75" id="header-1" class="scene-header">
+        <div data-hf-id="hf-ocpk" class="header-tag">
+          <div data-hf-id="hf-d47y" class="header-tag-dot"></div>
+          <span data-hf-id="hf-uiy7">HỒ SƠ PHÁP NHÂN</span>
+        </div>
+        <div data-hf-id="hf-wda7" class="header-badge">HẢI PHÒNG</div>
+      </div>
+
+      <!-- Khung ảnh chủ doanh nghiệp ôm tập hồ sơ -->
+      <div data-hf-id="hf-okyr" id="hero-card-1" class="hero-frame">
+        <div data-hf-id="hf-ou8x" class="card-stamp">CHỨNG CỨ S09-1</div>
+        <div data-hf-id="hf-4mgc" class="hero-img-container">
+          <img data-hf-id="hf-w8dr" id="hero-img-1" class="hero-image" src="assets/img-05-worried-businessman-tax-invoice.jpeg" alt="Chủ doanh nghiệp ôm tập tài liệu" style="object-position: center 20%;">
+        </div>
+      </div>
+
+      <!-- Nhãn 1: Sinh năm 1975 -->
+      <div data-hf-id="hf-2ick" id="label-1" class="badge-birthyear">
+        <div data-hf-id="hf-6c73" class="badge-segment-orange">GIÁM ĐỐC</div>
+        <div data-hf-id="hf-j13j" class="badge-segment-dark">SINH NĂM 1975</div>
+      </div>
+
+      <!-- Nhãn 2: Doanh nghiệp tư nhân V Hải Phòng -->
+      <div data-hf-id="hf-ocmu" id="label-2" class="callout-dntn">
+        <div data-hf-id="hf-vxkf" class="callout-subtitle-badge">PHÁP NHÂN ĐĂNG KÝ</div>
+        <div data-hf-id="hf-inpn" class="callout-title">DNTN V HẢI PHÒNG</div>
+      </div>
+
+      <!-- Thẻ phụ chú thích nghiệp vụ phía dưới (vùng an toàn Y: 1110px) -->
+      <div data-hf-id="hf-kvah" id="info-footer-1" class="info-footer-card">
+        <div data-hf-id="hf-nndx" class="info-footer-tag">ĐỐI TƯỢNG ĐIỀU TRA</div>
+        <div data-hf-id="hf-sf2g" class="info-footer-title">HÙNG — GIÁM ĐỐC DOANH NGHIỆP</div>
+        <div data-hf-id="hf-gkbi" class="info-footer-desc">Đại diện pháp luật cơ sở kinh doanh sửa chữa ô tô tại Hải Phòng</div>
+      </div>
+    </div>
+
+    <!-- SHOT 2 (6.54s - 12.73s): Cận cảnh con dấu thuế & Phương pháp khấu trừ -->
+    <div data-hf-id="hf-cphk" id="shot-2" class="clip" data-start="6.54" data-duration="6.19">
+      <!-- Header chế độ thuế -->
+      <div data-hf-id="hf-p9b6" id="header-2" class="scene-header">
+        <div data-hf-id="hf-0cz4" class="header-tag">
+          <div data-hf-id="hf-papu" class="header-tag-dot"></div>
+          <span data-hf-id="hf-bnqb">CƠ CHẾ KÊ KHAI</span>
+        </div>
+        <div data-hf-id="hf-lplq" class="header-badge">THUẾ GTGT</div>
+      </div>
+
+      <!-- Khung ảnh cận cảnh hồ sơ & con dấu mộc Cục Thuế -->
+      <div data-hf-id="hf-fx2w" id="hero-card-2" class="hero-frame">
+        <div data-hf-id="hf-dfa6" class="card-stamp">BẰNG CHỨNG S09-2</div>
+        <div data-hf-id="hf-txdw" class="hero-img-container">
+          <img data-hf-id="hf-8ec5" id="hero-img-2" class="hero-image" src="assets/img-05-worried-businessman-tax-invoice.jpeg" alt="Cận cảnh dấu mộc Cục Thuế" style="object-position: 52% 70%;">
+        </div>
+        <!-- Vòng tròn định vị dấu mộc thuế đỏ -->
+        <div data-hf-id="hf-rbpx" id="reticle-stamp" class="reticle-focus">
+          <div data-hf-id="hf-pbvd" class="reticle-label">DẤU MỘC THUẾ</div>
+        </div>
+      </div>
+
+      <!-- Icon clock vẽ tay tự vẽ đường nét + Cấp phép từ 2005 -->
+      <div data-hf-id="hf-3hfa" id="clock-card" class="clock-banner">
+        <svg data-hf-id="hf-u9rb" class="clock-svg-box" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle data-hf-id="hf-2aoh" id="clock-rim" cx="32" cy="32" r="26" stroke="#FF6A1A" stroke-width="4.5" />
+          <line data-hf-id="hf-lbsd" id="clock-hand-h" x1="32" y1="32" x2="32" y2="18" stroke="#F7F4EC" stroke-width="4.5" stroke-linecap="round" />
+          <line data-hf-id="hf-y6wk" id="clock-hand-m" x1="32" y1="32" x2="44" y2="32" stroke="#FF6A1A" stroke-width="4" stroke-linecap="round" />
+        </svg>
+        <div data-hf-id="hf-pelz" class="clock-text-wrap">
+          <div data-hf-id="hf-10g7" class="clock-tag">CẤP PHÉP HOẠT ĐỘNG</div>
+          <div data-hf-id="hf-y6f5" class="clock-headline">TỪ NĂM 2005 • SỬA CHỮA Ô TÔ</div>
+        </div>
+      </div>
+
+      <!-- Punch Phrase: PHƯƠNG PHÁP KHẤU TRỪ -->
+      <div data-hf-id="hf-nzw6" id="punch-card" class="punch-card">
+        <div data-hf-id="hf-0280" class="punch-badge">CHẾ ĐỘ NỘP THUẾ</div>
+        <div data-hf-id="hf-i4t9" class="punch-headline">
+          <div data-hf-id="hf-14r9">PHƯƠNG PHÁP</div>
+          <div data-hf-id="hf-yons">KHẤU TRỪ</div>
+        </div>
+        <div data-hf-id="hf-lxiy" class="punch-footer-note">Kê khai thuế giá trị gia tăng theo quy định pháp luật</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Khởi tạo Timeline paused duy nhất cho composition root
+    const tl = gsap.timeline({ paused: true });
+
+    // Đo đạc hình học SVG cho hiệu ứng tự vẽ đồng hồ (lưu vào biến số để đảm bảo tính tất định)
+    const rim = document.getElementById("clock-rim");
+    const handH = document.getElementById("clock-hand-h");
+    const handM = document.getElementById("clock-hand-m");
+
+    let lenRim = 0;
+    let lenH = 0;
+    let lenM = 0;
+
+    if (rim && typeof rim.getTotalLength === "function") {
+      lenRim = rim.getTotalLength();
+      rim.style.strokeDasharray = `${lenRim}`;
+      rim.style.strokeDashoffset = `${lenRim}`;
+    }
+    if (handH && typeof handH.getTotalLength === "function") {
+      lenH = handH.getTotalLength();
+      handH.style.strokeDasharray = `${lenH}`;
+      handH.style.strokeDashoffset = `${lenH}`;
+    }
+    if (handM && typeof handM.getTotalLength === "function") {
+      lenM = handM.getTotalLength();
+      handM.style.strokeDasharray = `${lenM}`;
+      handM.style.strokeDashoffset = `${lenM}`;
+    }
+
+    // ==========================================
+    // DIỄN HOẠT SHOT 1 (0.00s -> 6.54s)
+    // ==========================================
+
+    // Header vào cảnh
+    tl.fromTo("#header-1", 
+      { y: -30, opacity: 0 }, 
+      { y: 0, opacity: 1, duration: 0.5, ease: "power2.out" }, 
+      0.1
+    );
+
+    // Hero card trượt lên từ đáy khung hình (rise transition)
+    tl.fromTo("#hero-card-1", 
+      { y: 320, opacity: 0 }, 
+      { y: 0, opacity: 1, duration: 0.65, ease: "power3.out" }, 
+      0.1
+    );
+
+    // Chuyển động máy quay nhẹ trên ảnh chân dung (pan-right & drift kết thúc an toàn ở 6.40s)
+    tl.fromTo("#hero-img-1", 
+      { x: -30, scale: 1.05 }, 
+      { x: 30, scale: 1.12, duration: 6.4, ease: "none" }, 
+      0.0
+    );
+
+    // Thẻ mô tả nhân thân ở phía dưới
+    tl.fromTo("#info-footer-1", 
+      { y: 40, opacity: 0 }, 
+      { y: 0, opacity: 1, duration: 0.5, ease: "power3.out" }, 
+      0.4
+    );
+
+    // Overlay 1: SINH NĂM 1975 (tại 80730ms -> relative 0.74s, hold 2.0s)
+    tl.fromTo("#label-1", 
+      { scale: 0.75, opacity: 0, y: 20 }, 
+      { scale: 1, opacity: 1, y: 0, duration: 0.4, ease: "power3.out" }, 
+      0.74
+    );
+    tl.to("#label-1", 
+      { opacity: 0, y: -15, duration: 0.25, ease: "power2.in" }, 
+      2.74
+    );
+
+    // Overlay 2: DNTN V HẢI PHÒNG (tại 82130ms -> relative 2.14s, hold 2.2s)
+    tl.fromTo("#label-2", 
+      { scale: 0.85, opacity: 0, y: 25 }, 
+      { scale: 1, opacity: 1, y: 0, duration: 0.45, ease: "power3.out" }, 
+      2.14
+    );
+    tl.to("#label-2", 
+      { opacity: 0, y: -15, duration: 0.25, ease: "power2.in" }, 
+      4.34
+    );
+
+    // ==========================================
+    // DIỄN HOẠT SHOT 2 (6.54s -> 12.73s)
+    // ==========================================
+
+    // Cut transition tại 6.54s: Header 2 và Hero Card 2 xuất hiện ngay
+    tl.fromTo("#header-2", 
+      { opacity: 0, y: -20 }, 
+      { opacity: 1, y: 0, duration: 0.35, ease: "power2.out" }, 
+      6.54
+    );
+
+    tl.fromTo("#hero-card-2", 
+      { opacity: 0, scale: 0.98 }, 
+      { opacity: 1, scale: 1, duration: 0.35, ease: "power2.out" }, 
+      6.54
+    );
+
+    // Camera zoom-in vào chi tiết con dấu Cục Thuế và hồ sơ VAT (kết thúc an toàn ở 12.54s)
+    tl.fromTo("#hero-img-2", 
+      { scale: 1.15 }, 
+      { scale: 1.34, duration: 6.0, ease: "sine.out" }, 
+      6.54
+    );
+
+    // Vòng tròn định vị dấu mộc xuất hiện (dùng power3.out nghiêm túc, không dùng back.out)
+    tl.fromTo("#reticle-stamp", 
+      { opacity: 0, scale: 0.7 }, 
+      { opacity: 1, scale: 1, duration: 0.45, ease: "power3.out" }, 
+      6.8
+    );
+
+    // Overlay 1: Biểu tượng Clock + Cấp phép từ 2005 (tại 86980ms -> relative 6.99s, hold 1.8s)
+    tl.fromTo("#clock-card", 
+      { y: 20, opacity: 0 }, 
+      { y: 0, opacity: 1, duration: 0.4, ease: "power3.out" }, 
+      6.99
+    );
+
+    if (rim && lenRim > 0) {
+      tl.fromTo(rim, { strokeDashoffset: lenRim }, { strokeDashoffset: 0, duration: 0.45, ease: "power2.out" }, 6.99);
+    }
+    if (handH && lenH > 0) {
+      tl.fromTo(handH, { strokeDashoffset: lenH }, { strokeDashoffset: 0, duration: 0.3, ease: "power2.out" }, 7.2);
+    }
+    if (handM && lenM > 0) {
+      tl.fromTo(handM, { strokeDashoffset: lenM }, { strokeDashoffset: 0, duration: 0.3, ease: "power2.out" }, 7.35);
+    }
+
+    tl.to("#clock-card", 
+      { opacity: 0, y: -15, duration: 0.25, ease: "power2.in" }, 
+      8.79
+    );
+
+    // Overlay 2: Punch Phrase PHƯƠNG PHÁP KHẤU TRỪ (tại 89740ms -> relative 9.75s, hold đến hết cảnh)
+    tl.fromTo("#punch-card", 
+      { scale: 0.88, opacity: 0, y: 35 }, 
+      { scale: 1, opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, 
+      9.75
+    );
+
+    // Đăng ký timeline cho HyperFrames seek engine (chỉ gán trực tiếp, window.__timelines đã có sẵn)
+    window.__timelines["scene-s09"] = tl;
+  </script>
+
+    </template>
+  </body>
+</html>

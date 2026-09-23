@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap">
+      <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+        background-color: #F5F0E4; /* Biến thể card phẳng theo Style DNA */
+        font-family: "Be Vietnam Pro", sans-serif;
+        color: #141414;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      #root {
+        position: relative;
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+      }
+
+      .clip {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+      }
+
+      /* Hạt giấy nhẹ (grain overlay) tạo cảm giác tài liệu in thực tế */
+      .grain-layer {
+        position: absolute;
+        inset: 0;
+        background-image: radial-gradient(rgba(20, 20, 20, 0.08) 1px, transparent 0);
+        background-size: 24px 24px;
+        pointer-events: none;
+        opacity: 0.35;
+        z-index: 1;
+      }
+
+      /* Thanh cam thương hiệu cố định mép đáy khung hình */
+      .bottom-orange-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 1080px;
+        height: 8px;
+        background-color: #FF6A1A;
+        z-index: 50;
+      }
+
+      /* Khung camera tổng thể tạo chuyển động chậm zoom-in */
+      #camera-container {
+        position: absolute;
+        inset: 0;
+        transform-origin: 540px 720px;
+        z-index: 10;
+      }
+
+      /* Nhãn tiêu đề phân loại đầu trang */
+      .top-meta-badge {
+        position: absolute;
+        top: 90px;
+        left: 80px;
+        right: 80px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 22px;
+        font-weight: 700;
+        color: #736B5E;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        border-bottom: 2px solid rgba(20, 20, 20, 0.15);
+        padding-bottom: 12px;
+      }
+
+      /* 
+        Thẻ trích lục bản án pháp lý:
+        Đặt trọn vẹn trong vùng an toàn (top 170px, cao 1140px -> đáy tại 1310px).
+        Hoàn toàn cách biệt khỏi vùng caption rail (bottom 440px tương ứng y=1480px).
+      */
+      #doc-card {
+        position: absolute;
+        top: 170px;
+        left: 80px;
+        width: 920px;
+        height: 1140px;
+        background-color: #FAF8F5;
+        border: 2px solid rgba(20, 20, 20, 0.2);
+        box-shadow: 0 24px 48px rgba(20, 20, 20, 0.1);
+        padding: 44px 50px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        transform-origin: top center;
+      }
+
+      /* Đầu trang trích lục công văn */
+      .court-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        border-bottom: 2px solid #141414;
+        padding-bottom: 20px;
+      }
+
+      .court-left {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      .court-name {
+        font-size: 22px;
+        font-weight: 900;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+      }
+
+      .court-sub {
+        font-size: 19px;
+        font-weight: 700;
+        color: #4A443A;
+      }
+
+      .doc-number {
+        margin-top: 6px;
+        font-size: 18px;
+        font-weight: 700;
+        color: #141414;
+      }
+
+      .court-right {
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      .nation-title {
+        font-size: 20px;
+        font-weight: 900;
+        letter-spacing: 0.5px;
+      }
+
+      .nation-motto {
+        font-size: 17px;
+        font-weight: 700;
+        border-bottom: 1.5px solid #141414;
+        padding-bottom: 4px;
+        display: inline-block;
+      }
+
+      /* Hàng tiêu đề bản án & icon tài liệu */
+      .heading-row {
+        margin-top: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .heading-text {
+        font-size: 38px;
+        font-weight: 900;
+        line-height: 1.25;
+        letter-spacing: -0.5px;
+      }
+
+      /* Huy hiệu icon tài liệu tự vẽ */
+      #doc-icon-badge {
+        width: 68px;
+        height: 68px;
+        background-color: #E7E3D9;
+        border: 2px solid #141414;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+
+      .doc-icon-svg {
+        width: 38px;
+        height: 38px;
+      }
+
+      .doc-icon-svg path {
+        fill: none;
+        stroke: #141414;
+        stroke-width: 3;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
+      /* Đoạn văn trích yếu và định nghĩa */
+      .body-section {
+        margin-top: 14px;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+
+      .body-intro {
+        font-size: 24px;
+        font-weight: 700;
+        color: #332E27;
+        line-height: 1.45;
+      }
+
+      /* Khối định nghĩa trọng tâm có highlight cam */
+      .definition-box {
+        position: relative;
+        background-color: #F0EDE4;
+        border-left: 8px solid #FF6A1A;
+        padding: 24px 28px;
+        border-radius: 4px;
+        margin-top: 4px;
+      }
+
+      .def-subhead {
+        font-size: 21px;
+        font-weight: 700;
+        color: #595247;
+        margin-bottom: 8px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .def-statement {
+        position: relative;
+        display: inline-block;
+        font-size: 32px;
+        font-weight: 900;
+        color: #141414;
+        line-height: 1.35;
+        z-index: 2;
+      }
+
+      /* Vệt bút dạ quang cam gạch chân định nghĩa */
+      #highlight-bar {
+        position: absolute;
+        bottom: 2px;
+        left: 0;
+        width: 100%;
+        height: 16px;
+        background-color: rgba(255, 106, 26, 0.45);
+        transform-origin: left center;
+        z-index: 1;
+      }
+
+      /* 
+        Phần cán bộ tư pháp và mộc đỏ:
+        Phân bố không gian chuẩn xác giữa 2 cột:
+        - Cột trái: Nơi nhận + Nhãn kết luận cam
+        - Cột phải: Khối chức danh và slot con dấu mộc đỏ riêng biệt
+      */
+      .bottom-authority-row {
+        margin-top: 20px;
+        display: grid;
+        grid-template-columns: 1.05fr 1fr;
+        gap: 20px;
+        align-items: start;
+        padding-top: 20px;
+        border-top: 1.5px dashed rgba(20, 20, 20, 0.25);
+      }
+
+      .recipients-block {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+
+      .recipients-title {
+        font-size: 19px;
+        font-weight: 900;
+        color: #141414;
+      }
+
+      .recipients-list {
+        font-size: 17px;
+        font-weight: 700;
+        color: #595247;
+        line-height: 1.45;
+      }
+
+      /* Nhãn kết luận cam: GIAO DỊCH KHÔNG THẬT */
+      #fake-deal-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        background-color: #FF6A1A;
+        color: #141414;
+        font-size: 20px;
+        font-weight: 900;
+        padding: 10px 18px;
+        border-radius: 6px;
+        width: fit-content;
+        box-shadow: 0 4px 12px rgba(255, 106, 26, 0.25);
+      }
+
+      /* Khối thẩm quyền tòa án */
+      .officials-zone {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 14px;
+        min-height: 250px;
+      }
+
+      .officials-header {
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      .officials-title {
+        font-size: 20px;
+        font-weight: 900;
+        color: #141414;
+        text-transform: uppercase;
+      }
+
+      .officials-role {
+        font-size: 17px;
+        font-weight: 700;
+        color: #4A443A;
+      }
+
+      /* 
+        Slot chứa con dấu mộc đỏ riêng biệt:
+        Nằm ngay dưới chức danh, không bị absolute đè lên dòng chữ tiêu đề.
+      */
+      .stamp-slot {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-top: 4px;
+      }
+
+      /* 
+        Con dấu mộc đỏ JUDICIAL STAMP (Punch-phrase "HÓA ĐƠN LẬP KHỐNG"):
+        Con dấu hình chữ nhật kép bo góc sắc nét, đóng dán đanh thép.
+        Màu đỏ thẫm #C62828 đạt tương phản cao > 5.5:1 trên nền giấy ngà.
+      */
+      #judicial-stamp {
+        width: 350px;
+        border: 4px solid #C62828;
+        border-radius: 8px;
+        padding: 8px 12px;
+        color: #C62828;
+        text-align: center;
+        background-color: rgba(250, 248, 245, 0.96);
+        box-shadow: 0 6px 18px rgba(198, 40, 40, 0.18);
+        transform-origin: center center;
+        transform: rotate(-6deg);
+      }
+
+      .stamp-inner-border {
+        border: 1.5px solid #C62828;
+        border-radius: 4px;
+        padding: 6px 8px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 3px;
+      }
+
+      .stamp-subhead {
+        font-size: 14px;
+        font-weight: 900;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+      }
+
+      .stamp-main-phrase {
+        font-size: 27px;
+        font-weight: 900;
+        letter-spacing: 1px;
+        line-height: 1.15;
+        text-transform: uppercase;
+        border-top: 1.5px solid #C62828;
+        border-bottom: 1.5px solid #C62828;
+        padding: 4px 0;
+        width: 100%;
+      }
+
+      .stamp-conclusion {
+        font-size: 13px;
+        font-weight: 900;
+        letter-spacing: 1.5px;
+      }
+    </style>
+
+    <div data-hf-id="hf-dbjh" id="root" data-composition-id="scene-s16" data-start="0" data-duration="8.21" data-width="1080" data-height="1920">
+      <div data-hf-id="hf-s2bh" class="grain-layer"></div>
+      <div data-hf-id="hf-2ykk" class="bottom-orange-bar"></div>
+
+      <!-- Scene Clip độc lập -->
+      <section data-hf-id="hf-sv2o" id="scene-s16" class="clip" data-start="0" data-duration="8.21">
+        <div data-hf-id="hf-k32m" id="camera-container">
+          <!-- Phân loại đầu trang -->
+          <div data-hf-id="hf-5efj" class="top-meta-badge">
+            <span data-hf-id="hf-l76n">Trích lục bản án sơ thẩm</span>
+            <span data-hf-id="hf-atl3">Hồ sơ giám định tài chính</span>
+          </div>
+
+          <!-- Thẻ trích lục công văn chính -->
+          <div data-hf-id="hf-b9kg" id="doc-card">
+            <!-- Header Tòa án -->
+            <div data-hf-id="hf-xdgx" class="court-header">
+              <div data-hf-id="hf-vja5" class="court-left">
+                <div data-hf-id="hf-e8bv" class="court-name">Tòa án nhân dân</div>
+                <div data-hf-id="hf-cyad" class="court-sub">Hội đồng xét xử sơ thẩm</div>
+                <div data-hf-id="hf-yznh" class="doc-number">Số: 142/2023/HS-ST</div>
+              </div>
+              <div data-hf-id="hf-vc8w" class="court-right">
+                <div data-hf-id="hf-kbr3" class="nation-title">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</div>
+                <div data-hf-id="hf-cqwa" class="nation-motto">Độc lập - Tự do - Hạnh phúc</div>
+              </div>
+            </div>
+
+            <!-- Dòng tiêu đề và icon tài liệu -->
+            <div data-hf-id="hf-dgkd" class="heading-row">
+              <div data-hf-id="hf-m7o2" class="heading-text">KẾT LUẬN GIÁM ĐỊNH<br data-hf-id="hf-x5px">PHÁP LÝ HÓA ĐƠN</div>
+              <div data-hf-id="hf-xx5b" id="doc-icon-badge">
+                <svg data-hf-id="hf-aot1" class="doc-icon-svg" viewBox="0 0 24 24">
+                  <path data-hf-id="hf-yzls" id="doc-icon-path" d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z M14 2v6h6 M16 13H8 M16 17H8 M10 9H8" />
+                </svg>
+              </div>
+            </div>
+
+            <!-- Đoạn văn trích lục và định nghĩa lập khống -->
+            <div data-hf-id="hf-t9ci" class="body-section">
+              <div data-hf-id="hf-48ow" class="body-intro">
+                Theo kết luận được nêu trong bản án, toàn bộ hóa đơn giá trị gia tăng được phát hành trong vụ việc:
+              </div>
+
+              <!-- Hộp định nghĩa trọng tâm có highlight cam -->
+              <div data-hf-id="hf-mj9j" class="definition-box">
+                <div data-hf-id="hf-cbhx" class="def-subhead">Bản chất pháp lý:</div>
+                <div data-hf-id="hf-1dqn" class="def-statement">
+                  Hàng hóa, dịch vụ ghi trên hóa đơn<br data-hf-id="hf-rsrt">
+                  <strong data-hf-id="hf-9dqr">KHÔNG CÓ THẬT GIỮA HAI BÊN</strong>
+                  <div data-hf-id="hf-o57j" id="highlight-bar"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Khu vực thẩm quyền tư pháp & mộc đỏ -->
+            <div data-hf-id="hf-ajpe" class="bottom-authority-row">
+              <div data-hf-id="hf-sj98" class="recipients-block">
+                <div data-hf-id="hf-6iac" class="recipients-title">Nơi nhận tài liệu:</div>
+                <div data-hf-id="hf-b15t" class="recipients-list">
+                  - Cơ quan CSĐT Bộ Công An<br data-hf-id="hf-szow">
+                  - Viện kiểm sát nhân dân tối cao<br data-hf-id="hf-sldv">
+                  - Lưu hồ sơ vụ án số 142
+                </div>
+                <div data-hf-id="hf-nzq3" id="fake-deal-badge">
+                  <span data-hf-id="hf-o6c3">⚠</span>
+                  <span data-hf-id="hf-8hro">GIAO DỊCH KHÔNG THẬT</span>
+                </div>
+              </div>
+
+              <div data-hf-id="hf-wi1x" class="officials-zone" data-layout-allow-overlap="true">
+                <div data-hf-id="hf-zm9o" class="officials-header">
+                  <div data-hf-id="hf-hcw5" class="officials-title">TM. HỘI ĐỒNG XÉT XỬ</div>
+                  <div data-hf-id="hf-dt1s" class="officials-role">THẨM PHÁN - CHỦ TỌA</div>
+                </div>
+
+                <!-- Slot riêng biệt chứa con dấu mộc đỏ, không bị overlap lên tiêu đề -->
+                <div data-hf-id="hf-qzwg" class="stamp-slot" data-layout-allow-overlap="true">
+                  <div data-hf-id="hf-8g2s" id="judicial-stamp" data-layout-allow-overlap="true" data-layout-allow-occlusion="true">
+                    <div data-hf-id="hf-nk2h" class="stamp-inner-border">
+                      <div data-hf-id="hf-zvzw" class="stamp-subhead">TÒA ÁN NHÂN DÂN</div>
+                      <div data-hf-id="hf-8wcj" class="stamp-main-phrase">HÓA ĐƠN LẬP KHỐNG</div>
+                      <div data-hf-id="hf-xzl2" class="stamp-conclusion">★ ĐÃ KẾT LUẬN ★</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <script>
+      // Single paused GSAP timeline theo chuẩn HyperFrames
+      const tl = gsap.timeline({ paused: true });
+
+      // 1. Camera chuyển động zoom-in nhẹ nhàng xuyên suốt 8.21s
+      tl.fromTo(
+        "#camera-container",
+        { scale: 1.0 },
+        { scale: 1.04, duration: 8.21, ease: "none" },
+        0
+      );
+
+      // 2. Peel entrance: Thẻ tài liệu lật mở dán xuống (t=0.1s - 0.75s) - duy nhất 1 lần fromTo trên #doc-card
+      tl.fromTo(
+        "#doc-card",
+        { y: -36, opacity: 0, scale: 0.97, rotationX: 8 },
+        { y: 0, opacity: 1, scale: 1, rotationX: 0, duration: 0.65, ease: "power3.out" },
+        0.1
+      );
+
+      // 3. Icon tài liệu SVG xuất hiện và vẽ nét (t=1.66s theo Shotlist overlay 151080ms)
+      tl.fromTo(
+        "#doc-icon-badge",
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.45, ease: "power3.out" },
+        1.66
+      );
+
+      // Thiết lập stroke-dash cho icon path để tự vẽ
+      const docPath = document.getElementById("doc-icon-path");
+      if (docPath) {
+        const pathLength = 80;
+        docPath.style.strokeDasharray = pathLength;
+        docPath.style.strokeDashoffset = pathLength;
+        tl.fromTo(
+          docPath,
+          { strokeDashoffset: pathLength },
+          { strokeDashoffset: 0, duration: 0.5, ease: "power2.out" },
+          1.75
+        );
+      }
+
+      // 4. Punch phrase: Con dấu mộc đỏ "HÓA ĐƠN LẬP KHỐNG" đóng mạnh xuống văn bản (t=3.41s theo Shotlist 152830ms)
+      tl.fromTo(
+        "#judicial-stamp",
+        { scale: 1.8, opacity: 0, rotation: -20 },
+        { scale: 1, opacity: 1, rotation: -6, duration: 0.42, ease: "power4.out" },
+        3.41
+      );
+
+      // 5. Highlight cam quét ngang qua cụm "KHÔNG CÓ THẬT GIỮA HAI BÊN" (t=5.3s)
+      tl.fromTo(
+        "#highlight-bar",
+        { scaleX: 0 },
+        { scaleX: 1, duration: 0.55, ease: "power2.out" },
+        5.3
+      );
+
+      // 6. Label "GIAO DỊCH KHÔNG THẬT" xuất hiện (t=6.11s theo Shotlist 155530ms)
+      tl.fromTo(
+        "#fake-deal-badge",
+        { scale: 0.7, opacity: 0, y: 14 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.45, ease: "power3.out" },
+        6.11
+      );
+
+      // Đăng ký timeline cho HyperFrames seek
+      window.__timelines = window.__timelines || {};
+      window.__timelines["scene-s16"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

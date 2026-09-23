@@ -1,0 +1,635 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap"
+    />
+      <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #141414;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+
+      /* Lớp hạt grain giấy mô phỏng chất liệu báo chí tài liệu Vox */
+      .paper-grain {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        z-index: 900;
+        opacity: 0.16;
+        mix-blend-mode: multiply;
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+      }
+
+      /* Thanh cam nhận diện đáy khung hình (Vox Signature Bottom Bar) */
+      #signature-bottom-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 14px;
+        background-color: #ff6a1a;
+        z-index: 1000;
+      }
+
+      /* Các clip kịch bản */
+      .clip {
+        position: absolute;
+        inset: 0;
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+      }
+
+      /* --- SHOT 1: Card Quote & Cảnh Báo Đanh Thép --- */
+      #shot-1 {
+        background-color: #f5f0e4;
+      }
+
+      #shot-1-content {
+        position: absolute;
+        inset: 0;
+        padding: 180px 70px 480px 70px;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+      }
+
+      /* Thẻ hồ sơ đối thoại / metadata */
+      .meta-tag-row {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 40px;
+      }
+
+      .meta-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background-color: #141414;
+        color: #f7f4ec;
+        font-weight: 700;
+        font-size: 22px;
+        letter-spacing: 2px;
+        padding: 8px 18px;
+        border-radius: 4px;
+        text-transform: uppercase;
+      }
+
+      .meta-pill-dot {
+        width: 10px;
+        height: 10px;
+        background-color: #ff6a1a;
+        border-radius: 50%;
+      }
+
+      .meta-date {
+        font-size: 22px;
+        font-weight: 700;
+        color: rgba(20, 20, 20, 0.65);
+        letter-spacing: 1px;
+      }
+
+      /* Speaker label: "LÝ BẰNG CẢNH BÁO" */
+      #speaker-label-wrapper {
+        display: inline-flex;
+        align-items: center;
+        margin-bottom: 70px;
+        opacity: 0;
+      }
+
+      .speaker-box {
+        display: flex;
+        align-items: center;
+        background-color: #e7e3d9;
+        border: 2.5px solid #141414;
+        box-shadow: 6px 6px 0px #ff6a1a;
+        padding: 12px 26px;
+      }
+
+      .speaker-title {
+        font-size: 30px;
+        font-weight: 900;
+        color: #141414;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+      }
+
+      /* Khung trích dẫn Quote lớn */
+      #quote-box {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        opacity: 0;
+      }
+
+      .giant-quote-mark {
+        position: absolute;
+        top: -80px;
+        left: -35px;
+        width: 130px;
+        height: 100px;
+        opacity: 0.18;
+        fill: #ff6a1a;
+        pointer-events: none;
+      }
+
+      .punch-phrase-line {
+        font-size: 88px;
+        line-height: 1.14;
+        font-weight: 900;
+        text-transform: uppercase;
+        color: #141414;
+        margin: 0;
+        letter-spacing: -1.5px;
+      }
+
+      .highlight-container {
+        position: relative;
+        display: inline-block;
+        margin-top: 8px;
+      }
+
+      .highlight-bg {
+        position: absolute;
+        inset: 4px -12px;
+        background-color: #141414;
+        z-index: 1;
+        transform-origin: left center;
+        transform: scaleX(0);
+      }
+
+      .highlight-text {
+        position: relative;
+        z-index: 2;
+        color: #f7f4ec;
+      }
+
+      /* Khối vạch kẻ thước kỹ thuật trang trí */
+      .ruler-decoration {
+        margin-top: 90px;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        opacity: 0;
+      }
+
+      .ruler-line {
+        width: 100%;
+        height: 3px;
+        background: repeating-linear-gradient(
+          to right,
+          #141414,
+          #141414 16px,
+          transparent 16px,
+          transparent 24px
+        );
+      }
+
+      .ruler-caption {
+        font-size: 20px;
+        font-weight: 700;
+        color: rgba(20, 20, 20, 0.7);
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+      }
+
+      /* Flash chớp khi giáng đòn strike quote */
+      #strike-flash {
+        position: absolute;
+        inset: 0;
+        background-color: #ff6a1a;
+        opacity: 0;
+        pointer-events: none;
+        z-index: 800;
+      }
+
+      /* --- SHOT 2: Silhouette Bỏ Đi & Cơn Giận Dữ --- */
+      #shot-2 {
+        background: radial-gradient(circle at 50% 46%, #282828 0%, #141414 70%, #0c0c0c 100%);
+      }
+
+      #shot-2-stage {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+      }
+
+      /* Vệt cắt nộ khí (Anger strike slash) */
+      .rage-slash {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 1080px;
+        height: 1920px;
+        pointer-events: none;
+        z-index: 50;
+      }
+
+      /* Khung cửa hội trường mở ra khoảng tối */
+      .doorway-frame {
+        position: absolute;
+        top: 250px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 520px;
+        height: 820px;
+        border: 4px solid rgba(247, 244, 236, 0.35);
+        background: linear-gradient(180deg, #e7e3d9 0%, #cfc9be 100%);
+        box-shadow: 0 0 100px rgba(0, 0, 0, 0.85) inset;
+        overflow: hidden;
+      }
+
+      .doorway-light-beam {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: radial-gradient(ellipse at 50% 20%, rgba(255, 255, 255, 0.8) 0%, transparent 80%);
+        opacity: 0.6;
+      }
+
+      /* Silhouette người quay lưng bước đi */
+      .figure-container {
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 360px;
+        height: 600px;
+      }
+
+      /* Bóng cam đặc sắc nét (#ff7a1a) lệch 3% theo đúng Style DNA Cutout Treatment */
+      .figure-shadow-orange {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        transform: translate(16px, 12px);
+        fill: #ff7a1a;
+        opacity: 0;
+      }
+
+      .figure-body-ink {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        fill: #141414;
+      }
+
+      /* Khối label trạng thái: CƠN GIẬN DỮ */
+      #fury-card {
+        position: absolute;
+        top: 1140px;
+        left: 80px;
+        right: 80px;
+        background-color: #141414;
+        border: 3px solid #ff6a1a;
+        padding: 30px 40px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        box-shadow: 12px 12px 0px rgba(255, 106, 26, 0.35);
+        opacity: 0;
+      }
+
+      .fury-text-group {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      .fury-label {
+        font-size: 54px;
+        font-weight: 900;
+        color: #f7f4ec;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        margin: 0;
+        line-height: 1;
+      }
+
+      .fury-sub {
+        font-size: 22px;
+        font-weight: 700;
+        color: #ff6a1a;
+        letter-spacing: 3px;
+        text-transform: uppercase;
+      }
+
+      .fall-icon-wrapper {
+        width: 80px;
+        height: 80px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s12"
+      data-start="0"
+      data-width="1080"
+      data-height="1920"
+      data-duration="7"
+    >
+      <!-- Lớp hạt noise/grain nền phong cách báo chí tài liệu -->
+      <div class="paper-grain" data-layout-ignore="true"></div>
+
+      <!-- ==================== SHOT 1: QUOTE ĐANH THÉP ==================== -->
+      <section id="shot-1" class="clip" data-start="0" data-duration="4">
+        <div id="shot-1-content">
+          <!-- Metadata header -->
+          <div class="meta-tag-row" id="meta-header">
+            <div class="meta-pill">
+              <span class="meta-pill-dot"></span>
+              BIÊN BẢN ĐỐI THOẠI
+            </div>
+            <div class="meta-date">18.05.1989 • ĐẠI LỄ ĐƯỜNG</div>
+          </div>
+
+          <!-- Label: LÝ BẰNG CẢNH BÁO (atMs: 105330 -> rel: 0.83s) -->
+          <div id="speaker-label-wrapper">
+            <div class="speaker-box">
+              <span class="speaker-title">LÝ BẰNG CẢNH BÁO</span>
+            </div>
+          </div>
+
+          <!-- Punch phrase: «CÁC ANH ĐÃ ĐI QUÁ XA» (atMs: 106320 -> rel: 1.82s) -->
+          <div id="quote-box">
+            <!-- Dấu ngoặc kép biểu trưng -->
+            <svg class="giant-quote-mark" viewBox="0 0 100 80">
+              <path
+                d="M0 45 C0 20 18 0 42 0 L46 12 C30 15 22 28 20 40 L45 40 L45 80 L0 80 Z M55 45 C55 20 73 0 97 0 L101 12 C85 15 77 28 75 40 L100 40 L100 80 L55 80 Z"
+              />
+            </svg>
+
+            <h1 class="punch-phrase-line">«CÁC ANH</h1>
+            <div class="highlight-container">
+              <div class="highlight-bg" id="quote-hl-bg"></div>
+              <h1 class="punch-phrase-line highlight-text">ĐÃ ĐI QUÁ XA»</h1>
+            </div>
+          </div>
+
+          <!-- Kẻ thước & chú thích dưới -->
+          <div class="ruler-decoration" id="ruler-box">
+            <div class="ruler-line"></div>
+            <div class="ruler-caption">TỐI HẬU THƯ TẠI HỘI TRƯỜNG • ĐỐI THOẠI BẾ TẮC</div>
+          </div>
+        </div>
+
+        <!-- Chớp strike va chạm thị giác -->
+        <div id="strike-flash" data-layout-ignore="true"></div>
+      </section>
+
+      <!-- ==================== SHOT 2: SILHOUETTE BỎ ĐI & CƠN THỊNH NỘ ==================== -->
+      <section id="shot-2" class="clip" data-start="4" data-duration="3">
+        <div id="shot-2-stage">
+          <!-- Cửa hội trường sáng gắt đối lập với phòng họp tối -->
+          <div class="doorway-frame" id="doorway">
+            <div class="doorway-light-beam"></div>
+
+            <!-- Vector silhouette người quay lưng bước ra ngoài -->
+            <div class="figure-container" id="figure-wrap">
+              <!-- Bóng cam đặc chuẩn Vox DNA (#ff7a1a) -->
+              <svg class="figure-shadow-orange" viewBox="0 0 360 600">
+                <path
+                  d="M180 30 C155 30 140 50 140 85 C140 120 155 135 180 135 C205 135 220 120 220 85 C220 50 205 30 180 30 Z M120 150 C80 165 60 210 50 310 C85 320 105 300 110 240 L100 580 L165 580 L175 380 L185 380 L195 580 L260 580 L250 240 C255 300 275 320 310 310 C300 210 280 165 240 150 C210 140 150 140 120 150 Z"
+                />
+              </svg>
+
+              <!-- Thân người mực đen tương phản cao -->
+              <svg class="figure-body-ink" viewBox="0 0 360 600">
+                <path
+                  d="M180 30 C155 30 140 50 140 85 C140 120 155 135 180 135 C205 135 220 120 220 85 C220 50 205 30 180 30 Z M120 150 C80 165 60 210 50 310 C85 320 105 300 110 240 L100 580 L165 580 L175 380 L185 380 L195 580 L260 580 L250 240 C255 300 275 320 310 310 C300 210 280 165 240 150 C210 140 150 140 120 150 Z"
+                />
+              </svg>
+            </div>
+          </div>
+
+          <!-- Vết mực loang / tia thị nộ màu cam cắt ngang (Rage slash) -->
+          <svg class="rage-slash" viewBox="0 0 1080 1920" data-layout-ignore="true">
+            <path
+              id="rage-path"
+              d="M 120 280 L 960 1100"
+              fill="none"
+              stroke="#FF6A1A"
+              stroke-width="12"
+              stroke-linecap="square"
+            />
+          </svg>
+
+          <!-- Label: CƠN GIẬN DỮ & Icon Fall (atMs: 109950 -> rel: 5.45s) -->
+          <div id="fury-card">
+            <div class="fury-text-group">
+              <h2 class="fury-label">CƠN GIẬN DỮ</h2>
+              <span class="fury-sub">RỜI KHỎI PHÒNG • BẾ MẠC ĐỐI THOẠI</span>
+            </div>
+
+            <!-- Icon vocabulary chuẩn Style DNA: 'fall' (sụp đổ, rơi xuống) -->
+            <div class="fall-icon-wrapper">
+              <svg viewBox="0 0 80 80" width="80" height="80">
+                <!-- Đường gấp khúc đứt gãy cắm xuống -->
+                <path
+                  id="fall-path"
+                  d="M 12 18 L 38 42 L 30 48 L 68 70"
+                  fill="none"
+                  stroke="#FF6A1A"
+                  stroke-width="6"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+                <!-- Đầu mũi tên cắm dốc -->
+                <path
+                  id="fall-arrow"
+                  d="M 46 70 L 68 70 L 68 48"
+                  fill="none"
+                  stroke="#FF6A1A"
+                  stroke-width="6"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Chữ ký thị giác: thanh cam cố định mép đáy khung hình -->
+      <div id="signature-bottom-bar" data-layout-ignore="true"></div>
+    </div>
+
+    <script>
+      // Khởi tạo GSAP Timeline bắt buộc ở trạng thái paused
+      const tl = gsap.timeline({ paused: true });
+
+      // Chuẩn bị đường nét vẽ tự sinh cho SVG path
+      const ragePath = document.getElementById("rage-path");
+      if (ragePath) {
+        const rageLen = ragePath.getTotalLength();
+        ragePath.style.strokeDasharray = rageLen;
+        ragePath.style.strokeDashoffset = rageLen;
+      }
+
+      const fallPath = document.getElementById("fall-path");
+      if (fallPath) {
+        const fallLen = fallPath.getTotalLength();
+        fallPath.style.strokeDasharray = fallLen;
+        fallPath.style.strokeDashoffset = fallLen;
+      }
+
+      const fallArrow = document.getElementById("fall-arrow");
+      if (fallArrow) {
+        const arrowLen = fallArrow.getTotalLength();
+        fallArrow.style.strokeDasharray = arrowLen;
+        fallArrow.style.strokeDashoffset = arrowLen;
+      }
+
+      // ==========================================
+      // CHOREOGRAPHY SHOT 1: [0.0s -> 4.0s]
+      // ==========================================
+
+      // 0.1s: Header xuất hiện nhẹ nhàng
+      tl.fromTo(
+        "#meta-header",
+        { opacity: 0, y: -20 },
+        { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" },
+        0.1
+      );
+
+      // 0.83s: Label "LÝ BẰNG CẢNH BÁO" trượt ra dứt khoát (atMs: 105330)
+      tl.fromTo(
+        "#speaker-label-wrapper",
+        { opacity: 0, x: -50 },
+        { opacity: 1, x: 0, duration: 0.45, ease: "power3.out" },
+        0.83
+      );
+
+      // 1.82s: STRIKE ENTRANCE cho Punch Phrase "«CÁC ANH ĐÃ ĐI QUÁ XA»" (atMs: 106320)
+      // 1. Chớp sáng va chạm (strike flash)
+      tl.fromTo(
+        "#strike-flash",
+        { opacity: 0.4 },
+        { opacity: 0, duration: 0.14, ease: "power2.out" },
+        1.82
+      );
+
+      // 2. Khối chữ giáng mạnh xuống (scale 1.35 -> 1.0, không overshoot lố lăng)
+      tl.fromTo(
+        "#quote-box",
+        { opacity: 0, scale: 1.35, y: -20 },
+        { opacity: 1, scale: 1.0, y: 0, duration: 0.38, ease: "power4.out" },
+        1.82
+      );
+
+      // 3. Highlight đen bung ra phía sau chữ "ĐÃ ĐI QUÁ XA»"
+      tl.to(
+        "#quote-hl-bg",
+        { scaleX: 1, duration: 0.32, ease: "power3.out" },
+        2.02
+      );
+
+      // 4. Kẻ thước kỹ thuật xuất hiện hoàn tất bố cục
+      tl.fromTo(
+        "#ruler-box",
+        { opacity: 0, y: 20 },
+        { opacity: 1, y: 0, duration: 0.4, ease: "power2.out" },
+        2.2
+      );
+
+      // (Giữ nguyên vị trí vững chắc đến hết 4.0s: hold > 1.6s theo quy chuẩn Style DNA)
+
+      // ==========================================
+      // CHOREOGRAPHY SHOT 2: [4.0s -> 7.0s]
+      // ==========================================
+
+      // 4.0s: Camera pan-right & zoom nhẹ mô phỏng cú lia theo bước chân
+      tl.fromTo(
+        "#shot-2-stage",
+        { x: -30, scale: 1.0 },
+        { x: 20, scale: 1.03, duration: 3.0, ease: "sine.out" },
+        4.0
+      );
+
+      // 4.1s: Người bước đi hướng vào cánh cửa
+      tl.fromTo(
+        "#figure-wrap",
+        { opacity: 0, y: 35 },
+        { opacity: 1, y: 0, duration: 0.7, ease: "power3.out" },
+        4.1
+      );
+
+      // 4.35s: Bóng cam đặc (#ff7a1a) bật ra sau lưng (dấu ấn Vox Cutout DNA)
+      tl.to(
+        ".figure-shadow-orange",
+        { opacity: 1, duration: 0.35, ease: "power2.out" },
+        4.35
+      );
+
+      // 4.7s: Tia thị nộ màu cam chém gắt ngang màn hình
+      tl.to(
+        "#rage-path",
+        { strokeDashoffset: 0, duration: 0.32, ease: "power3.out" },
+        4.7
+      );
+
+      // 5.45s: Label "CƠN GIẬN DỮ" đập vào (atMs: 109950)
+      tl.fromTo(
+        "#fury-card",
+        { opacity: 0, scale: 0.88, y: 24 },
+        { opacity: 1, scale: 1.0, y: 0, duration: 0.45, ease: "power3.out" },
+        5.45
+      );
+
+      // 5.55s: Icon 'fall' tự vẽ nét sắc bén hoàn thiện biểu tượng thất bại
+      tl.to(
+        "#fall-path",
+        { strokeDashoffset: 0, duration: 0.45, ease: "power2.out" },
+        5.55
+      );
+      tl.to(
+        "#fall-arrow",
+        { strokeDashoffset: 0, duration: 0.3, ease: "power2.out" },
+        5.85
+      );
+
+      // Đăng ký timeline chính thức lên window.__timelines["scene-s12"]
+      window.__timelines = window.__timelines || {};
+      window.__timelines["scene-s12"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

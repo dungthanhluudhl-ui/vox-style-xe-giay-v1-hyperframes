@@ -1,0 +1,393 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+        background: #0a0a0a;
+        font-family: "Be Vietnam Pro", sans-serif;
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: #E7E3D9;
+      }
+
+      /* Nền lưới ô vuông Vox 84px */
+      .bg-grid {
+        position: absolute;
+        inset: 0;
+        background-color: #E7E3D9;
+        background-image:
+          linear-gradient(rgba(20, 20, 20, 0.16) 1.5px, transparent 1.5px),
+          linear-gradient(90deg, rgba(20, 20, 20, 0.16) 1.5px, transparent 1.5px);
+        background-size: 84px 84px;
+        z-index: 1;
+        pointer-events: none;
+      }
+
+      /* Lớp hạt grain giấy 18% */
+      .grain-overlay {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        z-index: 50;
+        opacity: 0.18;
+        mix-blend-mode: multiply;
+      }
+
+      /* Thanh cam nhận diện cố định đáy */
+      .bottom-orange-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 1080px;
+        height: 10px;
+        background: #FF6A1A;
+        z-index: 100;
+      }
+
+      /* Clip định dạng chung */
+      .clip {
+        position: absolute;
+        box-sizing: border-box;
+      }
+      .scene-clip {
+        inset: 0;
+        pointer-events: none;
+        z-index: 20;
+      }
+
+      /* Video media */
+      .video-media {
+        position: absolute;
+        inset: 0;
+        width: 1080px;
+        height: 1920px;
+        object-fit: cover;
+        z-index: 5;
+        transform-origin: 50% 50%;
+        will-change: transform;
+      }
+      .video-crop {
+        object-position: center 46%;
+      }
+
+      /* Viewfinder máy quay truyền hình (Shot 1) */
+      .viewfinder-box {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .viewfinder-svg {
+        position: absolute;
+        inset: 0;
+        width: 1080px;
+        height: 1920px;
+      }
+      .viewfinder-rec-badge {
+        position: absolute;
+        top: 175px;
+        right: 80px;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        background: rgba(20, 20, 20, 0.90);
+        border: 2px solid #FF6A1A;
+        border-radius: 8px;
+        padding: 8px 18px;
+      }
+      .viewfinder-rec-dot {
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: #FF6A1A;
+      }
+      .viewfinder-rec-text {
+        color: #F7F4EC;
+        font-size: 24px;
+        font-weight: 900;
+        letter-spacing: 0.08em;
+      }
+
+      /* Card nhãn Shot 1: TIÊU ĐIỂM BẮC KINH */
+      .shot-1-label-container {
+        position: absolute;
+        top: 240px;
+        left: 60px;
+        right: 60px;
+        display: flex;
+        justify-content: flex-start;
+      }
+      .shot-1-label-card {
+        display: inline-flex;
+        align-items: center;
+        background: #141414;
+        border-left: 8px solid #FF6A1A;
+        padding: 18px 32px;
+        border-radius: 10px;
+        box-shadow: 0 16px 36px rgba(0, 0, 0, 0.45);
+      }
+      .shot-1-label-text {
+        color: #F7F4EC;
+        font-size: 42px;
+        font-weight: 900;
+        letter-spacing: 0.03em;
+        line-height: 1.2;
+      }
+
+      /* Card nhãn Shot 2: TUYỆT THỰC ĐÒI CẢI CÁCH & KHÁNG NGHỊ ÔN HÒA */
+      .shot-2-card-container {
+        position: absolute;
+        top: 260px;
+        left: 60px;
+        right: 60px;
+        display: flex;
+        justify-content: center;
+      }
+      .shot-2-card {
+        width: 100%;
+        background: rgba(20, 20, 20, 0.94);
+        border-left: 8px solid #FF6A1A;
+        padding: 28px 36px;
+        border-radius: 12px;
+        box-shadow: 0 20px 48px rgba(0, 0, 0, 0.5);
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+      .shot-2-badge-row {
+        display: flex;
+        align-items: center;
+      }
+      /* Dedicated label backing cho KHÁNG NGHỊ ÔN HÒA - đạt tỉ lệ tương phản > 14:1 */
+      .dedicated-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        background: #141414;
+        border: 2px solid #FF6A1A;
+        border-radius: 8px;
+        padding: 10px 22px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+      }
+      .dedicated-badge-text {
+        color: #F7F4EC;
+        font-size: 30px;
+        font-weight: 900;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        line-height: 1.2;
+      }
+      .shot-2-headline {
+        color: #F7F4EC;
+        font-size: 54px;
+        font-weight: 900;
+        letter-spacing: -0.01em;
+        line-height: 1.25;
+      }
+
+      /* Captions thanh phụ đề dưới */
+      .caption-clip {
+        bottom: 440px;
+        left: 60px;
+        right: 60px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        pointer-events: none;
+        z-index: 90;
+      }
+      .caption-bubble {
+        background: rgba(10, 10, 10, 0.88);
+        border-radius: 14px;
+        padding: 14px 32px;
+        color: #F7F4EC;
+        font-size: 38px;
+        font-weight: 700;
+        text-align: center;
+        line-height: 1.35;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s01"
+      data-start="0"
+      data-duration="7.5"
+      data-width="1080"
+      data-height="1920"
+    >
+      <!-- Nền lưới và lớp phủ grain tĩnh -->
+      <div class="bg-grid"></div>
+      <div class="grain-overlay">
+        <svg width="100%" height="100%">
+          <filter id="noiseFilter">
+            <feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" stitchTiles="stitch" />
+            <feColorMatrix type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 1 0" />
+          </filter>
+          <rect width="100%" height="100%" filter="url(#noiseFilter)" />
+        </svg>
+      </div>
+
+      <!-- Video Shot 1: Toàn cảnh báo chí (0s -> 4.5s) -->
+      <video
+        id="vid-1"
+        muted
+        playsinline
+        src="assets/vid-02-tiananmen-protest-press-cutout.mp4"
+        data-start="0"
+        data-duration="4.5"
+        data-media-start="0"
+        data-track-index="0"
+        data-layout-allow-overflow="true"
+        class="video-media"
+      ></video>
+
+      <!-- Video Shot 2: Cận cảnh sinh viên tuyệt thực (4.5s -> 7.5s) -->
+      <video
+        id="vid-2"
+        muted
+        playsinline
+        src="assets/vid-02-tiananmen-protest-press-cutout.mp4"
+        data-start="4.5"
+        data-duration="3.0"
+        data-media-start="4.5"
+        data-track-index="0"
+        data-layout-allow-overflow="true"
+        class="video-media video-crop"
+      ></video>
+
+      <!-- Overlay Shot 1: Khung ngắm máy quay hội tụ (1.25s -> 4.05s) -->
+      <div id="viewfinder" class="clip scene-clip" data-start="1.25" data-duration="2.8" data-track-index="1">
+        <div id="viewfinder-inner" class="viewfinder-box">
+          <svg class="viewfinder-svg" viewBox="0 0 1080 1920" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <!-- 4 góc ngắm máy quay nét mảnh cam #FF6A1A -->
+            <path d="M 80 230 L 160 230 M 80 230 L 80 310" stroke="#FF6A1A" stroke-width="4" stroke-linecap="round" />
+            <path d="M 1000 230 L 920 230 M 1000 230 L 1000 310" stroke="#FF6A1A" stroke-width="4" stroke-linecap="round" />
+            <path d="M 80 1690 L 160 1690 M 80 1690 L 80 1610" stroke="#FF6A1A" stroke-width="4" stroke-linecap="round" />
+            <path d="M 1000 1690 L 920 1690 M 1000 1690 L 1000 1610" stroke="#FF6A1A" stroke-width="4" stroke-linecap="round" />
+
+            <!-- Điểm hội tụ trung tâm -->
+            <circle cx="540" cy="960" r="28" stroke="#FF6A1A" stroke-width="2.5" />
+            <circle cx="540" cy="960" r="4" fill="#FF6A1A" />
+            <path d="M 480 960 L 515 960 M 565 960 L 600 960 M 540 900 L 540 935 M 540 985 L 540 1020" stroke="#FF6A1A" stroke-width="2.5" stroke-linecap="round" />
+
+            <!-- Thước căn nét ngang -->
+            <line x1="160" y1="960" x2="220" y2="960" stroke="#FF6A1A" stroke-width="2" stroke-opacity="0.7" />
+            <line x1="860" y1="960" x2="920" y2="960" stroke="#FF6A1A" stroke-width="2" stroke-opacity="0.7" />
+          </svg>
+          <div class="viewfinder-rec-badge">
+            <div class="viewfinder-rec-dot"></div>
+            <div class="viewfinder-rec-text">REC ● TRUYỀN HÌNH</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Overlay Shot 1: Label TIÊU ĐIỂM BẮC KINH (2.3s -> 4.1s) -->
+      <div id="shot-1-label" class="clip scene-clip" data-start="2.3" data-duration="1.8" data-track-index="2">
+        <div id="shot-1-label-inner" class="shot-1-label-container">
+          <div class="shot-1-label-card">
+            <span class="shot-1-label-text">TIÊU ĐIỂM BẮC KINH</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Overlay Shot 2: Card TUYỆT THỰC ĐÒI CẢI CÁCH & KHÁNG NGHỊ ÔN HÒA (5.52s -> 7.32s) -->
+      <div id="shot-2-overlay" class="clip scene-clip" data-start="5.52" data-duration="1.8" data-track-index="2">
+        <div id="shot-2-card-inner" class="shot-2-card-container">
+          <div class="shot-2-card">
+            <div class="shot-2-badge-row">
+              <!-- Dedicated backing cho KHÁNG NGHỊ ÔN HÒA: nền #141414, chữ #F7F4EC, viền #FF6A1A -->
+              <div class="dedicated-badge">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#FF6A1A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="7" r="4"></circle>
+                  <path d="M5.5 21v-2a6.5 6.5 0 0 1 13 0v2"></path>
+                </svg>
+                <span class="dedicated-badge-text">KHÁNG NGHỊ ÔN HÒA</span>
+              </div>
+            </div>
+            <h2 class="shot-2-headline">TUYỆT THỰC ĐÒI CẢI CÁCH</h2>
+          </div>
+        </div>
+      </div>
+
+      <!-- Captions đồng bộ lời thoại (6 cụm không đè nhau, 0s -> 7.5s) -->
+      <div id="caption-1" class="clip caption-clip" data-start="0" data-duration="1.3" data-track-index="3" data-layout-allow-caption-zone="true">
+        <div id="caption-1-text" class="caption-bubble">Trong khi toàn bộ</div>
+      </div>
+      <div id="caption-2" class="clip caption-clip" data-start="1.3" data-duration="1.3" data-track-index="3" data-layout-allow-caption-zone="true">
+        <div id="caption-2-text" class="caption-bubble">truyền thông thế giới</div>
+      </div>
+      <div id="caption-3" class="clip caption-clip" data-start="2.6" data-duration="1.2" data-track-index="3" data-layout-allow-caption-zone="true">
+        <div id="caption-3-text" class="caption-bubble">đều hướng ống kính</div>
+      </div>
+      <div id="caption-4" class="clip caption-clip" data-start="3.8" data-duration="1.2" data-track-index="3" data-layout-allow-caption-zone="true">
+        <div id="caption-4-text" class="caption-bubble">về thủ đô Trung Quốc,</div>
+      </div>
+      <div id="caption-5" class="clip caption-clip" data-start="5.0" data-duration="1.2" data-track-index="3" data-layout-allow-caption-zone="true">
+        <div id="caption-5-text" class="caption-bubble">hình ảnh sinh viên</div>
+      </div>
+      <div id="caption-6" class="clip caption-clip" data-start="6.2" data-duration="1.3" data-track-index="3" data-layout-allow-caption-zone="true">
+        <div id="caption-6-text" class="caption-bubble">tuyệt thực giữa quảng trường</div>
+      </div>
+
+      <!-- Thanh màu cam chữ ký Vox cố định đáy -->
+      <div class="bottom-orange-bar"></div>
+    </div>
+
+    <script>
+      const tl = gsap.timeline({ paused: true });
+
+      // Shot 1: Video toàn cảnh phóng viên báo chí Ken Burns zoom nhẹ (0 -> 4.5s)
+      tl.fromTo("#vid-1", { scale: 1.0 }, { scale: 1.08, duration: 4.5, ease: "none" }, 0);
+
+      // Shot 1: Viewfinder máy quay xuất hiện và thu hút ánh nhìn (1.25s -> 4.05s)
+      tl.fromTo("#viewfinder-inner", { opacity: 0, scale: 0.94 }, { opacity: 1, scale: 1.0, duration: 0.4, ease: "power3.out" }, 1.25);
+      tl.to("#viewfinder-inner", { opacity: 0, duration: 0.3, ease: "power2.in" }, 3.75);
+
+      // Shot 1: Label TIÊU ĐIỂM BẮC KINH (2.3s -> 4.1s)
+      tl.fromTo("#shot-1-label-inner", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, 2.3);
+      tl.to("#shot-1-label-inner", { opacity: 0, y: -20, duration: 0.35, ease: "power2.in" }, 3.75);
+
+      // Shot 2: Cắt cận cảnh sinh viên tuyệt thực (4.5s -> 7.5s)
+      tl.fromTo("#vid-2", { scale: 1.12 }, { scale: 1.16, duration: 3.0, ease: "sine.out" }, 4.5);
+
+      // Shot 2: Card TUYỆT THỰC ĐÒI CẢI CÁCH & KHÁNG NGHỊ ÔN HÒA (5.52s -> 7.32s)
+      tl.fromTo("#shot-2-card-inner", { opacity: 0, y: 36, scale: 0.96 }, { opacity: 1, y: 0, scale: 1.0, duration: 0.5, ease: "power3.out" }, 5.52);
+      tl.to("#shot-2-card-inner", { opacity: 0, y: -20, duration: 0.35, ease: "power2.in" }, 6.95);
+
+      // Captions đồng bộ tuần tự theo dòng thời gian
+      tl.fromTo("#caption-1-text", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.25, ease: "power2.out" }, 0.05);
+      tl.fromTo("#caption-2-text", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.25, ease: "power2.out" }, 1.35);
+      tl.fromTo("#caption-3-text", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.25, ease: "power2.out" }, 2.65);
+      tl.fromTo("#caption-4-text", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.25, ease: "power2.out" }, 3.85);
+      tl.fromTo("#caption-5-text", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.25, ease: "power2.out" }, 5.05);
+      tl.fromTo("#caption-6-text", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.25, ease: "power2.out" }, 6.25);
+
+      // Đăng ký timeline với HyperFrames
+      window.__timelines["scene-s01"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

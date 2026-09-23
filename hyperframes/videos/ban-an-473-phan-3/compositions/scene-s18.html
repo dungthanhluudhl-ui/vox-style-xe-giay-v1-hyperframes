@@ -1,0 +1,550 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap"
+    />
+      <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+        background: #0b0f14;
+        font-family: "Be Vietnam Pro", sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+      .clip {
+        position: absolute;
+        inset: 0;
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+      }
+
+      /* Background Spotlight tối đen kết hợp lưới ô vuông 84px chìm theo Style DNA */
+      .spotlight-bg {
+        position: absolute;
+        inset: 0;
+        background-image:
+          radial-gradient(ellipse at 50% 46%, #22201d 0%, #11100f 50%, #060505 100%),
+          linear-gradient(to right, rgba(247, 244, 236, 0.035) 1.5px, transparent 1.5px),
+          linear-gradient(to bottom, rgba(247, 244, 236, 0.035) 1.5px, transparent 1.5px);
+        background-size: 100% 100%, 84px 84px, 84px 84px;
+      }
+
+      /* Lớp grain nhiễu giấy tự nhiên 18% opacity */
+      .grain-overlay {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        opacity: 0.18;
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+        mix-blend-mode: overlay;
+      }
+
+      /* Thanh cam nhận diện thương hiệu cố định mép đáy */
+      .brand-bottom-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 1080px;
+        height: 10px;
+        background: #FF6A1A;
+        z-index: 99;
+      }
+
+      /* Camera Stage để pan/zoom/shake mà không xê dịch thanh đáy */
+      .camera-stage {
+        position: absolute;
+        inset: 0;
+        width: 1080px;
+        height: 1920px;
+        transform-origin: 50% 46%;
+        will-change: transform;
+      }
+
+      /* Vùng hiển thị an toàn (Safe Zone): Top 160px, Bottom 460px */
+      .content-area {
+        position: absolute;
+        top: 160px;
+        left: 40px;
+        width: 1000px;
+        height: 1300px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+      }
+
+      /* ---- Shot 1 Styling ---- */
+      .context-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 28px;
+        border-radius: 40px;
+        border: 1.5px solid rgba(255, 106, 26, 0.5);
+        background: rgba(17, 16, 15, 0.75);
+        color: #FF6A1A;
+        font-size: 26px;
+        font-weight: 700;
+        letter-spacing: 3px;
+        text-transform: uppercase;
+        margin-bottom: 36px;
+      }
+
+      .punch-wrap {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        will-change: transform, opacity;
+      }
+
+      .question-icon-box {
+        width: 120px;
+        height: 120px;
+        margin-bottom: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .punch-title-1 {
+        font-size: 82px;
+        font-weight: 900;
+        line-height: 1.15;
+        color: #F7F4EC;
+        letter-spacing: -1px;
+        margin: 0;
+        text-transform: uppercase;
+      }
+
+      .punch-title-2 {
+        font-size: 92px;
+        font-weight: 900;
+        line-height: 1.15;
+        color: #FF6A1A;
+        letter-spacing: -1px;
+        margin: 8px 0 0 0;
+        text-transform: uppercase;
+        text-shadow: 0 4px 24px rgba(255, 106, 26, 0.35);
+      }
+
+      .punch-underline {
+        width: 220px;
+        height: 6px;
+        background: #FF6A1A;
+        border-radius: 3px;
+        margin-top: 28px;
+      }
+
+      /* ---- Shot 2 Styling ---- */
+      .flash-overlay {
+        position: absolute;
+        inset: 0;
+        background: #FF6A1A;
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      .stamp-container {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        will-change: transform, opacity;
+      }
+
+      /* Con dấu mộc khổng lồ phong cách pháp lý / điều tra của Vox */
+      .vox-stamp {
+        position: relative;
+        width: 820px;
+        padding: 30px 36px;
+        border: 8px solid #FF6A1A;
+        outline: 3px solid #FF6A1A;
+        outline-offset: -16px;
+        border-radius: 14px;
+        background: rgba(14, 13, 12, 0.94);
+        box-shadow:
+          0 0 45px rgba(255, 106, 26, 0.4),
+          inset 0 0 30px rgba(255, 106, 26, 0.16);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+      }
+
+      .stamp-header {
+        font-size: 24px;
+        font-weight: 700;
+        letter-spacing: 5px;
+        color: #FF6A1A;
+        text-transform: uppercase;
+        margin-bottom: 2px;
+      }
+
+      .stamp-main-word {
+        font-size: 168px;
+        font-weight: 900;
+        line-height: 1;
+        letter-spacing: 8px;
+        color: #FF6A1A;
+        margin: 6px 0;
+        text-transform: uppercase;
+        text-shadow:
+          4px 4px 0px rgba(0, 0, 0, 0.9),
+          0 0 35px rgba(255, 106, 26, 0.5);
+      }
+
+      .stamp-footer {
+        font-size: 20px;
+        font-weight: 700;
+        letter-spacing: 6px;
+        color: #FF6A1A;
+        text-transform: uppercase;
+      }
+
+      /* Icon Ban đè lên góc dấu mộc */
+      .stamp-ban-badge {
+        position: absolute;
+        top: -46px;
+        right: -36px;
+        width: 120px;
+        height: 120px;
+        background: #11100f;
+        border-radius: 50%;
+        border: 3px solid #FF6A1A;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.8);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      /* Sóng chấn động khi mộc dập xuống */
+      .shockwave-ring {
+        position: absolute;
+        width: 820px;
+        height: 380px;
+        border: 5px solid #FF6A1A;
+        border-radius: 24px;
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      .sub-explainer-badge {
+        margin-top: 60px;
+        padding: 12px 34px;
+        border-radius: 12px;
+        background: rgba(20, 20, 20, 0.85);
+        border: 1.5px solid rgba(255, 106, 26, 0.5);
+        color: #F7F4EC;
+        font-size: 32px;
+        font-weight: 700;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s18"
+      data-start="0"
+      data-width="1080"
+      data-height="1920"
+      data-duration="5.22"
+    >
+      <!-- SHOT 1: CÂU HỎI KỊCH TÍNH (0s - 2.54s) -->
+      <section
+        id="shot-1"
+        class="clip"
+        data-start="0"
+        data-duration="2.54"
+        data-track-index="0"
+        data-layout-allow-overflow="true"
+      >
+        <div class="spotlight-bg"></div>
+        <div class="grain-overlay"></div>
+
+        <div id="s1-camera" class="camera-stage">
+          <div class="content-area">
+            <div id="s1-badge" class="context-badge">
+              <span>BĂN KHOĂN PHÁP LÝ</span>
+            </div>
+
+            <div id="s1-punch-wrap" class="punch-wrap">
+              <div class="question-icon-box">
+                <svg
+                  width="110"
+                  height="110"
+                  viewBox="0 0 100 100"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    id="s1-question-path"
+                    d="M 32 38 C 32 20, 68 20, 68 38 C 68 52, 50 56, 50 70"
+                    fill="none"
+                    stroke="#FF6A1A"
+                    stroke-width="7"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    pathLength="100"
+                    style="stroke-dasharray: 100; stroke-dashoffset: 100;"
+                  />
+                  <circle
+                    id="s1-question-dot"
+                    cx="50"
+                    cy="84"
+                    r="5.5"
+                    fill="#FF6A1A"
+                    style="transform-origin: 50px 84px; opacity: 0;"
+                  />
+                </svg>
+              </div>
+
+              <h1 class="punch-title-1">CÓ ĐƯỢC</h1>
+              <h1 class="punch-title-2">GIẢM HẾT?</h1>
+              <div id="s1-underline" class="punch-underline"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="brand-bottom-bar"></div>
+      </section>
+
+      <!-- SHOT 2: DẤU MỘC 'KHÔNG!' ĐẬP RUNG CHẤN (2.54s - 5.22s) -->
+      <section
+        id="shot-2"
+        class="clip"
+        data-start="2.54"
+        data-duration="2.68"
+        data-track-index="0"
+        data-layout-allow-overflow="true"
+      >
+        <div class="spotlight-bg"></div>
+        <div class="grain-overlay"></div>
+        <div id="s2-flash" class="flash-overlay"></div>
+
+        <div id="s2-camera" class="camera-stage">
+          <div class="content-area">
+            <div class="stamp-container">
+              <!-- Sóng chấn động lan tỏa từ mộc -->
+              <div
+                id="s2-shockwave"
+                class="shockwave-ring"
+                data-layout-allow-overflow="true"
+              ></div>
+
+              <!-- Dấu mộc 'KHÔNG!' -->
+              <div id="s2-stamp" class="vox-stamp" style="transform: rotate(-8deg);">
+                <div class="stamp-header">BÁC BỎ YÊU CẦU • ĐIỀU 51 BLHS</div>
+                <div class="stamp-main-word">KHÔNG!</div>
+                <div class="stamp-footer">★ QUYẾT ĐỊNH CUỐI CÙNG ★</div>
+
+                <!-- Icon ban tự vẽ nét -->
+                <div class="stamp-ban-badge">
+                  <svg
+                    width="76"
+                    height="76"
+                    viewBox="0 0 100 100"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <circle
+                      id="s2-ban-circle"
+                      cx="50"
+                      cy="50"
+                      r="40"
+                      fill="none"
+                      stroke="#FF6A1A"
+                      stroke-width="7"
+                      pathLength="100"
+                      style="stroke-dasharray: 100; stroke-dashoffset: 100;"
+                    />
+                    <line
+                      id="s2-ban-slash"
+                      x1="24"
+                      y1="24"
+                      x2="76"
+                      y2="76"
+                      stroke="#FF6A1A"
+                      stroke-width="7"
+                      stroke-linecap="round"
+                      pathLength="100"
+                      style="stroke-dasharray: 100; stroke-dashoffset: 100;"
+                    />
+                  </svg>
+                </div>
+              </div>
+
+              <!-- Nhãn giải thích ngắn gọn bổ sung thông tin -->
+              <div id="s2-sublabel" class="sub-explainer-badge">
+                KHÔNG THỂ XÓA HẾT
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="brand-bottom-bar"></div>
+      </section>
+    </div>
+
+    <script>
+      // Composition Master Timeline (paused: true bắt buộc theo contract)
+      const tl = gsap.timeline({ paused: true });
+
+      /* ======================================================================
+         SHOT 1: S18-1 (0.00s -> 2.54s)
+         - transitionIn: punch
+         - cameraMotion: zoom-in
+         - Punch phrase 'CÓ ĐƯỢC GIẢM HẾT?' tại 0.66s (holdMs: 1800ms)
+         - Icon question tại 1.64s (holdMs: 900ms)
+         ====================================================================== */
+
+      // Camera slow zoom-in
+      tl.fromTo(
+        "#s1-camera",
+        { scale: 1.0 },
+        { scale: 1.06, duration: 2.54, ease: "none" },
+        0
+      );
+
+      // Context badge vào nhẹ nhàng
+      tl.fromTo(
+        "#s1-badge",
+        { opacity: 0, y: -20 },
+        { opacity: 1, y: 0, duration: 0.35, ease: "power2.out" },
+        0.25
+      );
+
+      // Punch Phrase 'CÓ ĐƯỢC GIẢM HẾT?' xuất hiện dứt khoát tại 0.66s
+      tl.fromTo(
+        "#s1-punch-wrap",
+        { scale: 0.65, opacity: 0, y: 28 },
+        { scale: 1.0, opacity: 1, y: 0, duration: 0.45, ease: "power3.out" },
+        0.66
+      );
+
+      tl.fromTo(
+        "#s1-underline",
+        { scaleX: 0, opacity: 0 },
+        { scaleX: 1, opacity: 1, duration: 0.4, ease: "power2.out" },
+        0.85
+      );
+
+      // Icon question tự vẽ nét tại 1.64s
+      tl.fromTo(
+        "#s1-question-path",
+        { strokeDashoffset: 100 },
+        { strokeDashoffset: 0, duration: 0.42, ease: "power2.out" },
+        1.64
+      );
+
+      tl.fromTo(
+        "#s1-question-dot",
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.2, ease: "power3.out" },
+        1.95
+      );
+
+      /* ======================================================================
+         SHOT 2: S18-2 (2.54s -> 5.22s)
+         - transitionIn: cut (ngay tại 2.54s)
+         - cameraMotion: punch & screen shake
+         - Con dấu mộc 'KHÔNG!' dập mạnh tại 2.54s
+         - Icon ban tại 2.94s (holdMs: 1500ms)
+         ====================================================================== */
+
+      // Con dấu lao từ trên cao xuống và dập mạnh vào màn hình (0.22s)
+      tl.fromTo(
+        "#s2-stamp",
+        { scale: 2.6, opacity: 0, rotation: -18 },
+        { scale: 1.0, opacity: 1, rotation: -8, duration: 0.22, ease: "power4.in" },
+        2.54
+      );
+
+      // Tiếp đất tại 2.76s -> Screen shake tất định (deterministic)
+      tl.fromTo(
+        "#s2-camera",
+        { x: 0, y: 0 },
+        { x: -16, y: 16, duration: 0.04, ease: "none" },
+        2.76
+      )
+        .to("#s2-camera", { x: 14, y: -12, duration: 0.04, ease: "none" }, 2.8)
+        .to("#s2-camera", { x: -10, y: 10, duration: 0.04, ease: "none" }, 2.84)
+        .to("#s2-camera", { x: 6, y: -6, duration: 0.04, ease: "none" }, 2.88)
+        .to("#s2-camera", { x: -2, y: 2, duration: 0.04, ease: "none" }, 2.92)
+        .to("#s2-camera", { x: 0, y: 0, duration: 0.04, ease: "none" }, 2.96);
+
+      // Chớp sáng cam nhẹ cùng chấn động
+      tl.fromTo(
+        "#s2-flash",
+        { opacity: 0.35 },
+        { opacity: 0, duration: 0.24, ease: "power2.out" },
+        2.76
+      );
+
+      // Sóng xung kích mở rộng lan tỏa
+      tl.fromTo(
+        "#s2-shockwave",
+        { scale: 0.6, opacity: 0.9 },
+        { scale: 2.1, opacity: 0, duration: 0.45, ease: "power2.out" },
+        2.76
+      );
+
+      // Icon 'ban' vẽ nét xuất hiện tại 2.94s (0.4s sau khi Shot 2 bắt đầu)
+      tl.fromTo(
+        "#s2-ban-circle",
+        { strokeDashoffset: 100 },
+        { strokeDashoffset: 0, duration: 0.32, ease: "power2.out" },
+        2.94
+      );
+
+      tl.fromTo(
+        "#s2-ban-slash",
+        { strokeDashoffset: 100 },
+        { strokeDashoffset: 0, duration: 0.22, ease: "power2.out" },
+        3.15
+      );
+
+      // Sub-label pháp lý xuất hiện vững chãi
+      tl.fromTo(
+        "#s2-sublabel",
+        { opacity: 0, y: 18 },
+        { opacity: 1, y: 0, duration: 0.4, ease: "power2.out" },
+        3.35
+      );
+
+      // Subtle breathing motion ở cuối cảnh để không bị đông cứng khung hình
+      tl.to(
+        "#s2-camera",
+        { scale: 1.03, duration: 1.42, ease: "sine.inOut" },
+        3.8
+      );
+
+      // Đăng ký timeline cho HyperFrames seek runtime
+      window.__timelines = window.__timelines || {};
+      window.__timelines["scene-s18"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

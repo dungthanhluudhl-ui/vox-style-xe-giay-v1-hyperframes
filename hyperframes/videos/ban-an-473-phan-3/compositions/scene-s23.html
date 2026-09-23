@@ -1,0 +1,524 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+      *, *::before, *::after {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        padding: 0;
+        width: 1080px;
+        height: 1920px;
+        background-color: #E7E3D9;
+        font-family: "Be Vietnam Pro", sans-serif;
+        color: #141414;
+        overflow: hidden;
+      }
+
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+
+      /* Lưới ô vuông 84px đặc trưng Vox DNA */
+      .bg-grid {
+        position: absolute;
+        inset: 0;
+        background-image:
+          linear-gradient(to right, rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px),
+          linear-gradient(to bottom, rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px);
+        background-size: 84px 84px;
+        opacity: 0.55;
+        pointer-events: none;
+        z-index: 1;
+      }
+
+      /* Lớp nhiễu hạt giấy (grain) hòa trộn multiply */
+      .grain-overlay {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: 2;
+        mix-blend-mode: multiply;
+        opacity: 0.18;
+      }
+
+      /* Thanh cam nhận diện cố định ở mép đáy khung hình */
+      .bottom-orange-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 10px;
+        background-color: #FF6A1A;
+        z-index: 50;
+      }
+
+      /* Khung card tổng thể chứa nội dung mở màn kiểu unfold */
+      #scene-card {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        transform-origin: 50% 12%;
+        will-change: transform, opacity;
+        z-index: 10;
+      }
+
+      /* Header tòa án phúc thẩm */
+      #header-docket {
+        position: absolute;
+        top: 160px;
+        left: 60px;
+        right: 60px;
+        height: 70px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 2px solid #141414;
+        padding-bottom: 8px;
+        will-change: transform, opacity;
+      }
+
+      .docket-badge {
+        background-color: #141414;
+        color: #F7F4EC;
+        font-weight: 900;
+        font-size: 20px;
+        padding: 6px 14px;
+        letter-spacing: 0.5px;
+        border-radius: 4px;
+      }
+
+      .docket-court {
+        font-weight: 700;
+        font-size: 20px;
+        color: #141414;
+        letter-spacing: 0.2px;
+      }
+
+      /* Cửa sổ hiển thị video phiên tòa TAND TP. Hà Nội */
+      #video-wrapper {
+        position: absolute;
+        top: 248px;
+        left: 60px;
+        width: 960px;
+        height: 720px;
+        border: 4px solid #141414;
+        background-color: #141414;
+        box-shadow: 10px 10px 0px rgba(20, 20, 20, 0.22);
+        overflow: hidden;
+      }
+
+      #vid-court {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+        transform-origin: center center;
+        will-change: transform;
+      }
+
+      .video-caption-tag {
+        position: absolute;
+        top: 16px;
+        left: 16px;
+        background: rgba(20, 20, 20, 0.9);
+        color: #F7F4EC;
+        font-size: 19px;
+        font-weight: 700;
+        padding: 6px 14px;
+        border-left: 5px solid #FF6A1A;
+        letter-spacing: 0.5px;
+        z-index: 5;
+      }
+
+      /* Overlay 1: Áp dụng Điều 54 Bộ luật Hình sự */
+      #doc-badge {
+        position: absolute;
+        top: 990px;
+        left: 60px;
+        width: 960px;
+        height: 110px;
+        background-color: #F5F0E4;
+        border: 3.5px solid #141414;
+        border-left: 12px solid #FF6A1A;
+        box-shadow: 6px 6px 0px rgba(20, 20, 20, 0.16);
+        padding: 16px 24px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        will-change: transform, opacity;
+      }
+
+      .doc-content {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      .doc-pill-group {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .doc-pill {
+        background-color: #141414;
+        color: #F7F4EC;
+        font-weight: 900;
+        font-size: 17px;
+        padding: 4px 10px;
+        border-radius: 3px;
+        letter-spacing: 0.5px;
+      }
+
+      .doc-title {
+        font-size: 28px;
+        font-weight: 900;
+        color: #141414;
+        line-height: 1.2;
+      }
+
+      .doc-sub {
+        font-size: 19px;
+        font-weight: 700;
+        color: #141414;
+      }
+
+      .doc-stamp-icon {
+        width: 58px;
+        height: 58px;
+        flex-shrink: 0;
+      }
+
+      /* Overlay 2: Sự chuyển đổi mức án (Gạch 36 tháng, icon fall) */
+      #penalty-shift {
+        position: absolute;
+        top: 1120px;
+        left: 60px;
+        width: 960px;
+        height: 98px;
+        background-color: #E7E3D9;
+        border: 2.5px dashed rgba(20, 20, 20, 0.5);
+        border-radius: 6px;
+        padding: 0 28px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        will-change: transform, opacity;
+      }
+
+      .old-penalty-group {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .penalty-label-small {
+        font-size: 16px;
+        font-weight: 900;
+        color: #141414;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .old-penalty-val {
+        position: relative;
+        display: inline-block;
+        font-size: 38px;
+        font-weight: 900;
+        color: #141414;
+      }
+
+      .strike-line {
+        position: absolute;
+        top: 50%;
+        left: -6px;
+        right: -6px;
+        height: 5px;
+        background-color: #141414;
+        transform-origin: left center;
+        will-change: transform;
+      }
+
+      .fall-icon-wrapper {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 62px;
+        height: 62px;
+      }
+
+      .fall-svg {
+        width: 56px;
+        height: 56px;
+      }
+
+      .status-pill-under {
+        background-color: #141414;
+        color: #F7F4EC;
+        font-size: 20px;
+        font-weight: 900;
+        padding: 8px 18px;
+        border-radius: 4px;
+        letter-spacing: 0.5px;
+      }
+
+      /* Overlay 3: Punch Phrase "GIẢM CÒN 30 THÁNG" */
+      #punch-verdict {
+        position: absolute;
+        top: 1238px;
+        left: 60px;
+        width: 960px;
+        height: 184px;
+        background-color: #141414;
+        border: 4px solid #FF6A1A;
+        box-shadow: 8px 8px 0px rgba(255, 106, 26, 0.35);
+        padding: 20px 32px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        transform-origin: 50% 50%;
+        will-change: transform, opacity;
+      }
+
+      .punch-header-tag {
+        font-size: 20px;
+        font-weight: 900;
+        color: #FF6A1A;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        margin-bottom: 6px;
+      }
+
+      .punch-text {
+        margin: 0;
+        font-size: 62px;
+        font-weight: 900;
+        line-height: 1.15;
+        color: #F7F4EC;
+        letter-spacing: -0.5px;
+      }
+
+      .punch-sub {
+        margin: 6px 0 0 0;
+        font-size: 21px;
+        font-weight: 700;
+        color: #E7E3D9;
+        letter-spacing: 0.5px;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s23"
+      data-width="1080"
+      data-height="1920"
+      data-duration="7.12"
+      data-layout-allow-overflow="true"
+    >
+      <!-- Lớp nền & họa tiết giấy Vox -->
+      <div class="bg-grid" data-layout-ignore="true"></div>
+
+      <svg class="grain-overlay" data-layout-ignore="true" xmlns="http://www.w3.org/2000/svg">
+        <filter id="grain-filter">
+          <feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" stitchTiles="stitch" />
+          <feColorMatrix type="matrix" values="0 0 0 0 0.08  0 0 0 0 0.08  0 0 0 0 0.08  0 0 0 0.18 0" />
+        </filter>
+        <rect width="100%" height="100%" filter="url(#grain-filter)" />
+      </svg>
+
+      <!-- Dải cam nhận diện đáy khung hình -->
+      <div class="bottom-orange-bar" data-layout-ignore="true"></div>
+
+      <!-- Khung cảnh chứa nội dung S23 -->
+      <div id="scene-card">
+        <!-- Tiêu đề hồ sơ tòa án -->
+        <header id="header-docket">
+          <div class="docket-badge">ÁP DỤNG ĐIỀU 54 BLHS</div>
+          <div class="docket-court">TÒA ÁN NHÂN DÂN CẤP PHÚC THẨM</div>
+        </header>
+
+        <!-- Cửa sổ Video phiên tòa (vid-05 có data-start và data-duration tường minh) -->
+        <div id="video-wrapper">
+          <video
+            id="vid-court"
+            src="assets/vid-05-courtroom-sentencing-prison-verdict.mp4"
+            data-start="0"
+            data-duration="7.12"
+            data-media-start="0.5"
+            muted
+            playsinline
+          ></video>
+          <div class="video-caption-tag">TAND TP. HÀ NỘI • TUYÊN ÁN</div>
+        </div>
+
+        <!-- Overlay 1: Nhãn áp dụng Điều 54 (atMs: 190440 -> 2.30s) -->
+        <article id="doc-badge">
+          <div class="doc-content">
+            <div class="doc-pill-group">
+              <span class="doc-pill">BỘ LUẬT HÌNH SỰ</span>
+              <span class="doc-title">Áp dụng Điều 54</span>
+            </div>
+            <span class="doc-sub">Quyết định hình phạt dưới mức thấp nhất của khung</span>
+          </div>
+          <svg class="doc-stamp-icon" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="32" cy="32" r="28" stroke="#141414" stroke-width="3.5" />
+            <path d="M 20 32 L 28 40 L 44 24" stroke="#FF6A1A" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+        </article>
+
+        <!-- Overlay 2: Hạ mức án & icon "fall" (atMs: 192400 -> 4.26s) -->
+        <div id="penalty-shift" data-layout-allow-occlusion="true">
+          <div class="old-penalty-group">
+            <span class="penalty-label-small">Mức án trước đây</span>
+            <div class="old-penalty-val" data-layout-allow-occlusion="true">
+              36 THÁNG
+              <span class="strike-line" id="strike-bar" data-layout-allow-occlusion="true"></span>
+            </div>
+          </div>
+
+          <div class="fall-icon-wrapper">
+            <svg class="fall-svg" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="30" cy="30" r="26" fill="#141414" />
+              <path
+                id="fall-path"
+                d="M 18 20 L 38 40 M 38 40 L 24 40 M 38 40 L 38 26"
+                stroke="#FF6A1A"
+                stroke-width="4.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </div>
+
+          <div class="status-pill-under">GIẢM DƯỚI KHUNG</div>
+        </div>
+
+        <!-- Overlay 3: Punch Phrase (xuất hiện 5.32s, giữ đủ 1.8s đến hết 7.12s) -->
+        <div id="punch-verdict">
+          <span class="punch-header-tag">QUYẾT ĐỊNH CỦA HỘI ĐỒNG XÉT XỬ</span>
+          <h1 class="punch-text">GIẢM CÒN 30 THÁNG</h1>
+          <p class="punch-sub">ÁP DỤNG CHO NGUYỄN SƠN & NGUYỄN ĐỨC HUY</p>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Đo độ dài đường nét SVG icon fall
+      const fallPath = document.getElementById("fall-path");
+      const pathLength = fallPath ? Math.ceil(fallPath.getTotalLength()) : 75;
+      if (fallPath) {
+        fallPath.style.strokeDasharray = String(pathLength);
+      }
+
+      // Khởi tạo duy nhất 1 timeline gốc paused
+      const tl = gsap.timeline({ paused: true });
+
+      // 1. Vào cảnh kiểu "unfold" (t = 0.0s -> 0.75s)
+      tl.fromTo(
+        "#scene-card",
+        {
+          transformPerspective: 1200,
+          rotationX: -15,
+          scale: 0.94,
+          opacity: 0,
+        },
+        {
+          transformPerspective: 1200,
+          rotationX: 0,
+          scale: 1.0,
+          opacity: 1,
+          duration: 0.75,
+          ease: "power3.out",
+        },
+        0
+      );
+
+      // Header xuất hiện đồng bộ
+      tl.fromTo(
+        "#header-docket",
+        { y: -24, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.5, ease: "power2.out" },
+        0.15
+      );
+
+      // 2. Chuyển động zoom-in nhẹ cho video theo cameraMotion của shotlist
+      tl.fromTo(
+        "#vid-court",
+        { scale: 1.0 },
+        { scale: 1.08, duration: 7.12, ease: "none" },
+        0
+      );
+
+      // 3. Overlay 1: "Áp dụng Điều 54" (t = 2.30s)
+      tl.fromTo(
+        "#doc-badge",
+        { y: 35, opacity: 0, scale: 0.96 },
+        { y: 0, opacity: 1, scale: 1.0, duration: 0.55, ease: "power3.out" },
+        2.30
+      );
+
+      // 4. Overlay 2: "fall" & hạ mức án (t = 4.26s)
+      tl.fromTo(
+        "#penalty-shift",
+        { y: 25, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.45, ease: "power3.out" },
+        4.26
+      );
+
+      // Gạch bỏ mức án cũ 36 tháng (t = 4.45s)
+      tl.fromTo(
+        "#strike-bar",
+        { scaleX: 0 },
+        { scaleX: 1, duration: 0.35, ease: "power2.out" },
+        4.45
+      );
+
+      // Tự vẽ icon mũi tên hạ xuống (fall) theo strokeDashoffset (t = 4.50s)
+      tl.fromTo(
+        "#fall-path",
+        { strokeDashoffset: pathLength },
+        { strokeDashoffset: 0, duration: 0.48, ease: "power2.out" },
+        4.50
+      );
+
+      // 5. Overlay 3: Punch "GIẢM CÒN 30 THÁNG" (t = 5.32s, giữ đủ 1.8s đến hết 7.12s)
+      tl.fromTo(
+        "#punch-verdict",
+        {
+          scale: 1.28,
+          rotation: 2,
+          opacity: 0,
+        },
+        {
+          scale: 1.0,
+          rotation: 0,
+          opacity: 1,
+          duration: 0.45,
+          ease: "power3.out",
+        },
+        5.32
+      );
+
+      // Đăng ký timeline chính vào window.__timelines["scene-s23"]
+      window.__timelines["scene-s23"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

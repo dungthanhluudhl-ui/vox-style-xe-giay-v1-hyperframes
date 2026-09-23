@@ -1,0 +1,583 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+      *, *::before, *::after {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #E7E3D9;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: #E7E3D9;
+      }
+
+      /* 1. NỀN GIẤY & LƯỚI CHART (Variant 'chart' theo Style DNA) */
+      .bg-paper {
+        position: absolute;
+        inset: 0;
+        background-color: #E7E3D9;
+        z-index: 1;
+      }
+      .bg-grid {
+        position: absolute;
+        inset: 0;
+        background-image: 
+          linear-gradient(to right, rgba(20, 20, 20, 0.14) 1.5px, transparent 1.5px),
+          linear-gradient(to bottom, rgba(20, 20, 20, 0.14) 1.5px, transparent 1.5px);
+        background-size: 84px 84px;
+        z-index: 2;
+      }
+      .bg-grain {
+        position: absolute;
+        inset: 0;
+        opacity: 0.18;
+        mix-blend-mode: multiply;
+        background-image: radial-gradient(rgba(20, 20, 20, 0.8) 1px, transparent 0);
+        background-size: 6px 6px;
+        pointer-events: none;
+        z-index: 3;
+      }
+
+      /* 2. VIDEO LAYER TƯ LIỆU BIỂU TÌNH 1989 (z-index: 4) */
+      #video-layer {
+        position: absolute;
+        inset: 0;
+        z-index: 4;
+        mix-blend-mode: multiply;
+        opacity: 0.88;
+        overflow: hidden;
+      }
+      .video-el {
+        position: absolute;
+        top: -5%;
+        left: -10%;
+        width: 120%;
+        height: 110%;
+        object-fit: cover;
+      }
+
+      /* 3. CHART HORIZONTAL LINES (20%, 40%, 60%, 80%) & SPATIAL RADAR (z-index: 5 & 6) */
+      .chart-overlay {
+        position: absolute;
+        inset: 0;
+        z-index: 5;
+        pointer-events: none;
+      }
+      .chart-line {
+        position: absolute;
+        left: 0;
+        width: 100%;
+        height: 2px;
+        background: rgba(20, 20, 20, 0.32);
+      }
+      .chart-line::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: -4px;
+        width: 32px;
+        height: 10px;
+        background-color: #FF6A1A;
+      }
+      .line-20 { top: 20%; }
+      .line-40 { top: 40%; }
+      .line-60 { top: 60%; }
+      .line-80 { top: 80%; }
+
+      /* Vòng tròn radar biểu thị quan hệ không gian Bắc Kinh bị bao vây */
+      .beijing-spatial {
+        position: absolute;
+        top: 660px;
+        left: 190px;
+        width: 700px;
+        height: 700px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 6;
+        pointer-events: none;
+      }
+      .spatial-ring {
+        position: absolute;
+        border-radius: 50%;
+        box-sizing: border-box;
+        pointer-events: none;
+      }
+      .ring-outer {
+        width: 680px;
+        height: 680px;
+        border: 2.5px dashed rgba(255, 106, 26, 0.65);
+      }
+      .ring-mid {
+        width: 520px;
+        height: 520px;
+        border: 2px dotted rgba(255, 106, 26, 0.45);
+      }
+      .ring-inner {
+        width: 360px;
+        height: 360px;
+        border: 1.5px solid rgba(20, 20, 20, 0.35);
+      }
+      .spatial-center {
+        position: relative;
+        z-index: 2;
+        padding: 10px 24px;
+        background: #141414;
+        color: #F7F4EC;
+        font-size: 20px;
+        font-weight: 900;
+        letter-spacing: 2px;
+        border-left: 6px solid #FF6A1A;
+        border-radius: 4px;
+        box-shadow: 4px 4px 0px #ff7a1a;
+      }
+
+      /* 4. OVERLAYS CLIPS & CARDS (z-index: 20 & 25, nằm trên video) */
+      .clip-overlay {
+        position: absolute;
+        inset: 0;
+        z-index: 20;
+        overflow: hidden;
+      }
+
+      /* Card Shot 1: Triệu Tử Dương lo âu */
+      .shot1-card {
+        position: absolute;
+        top: 240px;
+        left: 60px;
+        right: 60px;
+        background: #141414;
+        border: 3px solid #141414;
+        box-shadow: 10px 10px 0px #ff7a1a;
+        padding: 34px 38px;
+        border-radius: 4px;
+        z-index: 25;
+      }
+      .shot1-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        background: #FF6A1A;
+        color: #141414;
+        font-size: 20px;
+        font-weight: 900;
+        padding: 6px 16px;
+        letter-spacing: 2px;
+        margin-bottom: 20px;
+        border-radius: 2px;
+      }
+      .shot1-row {
+        display: flex;
+        align-items: center;
+        gap: 26px;
+      }
+      .shot1-icon-wrap {
+        flex-shrink: 0;
+        width: 84px;
+        height: 84px;
+        background: rgba(247, 244, 236, 0.08);
+        border: 2px solid #FF6A1A;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .shot1-text-col {
+        flex: 1;
+      }
+      .shot1-title {
+        margin: 0;
+        color: #F7F4EC;
+        font-size: 46px;
+        font-weight: 900;
+        line-height: 1.25;
+        letter-spacing: 0.5px;
+      }
+      .shot1-sub {
+        margin: 10px 0 0 0;
+        color: #E7E3D9;
+        font-size: 22px;
+        font-weight: 700;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+      }
+
+      /* Card Shot 2: Punch-phrase 1.000.000 NGƯỜI & Biểu đồ quy mô dữ liệu */
+      .shot2-card {
+        position: absolute;
+        top: 240px;
+        left: 50px;
+        right: 50px;
+        background: #141414;
+        border: 3px solid #141414;
+        box-shadow: 12px 12px 0px #ff7a1a;
+        padding: 38px 36px;
+        border-radius: 4px;
+        text-align: center;
+        z-index: 25;
+      }
+      .shot2-header-badge {
+        display: inline-flex;
+        align-items: center;
+        background: #FF6A1A;
+        color: #141414;
+        font-size: 22px;
+        font-weight: 900;
+        padding: 6px 20px;
+        letter-spacing: 3px;
+        border-radius: 2px;
+        text-transform: uppercase;
+        margin-bottom: 16px;
+      }
+      .counter-container {
+        display: flex;
+        align-items: baseline;
+        justify-content: center;
+        gap: 16px;
+        margin: 4px 0;
+      }
+      .counter-number {
+        color: #FF6A1A;
+        font-size: 104px;
+        font-weight: 900;
+        line-height: 1;
+        letter-spacing: -1px;
+      }
+      .counter-unit {
+        color: #F7F4EC;
+        font-size: 56px;
+        font-weight: 900;
+        line-height: 1;
+        letter-spacing: 2px;
+      }
+
+      /* Thước đo dữ liệu phần trăm tăng trưởng áp lực */
+      .gauge-track {
+        position: relative;
+        width: 100%;
+        height: 8px;
+        background: rgba(247, 244, 236, 0.15);
+        border-radius: 4px;
+        margin-top: 14px;
+        overflow: hidden;
+      }
+      .gauge-fill {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background: #FF6A1A;
+        border-radius: 4px;
+        transform-origin: left center;
+      }
+
+      .crowd-icon-row {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 18px;
+        margin-top: 24px;
+        padding-top: 20px;
+        border-top: 1.5px dashed rgba(247, 244, 236, 0.25);
+      }
+      .crowd-text {
+        color: #F7F4EC;
+        font-size: 22px;
+        font-weight: 700;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+      }
+
+      /* 5. BRAND SIGNATURE: Thanh cam cố định mép đáy */
+      .brand-bottom-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 12px;
+        background-color: #FF6A1A;
+        z-index: 100;
+        pointer-events: none;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s05"
+      data-start="0"
+      data-width="1080"
+      data-height="1920"
+      data-duration="9"
+    >
+      <!-- LAYER 1: Giấy nền & Lưới texture -->
+      <div class="bg-paper" data-layout-ignore="true"></div>
+      <div class="bg-grid" data-layout-ignore="true"></div>
+      <div class="bg-grain" data-layout-ignore="true"></div>
+
+      <!-- LAYER 2: Video tư liệu đám đông 1989 phân đoạn thành 2 shot cắt cảnh -->
+      <div id="video-layer" data-layout-allow-overflow="true" data-layout-ignore="true">
+        <!-- Shot S05-1: Pan trái từ 0s đến 4.6s -->
+        <video
+          id="vid-shot1"
+          class="video-el"
+          data-start="0"
+          data-duration="4.6"
+          data-media-start="0"
+          muted
+          playsinline
+          src="assets/vid-05-protest-crowd-paper-cutout.mp4"
+        ></video>
+        <!-- Shot S05-2: Zoom-out từ 4.6s đến 9.0s (offset 4.6s trong video) -->
+        <video
+          id="vid-shot2"
+          class="video-el"
+          data-start="4.6"
+          data-duration="4.4"
+          data-media-start="4.6"
+          muted
+          playsinline
+          src="assets/vid-05-protest-crowd-paper-cutout.mp4"
+        ></video>
+      </div>
+
+      <!-- LAYER 3: Chart ruled lines & Visual relationship bản đồ Bắc Kinh -->
+      <div class="chart-overlay" data-layout-ignore="true">
+        <div class="chart-line line-20"></div>
+        <div class="chart-line line-40"></div>
+        <div class="chart-line line-60"></div>
+        <div class="chart-line line-80"></div>
+      </div>
+
+      <!-- Radar / Không gian thủ đô Bắc Kinh bị vây quanh -->
+      <div id="beijing-map" class="beijing-spatial" data-layout-allow-overflow="true" data-layout-ignore="true">
+        <div id="ring-1" class="spatial-ring ring-outer"></div>
+        <div id="ring-2" class="spatial-ring ring-mid"></div>
+        <div id="ring-3" class="spatial-ring ring-inner"></div>
+        <div class="spatial-center" data-layout-allow-occlusion="true">TRỤC BẮC KINH • THIÊN AN MÔN</div>
+      </div>
+
+      <!-- LAYER 4: OVERLAYS (z-index: 20/25, nằm trên video) -->
+      <!-- Shot S05-1: Label Triệu Tử Dương lo âu (t = 2.07s -> 4.27s) -->
+      <div id="shot1-overlay" class="clip clip-overlay" data-start="2.07" data-duration="2.2" data-layout-allow-occlusion="true">
+        <div id="shot1-card" class="shot1-card" data-layout-allow-occlusion="true">
+          <div class="shot1-badge" data-layout-allow-occlusion="true">
+            <span data-layout-allow-occlusion="true">●</span>
+            <span data-layout-allow-occlusion="true">BẮC KINH • THÁNG 5/1989</span>
+          </div>
+          <div class="shot1-row" data-layout-allow-occlusion="true">
+            <div class="shot1-icon-wrap" data-layout-ignore="true">
+              <!-- SVG icon "person" tự vẽ tay theo Style DNA -->
+              <svg width="56" height="56" viewBox="0 0 100 100">
+                <circle id="person-head" cx="50" cy="30" r="18" fill="none" stroke="#FF6A1A" stroke-width="6" stroke-linecap="round" />
+                <path id="person-body" d="M 22 86 C 22 58, 78 58, 78 86" fill="none" stroke="#FF6A1A" stroke-width="6" stroke-linecap="round" />
+              </svg>
+            </div>
+            <div class="shot1-text-col" data-layout-allow-occlusion="true">
+              <h2 class="shot1-title" data-layout-allow-occlusion="true">TRIỆU TỬ DƯƠNG LO ÂU</h2>
+              <p class="shot1-sub" data-layout-allow-occlusion="true">TỔNG BÍ THƯ ĐẢNG CỘNG SẢN TQ</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Shot S05-2: Punch-phrase 1.000.000 NGƯỜI & crowd icon (t = 5.74s -> 8.54s) -->
+      <div id="shot2-overlay" class="clip clip-overlay" data-start="5.74" data-duration="2.8" data-layout-allow-occlusion="true">
+        <div id="shot2-card" class="shot2-card" data-layout-allow-occlusion="true">
+          <div class="shot2-header-badge" data-layout-allow-occlusion="true">QUY MÔ BIỂU TÌNH</div>
+          <div class="counter-container" data-layout-allow-occlusion="true">
+            <span class="counter-number" data-layout-allow-occlusion="true">1.000.000</span>
+            <span class="counter-unit" data-layout-allow-occlusion="true">NGƯỜI</span>
+          </div>
+          <!-- Gauge bar thể hiện quy mô mở rộng tối đa chạm mốc 1 triệu người -->
+          <div class="gauge-track" data-layout-ignore="true">
+            <div id="gauge-fill" class="gauge-fill"></div>
+          </div>
+          <div class="crowd-icon-row" data-layout-allow-occlusion="true">
+            <!-- SVG icon "crowd" 3 người tự vẽ tay theo Style DNA -->
+            <svg width="68" height="48" viewBox="0 0 120 90" data-layout-ignore="true">
+              <!-- Người trái -->
+              <circle id="crowd-h1" cx="30" cy="36" r="12" fill="none" stroke="#FF6A1A" stroke-width="5" stroke-linecap="round" />
+              <path id="crowd-b1" d="M 12 84 C 12 62, 48 62, 48 84" fill="none" stroke="#FF6A1A" stroke-width="5" stroke-linecap="round" />
+              <!-- Người phải -->
+              <circle id="crowd-h2" cx="90" cy="36" r="12" fill="none" stroke="#FF6A1A" stroke-width="5" stroke-linecap="round" />
+              <path id="crowd-b2" d="M 72 84 C 72 62, 108 62, 108 84" fill="none" stroke="#FF6A1A" stroke-width="5" stroke-linecap="round" />
+              <!-- Người giữa (chính) -->
+              <circle id="crowd-h3" cx="60" cy="24" r="15" fill="none" stroke="#F7F4EC" stroke-width="6" stroke-linecap="round" />
+              <path id="crowd-b3" d="M 32 84 C 32 54, 88 54, 88 84" fill="none" stroke="#F7F4EC" stroke-width="6" stroke-linecap="round" />
+            </svg>
+            <span class="crowd-text" data-layout-allow-occlusion="true">BAO VÂY TRỤC KHÔNG GIAN THỦ ĐÔ</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- LAYER 5: Chữ ký thương hiệu thanh cam cố định mép đáy -->
+      <div class="brand-bottom-bar" data-layout-ignore="true"></div>
+    </div>
+
+    <!-- GSAP Choreography Timeline (100% Deterministic & Seek-Safe) -->
+    <script>
+      // Thiết lập chuẩn bị cho stroke SVG tự vẽ
+      function initSvgPath(el, fallbackLen) {
+        if (!el) return;
+        const len = (el.getTotalLength && typeof el.getTotalLength === "function") 
+          ? el.getTotalLength() 
+          : fallbackLen;
+        el.style.strokeDasharray = len + "";
+        el.style.strokeDashoffset = len + "";
+      }
+
+      const pHead = document.getElementById("person-head");
+      const pBody = document.getElementById("person-body");
+      const crH1 = document.getElementById("crowd-h1");
+      const crB1 = document.getElementById("crowd-b1");
+      const crH2 = document.getElementById("crowd-h2");
+      const crB2 = document.getElementById("crowd-b2");
+      const crH3 = document.getElementById("crowd-h3");
+      const crB3 = document.getElementById("crowd-b3");
+
+      initSvgPath(pHead, 115);
+      initSvgPath(pBody, 120);
+      initSvgPath(crH1, 76);
+      initSvgPath(crB1, 80);
+      initSvgPath(crH2, 76);
+      initSvgPath(crB2, 80);
+      initSvgPath(crH3, 95);
+      initSvgPath(crB3, 100);
+
+      // KHỞI TẠO TIMELINE TẤT ĐỊNH (PAUSED: TRUE)
+      const tl = gsap.timeline({ paused: true });
+
+      // === SHOT S05-1 (0.0s -> 4.6s) ===
+      // Entrance "rise" tổng thể cho shot 1
+      tl.fromTo(
+        "#video-layer",
+        { y: 50, opacity: 0 },
+        { y: 0, opacity: 0.88, duration: 0.75, ease: "power3.out" },
+        0
+      );
+
+      // Camera motion: pan-left chậm trên vid-shot1
+      tl.fromTo(
+        "#vid-shot1",
+        { x: 0, scale: 1.08 },
+        { x: -70, scale: 1.08, duration: 4.6, ease: "none" },
+        0
+      );
+
+      // Bản đồ / radar Bắc Kinh xuất hiện nhẹ nhàng
+      tl.fromTo(
+        "#beijing-map",
+        { opacity: 0, scale: 0.85 },
+        { opacity: 1, scale: 1, duration: 0.9, ease: "power2.out" },
+        0.4
+      );
+
+      // Shot 1 Overlay Card: "TRIỆU TỬ DƯƠNG LO ÂU" (t = 2.07s)
+      tl.fromTo(
+        "#shot1-card",
+        { y: 35, opacity: 0, scale: 0.95 },
+        { y: 0, opacity: 1, scale: 1, duration: 0.5, ease: "power3.out" },
+        2.07
+      );
+
+      // Vẽ icon person tự vẽ tay
+      tl.to(
+        "#person-head",
+        { strokeDashoffset: 0, duration: 0.4, ease: "power2.out" },
+        2.15
+      );
+      tl.to(
+        "#person-body",
+        { strokeDashoffset: 0, duration: 0.45, ease: "power2.out" },
+        2.3
+      );
+
+      // Kết thúc shot 1 card trước khi cut sang shot 2
+      tl.to(
+        "#shot1-card",
+        { opacity: 0, y: -20, duration: 0.25, ease: "power2.in" },
+        4.0
+      );
+
+      // === SHOT S05-2 (4.6s -> 9.0s) ===
+      // Cut transition tại 4.6s
+      // Camera motion: zoom-out chậm làm lộ biển người
+      tl.fromTo(
+        "#vid-shot2",
+        { scale: 1.18, x: -20 },
+        { scale: 1.02, x: 0, duration: 4.4, ease: "power1.out" },
+        4.6
+      );
+
+      // Sóng dữ liệu vòng tròn lan rộng mô tả biển người vây quanh
+      tl.fromTo(
+        "#ring-1",
+        { scale: 1, opacity: 0.65 },
+        { scale: 1.25, opacity: 0.2, duration: 3.8, ease: "sine.out" },
+        4.6
+      );
+      tl.fromTo(
+        "#ring-2",
+        { scale: 1, opacity: 0.5 },
+        { scale: 1.35, opacity: 0.15, duration: 3.8, ease: "sine.out" },
+        4.8
+      );
+
+      // Shot 2 Overlay: Punch-phrase 1.000.000 NGƯỜI (t = 5.74s)
+      tl.fromTo(
+        "#shot2-card",
+        { y: 40, opacity: 0, scale: 0.92 },
+        { y: 0, opacity: 1, scale: 1, duration: 0.55, ease: "power3.out" },
+        5.74
+      );
+
+      // Thước đo dữ liệu quy mô biểu tình mở rộng tối đa (seek-safe transform)
+      tl.fromTo(
+        "#gauge-fill",
+        { scaleX: 0 },
+        { scaleX: 1, duration: 1.0, ease: "power2.out" },
+        5.85
+      );
+
+      // Vẽ nét SVG icon crowd (bền vững và seek-safe)
+      tl.to(
+        ["#crowd-h3", "#crowd-b3"],
+        { strokeDashoffset: 0, duration: 0.45, ease: "power2.out" },
+        5.95
+      );
+      tl.to(
+        ["#crowd-h1", "#crowd-b1", "#crowd-h2", "#crowd-b2"],
+        { strokeDashoffset: 0, duration: 0.5, ease: "power2.out" },
+        6.15
+      );
+
+      // Card exit fade out trước khi hết cảnh
+      tl.to(
+        "#shot2-card",
+        { opacity: 0, y: -20, duration: 0.28, ease: "power2.in" },
+        8.25
+      );
+
+      // ĐĂNG KÝ VÀO REGISTRY BẮT BUỘC CỦA HYPERFRAMES
+      window.__timelines["scene-s05"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

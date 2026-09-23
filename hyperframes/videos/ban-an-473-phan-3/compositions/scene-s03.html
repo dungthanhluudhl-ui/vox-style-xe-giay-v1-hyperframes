@@ -1,0 +1,674 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      width: 1080px;
+      height: 1920px;
+      overflow: hidden;
+      background-color: #F5F0E4;
+      color: #141414;
+      font-family: "Be Vietnam Pro", sans-serif;
+      user-select: none;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    #root {
+      position: relative;
+      width: 1080px;
+      height: 1920px;
+      overflow: hidden;
+      background-color: #F5F0E4;
+    }
+
+    /* Texture hạt nhiễu chuẩn phong cách Vox (card variant) */
+    .paper-grain {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.18;
+      mix-blend-mode: multiply;
+      z-index: 900;
+      background-image: radial-gradient(#141414 1px, transparent 1px);
+      background-size: 8px 8px;
+    }
+
+    /* Thanh cam nhận diện thương hiệu cố định ở đáy */
+    .bottom-brand-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 1080px;
+      height: 14px;
+      background-color: #FF6A1A;
+      z-index: 1000;
+    }
+
+    /* Clip chính toàn scene — kiêm camera stage */
+    .scene-clip {
+      position: absolute;
+      inset: 0;
+      width: 1080px;
+      height: 1920px;
+      transform-origin: 540px 960px;
+      will-change: transform;
+    }
+
+    /* -------------------------------------------------------------
+       VÙNG OVERLAY PHÍA TRÊN (Y: 170px -> 490px)
+       Tách biệt hoàn toàn với điện thoại bên dưới, tránh đè chữ
+       ------------------------------------------------------------- */
+    #top-overlay-zone {
+      position: absolute;
+      top: 170px;
+      left: 60px;
+      width: 960px;
+      height: 320px;
+      z-index: 80;
+    }
+
+    /* Label: "Vài clip Zalo?" (Shot 1) - căn giữa tuyệt đối không dùng CSS transform */
+    #label-vai-clip {
+      position: absolute;
+      top: 90px;
+      left: 0;
+      right: 0;
+      margin-inline: auto;
+      width: fit-content;
+      background: #FF6A1A;
+      color: #141414;
+      font-size: 52px;
+      font-weight: 900;
+      padding: 16px 40px;
+      border: 5px solid #141414;
+      border-radius: 14px;
+      box-shadow: 8px 10px 0px #141414;
+      z-index: 85;
+      white-space: nowrap;
+      will-change: transform, opacity;
+      opacity: 0;
+    }
+
+    /* Dấu hỏi cam Vox (Shot 1) */
+    #icon-question-wrap {
+      position: absolute;
+      top: 50px;
+      right: 50px;
+      width: 130px;
+      height: 130px;
+      z-index: 90;
+      will-change: transform, opacity;
+      opacity: 0;
+    }
+
+    .question-svg {
+      width: 100%;
+      height: 100%;
+      filter: drop-shadow(6px 8px 0px #141414);
+    }
+
+    /* Punch-phrase: "RẤT KHIÊM TỐN" (Shot 2) - căn giữa không dùng CSS transform */
+    #punch-khiem-ton {
+      position: absolute;
+      top: 55px;
+      left: 0;
+      right: 0;
+      margin-inline: auto;
+      width: fit-content;
+      background: #141414;
+      color: #F7F4EC;
+      border: 6px solid #FF6A1A;
+      box-shadow: 10px 14px 0px #ff7a1a;
+      border-radius: 20px;
+      padding: 22px 50px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      z-index: 100;
+      will-change: transform, opacity;
+      opacity: 0;
+    }
+
+    .punch-sub-text {
+      font-size: 26px;
+      font-weight: 900;
+      color: #F7F4EC;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+    }
+
+    .punch-main-text {
+      font-size: 66px;
+      font-weight: 900;
+      letter-spacing: 1px;
+      line-height: 1.1;
+      color: #FF6A1A;
+      text-transform: uppercase;
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    /* Icon Warning trên góc punch phrase (Shot 2) */
+    #icon-warning-wrap {
+      position: absolute;
+      top: -38px;
+      right: -26px;
+      width: 86px;
+      height: 86px;
+      z-index: 110;
+      opacity: 0;
+      will-change: transform, opacity;
+    }
+
+    .warning-svg {
+      width: 100%;
+      height: 100%;
+      filter: drop-shadow(4px 4px 0px #141414);
+    }
+
+    /* -------------------------------------------------------------
+       KHUNG ĐIỆN THOẠI MOCKUP ZALO (Y: 520px -> 1440px)
+       Chiều rộng 680px, căn giữa bằng left: 200px (1080-680)/2
+       Không dùng CSS transform: translateX(-50%) để tránh xung đột GSAP
+       ------------------------------------------------------------- */
+    #phone-mockup {
+      position: absolute;
+      top: 520px;
+      left: 200px;
+      width: 680px;
+      height: 920px;
+      background: #FFFFFF;
+      border: 12px solid #141414;
+      border-radius: 52px;
+      box-shadow: 16px 22px 0px rgba(20, 20, 20, 0.95);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      z-index: 20;
+      transform-origin: 50% 50%;
+      will-change: transform;
+    }
+
+    .phone-notch {
+      position: absolute;
+      top: 14px;
+      left: 265px;
+      width: 150px;
+      height: 20px;
+      background-color: #141414;
+      border-radius: 10px;
+      z-index: 30;
+    }
+
+    /* Header thanh ứng dụng chat */
+    .app-header {
+      width: 100%;
+      height: 96px;
+      background-color: #141414;
+      display: flex;
+      align-items: flex-end;
+      padding: 0 24px 14px 24px;
+      gap: 14px;
+      color: #F7F4EC;
+    }
+
+    .app-avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background-color: #FF6A1A;
+      border: 2px solid #F7F4EC;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 900;
+      font-size: 20px;
+      color: #141414;
+    }
+
+    .app-title-box {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .app-name {
+      font-size: 24px;
+      font-weight: 900;
+      letter-spacing: -0.5px;
+      color: #F7F4EC;
+    }
+
+    .app-status {
+      font-size: 15px;
+      font-weight: 700;
+      color: #F7F4EC;
+      opacity: 0.9;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      background-color: #FF6A1A;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    /* Thân tin nhắn */
+    .chat-body {
+      flex: 1;
+      background-color: #F0EBE1;
+      background-image: 
+        linear-gradient(rgba(20, 20, 20, 0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(20, 20, 20, 0.04) 1px, transparent 1px);
+      background-size: 32px 32px;
+      padding: 34px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      position: relative;
+    }
+
+    .chat-date-pill {
+      align-self: center;
+      background-color: #141414;
+      color: #F7F4EC;
+      font-size: 14px;
+      font-weight: 900;
+      padding: 5px 18px;
+      border-radius: 20px;
+      margin-bottom: 6px;
+    }
+
+    /* Tin nhắn bên trái */
+    .msg-left {
+      align-self: flex-start;
+      max-width: 82%;
+      background-color: #FFFFFF;
+      color: #141414;
+      border: 3px solid #141414;
+      border-radius: 18px 18px 18px 4px;
+      padding: 14px 20px;
+      box-shadow: 4px 4px 0px #141414;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .msg-sender-tag {
+      align-self: flex-start;
+      background-color: #141414;
+      color: #F7F4EC;
+      font-size: 12px;
+      font-weight: 900;
+      padding: 2px 8px;
+      border-radius: 4px;
+      letter-spacing: 0.5px;
+    }
+
+    .msg-text {
+      font-size: 22px;
+      font-weight: 700;
+      line-height: 1.32;
+      color: #141414;
+    }
+
+    /* Tin nhắn bên phải (tâm điểm) */
+    .msg-right-wrapper {
+      align-self: flex-end;
+      position: relative;
+      max-width: 90%;
+    }
+
+    .msg-right {
+      background-color: #141414;
+      color: #F7F4EC;
+      border: 3px solid #141414;
+      border-radius: 18px 18px 4px 18px;
+      padding: 18px 22px;
+      box-shadow: -4px 6px 0px #FF6A1A;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .target-phrase {
+      font-size: 26px;
+      font-weight: 900;
+      line-height: 1.25;
+      color: #F7F4EC;
+    }
+
+    .highlight-word {
+      color: #FF6A1A;
+      display: inline-block;
+      position: relative;
+    }
+
+    .quote-mark {
+      font-size: 36px;
+      color: #FF6A1A;
+      font-weight: 900;
+      line-height: 1;
+      display: inline-block;
+      margin: 0 3px;
+      opacity: 0;
+    }
+
+    /* 3 thumbnail video gửi kèm */
+    .attached-videos {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-top: 4px;
+    }
+
+    .video-thumb {
+      height: 90px;
+      background: #262626;
+      border-radius: 8px;
+      border: 2px solid #F7F4EC;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    .video-play-icon {
+      width: 26px;
+      height: 26px;
+      background: #FF6A1A;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .video-play-icon::after {
+      content: "";
+      width: 0;
+      height: 0;
+      border-top: 5px solid transparent;
+      border-bottom: 5px solid transparent;
+      border-left: 8px solid #141414;
+      margin-left: 2px;
+    }
+
+    .video-badge {
+      position: absolute;
+      bottom: 4px;
+      right: 4px;
+      font-size: 11px;
+      font-weight: 700;
+      background: rgba(0, 0, 0, 0.9);
+      color: #F7F4EC;
+      padding: 2px 5px;
+      border-radius: 4px;
+    }
+  </style>
+
+  <div
+    id="root"
+    data-composition-id="scene-s03"
+    data-start="0"
+    data-width="1080"
+    data-height="1920"
+    data-duration="6.45"
+    data-layout-allow-overflow="true"
+  >
+    <!-- Texture giấy ngà Vox -->
+    <div class="paper-grain" data-layout-ignore="true"></div>
+
+    <!-- Thanh cam signature ở đáy -->
+    <div class="bottom-brand-bar" data-layout-ignore="true"></div>
+
+    <!-- Clip duy nhất cho Scene S03 (duration: 6.45s = 20670 - 14220) -->
+    <section
+      id="scene-s03"
+      class="clip scene-clip"
+      data-start="0"
+      data-duration="6.45"
+      data-track-index="0"
+      data-layout-allow-overflow="true"
+    >
+      <!-- VÙNG OVERLAY RIÊNG BIỆT TRÊN ĐẦU (Shot 1 & Shot 2) -->
+      <div id="top-overlay-zone" data-layout-allow-overflow="true">
+        <!-- Shot 1: Label "Vài clip Zalo?" (atMs: 15010 -> local 0.79s) -->
+        <div id="label-vai-clip" data-layout-allow-overflow="true" data-layout-allow-overlap="true">
+          Vài clip Zalo?
+        </div>
+
+        <!-- Shot 1: Dấu hỏi cam lớn (atMs: 16410 -> local 2.19s) -->
+        <div id="icon-question-wrap" data-layout-allow-overflow="true" data-layout-allow-overlap="true">
+          <svg class="question-svg" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="60" cy="60" r="52" fill="#FF6A1A" stroke="#141414" stroke-width="8"/>
+            <path id="question-path" d="M49 46C49 38 54 33 61 33C68 33 73 38 73 44C73 51 68 54 63 58C59 61 58 64 58 69" stroke="#141414" stroke-width="9" stroke-linecap="round" fill="none"/>
+            <circle id="question-dot" cx="58" cy="85" r="6" fill="#141414"/>
+          </svg>
+        </div>
+
+        <!-- Shot 2: Punch Phrase "RẤT KHIÊM TỐN" (atMs: 19760 -> local 5.54s) -->
+        <div id="punch-khiem-ton" data-layout-allow-overflow="true" data-layout-allow-overlap="true" data-layout-allow-occlusion="true">
+          <div class="punch-sub-text">CÁCH NÓI</div>
+          <div class="punch-main-text">RẤT KHIÊM TỐN</div>
+
+          <!-- Icon Warning nổi bật góc badge (atMs: 19850 -> local 5.63s) -->
+          <div id="icon-warning-wrap" data-layout-allow-overflow="true">
+            <svg class="warning-svg" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M50 14L10 84H90L50 14Z" fill="#FF6A1A" stroke="#141414" stroke-width="8" stroke-linejoin="round"/>
+              <path d="M50 40V60" stroke="#141414" stroke-width="8" stroke-linecap="round"/>
+              <circle cx="50" cy="74" r="5" fill="#141414"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- MOCKUP SMARTPHONE MÀN HÌNH CHAT ZALO (Y: 520px -> 1440px) -->
+      <div id="phone-mockup" data-layout-allow-overflow="true">
+        <div class="phone-notch"></div>
+
+        <!-- Header ứng dụng -->
+        <div class="app-header">
+          <div class="app-avatar">Z</div>
+          <div class="app-title-box">
+            <div class="app-name">Nhóm Zalo Kín</div>
+            <div class="app-status">
+              <span class="status-dot"></span>
+              <span>12 thành viên</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Nội dung tin nhắn -->
+        <div class="chat-body">
+          <div class="chat-date-pill">Hôm nay 14:02</div>
+
+          <!-- Tin nhắn hỏi từ thành viên khác -->
+          <div class="msg-left" id="chat-msg-1">
+            <div class="msg-sender-tag">Thành viên #04</div>
+            <div class="msg-text">Có clip mới quay chưa bro?</div>
+          </div>
+
+          <!-- Tin nhắn trả lời chứa nghịch lý -->
+          <div class="msg-right-wrapper" id="chat-msg-2">
+            <div class="msg-right">
+              <div class="target-phrase">
+                Đã gửi <span class="quote-mark" id="quote-left">“</span><span class="highlight-word">vài video</span><span class="quote-mark" id="quote-right">”</span> vào đây...
+              </div>
+
+              <!-- 3 video thumbnail tượng trưng -->
+              <div class="attached-videos">
+                <div class="video-thumb">
+                  <div class="video-play-icon"></div>
+                  <span class="video-badge">0:45</span>
+                </div>
+                <div class="video-thumb">
+                  <div class="video-play-icon"></div>
+                  <span class="video-badge">1:12</span>
+                </div>
+                <div class="video-thumb">
+                  <div class="video-play-icon"></div>
+                  <span class="video-badge">0:38</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    // Chuẩn bị stroke-draw cho icon question mark chuẩn ngôn ngữ Vox
+    const qPath = document.getElementById("question-path");
+    if (qPath && qPath.getTotalLength) {
+      const qLen = qPath.getTotalLength();
+      qPath.style.strokeDasharray = qLen.toString();
+      qPath.style.strokeDashoffset = qLen.toString();
+    }
+
+    // Khởi tạo GSAP Timeline paused đúng contract HyperFrames
+    const tl = gsap.timeline({ paused: true });
+
+    // -------------------------------------------------------------
+    // SHOT 1: 0.00s -> 3.70s (14220ms - 17920ms)
+    // -------------------------------------------------------------
+
+    // 1. Phone Mockup Punch-in tại t=0.08s (sử dụng endpoints tuyệt đối)
+    tl.fromTo(
+      "#phone-mockup",
+      { scale: 0.75, opacity: 0, y: 60, rotation: -2, x: 0 },
+      { scale: 1.0, opacity: 1, y: 0, rotation: 0, x: 0, duration: 0.55, ease: "power3.out" },
+      0.08
+    );
+
+    // 2. Camera zoom-in nhẹ toàn cảnh từ 0.0s đến 3.5s
+    tl.fromTo(
+      "#scene-s03",
+      { scale: 1.0 },
+      { scale: 1.05, duration: 3.5, ease: "sine.inOut" },
+      0.0
+    );
+
+    // 3. Tin nhắn chat 1 xuất hiện
+    tl.fromTo(
+      "#chat-msg-1",
+      { opacity: 0, y: 20, scale: 0.95 },
+      { opacity: 1, y: 0, scale: 1.0, duration: 0.35, ease: "power2.out" },
+      0.30
+    );
+
+    // 4. Tin nhắn chat 2 bật lên
+    tl.fromTo(
+      "#chat-msg-2",
+      { opacity: 0, y: 24, scale: 0.95 },
+      { opacity: 1, y: 0, scale: 1.0, duration: 0.40, ease: "power3.out" },
+      0.50
+    );
+
+    // 5. Overlay Label: "Vài clip Zalo?" (atMs 15010 -> 0.79s local)
+    tl.fromTo(
+      "#label-vai-clip",
+      { scale: 0.3, opacity: 0, rotation: -14, y: 0 },
+      { scale: 1.0, opacity: 1, rotation: -3, y: 0, duration: 0.42, ease: "power3.out" },
+      0.79
+    );
+
+    // 6. Overlay Icon: Question mark cam (atMs 16410 -> 2.19s local)
+    tl.fromTo(
+      "#icon-question-wrap",
+      { scale: 0, opacity: 0, rotation: 20 },
+      { scale: 1.0, opacity: 1, rotation: 6, duration: 0.45, ease: "power3.out" },
+      2.19
+    );
+
+    // Stroke-draw dần đường cong dấu hỏi
+    if (qPath) {
+      tl.to(
+        "#question-path",
+        { strokeDashoffset: 0, duration: 0.35, ease: "power2.out" },
+        2.28
+      );
+    }
+
+    // -------------------------------------------------------------
+    // SHOT 2: 3.70s -> 6.45s (17920ms - 20670ms)
+    // -------------------------------------------------------------
+
+    // 7. Chuyển shot:
+    // Thu gọn và ẩn nhãn + icon Shot 1 để giải phóng không gian
+    tl.to("#label-vai-clip", { opacity: 0, scale: 0.85, y: -16, duration: 0.30, ease: "power2.in" }, 3.50);
+    tl.to("#icon-question-wrap", { opacity: 0, scale: 0.85, duration: 0.30, ease: "power2.in" }, 3.50);
+
+    // Camera chuyển sang tĩnh và zoom cận cảnh nhẹ
+    tl.to("#scene-s03", { scale: 1.07, duration: 0.40, ease: "power2.out" }, 3.70);
+
+    // Hiệu ứng "Tremble" rung lắc mỉa mai trên mockup điện thoại
+    // Sử dụng chuỗi tween nối tiếp '>' để loại bỏ triệt để sai số dấu phẩy động
+    tl.to("#phone-mockup", { rotation: -1.6, x: -6, duration: 0.07, ease: "none" }, 3.75)
+      .to("#phone-mockup", { rotation: 1.8, x: 7, duration: 0.07, ease: "none" }, ">")
+      .to("#phone-mockup", { rotation: -1.2, x: -5, duration: 0.07, ease: "none" }, ">")
+      .to("#phone-mockup", { rotation: 1.4, x: 5, duration: 0.07, ease: "none" }, ">")
+      .to("#phone-mockup", { rotation: -0.6, x: -3, duration: 0.07, ease: "none" }, ">")
+      .to("#phone-mockup", { rotation: 0, x: 0, duration: 0.10, ease: "power1.out" }, ">");
+
+    // Dấu ngoặc kép kẹp chữ "vài video" phóng ra
+    tl.fromTo(
+      "#quote-left",
+      { scale: 0, opacity: 0 },
+      { scale: 1.0, opacity: 1, duration: 0.25, ease: "power3.out" },
+      4.15
+    );
+    tl.fromTo(
+      "#quote-right",
+      { scale: 0, opacity: 0 },
+      { scale: 1.0, opacity: 1, duration: 0.25, ease: "power3.out" },
+      4.25
+    );
+
+    // Đợt rung nhẹ thứ 2 trước punch phrase (nối tiếp sạch bằng '>')
+    tl.to("#phone-mockup", { rotation: 1.0, x: 3, duration: 0.06, ease: "none" }, 5.25)
+      .to("#phone-mockup", { rotation: -1.0, x: -3, duration: 0.06, ease: "none" }, ">")
+      .to("#phone-mockup", { rotation: 0, x: 0, duration: 0.08, ease: "power1.out" }, ">");
+
+    // 8. Overlay Punch Phrase: "RẤT KHIÊM TỐN" (atMs 19760 -> 5.54s local)
+    tl.fromTo(
+      "#punch-khiem-ton",
+      { scale: 1.7, opacity: 0, rotation: -6, y: -20 },
+      { scale: 1.0, opacity: 1, rotation: 2, y: 0, duration: 0.32, ease: "power4.out" },
+      5.54
+    );
+
+    // 9. Overlay Icon: Warning bật lên trên góc badge punch (atMs 19850 -> 5.63s local)
+    tl.fromTo(
+      "#icon-warning-wrap",
+      { scale: 0, opacity: 0, rotation: -25 },
+      { scale: 1.0, opacity: 1, rotation: 6, duration: 0.28, ease: "power3.out" },
+      5.63
+    );
+
+    // Đăng ký timeline chính thức vào registry HyperFrames
+    window.__timelines = window.__timelines || {};
+    window.__timelines["scene-s03"] = tl;
+  </script>
+
+    </template>
+  </body>
+</html>

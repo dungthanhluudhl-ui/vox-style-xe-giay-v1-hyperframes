@@ -1,0 +1,800 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap">
+      <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      width: 1080px;
+      height: 1920px;
+      background-color: #F5F0E4;
+      font-family: "Be Vietnam Pro", sans-serif;
+      color: #141414;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    #root {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #F5F0E4;
+    }
+
+    .clip {
+      position: absolute;
+      inset: 0;
+      width: 1080px;
+      height: 1920px;
+      overflow: hidden;
+    }
+
+    /* Grain Overlay - Giấy in tạp chí thủ công */
+    .paper-grain {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 90;
+      opacity: 0.16;
+      background-image: radial-gradient(#141414 0.75px, transparent 0.75px);
+      background-size: 6px 6px;
+      mix-blend-mode: multiply;
+    }
+
+    /* Viền cam đáy thương hiệu */
+    .brand-bottom-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 14px;
+      background-color: #FF6A1A;
+      z-index: 100;
+    }
+
+    /* Camera wrapper - hỗ trợ camera zoom-in xuyên suốt shot */
+    .camera-rig {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      transform-origin: 540px 780px;
+    }
+
+    /* Header text dẫn nhập */
+    .lead-header {
+      position: absolute;
+      top: 180px;
+      width: 920px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      z-index: 20;
+    }
+
+    .lead-category {
+      background-color: #141414;
+      color: #F7F4EC;
+      font-size: 22px;
+      font-weight: 900;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      padding: 6px 18px;
+      border-radius: 4px;
+    }
+
+    .lead-question {
+      font-size: 38px;
+      font-weight: 900;
+      line-height: 1.25;
+      text-align: center;
+      color: #141414;
+      text-transform: uppercase;
+      letter-spacing: -0.5px;
+    }
+
+    /* Mockup Điện thoại */
+    .phone-stage {
+      position: absolute;
+      top: 340px;
+      width: 630px;
+      height: 980px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 10;
+    }
+
+    /* Wrapper riêng cho floating motion tránh xung đột second-writer GSAP */
+    .phone-float-wrapper {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    /* Bóng cam đặc: Không dùng CSS transform để tránh xung đột với GSAP x/y */
+    .phone-shadow {
+      position: absolute;
+      inset: 0;
+      background-color: #ff7a1a;
+      border-radius: 54px;
+      z-index: 1;
+    }
+
+    .phone-body {
+      position: absolute;
+      inset: 0;
+      background-color: #FAF7F0;
+      border: 8px solid #141414;
+      border-radius: 54px;
+      display: flex;
+      flex-direction: column;
+      padding: 24px 28px;
+      z-index: 2;
+      overflow: hidden;
+    }
+
+    /* Màn hình điện thoại */
+    .phone-island {
+      width: 130px;
+      height: 24px;
+      background-color: #141414;
+      border-radius: 12px;
+      align-self: center;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      padding-right: 12px;
+    }
+
+    .island-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: #FF6A1A;
+    }
+
+    /* App Bar */
+    .app-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 22px;
+      border-bottom: 2px solid rgba(20, 20, 20, 0.12);
+      padding-bottom: 16px;
+    }
+
+    .app-title {
+      font-size: 24px;
+      font-weight: 900;
+      letter-spacing: -0.5px;
+      color: #141414;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .app-title-tag {
+      background-color: #FF6A1A;
+      color: #141414;
+      font-size: 14px;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-weight: 900;
+    }
+
+    .cart-wrapper {
+      position: relative;
+      width: 48px;
+      height: 48px;
+      background-color: #E7E3D9;
+      border: 2px solid #141414;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .cart-badge {
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      background-color: #FF6A1A;
+      color: #141414;
+      font-size: 14px;
+      font-weight: 900;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      border: 2px solid #141414;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Thanh tìm kiếm */
+    .search-box {
+      width: 100%;
+      height: 64px;
+      background-color: #FFFFFF;
+      border: 3px solid #141414;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      padding: 0 18px;
+      gap: 14px;
+      box-shadow: 4px 4px 0px #141414;
+      margin-bottom: 22px;
+    }
+
+    .search-icon svg {
+      display: block;
+      width: 24px;
+      height: 24px;
+    }
+
+    .search-text-container {
+      display: flex;
+      align-items: center;
+      font-size: 22px;
+      font-weight: 700;
+      color: #141414;
+      white-space: nowrap;
+      overflow: hidden;
+    }
+
+    .search-cursor {
+      display: inline-block;
+      width: 3px;
+      height: 24px;
+      background-color: #FF6A1A;
+      margin-left: 4px;
+    }
+
+    /* Grid sản phẩm bán lẻ trong app */
+    .product-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      width: 100%;
+    }
+
+    .product-card {
+      background-color: #FFFFFF;
+      border: 2.5px solid #141414;
+      border-radius: 14px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .prod-visual {
+      width: 100%;
+      height: 125px;
+      background-color: #E7E3D9;
+      border-radius: 8px;
+      border: 1.5px solid #141414;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .prod-badge {
+      position: absolute;
+      top: 6px;
+      left: 6px;
+      background-color: #141414;
+      color: #F7F4EC;
+      font-size: 11px;
+      font-weight: 900;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    .prod-tag {
+      font-size: 16px;
+      font-weight: 900;
+      color: #141414;
+      line-height: 1.2;
+    }
+
+    .prod-price {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 15px;
+      font-weight: 700;
+      color: #141414;
+    }
+
+    .prod-btn {
+      background-color: #FF6A1A;
+      border: 1.5px solid #141414;
+      border-radius: 6px;
+      padding: 4px 8px;
+      font-size: 12px;
+      font-weight: 900;
+      color: #141414;
+    }
+
+    /* Livestream Banner ở đáy app */
+    .live-feed-banner {
+      margin-top: 18px;
+      background-color: #141414;
+      color: #F7F4EC;
+      border-radius: 12px;
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .live-indicator {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      font-weight: 900;
+      letter-spacing: 1px;
+    }
+
+    .live-rec {
+      width: 10px;
+      height: 10px;
+      background-color: #FF6A1A;
+      border-radius: 50%;
+    }
+
+    .live-orders {
+      font-size: 13px;
+      font-weight: 700;
+      color: #FF6A1A;
+    }
+
+    /* Icon Phone Vocabulary Overlay */
+    .phone-icon-accent {
+      position: absolute;
+      top: 360px;
+      right: 80px;
+      width: 108px;
+      height: 108px;
+      background-color: #FAF7F0;
+      border: 4px solid #141414;
+      border-radius: 26px;
+      box-shadow: 6px 6px 0px #141414;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 36;
+    }
+
+    .phone-icon-accent svg {
+      width: 56px;
+      height: 56px;
+      stroke: #FF6A1A;
+      stroke-width: 2.5;
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    /* Label Sticker: "Khởi đầu đời thường" */
+    .label-tape {
+      position: absolute;
+      top: 290px;
+      left: 70px;
+      background-color: #141414;
+      color: #F7F4EC;
+      font-size: 28px;
+      font-weight: 900;
+      padding: 12px 28px;
+      border-radius: 2px;
+      border: 2px solid #FF6A1A;
+      box-shadow: 6px 6px 0px #FF6A1A;
+      z-index: 35;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .tape-pin {
+      width: 14px;
+      height: 14px;
+      background-color: #FF6A1A;
+      border-radius: 50%;
+      border: 2px solid #141414;
+    }
+
+    /* Sticker phụ bên phải: "GÓI HÀNG #01" */
+    .package-sticker {
+      position: absolute;
+      top: 480px;
+      right: 70px;
+      background-color: #E7E3D9;
+      border: 3px solid #141414;
+      border-radius: 8px;
+      padding: 8px 16px;
+      font-size: 18px;
+      font-weight: 900;
+      color: #141414;
+      box-shadow: 4px 4px 0px #141414;
+      z-index: 34;
+    }
+
+    /* PUNCH PHRASE LỚN - BÁN HÀNG ONLINE */
+    .punch-container {
+      position: absolute;
+      bottom: 480px;
+      width: 960px;
+      z-index: 50;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      pointer-events: none;
+    }
+
+    .punch-subtag {
+      background-color: #141414;
+      color: #F7F4EC;
+      font-size: 24px;
+      font-weight: 900;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      padding: 8px 24px;
+      border-radius: 4px 4px 0 0;
+      border: 4px solid #141414;
+      border-bottom: none;
+      box-shadow: 6px 6px 0px #141414;
+      align-self: flex-start;
+      margin-left: 40px;
+    }
+
+    .punch-box {
+      width: 100%;
+      background-color: #FF6A1A;
+      border: 6px solid #141414;
+      border-radius: 12px;
+      padding: 24px 32px;
+      box-shadow: 12px 14px 0px #141414;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 24px;
+    }
+
+    .punch-box h1 {
+      font-size: 68px;
+      font-weight: 900;
+      line-height: 1.1;
+      color: #141414;
+      text-transform: uppercase;
+      letter-spacing: -1px;
+      text-align: center;
+    }
+
+    .punch-cart-icon {
+      width: 64px;
+      height: 64px;
+      flex-shrink: 0;
+    }
+
+    .punch-cart-icon svg {
+      width: 100%;
+      height: 100%;
+      stroke: #141414;
+      stroke-width: 3;
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+  </style>
+
+  <div
+    id="root"
+    data-composition-id="scene-s25"
+    data-width="1080"
+    data-height="1920"
+    data-duration="8.32"
+    data-layout-allow-overflow="true"
+  >
+    <!-- Scene Clip chính -->
+    <section id="scene-s25" class="clip" data-start="0" data-duration="8.32">
+      <!-- Lớp phủ hạt giấy ngà -->
+      <div class="paper-grain"></div>
+
+      <!-- Khung quay camera -->
+      <div class="camera-rig" id="cameraRig">
+        <!-- Lead In Header -->
+        <div class="lead-header" id="leadHeader">
+          <span class="lead-category">Vụ Án & Góc Nhìn</span>
+          <div class="lead-question">Cả vụ án bắt đầu từ đâu?</div>
+        </div>
+
+        <!-- Phone Mockup Stage -->
+        <div class="phone-stage" id="phoneStage">
+          <div class="phone-float-wrapper" id="phoneFloatWrapper">
+            <div class="phone-shadow" id="phoneShadow"></div>
+            <div class="phone-body" id="phoneBody">
+              <!-- Notch -->
+              <div class="phone-island">
+                <div class="island-dot"></div>
+              </div>
+
+              <!-- Header App -->
+              <div class="app-bar">
+                <div class="app-title">
+                  <span>SHOPPING</span>
+                  <span class="app-title-tag">ONLINE</span>
+                </div>
+                <div class="cart-wrapper" id="phoneCart">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#141414" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="9" cy="21" r="1"></circle>
+                    <circle cx="20" cy="21" r="1"></circle>
+                    <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                  </svg>
+                  <div class="cart-badge">1</div>
+                </div>
+              </div>
+
+              <!-- Search Bar -->
+              <div class="search-box" id="searchBox">
+                <div class="search-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="#141414" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                  </svg>
+                </div>
+                <div class="search-text-container">
+                  <span id="searchText">Bán hàng online</span>
+                  <span class="search-cursor" id="searchCursor"></span>
+                </div>
+              </div>
+
+              <!-- Product Items -->
+              <div class="product-grid" id="productGrid">
+                <!-- Item 1 -->
+                <div class="product-card" id="prod1">
+                  <div class="prod-visual">
+                    <span class="prod-badge">HOT</span>
+                    <!-- Biểu tượng áo thun -->
+                    <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="#141414" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M20.38 3.46L16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z"></path>
+                    </svg>
+                  </div>
+                  <div class="prod-tag">Áo Thun Basic</div>
+                  <div class="prod-price">
+                    <span>99.000đ</span>
+                    <span class="prod-btn">+ MUA</span>
+                  </div>
+                </div>
+
+                <!-- Item 2 -->
+                <div class="product-card" id="prod2">
+                  <div class="prod-visual">
+                    <span class="prod-badge" style="background-color: #FF6A1A; color: #141414;">SHIP COD</span>
+                    <!-- Biểu tượng gói hàng -->
+                    <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="#141414" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <line x1="16.5" y1="9.4" x2="7.55" y2="4.24"></line>
+                      <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                      <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                      <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                    </svg>
+                  </div>
+                  <div class="prod-tag">Gói Bưu Kiện</div>
+                  <div class="prod-price">
+                    <span>Toàn Quốc</span>
+                    <span class="prod-btn">+ GỬI</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Live Feed Banner -->
+              <div class="live-feed-banner" id="liveBanner">
+                <div class="live-indicator">
+                  <div class="live-rec"></div>
+                  <span>LIVESTREAM</span>
+                </div>
+                <div class="live-orders">Đang chốt đơn: 1.420</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Phone Icon Vocabulary Overlay (đúng atMs 204940 = 4.33s) -->
+        <div class="phone-icon-accent" id="phoneIconAccent">
+          <svg viewBox="0 0 24 24">
+            <rect x="5" y="2" width="14" height="20" rx="3" ry="3"></rect>
+            <line x1="12" y1="18" x2="12.01" y2="18"></line>
+          </svg>
+        </div>
+
+        <!-- Label Sticker: "Khởi đầu đời thường" (đúng atMs 206700 = 6.09s) -->
+        <div class="label-tape" id="labelTape">
+          <div class="tape-pin"></div>
+          <span>Khởi Đầu Đời Thường</span>
+        </div>
+
+        <!-- Sticker phụ: Gói hàng -->
+        <div class="package-sticker" id="packageSticker">
+          <span>ĐƠN HÀNG #001</span>
+        </div>
+
+        <!-- Big Punch Phrase: BÁN HÀNG ONLINE (đúng atMs 208130 = 7.52s) -->
+        <div class="punch-container" id="punchContainer" data-layout-allow-occlusion="true">
+          <div class="punch-subtag" id="punchSubtag">Ý ĐỊNH BAN ĐẦU</div>
+          <div class="punch-box" id="punchBox">
+            <div class="punch-cart-icon">
+              <svg viewBox="0 0 24 24">
+                <circle cx="9" cy="21" r="1.5"></circle>
+                <circle cx="20" cy="21" r="1.5"></circle>
+                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+              </svg>
+            </div>
+            <h1>BÁN HÀNG ONLINE</h1>
+          </div>
+        </div>
+      </div>
+
+      <!-- Thanh cam cố định nhận diện thương hiệu đáy -->
+      <div class="brand-bottom-bar"></div>
+    </section>
+  </div>
+
+  <script>
+    // Khởi tạo paused timeline duy nhất theo hợp đồng HyperFrames
+    const tl = gsap.timeline({ paused: true });
+
+    // ==========================================
+    // CHOREOGRAPHY
+    // ==========================================
+
+    // 0. Camera Zoom-in nhẹ xuyên suốt 8.32s
+    tl.fromTo("#cameraRig", 
+      { scale: 1.0 }, 
+      { scale: 1.06, duration: 8.32, ease: "none" }, 
+      0
+    );
+
+    // 1. Entrance: Header dẫn nhập xuất hiện mượt
+    tl.fromTo("#leadHeader",
+      { y: -40, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.6, ease: "power3.out" },
+      0.15
+    );
+
+    // 2. Entrance Mockup Phone: Trồi lên từ dưới (Rise)
+    tl.fromTo("#phoneStage",
+      { y: 380, opacity: 0, scale: 0.92 },
+      { y: 0, opacity: 1, scale: 1.0, duration: 0.85, ease: "power3.out" },
+      0.3
+    );
+
+    // Đổ bóng cam: GSAP quản lý hoàn toàn x/y (không có CSS transform xung đột)
+    tl.fromTo("#phoneShadow",
+      { x: 0, y: 0, opacity: 0 },
+      { x: 16, y: 18, opacity: 1, duration: 0.5, ease: "power2.out" },
+      0.7
+    );
+
+    // 3. App UI Animation: Search bar focus (smooth power3.out, không bouncy)
+    tl.fromTo("#searchBox",
+      { scale: 0.96, opacity: 0 },
+      { scale: 1, opacity: 1, duration: 0.45, ease: "power3.out" },
+      1.05
+    );
+
+    // Search Cursor nhấp nháy
+    tl.fromTo("#searchCursor",
+      { opacity: 1 },
+      { opacity: 0, duration: 0.35, repeat: 5, yoyo: true, ease: "steps(1)" },
+      1.25
+    );
+
+    // Grid sản phẩm pop-in stagger mượt mà
+    tl.fromTo("#prod1",
+      { y: 30, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.45, ease: "power3.out" },
+      1.5
+    );
+
+    tl.fromTo("#prod2",
+      { y: 30, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.45, ease: "power3.out" },
+      1.7
+    );
+
+    tl.fromTo("#liveBanner",
+      { y: 20, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.4, ease: "power2.out" },
+      1.9
+    );
+
+    // Cart badge nảy nhẹ
+    tl.fromTo("#phoneCart",
+      { scale: 1 },
+      { scale: 1.22, duration: 0.2, yoyo: true, repeat: 1, ease: "power2.out" },
+      2.15
+    );
+
+    // Gentle float riêng trên phoneFloatWrapper (tách phần tử, độc lập entrance, 100% deterministic)
+    tl.fromTo("#phoneFloatWrapper",
+      { y: 0 },
+      { y: -10, duration: 1.8, yoyo: true, repeat: 2, ease: "sine.inOut" },
+      2.5
+    );
+
+    // ==========================================
+    // OVERLAYS ĐỒNG BỘ CHÍNH XÁC VỚI SHOTLIST
+    // ==========================================
+
+    // 4. Icon Phone Vocabulary: atMs 204940 (tương đối 4.33s)
+    tl.fromTo("#phoneIconAccent",
+      { scale: 0, opacity: 0, rotation: -20 },
+      { scale: 1, opacity: 1, rotation: 10, duration: 0.5, ease: "power3.out" },
+      4.33
+    );
+
+    // 5. Label Sticker: "Khởi đầu đời thường" tại atMs 206700 (tương đối 6.09s)
+    tl.fromTo("#labelTape",
+      { scale: 0, opacity: 0, rotation: 6 },
+      { scale: 1, opacity: 1, rotation: -2, duration: 0.45, ease: "power3.out" },
+      6.09
+    );
+
+    tl.fromTo("#packageSticker",
+      { scale: 0, opacity: 0, rotation: -10 },
+      { scale: 1, opacity: 1, rotation: 4, duration: 0.4, ease: "power3.out" },
+      6.25
+    );
+
+    // 6. PUNCH PHRASE "BÁN HÀNG ONLINE": atMs 208130 (tương đối 7.52s)
+    // Xuất hiện dứt khoát, hold tới hết scene duration 8.32s
+    tl.fromTo("#punchSubtag",
+      { y: 20, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.25, ease: "power3.out" },
+      7.45
+    );
+
+    tl.fromTo("#punchBox",
+      { scale: 0.75, opacity: 0, y: 35 },
+      { scale: 1, opacity: 1, y: 0, duration: 0.35, ease: "power4.out" },
+      7.52
+    );
+
+    tl.fromTo(".punch-cart-icon",
+      { rotation: 0 },
+      { rotation: -12, duration: 0.12, yoyo: true, repeat: 3, ease: "power1.inOut" },
+      7.7
+    );
+
+    // Đăng ký timeline chính lên window.__timelines["scene-s25"]
+    window.__timelines["scene-s25"] = tl;
+  </script>
+
+    </template>
+  </body>
+</html>

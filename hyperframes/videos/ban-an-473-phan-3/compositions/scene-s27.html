@@ -1,0 +1,589 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+      *, *::before, *::after {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background: #E7E3D9;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: #E7E3D9;
+      }
+
+      /* Nền lưới 84px chuẩn Vox DNA */
+      .grid-bg {
+        position: absolute;
+        inset: 0;
+        background-color: #E7E3D9;
+        background-image:
+          linear-gradient(to right, rgba(20, 20, 20, 0.28) 1.5px, transparent 1.5px),
+          linear-gradient(to bottom, rgba(20, 20, 20, 0.28) 1.5px, transparent 1.5px);
+        background-size: 84px 84px;
+        z-index: 1;
+      }
+
+      /* Lớp grain giấy 18% multiply */
+      .grain-overlay {
+        position: absolute;
+        inset: 0;
+        opacity: 0.18;
+        mix-blend-mode: multiply;
+        pointer-events: none;
+        z-index: 2;
+      }
+
+      /* Dải cam chữ ký thương hiệu cố định mép đáy */
+      .brand-orange-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 12px;
+        background: #FF6A1A;
+        z-index: 99;
+      }
+
+      /* Camera rig bao trọn nội dung chính để zoom nhẹ */
+      #camera-rig {
+        position: absolute;
+        inset: 0;
+        transform-origin: 50% 45%;
+        will-change: transform;
+        z-index: 10;
+      }
+
+      /* Hiệu ứng bóc giấy mở đầu (Peel Transition) */
+      #peel-curtain {
+        position: absolute;
+        inset: 0;
+        background: #E7E3D9;
+        z-index: 60;
+        pointer-events: none;
+        box-shadow: -20px 20px 40px rgba(20, 20, 20, 0.4);
+      }
+
+      /* Header hồ sơ vụ án */
+      .header-badge {
+        position: absolute;
+        top: 170px;
+        left: 60px;
+        display: inline-flex;
+        align-items: center;
+        gap: 14px;
+        background: #F5F0E4;
+        border: 4px solid #141414;
+        box-shadow: 6px 6px 0px #141414;
+        padding: 10px 24px;
+        z-index: 15;
+        opacity: 0;
+      }
+      .badge-dot {
+        width: 14px;
+        height: 14px;
+        background: #FF6A1A;
+      }
+      .badge-text {
+        font-size: 24px;
+        font-weight: 900;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        color: #141414;
+      }
+
+      /* Khung video vid-07 dạng cắt dán paper collage */
+      .video-wrapper {
+        position: absolute;
+        top: 235px;
+        left: 60px;
+        width: 960px;
+        height: 640px;
+        background: #141414;
+        border: 6px solid #141414;
+        box-shadow: 16px 16px 0px rgba(20, 20, 20, 0.22);
+        overflow: hidden;
+        z-index: 12;
+        opacity: 0;
+      }
+      .video-wrapper video {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+
+      /* Nhãn băng dính phong cách cắt dán ở góc khung (không animate transform bằng GSAP) */
+      .paper-tape {
+        position: absolute;
+        width: 130px;
+        height: 38px;
+        background: rgba(245, 240, 228, 0.85);
+        border: 2px dashed rgba(20, 20, 20, 0.35);
+        z-index: 20;
+      }
+      .tape-top-left {
+        top: 218px;
+        left: 42px;
+        transform: rotate(-12deg);
+      }
+      .tape-top-right {
+        top: 218px;
+        right: 42px;
+        transform: rotate(10deg);
+      }
+
+      /* Sơ đồ nhánh nhân bản (Branching diagram) */
+      .diagram-stage {
+        position: absolute;
+        top: 900px;
+        left: 60px;
+        width: 960px;
+        height: 220px;
+        z-index: 18;
+      }
+
+      /* Label overlay chính: "Nhân bản nhóm chat" — căn giữa qua left/right + margin, không dùng CSS transform */
+      #label-clone-group {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        margin: 0 auto;
+        width: fit-content;
+        display: inline-flex;
+        align-items: center;
+        gap: 16px;
+        background: #141414;
+        border: 4px solid #FF6A1A;
+        padding: 12px 30px;
+        box-shadow: 8px 8px 0px rgba(255, 106, 26, 0.3);
+        white-space: nowrap;
+        opacity: 0;
+      }
+      #label-clone-group .label-title {
+        color: #F7F4EC;
+        font-size: 30px;
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+      }
+
+      /* Các nhánh nhóm chat nhân bản */
+      .branch-nodes {
+        position: absolute;
+        top: 80px;
+        left: 0;
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        gap: 20px;
+      }
+      .node-card {
+        flex: 1;
+        background: #F5F0E4;
+        border: 4px solid #141414;
+        box-shadow: 6px 6px 0px #141414;
+        padding: 12px 10px;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+        opacity: 0;
+      }
+      .node-icon-wrap {
+        width: 42px;
+        height: 42px;
+        background: #141414;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .node-name {
+        font-size: 21px;
+        font-weight: 900;
+        color: #141414;
+        letter-spacing: 0.5px;
+      }
+      .node-status {
+        font-size: 16px;
+        font-weight: 700;
+        color: #FF6A1A;
+        background: #141414;
+        padding: 3px 8px;
+      }
+
+      /* Khung Punch Phrase: "THẤY TIỀN HỌC THEO" — nằm gọn trong dải an toàn (kết thúc trước vùng caption 1440px) */
+      #punch-card {
+        position: absolute;
+        top: 1145px;
+        left: 60px;
+        width: 960px;
+        background: #141414;
+        border: 5px solid #FF6A1A;
+        box-shadow: 14px 14px 0px rgba(255, 106, 26, 0.35);
+        padding: 22px 30px;
+        z-index: 25;
+        opacity: 0;
+      }
+      .punch-top-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 2px dashed rgba(247, 244, 236, 0.3);
+        padding-bottom: 10px;
+        margin-bottom: 12px;
+      }
+      .punch-tag {
+        color: #FF6A1A;
+        font-size: 21px;
+        font-weight: 900;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+      }
+      .punch-source {
+        color: #F7F4EC;
+        font-size: 18px;
+        font-weight: 700;
+        opacity: 0.85;
+      }
+
+      .punch-main-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+      }
+      .punch-headline {
+        margin: 0;
+        color: #F7F4EC;
+        font-size: 52px;
+        font-weight: 900;
+        line-height: 1.15;
+        letter-spacing: -0.5px;
+        text-transform: uppercase;
+        display: flex;
+        flex-direction: column;
+      }
+      .headline-block {
+        display: block;
+      }
+
+      /* Icon tiền tệ vẽ nét SVG */
+      .money-visual {
+        flex-shrink: 0;
+        width: 96px;
+        height: 96px;
+        background: #FF6A1A;
+        border: 4px solid #F7F4EC;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+      }
+      .money-svg {
+        width: 64px;
+        height: 64px;
+      }
+
+      /* Badge hai nhân vật Sơn & Đức Huy gia nhập */
+      .characters-join-row {
+        margin-top: 14px;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        opacity: 0;
+      }
+      .join-label {
+        color: #F7F4EC;
+        font-size: 18px;
+        font-weight: 700;
+        text-transform: uppercase;
+      }
+      .char-tag {
+        background: #F5F0E4;
+        color: #141414;
+        font-size: 18px;
+        font-weight: 900;
+        padding: 4px 12px;
+        border: 2px solid #141414;
+      }
+      .char-action {
+        color: #FF6A1A;
+        font-size: 18px;
+        font-weight: 900;
+        letter-spacing: 0.5px;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s27"
+      data-width="1080"
+      data-height="1920"
+      data-duration="5.2"
+      data-layout-allow-overflow="true"
+    >
+      <!-- Nền giấy ngà + lưới 84px chuẩn -->
+      <div class="grid-bg"></div>
+
+      <!-- Lớp hạt nhiễu grain giấy tự tạo SVG (18% multiply) -->
+      <svg class="grain-overlay" width="1080" height="1920" xmlns="http://www.w3.org/2000/svg">
+        <filter id="noiseFilter">
+          <feTurbulence type="fractalNoise" baseFrequency="0.75" numOctaves="3" stitchTiles="stitch" />
+          <feColorMatrix type="saturate" values="0" />
+        </filter>
+        <rect width="100%" height="100%" filter="url(#noiseFilter)" />
+      </svg>
+
+      <!-- Dải cam chữ ký thương hiệu ở đáy -->
+      <div class="brand-orange-bar"></div>
+
+      <!-- Paper peel curtain cho hiệu ứng mở cảnh (peel transition) -->
+      <div id="peel-curtain"></div>
+
+      <!-- Khung cảnh chính và camera rig -->
+      <div id="camera-rig" data-layout-allow-overflow="true">
+        <!-- Băng dính trang trí phong cách collage -->
+        <div class="paper-tape tape-top-left"></div>
+        <div class="paper-tape tape-top-right"></div>
+
+        <!-- Header nhãn hồ sơ -->
+        <div class="header-badge" id="header-badge">
+          <div class="badge-dot"></div>
+          <span class="badge-text">Cơ chế phát tán // Mạng lưới</span>
+        </div>
+
+        <!-- Khung video vid-07 crop 9:16 tỉ lệ cắt dán -->
+        <div class="video-wrapper" id="video-frame">
+          <video
+            id="vid-network"
+            src="assets/vid-07-independent-crime-network-diagram.mp4"
+            muted
+            playsinline
+            data-start="0"
+            data-duration="5.2"
+            data-media-start="2"
+          ></video>
+        </div>
+
+        <!-- Khu vực sơ đồ nhánh và nhãn: "Nhân bản nhóm chat" -->
+        <div class="diagram-stage">
+          <!-- Label xuất hiện lúc t = 2.18s (217580ms) -->
+          <div id="label-clone-group">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#FF6A1A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+            </svg>
+            <span class="label-title">Nhân bản nhóm chat</span>
+          </div>
+
+          <!-- Các nhánh nhóm chat độc lập sinh sôi -->
+          <div class="branch-nodes">
+            <div class="node-card" id="node-1">
+              <div class="node-icon-wrap">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FF6A1A" stroke-width="2.5" stroke-linecap="round">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="9" cy="7" r="4"></circle>
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                </svg>
+              </div>
+              <div class="node-name">NHÓM 01</div>
+              <div class="node-status">ĐÔNG NGHẸT</div>
+            </div>
+
+            <div class="node-card" id="node-2">
+              <div class="node-icon-wrap">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#F5F0E4" stroke-width="2.5" stroke-linecap="round">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                </svg>
+              </div>
+              <div class="node-name">NHÓM 02</div>
+              <div class="node-status">+ TÁCH NHÁNH</div>
+            </div>
+
+            <div class="node-card" id="node-3">
+              <div class="node-icon-wrap">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#F5F0E4" stroke-width="2.5" stroke-linecap="round">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                </svg>
+              </div>
+              <div class="node-name">NHÓM 03</div>
+              <div class="node-status">+ MỞ RỘNG</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Khung Punch Phrase: "THẤY TIỀN HỌC THEO" lúc t = 3.99s (219390ms) -->
+        <div id="punch-card">
+          <div class="punch-top-row">
+            <span class="punch-tag">LỢI NHUẬN BẤT CHÍNH</span>
+            <span class="punch-source">DẪN DẮT HÀNH VI</span>
+          </div>
+          <div class="punch-main-row">
+            <h2 class="punch-headline">
+              <span class="headline-block">THẤY TIỀN</span>
+              <span class="headline-block">HỌC THEO</span>
+            </h2>
+            <!-- Icon tiền tệ "money" vẽ đường stroke lúc t = 4.14s (219540ms) -->
+            <div class="money-visual" id="money-icon-box">
+              <svg class="money-svg" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <!-- Túi tiền và biểu tượng xấp tiền -->
+                <path id="money-bag" d="M32 10 C24 10 20 18 16 26 C12 34 10 54 20 58 C30 62 34 62 44 58 C54 54 52 34 48 26 C44 18 40 10 32 10 Z" stroke="#141414" stroke-width="4.5" stroke-linejoin="round" />
+                <path id="money-tie" d="M26 22 L38 22" stroke="#141414" stroke-width="4.5" stroke-linecap="round" />
+                <!-- Ký hiệu tiền tệ trung tâm -->
+                <path id="money-symbol" d="M32 32 L32 48 M27 36 C27 33 37 33 37 38 C37 43 27 41 27 45 C27 49 37 49 37 46" stroke="#141414" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+            </div>
+          </div>
+
+          <!-- Tên Sơn và Đức Huy nhập cuộc -->
+          <div class="characters-join-row" id="characters-row">
+            <span class="join-label">ĐỐI TƯỢNG:</span>
+            <span class="char-tag">SƠN</span>
+            <span class="char-tag">ĐỨC HUY</span>
+            <span class="char-action">➔ NHẬP CUỘC MỞ NHÓM</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Khởi tạo GSAP Timeline ở trạng thái paused bắt buộc
+      const tl = gsap.timeline({ paused: true });
+
+      // Cài đặt độ dài vẽ stroke cho icon tiền tệ từ DOM geometry thật
+      const bagPath = document.querySelector("#money-bag");
+      const tiePath = document.querySelector("#money-tie");
+      const symbolPath = document.querySelector("#money-symbol");
+      if (bagPath && tiePath && symbolPath) {
+        const bagLen = bagPath.getTotalLength();
+        const tieLen = tiePath.getTotalLength();
+        const symLen = symbolPath.getTotalLength();
+        bagPath.style.strokeDasharray = bagLen;
+        bagPath.style.strokeDashoffset = bagLen;
+        tiePath.style.strokeDasharray = tieLen;
+        tiePath.style.strokeDashoffset = tieLen;
+        symbolPath.style.strokeDasharray = symLen;
+        symbolPath.style.strokeDashoffset = symLen;
+      }
+
+      // 1. Chuyển động máy quay zoom-in nhẹ xuyên suốt cảnh (Camera motion: zoom-in)
+      tl.fromTo(
+        "#camera-rig",
+        { scale: 1.0 },
+        { scale: 1.05, duration: 5.2, ease: "none" },
+        0
+      );
+
+      // 2. Hiệu ứng bóc giấy mở đầu (Peel Transition) lúc t = 0 -> 0.65s
+      tl.fromTo(
+        "#peel-curtain",
+        {
+          clipPath: "polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)",
+          opacity: 1
+        },
+        {
+          clipPath: "polygon(100% 0%, 100% 0%, 100% 100%, 100% 100%)",
+          opacity: 0,
+          duration: 0.65,
+          ease: "power3.inOut"
+        },
+        0
+      );
+
+      // 3. Khung video & Header cố định xuất hiện tự tin
+      tl.fromTo(
+        "#header-badge",
+        { y: -20, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.45, ease: "power3.out" },
+        0.25
+      );
+      tl.fromTo(
+        "#video-frame",
+        { scale: 0.94, opacity: 0 },
+        { scale: 1.0, opacity: 1, duration: 0.55, ease: "power3.out" },
+        0.3
+      );
+
+      // 4. Nhóm chat nhân bản: Label xuất hiện lúc t = 2.18s (217580ms - 215400ms)
+      tl.fromTo(
+        "#label-clone-group",
+        { scale: 0.82, opacity: 0, y: -15 },
+        { scale: 1.0, opacity: 1, y: 0, duration: 0.42, ease: "power3.out" },
+        2.18
+      );
+
+      // 3 nhánh nhóm chat độc lập bung ra theo đà nhân bản
+      tl.fromTo(
+        "#node-1",
+        { y: 25, opacity: 0, scale: 0.92 },
+        { y: 0, opacity: 1, scale: 1.0, duration: 0.38, ease: "power3.out" },
+        2.35
+      );
+      tl.fromTo(
+        "#node-2",
+        { y: 25, opacity: 0, scale: 0.92 },
+        { y: 0, opacity: 1, scale: 1.0, duration: 0.38, ease: "power3.out" },
+        2.48
+      );
+      tl.fromTo(
+        "#node-3",
+        { y: 25, opacity: 0, scale: 0.92 },
+        { y: 0, opacity: 1, scale: 1.0, duration: 0.38, ease: "power3.out" },
+        2.61
+      );
+
+      // 5. Khung Punch Phrase: "THẤY TIỀN HỌC THEO" lúc t = 3.99s (219390ms - 215400ms)
+      tl.fromTo(
+        "#punch-card",
+        { y: 35, opacity: 0, scale: 0.96 },
+        { y: 0, opacity: 1, scale: 1.0, duration: 0.42, ease: "power3.out" },
+        3.99
+      );
+
+      // 6. Icon tiền tệ (money icon) vẽ stroke & pop lúc t = 4.14s (219540ms - 215400ms)
+      tl.fromTo(
+        "#money-icon-box",
+        { scale: 0, rotation: -10, opacity: 0 },
+        { scale: 1.0, rotation: 0, opacity: 1, duration: 0.38, ease: "power3.out" },
+        4.14
+      );
+      if (bagPath && tiePath && symbolPath) {
+        tl.to("#money-bag", { strokeDashoffset: 0, duration: 0.42, ease: "power2.out" }, 4.2);
+        tl.to("#money-tie", { strokeDashoffset: 0, duration: 0.22, ease: "power2.out" }, 4.35);
+        tl.to("#money-symbol", { strokeDashoffset: 0, duration: 0.32, ease: "power2.out" }, 4.45);
+      }
+
+      // 7. Nhãn Sơn & Đức Huy gia nhập mạng lưới xuất hiện lúc t = 4.35s
+      tl.fromTo(
+        "#characters-row",
+        { opacity: 0, x: -20 },
+        { opacity: 1, x: 0, duration: 0.38, ease: "power3.out" },
+        4.35
+      );
+
+      // BẮT BUỘC: Đăng ký timeline cho runtime HyperFrames seek
+      window.__timelines["scene-s27"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap">
+      <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #0b0f14;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: #E7E3D9;
+      }
+      .clip {
+        position: absolute;
+        inset: 0;
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+      }
+
+      /* Nền Vox: Lưới ô vuông 84px + Grain + Spotlight */
+      .bg-grid {
+        position: absolute;
+        inset: 0;
+        background-size: 84px 84px;
+        background-image:
+          linear-gradient(to right, rgba(20, 20, 20, 0.16) 1.5px, transparent 1.5px),
+          linear-gradient(to bottom, rgba(20, 20, 20, 0.16) 1.5px, transparent 1.5px);
+        pointer-events: none;
+        z-index: 2;
+      }
+      .bg-spotlight {
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(circle at 50% 45%, rgba(231, 227, 217, 0.05) 20%, rgba(20, 20, 20, 0.5) 75%, rgba(20, 20, 20, 0.8) 100%);
+        pointer-events: none;
+        z-index: 3;
+      }
+      .bg-grain {
+        position: absolute;
+        inset: 0;
+        opacity: 0.16;
+        background-image: radial-gradient(rgba(20, 20, 20, 0.9) 1px, transparent 0);
+        background-size: 4px 4px;
+        mix-blend-mode: multiply;
+        pointer-events: none;
+        z-index: 4;
+      }
+
+      /* Camera rig & Media viewport */
+      .camera-rig {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        z-index: 1;
+        transform-origin: 50% 50%;
+        will-change: transform;
+      }
+      .scene-img {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        will-change: transform;
+      }
+
+      /* Thanh cam nhận diện thương hiệu cố định mép dưới */
+      .brand-bottom-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 14px;
+        background-color: #FF6A1A;
+        z-index: 50;
+      }
+
+      /* Flow Tracker Header (Y: 180px - 260px) */
+      .doc-header {
+        position: absolute;
+        top: 180px;
+        left: 60px;
+        right: 60px;
+        z-index: 20;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      .flow-badge {
+        align-self: flex-start;
+        background-color: #141414;
+        color: #FF6A1A;
+        font-size: 20px;
+        font-weight: 900;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        padding: 6px 16px;
+        border-radius: 4px;
+      }
+      .flow-badge-alert {
+        background-color: #FF6A1A;
+        color: #141414;
+      }
+      .flow-track {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        background-color: rgba(20, 20, 20, 0.92);
+        padding: 12px 20px;
+        border-radius: 8px;
+        border-left: 6px solid #FF6A1A;
+      }
+      .step-active {
+        font-size: 20px;
+        font-weight: 900;
+        color: #F7F4EC;
+      }
+      .step-done {
+        font-size: 20px;
+        font-weight: 700;
+        color: #FF6A1A;
+      }
+      .step-dim {
+        font-size: 20px;
+        font-weight: 700;
+        color: rgba(247, 244, 236, 0.45);
+      }
+      .step-arrow {
+        color: #FF6A1A;
+        font-size: 16px;
+        font-weight: 900;
+      }
+
+      /* Overlay Card: Ban Icon (Shot 1) */
+      .ban-card {
+        position: absolute;
+        top: 580px;
+        left: 60px;
+        width: 540px;
+        background-color: #141414;
+        border: 3px solid #FF6A1A;
+        border-radius: 12px;
+        padding: 24px;
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        box-shadow: 8px 8px 0px rgba(20, 20, 20, 0.85);
+        z-index: 25;
+        transform-origin: 50% 50%;
+        will-change: transform, opacity;
+      }
+      .ban-icon-wrap {
+        width: 68px;
+        height: 68px;
+        flex-shrink: 0;
+      }
+      .ban-icon-wrap svg {
+        width: 68px;
+        height: 68px;
+        display: block;
+      }
+      .ban-text-wrap {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+      .ban-title {
+        font-size: 34px;
+        font-weight: 900;
+        color: #F7F4EC;
+        line-height: 1.2;
+      }
+      .ban-sub {
+        font-size: 20px;
+        font-weight: 700;
+        color: #FF6A1A;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+
+      /* Overlay Card: Pháp nhân trung gian (Shot 1) */
+      .annotation-box {
+        position: absolute;
+        top: 920px;
+        left: 60px;
+        right: 60px;
+        background-color: #F5F0E4;
+        border-left: 10px solid #FF6A1A;
+        border-radius: 8px;
+        padding: 28px 32px;
+        box-shadow: 10px 10px 0px #141414;
+        z-index: 25;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        will-change: transform, opacity;
+      }
+      .annotation-tag {
+        align-self: flex-start;
+        background-color: #141414;
+        color: #F7F4EC;
+        font-size: 18px;
+        font-weight: 900;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        padding: 4px 12px;
+        border-radius: 4px;
+      }
+      .annotation-main {
+        font-size: 48px;
+        font-weight: 900;
+        color: #141414;
+        line-height: 1.15;
+      }
+      .annotation-sub {
+        font-size: 24px;
+        font-weight: 700;
+        color: #141414;
+        opacity: 0.85;
+      }
+
+      /* Overlay Card: Money Deal (Shot 2) */
+      .money-card {
+        position: absolute;
+        top: 540px;
+        left: 60px;
+        width: 520px;
+        background-color: #141414;
+        border: 3px solid #FF6A1A;
+        border-radius: 12px;
+        padding: 24px;
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        box-shadow: 8px 8px 0px rgba(20, 20, 20, 0.85);
+        z-index: 25;
+        transform-origin: 50% 50%;
+        will-change: transform, opacity;
+      }
+      .money-icon-wrap {
+        width: 60px;
+        height: 42px;
+        flex-shrink: 0;
+      }
+      .money-icon-wrap svg {
+        width: 60px;
+        height: 42px;
+        display: block;
+      }
+      .money-text-wrap {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+      .money-tag {
+        font-size: 18px;
+        font-weight: 900;
+        color: #FF6A1A;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+      }
+      .money-title {
+        font-size: 34px;
+        font-weight: 900;
+        color: #F7F4EC;
+        line-height: 1.2;
+      }
+
+      /* Overlay Card: Hóa đơn GTGT mua (Shot 2) */
+      .doc-card {
+        position: absolute;
+        top: 860px;
+        left: 60px;
+        right: 60px;
+        background-color: #141414;
+        border: 3px solid #FF6A1A;
+        border-radius: 12px;
+        padding: 28px 32px;
+        box-shadow: 10px 10px 0px rgba(20, 20, 20, 0.85);
+        z-index: 25;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        will-change: transform, opacity;
+      }
+      .stamp-tag {
+        align-self: flex-start;
+        background-color: #FF6A1A;
+        color: #141414;
+        font-size: 18px;
+        font-weight: 900;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        padding: 4px 12px;
+        border-radius: 4px;
+        transform-origin: center center;
+      }
+      .doc-title {
+        font-size: 46px;
+        font-weight: 900;
+        color: #F7F4EC;
+        line-height: 1.2;
+      }
+      .doc-desc {
+        font-size: 22px;
+        font-weight: 700;
+        color: rgba(247, 244, 236, 0.75);
+      }
+
+      /* Punch Phrase Card (Shot 2, Y: 1200px - 1440px) */
+      .punch-card {
+        position: absolute;
+        top: 1200px;
+        left: 60px;
+        right: 60px;
+        background-color: #141414;
+        border-radius: 14px;
+        padding: 32px 36px;
+        box-shadow: 10px 10px 0px #FF6A1A;
+        z-index: 30;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        transform-origin: 50% 50%;
+        will-change: transform, opacity;
+      }
+      .punch-eyebrow {
+        font-size: 20px;
+        font-weight: 900;
+        letter-spacing: 2px;
+        color: #FF6A1A;
+        text-transform: uppercase;
+      }
+      .punch-headline {
+        font-size: 64px;
+        font-weight: 900;
+        color: #F7F4EC;
+        line-height: 1.15;
+        text-transform: uppercase;
+      }
+      .punch-sub {
+        font-size: 22px;
+        font-weight: 700;
+        color: rgba(247, 244, 236, 0.75);
+      }
+      .punch-stripe {
+        width: 100%;
+        height: 6px;
+        background-color: #FF6A1A;
+        margin-top: 6px;
+        transform-origin: 0% 50%;
+      }
+    </style>
+
+    <div data-hf-id="hf-mtza" id="root" data-composition-id="scene-s03" data-start="0" data-width="1080" data-height="1920" data-duration="13.67" data-layout-allow-overflow="true">
+      <!-- SHOT 1 (0.00s -> 6.93s) -->
+      <section data-hf-id="hf-qho9" id="shot-1" class="clip" data-start="0" data-duration="6.93" data-layout-allow-overflow="true">
+        <div data-hf-id="hf-yqqm" class="bg-grid"></div>
+        <div data-hf-id="hf-0rvu" class="bg-spotlight"></div>
+        <div data-hf-id="hf-ae6v" class="bg-grain"></div>
+
+        <!-- Camera Rig & Image -->
+        <div data-hf-id="hf-vx8c" id="shot1-camera" class="camera-rig" data-layout-allow-overflow="true">
+          <img data-hf-id="hf-0ogx" id="shot1-img" class="scene-img" src="assets/img-03-illegal-vat-invoice-deal.jpeg" alt="Giao dịch ngầm dưới gầm bàn">
+        </div>
+
+        <!-- Flow Step Indicator Header -->
+        <div data-hf-id="hf-kod3" id="shot1-header" class="doc-header">
+          <div data-hf-id="hf-2v0j" class="flow-badge">GIAO DỊCH NGẦM</div>
+          <div data-hf-id="hf-hdaa" class="flow-track">
+            <span data-hf-id="hf-kjvq" class="step-active">01 / TÌM PHÁP NHÂN</span>
+            <span data-hf-id="hf-26s5" class="step-arrow">➔</span>
+            <span data-hf-id="hf-chau" class="step-dim">02 / MUA HÓA ĐƠN</span>
+            <span data-hf-id="hf-6byh" class="step-arrow">➔</span>
+            <span data-hf-id="hf-i66w" class="step-dim">03 / KÊ KHAI</span>
+          </div>
+        </div>
+
+        <!-- Overlay: Ban Icon Card (atMs: 19630 -> relative 2.90s) -->
+        <div data-hf-id="hf-usa8" id="shot1-ban-card" class="ban-card">
+          <div data-hf-id="hf-8vwk" class="ban-icon-wrap">
+            <svg data-hf-id="hf-t4m9" viewBox="0 0 68 68">
+              <circle data-hf-id="hf-c2e0" id="shot1-ban-circle" cx="34" cy="34" r="26" fill="none" stroke="#FF6A1A" stroke-width="5" />
+              <line data-hf-id="hf-mj3r" id="shot1-ban-slash" x1="16" y1="16" x2="52" y2="52" stroke="#FF6A1A" stroke-width="5" stroke-linecap="round" />
+            </svg>
+          </div>
+          <div data-hf-id="hf-o142" class="ban-text-wrap">
+            <div data-hf-id="hf-9pw0" class="ban-title">KHÔNG CHỨNG TỪ</div>
+            <div data-hf-id="hf-ub2y" class="ban-sub">KHÔNG HÀNG HÓA THỰC TẾ</div>
+          </div>
+        </div>
+
+        <!-- Overlay: Pháp nhân trung gian (atMs: 21860 -> relative 5.13s) -->
+        <div data-hf-id="hf-t822" id="shot1-label-card" class="annotation-box">
+          <div data-hf-id="hf-022d" class="annotation-tag">DOANH NGHIỆP ĐỆM</div>
+          <div data-hf-id="hf-vq6d" class="annotation-main">PHÁP NHÂN TRUNG GIAN</div>
+          <div data-hf-id="hf-f23q" id="shot1-label-sub" class="annotation-sub">Thực tế không bán bất kỳ món hàng nào</div>
+        </div>
+
+        <div data-hf-id="hf-v6l5" class="brand-bottom-bar"></div>
+      </section>
+
+      <!-- SHOT 2 (6.93s -> 13.67s) -->
+      <section data-hf-id="hf-vu41" id="shot-2" class="clip" data-start="6.93" data-duration="6.74" data-layout-allow-overflow="true">
+        <div data-hf-id="hf-kbsy" class="bg-grid"></div>
+        <div data-hf-id="hf-elf2" class="bg-spotlight"></div>
+        <div data-hf-id="hf-hefr" class="bg-grain"></div>
+
+        <!-- Camera Rig & Image (Pan sang xấp hóa đơn GTGT) -->
+        <div data-hf-id="hf-bn8l" id="shot2-camera" class="camera-rig" data-layout-allow-overflow="true">
+          <img data-hf-id="hf-n1qu" id="shot2-img" class="scene-img" src="assets/img-03-illegal-vat-invoice-deal.jpeg" alt="Xấp hóa đơn GTGT đóng dấu đỏ">
+        </div>
+
+        <!-- Flow Step Indicator Header -->
+        <div data-hf-id="hf-45ce" id="shot2-header" class="doc-header">
+          <div data-hf-id="hf-m4pj" class="flow-badge flow-badge-alert">HÓA ĐƠN KHỐNG</div>
+          <div data-hf-id="hf-n55y" class="flow-track">
+            <span data-hf-id="hf-ikxs" class="step-done">01 / TÌM PHÁP NHÂN</span>
+            <span data-hf-id="hf-7ivk" class="step-arrow">➔</span>
+            <span data-hf-id="hf-0hd6" class="step-active">02 / MUA HÓA ĐƠN</span>
+            <span data-hf-id="hf-74kj" class="step-arrow">➔</span>
+            <span data-hf-id="hf-q5v4" class="step-dim">03 / KÊ KHAI</span>
+          </div>
+        </div>
+
+        <!-- Overlay: Money Icon Card (atMs: 25680 -> relative 8.95s) -->
+        <div data-hf-id="hf-6smt" id="shot2-money-card" class="money-card">
+          <div data-hf-id="hf-o60n" class="money-icon-wrap">
+            <svg data-hf-id="hf-wdqh" viewBox="0 0 60 42">
+              <rect data-hf-id="hf-l0co" id="shot2-money-rect" x="3" y="3" width="54" height="36" rx="4" fill="none" stroke="#FF6A1A" stroke-width="4" />
+              <circle data-hf-id="hf-odt6" id="shot2-money-circle" cx="30" cy="21" r="9" fill="none" stroke="#FF6A1A" stroke-width="4" />
+            </svg>
+          </div>
+          <div data-hf-id="hf-4vkh" class="money-text-wrap">
+            <div data-hf-id="hf-2byg" class="money-tag">GIAO DỊCH TIỀN MẶT</div>
+            <div data-hf-id="hf-g6eh" class="money-title">MUA BÁN HÓA ĐƠN</div>
+          </div>
+        </div>
+
+        <!-- Overlay: Hóa đơn GTGT mua (atMs: 27700 -> relative 10.97s) -->
+        <div data-hf-id="hf-rn5h" id="shot2-label-card" class="doc-card">
+          <div data-hf-id="hf-t1f1" id="shot2-stamp" class="stamp-tag">DẤU ĐỎ KHỐNG</div>
+          <div data-hf-id="hf-uuqo" class="doc-title">HÓA ĐƠN GTGT MUA</div>
+          <div data-hf-id="hf-5zfc" class="doc-desc">Chứng từ xuất khống để hợp thức hóa đầu vào</div>
+        </div>
+
+        <!-- Overlay: Punch Phrase (atMs: 28620 -> relative 11.89s, hold to end) -->
+        <div data-hf-id="hf-2nnz" id="punch-card" class="punch-card" data-layout-allow-overflow="true">
+          <div data-hf-id="hf-meqd" class="punch-eyebrow">HÀNH VI VI PHẠM</div>
+          <div data-hf-id="hf-e5q9" class="punch-headline">HỢP THỨC HÓA THUẾ</div>
+          <div data-hf-id="hf-wchm" class="punch-sub">Kê khai hóa đơn khống nhằm khấu trừ thuế phi pháp</div>
+          <div data-hf-id="hf-d1cy" id="punch-stripe" class="punch-stripe"></div>
+        </div>
+
+        <div data-hf-id="hf-west" class="brand-bottom-bar"></div>
+      </section>
+    </div>
+
+    <script>
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true });
+
+      // Cài đặt đường nét SVG vẽ dần bằng stroke-dashoffset thực tế
+      const banCircle = document.getElementById("shot1-ban-circle");
+      const banSlash = document.getElementById("shot1-ban-slash");
+      const moneyRect = document.getElementById("shot2-money-rect");
+      const moneyCircle = document.getElementById("shot2-money-circle");
+
+      const banCircleLen = banCircle ? banCircle.getTotalLength() : 163.4;
+      const banSlashLen = banSlash ? banSlash.getTotalLength() : 50.9;
+      const moneyRectLen = moneyRect ? moneyRect.getTotalLength() : 170.0;
+      const moneyCircleLen = moneyCircle ? moneyCircle.getTotalLength() : 56.5;
+
+      if (banCircle) {
+        banCircle.style.strokeDasharray = banCircleLen;
+        banCircle.style.strokeDashoffset = banCircleLen;
+      }
+      if (banSlash) {
+        banSlash.style.strokeDasharray = banSlashLen;
+        banSlash.style.strokeDashoffset = banSlashLen;
+      }
+      if (moneyRect) {
+        moneyRect.style.strokeDasharray = moneyRectLen;
+        moneyRect.style.strokeDashoffset = moneyRectLen;
+      }
+      if (moneyCircle) {
+        moneyCircle.style.strokeDasharray = moneyCircleLen;
+        moneyCircle.style.strokeDashoffset = moneyCircleLen;
+      }
+
+      // ==========================================
+      // CHOREOGRAPHY SHOT 1: 0.00s -> 6.93s
+      // ==========================================
+
+      // Cú đâm xuyên zoom-through vào cận cảnh giao dịch ngầm
+      tl.fromTo(
+        "#shot1-camera",
+        { scale: 1.6, opacity: 0 },
+        { scale: 1.0, opacity: 1, duration: 0.7, ease: "power4.out" },
+        0
+      );
+
+      // Ken Burns zoom-in chuyển động liên tục về phía cọc tiền dưới bàn
+      tl.fromTo(
+        "#shot1-img",
+        { scale: 1.15, x: 10, y: 10 },
+        { scale: 1.36, x: -20, y: -45, duration: 6.93, ease: "none" },
+        0
+      );
+
+      // Header xuất hiện
+      tl.fromTo(
+        "#shot1-header",
+        { y: -30, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.5, ease: "power3.out" },
+        0.25
+      );
+
+      // Biểu tượng ban đỏ hiện lên khi nhắc tới việc thiếu chứng từ hợp lệ (atMs: 19630 -> 2.90s, hold 1.8s)
+      tl.fromTo(
+        "#shot1-ban-card",
+        { scale: 0.7, opacity: 0, y: 20 },
+        { scale: 1.0, opacity: 1, y: 0, duration: 0.45, ease: "power3.out" },
+        2.90
+      );
+      tl.fromTo(
+        "#shot1-ban-circle",
+        { strokeDashoffset: banCircleLen },
+        { strokeDashoffset: 0, duration: 0.45, ease: "power2.out" },
+        2.95
+      );
+      tl.fromTo(
+        "#shot1-ban-slash",
+        { strokeDashoffset: banSlashLen },
+        { strokeDashoffset: 0, duration: 0.35, ease: "power2.out" },
+        3.15
+      );
+      tl.to(
+        "#shot1-ban-card",
+        { opacity: 0, scale: 0.9, duration: 0.35, ease: "power2.in" },
+        4.35
+      );
+
+      // Label "PHÁP NHÂN TRUNG GIAN" (atMs: 21860 -> 5.13s, hold 1.8s)
+      tl.fromTo(
+        "#shot1-label-card",
+        { x: -40, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.48, ease: "power3.out" },
+        5.13
+      );
+      tl.fromTo(
+        "#shot1-label-sub",
+        { opacity: 0, y: 8 },
+        { opacity: 0.85, y: 0, duration: 0.38, ease: "power2.out" },
+        5.35
+      );
+
+      // ==========================================
+      // CHOREOGRAPHY SHOT 2: 6.93s -> 13.67s
+      // ==========================================
+
+      // Cắt góc máy Ken Burns đổi tiêu điểm từ tiền mặt sang xấp hóa đơn đóng dấu đỏ
+      tl.fromTo(
+        "#shot2-img",
+        { scale: 1.34, x: -30, y: 70 },
+        { scale: 1.20, x: 20, y: -40, duration: 6.74, ease: "power1.inOut" },
+        6.93
+      );
+
+      // Header Shot 2 cập nhật bước tiến độ
+      tl.fromTo(
+        "#shot2-header",
+        { y: -25, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.45, ease: "power3.out" },
+        7.05
+      );
+
+      // Icon tiền mặt xuất hiện (atMs: 25680 -> 8.95s, hold 1.8s)
+      tl.fromTo(
+        "#shot2-money-card",
+        { scale: 0.75, opacity: 0, y: 20 },
+        { scale: 1.0, opacity: 1, y: 0, duration: 0.45, ease: "power3.out" },
+        8.95
+      );
+      tl.fromTo(
+        "#shot2-money-rect",
+        { strokeDashoffset: moneyRectLen },
+        { strokeDashoffset: 0, duration: 0.4, ease: "power2.out" },
+        9.0
+      );
+      tl.fromTo(
+        "#shot2-money-circle",
+        { strokeDashoffset: moneyCircleLen },
+        { strokeDashoffset: 0, duration: 0.35, ease: "power2.out" },
+        9.2
+      );
+      tl.to(
+        "#shot2-money-card",
+        { opacity: 0, scale: 0.9, duration: 0.3, ease: "power2.in" },
+        10.45
+      );
+
+      // Label "HÓA ĐƠN GTGT MUA" (atMs: 27700 -> 10.97s, hold 1.8s)
+      tl.fromTo(
+        "#shot2-label-card",
+        { y: 30, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.45, ease: "power3.out" },
+        10.97
+      );
+      tl.fromTo(
+        "#shot2-stamp",
+        { scale: 1.35, opacity: 0, rotation: -12 },
+        { scale: 1.0, opacity: 1, rotation: -3, duration: 0.35, ease: "power3.out" },
+        11.12
+      );
+
+      // Nhường tâm điểm cho Punch Phrase
+      tl.to(
+        "#shot2-label-card",
+        { opacity: 0, duration: 0.35, ease: "power2.in" },
+        12.40
+      );
+
+      // Punch Phrase "HỢP THỨC HÓA THUẾ" (atMs: 28620 -> 11.89s, hold 1.78s to end)
+      tl.fromTo(
+        "#punch-card",
+        { scale: 0.88, opacity: 0, y: 35 },
+        { scale: 1.0, opacity: 1, y: 0, duration: 0.45, ease: "power4.out" },
+        11.89
+      );
+      tl.fromTo(
+        "#punch-stripe",
+        { scaleX: 0 },
+        { scaleX: 1, duration: 0.5, ease: "power3.out" },
+        12.10
+      );
+
+      // Đăng ký timeline gốc vào HyperFrames
+      window.__timelines["scene-s03"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>
