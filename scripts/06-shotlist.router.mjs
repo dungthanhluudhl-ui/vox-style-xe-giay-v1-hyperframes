@@ -159,7 +159,7 @@ const md = [
       ...sceneShots.map((s) => {
         const asset = s.assetId ? `${s.assetId} (${mediaById[s.assetId]?.file?.split("/").pop() ?? ""})` : "—";
         const trim = s.trimStartSec != null ? `${s.trimStartSec}s–${s.trimEndSec}s` : "—";
-        const overlays = (s.overlays || []).map((o) => `${o.type}:"${o.text ?? o.name}"@${o.atMs}ms`).join("; ") || "—";
+        const overlays = (s.overlays || []).map((o) => `${o.type}:"${o.text ?? o.icon ?? o.name}"@${o.atMs}ms`).join("; ") || "—";
         return `| ${s.id} | ${s.startFrame}–${s.endFrame} (${s.durationInFrames}f) | ${fmtMs(s.startMs)}–${fmtMs(s.endMs)} | ${asset} | ${trim} | ${s.assetTreatment} | ${s.cameraMotion} | ${overlays} | ${s.transitionIn} |`;
       }),
       "",

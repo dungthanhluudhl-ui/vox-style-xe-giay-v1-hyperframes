@@ -72,27 +72,43 @@ export function generateCaptionTrackHf(slug, totalDurationMs, root = process.cwd
 
   const totalDurationSec = totalDurationMs / 1000;
 
-  const pageBlocks = pages.map((page, i) => {
+  // Lỗi thật đã phát hiện (video "vua-chuot-ratking-phan-1", 2026-09-23): khi từ cuối 1 câu bị
+  // Stage 2 (align qua 9router) gán startMs===endMs (0 độ dài, thường do nội suy timestamp sát
+  // đúng mốc từ đầu câu kế tiếp), trang chứa từ đó nhận durationSec<=0 (endMs của trang này =
+  // startMs của trang kế tiếp = chính startMs của nó). Một `.clip` với `data-duration="0"` KHÔNG
+  // được HyperFrames runtime coi là "không bao giờ hiển thị" như kỳ vọng — quan sát thật: nó bị
+  // kẹt hiển thị đè lên mọi trang sau đó suốt phần còn lại video (`hyperframes check` báo
+  // content_overlap, heldMs~17.7s). Lọc bỏ hẳn các trang duration<=0 trước khi sinh HTML — trang
+  // liền trước đã tự kết thúc đúng ngay mốc này (endMs tính từ startMs của trang kế tiếp trong
+  // mảng `pages` gốc, không đổi dù trang 0-độ-dài có được lọc hay không) nên không tạo khoảng hở,
+  // và nội dung 0ms này vốn dĩ không thể hiển thị được ở bất kỳ frame rời rạc nào nên không mất gì.
+  const pageBlocksRaw = pages.map((page, i) => {
     const startSec = page.startMs / 1000;
     const endMs = i < pages.length - 1 ? pages[i + 1].startMs : totalDurationMs;
     const durationSec = endMs / 1000 - startSec;
-    const wordsHtml = page.tokens
-      .map((t) => `<span class="word" data-from-ms="${t.fromMs}" data-to-ms="${t.toMs}">${escapeHtml(t.text)}</span>`)
-      .join("");
-    return {
-      index: i,
-      startSec,
-      // data-layout-allow-caption-zone: caption-track LÀ nội dung thật sự thuộc caption band —
-      // không có attribute này, `hyperframes check --caption-zone` tự báo caption_zone_collision
-      // trên CHÍNH text caption của nó (xác nhận bằng test thật trên ban-an-473-phan-3: 4 finding
-      // giả, source `compositions/caption-track.html`, text là chính các từ phụ đề như "là"/"tháng").
-      // Áp dụng cho phần tử + mọi con cháu qua `closest` (data-attributes.md:69), nên đặt ở
-      // .caption-page là đủ, không cần lặp lại trên từng <span class="word">.
-      html: `      <div class="clip caption-page" data-start="${startSec.toFixed(6)}" data-duration="${durationSec.toFixed(6)}" data-layout-allow-caption-zone>
+    return { page, startSec, durationSec };
+  });
+
+  const pageBlocks = pageBlocksRaw
+    .filter((p) => p.durationSec > 0)
+    .map((p, i) => {
+      const wordsHtml = p.page.tokens
+        .map((t) => `<span class="word" data-from-ms="${t.fromMs}" data-to-ms="${t.toMs}">${escapeHtml(t.text)}</span>`)
+        .join("");
+      return {
+        index: i,
+        startSec: p.startSec,
+        // data-layout-allow-caption-zone: caption-track LÀ nội dung thật sự thuộc caption band —
+        // không có attribute này, `hyperframes check --caption-zone` tự báo caption_zone_collision
+        // trên CHÍNH text caption của nó (xác nhận bằng test thật trên ban-an-473-phan-3: 4 finding
+        // giả, source `compositions/caption-track.html`, text là chính các từ phụ đề như "là"/"tháng").
+        // Áp dụng cho phần tử + mọi con cháu qua `closest` (data-attributes.md:69), nên đặt ở
+        // .caption-page là đủ, không cần lặp lại trên từng <span class="word">.
+        html: `      <div class="clip caption-page" data-start="${p.startSec.toFixed(6)}" data-duration="${p.durationSec.toFixed(6)}" data-layout-allow-caption-zone>
         <div class="caption-card">${wordsHtml}</div>
       </div>`,
-    };
-  });
+      };
+    });
 
   const entranceLines = pageBlocks
     .map(

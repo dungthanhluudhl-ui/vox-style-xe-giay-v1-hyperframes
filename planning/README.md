@@ -142,6 +142,20 @@ Từ bước 5 trở đi cần **cả 2 nhánh đã xong** (Stage 5 đọc cả 
   người dùng yêu cầu, hoặc nghi ngờ rõ ràng sau khi xem kết quả thật).
 - [ ] **Đang chờ người dùng xem `out/ban-an-473-phan-2-full.mp4` và xác nhận Checkpoint.**
 
+### Video "vua-chuot-ratking-phan-1" (chủ đề mới — hiện tượng khoa học kỳ lạ "Vua chuột/Rat King", video ngắn 32s, khác dòng nội dung bản án/thảm hoạ các video trước)
+- [x] Nhận script (SRT) + audio (2026-09-23) từ `Vox style 3.1_test/.../input audio + transcript/Vui vẻ/` — không có media nguồn sẵn. Script gốc chuyển tay từ SRT sang văn xuôi (`content/videos/vua-chuot-ratking-phan-1/script.txt`, tách số thứ tự/timestamp, giữ nguyên câu chữ).
+- [x] Transcribe (whisper.cpp) + align với script gốc qua 9router (2026-09-23) — 172/172 caption khớp 100% script gốc, timestamp cuối 32039ms = đúng audio thật (32.039s).
+- [x] Tạo media qua Google Flow (Stage 2b, 2026-09-23) — 5 ảnh + 5 video (768×1376/720×1280, 8.0s/clip) qua account "default", không cần fallback, không lặp lỗi collage khổ ngang.
+- [x] Phân tích + chuẩn hoá tên media qua 9router[vision] (2026-09-23) — 10/10 asset.
+- [x] Scene Plan (2026-09-23) — 4 scene, dùng đủ 10/10 asset, mọi scene ≥5s.
+- [x] Shotlist (2026-09-23) — 10 shot / 4 scene. Phát hiện shotlist.md vẫn hiển thị `icon:"undefined"` dù bug này từng được ghi là "đã vá" ở video `ban-an-473-phan-2` (dòng ghi chú phía trên) — đọc code xác nhận bản vá trước đó dùng sai fallback field (`o.name`) trong khi overlay `icon` thực tế dùng field `o.icon`. Sửa đúng field tại `scripts/06-shotlist.router.mjs` (`o.text ?? o.icon ?? o.name`), áp dụng mọi video sau.
+- [x] Dựng composition qua nhánh HyperFrames (2026-09-23) — chạy thẳng 4 scene song song, 3/4 PASS ngay lần đầu; S04 fail nội dung sau 3 lần thử (5 lỗi GSAP cụ thể: xung đột 2 tween cùng ghi `x` cùng lúc, tween `width` bị cấm allowlist thay vì `scaleX`, `innerText` dùng sai trong `fromTo()`, `transformOrigin` đặt sai trong `fromVars`, nghi ngờ occlusion) — đọc log, viết `--issue-file` sửa đúng 5 điểm, PASS ngay lần retry đầu.
+- [x] **2 bug thật phát hiện ở Stage 7b/render, cả 2 đều tổng quát hoá cho mọi video sau, không riêng video này:**
+  1. `scripts/lib/hf-check.mjs` (`runHyperframesCheck()`, dùng chung Stage 7 verify + Stage 7b) cắt `raw` còn 6000 ký tự TRƯỚC KHI trả về — `passed` tính từ JSON đầy đủ nên không sai, nhưng file `integration-check.log` ghi từ bản đã cắt, nên khi có nhiều cảnh báo lint (không gây fail) đứng trước phần lỗi thật (runtime/layout/contrast), log FAIL không đọc được nguyên nhân thật. Các nơi gọi khác đã tự cắt riêng cho console (2000-4000 ký tự) nên bỏ cap ở đây an toàn. Đã sửa: trả `raw` đầy đủ.
+  2. Sau khi sửa (1), lộ ra lỗi thật: `layout` check FAIL 80 `content_overlap` — nguyên nhân gốc là từ `"ấy."` trong `captions.json` bị Stage 2 align gán `startMs===endMs===10520` (0 độ dài, trùng đúng mốc từ đầu câu kế tiếp). `scripts/lib/generate-caption-track-hf.mjs` tính duration của trang phụ đề chứa từ này = 0, sinh ra `.clip` với `data-duration="0.000000"` — runtime HyperFrames xử lý duration=0 như "luôn hiển thị" thay vì "không bao giờ hiển thị", khiến trang này kẹt đè lên mọi trang sau suốt ~17.7s còn lại video. Đã sửa: lọc bỏ hẳn các trang duration≤0 trước khi sinh HTML (trang liền trước đã tự kết thúc đúng mốc đó nên không tạo khoảng hở; nội dung 0ms vốn không thể hiển thị ở bất kỳ frame nào nên không mất gì). Gotcha này có thể tái diễn ở bất kỳ video nào có từ cuối câu bị align trùng mốc với từ đầu câu kế tiếp — cần theo dõi qua `pipeline/codegen-issues.jsonl` nếu tái diễn.
+  - Sau cả 2 fix: Stage 7b PASS sạch (4/4 scene, audio, caption-track, `hyperframes check` ok=true).
+- [x] Render bản đầy đủ (2026-09-23) — `out/vua-chuot-ratking-phan-1-full.mp4`, **32.067s** (khớp audio thật 32.039s), 1080×1920 h264/aac, 60.0MB. `completion-manifest.json` xác nhận mọi field `*Ok` đều `true`.
+
 ## Archive: pipeline Remotion cũ (4 video đầu, `archive/remotion-legacy/`)
 
 Giữ lại đúng nguyên trạng để tham khảo/sửa lỗi cho 4 video archive — KHÔNG áp dụng cho video mới.

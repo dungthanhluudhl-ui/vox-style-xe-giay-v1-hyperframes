@@ -43,5 +43,8 @@ export function runHyperframesCheck(dir, { extraArgs = [] } = {}) {
   const hasValidReport = !!parsed && typeof parsed.ok === "boolean";
   const killedByTimeout = execError?.code === "ETIMEDOUT" || !!execError?.signal;
   const infraError = !hasValidReport || killedByTimeout;
-  return { passed, raw: raw.slice(0, 6000), infraError };
+  // KHÔNG cắt raw ở đây: 07b-integration-check.hf.mjs ghi raw thẳng vào file log riêng để đọc
+  // sau (không phải console), cắt ở đây làm mất phần lỗi thật khi lint warning dài đứng trước.
+  // Các nơi gọi khác (verify() trong 07-codegen.hf.router.mjs) đã tự cắt riêng cho console/feedback.
+  return { passed, raw, infraError };
 }
