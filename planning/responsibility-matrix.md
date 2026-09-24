@@ -23,7 +23,7 @@ giữ nguyên archive tại `archive/remotion-legacy/` — các ghi chú riêng 
 ## 2. Xử lý Audio
 | Task | Ai/gì đảm nhiệm | Công cụ |
 |---|---|---|
-| Transcribe audio → text + timestamp thô | Local | whisper.cpp (`@remotion/install-whisper-cpp`) — audio tiếng Việt phải dùng model đa ngôn ngữ (`medium`/`large-v3`), không dùng bản `.en` |
+| Transcribe audio → text + timestamp thô | Local | whisper.cpp (`@remotion/install-whisper-cpp`) — audio tiếng Việt phải dùng model đa ngôn ngữ (`medium`/`large-v3`), không dùng bản `.en`. **Mặc định chạy CUDA từ 2026-09-24** (~5.6x nhanh hơn CPU, đã benchmark trên audio 460s thật; `WHISPER_CUDA=0` để quay lại CPU) — xem memory `whisper_cuda_manual_setup` để biết cách cài lại nếu thiếu |
 | Convert whisper output → `Caption[]` chuẩn | Local | `toCaptions()` |
 | Sửa lỗi chính tả/dấu câu transcript, giữ nguyên timestamp | 9router[text_cleanup] | `ag/gemini-3.8-flash-high` |
 | Chuẩn hoá loudness, kiểm tra clipping/khoảng lặng | Local | ffmpeg loudnorm |

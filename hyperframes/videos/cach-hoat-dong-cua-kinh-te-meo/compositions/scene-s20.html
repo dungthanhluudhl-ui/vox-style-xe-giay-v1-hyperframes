@@ -1,0 +1,551 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #E7E3D9;
+      color: #141414;
+      font-family: "Be Vietnam Pro", sans-serif;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+    #root {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #E7E3D9;
+    }
+
+    /* Quy chuẩn HyperFrames: .clip dùng inset: 0, không set width/height cứng */
+    .clip {
+      position: absolute;
+      inset: 0;
+    }
+
+    /* Nền lưới 84px & hạt giấy grain đúng chuẩn Vox style tokens */
+    .bg-grid {
+      position: absolute;
+      inset: 0;
+      background-size: 84px 84px;
+      background-image:
+        linear-gradient(to right, rgba(20, 20, 20, 0.22) 1.5px, transparent 1.5px),
+        linear-gradient(to bottom, rgba(20, 20, 20, 0.22) 1.5px, transparent 1.5px);
+      z-index: 1;
+    }
+    .bg-grain {
+      position: absolute;
+      inset: 0;
+      background-image: radial-gradient(rgba(20, 20, 20, 0.08) 1px, transparent 1px);
+      background-size: 16px 16px;
+      opacity: 0.7;
+      mix-blend-mode: multiply;
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    /* Thanh cam nhận diện thương hiệu cố định mép đáy */
+    .bottom-brand-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 12px;
+      background-color: #FF6A1A;
+      z-index: 100;
+    }
+
+    /* Khung tiêu đề trên (Y: 160px - trong safe zone) */
+    .header-box {
+      position: absolute;
+      top: 160px;
+      left: 60px;
+      right: 60px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 10px;
+      z-index: 30;
+    }
+    .header-pill {
+      background-color: #FF6A1A;
+      color: #141414;
+      font-weight: 900;
+      font-size: 24px;
+      padding: 6px 18px;
+      border-radius: 4px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      border: 2px solid #141414;
+      box-shadow: 4px 4px 0 #141414;
+    }
+    .header-title {
+      margin: 0;
+      font-size: 54px;
+      font-weight: 900;
+      line-height: 1.15;
+      color: #141414;
+      text-transform: uppercase;
+      letter-spacing: -0.5px;
+      background-color: #F5F0E4;
+      padding: 8px 16px;
+      border: 3px solid #141414;
+      box-shadow: 6px 6px 0 #141414;
+    }
+
+    /* Khung ảnh Collage / Bản đồ (Y: 340px đến 1320px) */
+    .hero-card {
+      position: absolute;
+      top: 340px;
+      left: 60px;
+      width: 960px;
+      height: 980px;
+      background-color: #F5F0E4;
+      border: 4px solid #141414;
+      box-shadow: 16px 16px 0 #141414;
+      border-radius: 6px;
+      overflow: hidden;
+      z-index: 10;
+    }
+    .hero-img-wrap {
+      position: absolute;
+      inset: 16px;
+      border: 2px solid #141414;
+      overflow: hidden;
+      background-color: #141414;
+    }
+    .hero-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transform-origin: 50% 50%;
+    }
+
+    /* Overlay sơ đồ cắt xẻ đất (Diagram layer) */
+    .diagram-layer {
+      position: absolute;
+      inset: 16px;
+      pointer-events: none;
+      z-index: 20;
+    }
+    .cut-line {
+      stroke: #FF6A1A;
+      stroke-width: 5;
+      stroke-dasharray: 16 10;
+      fill: none;
+    }
+
+    /* Huy hiệu giá & phân lô trên bản đồ */
+    .map-badge {
+      position: absolute;
+      font-weight: 900;
+      border: 2px solid #141414;
+      box-shadow: 4px 4px 0 #141414;
+      border-radius: 4px;
+      text-align: center;
+      line-height: 1.2;
+    }
+    .tag-cheap {
+      top: 40px;
+      right: 40px;
+      background-color: #FF6A1A;
+      color: #141414;
+      padding: 10px 18px;
+      font-size: 26px;
+    }
+    .parcel-badge {
+      padding: 8px 14px;
+      font-size: 22px;
+      background-color: #141414;
+      color: #F7F4EC;
+      border-color: #FF6A1A;
+    }
+    .parcel-p1 { top: 120px; left: 60px; }
+    .parcel-p2 { top: 120px; right: 80px; }
+    .parcel-p3 { top: 480px; left: 80px; }
+    .parcel-p4 { top: 480px; right: 60px; }
+    .parcel-vip {
+      top: 300px;
+      left: 310px;
+      background-color: #FF6A1A;
+      color: #141414;
+      padding: 12px 24px;
+      font-size: 28px;
+      border: 3px solid #141414;
+      box-shadow: 6px 6px 0 #141414;
+    }
+
+    /* Blueprint / Bản vẽ ảo overlay */
+    .blueprint-overlay {
+      position: absolute;
+      bottom: 24px;
+      left: 24px;
+      right: 24px;
+      background: rgba(20, 20, 20, 0.94);
+      border: 3px solid #FF6A1A;
+      border-radius: 6px;
+      padding: 20px 24px;
+      color: #F7F4EC;
+      box-shadow: 8px 8px 0 rgba(20, 20, 20, 0.6);
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      z-index: 25;
+    }
+    .blueprint-info {
+      flex: 1;
+    }
+    .blueprint-title {
+      font-size: 26px;
+      font-weight: 900;
+      color: #FF6A1A;
+      margin: 0 0 6px 0;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .blueprint-sub {
+      font-size: 20px;
+      font-weight: 700;
+      color: #F7F4EC;
+      margin: 0;
+    }
+    .stamp-fake {
+      border: 3px solid #FF6A1A;
+      color: #FF6A1A;
+      font-weight: 900;
+      font-size: 22px;
+      padding: 6px 12px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      transform: rotate(-8deg);
+      border-radius: 4px;
+    }
+
+    /* Thanh thông báo bước thực hiện (Lower third: Y: 1360px - 1490px, an toàn trên Y=1529px) */
+    .status-stage-wrapper {
+      position: absolute;
+      top: 1360px;
+      left: 60px;
+      width: 960px;
+      height: 130px;
+      z-index: 40;
+    }
+    .status-card {
+      position: absolute;
+      inset: 0;
+      background-color: #141414;
+      border: 3px solid #FF6A1A;
+      border-radius: 8px;
+      box-shadow: 10px 10px 0 rgba(20, 20, 20, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 32px;
+      opacity: 0;
+    }
+    .status-left {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+    .status-text {
+      color: #F7F4EC;
+      font-size: 34px;
+      font-weight: 900;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+    .status-badge {
+      background-color: #FF6A1A;
+      color: #141414;
+      font-size: 24px;
+      font-weight: 900;
+      padding: 8px 18px;
+      border-radius: 4px;
+      text-transform: uppercase;
+    }
+
+    /* Icon SVGs */
+    .icon-svg {
+      width: 56px;
+      height: 56px;
+      flex-shrink: 0;
+    }
+  </style>
+
+  <div
+    id="root"
+    data-composition-id="scene-s20"
+    data-width="1080"
+    data-height="1920"
+    data-duration="13"
+  >
+    <!-- Background layer -->
+    <div class="bg-grid"></div>
+    <div class="bg-grain"></div>
+
+    <!-- Thanh cam chữ ký nhận diện đáy màn hình -->
+    <div class="bottom-brand-bar"></div>
+
+    <!-- Scene S20 Clip -->
+    <section id="scene-s20" class="clip" data-start="0" data-duration="13">
+      <!-- Header / Tiêu đề cơ chế -->
+      <div id="header-box" class="header-box">
+        <div class="header-pill">CƠ CHẾ ĐẦU CƠ</div>
+        <h1 class="header-title">XẺ THỊT ĐẤT RỪNG</h1>
+      </div>
+
+      <!-- Hero Card: Khung tranh cắt dán Vintage Ken Burns -->
+      <div id="hero-card" class="hero-card">
+        <div class="hero-img-wrap">
+          <img
+            id="hero-img"
+            class="hero-img"
+            src="assets/img-15-illegal-forest-land-grab.jpeg"
+            alt="Mèo mafia chiếm đất rừng và phân lô"
+          />
+
+          <!-- Lớp sơ đồ xẻ nhỏ đất (Diagram Grid Cut) -->
+          <div id="diagram-overlay" class="diagram-layer">
+            <svg width="100%" height="100%" viewBox="0 0 928 948" style="overflow: visible;">
+              <!-- Đường cắt dọc 1 -->
+              <line id="cut-v1" class="cut-line" x1="310" y1="0" x2="310" y2="948" />
+              <!-- Đường cắt dọc 2 -->
+              <line id="cut-v2" class="cut-line" x1="620" y1="0" x2="620" y2="948" />
+              <!-- Đường cắt ngang -->
+              <line id="cut-h" class="cut-line" x1="0" y1="474" x2="928" y2="474" />
+            </svg>
+
+            <!-- Huy hiệu nhãn các lô đất -->
+            <div id="tag-cheap-land" class="map-badge tag-cheap">GIÁ MUA: 1X (RẺ)</div>
+            <div class="map-badge parcel-badge parcel-p1">LÔ A1: +300%</div>
+            <div class="map-badge parcel-badge parcel-p2">LÔ A2: +350%</div>
+            <div class="map-badge parcel-badge parcel-p3">LÔ B1: +400%</div>
+            <div class="map-badge parcel-badge parcel-p4">LÔ B2: +450%</div>
+            <div class="map-badge parcel-vip">LÔ TRUNG TÂM VIP: +600%</div>
+          </div>
+
+          <!-- Lớp Blueprint / Bản vẽ quy hoạch dự án ảo -->
+          <div id="blueprint-overlay" class="blueprint-overlay">
+            <svg class="icon-svg" viewBox="0 0 64 64" fill="none">
+              <path id="doc-path" d="M12 8H40L52 20V56H12V8Z" stroke="#FF6A1A" stroke-width="4" stroke-linejoin="round"/>
+              <path d="M40 8V20H52" stroke="#FF6A1A" stroke-width="4" stroke-linecap="round"/>
+              <path d="M20 28H44M20 38H44M20 48H34" stroke="#F7F4EC" stroke-width="3" stroke-linecap="round"/>
+            </svg>
+            <div class="blueprint-info">
+              <div class="blueprint-title">ECO FOREST VILLA RESORT</div>
+              <div class="blueprint-sub">Bản vẽ quy hoạch phân lô 1/500 (Dự án ảo)</div>
+            </div>
+            <div class="stamp-fake">ĐÃ ĐẶT TÊN</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Khung thông báo diễn tiến 3 giai đoạn (Lower-third Status Cards) -->
+      <div class="status-stage-wrapper">
+        <!-- Bước 1: 2.5s -> 4.9s: GOM ĐẤT TRỐNG GIÁ RẺ -->
+        <div id="status-step-1" class="status-card">
+          <div class="status-left">
+            <svg class="icon-svg" viewBox="0 0 64 64" fill="none">
+              <circle cx="32" cy="32" r="24" stroke="#FF6A1A" stroke-width="4"/>
+              <path d="M22 34L29 41L44 24" stroke="#F7F4EC" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <div class="status-text">GOM ĐẤT TRỐNG GIÁ RẺ</div>
+          </div>
+          <div class="status-badge">BƯỚC 01</div>
+        </div>
+
+        <!-- Bước 2: 5.04s -> 9.4s: XẺ NHỎ THÀNH NHIỀU LÔ + Density Icon -->
+        <div id="status-step-2" class="status-card">
+          <div class="status-left">
+            <!-- Icon Density (chuẩn style tokens) -->
+            <svg class="icon-svg" viewBox="0 0 64 64" fill="none">
+              <rect x="10" y="10" width="44" height="44" stroke="#FF6A1A" stroke-width="4"/>
+              <line x1="10" y1="24" x2="54" y2="24" stroke="#FF6A1A" stroke-width="2"/>
+              <line x1="10" y1="38" x2="54" y2="38" stroke="#FF6A1A" stroke-width="2"/>
+              <line x1="24" y1="10" x2="24" y2="54" stroke="#FF6A1A" stroke-width="2"/>
+              <line x1="38" y1="10" x2="38" y2="54" stroke="#FF6A1A" stroke-width="2"/>
+              <circle cx="31" cy="31" r="5" fill="#F7F4EC"/>
+              <circle cx="17" cy="17" r="3" fill="#FF6A1A"/>
+              <circle cx="45" cy="45" r="3" fill="#FF6A1A"/>
+            </svg>
+            <div class="status-text">XẺ NHỎ THÀNH NHIỀU LÔ</div>
+          </div>
+          <div class="status-badge">BƯỚC 02</div>
+        </div>
+
+        <!-- Bước 3: 9.72s -> 13.0s: THIẾT KẾ DỰ ÁN ẢO + Doc Icon -->
+        <div id="status-step-3" class="status-card">
+          <div class="status-left">
+            <!-- Icon Doc (chuẩn style tokens) -->
+            <svg class="icon-svg" viewBox="0 0 64 64" fill="none">
+              <path d="M14 8H38L50 20V56H14V8Z" stroke="#FF6A1A" stroke-width="4" stroke-linejoin="round"/>
+              <path d="M38 8V20H50" stroke="#FF6A1A" stroke-width="4"/>
+              <line x1="22" y1="32" x2="42" y2="32" stroke="#F7F4EC" stroke-width="3" stroke-linecap="round"/>
+              <line x1="22" y1="42" x2="42" y2="42" stroke="#F7F4EC" stroke-width="3" stroke-linecap="round"/>
+            </svg>
+            <div class="status-text">THIẾT KẾ DỰ ÁN ẢO</div>
+          </div>
+          <div class="status-badge">BƯỚC 03</div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    // Khởi tạo GSAP Timeline seekable cho HyperFrames
+    window.__timelines = window.__timelines || {};
+    const tl = gsap.timeline({ paused: true });
+
+    // Đoạn chuẩn bị SVG line dashoffset để vẽ hoạt họa (Path Draw)
+    const cutV1 = document.getElementById("cut-v1");
+    const cutV2 = document.getElementById("cut-v2");
+    const cutH = document.getElementById("cut-h");
+    const docPath = document.getElementById("doc-path");
+
+    if (cutV1 && cutV2 && cutH) {
+      cutV1.style.strokeDasharray = "948";
+      cutV1.style.strokeDashoffset = "948";
+      cutV2.style.strokeDasharray = "948";
+      cutV2.style.strokeDashoffset = "948";
+      cutH.style.strokeDasharray = "928";
+      cutH.style.strokeDashoffset = "928";
+    }
+
+    if (docPath) {
+      const docLen = docPath.getTotalLength() || 180;
+      docPath.style.strokeDasharray = String(docLen);
+      docPath.style.strokeDashoffset = String(docLen);
+    }
+
+    // 1. CẢNH VÀO (0.0s - 0.6s) - Transition "punch"
+    tl.fromTo(
+      "#hero-card",
+      { scale: 0.92, opacity: 0 },
+      { scale: 1, opacity: 1, duration: 0.6, ease: "power3.out" },
+      0
+    );
+    tl.fromTo(
+      "#header-box",
+      { y: -30, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.5, ease: "power3.out" },
+      0.15
+    );
+
+    // 2. CAMERA MOTION: Ken Burns Pan Right dọc toàn bộ 13s
+    tl.fromTo(
+      "#hero-img",
+      { scale: 1.15, x: -40, y: 0 },
+      { scale: 1.25, x: 40, y: -20, duration: 13.0, ease: "none" },
+      0
+    );
+
+    // Initial state cho các overlay con
+    gsap.set("#tag-cheap-land", { scale: 0, opacity: 0 });
+    gsap.set(".parcel-badge", { scale: 0, opacity: 0 });
+    gsap.set(".parcel-vip", { scale: 0, opacity: 0 });
+    gsap.set("#blueprint-overlay", { opacity: 0, scale: 0.92, y: 30 });
+
+    // 3. OVERLAY 1: "GOM ĐẤT TRỐNG GIÁ RẺ" (atMs: 173200 -> t = 2.5s)
+    tl.fromTo(
+      "#status-step-1",
+      { scale: 0.9, opacity: 0, y: 20 },
+      { scale: 1, opacity: 1, y: 0, duration: 0.45, ease: "power3.out" },
+      2.5
+    );
+    tl.fromTo(
+      "#tag-cheap-land",
+      { scale: 0, opacity: 0 },
+      { scale: 1, opacity: 1, duration: 0.4, ease: "back.out(1.4)" },
+      2.8
+    );
+
+    // Bước 1 fade out tại 4.85s (chuẩn bị chuyển sang Bước 2)
+    tl.to(
+      "#status-step-1",
+      { opacity: 0, y: -15, duration: 0.2, ease: "power2.in" },
+      4.85
+    );
+    tl.to(
+      "#tag-cheap-land",
+      { opacity: 0, scale: 0.8, duration: 0.2, ease: "power2.in" },
+      4.85
+    );
+
+    // 4. OVERLAY 2: "XẺ NHỎ THÀNH NHIỀU LÔ" (atMs: 175740 -> t = 5.04s)
+    // Kèm biểu tượng density và đường xẻ ranh giới đất
+    tl.fromTo(
+      "#status-step-2",
+      { scale: 0.9, opacity: 0, y: 20 },
+      { scale: 1, opacity: 1, y: 0, duration: 0.45, ease: "power3.out" },
+      5.04
+    );
+
+    // Vẽ đường cắt xẻ đất (SVG Stroke Dashoffset)
+    tl.to("#cut-h", { strokeDashoffset: 0, duration: 0.5, ease: "power2.out" }, 5.2);
+    tl.to("#cut-v1", { strokeDashoffset: 0, duration: 0.5, ease: "power2.out" }, 5.4);
+    tl.to("#cut-v2", { strokeDashoffset: 0, duration: 0.5, ease: "power2.out" }, 5.6);
+
+    // Các lô đất nhảy vọt giá (Stagger reveal)
+    tl.fromTo(
+      ".parcel-badge",
+      { scale: 0, opacity: 0 },
+      { scale: 1, opacity: 1, duration: 0.35, stagger: 0.1, ease: "power3.out" },
+      5.8
+    );
+    tl.fromTo(
+      ".parcel-vip",
+      { scale: 0, opacity: 0 },
+      { scale: 1, opacity: 1, duration: 0.45, ease: "back.out(1.5)" },
+      6.3
+    );
+
+    // Bước 2 mờ dần chuyển tiếp tại 9.4s
+    tl.to(
+      "#status-step-2",
+      { opacity: 0, y: -15, duration: 0.25, ease: "power2.in" },
+      9.4
+    );
+    tl.to(
+      "#diagram-overlay",
+      { opacity: 0.35, duration: 0.4, ease: "power2.out" },
+      9.4
+    );
+
+    // 5. OVERLAY 3: "THIẾT KẾ DỰ ÁN ẢO" + Icon doc (atMs: 180420 -> 9.72s & 181860 -> 11.16s)
+    // Bản vẽ dự án ảo xuất hiện tại 9.72s
+    tl.fromTo(
+      "#blueprint-overlay",
+      { opacity: 0, scale: 0.9, y: 30 },
+      { opacity: 1, scale: 1, y: 0, duration: 0.5, ease: "power3.out" },
+      9.72
+    );
+    if (docPath) {
+      tl.to(docPath, { strokeDashoffset: 0, duration: 0.6, ease: "power2.out" }, 9.9);
+    }
+
+    // Label chính thức "THIẾT KẾ DỰ ÁN ẢO" xuất hiện tại 11.16s
+    tl.fromTo(
+      "#status-step-3",
+      { scale: 0.9, opacity: 0, y: 20 },
+      { scale: 1, opacity: 1, y: 0, duration: 0.45, ease: "power3.out" },
+      11.16
+    );
+
+    // Đăng ký timeline cho HyperFrames seek runtime
+    window.__timelines["scene-s20"] = tl;
+  </script>
+
+    </template>
+  </body>
+</html>

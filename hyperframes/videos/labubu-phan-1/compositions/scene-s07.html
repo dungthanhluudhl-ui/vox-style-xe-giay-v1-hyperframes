@@ -1,0 +1,472 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background: #E7E3D9;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: #E7E3D9;
+        perspective: 1600px;
+      }
+
+      /* Nền spotlight: lưới ô vuông 84px + hạt giấy grain + vignette tối viền */
+      .bg-grid {
+        position: absolute;
+        inset: 0;
+        background-image:
+          linear-gradient(to right, rgba(20, 20, 20, 0.16) 1.5px, transparent 1.5px),
+          linear-gradient(to bottom, rgba(20, 20, 20, 0.16) 1.5px, transparent 1.5px);
+        background-size: 84px 84px;
+      }
+      .bg-spotlight {
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(circle at 50% 45%, rgba(20, 20, 20, 0.05) 20%, rgba(20, 20, 20, 0.45) 65%, rgba(20, 20, 20, 0.88) 100%);
+        pointer-events: none;
+      }
+      .bg-grain {
+        position: absolute;
+        inset: 0;
+        opacity: 0.18;
+        mix-blend-mode: multiply;
+        pointer-events: none;
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+      }
+
+      /* Sân khấu 3D flip xoay tiết lộ mặt tối cờ bạc */
+      #flip-stage {
+        position: absolute;
+        inset: 0;
+        transform-style: preserve-3d;
+      }
+
+      /* Khung hiển thị video chính vid-02 */
+      #video-card-container {
+        position: absolute;
+        top: 250px;
+        left: 90px;
+        width: 900px;
+        height: 860px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+      #video-card {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        border-radius: 24px;
+        border: 4px solid #141414;
+        background: #141414;
+        box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
+        overflow: hidden;
+      }
+      #vid-02 {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center;
+        display: block;
+      }
+      .video-inner-vignette {
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0) 50%, rgba(20, 20, 20, 0.6) 100%);
+        pointer-events: none;
+      }
+
+      /* Trạng thái ẩn khởi tạo cho các overlay tránh hiện ở frame 0 */
+      #prob-badge-container,
+      #warn-container,
+      #punch-container {
+        opacity: 0;
+      }
+
+      /* Overlay 1: Data badge XÁC SUẤT 1/12 */
+      #prob-badge-container {
+        position: absolute;
+        top: 160px;
+        left: 0;
+        right: 0;
+        height: 72px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        pointer-events: none;
+        z-index: 20;
+      }
+      #prob-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 16px;
+        background: #141414;
+        border: 2px solid #FF6A1A;
+        border-radius: 40px;
+        padding: 12px 28px;
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
+      }
+      .pill-tag {
+        font-weight: 900;
+        font-size: 20px;
+        color: #FF6A1A;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+      }
+      .pill-divider {
+        width: 2px;
+        height: 24px;
+        background: rgba(247, 244, 236, 0.3);
+      }
+      .pill-title {
+        font-weight: 900;
+        font-size: 30px;
+        color: #F7F4EC;
+        letter-spacing: 1px;
+      }
+      .pill-stat {
+        font-weight: 700;
+        font-size: 22px;
+        color: #FF6A1A;
+      }
+      #prob-bar-container {
+        width: 60px;
+        height: 6px;
+        background: rgba(247, 244, 236, 0.2);
+        border-radius: 3px;
+        overflow: hidden;
+      }
+      #prob-bar-fill {
+        width: 100%;
+        height: 100%;
+        background: #FF6A1A;
+        transform-origin: left center;
+      }
+
+      /* Overlay 2: Warning Icon Vocabulary */
+      #warn-container {
+        position: absolute;
+        top: 1140px;
+        left: 0;
+        right: 0;
+        height: 110px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        pointer-events: none;
+        z-index: 30;
+      }
+      #warn-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 16px;
+        background: #141414;
+        border: 2px solid #FF6A1A;
+        border-radius: 20px;
+        padding: 12px 24px;
+        box-shadow: 0 16px 36px rgba(0, 0, 0, 0.5);
+      }
+      .warn-label {
+        font-weight: 900;
+        font-size: 24px;
+        color: #FF6A1A;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+      }
+
+      /* Overlay 3: Punch Phrase CỜ BẠC NÚP BÓNG */
+      #punch-container {
+        position: absolute;
+        top: 1280px;
+        left: 90px;
+        right: 90px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        pointer-events: none;
+        z-index: 40;
+      }
+      #punch-card {
+        position: relative;
+        width: 100%;
+        background: #141414;
+        border: 3px solid #FF6A1A;
+        border-radius: 20px;
+        padding: 22px 32px 26px 32px;
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+        text-align: center;
+        overflow: hidden;
+      }
+      .punch-tag {
+        display: inline-block;
+        font-weight: 700;
+        font-size: 20px;
+        color: #FF6A1A;
+        letter-spacing: 3px;
+        text-transform: uppercase;
+        margin-bottom: 6px;
+      }
+      .punch-headline {
+        font-weight: 900;
+        font-size: 64px;
+        line-height: 1.2;
+        color: #F7F4EC;
+        letter-spacing: 1px;
+        margin: 0;
+        text-transform: uppercase;
+      }
+      #punch-accent-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 6px;
+        background: #FF6A1A;
+        transform-origin: left center;
+      }
+
+      /* Dải cam thương hiệu cố định mép đáy */
+      .bottom-brand-bar {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 14px;
+        background-color: #FF6A1A;
+        z-index: 100;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s07"
+      data-width="1080"
+      data-height="1920"
+      data-duration="7.25"
+    >
+      <!-- Nền spotlight & hạt nhiễu giấy -->
+      <div class="bg-grid"></div>
+      <div class="bg-spotlight"></div>
+      <div class="bg-grain"></div>
+
+      <!-- Khung lật 3D bao quát shot S07-1 -->
+      <div id="flip-stage">
+        <!-- Video chính vid-02 đặt trong thẻ cắt dán Vox (timed media element) -->
+        <div id="video-card-container">
+          <div id="video-card">
+            <video
+              id="vid-02"
+              src="assets/vid-02-mystery-box-gambling-scam.mp4"
+              data-start="0"
+              data-duration="7.25"
+              data-media-start="0.5"
+              muted
+              playsinline
+            ></video>
+            <div class="video-inner-vignette"></div>
+          </div>
+        </div>
+
+        <!-- Overlay 1: Label XÁC SUẤT 1/12 (atMs: 46100 -> relative 1.70s) -->
+        <div id="prob-badge-container">
+          <div id="prob-badge">
+            <span class="pill-tag">TỶ LỆ</span>
+            <div class="pill-divider"></div>
+            <span class="pill-title">XÁC SUẤT 1/12</span>
+            <span class="pill-stat">≈ 8.3%</span>
+            <div id="prob-bar-container">
+              <div id="prob-bar-fill"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Overlay 2: Self-drawing Warning Icon (atMs: 48720 -> relative 4.32s) -->
+        <div id="warn-container">
+          <div id="warn-badge">
+            <svg id="warn-svg" width="60" height="60" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path
+                id="warn-tri"
+                d="M 50 14 L 88 82 L 12 82 Z"
+                stroke="#FF6A1A"
+                stroke-width="7"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                fill="none"
+              />
+              <path
+                id="warn-bang-bar"
+                d="M 50 38 L 50 58"
+                stroke="#F7F4EC"
+                stroke-width="7"
+                stroke-linecap="round"
+              />
+              <circle id="warn-bang-dot" cx="50" cy="71" r="3.5" fill="#F7F4EC" />
+            </svg>
+            <span class="warn-label">BẪY XÁC SUẤT</span>
+          </div>
+        </div>
+
+        <!-- Overlay 3: Punch-phrase CỜ BẠC NÚP BÓNG (atMs: 49770 -> relative 5.37s) -->
+        <div id="punch-container">
+          <div id="punch-card">
+            <div class="punch-tag">BẢN CHẤT CƠ CHẾ</div>
+            <h1 class="punch-headline">CỜ BẠC NÚP BÓNG</h1>
+            <div id="punch-accent-bar"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Thanh cam cố định mép đáy thương hiệu -->
+      <div class="bottom-brand-bar"></div>
+    </div>
+
+    <script>
+      // Thiết lập độ dài nét vẽ SVG cho Warning Icon
+      const warnTri = document.getElementById("warn-tri");
+      const triLen = Math.ceil(warnTri && warnTri.getTotalLength ? warnTri.getTotalLength() : 240);
+      if (warnTri) {
+        warnTri.style.strokeDasharray = triLen;
+        warnTri.style.strokeDashoffset = triLen;
+      }
+
+      const warnBar = document.getElementById("warn-bang-bar");
+      const barLen = Math.ceil(warnBar && warnBar.getTotalLength ? warnBar.getTotalLength() : 25);
+      if (warnBar) {
+        warnBar.style.strokeDasharray = barLen;
+        warnBar.style.strokeDashoffset = barLen;
+      }
+
+      // Khởi tạo trạng thái ẩn cho các overlay trước khi build timeline
+      gsap.set(["#prob-badge-container", "#warn-container", "#punch-container"], { opacity: 0 });
+
+      // Khởi tạo Timeline paused duy nhất cho composition
+      const tl = gsap.timeline({ paused: true });
+
+      // Đảm bảo tại t=0 các overlay đều ẩn hoàn toàn (seek-safe khi tua về đầu)
+      tl.set(["#prob-badge-container", "#warn-container", "#punch-container"], { opacity: 0 }, 0);
+
+      // 1. Chuyển cảnh vào: 3D Flip trục dọc tiết lộ mặt tối cờ bạc (0.0s - 0.75s)
+      tl.fromTo(
+        "#flip-stage",
+        { rotationY: -90, opacity: 0 },
+        { rotationY: 0, opacity: 1, duration: 0.75, ease: "power3.out" },
+        0
+      );
+
+      // Chuyển động máy quay nhẹ liên tục (ambient zoom) tránh hình ảnh bị đông cứng
+      tl.fromTo(
+        "#video-card",
+        { scale: 1 },
+        { scale: 1.035, duration: 7.25, ease: "none" },
+        0
+      );
+
+      // 2. Overlay 1: Label "XÁC SUẤT 1/12" xuất hiện lúc 1.70s (giữ 1.8s tới 3.50s)
+      tl.set("#prob-badge-container", { opacity: 1 }, 1.70);
+      tl.fromTo(
+        "#prob-badge",
+        { scale: 0.8, opacity: 0, y: -20 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.45, ease: "power3.out" },
+        1.70
+      );
+      tl.fromTo(
+        "#prob-bar-fill",
+        { scaleX: 0 },
+        { scaleX: 1, duration: 0.55, ease: "power2.out" },
+        1.85
+      );
+      tl.fromTo(
+        "#prob-badge",
+        { opacity: 1, y: 0 },
+        { opacity: 0, y: -18, duration: 0.35, ease: "power2.in" },
+        3.50
+      );
+      tl.set("#prob-badge-container", { opacity: 0 }, 3.85);
+
+      // 3. Overlay 2: Warning Icon tự vẽ dần lúc 4.32s (giữ 1.6s tới 5.92s)
+      tl.set("#warn-container", { opacity: 1 }, 4.32);
+      tl.fromTo(
+        "#warn-badge",
+        { scale: 0.8, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.4, ease: "power3.out" },
+        4.32
+      );
+      tl.fromTo(
+        warnTri,
+        { strokeDashoffset: triLen },
+        { strokeDashoffset: 0, duration: 0.48, ease: "power2.out" },
+        4.32
+      );
+      tl.fromTo(
+        warnBar,
+        { strokeDashoffset: barLen },
+        { strokeDashoffset: 0, duration: 0.28, ease: "power2.out" },
+        4.55
+      );
+      tl.fromTo(
+        "#warn-bang-dot",
+        { opacity: 0 },
+        { opacity: 1, duration: 0.15, ease: "power2.out" },
+        4.70
+      );
+      // Nhịp cảnh báo vi mô (fromTo tường minh, seek-safe)
+      tl.fromTo(
+        "#warn-badge",
+        { scale: 1.0 },
+        { scale: 1.05, duration: 0.14, ease: "power2.out" },
+        4.90
+      );
+      tl.fromTo(
+        "#warn-badge",
+        { scale: 1.05 },
+        { scale: 1.0, duration: 0.14, ease: "power2.in" },
+        5.04
+      );
+      tl.fromTo(
+        "#warn-badge",
+        { opacity: 1, scale: 1.0 },
+        { opacity: 0, scale: 0.85, duration: 0.3, ease: "power2.in" },
+        5.92
+      );
+      tl.set("#warn-container", { opacity: 0 }, 6.22);
+
+      // 4. Overlay 3: Punch-phrase "CỜ BẠC NÚP BÓNG" xuất hiện lúc 5.37s (giữ tới hết scene 7.25s)
+      tl.set("#punch-container", { opacity: 1 }, 5.37);
+      tl.fromTo(
+        "#punch-card",
+        { scale: 0.86, opacity: 0, y: 30 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.55, ease: "power3.out" },
+        5.37
+      );
+      tl.fromTo(
+        "#punch-accent-bar",
+        { scaleX: 0 },
+        { scaleX: 1, duration: 0.45, ease: "power2.out" },
+        5.55
+      );
+
+      // Đăng ký timeline duy nhất cho composition ID "scene-s07"
+      window.__timelines["scene-s07"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

@@ -1,0 +1,425 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background: #E7E3D9;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: #E7E3D9;
+      }
+      .clip {
+        position: absolute;
+        inset: 0;
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+      }
+
+      /* Media layers */
+      .media-cover {
+        position: absolute;
+        inset: 0;
+        width: 1080px;
+        height: 1920px;
+        object-fit: cover;
+        display: block;
+        will-change: transform;
+      }
+
+      /* Spotlight vignette chuẩn phong cách Vox cảnh điều tra */
+      .spotlight-vignette {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background: radial-gradient(
+          circle at 50% 48%,
+          rgba(20, 20, 20, 0.1) 25%,
+          rgba(20, 20, 20, 0.5) 75%,
+          rgba(20, 20, 20, 0.85) 100%
+        );
+        z-index: 10;
+      }
+
+      /* Lớp film grain 18% hòa trộn multiply theo style-tokens */
+      .grain-overlay {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        opacity: 0.18;
+        mix-blend-mode: multiply;
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+        z-index: 80;
+      }
+
+      /* Thanh cam nhận diện thương hiệu cố định mép dưới khung hình */
+      .vox-signature-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 1080px;
+        height: 14px;
+        background-color: #FF6A1A;
+        z-index: 99;
+        pointer-events: none;
+      }
+
+      /* Containers canh lề an toàn (Safe zone: top 160px, bottom 391px) */
+      .punch-phrase-slot {
+        position: absolute;
+        top: 660px;
+        left: 0;
+        width: 1080px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 20;
+        pointer-events: none;
+      }
+
+      /* Punch Phrase Card phong cách hồ sơ trinh thám */
+      .punch-card {
+        background: rgba(20, 20, 20, 0.94);
+        border: 3px solid #FF6A1A;
+        box-shadow: 0 16px 40px rgba(0, 0, 0, 0.65), 0 0 28px rgba(255, 106, 26, 0.25);
+        padding: 32px 52px;
+        border-radius: 4px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        max-width: 920px;
+        will-change: transform, opacity;
+      }
+      .punch-kicker {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 14px;
+      }
+      .kicker-tag {
+        font-family: "Be Vietnam Pro", sans-serif;
+        font-size: 22px;
+        font-weight: 900;
+        color: #FF6A1A;
+        letter-spacing: 3px;
+        text-transform: uppercase;
+      }
+      .kicker-dot {
+        width: 8px;
+        height: 8px;
+        background-color: #FF6A1A;
+        border-radius: 50%;
+      }
+      .kicker-ref {
+        font-family: "Be Vietnam Pro", sans-serif;
+        font-size: 20px;
+        font-weight: 700;
+        color: #E7E3D9;
+        opacity: 0.8;
+        letter-spacing: 2px;
+      }
+      .punch-title {
+        margin: 0;
+        font-family: "Be Vietnam Pro", sans-serif;
+        font-size: 68px;
+        font-weight: 900;
+        line-height: 1.25;
+        color: #F7F4EC;
+        text-align: center;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+      }
+
+      /* Slot icon câu hỏi điều tra */
+      .question-icon-slot {
+        position: absolute;
+        top: 960px;
+        left: 0;
+        width: 1080px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 22;
+        pointer-events: none;
+      }
+      .question-badge {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 140px;
+        height: 140px;
+        border-radius: 50%;
+        background: rgba(20, 20, 20, 0.95);
+        border: 4px solid #FF6A1A;
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.7), 0 0 35px rgba(255, 106, 26, 0.4);
+        will-change: transform, opacity;
+      }
+      .question-svg {
+        display: block;
+      }
+      .question-stroke {
+        stroke: #FF6A1A;
+        stroke-width: 9;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        fill: none;
+      }
+
+      /* Slot Label Shot 2: Nghịch Lý Tự Nhiên */
+      .label-slot-s02 {
+        position: absolute;
+        top: 1300px;
+        left: 0;
+        width: 1080px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 25;
+        pointer-events: none;
+      }
+      .detective-label-card {
+        background: #141414;
+        border-left: 8px solid #FF6A1A;
+        border-top: 1px solid rgba(255, 106, 26, 0.3);
+        border-right: 1px solid rgba(255, 106, 26, 0.3);
+        border-bottom: 1px solid rgba(255, 106, 26, 0.3);
+        box-shadow: 0 16px 36px rgba(0, 0, 0, 0.6);
+        padding: 22px 42px;
+        border-radius: 0 8px 8px 0;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        will-change: transform, opacity;
+      }
+      .detective-label-prefix {
+        font-family: "Be Vietnam Pro", sans-serif;
+        font-size: 20px;
+        font-weight: 700;
+        color: #FF6A1A;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+      }
+      .detective-label-title {
+        margin: 0;
+        font-family: "Be Vietnam Pro", sans-serif;
+        font-size: 42px;
+        font-weight: 900;
+        line-height: 1.25;
+        color: #F7F4EC;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s01"
+      data-width="1080"
+      data-height="1920"
+      data-duration="6.68"
+    >
+      <!-- SHOT 1 VIDEO NỀN: Bảng điều tra động (0s - 4.4s) -->
+      <video
+        id="vid-02-media"
+        class="media-cover"
+        data-start="0"
+        data-duration="4.4"
+        data-media-start="0"
+        data-layout-allow-overflow="true"
+        src="assets/vid-02-mystery-investigation-board-questions.mp4"
+        muted
+        playsinline
+        style="z-index: 2;"
+      ></video>
+
+      <!-- SHOT 2 ẢNH NỀN: Ken Burns ảnh hiện trường điều tra (4.2s - 6.68s) -->
+      <img
+        id="img-05-media"
+        class="clip media-cover"
+        data-start="4.2"
+        data-duration="2.48"
+        data-layout-allow-overflow="true"
+        src="assets/img-05-investigation-board-clues-evidence.jpeg"
+        alt="Hồ sơ hiện trường vụ án"
+        style="z-index: 5;"
+      />
+
+      <!-- LỚP SPOTLIGHT VIGNETTE TOÀN KHUNG HÌNH (z-index: 10) -->
+      <div class="spotlight-vignette"></div>
+
+      <!-- OVERLAY 1: Punch phrase "BÍ ẨN KHOA HỌC" (2.0s - 4.1s) -->
+      <div
+        id="punch-slot"
+        class="clip punch-phrase-slot"
+        data-start="2.0"
+        data-duration="2.1"
+      >
+        <div id="punch-card-s01" class="punch-card">
+          <div class="punch-kicker">
+            <span class="kicker-tag">HỒ SƠ ĐIỀU TRA</span>
+            <span class="kicker-dot"></span>
+            <span class="kicker-ref">CASE #01</span>
+          </div>
+          <h1 class="punch-title">BÍ ẨN KHOA HỌC</h1>
+        </div>
+      </div>
+
+      <!-- OVERLAY 2: Dấu hỏi điều tra phát sáng tự vẽ (3.2s - 4.15s) -->
+      <div
+        id="question-slot"
+        class="clip question-icon-slot"
+        data-start="3.2"
+        data-duration="0.95"
+      >
+        <div id="question-icon-badge" class="question-badge">
+          <svg class="question-svg" viewBox="0 0 100 100" width="90" height="90">
+            <path
+              id="q-path-curve"
+              class="question-stroke"
+              d="M 34 38 C 34 26 43 20 50 20 C 59 20 66 26 66 35 C 66 44 57 48 50 54 L 50 63"
+            />
+            <circle id="q-dot" cx="50" cy="78" r="5.5" fill="#FF6A1A" />
+          </svg>
+        </div>
+      </div>
+
+      <!-- OVERLAY 3: Nhãn "NGHỊCH LÝ TỰ NHIÊN" trong Shot 2 (4.76s - 6.68s) -->
+      <div
+        id="label-slot-s02"
+        class="clip label-slot-s02"
+        data-start="4.76"
+        data-duration="1.92"
+      >
+        <div id="shot-2-label" class="detective-label-card">
+          <span class="detective-label-prefix">MANH MỐI BẤT THƯỜNG</span>
+          <h2 class="detective-label-title">NGHỊCH LÝ TỰ NHIÊN</h2>
+        </div>
+      </div>
+
+      <!-- Lớp phủ hạt grain toàn khung hình (phong cách phóng sự giấy mộc) -->
+      <div class="grain-overlay"></div>
+
+      <!-- Thanh cam thương hiệu cố định mép dưới -->
+      <div class="vox-signature-bar"></div>
+    </div>
+
+    <script>
+      // Khởi tạo GSAP Timeline tất định cho HyperFrames
+      const tl = gsap.timeline({ paused: true });
+
+      // Thiết lập nét vẽ SVG cho dấu hỏi điều tra
+      const qPath = document.getElementById("q-path-curve");
+      let qPathLen = 110;
+      if (qPath && typeof qPath.getTotalLength === "function") {
+        try {
+          qPathLen = Math.ceil(qPath.getTotalLength()) || 110;
+        } catch (e) {
+          qPathLen = 110;
+        }
+      }
+      if (qPath) {
+        qPath.style.strokeDasharray = qPathLen;
+        qPath.style.strokeDashoffset = qPathLen;
+      }
+
+      // --- SHOT 1 MOTION (0.0s -> 4.2s) ---
+      // 1. Camera Motion: Zoom-through vào bảng điều tra nghi vấn
+      tl.fromTo(
+        "#vid-02-media",
+        { scale: 1.25, transformOrigin: "50% 48%" },
+        { scale: 1.08, duration: 4.2, ease: "power1.out" },
+        0
+      );
+
+      // 2. Punch phrase "BÍ ẨN KHOA HỌC" xuất hiện lúc 2.0s, giữ 1.85s
+      tl.fromTo(
+        "#punch-card-s01",
+        { scale: 0.88, opacity: 0, y: 32 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.48, ease: "power3.out" },
+        2.0
+      );
+
+      // Thu gọn punch phrase trước khi chuyển shot
+      tl.to(
+        "#punch-card-s01",
+        { opacity: 0, y: -20, scale: 0.96, duration: 0.3, ease: "power2.in" },
+        3.85
+      );
+
+      // 3. Question Icon xuất hiện lúc 3.2s, vẽ nét phát sáng
+      tl.fromTo(
+        "#question-icon-badge",
+        { scale: 0.65, opacity: 0, rotation: -15 },
+        { scale: 1, opacity: 1, rotation: 0, duration: 0.38, ease: "power3.out" },
+        3.2
+      );
+      if (qPath) {
+        tl.fromTo(
+          "#q-path-curve",
+          { strokeDashoffset: qPathLen },
+          { strokeDashoffset: 0, duration: 0.4, ease: "power2.out" },
+          3.28
+        );
+      }
+      tl.fromTo(
+        "#q-dot",
+        { scale: 0, transformOrigin: "50px 78px", opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.2, ease: "power3.out" },
+        3.55
+      );
+      tl.to(
+        "#question-icon-badge",
+        { opacity: 0, scale: 0.9, duration: 0.22, ease: "power2.in" },
+        3.9
+      );
+
+      // --- SHOT 2 MOTION (4.2s -> 6.68s) ---
+      // 4. Chuyển cảnh hòa tan (dissolve) êm ái sang ảnh tư liệu hiện trường
+      tl.fromTo(
+        "#img-05-media",
+        { opacity: 0 },
+        { opacity: 1, duration: 0.35, ease: "power2.out" },
+        4.2
+      );
+
+      // 5. Ken Burns zoom chậm từ 1.02x lên 1.08x hướng về góc chứng cứ
+      tl.fromTo(
+        "#img-05-media",
+        { scale: 1.02, x: 0, y: 0, transformOrigin: "55% 42%" },
+        { scale: 1.08, x: -16, y: -22, duration: 2.48, ease: "power1.out" },
+        4.2
+      );
+
+      // 6. Label "NGHỊCH LÝ TỰ NHIÊN" xuất hiện lúc 4.76s, giữ đến cuối cảnh
+      tl.fromTo(
+        "#shot-2-label",
+        { scale: 0.92, opacity: 0, y: 24 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.45, ease: "power3.out" },
+        4.76
+      );
+
+      // Đăng ký timeline chính lên window.__timelines["scene-s01"]
+      window.__timelines["scene-s01"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

@@ -1,0 +1,31 @@
+# Scene Plan — labubu-phan-1
+
+> Sinh bởi `scripts/05-scene-plan.router.mjs` qua ag/gemini-3.8-flash-high. Nguồn dữ liệu: `planning/videos/labubu-phan-1/scene-plan.json`. Sửa tay thì sửa cả 2 file cho khớp.
+
+Tổng thời lượng: 70.800s · 10 scene
+
+| # | Thời gian | Lời thoại | Chức năng | Quan hệ hình ảnh | Ngôn ngữ thị giác | Nền | Asset | Vào cảnh |
+|---|---|---|---|---|---|---|---|---|
+| S01 | 0.000s–7.120s | Trong video lần trước về sự sụp đổ của quần áo đắt tiền thì tôi thấy là anh em cũng hưởng ứng phết. Thế là tôi mới nghĩ là không biết gần đây còn cái trend gì mà làm chúng ta FOMO thế không. | hook | Hình ảnh người đứng suy tư bị bao vây bởi các món đồ xa xỉ vụt sáng rồi chữ 'FOMO' màu cam dập mạnh đè lên, tạo quan hệ áp lực tâm lý từ đám đông ép vào cá nhân. | background-photo + cutout | grid | vid-04, img-04 | rise |
+| S02 | 7.120s–13.440s | Thì tôi mới nhớ ra là có một thời kỳ mà blind box hay là cái túi mù đấy cũng nổi, xong bây giờ nó cũng lụi tàn bớt rồi. | paradox | Chiếc hộp bí ẩn hào nhoáng ban đầu vỡ nứt, kéo theo biểu đồ mũi tên đỏ lao dốc cắt chéo màn hình, thể hiện sự đối lập giữa đỉnh cao trào lưu và sự sụp đổ thoái trào. | split + background-photo | spotlight | vid-03, img-03 | shatter |
+| S03 | 13.440s–20.280s | Thế thì trong video ngày hôm nay, chúng ta sẽ cùng tìm hiểu xem chuyện gì đã xảy ra với thời kỳ này và tại sao nó lại nhanh chóng sụp đổ đến thế. | question | Khung cảnh hỗn loạn của đám đông chen lấn bị rạch đôi bởi một đường nứt sàn nhà cùng dấu hỏi cam khổng lồ đâm xuyên tâm, kết nối hiện tượng sốt ảo với nguyên nhân sụp đổ bí ẩn. | annotated + background-photo | card | img-05 | zoom-through |
+| S04 | 20.280s–30.360s | Tôi là Lắng. Và lưu ý những thông tin dưới đây là do chúng tôi tổng hợp và cóp nhặt từ nhiều nguồn, cũng như là trải nghiệm cá nhân, ý kiến cá nhân. Nên là nếu có gì sai hoặc cần đính chính, các bạn hãy vui lòng comment bên dưới. Còn bây giờ thì vào video thôi! | definition | Nhiều luồng tài liệu báo chí, biểu đồ số liệu từ bốn góc màn hình hội tụ vào màn hình laptop của người dẫn chuyện, minh chứng cho quá trình đối chiếu thông tin đa chiều trước khi đưa ra nhận định. | document + background-photo | grid | vid-05, img-07 | unfold |
+| S05 | 30.360s–36.200s | Cái thị trường bán lẻ toàn cầu ở thời điểm mà Labubu nổi lên ấy, nó vừa trải qua một chu kỳ biến động lớn. | cause | Đường biểu đồ kinh tế hình sin biên độ cực lớn chạy cắt ngang đám đông mua sắm, sàn nhà nứt vỡ theo từng đỉnh sóng biểu thị sự rung lắc dữ dội của toàn bộ chu kỳ bán lẻ. | diagram + background-photo | chart | vid-06 | punch |
+| S06 | 36.200s–44.400s | Tâm điểm của chu kỳ này là mô hình túi mù, hay còn gọi là blind box. Nó cũng khá đơn giản thôi: Người ta mua một thứ gì đó mà họ sẽ không biết là sẽ nhận được gì. | mechanism | Một hộp kín đen tuyền đứng giữa các nhân vật mờ ảo; khi tiền bay vào hộp, một dấu hỏi cam lập lòe xuất hiện thay vì sản phẩm cụ thể, thể hiện quan hệ giao dịch đổi tiền lấy sự mù mờ. | cutout + diagram | card | img-01 | peel |
+| S07 | 44.400s–51.650s | Họ chỉ có thể biết là mình sẽ trúng một trong 12 con nhân vật này chẳng hạn. Thì cái cơ chế này kết hợp giữa việc mua sắm thông thường và mang tính đỏ đen. | causal-chain | Lưới 12 ô nhân vật lần lượt bị bóng tối nuốt chửng chỉ chừa lại đúng 1 ô phát sáng cô độc, trong khi bánh xe roulette và phỉnh cờ bạc xoay tròn bao bọc lấy chiếc hộp, chuyển hóa việc mua sắm thành trò cá cược xác suất. | data + background-photo | spotlight | vid-02 | flip |
+| S08 | 51.650s–58.200s | Mà tôi đã có một video phân tích tại sao chúng ta lại thích đỏ đen trên kênh ấy, thì nó tạo ra một sự tò mò và kích thích tâm lý người mua. | evidence | Vòng lặp mũi tên kín tự vẽ nối liền ba nút 'Tò mò' -> 'Mua thử' -> 'Kích thích Dopamine', đóng khung bên trong giao diện video tham chiếu, thể hiện cơ chế tâm lý bị thao túng liên tục không lối thoát. | mockup + flow | grid | — | wobble-drop |
+| S09 | 58.200s–65.010s | Trong giai đoạn từ 2023 đến 2025 thì đồ chơi hộp mù không chỉ dừng lại ở mức độ giải trí, mà nó đã trở thành một hiện tượng văn hóa, | reversal | Móc khóa đồ chơi nhỏ bé trên túi xách phóng to gấp ba lần, kéo theo hàng loạt bong bóng hashtag mạng xã hội lan tỏa kín màn hình, trực quan hóa bước nhảy từ món đồ chơi bình thường thành làn sóng văn hóa đại chúng. | background-photo + annotated | card | vid-07, img-06 | grow |
+| S10 | 65.010s–70.800s | một phụ kiện thời trang và một loại tài sản đầu cơ. Và nổi bật nhất là quả Labubu thuộc sở hữu của công ty Pop Mart. | conclusion | Nhân vật Labubu bật lên từ hộp Pop Mart giữa cơn mưa tiền đô la và biểu đồ tăng giá dựng đứng, nhưng ngay lập tức bị bóng của một chiếc búa toà án giáng xuống từ góc trên, vạch trần bản chất bong bóng đầu cơ đối mặt với rủi ro pháp lý. | split + background-photo | spotlight | vid-01, img-02 | strike |
+
+## Ghi chú từng scene
+
+- **S01**: Dùng video vid-04 làm nền động kết hợp lớp ảnh tĩnh img-04 để mở đầu chủ đề FOMO; nhãn punch-phrase 'FOMO ĐỒ HIỆU' màu cam nổi bật.
+- **S02**: Vid-03 thể hiện chiếc hộp bí ẩn và biểu đồ lao dốc; hiệu ứng shatter nhấn mạnh điểm gãy đổ thoái trào của trào lưu túi mù.
+- **S03**: Tận dụng img-05 làm phông nền có chú thích đường nứt và mũi tên chỉ báo rủi ro; zoom-through tạo lực đẩy dứt khoát vào trọng tâm video.
+- **S04**: Vid-05 và img-07 khớp trọn vẹn cảnh làm việc ban đêm, tổng hợp tư liệu số liệu; thời lượng 10.08s đủ để đọc disclaimer mà không bị cắt vụn.
+- **S05**: Vid-06 có sẵn cảnh sàn nhà nứt toác và biểu đồ biến động thị trường; kết hợp nền chart với đường kẻ ngang đo lường biên độ dao động.
+- **S06**: Img-01 đặt chiếc Mystery Box vào trung tâm giữa các hình nhân bìa các-tông; peel tạo cảm giác bóc mở nhãn dán hồi hộp.
+- **S07**: Vid-02 mô tả các hình nhân tan biến và vòng quay may mắn đỏ đen; overlay thêm bộ đếm tỷ lệ xác suất '1/12' kiểu data.
+- **S08**: Scene dựng code chuẩn mực: khung mockup video trên kênh kết hợp sơ đồ flow vòng lặp tâm lý kích thích đỏ đen, không cần gượng ép asset ngoài.
+- **S09**: Vid-07 và img-06 minh họa nhóm bạn trẻ Gen Z đeo phụ kiện dạo phố; nhịp grow phóng to quy mô ảnh hưởng xã hội.
+- **S10**: Vid-01 và img-02 khớp chính xác nhân vật Labubu, tiền bay và búa toà án; animation strike dứt khoát kết thúc video với lời cảnh báo đầu cơ mạnh mẽ.

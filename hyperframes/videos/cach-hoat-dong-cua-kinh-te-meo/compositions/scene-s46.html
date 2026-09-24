@@ -1,0 +1,442 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background: #E7E3D9;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+
+      /* Camera Rig for Pan Motion */
+      #camera-rig {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        will-change: transform, opacity;
+      }
+
+      /* Video Background Layer */
+      #main-video {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      /* Spotlight & Texture Overlays */
+      .spotlight-vignette {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background: radial-gradient(circle at 50% 50%, rgba(20, 20, 20, 0.05) 28%, rgba(20, 20, 20, 0.48) 100%);
+        mix-blend-mode: multiply;
+        z-index: 2;
+      }
+      .grid-pattern {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background-image:
+          linear-gradient(to right, rgba(20, 20, 20, 0.16) 1.5px, transparent 1.5px),
+          linear-gradient(to bottom, rgba(20, 20, 20, 0.16) 1.5px, transparent 1.5px);
+        background-size: 84px 84px;
+        opacity: 0.42;
+        z-index: 3;
+      }
+
+      /* Editorial Badge: Beat 1 (Crowd / Unemployed) */
+      #callout-crowd {
+        position: absolute;
+        top: 220px;
+        left: 60px;
+        right: 60px;
+        background: #141414;
+        border-radius: 16px;
+        padding: 24px 30px;
+        display: flex;
+        align-items: center;
+        gap: 24px;
+        border-left: 8px solid #FF6A1A;
+        box-shadow: 0 18px 44px rgba(0, 0, 0, 0.5);
+        opacity: 0;
+        z-index: 10;
+        will-change: transform, opacity;
+      }
+      #crowd-icon-box {
+        flex-shrink: 0;
+        width: 68px;
+        height: 68px;
+        background: rgba(255, 106, 26, 0.14);
+        border: 2px solid #FF6A1A;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        will-change: transform, opacity;
+      }
+      .badge-content {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        will-change: transform, opacity;
+      }
+      .badge-tag {
+        font-size: 19px;
+        font-weight: 700;
+        color: #FF6A1A;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        margin-bottom: 6px;
+      }
+      .badge-title {
+        font-size: 38px;
+        font-weight: 900;
+        color: #F7F4EC;
+        letter-spacing: 0.5px;
+        line-height: 1.25;
+        text-transform: uppercase;
+      }
+
+      /* Editorial Badge: Beat 2 (Downward Spiral) */
+      #callout-fall {
+        position: absolute;
+        top: 1040px;
+        left: 60px;
+        right: 60px;
+        background: #141414;
+        border-radius: 16px;
+        padding: 24px 30px;
+        display: flex;
+        align-items: center;
+        gap: 24px;
+        border-left: 8px solid #FF6A1A;
+        box-shadow: 0 18px 44px rgba(0, 0, 0, 0.5);
+        opacity: 0;
+        z-index: 10;
+        will-change: transform, opacity;
+      }
+      #fall-icon-box {
+        flex-shrink: 0;
+        width: 68px;
+        height: 68px;
+        background: rgba(255, 106, 26, 0.14);
+        border: 2px solid #FF6A1A;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        will-change: transform, opacity;
+      }
+
+      /* Editorial Card: Beat 3 (Punch Phrase) */
+      #punch-card {
+        position: absolute;
+        top: 340px;
+        left: 54px;
+        right: 54px;
+        background: #141414;
+        border: 4px solid #FF6A1A;
+        border-radius: 20px;
+        padding: 40px 32px 36px;
+        text-align: center;
+        box-shadow: 0 26px 64px rgba(0, 0, 0, 0.7);
+        opacity: 0;
+        z-index: 20;
+        will-change: transform, opacity;
+      }
+      .punch-badge {
+        display: inline-block;
+        background: #FF6A1A;
+        color: #141414;
+        font-size: 22px;
+        font-weight: 900;
+        letter-spacing: 1.5px;
+        padding: 8px 24px;
+        border-radius: 6px;
+        margin-bottom: 20px;
+        text-transform: uppercase;
+      }
+      .punch-heading {
+        font-size: 62px;
+        font-weight: 900;
+        color: #F7F4EC;
+        line-height: 1.2;
+        letter-spacing: -0.5px;
+        text-transform: uppercase;
+        margin: 0;
+        white-space: nowrap;
+      }
+      .punch-accent-line {
+        display: block;
+        width: 130px;
+        height: 6px;
+        background: #FF6A1A;
+        margin: 22px auto 0;
+        border-radius: 3px;
+        transform-origin: center center;
+        will-change: transform;
+      }
+
+      /* Signature Brand Bottom Bar */
+      #bottom-brand-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 14px;
+        background: #FF6A1A;
+        z-index: 100;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s46"
+      data-width="1080"
+      data-height="1920"
+      data-duration="7.98"
+    >
+      <!-- Background Video Rig with Pan Motion -->
+      <div id="camera-rig" data-layout-allow-overflow="true">
+        <video
+          id="main-video"
+          data-start="0"
+          data-duration="7.98"
+          data-media-start="0"
+          data-layout-allow-overflow="true"
+          src="assets/vid-02-economic-crisis-cutout-animation.mp4"
+          muted
+          playsinline
+        ></video>
+      </div>
+
+      <!-- Lighting & Atmosphere Overlays -->
+      <div class="spotlight-vignette" data-layout-ignore="true"></div>
+      <div class="grid-pattern" data-layout-ignore="true"></div>
+
+      <!-- Editorial Callout: Beat 1 (Crowd / Unemployed) -->
+      <div id="callout-crowd">
+        <div id="crowd-icon-box">
+          <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+            <circle cx="24" cy="15" r="5" stroke="#FF6A1A" stroke-width="2.8" />
+            <path d="M14 35 C14 26 34 26 34 35" stroke="#FF6A1A" stroke-width="2.8" stroke-linecap="round" />
+            <circle cx="12" cy="19" r="4" stroke="#F7F4EC" stroke-width="2.4" />
+            <path d="M5 36 C5 29 19 29 19 36" stroke="#F7F4EC" stroke-width="2.4" stroke-linecap="round" />
+            <circle cx="36" cy="19" r="4" stroke="#F7F4EC" stroke-width="2.4" />
+            <path d="M29 36 C29 29 43 29 43 36" stroke="#F7F4EC" stroke-width="2.4" stroke-linecap="round" />
+          </svg>
+        </div>
+        <div id="crowd-text-box" class="badge-content">
+          <div class="badge-tag">TÌNH CẢNH DOANH NGHIỆP</div>
+          <div class="badge-title">NHÂN VIÊN MẤT VIỆC LÀM</div>
+        </div>
+      </div>
+
+      <!-- Editorial Callout: Beat 2 (Downward Fall) -->
+      <div id="callout-fall">
+        <div id="fall-icon-box">
+          <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+            <path
+              id="fall-arrow-path"
+              d="M8 12 L20 25 L28 18 L39 36"
+              stroke="#FF6A1A"
+              stroke-width="3.4"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+            <path
+              id="fall-arrow-head"
+              d="M29 36 H39 V26"
+              stroke="#FF6A1A"
+              stroke-width="3.4"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+        </div>
+        <div id="fall-text-box" class="badge-content">
+          <div class="badge-tag">HỆ QUẢ LIÊN HOÀN</div>
+          <div class="badge-title">VÒNG XOÁY SA THẢI TIÊU CỰC</div>
+        </div>
+      </div>
+
+      <!-- Editorial Card: Beat 3 (Punch Phrase) -->
+      <div id="punch-card">
+        <div class="punch-badge">CƠ CHẾ NỀN KINH TẾ</div>
+        <h1 class="punch-heading">KHỦNG HOẢNG KINH TẾ</h1>
+        <span class="punch-accent-line"></span>
+      </div>
+
+      <!-- Signature Brand Bottom Bar -->
+      <div id="bottom-brand-bar" data-layout-ignore="true"></div>
+    </div>
+
+    <script>
+      const tl = gsap.timeline({ paused: true });
+
+      // Setup SVG paths for progressive drawing
+      const fallPath = document.getElementById("fall-arrow-path");
+      const fallHead = document.getElementById("fall-arrow-head");
+      let pathLen = 60;
+      let headLen = 20;
+      if (fallPath) {
+        pathLen = fallPath.getTotalLength();
+        fallPath.style.strokeDasharray = pathLen;
+        fallPath.style.strokeDashoffset = pathLen;
+      }
+      if (fallHead) {
+        headLen = fallHead.getTotalLength();
+        fallHead.style.strokeDasharray = headLen;
+        fallHead.style.strokeDashoffset = headLen;
+      }
+
+      // 0.0s - 0.5s: Scene Transition In (Fade & settle)
+      tl.fromTo(
+        "#camera-rig",
+        { opacity: 0 },
+        { opacity: 1, duration: 0.5, ease: "power2.out" },
+        0
+      );
+
+      // 0.0s - 7.98s: Camera Motion (Pan-right across full duration)
+      tl.fromTo(
+        "#camera-rig",
+        { x: -28, scale: 1.06 },
+        { x: 28, scale: 1.06, duration: 7.98, ease: "none" },
+        0
+      );
+
+      // --- BEAT 1: Crowd & Unemployed ---
+      // atMs 401220 (0.47s), holdMs 2400 (to 2.87s)
+      tl.fromTo(
+        "#callout-crowd",
+        { y: 24, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.45, ease: "power3.out" },
+        0.47
+      );
+      tl.fromTo(
+        "#crowd-icon-box",
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.45, ease: "power3.out" },
+        0.47
+      );
+
+      // Label atMs 401700 (0.95s), holdMs 2200 (to 3.15s)
+      tl.fromTo(
+        "#crowd-text-box",
+        { x: -20, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.4, ease: "power3.out" },
+        0.95
+      );
+
+      // Crowd icon fade out at 2.87s
+      tl.to(
+        "#crowd-icon-box",
+        { scale: 0.85, opacity: 0, duration: 0.25, ease: "power2.in" },
+        2.87
+      );
+
+      // Callout crowd container fade out at 3.15s
+      tl.to(
+        "#callout-crowd",
+        { y: -16, opacity: 0, duration: 0.3, ease: "power2.in" },
+        3.15
+      );
+
+      // --- BEAT 2: Fall & Downward Spiral ---
+      // atMs 404410 (3.66s), holdMs 2500 (to 6.16s)
+      tl.fromTo(
+        "#callout-fall",
+        { y: 24, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.45, ease: "power3.out" },
+        3.66
+      );
+      tl.fromTo(
+        "#fall-icon-box",
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.45, ease: "power3.out" },
+        3.66
+      );
+
+      // SVG path progressive drawing for downward arrow
+      if (fallPath) {
+        tl.fromTo(
+          fallPath,
+          { strokeDashoffset: pathLen },
+          { strokeDashoffset: 0, duration: 0.5, ease: "power2.out" },
+          3.78
+        );
+      }
+      if (fallHead) {
+        tl.fromTo(
+          fallHead,
+          { strokeDashoffset: headLen },
+          { strokeDashoffset: 0, duration: 0.25, ease: "power2.out" },
+          4.22
+        );
+      }
+
+      // Label atMs 405740 (4.99s), holdMs 2400 (to 7.39s)
+      tl.fromTo(
+        "#fall-text-box",
+        { x: -20, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.4, ease: "power3.out" },
+        4.99
+      );
+
+      // Fall icon fade out at 6.16s
+      tl.to(
+        "#fall-icon-box",
+        { scale: 0.85, opacity: 0, duration: 0.25, ease: "power2.in" },
+        6.16
+      );
+
+      // --- BEAT 3: Punch Phrase Card ---
+      // atMs 407200 (6.45s), holdMs 1800 (through to 7.98s)
+      tl.fromTo(
+        "#punch-card",
+        { scale: 0.88, y: 30, opacity: 0 },
+        { scale: 1, y: 0, opacity: 1, duration: 0.45, ease: "power3.out" },
+        6.45
+      );
+      tl.fromTo(
+        ".punch-accent-line",
+        { scaleX: 0 },
+        { scaleX: 1, duration: 0.4, ease: "power2.out" },
+        6.65
+      );
+
+      // Callout fall container exit transition at 7.10s
+      tl.to(
+        "#callout-fall",
+        { y: 16, opacity: 0, duration: 0.3, ease: "power2.in" },
+        7.10
+      );
+
+      // Register master paused timeline
+      window.__timelines["scene-s46"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

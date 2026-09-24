@@ -1,0 +1,579 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap"
+    />
+      <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        padding: 0;
+        background: #0b0f14;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: #e7e3d9;
+      }
+
+      /* Nền giấy ngà + lưới ô vuông Vox 84px + Grain texture multiply */
+      .bg-base {
+        position: absolute;
+        inset: 0;
+        background-color: #e7e3d9;
+        z-index: 1;
+      }
+
+      .bg-grid {
+        position: absolute;
+        inset: 0;
+        background-image:
+          linear-gradient(rgba(20, 20, 20, 0.22) 1.5px, transparent 1.5px),
+          linear-gradient(90deg, rgba(20, 20, 20, 0.22) 1.5px, transparent 1.5px);
+        background-size: 84px 84px;
+        z-index: 2;
+        pointer-events: none;
+      }
+
+      .bg-grain {
+        position: absolute;
+        inset: 0;
+        opacity: 0.18;
+        mix-blend-mode: multiply;
+        background-image: radial-gradient(rgba(20, 20, 20, 0.7) 1px, transparent 0);
+        background-size: 4px 4px;
+        z-index: 3;
+        pointer-events: none;
+      }
+
+      /* Khung Video trung tâm theo phong cách Collage Cắt Giấy */
+      .video-wrapper {
+        position: absolute;
+        inset: 0;
+        z-index: 10;
+        overflow: hidden;
+        background: #141414;
+        transform-origin: 50% 50%;
+      }
+
+      #scene-video {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 1080px;
+        height: 1920px;
+        object-fit: cover;
+        display: block;
+        transform-origin: 50% 50%;
+      }
+
+      .video-overlay {
+        position: absolute;
+        inset: 0;
+        background:
+          radial-gradient(circle at 50% 50%, transparent 60%, rgba(20, 20, 20, 0.45) 100%),
+          linear-gradient(
+            to bottom,
+            rgba(20, 20, 20, 0.5) 0%,
+            transparent 18%,
+            transparent 75%,
+            rgba(20, 20, 20, 0.65) 100%
+          );
+        pointer-events: none;
+      }
+
+      /* Dossier Tag trên cùng (Safe zone top > 160px) */
+      .dossier-tag {
+        position: absolute;
+        top: 175px;
+        left: 48px;
+        z-index: 30;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        opacity: 0;
+      }
+
+      .dossier-pill {
+        background: #ff6a1a;
+        color: #141414;
+        font-size: 20px;
+        font-weight: 900;
+        letter-spacing: 1.5px;
+        padding: 6px 14px;
+        border-radius: 4px;
+        text-transform: uppercase;
+      }
+
+      .dossier-title {
+        background: rgba(20, 20, 20, 0.9);
+        color: #f7f4ec;
+        font-size: 22px;
+        font-weight: 700;
+        letter-spacing: 1px;
+        padding: 6px 16px;
+        border-radius: 4px;
+        border-left: 4px solid #ff6a1a;
+      }
+
+      /* Flow Step Cards: Hệ thống nhãn HUD Vox */
+      .step-card {
+        position: absolute;
+        left: 48px;
+        z-index: 30;
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        background: rgba(20, 20, 20, 0.94);
+        padding: 16px 24px;
+        border-radius: 12px;
+        border-left: 8px solid #ff6a1a;
+        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+        opacity: 0;
+      }
+
+      .step-card-1 {
+        top: 270px;
+      }
+
+      .step-card-2 {
+        top: 390px;
+      }
+
+      .step-card-3 {
+        top: 510px;
+      }
+
+      .step-badge {
+        background: #ff6a1a;
+        color: #141414;
+        font-size: 16px;
+        font-weight: 900;
+        letter-spacing: 1px;
+        padding: 4px 10px;
+        border-radius: 4px;
+        white-space: nowrap;
+      }
+
+      .step-badge-dark {
+        background: #f7f4ec;
+        color: #141414;
+      }
+
+      .step-badge-check {
+        background: #ff6a1a;
+        color: #141414;
+      }
+
+      .icon-box {
+        width: 60px;
+        height: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+
+      .svg-icon {
+        width: 100%;
+        height: 100%;
+        display: block;
+      }
+
+      .step-text-wrap {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      .step-sub {
+        font-size: 18px;
+        font-weight: 700;
+        color: #ff6a1a;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+      }
+
+      .step-main {
+        font-size: 32px;
+        font-weight: 900;
+        color: #f7f4ec;
+        letter-spacing: 0.5px;
+        white-space: nowrap;
+      }
+
+      /* Punch Phrase Card Kết Luận */
+      .punch-container {
+        position: absolute;
+        top: 1140px;
+        left: 0;
+        right: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 40;
+        pointer-events: none;
+      }
+
+      .punch-card {
+        background: #141414;
+        border: 4px solid #ff6a1a;
+        padding: 32px 52px;
+        border-radius: 16px;
+        box-shadow: 12px 16px 0px #ff6a1a, 0 20px 50px rgba(0, 0, 0, 0.6);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        opacity: 0;
+        transform-origin: 50% 50%;
+      }
+
+      .punch-stamp {
+        font-size: 20px;
+        font-weight: 900;
+        color: #141414;
+        background: #ff6a1a;
+        padding: 6px 18px;
+        border-radius: 4px;
+        letter-spacing: 2.5px;
+        margin-bottom: 14px;
+        text-transform: uppercase;
+      }
+
+      .punch-title {
+        font-size: 64px;
+        font-weight: 900;
+        line-height: 1.15;
+        color: #f7f4ec;
+        letter-spacing: -1px;
+        text-transform: uppercase;
+        margin: 0;
+        white-space: nowrap;
+      }
+
+      .punch-line {
+        width: 100%;
+        height: 6px;
+        background: #ff6a1a;
+        margin-top: 18px;
+        transform-origin: 0% 50%;
+      }
+
+      /* Thanh cam nhận diện cố định ở mép đáy khung hình */
+      .bottom-orange-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 12px;
+        background: #ff6a1a;
+        z-index: 100;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s16"
+      data-width="1080"
+      data-height="1920"
+      data-duration="10.01"
+    >
+      <!-- Nền giấy ngà + lưới ô vuông Vox 84px + Grain texture -->
+      <div class="bg-base"></div>
+      <div class="bg-grid"></div>
+      <div class="bg-grain"></div>
+
+      <!-- Video Fit 9:16 Cỗ Máy Rửa Cá (Paper Cutout) -->
+      <div id="video-wrapper" class="video-wrapper">
+        <video
+          id="scene-video"
+          data-start="0"
+          data-duration="10.01"
+          data-media-start="0"
+          src="assets/vid-13-money-laundering-shell-corp-cat.mp4"
+          muted
+          playsinline
+        ></video>
+        <div class="video-overlay"></div>
+      </div>
+
+      <!-- Tag Hồ Sơ Góc Trên (Safe zone top > 160px) -->
+      <div id="dossier-tag" class="dossier-tag">
+        <span class="dossier-pill">HỒ SƠ TỘI PHẠM #16</span>
+        <span class="dossier-title">CƠ CHẾ RỬA CÁ</span>
+      </div>
+
+      <!-- Overlay 1: Doc Icon + "CÔNG TY MA VỎ BỌC" -->
+      <div id="overlay-step-1" class="step-card step-card-1">
+        <div class="step-badge">BƯỚC 1</div>
+        <div class="icon-box">
+          <svg class="svg-icon" viewBox="0 0 64 64" fill="none">
+            <path
+              class="draw-doc"
+              d="M16 8 H40 L52 20 V56 H16 Z"
+              stroke="#FF6A1A"
+              stroke-width="4.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+            <path
+              class="draw-doc"
+              d="M40 8 V20 H52"
+              stroke="#FF6A1A"
+              stroke-width="4"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+            <path
+              class="draw-doc"
+              d="M24 30 H44"
+              stroke="#F7F4EC"
+              stroke-width="4"
+              stroke-linecap="round"
+            />
+            <path
+              class="draw-doc"
+              d="M24 40 H44"
+              stroke="#F7F4EC"
+              stroke-width="4"
+              stroke-linecap="round"
+            />
+            <path
+              class="draw-doc"
+              d="M24 50 H34"
+              stroke="#F7F4EC"
+              stroke-width="4"
+              stroke-linecap="round"
+            />
+          </svg>
+        </div>
+        <div class="step-text-wrap">
+          <div class="step-sub">GIẤY TỜ PHÁP LÝ</div>
+          <div class="step-main">CÔNG TY MA VỎ BỌC</div>
+        </div>
+      </div>
+
+      <!-- Overlay 2: Fall Icon + "ĐẦU TƯ CÁ BẨN VÀO" -->
+      <div id="overlay-step-2" class="step-card step-card-2">
+        <div class="step-badge step-badge-dark">BƯỚC 2</div>
+        <div class="icon-box">
+          <svg class="svg-icon" viewBox="0 0 64 64" fill="none">
+            <path
+              class="draw-fall"
+              d="M32 10 V46"
+              stroke="#FF6A1A"
+              stroke-width="5"
+              stroke-linecap="round"
+            />
+            <path
+              class="draw-fall"
+              d="M18 34 L32 48 L46 34"
+              stroke="#FF6A1A"
+              stroke-width="5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+            <path
+              class="draw-fall"
+              d="M14 20 C22 28, 26 30, 32 30 C38 30, 42 28, 50 20"
+              stroke="#F7F4EC"
+              stroke-width="3.5"
+              stroke-linecap="round"
+            />
+          </svg>
+        </div>
+        <div class="step-text-wrap">
+          <div class="step-sub">DÒNG TIỀN ĐEN</div>
+          <div class="step-main">ĐẦU TƯ CÁ BẨN VÀO</div>
+        </div>
+      </div>
+
+      <!-- Overlay 3: Check Icon + "NHẬN LẠI CÁ SẠCH" -->
+      <div id="overlay-step-3" class="step-card step-card-3">
+        <div class="step-badge step-badge-check">BƯỚC 3</div>
+        <div class="icon-box">
+          <svg class="svg-icon" viewBox="0 0 64 64" fill="none">
+            <circle
+              class="draw-check"
+              cx="32"
+              cy="32"
+              r="24"
+              stroke="#FF6A1A"
+              stroke-width="4.5"
+            />
+            <path
+              class="draw-check"
+              d="M20 33 L28 41 L44 23"
+              stroke="#F7F4EC"
+              stroke-width="5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+        </div>
+        <div class="step-text-wrap">
+          <div class="step-sub">LỢI NHUẬN HỢP PHÁP</div>
+          <div class="step-main">NHẬN LẠI CÁ SẠCH</div>
+        </div>
+      </div>
+
+      <!-- Overlay 4: Punch Phrase "RỬA TIỀN - RỬA CÁ" -->
+      <div id="punch-container" class="punch-container">
+        <div id="punch-card" class="punch-card">
+          <div class="punch-stamp">KẾT LUẬN THỦ ĐOẠN</div>
+          <h1 class="punch-title">RỬA TIỀN - RỬA CÁ</h1>
+          <div id="punch-line" class="punch-line"></div>
+        </div>
+      </div>
+
+      <!-- Thanh cam nhận diện cố định ở mép đáy khung hình -->
+      <div class="bottom-orange-bar"></div>
+    </div>
+
+    <script>
+      // Khởi tạo stroke-dash pattern cho SVG icon paths theo chuẩn Style DNA
+      function initSvgPath(selector) {
+        var elements = document.querySelectorAll(selector);
+        elements.forEach(function (el) {
+          var len = el.getTotalLength ? Math.ceil(el.getTotalLength()) : 200;
+          el.style.strokeDasharray = (len + 2) + "px";
+          el.style.strokeDashoffset = (len + 2) + "px";
+        });
+      }
+
+      initSvgPath(".draw-doc");
+      initSvgPath(".draw-fall");
+      initSvgPath(".draw-check");
+
+      // Khởi tạo GSAP Timeline duy nhất và paused cho composition "scene-s16"
+      const tl = gsap.timeline({ paused: true });
+
+      // 1. Unfold Entrance Animation (0.0s -> 0.7s)
+      tl.fromTo(
+        "#video-wrapper",
+        { scaleY: 0.1, opacity: 0 },
+        { scaleY: 1, opacity: 1, duration: 0.7, ease: "power3.out" },
+        0
+      );
+
+      // 2. Camera Motion: Zoom-in liên tục
+      // 0s -> 8.0s: Zoom nhẹ vào toàn cảnh cỗ máy mèo buôn lậu
+      tl.fromTo(
+        "#scene-video",
+        { scale: 1.0 },
+        { scale: 1.08, duration: 8.0, ease: "none" },
+        0
+      );
+      // 8.0s -> 10.01s: Freeze frame cuối, zoom sâu vào khay cá sạch thành phẩm
+      tl.fromTo(
+        "#scene-video",
+        { scale: 1.08, y: 0 },
+        { scale: 1.2, y: -45, duration: 2.01, ease: "power2.out" },
+        8.0
+      );
+
+      // 3. Dossier Tag Header (0.3s -> 0.8s)
+      tl.fromTo(
+        "#dossier-tag",
+        { y: -24, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.5, ease: "power3.out" },
+        0.3
+      );
+
+      // 4. Overlay 1: Doc Icon + "CÔNG TY MA VỎ BỌC" (1.03s -> 4.2s)
+      tl.fromTo(
+        "#overlay-step-1",
+        { x: -50, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.45, ease: "power3.out" },
+        1.03
+      );
+      tl.to(
+        ".draw-doc",
+        { strokeDashoffset: 0, duration: 0.65, ease: "power2.out", stagger: 0.08 },
+        1.15
+      );
+      tl.fromTo(
+        "#overlay-step-1",
+        { x: 0, opacity: 1 },
+        { x: 30, opacity: 0, duration: 0.33, ease: "power2.in" },
+        4.2
+      );
+
+      // 5. Overlay 2: Fall Icon + "ĐẦU TƯ CÁ BẨN VÀO" (4.42s -> 6.62s)
+      tl.fromTo(
+        "#overlay-step-2",
+        { x: -50, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.45, ease: "power3.out" },
+        4.42
+      );
+      tl.to(
+        ".draw-fall",
+        { strokeDashoffset: 0, duration: 0.65, ease: "power2.out", stagger: 0.1 },
+        4.55
+      );
+      tl.fromTo(
+        "#overlay-step-2",
+        { x: 0, opacity: 1 },
+        { x: 30, opacity: 0, duration: 0.35, ease: "power2.in" },
+        6.62
+      );
+
+      // 6. Overlay 3: Check Icon + "NHẬN LẠI CÁ SẠCH" (6.56s -> 8.3s)
+      tl.fromTo(
+        "#overlay-step-3",
+        { x: -50, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.45, ease: "power3.out" },
+        6.56
+      );
+      tl.to(
+        ".draw-check",
+        { strokeDashoffset: 0, duration: 0.6, ease: "power2.out", stagger: 0.12 },
+        6.7
+      );
+      tl.fromTo(
+        "#overlay-step-3",
+        { opacity: 1 },
+        { opacity: 0, duration: 0.25, ease: "power2.in" },
+        8.3
+      );
+
+      // 7. Overlay 4: Punch-phrase "RỬA TIỀN - RỬA CÁ" (8.41s -> 10.01s)
+      tl.fromTo(
+        "#punch-card",
+        { scale: 0.85, y: 35, opacity: 0 },
+        { scale: 1, y: 0, opacity: 1, duration: 0.5, ease: "power3.out" },
+        8.41
+      );
+      tl.fromTo(
+        "#punch-line",
+        { scaleX: 0 },
+        { scaleX: 1, duration: 0.45, ease: "power2.out" },
+        8.65
+      );
+
+      // Đăng ký timeline vào hệ thống seek của HyperFrames
+      window.__timelines["scene-s16"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

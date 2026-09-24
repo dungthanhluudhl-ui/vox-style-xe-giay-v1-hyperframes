@@ -1,0 +1,549 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap"
+    />
+      <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #e7e3d9;
+        font-family: "Be Vietnam Pro", sans-serif;
+        color: #141414;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+      .clip {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+      }
+
+      /* Nền Chart với 4 đường kẻ ngang 20/40/60/80% và tick cam mép trái theo đúng STYLE DNA */
+      .chart-grid-layer {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        z-index: 10;
+      }
+      .chart-line-row {
+        position: absolute;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: rgba(20, 20, 20, 0.22);
+        display: flex;
+        align-items: center;
+      }
+      .chart-tick {
+        width: 24px;
+        height: 4px;
+        background-color: #ff6a1a;
+        transform-origin: left center;
+      }
+
+      /* Video chính và Camera Rig */
+      #video-layer {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+        z-index: 2;
+      }
+      #camera-rig {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        transform-origin: 50% 45%;
+      }
+      #vid-19 {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+
+      /* Lớp phủ Paper Grain tạo chất giấy báo cổ điển */
+      .grain-overlay {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        opacity: 0.18;
+        mix-blend-mode: multiply;
+        z-index: 30;
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+      }
+
+      /* Thanh cam nhận diện thương hiệu cố định mép đáy */
+      #bottom-brand-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 14px;
+        background-color: #ff6a1a;
+        z-index: 999;
+      }
+
+      /* OVERLAY 1: Thẻ Giá Ban Đầu 5K */
+      #label-5k-card {
+        position: absolute;
+        top: 220px;
+        left: 60px;
+        width: 420px;
+        background-color: #f5f0e4;
+        border: 3px solid #141414;
+        border-radius: 14px;
+        box-shadow: 8px 8px 0px #141414;
+        padding: 22px 26px;
+        z-index: 20;
+      }
+      .tag-subtitle {
+        font-size: 20px;
+        font-weight: 700;
+        color: #141414;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        margin-bottom: 14px;
+      }
+      .price-container {
+        position: relative;
+        display: inline-block;
+      }
+      .price-number-ink {
+        font-size: 78px;
+        font-weight: 900;
+        color: #141414;
+        line-height: 1;
+        margin: 0;
+      }
+      .strikethrough-svg {
+        position: absolute;
+        top: -6px;
+        left: -8px;
+        width: calc(100% + 16px);
+        height: calc(100% + 12px);
+        overflow: visible;
+        pointer-events: none;
+      }
+      #badge-soldout {
+        margin-top: 12px;
+        display: inline-block;
+        background-color: #141414;
+        color: #ff6a1a;
+        font-size: 19px;
+        font-weight: 900;
+        padding: 6px 14px;
+        border-radius: 6px;
+        letter-spacing: 1px;
+        transform-origin: left center;
+      }
+
+      /* OVERLAY 2: Icon Rise (Mũi tên tăng vọt + Sức mua) */
+      #rise-card {
+        position: absolute;
+        top: 520px;
+        right: 60px;
+        width: 420px;
+        background-color: #141414;
+        border: 3px solid #ff6a1a;
+        border-radius: 14px;
+        box-shadow: 8px 8px 0px #ff6a1a;
+        padding: 22px 26px;
+        z-index: 22;
+      }
+      .rise-tag {
+        font-size: 19px;
+        font-weight: 700;
+        color: #ff6a1a;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        margin-bottom: 10px;
+      }
+      .rise-svg-wrap {
+        width: 100%;
+        height: 105px;
+        margin-bottom: 12px;
+      }
+      #rise-arrowhead {
+        transform-box: fill-box;
+        transform-origin: center;
+      }
+      #rise-badge {
+        font-size: 22px;
+        font-weight: 900;
+        color: #141414;
+        background: #ff6a1a;
+        padding: 8px 14px;
+        border-radius: 8px;
+        text-align: center;
+        letter-spacing: 1px;
+        transform-origin: center center;
+      }
+
+      /* OVERLAY 3: Thẻ Giá Mới 20K (x4) */
+      #label-20k-card {
+        position: absolute;
+        top: 220px;
+        right: 60px;
+        width: 430px;
+        background-color: #141414;
+        border: 3px solid #ff6a1a;
+        border-radius: 14px;
+        box-shadow: 8px 8px 0px #ff6a1a;
+        padding: 22px 26px;
+        z-index: 24;
+      }
+      .tag-subtitle-orange {
+        font-size: 20px;
+        font-weight: 700;
+        color: #ff6a1a;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        margin-bottom: 18px;
+        line-height: 1.2;
+      }
+      .price-number-white {
+        font-size: 78px;
+        font-weight: 900;
+        color: #f7f4ec;
+        line-height: 1;
+        margin: 0;
+      }
+      #pill-multiplier {
+        margin-top: 14px;
+        display: inline-block;
+        background-color: #ff6a1a;
+        color: #141414;
+        font-size: 20px;
+        font-weight: 900;
+        padding: 6px 14px;
+        border-radius: 8px;
+        transform-origin: left center;
+      }
+
+      /* OVERLAY 4: Punch-Phrase "LẠM PHÁT CẦU KÉO" */
+      #punch-card {
+        position: absolute;
+        top: 1180px;
+        left: 60px;
+        right: 60px;
+        background-color: rgba(20, 20, 20, 0.96);
+        border: 4px solid #ff6a1a;
+        border-radius: 16px;
+        box-shadow: 10px 10px 0px #ff6a1a;
+        padding: 30px 34px;
+        text-align: center;
+        z-index: 26;
+      }
+      .punch-label {
+        font-size: 22px;
+        font-weight: 700;
+        color: #ff6a1a;
+        letter-spacing: 4px;
+        text-transform: uppercase;
+        margin-bottom: 8px;
+      }
+      .punch-headline {
+        font-size: 58px;
+        font-weight: 900;
+        color: #f7f4ec;
+        line-height: 1.25;
+        margin: 0;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+      }
+      #punch-highlight-line {
+        height: 8px;
+        background-color: #ff6a1a;
+        margin: 16px auto 0;
+        width: 65%;
+        border-radius: 4px;
+        transform-origin: center center;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s03"
+      data-width="1080"
+      data-height="1920"
+      data-duration="6.67"
+      data-fps="30"
+    >
+      <!-- Lớp Video chính có Camera Zoom Rig (video mang data-start và duration) -->
+      <div id="video-layer">
+        <div id="camera-rig">
+          <video
+            id="vid-19"
+            src="assets/vid-19-high-profit-cutout-infographic.mp4"
+            data-start="0"
+            data-duration="6.67"
+            data-media-start="0.8"
+            muted
+            playsinline
+          ></video>
+        </div>
+      </div>
+
+      <!-- Lớp đồ họa Chart Grid: 4 đường kẻ ngang 20/40/60/80% cùng tick cam ở mép trái -->
+      <div class="chart-grid-layer">
+        <div class="chart-line-row" style="top: 20%;">
+          <div class="chart-tick"></div>
+        </div>
+        <div class="chart-line-row" style="top: 40%;">
+          <div class="chart-tick"></div>
+        </div>
+        <div class="chart-line-row" style="top: 60%;">
+          <div class="chart-tick"></div>
+        </div>
+        <div class="chart-line-row" style="top: 80%;">
+          <div class="chart-tick"></div>
+        </div>
+      </div>
+
+      <!-- Lớp Grain tạo chất giấy cổ điển -->
+      <div class="grain-overlay"></div>
+
+      <!-- Thanh cam thương hiệu cố định mép đáy -->
+      <div id="bottom-brand-bar"></div>
+
+      <!-- OVERLAY 1: Giá ban đầu 5K (1.35s -> 3.15s) -->
+      <div id="overlay-5k" class="clip" data-start="1.35" data-duration="1.8">
+        <div id="label-5k-card">
+          <div class="tag-subtitle">GIÁ BAN ĐẦU</div>
+          <div class="price-container">
+            <div class="price-number-ink" data-layout-allow-occlusion="true">5K</div>
+            <svg class="strikethrough-svg" viewBox="0 0 160 80" xmlns="http://www.w3.org/2000/svg">
+              <path
+                id="strikethrough-path"
+                d="M 10 65 L 145 15"
+                fill="none"
+                stroke="#141414"
+                stroke-width="9"
+                stroke-linecap="round"
+              />
+            </svg>
+          </div>
+          <div>
+            <div id="badge-soldout">HẾT HÀNG</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- OVERLAY 2: Icon Rise (Mũi tên tăng vọt) (3.18s -> 5.38s) -->
+      <div id="overlay-rise" class="clip" data-start="3.18" data-duration="2.2">
+        <div id="rise-card">
+          <div class="rise-tag">XU HƯỚNG CẦU</div>
+          <div class="rise-svg-wrap">
+            <svg viewBox="0 0 360 105" xmlns="http://www.w3.org/2000/svg" style="width: 100%; height: 100%;">
+              <line x1="10" y1="92" x2="350" y2="92" stroke="rgba(247,244,236,0.18)" stroke-width="2" stroke-dasharray="6 6" />
+              <line x1="10" y1="50" x2="350" y2="50" stroke="rgba(247,244,236,0.18)" stroke-width="2" stroke-dasharray="6 6" />
+              <path
+                id="rise-arrow-path"
+                d="M 20 90 L 105 76 L 190 60 L 265 28 L 325 14"
+                fill="none"
+                stroke="#FF6A1A"
+                stroke-width="9"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <polygon
+                id="rise-arrowhead"
+                points="320,4 342,15 318,27"
+                fill="#FF6A1A"
+              />
+            </svg>
+          </div>
+          <div id="rise-badge">SỨC MUA BÙNG NỔ</div>
+        </div>
+      </div>
+
+      <!-- OVERLAY 3: Giá mới 20K (x4) (4.39s -> 6.39s) -->
+      <div id="overlay-20k" class="clip" data-start="4.39" data-duration="2.0">
+        <div id="label-20k-card">
+          <div class="tag-subtitle-orange">GIÁ MỚI</div>
+          <div class="price-number-white">20K</div>
+          <div>
+            <div id="pill-multiplier">▲ TĂNG GẤP 4 LẦN</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- OVERLAY 4: Punch-Phrase "LẠM PHÁT CẦU KÉO" (5.07s -> 6.67s) -->
+      <div id="overlay-punch" class="clip" data-start="5.07" data-duration="1.6">
+        <div id="punch-card">
+          <div class="punch-label">CƠ CHẾ KINH TẾ</div>
+          <h1 class="punch-headline">LẠM PHÁT CẦU KÉO</h1>
+          <div id="punch-highlight-line"></div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // 1. Chuẩn bị hình học SVG theo API getTotalLength
+      const strikePath = document.getElementById("strikethrough-path");
+      if (strikePath) {
+        const len = strikePath.getTotalLength() || 145;
+        strikePath.style.strokeDasharray = `${len}`;
+        strikePath.style.strokeDashoffset = `${len}`;
+      }
+
+      const risePath = document.getElementById("rise-arrow-path");
+      if (risePath) {
+        const len = risePath.getTotalLength() || 320;
+        risePath.style.strokeDasharray = `${len}`;
+        risePath.style.strokeDashoffset = `${len}`;
+      }
+
+      // 2. Khởi tạo paused timeline duy nhất cho composition
+      const tl = gsap.timeline({ paused: true });
+
+      // Camera motion: zoom-in chậm, mượt mà xuyên suốt 6.67s
+      tl.fromTo(
+        "#camera-rig",
+        { scale: 1.0 },
+        { scale: 1.08, duration: 6.67, ease: "sine.inOut" },
+        0
+      );
+
+      // Nhịp xuất hiện các vạch cam chart
+      tl.fromTo(
+        ".chart-tick",
+        { scaleX: 0 },
+        { scaleX: 1, duration: 0.35, stagger: 0.08, ease: "power2.out" },
+        0.15
+      );
+
+      // OVERLAY 1: Giá 5k xuất hiện (t = 1.35s)
+      tl.fromTo(
+        "#label-5k-card",
+        { scale: 0.85, opacity: 0, y: 25 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.4, ease: "power3.out" },
+        1.35
+      );
+
+      // Gạch chéo mực đen xuất hiện khi narrator chuyển ý "nhưng..." (t = 2.15s)
+      tl.to(
+        "#strikethrough-path",
+        { strokeDashoffset: 0, duration: 0.22, ease: "power2.out" },
+        2.15
+      );
+
+      // Nhãn Hết hàng nảy ra (t = 2.28s)
+      tl.fromTo(
+        "#badge-soldout",
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.28, ease: "power3.out" },
+        2.28
+      );
+
+      // Thẻ 5k mờ dần trước khi kết thúc thời lượng clip (t = 2.85s)
+      tl.to(
+        "#label-5k-card",
+        { opacity: 0, y: -18, duration: 0.3, ease: "power2.in" },
+        2.85
+      );
+
+      // OVERLAY 2: Icon Rise xuất hiện (t = 3.18s)
+      tl.fromTo(
+        "#rise-card",
+        { scale: 0.85, opacity: 0, x: 30 },
+        { scale: 1, opacity: 1, x: 0, duration: 0.42, ease: "power3.out" },
+        3.18
+      );
+
+      // Đường path mũi tên tự vẽ (t = 3.35s)
+      tl.to(
+        "#rise-arrow-path",
+        { strokeDashoffset: 0, duration: 0.65, ease: "power2.out" },
+        3.35
+      );
+
+      // Đầu mũi tên bật ra (t = 3.85s)
+      tl.fromTo(
+        "#rise-arrowhead",
+        { scale: 0 },
+        { scale: 1, duration: 0.22, ease: "power3.out" },
+        3.85
+      );
+
+      // Badge Sức mua bùng nổ (t = 3.92s)
+      tl.fromTo(
+        "#rise-badge",
+        { scale: 0.8, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.3, ease: "power3.out" },
+        3.92
+      );
+
+      // Thẻ Rise mờ dần trước khi kết thúc slot (t = 5.08s)
+      tl.to(
+        "#rise-card",
+        { opacity: 0, y: -16, duration: 0.3, ease: "power2.in" },
+        5.08
+      );
+
+      // OVERLAY 3: Giá mới 20k xuất hiện (t = 4.39s)
+      tl.fromTo(
+        "#label-20k-card",
+        { scale: 0.85, opacity: 0, y: 25 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.45, ease: "power3.out" },
+        4.39
+      );
+
+      // Nhãn x4 bật ra (t = 4.7s)
+      tl.fromTo(
+        "#pill-multiplier",
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.3, ease: "power3.out" },
+        4.7
+      );
+
+      // Thẻ 20k mờ dần (t = 6.09s)
+      tl.to(
+        "#label-20k-card",
+        { opacity: 0, y: -16, duration: 0.3, ease: "power2.in" },
+        6.09
+      );
+
+      // OVERLAY 4: Punch-Phrase "LẠM PHÁT CẦU KÉO" (t = 5.07s)
+      tl.fromTo(
+        "#punch-card",
+        { scale: 0.9, opacity: 0, y: 35 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.4, ease: "power4.out" },
+        5.07
+      );
+
+      // Gạch chân highlight cam mở rộng ra (t = 5.35s)
+      tl.fromTo(
+        "#punch-highlight-line",
+        { scaleX: 0 },
+        { scaleX: 1, duration: 0.35, ease: "power3.out" },
+        5.35
+      );
+
+      // 3. Đăng ký timeline đồng bộ với framework HyperFrames
+      window.__timelines = window.__timelines || {};
+      window.__timelines["scene-s03"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

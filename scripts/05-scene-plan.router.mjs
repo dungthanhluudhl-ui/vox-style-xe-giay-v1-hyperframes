@@ -131,7 +131,8 @@ const response = await callModel({
     { role: "user", content: userPrompt },
   ],
   temperature: 0.4,
-  maxTokens: 8000,
+  maxTokens: 16000,
+  timeoutMs: 240000,
   responseFormat: { type: "json_object" },
 });
 

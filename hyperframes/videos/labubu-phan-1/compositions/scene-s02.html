@@ -1,0 +1,546 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background: #141414;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      /* Root composition: kích thước 100% theo contract HyperFrames, pixels do data-width/height kiểm soát */
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: #E7E3D9;
+      }
+
+      /* Nền spotlight: lưới ô vuông 84px + viền tối vignette rgba(20,20,20,0.30) */
+      .bg-spotlight-layer {
+        position: absolute;
+        inset: 0;
+        background-color: #E7E3D9;
+        background-image:
+          radial-gradient(circle at 50% 48%, rgba(20, 20, 20, 0) 38%, rgba(20, 20, 20, 0.30) 100%),
+          linear-gradient(to right, rgba(20, 20, 20, 0.16) 1.5px, transparent 1.5px),
+          linear-gradient(to bottom, rgba(20, 20, 20, 0.16) 1.5px, transparent 1.5px);
+        background-size: 100% 100%, 84px 84px, 84px 84px;
+        pointer-events: none;
+        z-index: 1;
+      }
+
+      /* Grain texture mô phỏng giấy nhám cổ điển */
+      .bg-grain-layer {
+        position: absolute;
+        inset: 0;
+        opacity: 0.18;
+        mix-blend-mode: multiply;
+        pointer-events: none;
+        z-index: 2;
+        background-image: url('data:image/svg+xml;utf8,<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"><filter id="noiseFilter"><feTurbulence type="fractalNoise" baseFrequency="0.75" numOctaves="3" stitchTiles="stitch"/></filter><rect width="100%" height="100%" filter="url(%23noiseFilter)"/></svg>');
+      }
+
+      /* Quy ước clip: định vị tuyệt đối theo khung nhìn với inset:0 */
+      .clip {
+        position: absolute;
+        inset: 0;
+      }
+
+      /* Thanh cam nhận diện thương hiệu cố định mép đáy */
+      #bottom-accent-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 14px;
+        background-color: #FF6A1A;
+        z-index: 90;
+      }
+
+      /* Header kicker trên vùng safe zone (Y > 160px) */
+      .header-kicker {
+        position: absolute;
+        top: 175px;
+        left: 60px;
+        right: 60px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        z-index: 30;
+      }
+      .kicker-tag {
+        background: #141414;
+        color: #F7F4EC;
+        font-size: 22px;
+        font-weight: 900;
+        padding: 6px 16px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        border-left: 6px solid #FF6A1A;
+      }
+      .kicker-context {
+        color: #141414;
+        font-size: 20px;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+      }
+
+      /* Hero Media Container (khung tranh cắt dán trung tâm theo phong cách collage) */
+      .hero-frame-container {
+        position: absolute;
+        top: 250px;
+        left: 60px;
+        width: 960px;
+        height: 1040px;
+        border: 5px solid #141414;
+        box-shadow: 14px 14px 0px #141414;
+        background-color: #141414;
+        overflow: hidden;
+        z-index: 10;
+      }
+
+      /* Shot 1: Video chiếc hộp bí ẩn (width 112% phục vụ chuyển động pan-left) */
+      #shot1-video {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 112%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      /* Shot 2: Lớp khung clip cho ảnh biểu đồ lao dốc */
+      .shot-layer {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+      }
+
+      .zoom-wrap {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        transform-origin: 50% 50%;
+      }
+
+      #shot2-image {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+
+      /* Hiệu ứng vignette góc tối cho khung media */
+      .media-vignette-overlay {
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(circle at 50% 50%, rgba(20, 20, 20, 0) 50%, rgba(20, 20, 20, 0.42) 100%);
+        pointer-events: none;
+        z-index: 12;
+      }
+
+      /* Đường viền cam mảnh quanh hộp điểm xuyết phong cách Vox */
+      .media-accent-border {
+        position: absolute;
+        inset: 16px;
+        border: 1.5px dashed rgba(255, 106, 26, 0.65);
+        pointer-events: none;
+        z-index: 13;
+      }
+
+      /* Shards cho hiệu ứng shatter đầu cảnh */
+      .shatter-overlay {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        z-index: 15;
+      }
+      .shard-piece {
+        position: absolute;
+        inset: 0;
+        background: #141414;
+        border: 2px solid #FF6A1A;
+      }
+      .shard-1 { clip-path: polygon(0% 0%, 55% 0%, 42% 48%, 0% 40%); }
+      .shard-2 { clip-path: polygon(55% 0%, 100% 0%, 100% 52%, 42% 48%); }
+      .shard-3 { clip-path: polygon(0% 40%, 42% 48%, 35% 100%, 0% 100%); }
+      .shard-4 { clip-path: polygon(42% 48%, 100% 52%, 100% 100%, 35% 100%); }
+
+      /* Vùng chứa Overlays/Badges: slot timed có class="clip" inset:0 */
+      .badge-slot {
+        pointer-events: none;
+        z-index: 40;
+      }
+
+      /* Card nội dung badge bên trong: định vị chính xác, height: auto theo nội dung */
+      .editorial-badge {
+        position: absolute;
+        top: 1320px;
+        left: 60px;
+        width: 960px;
+        height: auto;
+        background: #141414;
+        border: 4px solid #FF6A1A;
+        box-shadow: 10px 10px 0px rgba(20, 20, 20, 0.85);
+        padding: 24px 32px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        will-change: transform, opacity;
+      }
+
+      .badge-left-block {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      .badge-stage-tag {
+        color: #FF6A1A;
+        font-size: 20px;
+        font-weight: 900;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+
+      .badge-punch-title {
+        color: #F7F4EC;
+        font-size: 50px;
+        font-weight: 900;
+        line-height: 1.15;
+        letter-spacing: -0.01em;
+        text-transform: uppercase;
+        margin: 0;
+      }
+
+      /* Icon Mystery Box (Shatter ráp lại thành hộp mù) */
+      .mystery-box-graphic {
+        width: 96px;
+        height: 96px;
+        flex-shrink: 0;
+      }
+
+      #box-spark {
+        transform-origin: 50px 50px;
+      }
+
+      /* Icon Fall biểu tượng sụt giảm lao dốc */
+      .fall-icon-container {
+        width: 104px;
+        height: 104px;
+        background: #1d1d1d;
+        border: 2px solid #FF6A1A;
+        border-radius: 8px;
+        display: grid;
+        place-items: center;
+        flex-shrink: 0;
+        padding: 8px;
+      }
+      .fall-svg {
+        width: 80px;
+        height: 80px;
+      }
+
+      /* Góc dán băng keo trang trí phong cách collage */
+      .tape-decoration {
+        position: absolute;
+        top: -18px;
+        right: 48px;
+        width: 120px;
+        height: 34px;
+        background: rgba(245, 240, 228, 0.85);
+        transform: rotate(3.5deg);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+        border: 1px solid rgba(20,20,20,0.2);
+        z-index: 20;
+      }
+    </style>
+
+    <!-- Composition Root: duration = (13440 - 7120) / 1000 = 6.32 giây -->
+    <div
+      id="root"
+      data-composition-id="scene-s02"
+      data-start="0"
+      data-width="1080"
+      data-height="1920"
+      data-duration="6.32"
+    >
+      <!-- Lớp nền phong cách spotlight & hạt nhiễu (giữ nguyên suốt cảnh) -->
+      <div class="bg-spotlight-layer"></div>
+      <div class="bg-grain-layer"></div>
+
+      <!-- Kicker đề mục đầu trang -->
+      <header class="header-kicker">
+        <div class="kicker-tag">HỒ SƠ THỊ TRƯỜNG</div>
+        <div class="kicker-context">NGHỊCH LÝ ĐẦU TƯ • TRÀO LƯU</div>
+      </header>
+
+      <!-- Khung hiển thị Media chính (Hero Container) -->
+      <div class="hero-frame-container" id="hero-frame">
+        <div class="tape-decoration"></div>
+
+        <!-- Shot 1: Video (0s -> 3.38s) với trim 1s -> 4.38s -->
+        <video
+          id="shot1-video"
+          data-start="0"
+          data-duration="3.38"
+          data-media-start="1"
+          data-layout-allow-overflow="true"
+          src="assets/vid-03-mystery-box-investment-scam.mp4"
+          muted
+          playsinline
+        ></video>
+
+        <!-- Shot 2: Ảnh biểu đồ lao dốc (3.38s -> 6.32s) bọc trong timed clip riêng -->
+        <div
+          id="shot2-layer"
+          class="clip shot-layer"
+          data-start="3.38"
+          data-duration="2.94"
+        >
+          <div id="shot2-zoom-wrap" class="zoom-wrap" data-layout-allow-overflow="true">
+            <img
+              id="shot2-image"
+              src="assets/img-03-mystery-box-scam-loss.jpeg"
+              alt="Biểu đồ tài chính sụt giảm và các khối hộp vỡ vụn"
+            />
+          </div>
+        </div>
+
+        <!-- Lớp phủ ánh sáng & khung viền cam quanh hộp bí ẩn -->
+        <div class="media-vignette-overlay"></div>
+        <div class="media-accent-border"></div>
+
+        <!-- Các mảnh vỡ shatter lúc mở màn cảnh 1 -->
+        <div class="shatter-overlay" id="shatter-overlay" data-layout-allow-overflow="true">
+          <div class="shard-piece shard-1" id="shard-1"></div>
+          <div class="shard-piece shard-2" id="shard-2"></div>
+          <div class="shard-piece shard-3" id="shard-3"></div>
+          <div class="shard-piece shard-4" id="shard-4"></div>
+        </div>
+      </div>
+
+      <!-- Overlay Shot 1: "CƠN SỐT BLIND BOX" (từ 2.38s đến 4.18s, hold 1.8s) -->
+      <div
+        id="badge-shot1"
+        class="clip badge-slot"
+        data-start="2.38"
+        data-duration="1.80"
+      >
+        <div class="editorial-badge" id="badge-shot1-card">
+          <div class="badge-left-block">
+            <div class="badge-stage-tag">GIAI ĐOẠN 01 • BÙNG NỔ</div>
+            <h1 class="badge-punch-title">CƠN SỐT BLIND BOX</h1>
+          </div>
+          <!-- Graphic Mystery Box vỡ rồi ráp lại -->
+          <svg class="mystery-box-graphic" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <g id="box-shards">
+              <path id="box-lid" d="M 15 32 L 50 14 L 85 32 L 50 50 Z" fill="#FF6A1A" stroke="#F7F4EC" stroke-width="3" stroke-linejoin="round"/>
+              <path id="box-left" d="M 15 32 L 50 50 L 50 86 L 15 68 Z" fill="#1d1d1d" stroke="#FF6A1A" stroke-width="3" stroke-linejoin="round"/>
+              <path id="box-right" d="M 50 50 L 85 32 L 85 68 L 50 86 Z" fill="#2a2a2a" stroke="#FF6A1A" stroke-width="3" stroke-linejoin="round"/>
+              <circle id="box-spark" cx="50" cy="50" r="12" fill="#F7F4EC"/>
+              <path d="M 50 42 L 50 58 M 42 50 L 58 50" stroke="#FF6A1A" stroke-width="4" stroke-linecap="round"/>
+            </g>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Overlay Shot 2: "THOÁI TRÀO ĐỘT NGỘT" (từ 4.56s đến 6.21s, hold 1.65s) -->
+      <div
+        id="badge-shot2"
+        class="clip badge-slot"
+        data-start="4.56"
+        data-duration="1.65"
+      >
+        <div class="editorial-badge" id="badge-shot2-card">
+          <div class="badge-left-block">
+            <div class="badge-stage-tag">GIAI ĐOẠN 02 • ĐẢO CHIỀU</div>
+            <h2 class="badge-punch-title">THOÁI TRÀO ĐỘT NGỘT</h2>
+          </div>
+          <!-- Biểu tượng Fall: đường path tự vẽ dần (SVG stroke-dashoffset) -->
+          <div class="fall-icon-container">
+            <svg class="fall-svg" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path
+                id="fall-stroke-trend"
+                d="M 14 22 L 44 54 L 58 40 L 84 82"
+                stroke="#FF6A1A"
+                stroke-width="7"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <path
+                id="fall-stroke-arrow"
+                d="M 64 82 L 84 82 L 84 62"
+                stroke="#FF6A1A"
+                stroke-width="7"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- Chữ ký nhận diện: Thanh cam cố định mép đáy -->
+      <div id="bottom-accent-bar"></div>
+    </div>
+
+    <!-- Script điều khiển hoạt ảnh GSAP tất định (seek-safe) -->
+    <script>
+      // Đăng ký đúng 1 timeline gốc paused theo hợp đồng HyperFrames
+      const tl = gsap.timeline({ paused: true });
+
+      // 1. Chuẩn bị hình học cho SVG Path Draw (icon fall)
+      const trendPath = document.getElementById("fall-stroke-trend");
+      const arrowPath = document.getElementById("fall-stroke-arrow");
+      let trendLen = 100;
+      let arrowLen = 50;
+      if (trendPath && arrowPath) {
+        try {
+          trendLen = trendPath.getTotalLength() || 100;
+          arrowLen = arrowPath.getTotalLength() || 50;
+        } catch (e) {
+          trendLen = 100;
+          arrowLen = 50;
+        }
+        trendPath.style.strokeDasharray = trendLen;
+        trendPath.style.strokeDashoffset = trendLen;
+        arrowPath.style.strokeDasharray = arrowLen;
+        arrowPath.style.strokeDashoffset = arrowLen;
+      }
+
+      // --- SHOT 1 (0.0s -> 3.38s) ---
+      // Camera motion: pan-left cho video
+      tl.fromTo(
+        "#shot1-video",
+        { x: 10 },
+        { x: -80, duration: 3.38, ease: "none" },
+        0
+      );
+
+      // Hiệu ứng transitionIn: shatter (các mảnh vỡ bung tách để lộ nội dung video)
+      tl.fromTo(
+        "#shard-1",
+        { x: 0, y: 0, rotation: 0, opacity: 1 },
+        { x: -160, y: -140, rotation: -18, opacity: 0, duration: 0.65, ease: "power3.out" },
+        0.05
+      );
+      tl.fromTo(
+        "#shard-2",
+        { x: 0, y: 0, rotation: 0, opacity: 1 },
+        { x: 160, y: -140, rotation: 18, opacity: 0, duration: 0.65, ease: "power3.out" },
+        0.05
+      );
+      tl.fromTo(
+        "#shard-3",
+        { x: 0, y: 0, rotation: 0, opacity: 1 },
+        { x: -150, y: 150, rotation: -12, opacity: 0, duration: 0.65, ease: "power3.out" },
+        0.08
+      );
+      tl.fromTo(
+        "#shard-4",
+        { x: 0, y: 0, rotation: 0, opacity: 1 },
+        { x: 150, y: 150, rotation: 14, opacity: 0, duration: 0.65, ease: "power3.out" },
+        0.08
+      );
+
+      // Overlay 1 xuất hiện tại t = 2.38s: tween trên phần tử con #badge-shot1-card (không tween .clip)
+      tl.fromTo(
+        "#badge-shot1-card",
+        { y: 35, opacity: 0, scale: 0.95 },
+        { y: 0, opacity: 1, scale: 1, duration: 0.45, ease: "power3.out" },
+        2.38
+      );
+      // Ráp nối các mảnh của chiếc hộp bí ẩn ngay trên badge
+      tl.fromTo(
+        "#box-lid",
+        { y: -25, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.4, ease: "power3.out" },
+        2.42
+      );
+      tl.fromTo(
+        "#box-left",
+        { x: -20, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.4, ease: "power3.out" },
+        2.46
+      );
+      tl.fromTo(
+        "#box-right",
+        { x: 20, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.4, ease: "power3.out" },
+        2.50
+      );
+      // Điểm sáng trung tâm hộp bung nở với ease mượt mà chuẩn Vox style
+      tl.fromTo(
+        "#box-spark",
+        { scale: 0 },
+        { scale: 1.1, duration: 0.35, ease: "power3.out" },
+        2.70
+      );
+
+      // --- SHOT 2 (3.38s -> 6.32s) ---
+      // Camera motion: zoom-out từ cận cảnh ra bao quát (tween trên #shot2-zoom-wrap)
+      tl.fromTo(
+        "#shot2-zoom-wrap",
+        { scale: 1.15 },
+        { scale: 1.0, duration: 2.94, ease: "none" },
+        3.38
+      );
+
+      // Transition in: dissolve mượt mà sang hình ảnh biểu đồ lao dốc (tween opacity trên #shot2-image)
+      tl.fromTo(
+        "#shot2-image",
+        { opacity: 0 },
+        { opacity: 1, duration: 0.45, ease: "power2.out" },
+        3.38
+      );
+
+      // Overlay 2 xuất hiện tại t = 4.56s: tween trên phần tử con #badge-shot2-card (không tween .clip)
+      tl.fromTo(
+        "#badge-shot2-card",
+        { y: 35, opacity: 0, scale: 0.95 },
+        { y: 0, opacity: 1, scale: 1, duration: 0.45, ease: "power3.out" },
+        4.56
+      );
+
+      // Icon Fall vẽ dần theo stroke tại t = 5.08s ("lụi tàn bớt rồi")
+      if (trendPath && arrowPath) {
+        tl.fromTo(
+          trendPath,
+          { strokeDashoffset: trendLen },
+          { strokeDashoffset: 0, duration: 0.45, ease: "power2.out" },
+          5.08
+        );
+        tl.fromTo(
+          arrowPath,
+          { strokeDashoffset: arrowLen },
+          { strokeDashoffset: 0, duration: 0.25, ease: "power2.out" },
+          5.45
+        );
+      }
+
+      // Đăng ký timeline cho HyperFrames seek
+      window.__timelines["scene-s02"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

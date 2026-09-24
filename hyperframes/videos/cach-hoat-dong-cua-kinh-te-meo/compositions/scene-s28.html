@@ -1,0 +1,771 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap"
+    />
+      <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        padding: 0;
+        background: #e7e3d9;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: #e7e3d9;
+      }
+
+      .clip {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+      }
+
+      /* Background chart variant: ruled horizontal lines + orange ticks */
+      .bg-chart-layer {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        z-index: 1;
+      }
+
+      .chart-bg-line {
+        position: absolute;
+        left: 0;
+        right: 0;
+        height: 4px;
+        display: flex;
+        align-items: center;
+      }
+
+      .chart-tick-orange {
+        width: 24px;
+        height: 4px;
+        background: #ff6a1a;
+        flex-shrink: 0;
+      }
+
+      .chart-grid-rule {
+        flex: 1;
+        height: 1.5px;
+        background: rgba(20, 20, 20, 0.2);
+      }
+
+      /* Grain texture */
+      .grain-overlay {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: 2;
+        mix-blend-mode: multiply;
+        opacity: 0.18;
+      }
+
+      /* Header */
+      .scene-header {
+        position: absolute;
+        top: 150px;
+        left: 50px;
+        width: 980px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        z-index: 10;
+        will-change: transform, opacity;
+      }
+
+      .header-meta {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .header-tag-pill {
+        background: #141414;
+        color: #f7f4ec;
+        font-size: 16px;
+        font-weight: 900;
+        padding: 5px 14px;
+        border-radius: 6px;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+      }
+
+      .header-tag-desc {
+        font-size: 18px;
+        font-weight: 700;
+        color: #141414;
+        letter-spacing: 0.5px;
+      }
+
+      .header-title {
+        margin: 0;
+        font-size: 38px;
+        font-weight: 900;
+        color: #141414;
+        line-height: 1.25;
+        letter-spacing: -0.5px;
+      }
+
+      /* Comparison Cards */
+      .comparison-card {
+        position: absolute;
+        left: 50px;
+        width: 980px;
+        height: 535px;
+        background: #f5f0e4;
+        border-radius: 20px;
+        border: 2px solid rgba(20, 20, 20, 0.18);
+        box-shadow: 0 16px 36px rgba(20, 20, 20, 0.06);
+        padding: 22px 28px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        z-index: 10;
+        will-change: transform, opacity;
+      }
+
+      #card-1 {
+        top: 275px;
+      }
+
+      #card-2 {
+        top: 830px;
+      }
+
+      .card-header-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        height: 42px;
+      }
+
+      .card-title-group {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .card-number {
+        font-size: 20px;
+        font-weight: 900;
+        color: #141414;
+      }
+
+      .card-title {
+        font-size: 26px;
+        font-weight: 900;
+        color: #141414;
+        letter-spacing: 0.2px;
+      }
+
+      .card-badge {
+        background: #141414;
+        color: #f7f4ec;
+        font-size: 15px;
+        font-weight: 900;
+        padding: 6px 14px;
+        border-radius: 20px;
+        letter-spacing: 0.5px;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .badge-growth {
+        border: 1.5px solid #1e5e3a;
+      }
+
+      .badge-danger {
+        border: 1.5px solid #ff6a1a;
+      }
+
+      /* Chart stage */
+      .chart-svg-wrap {
+        position: relative;
+        width: 100%;
+        height: 300px;
+      }
+
+      .chart-svg {
+        width: 100%;
+        height: 100%;
+        overflow: visible;
+      }
+
+      .axis-label {
+        font-family: "Be Vietnam Pro", sans-serif;
+        font-size: 15px;
+        font-weight: 700;
+        fill: #141414;
+      }
+
+      /* Icons */
+      .icon-box {
+        position: absolute;
+        width: 56px;
+        height: 56px;
+        background: #ffffff;
+        border-radius: 12px;
+        border: 2px solid #141414;
+        box-shadow: 0 6px 16px rgba(20, 20, 20, 0.08);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 6px;
+        will-change: transform, opacity;
+      }
+
+      #icon-rise-box {
+        top: 25px;
+        left: 490px;
+      }
+
+      #icon-warning-box {
+        top: 15px;
+        left: 610px;
+      }
+
+      /* Trend Callout Pills */
+      .trend-pill {
+        position: absolute;
+        font-family: "Be Vietnam Pro", sans-serif;
+        font-weight: 900;
+        font-size: 14px;
+        padding: 6px 14px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        background: #141414;
+        color: #f7f4ec;
+        box-shadow: 0 4px 12px rgba(20, 20, 20, 0.12);
+        will-change: transform, opacity;
+        z-index: 5;
+      }
+
+      #peak-growth-badge {
+        top: 18px;
+        right: 15px;
+        border: 1.5px solid #1e5e3a;
+      }
+
+      #badge-crypto-peak {
+        top: 18px;
+        left: 210px;
+        border: 1.5px solid #ff6a1a;
+      }
+
+      #badge-crypto-crash {
+        top: 165px;
+        left: 320px;
+        border: 1.5px solid #d33824;
+      }
+
+      /* Bottom Row in Cards: Label & Punch Phrase */
+      .card-bottom-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 16px;
+        height: 60px;
+      }
+
+      .meta-label {
+        background: #141414;
+        color: #f7f4ec;
+        border-radius: 10px;
+        padding: 9px 18px;
+        font-size: 20px;
+        font-weight: 700;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        will-change: transform, opacity;
+      }
+
+      .label-accent-bar {
+        width: 6px;
+        height: 20px;
+        border-radius: 3px;
+        flex-shrink: 0;
+      }
+
+      .punch-badge {
+        background: #141414;
+        color: #f7f4ec;
+        border-radius: 12px;
+        padding: 8px 18px;
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        box-shadow: 0 6px 18px rgba(20, 20, 20, 0.12);
+        will-change: transform, opacity;
+      }
+
+      .punch-pill {
+        font-size: 14px;
+        font-weight: 900;
+        padding: 4px 10px;
+        border-radius: 6px;
+        letter-spacing: 0.5px;
+      }
+
+      .punch-text {
+        font-size: 23px;
+        font-weight: 900;
+        letter-spacing: 0.5px;
+      }
+
+      /* Signature bottom orange bar */
+      .bottom-brand-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 12px;
+        background: #ff6a1a;
+        z-index: 100;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s28"
+      data-start="0"
+      data-width="1080"
+      data-height="1920"
+      data-duration="10"
+    >
+      <!-- Background chart variant: ruled horizontal lines -->
+      <div class="bg-chart-layer">
+        <div class="chart-bg-line" style="top: 20%">
+          <span class="chart-tick-orange"></span>
+          <span class="chart-grid-rule"></span>
+        </div>
+        <div class="chart-bg-line" style="top: 40%">
+          <span class="chart-tick-orange"></span>
+          <span class="chart-grid-rule"></span>
+        </div>
+        <div class="chart-bg-line" style="top: 60%">
+          <span class="chart-tick-orange"></span>
+          <span class="chart-grid-rule"></span>
+        </div>
+        <div class="chart-bg-line" style="top: 80%">
+          <span class="chart-tick-orange"></span>
+          <span class="chart-grid-rule"></span>
+        </div>
+      </div>
+
+      <!-- Noise texture filter -->
+      <svg class="grain-overlay" xmlns="http://www.w3.org/2000/svg">
+        <filter id="grain-filter">
+          <feTurbulence
+            type="fractalNoise"
+            baseFrequency="0.75"
+            numOctaves="3"
+            stitchTiles="stitch"
+          />
+          <feColorMatrix
+            type="matrix"
+            values="0 0 0 0 0.08  0 0 0 0 0.08  0 0 0 0 0.08  0 0 0 0.20 0"
+          />
+        </filter>
+        <rect width="100%" height="100%" filter="url(#grain-filter)" />
+      </svg>
+
+      <!-- Main Scene Clip -->
+      <div id="scene-s28" class="clip" data-start="0" data-duration="10" data-track-index="0">
+        <!-- Header -->
+        <header id="header-s28" class="scene-header">
+          <div class="header-meta">
+            <span class="header-tag-pill">QUẢN TRỊ TÀI CHÍNH</span>
+            <span class="header-tag-desc">// DÒNG TIỀN NHÀN RỖI</span>
+          </div>
+          <h1 class="header-title">PHÂN BỔ TÀI SẢN vs ĐẦU TƯ MẠO HIỂM</h1>
+        </header>
+
+        <!-- Card 1: Bất động sản -->
+        <div id="card-1" class="comparison-card">
+          <div class="card-header-row">
+            <div class="card-title-group">
+              <span class="card-number">01</span>
+              <span class="card-title">MẢNH ĐẤT (BẤT ĐỘNG SẢN)</span>
+            </div>
+            <span class="card-badge badge-growth">
+              <span style="color: #22c55e">▲</span> TĂNG DÀI HẠN
+            </span>
+          </div>
+
+          <!-- SVG Chart 1 -->
+          <div class="chart-svg-wrap">
+            <svg class="chart-svg" viewBox="0 0 924 300" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <linearGradient id="green-area-grad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#1E5E3A" stop-opacity="0.22" />
+                  <stop offset="100%" stop-color="#1E5E3A" stop-opacity="0.01" />
+                </linearGradient>
+              </defs>
+
+              <line x1="70" y1="60" x2="900" y2="60" stroke="#141414" stroke-opacity="0.1" stroke-dasharray="5 5" stroke-width="1.5" />
+              <line x1="70" y1="140" x2="900" y2="140" stroke="#141414" stroke-opacity="0.1" stroke-dasharray="5 5" stroke-width="1.5" />
+              <line x1="70" y1="220" x2="900" y2="220" stroke="#141414" stroke-opacity="0.1" stroke-dasharray="5 5" stroke-width="1.5" />
+
+              <text x="60" y="65" text-anchor="end" class="axis-label">+250%</text>
+              <text x="60" y="145" text-anchor="end" class="axis-label">+120%</text>
+              <text x="60" y="225" text-anchor="end" class="axis-label">+40%</text>
+              <text x="60" y="275" text-anchor="end" class="axis-label">GỐC</text>
+
+              <text x="90" y="295" text-anchor="middle" class="axis-label">Năm 1</text>
+              <text x="290" y="295" text-anchor="middle" class="axis-label">Năm 2</text>
+              <text x="490" y="295" text-anchor="middle" class="axis-label">Năm 3</text>
+              <text x="690" y="295" text-anchor="middle" class="axis-label">Năm 4</text>
+              <text x="880" y="295" text-anchor="middle" class="axis-label">Năm 5</text>
+
+              <path
+                id="fill-growth"
+                d="M 90 270 C 270 250, 440 180, 600 120 C 720 75, 800 50, 880 38 L 880 270 Z"
+                fill="url(#green-area-grad)"
+                opacity="0"
+              />
+
+              <path
+                id="path-growth"
+                d="M 90 270 C 270 250, 440 180, 600 120 C 720 75, 800 50, 880 38"
+                stroke="#1E5E3A"
+                stroke-width="7"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                fill="none"
+              />
+
+              <circle class="dot-growth" cx="90" cy="270" r="7" fill="#1E5E3A" stroke="#F7F4EC" stroke-width="3" />
+              <circle class="dot-growth" cx="350" cy="215" r="7" fill="#1E5E3A" stroke="#F7F4EC" stroke-width="3" />
+              <circle class="dot-growth" cx="600" cy="120" r="7" fill="#1E5E3A" stroke="#F7F4EC" stroke-width="3" />
+              <circle class="dot-growth" cx="880" cy="38" r="8" fill="#1E5E3A" stroke="#F7F4EC" stroke-width="3" />
+            </svg>
+
+            <!-- Icon: rise -->
+            <div id="icon-rise-box" class="icon-box">
+              <svg id="icon-rise" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" style="width: 100%; height: 100%;">
+                <path d="M 12 50 L 48 14" stroke="#1E5E3A" stroke-width="5" stroke-linecap="round" />
+                <path d="M 28 14 L 48 14 L 48 34" stroke="#1E5E3A" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M 16 50 L 16 40" stroke="#FF6A1A" stroke-width="4.5" stroke-linecap="round" />
+                <path d="M 28 50 L 28 32" stroke="#FF6A1A" stroke-width="4.5" stroke-linecap="round" />
+                <path d="M 40 50 L 40 24" stroke="#FF6A1A" stroke-width="4.5" stroke-linecap="round" />
+              </svg>
+            </div>
+
+            <!-- Peak Callout Badge -->
+            <div id="peak-growth-badge" class="trend-pill">
+              <span style="color: #22c55e">▲</span>
+              <span>+250% TĂNG TRƯỞNG THỰC</span>
+            </div>
+          </div>
+
+          <!-- Bottom Row: Land -->
+          <div class="card-bottom-row">
+            <div id="label-land" class="meta-label">
+              <span class="label-accent-bar" style="background: #1e5e3a"></span>
+              <span>ĐẤT TĂNG THEO THỜI GIAN</span>
+            </div>
+            <div id="punch-land" class="punch-badge">
+              <span class="punch-pill" style="background: #1e5e3a; color: #f7f4ec">BẢN CHẤT</span>
+              <span class="punch-text">TÀI SẢN SINH LỜI</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 2: Tiền ảo & Startup -->
+        <div id="card-2" class="comparison-card">
+          <div class="card-header-row">
+            <div class="card-title-group">
+              <span class="card-number">02</span>
+              <span class="card-title">TIỀN ẢO & STARTUP</span>
+            </div>
+            <span class="card-badge badge-danger">
+              <span style="color: #ff6a1a">▼</span> RỦI RO BẤT ĐỊNH
+            </span>
+          </div>
+
+          <!-- SVG Chart 2 -->
+          <div class="chart-svg-wrap">
+            <svg class="chart-svg" viewBox="0 0 924 300" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <linearGradient id="red-area-grad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#D33824" stop-opacity="0.24" />
+                  <stop offset="100%" stop-color="#D33824" stop-opacity="0.01" />
+                </linearGradient>
+              </defs>
+
+              <line x1="70" y1="50" x2="900" y2="50" stroke="#141414" stroke-opacity="0.1" stroke-dasharray="5 5" stroke-width="1.5" />
+              <line x1="70" y1="150" x2="900" y2="150" stroke="#141414" stroke-opacity="0.25" stroke-width="2" />
+              <line x1="70" y1="250" x2="900" y2="250" stroke="#141414" stroke-opacity="0.1" stroke-dasharray="5 5" stroke-width="1.5" />
+
+              <text x="60" y="55" text-anchor="end" class="axis-label">+300%</text>
+              <text x="60" y="155" text-anchor="end" class="axis-label">0% HOÀ</text>
+              <text x="60" y="255" text-anchor="end" class="axis-label">-80%</text>
+
+              <text x="90" y="295" text-anchor="middle" class="axis-label">T1</text>
+              <text x="250" y="295" text-anchor="middle" class="axis-label">T3</text>
+              <text x="450" y="295" text-anchor="middle" class="axis-label">T6</text>
+              <text x="670" y="295" text-anchor="middle" class="axis-label">T9</text>
+              <text x="880" y="295" text-anchor="middle" class="axis-label">T12</text>
+
+              <path
+                id="fill-volatile"
+                d="M 90 150 L 160 140 L 240 45 L 290 65 L 360 250 L 450 255 L 540 65 L 610 45 L 690 240 L 780 130 L 880 230 L 880 270 L 90 270 Z"
+                fill="url(#red-area-grad)"
+                opacity="0"
+              />
+
+              <path
+                id="path-volatile"
+                d="M 90 150 L 160 140 L 240 45 L 290 65 L 360 250 L 450 255 L 540 65 L 610 45 L 690 240 L 780 130 L 880 230"
+                stroke="#D33824"
+                stroke-width="7"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                fill="none"
+              />
+
+              <circle class="dot-crypto" cx="240" cy="45" r="8" fill="#FF6A1A" stroke="#141414" stroke-width="2.5" />
+              <circle class="dot-crypto" cx="360" cy="250" r="8" fill="#D33824" stroke="#F7F4EC" stroke-width="2.5" />
+              <circle class="dot-crypto" cx="610" cy="45" r="8" fill="#FF6A1A" stroke="#141414" stroke-width="2.5" />
+              <circle class="dot-crypto" cx="690" cy="240" r="8" fill="#D33824" stroke="#F7F4EC" stroke-width="2.5" />
+            </svg>
+
+            <!-- Icon: warning -->
+            <div id="icon-warning-box" class="icon-box">
+              <svg id="icon-warning" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" style="width: 100%; height: 100%;">
+                <path d="M 32 10 L 58 52 L 6 52 Z" stroke="#D33824" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M 32 24 L 32 38" stroke="#D33824" stroke-width="5" stroke-linecap="round" />
+                <circle cx="32" cy="45" r="3" fill="#D33824" />
+              </svg>
+            </div>
+
+            <div id="badge-crypto-peak" class="trend-pill">
+              <span style="color: #ff6a1a">▲</span>
+              <span>+300% ĐỈNH SỐT</span>
+            </div>
+            <div id="badge-crypto-crash" class="trend-pill">
+              <span style="color: #ff6a1a">▼</span>
+              <span>-80% BỐC HƠI</span>
+            </div>
+          </div>
+
+          <!-- Bottom Row: Crypto -->
+          <div class="card-bottom-row">
+            <div id="label-crypto" class="meta-label">
+              <span class="label-accent-bar" style="background: #d33824"></span>
+              <span>TIỀN ẢO & STARTUP</span>
+            </div>
+            <div id="punch-crypto" class="punch-badge">
+              <span class="punch-pill" style="background: #ff6a1a; color: #141414">BẢN CHẤT</span>
+              <span class="punch-text">ĐẦU TƯ MẠO HIỂM</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Signature bottom orange accent bar -->
+      <div class="bottom-brand-bar"></div>
+    </div>
+
+    <script>
+      // Setup SVG stroke lengths synchronously
+      const pathGrowth = document.getElementById("path-growth");
+      const lenGrowth = pathGrowth.getTotalLength();
+      pathGrowth.style.strokeDasharray = lenGrowth;
+      pathGrowth.style.strokeDashoffset = lenGrowth;
+
+      const pathVolatile = document.getElementById("path-volatile");
+      const lenVolatile = pathVolatile.getTotalLength();
+      pathVolatile.style.strokeDasharray = lenVolatile;
+      pathVolatile.style.strokeDashoffset = lenVolatile;
+
+      const risePaths = document.querySelectorAll("#icon-rise path");
+      risePaths.forEach(function (p) {
+        const l = p.getTotalLength();
+        p.style.strokeDasharray = l;
+        p.style.strokeDashoffset = l;
+      });
+
+      const warningPaths = document.querySelectorAll("#icon-warning path");
+      warningPaths.forEach(function (p) {
+        const l = p.getTotalLength();
+        p.style.strokeDasharray = l;
+        p.style.strokeDashoffset = l;
+      });
+
+      // Master paused timeline
+      const tl = gsap.timeline({ paused: true });
+
+      // 1. Entrance & Camera Motion
+      tl.fromTo(
+        ["#header-s28", "#card-1", "#card-2"],
+        { scale: 0.95, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.6, ease: "power3.out", stagger: 0.08 },
+        0
+      );
+
+      tl.to(
+        ["#header-s28", "#card-1", "#card-2"],
+        { scale: 1.03, duration: 9.3, ease: "sine.inOut" },
+        0.7
+      );
+
+      // 2. Card 1 Growth Curve Draw & Milestones (0.4s -> 2.6s)
+      tl.to(
+        "#path-growth",
+        { strokeDashoffset: 0, duration: 2.1, ease: "power2.out" },
+        0.4
+      );
+
+      tl.fromTo(
+        "#fill-growth",
+        { opacity: 0 },
+        { opacity: 1, duration: 1.4, ease: "power1.out" },
+        0.8
+      );
+
+      tl.fromTo(
+        ".dot-growth",
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.45, ease: "power3.out", stagger: 0.35 },
+        0.65
+      );
+
+      tl.fromTo(
+        "#peak-growth-badge",
+        { scale: 0, opacity: 0, y: 10 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.5, ease: "power3.out" },
+        2.1
+      );
+
+      // 3. Icon: rise (atMs: 250990 -> 1.29s)
+      tl.fromTo(
+        "#icon-rise-box",
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.5, ease: "power3.out" },
+        1.29
+      );
+
+      risePaths.forEach(function (p) {
+        tl.to(p, { strokeDashoffset: 0, duration: 0.65, ease: "power2.out" }, 1.35);
+      });
+
+      // 4. Label: ĐẤT TĂNG THEO THỜI GIAN (atMs: 252640 -> 2.94s)
+      tl.fromTo(
+        "#label-land",
+        { y: 22, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.5, ease: "power3.out" },
+        2.94
+      );
+
+      // 5. Punch Phrase: TÀI SẢN SINH LỜI (atMs: 253860 -> 4.16s)
+      tl.fromTo(
+        "#punch-land",
+        { scale: 0.88, opacity: 0, y: 16 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.6, ease: "power3.out" },
+        4.16
+      );
+
+      // 6. Volatile jagged curve draw & sudden swings (5.4s -> 7.6s)
+      tl.to(
+        "#path-volatile",
+        { strokeDashoffset: 0, duration: 2.1, ease: "power1.inOut" },
+        5.4
+      );
+
+      tl.fromTo(
+        "#fill-volatile",
+        { opacity: 0 },
+        { opacity: 1, duration: 1.4, ease: "power1.out" },
+        5.8
+      );
+
+      tl.fromTo(
+        ".dot-crypto",
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.4, ease: "power3.out", stagger: 0.35 },
+        5.7
+      );
+
+      tl.fromTo(
+        "#badge-crypto-peak",
+        { scale: 0, opacity: 0, y: -10 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.4, ease: "power3.out" },
+        6.1
+      );
+
+      tl.fromTo(
+        "#badge-crypto-crash",
+        { scale: 0, opacity: 0, y: 10 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.4, ease: "power3.out" },
+        6.65
+      );
+
+      // 7. Icon: warning (atMs: 257110 -> 7.41s)
+      tl.fromTo(
+        "#icon-warning-box",
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.5, ease: "power3.out" },
+        7.41
+      );
+
+      warningPaths.forEach(function (p) {
+        tl.to(p, { strokeDashoffset: 0, duration: 0.55, ease: "power2.out" }, 7.47);
+      });
+
+      tl.fromTo(
+        "#icon-warning circle",
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.3, ease: "power3.out" },
+        7.7
+      );
+
+      // 8. Label: TIỀN ẢO & STARTUP (atMs: 257890 -> 8.19s)
+      tl.fromTo(
+        "#label-crypto",
+        { y: 22, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.5, ease: "power3.out" },
+        8.19
+      );
+
+      // 9. Punch Phrase: ĐẦU TƯ MẠO HIỂM (atMs: 258560 -> 8.86s)
+      tl.fromTo(
+        "#punch-crypto",
+        { scale: 0.88, opacity: 0, y: 16 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.6, ease: "power3.out" },
+        8.86
+      );
+
+      // Register master timeline
+      window.__timelines["scene-s28"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

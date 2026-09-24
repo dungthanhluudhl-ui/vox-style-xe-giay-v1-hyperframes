@@ -1,0 +1,667 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap">
+      <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background: #E7E3D9;
+      color: #141414;
+      font-family: "Be Vietnam Pro", sans-serif;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    #root {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #E7E3D9;
+    }
+
+    .clip {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+    }
+
+    /* === NỀN VARIANT: CHART (Đường kẻ ngang + tick cam chuẩn Style Tokens) === */
+    .bg-chart-layer {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .chart-line {
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: rgba(20, 20, 20, 0.32);
+    }
+
+    .chart-line-20 { top: 384px; }
+    .chart-line-40 { top: 768px; }
+    .chart-line-60 { top: 1152px; }
+    .chart-line-80 { top: 1536px; }
+
+    .chart-tick {
+      position: absolute;
+      left: 0;
+      width: 24px;
+      height: 8px;
+      background: #FF6A1A;
+      transform: translateY(-3px);
+    }
+
+    /* Grain Texture Layer (18% opacity, mix-blend-mode: multiply) */
+    .grain-overlay {
+      position: absolute;
+      inset: 0;
+      opacity: 0.18;
+      mix-blend-mode: multiply;
+      pointer-events: none;
+      z-index: 2;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+    }
+
+    /* Thanh cam thương hiệu cố định mép đáy */
+    .brand-bottom-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 16px;
+      background: #FF6A1A;
+      z-index: 99;
+    }
+
+    /* Viewport chính của scene */
+    .scene-viewport {
+      position: absolute;
+      inset: 0;
+      z-index: 10;
+      transform-origin: 50% 25%;
+    }
+
+    /* =========================================================================
+       ZONE 1: PHOTO CARD (A-ROLL / B-ROLL) — [y: 170px -> 630px, cao 460px]
+       ========================================================================= */
+    .photo-card-container {
+      position: absolute;
+      top: 170px;
+      left: 60px;
+      width: 960px;
+      height: 460px;
+      background: #F5F0E4;
+      border: 4px solid #141414;
+      box-shadow: 10px 10px 0px rgba(20, 20, 20, 0.9);
+      overflow: hidden;
+      z-index: 12;
+    }
+
+    .photo-wrapper {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+    }
+
+    .photo-img {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transform-origin: center center;
+    }
+
+    .photo-doc-tag {
+      position: absolute;
+      top: 16px;
+      left: 16px;
+      background: #141414;
+      color: #F7F4EC;
+      font-size: 20px;
+      font-weight: 900;
+      padding: 6px 16px;
+      letter-spacing: 1px;
+      z-index: 5;
+      border-left: 6px solid #FF6A1A;
+    }
+
+    /* Icon DOC (Overlay 1) */
+    .doc-icon-badge {
+      position: absolute;
+      top: 186px;
+      right: 80px;
+      background: #F5F0E4;
+      border: 3px solid #141414;
+      box-shadow: 8px 8px 0px #FF6A1A;
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      z-index: 25;
+      transform-origin: 100% 0%;
+      opacity: 0;
+    }
+
+    .doc-svg {
+      width: 44px;
+      height: 52px;
+    }
+
+    .doc-path {
+      fill: none;
+      stroke: #141414;
+      stroke-width: 4;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .doc-badge-text {
+      font-size: 20px;
+      font-weight: 900;
+      color: #141414;
+      line-height: 1.2;
+    }
+
+    /* =========================================================================
+       ZONE 2: DIAGRAM BOARD — [y: 654px -> 1254px, cao 600px]
+       ========================================================================= */
+    .diagram-board {
+      position: absolute;
+      top: 654px;
+      left: 60px;
+      width: 960px;
+      height: 600px;
+      background: #F5F0E4;
+      border: 4px solid #141414;
+      box-shadow: 10px 10px 0px rgba(20, 20, 20, 0.9);
+      padding: 24px 36px 20px 36px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      z-index: 15;
+    }
+
+    .board-header {
+      width: 100%;
+    }
+
+    /* Chip nguyên liệu hội tụ */
+    .ingredients-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      width: 100%;
+      margin-bottom: 12px;
+    }
+
+    .ing-chip {
+      background: #E7E3D9;
+      border: 2px solid #141414;
+      padding: 6px 14px;
+      font-size: 20px;
+      font-weight: 700;
+      color: #141414;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      opacity: 0;
+    }
+
+    .ing-chip-dot {
+      width: 8px;
+      height: 8px;
+      background: #FF6A1A;
+      display: inline-block;
+      border-radius: 2px;
+    }
+
+    /* Nhãn "NGUYÊN LIỆU + MẶT BẰNG" (Overlay 2) */
+    .label-materials-badge {
+      display: inline-block;
+      background: #141414;
+      color: #F7F4EC;
+      font-size: 24px;
+      font-weight: 900;
+      padding: 8px 18px;
+      letter-spacing: 0.5px;
+      border-left: 5px solid #FF6A1A;
+      width: fit-content;
+      opacity: 0;
+    }
+
+    /* Sân khấu so sánh cột đồ thị 2K vs 18K */
+    .comparison-stage {
+      position: relative;
+      width: 100%;
+      height: 380px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-around;
+      padding: 0 30px 10px 30px;
+    }
+
+    /* Trục chuẩn ngang */
+    .baseline-guide {
+      position: absolute;
+      bottom: 40px;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: #141414;
+      transform-origin: 0% 50%;
+    }
+
+    /* Cột Vốn 2K */
+    .column-box {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 230px;
+      transform-origin: 50% 100%;
+      z-index: 10;
+    }
+
+    .col-cost-tag {
+      margin-bottom: 10px;
+      background: #E7E3D9;
+      border: 3px solid #141414;
+      color: #141414;
+      font-size: 26px;
+      font-weight: 900;
+      padding: 6px 14px;
+      text-align: center;
+      box-shadow: 4px 4px 0px #141414;
+      white-space: nowrap;
+      opacity: 0;
+    }
+
+    .col-cost-bar {
+      width: 120px;
+      height: 52px;
+      background: #141414;
+      transform-origin: 50% 100%;
+    }
+
+    .col-title {
+      margin-top: 14px;
+      font-size: 22px;
+      font-weight: 900;
+      color: #141414;
+      text-align: center;
+      letter-spacing: 0.5px;
+      height: 30px;
+      line-height: 30px;
+    }
+
+    /* Mũi tên chênh lệch tự nở rộng */
+    .gap-indicator {
+      position: absolute;
+      top: 10px;
+      left: 360px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      z-index: 8;
+      transform-origin: 50% 0%;
+      opacity: 0;
+    }
+
+    .gap-badge {
+      background: #141414;
+      color: #F7F4EC;
+      font-size: 20px;
+      font-weight: 900;
+      padding: 4px 12px;
+      margin-bottom: 6px;
+      border-left: 4px solid #FF6A1A;
+      white-space: nowrap;
+    }
+
+    .gap-arrow {
+      width: 4px;
+      height: 140px;
+      background: #FF6A1A;
+      position: relative;
+    }
+
+    .gap-arrow::after {
+      content: "";
+      position: absolute;
+      bottom: -6px;
+      left: -6px;
+      width: 0;
+      height: 0;
+      border-left: 8px solid transparent;
+      border-right: 8px solid transparent;
+      border-top: 12px solid #FF6A1A;
+    }
+
+    /* Cột Lợi Nhuận 18K */
+    .col-profit-tag {
+      margin-bottom: 10px;
+      background: #141414;
+      border: 3px solid #FF6A1A;
+      color: #FF6A1A;
+      font-size: 26px;
+      font-weight: 900;
+      padding: 6px 14px;
+      text-align: center;
+      box-shadow: 4px 4px 0px #FF6A1A;
+      white-space: nowrap;
+      opacity: 0;
+    }
+
+    .col-profit-bar {
+      width: 170px;
+      height: 250px;
+      background: #FF6A1A;
+      border: 4px solid #141414;
+      box-shadow: 6px 6px 0px rgba(20, 20, 20, 0.9);
+      position: relative;
+      transform-origin: 50% 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .col-profit-inner-text {
+      color: #141414;
+      font-size: 44px;
+      font-weight: 900;
+      letter-spacing: 1px;
+    }
+
+    /* =========================================================================
+       ZONE 3: PUNCH PHRASE BANNER — [y: 1284px -> 1414px, an toàn tuyệt đối]
+       Cách đáy Diagram Board 30px, cách vùng caption an toàn >110px
+       ========================================================================= */
+    .punch-phrase-wrapper {
+      position: absolute;
+      top: 1284px;
+      left: 60px;
+      width: 960px;
+      height: 130px;
+      z-index: 30;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      opacity: 0;
+    }
+
+    .punch-phrase-card {
+      background: #141414;
+      border: 4px solid #141414;
+      box-shadow: 10px 10px 0px #FF6A1A;
+      padding: 18px 40px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      transform-origin: 50% 50%;
+    }
+
+    .punch-main-text {
+      font-size: 52px;
+      font-weight: 900;
+      color: #F7F4EC;
+      letter-spacing: 1px;
+      white-space: nowrap;
+    }
+
+    .punch-accent-tag {
+      background: #FF6A1A;
+      color: #141414;
+      font-size: 58px;
+      font-weight: 900;
+      padding: 4px 18px;
+      border: 3px solid #141414;
+      white-space: nowrap;
+    }
+  </style>
+
+  <div id="root" data-composition-id="scene-s04" data-width="1080" data-height="1920" data-duration="11">
+
+    <!-- Lớp nền Grain Texture -->
+    <div class="grain-overlay"></div>
+
+    <!-- Nền: Các đường kẻ ngang Chart & Ticks cam -->
+    <div class="bg-chart-layer">
+      <div class="chart-line chart-line-20"><div class="chart-tick"></div></div>
+      <div class="chart-line chart-line-40"><div class="chart-tick"></div></div>
+      <div class="chart-line chart-line-60"><div class="chart-tick"></div></div>
+      <div class="chart-line chart-line-80"><div class="chart-tick"></div></div>
+    </div>
+
+    <!-- Scene Clip duy nhất thời lượng 11s -->
+    <div id="scene-s04" class="clip" data-start="0" data-duration="11">
+
+      <!-- Viewport chính nhận animation unfold -->
+      <div id="scene-viewport" class="scene-viewport">
+
+        <!-- 1. ZONE 1: PHOTO CARD (A-roll / B-roll) -->
+        <div id="photo-card" class="photo-card-container" data-layout-allow-overflow="true">
+          <div class="photo-doc-tag">HỒ SƠ GIAO DỊCH // S04</div>
+          <div class="photo-wrapper" data-layout-allow-overflow="true">
+            <img id="bg-photo-img" class="photo-img" src="assets/img-13-huge-profit-margin-diagram.jpeg" alt="Sơ đồ tỷ suất lợi nhuận khổng lồ">
+          </div>
+        </div>
+
+        <!-- Icon DOC tự vẽ SVG (Overlay 1: xuất hiện 0.57s) -->
+        <div id="doc-badge" class="doc-icon-badge">
+          <svg class="doc-svg" viewBox="0 0 64 74" xmlns="http://www.w3.org/2000/svg">
+            <path class="doc-path svg-doc-outline" d="M 6 6 L 42 6 L 58 22 L 58 68 L 6 68 Z" />
+            <path class="doc-path svg-doc-fold" d="M 42 6 L 42 22 L 58 22" />
+            <path class="doc-path svg-doc-line" d="M 16 34 L 48 34" />
+            <path class="doc-path svg-doc-line" d="M 16 46 L 48 46" />
+            <path class="doc-path svg-doc-line" d="M 16 58 L 36 58" />
+          </svg>
+          <div class="doc-badge-text">BẢNG KÊ<br>CHI PHÍ</div>
+        </div>
+
+        <!-- 2. ZONE 2: DIAGRAM BOARD (Đối chiếu chi phí vs lợi nhuận) -->
+        <div id="diagram-board" class="diagram-board">
+
+          <!-- Phần tiêu đề và nguyên liệu -->
+          <div class="board-header">
+            <div class="ingredients-row">
+              <div class="ing-chip ing-chip-1"><span class="ing-chip-dot"></span>BỘT + ĐƯỜNG</div>
+              <div class="ing-chip ing-chip-2"><span class="ing-chip-dot"></span>TRỨNG + SỮA</div>
+              <div class="ing-chip ing-chip-3"><span class="ing-chip-dot"></span>ĐIỆN + NƯỚC</div>
+              <div class="ing-chip ing-chip-4"><span class="ing-chip-dot"></span>CHỖ BÁN</div>
+            </div>
+
+            <!-- Label 2: NGUYÊN LIỆU + MẶT BẰNG (4.27s) -->
+            <div id="label-materials" class="label-materials-badge">
+              NGUYÊN LIỆU + MẶT BẰNG
+            </div>
+          </div>
+
+          <!-- Sân khấu so sánh 2 cột -->
+          <div class="comparison-stage">
+            <div id="baseline-guide" class="baseline-guide"></div>
+
+            <!-- Cột Chi Phí 2K (VỐN GỐC) -->
+            <div id="col-cost-group" class="column-box">
+              <div id="label-cost-tag" class="col-cost-tag">VỐN GỐC: 2K</div>
+              <div id="bar-cost" class="col-cost-bar"></div>
+              <div class="col-title">TỔNG CHI PHÍ</div>
+            </div>
+
+            <!-- Mũi tên chênh lệch tự mở rộng -->
+            <div id="gap-indicator" class="gap-indicator">
+              <div class="gap-badge">CHÊNH LỆCH LÃI</div>
+              <div class="gap-arrow"></div>
+            </div>
+
+            <!-- Cột Doanh Thu / Lợi Nhuận 18K -->
+            <div id="col-profit-group" class="column-box">
+              <div id="profit-tag" class="col-profit-tag">THU VỀ: 20K</div>
+              <div id="bar-profit" class="col-profit-bar">
+                <span class="col-profit-inner-text">+18K</span>
+              </div>
+              <div class="col-title">LỢI NHUẬN RÒNG</div>
+            </div>
+
+          </div>
+
+        </div>
+
+        <!-- 3. ZONE 3: PUNCH PHRASE BANNER (Overlay 4: 9.27s -> 11.0s) -->
+        <div id="punch-phrase-wrapper" class="punch-phrase-wrapper">
+          <div id="punch-card" class="punch-phrase-card">
+            <div class="punch-main-text">SIÊU LỢI NHUẬN:</div>
+            <div class="punch-accent-tag">18K</div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Thanh cam cố định nhận diện thương hiệu -->
+      <div class="brand-bottom-bar"></div>
+
+    </div>
+
+  </div>
+
+  <script>
+    // Khởi tạo GSAP Timeline đúng chuẩn deterministic seek của HyperFrames
+    const tl = gsap.timeline({ paused: true });
+
+    // Đo và thiết lập ban đầu cho các nét vẽ SVG doc-path
+    const docPaths = document.querySelectorAll(".doc-path");
+    docPaths.forEach(p => {
+      const len = p.getTotalLength();
+      p.style.strokeDasharray = len;
+      p.style.strokeDashoffset = len;
+    });
+
+    // 0.0s - 0.6s: Hiệu ứng chuyển cảnh vào "unfold" mở rộng toàn bộ viewport
+    tl.fromTo("#scene-viewport", 
+      { scaleY: 0.85, opacity: 0, y: -30 }, 
+      { scaleY: 1, opacity: 1, y: 0, duration: 0.6, ease: "power3.out" }, 
+      0
+    );
+
+    // 0.0s - 11.0s: Camera Motion Ken Burns pan dọc & zoom chậm trên ảnh minh họa A-roll
+    tl.fromTo("#bg-photo-img", 
+      { scale: 1.05, x: -15, y: 15 }, 
+      { scale: 1.15, x: 20, y: -20, duration: 11.0, ease: "none" }, 
+      0
+    );
+
+    // 0.57s: Icon DOC xuất hiện (atMs: 20270 -> 570ms = 0.57s, holdMs: 2500)
+    tl.fromTo("#doc-badge", 
+      { scale: 0, opacity: 0, rotation: 8 }, 
+      { scale: 1, opacity: 1, rotation: 0, duration: 0.42, ease: "power3.out" }, 
+      0.57
+    );
+
+    // Vẽ từng nét của Icon DOC (svg-path-draw)
+    docPaths.forEach((p, idx) => {
+      const len = p.getTotalLength();
+      tl.fromTo(p, 
+        { strokeDashoffset: len }, 
+        { strokeDashoffset: 0, duration: 0.32, ease: "power2.out" }, 
+        0.65 + idx * 0.07
+      );
+    });
+
+    // 1.4s - 2.2s: Các chip nguyên liệu nhỏ lần lượt hội tụ vào bảng
+    const ingChips = [".ing-chip-1", ".ing-chip-2", ".ing-chip-3", ".ing-chip-4"];
+    ingChips.forEach((chip, i) => {
+      tl.fromTo(chip, 
+        { y: -16, opacity: 0 }, 
+        { y: 0, opacity: 1, duration: 0.32, ease: "power3.out" }, 
+        1.4 + i * 0.22
+      );
+    });
+
+    // 3.2s: Icon DOC thu gọn nhẹ để nhường tâm điểm cho bảng số liệu
+    tl.to("#doc-badge", { scale: 0.9, opacity: 0.85, duration: 0.35, ease: "power2.out" }, 3.2);
+
+    // 4.27s: Overlay Label "NGUYÊN LIỆU + MẶT BẰNG" (atMs: 23970 -> 4.27s)
+    tl.fromTo("#label-materials", 
+      { x: -25, opacity: 0 }, 
+      { x: 0, opacity: 1, duration: 0.45, ease: "power3.out" }, 
+      4.27
+    );
+
+    // 5.8s: Nhịp nhấn thị giác tránh dead-air — chấm nguyên liệu nổi bật
+    tl.to(".ing-chip-dot", { scale: 1.4, duration: 0.2, ease: "power2.out" }, 5.8)
+      .to(".ing-chip-dot", { scale: 1, duration: 0.2, ease: "power2.in" }, 6.0);
+
+    // 6.2s: Trục chuẩn ngang vẽ ra tạo nền tảng so sánh
+    tl.fromTo("#baseline-guide", 
+      { scaleX: 0 }, 
+      { scaleX: 1, duration: 0.5, ease: "power3.out" }, 
+      6.2
+    );
+
+    // 7.64s: Overlay Label "VỐN GỐC: 2K" & Cột chi phí 2K dựng lên (atMs: 27340 -> 7.64s)
+    tl.fromTo("#bar-cost", 
+      { scaleY: 0 }, 
+      { scaleY: 1, duration: 0.45, ease: "power3.out" }, 
+      7.64
+    );
+
+    tl.fromTo("#label-cost-tag", 
+      { scale: 0.7, opacity: 0, y: 12 }, 
+      { scale: 1, opacity: 1, y: 0, duration: 0.4, ease: "power3.out" }, 
+      7.64
+    );
+
+    // 8.6s: Mũi tên khoảng chênh lệch tự mở rộng
+    tl.fromTo("#gap-indicator", 
+      { opacity: 0, scaleY: 0 }, 
+      { opacity: 1, scaleY: 1, duration: 0.45, ease: "power3.out" }, 
+      8.6
+    );
+
+    // 8.9s: Cột Doanh Thu & Lợi Nhuận 18K vọt lên khổng lồ đối chiếu với 2K
+    tl.fromTo("#bar-profit", 
+      { scaleY: 0 }, 
+      { scaleY: 1, duration: 0.55, ease: "power3.out" }, 
+      8.9
+    );
+
+    tl.fromTo("#profit-tag", 
+      { y: 16, opacity: 0 }, 
+      { y: 0, opacity: 1, duration: 0.35, ease: "power3.out" }, 
+      9.05
+    );
+
+    // 9.27s - 11.0s: PUNCH-PHRASE "SIÊU LỢI NHUẬN: 18K" bung ra ấn tượng (atMs: 28970 -> 9.27s, hold 1.73s)
+    tl.fromTo("#punch-phrase-wrapper", 
+      { opacity: 0 }, 
+      { opacity: 1, duration: 0.01 }, 
+      9.27
+    );
+
+    tl.fromTo("#punch-card", 
+      { scale: 0.82, opacity: 0, y: 24 }, 
+      { scale: 1, opacity: 1, y: 0, duration: 0.45, ease: "power3.out" }, 
+      9.27
+    );
+
+    // Đăng ký timeline duy nhất trên window.__timelines["scene-s04"]
+    window.__timelines["scene-s04"] = tl;
+  </script>
+
+    </template>
+  </body>
+</html>

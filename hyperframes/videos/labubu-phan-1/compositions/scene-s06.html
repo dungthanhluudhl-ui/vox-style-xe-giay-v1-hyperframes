@@ -1,0 +1,627 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+      *, *::before, *::after {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #F5F0E4;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        background-color: #F5F0E4; /* Biến thể card phẳng theo kịch bản S06 */
+        overflow: hidden;
+      }
+
+      /* Quy ước clip chuẩn của HyperFrames Core: inset: 0 */
+      .clip {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+      }
+
+      /* Thanh cam thương hiệu cố định mép dưới cùng theo Vox DNA */
+      .brand-bottom-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 1080px;
+        height: 14px;
+        background-color: #FF6A1A;
+        z-index: 100;
+      }
+
+      /* Technical header decor (phong cách phóng sự điều tra Vox) */
+      .technical-meta {
+        position: absolute;
+        top: 70px;
+        left: 70px;
+        right: 70px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 2px solid rgba(20, 20, 20, 0.2);
+        padding-bottom: 16px;
+        z-index: 40;
+      }
+
+      .meta-tag {
+        font-size: 22px;
+        font-weight: 700;
+        letter-spacing: 2px;
+        color: rgba(20, 20, 20, 0.75); /* Đạt chuẩn tương phản AAA */
+        text-transform: uppercase;
+      }
+
+      .meta-accent {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .meta-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background-color: #FF6A1A;
+      }
+
+      /* Khung chứa ảnh collage trung tâm */
+      .collage-stage {
+        position: absolute;
+        top: 250px;
+        left: 90px;
+        width: 900px;
+        height: 1040px;
+        z-index: 10;
+        transform-origin: 50% 50%;
+        will-change: transform;
+      }
+
+      /* Khung thẻ card bọc ảnh (peel target) */
+      .card-wrapper {
+        position: absolute;
+        inset: 0;
+        background-color: #E7E3D9;
+        border: 3px solid #141414;
+        box-shadow: 18px 24px 0px rgba(20, 20, 20, 0.85);
+        overflow: hidden;
+        transform-origin: 50% 50%;
+        will-change: transform, clip-path;
+      }
+
+      .card-image {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+        transform-origin: 50% 50%;
+        will-change: transform;
+      }
+
+      /* Băng dính giấy góc trang trí (paper tape sticker) */
+      .paper-tape {
+        position: absolute;
+        width: 160px;
+        height: 44px;
+        background-color: rgba(231, 227, 217, 0.92);
+        border: 1px solid rgba(20, 20, 20, 0.25);
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+        z-index: 25;
+      }
+
+      .tape-tl {
+        top: 225px;
+        left: 60px;
+        transform: rotate(-32deg);
+      }
+
+      .tape-br {
+        bottom: 600px;
+        right: 60px;
+        transform: rotate(-25deg);
+      }
+
+      /* Lớp sticker lột mở (peel flap effect) */
+      .peel-flap {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 240px;
+        height: 240px;
+        background: linear-gradient(135deg, rgba(245, 240, 228, 0.96) 45%, #FF6A1A 46%, #FF6A1A 49%, rgba(20, 20, 20, 0.25) 50%, transparent 51%);
+        z-index: 30;
+        pointer-events: none;
+        transform-origin: 0% 0%;
+        will-change: transform, opacity;
+      }
+
+      /* Punch Phrase: "HỘP BÍ ẨN" */
+      .punch-phrase-container {
+        position: absolute;
+        top: 140px;
+        left: 0;
+        width: 1080px;
+        display: flex;
+        justify-content: center;
+        z-index: 50;
+        pointer-events: none;
+      }
+
+      .punch-phrase-badge {
+        background-color: #141414;
+        border: 3px solid #FF6A1A;
+        padding: 16px 44px;
+        box-shadow: 10px 14px 0px rgba(255, 106, 26, 0.35);
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        transform-origin: 50% 50%;
+        will-change: transform, opacity;
+      }
+
+      .punch-phrase-text {
+        color: #F7F4EC; /* Text on dark đạt tương phản 18.5:1 chuẩn AAA */
+        font-size: 64px;
+        font-weight: 900;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        margin: 0;
+        line-height: 1;
+      }
+
+      /* Diagram overlay: Mũi tên giao dịch dòng tiền bay vào */
+      .diagram-transaction {
+        position: absolute;
+        top: 800px;
+        left: 40px;
+        width: 380px;
+        height: 220px;
+        z-index: 35;
+        pointer-events: none;
+      }
+
+      .money-pill {
+        position: absolute;
+        top: 10px;
+        left: 20px;
+        background-color: #141414;
+        border: 2px solid #FF6A1A;
+        color: #F7F4EC;
+        font-size: 26px;
+        font-weight: 900;
+        padding: 10px 22px;
+        box-shadow: 6px 6px 0px #FF6A1A;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        transform-origin: 50% 50%;
+        will-change: transform, opacity;
+      }
+
+      /* Question Icon overlay tự vẽ dạng vector phát sáng ở trung tâm hộp */
+      .question-overlay {
+        position: absolute;
+        top: 590px;
+        left: 360px;
+        width: 360px;
+        height: 360px;
+        z-index: 45;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        pointer-events: none;
+        transform-origin: 50% 50%;
+        will-change: transform, opacity;
+      }
+
+      /* Glow layer riêng hỗ trợ hiệu ứng lập lòe seek-safe (chỉ tween opacity & scale) */
+      .question-glow {
+        position: absolute;
+        width: 320px;
+        height: 320px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(255, 106, 26, 0.75) 0%, rgba(255, 106, 26, 0.25) 55%, transparent 75%);
+        z-index: 1;
+        transform-origin: 50% 50%;
+        will-change: transform, opacity;
+      }
+
+      .question-badge {
+        position: relative;
+        z-index: 2;
+        width: 250px;
+        height: 250px;
+        background-color: #141414;
+        border: 6px solid #FF6A1A;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 12px 14px 0px rgba(20, 20, 20, 0.8);
+        transform-origin: 50% 50%;
+        will-change: transform;
+      }
+
+      .question-svg {
+        width: 140px;
+        height: 140px;
+      }
+
+      .question-dot {
+        transform-origin: 50px 82px;
+        will-change: transform;
+      }
+
+      /* Label dưới: "MUA SẮM VÔ ĐỊNH" - Đặt ở top: 1330px (kết thúc ở ~1435px, hoàn toàn ngoài caption band ~1497px) */
+      .bottom-label-container {
+        position: absolute;
+        top: 1330px;
+        left: 0;
+        width: 1080px;
+        display: flex;
+        justify-content: center;
+        z-index: 50;
+        pointer-events: none;
+      }
+
+      .bottom-label-badge {
+        background-color: #141414;
+        border-left: 10px solid #FF6A1A;
+        border-top: 2px solid #141414;
+        border-right: 2px solid #141414;
+        border-bottom: 2px solid #141414;
+        padding: 16px 36px;
+        box-shadow: 12px 14px 0px rgba(20, 20, 20, 0.35);
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        transform-origin: 50% 50%;
+        will-change: transform, opacity;
+      }
+
+      .label-sub {
+        color: #FF6A1A;
+        font-size: 20px;
+        font-weight: 700;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        margin-bottom: 4px;
+      }
+
+      .label-title {
+        color: #F7F4EC; /* Text on dark chuẩn AAA */
+        font-size: 42px;
+        font-weight: 900;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        margin: 0;
+        line-height: 1.2;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s06"
+      data-start="0"
+      data-width="1080"
+      data-height="1920"
+      data-duration="8.2"
+      data-fps="30"
+    >
+      <!-- Visual Clip Shot S06-1 -->
+      <div id="shot-s06-1" class="clip" data-start="0" data-duration="8.2">
+        <!-- Header meta phong cách phóng sự -->
+        <div class="technical-meta">
+          <div class="meta-tag">CƠ CHẾ // BLIND BOX</div>
+          <div class="meta-accent">
+            <span class="meta-tag">MÔ HÌNH HỘP KÍN</span>
+            <div class="meta-dot"></div>
+          </div>
+        </div>
+
+        <!-- Băng dán giữ ảnh góc -->
+        <div class="paper-tape tape-tl"></div>
+        <div class="paper-tape tape-br"></div>
+
+        <!-- Sân khấu Collage: Ảnh trung tâm Mystery Box -->
+        <div class="collage-stage" id="stage">
+          <div class="card-wrapper" id="cardWrapper" data-layout-allow-overflow="true">
+            <!-- Asset ảnh chính của kịch bản S06 -->
+            <img
+              id="boxImage"
+              class="card-image"
+              data-layout-allow-overflow="true"
+              src="assets/img-01-mystery-box-gambling-fraud.jpeg"
+              alt="Mô hình Blind Box"
+            />
+            <!-- Miếng lật peel ở góc -->
+            <div class="peel-flap" id="peelFlap"></div>
+          </div>
+        </div>
+
+        <!-- Diagram: Dòng tiền đi vào hộp bí ẩn -->
+        <div class="diagram-transaction" id="transactionFlow">
+          <div class="money-pill" id="moneyPill">GIAO DỊCH TIỀN MẶT</div>
+          <svg width="340" height="150" viewBox="0 0 340 150" fill="none" style="margin-top: 60px;">
+            <path
+              id="arrowPath"
+              d="M 30 20 C 120 20, 180 90, 310 90"
+              stroke="#FF6A1A"
+              stroke-width="7"
+              stroke-dasharray="14 10"
+              stroke-linecap="round"
+            />
+            <polygon
+              id="arrowHead"
+              points="305,75 335,90 305,105"
+              fill="#FF6A1A"
+            />
+          </svg>
+        </div>
+
+        <!-- Overlay 1: Punch phrase "HỘP BÍ ẨN" (atMs: 37730 -> offset: 1.53s, hold: 2.0s) -->
+        <div class="punch-phrase-container" id="punchContainer">
+          <div class="punch-phrase-badge" id="punchBadge">
+            <h1 class="punch-phrase-text">HỘP BÍ ẨN</h1>
+          </div>
+        </div>
+
+        <!-- Overlay 2: Icon dấu hỏi cam "?" (atMs: 41530 -> offset: 5.33s, hold: 1.6s) -->
+        <div class="question-overlay" id="questionOverlay">
+          <div class="question-glow" id="questionGlow"></div>
+          <div class="question-badge" id="questionBadge">
+            <svg class="question-svg" viewBox="0 0 100 100" fill="none">
+              <!-- Dấu hỏi tự vẽ bằng vector nét cam rực rỡ -->
+              <path
+                id="questionStroke"
+                d="M 28 36 C 28 20, 50 14, 62 24 C 74 34, 56 46, 50 56 L 50 64"
+                stroke="#FF6A1A"
+                stroke-width="12"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <circle
+                id="questionDot"
+                class="question-dot"
+                cx="50"
+                cy="82"
+                r="7"
+                fill="#FF6A1A"
+              />
+            </svg>
+          </div>
+        </div>
+
+        <!-- Overlay 3: Label "MUA SẮM VÔ ĐỊNH" (atMs: 42650 -> offset: 6.45s, hold: 1.7s) -->
+        <div class="bottom-label-container" id="bottomLabelContainer" data-layout-allow-caption-zone="true">
+          <div class="bottom-label-badge" id="bottomLabelBadge" data-layout-allow-caption-zone="true">
+            <span class="label-sub">QUY LUẬT TÂM LÝ</span>
+            <div class="label-title" data-layout-allow-caption-zone="true">MUA SẮM VÔ ĐỊNH</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Thanh cam đáy cố định nhận diện thương hiệu -->
+      <div class="brand-bottom-bar"></div>
+    </div>
+
+    <script>
+      // Khởi tạo GSAP Timeline độc lập, seekable, tất định (deterministic)
+      const tl = gsap.timeline({ paused: true });
+
+      // Đo chính xác độ dài nét vẽ SVG path cho stroke animation (tất định)
+      const qPath = document.getElementById("questionStroke");
+      const pathLen = qPath ? qPath.getTotalLength() : 180;
+      if (qPath) {
+        qPath.style.strokeDasharray = pathLen;
+        qPath.style.strokeDashoffset = pathLen;
+      }
+
+      const arrow = document.getElementById("arrowPath");
+      const arrowLen = arrow ? arrow.getTotalLength() : 350;
+      if (arrow) {
+        arrow.style.strokeDasharray = arrowLen;
+        arrow.style.strokeDashoffset = arrowLen;
+      }
+
+      // Thiết lập trạng thái ban đầu và tiến trình hoạt họa bằng fromTo tường minh
+      // 1. Entrance Peel Animation (0.1s -> 1.2s): Hiệu ứng bóc nhãn hé lộ chiếc hộp
+      tl.fromTo(
+        "#cardWrapper",
+        {
+          clipPath: "polygon(25% 0%, 100% 0%, 100% 100%, 0% 100%)",
+          rotationZ: -2,
+          scale: 0.94,
+          opacity: 0
+        },
+        {
+          clipPath: "polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)",
+          rotationZ: 0,
+          scale: 1,
+          opacity: 1,
+          duration: 1.1,
+          ease: "power3.out"
+        },
+        0.1
+      );
+
+      tl.fromTo(
+        "#peelFlap",
+        { scale: 1.4, opacity: 1, x: 0, y: 0 },
+        { scale: 0, opacity: 0, x: -60, y: -60, duration: 0.9, ease: "power2.inOut" },
+        0.2
+      );
+
+      // Camera motion zoom-in nhẹ nhàng xuyên suốt cảnh (0.0s -> 8.2s)
+      tl.fromTo(
+        "#stage",
+        { scale: 1 },
+        { scale: 1.06, duration: 8.2, ease: "sine.inOut" },
+        0
+      );
+
+      // Idle motion "breathe" hữu hạn cho chiếc hộp (3 chu kỳ yoyo, kết thúc về lại scale: 1)
+      tl.fromTo(
+        "#boxImage",
+        { scale: 1 },
+        {
+          scale: 1.025,
+          duration: 1.2,
+          repeat: 3,
+          yoyo: true,
+          ease: "sine.inOut"
+        },
+        1.3
+      );
+      tl.set("#boxImage", { scale: 1 }, 1.3 + 1.2 * 4);
+
+      // 2. Punch Phrase "HỘP BÍ ẨN" (Xuất hiện lúc 1.53s, giữ 2.0s, kết thúc 3.53s)
+      tl.fromTo(
+        "#punchBadge",
+        { scale: 0.6, opacity: 0, y: -40 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.55, ease: "power3.out" },
+        1.53
+      );
+
+      // Thu hồi punch phrase mượt mà để nhường sự chú ý cho diagram
+      tl.to(
+        "#punchBadge",
+        { opacity: 0, y: -25, scale: 0.95, duration: 0.4, ease: "power2.in" },
+        3.53
+      );
+
+      // 3. Diagram: Luồng tiền đi vào hộp bí ẩn (Xuất hiện lúc 3.8s -> 5.3s)
+      tl.fromTo(
+        "#moneyPill",
+        { opacity: 0, x: -50, scale: 0.8 },
+        { opacity: 1, x: 0, scale: 1, duration: 0.5, ease: "power3.out" },
+        3.8
+      );
+
+      tl.fromTo(
+        "#arrowPath",
+        { strokeDashoffset: arrowLen },
+        { strokeDashoffset: 0, duration: 0.8, ease: "power2.out" },
+        4.1
+      );
+
+      // Fix 1: Thay ease back.out(1.5) bằng power3.out tuân thủ nguyên tắc "smooth beats bouncy"
+      tl.fromTo(
+        "#arrowHead",
+        { opacity: 0, scale: 0 },
+        { opacity: 1, scale: 1, duration: 0.3, ease: "power3.out" },
+        4.8
+      );
+
+      // Rung nhẹ chiếc hộp khi tiền chạm vào (5.0s -> 5.32s, 4 half-cycles yoyo rồi chốt về 0)
+      tl.fromTo(
+        "#cardWrapper",
+        { rotationZ: 0 },
+        { rotationZ: 1.2, duration: 0.08, repeat: 3, yoyo: true, ease: "sine.inOut" },
+        5.0
+      );
+      tl.set("#cardWrapper", { rotationZ: 0 }, 5.33);
+
+      // 4. Overlay Question Icon "?" màu cam bật lên (Xuất hiện 5.33s, giữ 1.6s, kết thúc 6.93s)
+      tl.fromTo(
+        "#questionOverlay",
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.45, ease: "power3.out" },
+        5.33
+      );
+
+      tl.fromTo(
+        "#questionStroke",
+        { strokeDashoffset: pathLen },
+        { strokeDashoffset: 0, duration: 0.5, ease: "power2.out" },
+        5.4
+      );
+
+      // Fix 2: Bổ sung transformOrigin tường minh "50px 82px" cho SVG circle #questionDot (cx=50, cy=82)
+      tl.fromTo(
+        "#questionDot",
+        { scale: 0, transformOrigin: "50px 82px" },
+        { scale: 1, duration: 0.3, ease: "power3.out", transformOrigin: "50px 82px" },
+        5.7
+      );
+
+      // Hiệu ứng phát sáng lập lòe thể hiện sự bất định qua opacity & scale (allowlisted properties)
+      tl.fromTo(
+        "#questionGlow",
+        { opacity: 0.3, scale: 0.9 },
+        {
+          opacity: 0.95,
+          scale: 1.15,
+          duration: 0.25,
+          repeat: 3,
+          yoyo: true,
+          ease: "sine.inOut"
+        },
+        5.9
+      );
+
+      tl.fromTo(
+        "#questionBadge",
+        { scale: 1 },
+        {
+          scale: 1.04,
+          duration: 0.25,
+          repeat: 3,
+          yoyo: true,
+          ease: "sine.inOut"
+        },
+        5.9
+      );
+
+      // Fix 3: Thêm tl.set chốt giá trị ổn định cho #questionGlow và #questionBadge ngay sau khi yoyo kết thúc (5.9s + 0.25s * 4 = 6.9s)
+      tl.set("#questionGlow", { opacity: 0.3, scale: 0.9 }, 6.9);
+      tl.set("#questionBadge", { scale: 1 }, 6.9);
+
+      // Ẩn icon dấu hỏi trước khi kết cảnh
+      tl.to(
+        "#questionOverlay",
+        { opacity: 0, scale: 0.8, duration: 0.35, ease: "power2.in" },
+        6.93
+      );
+
+      // 5. Overlay Label "MUA SẮM VÔ ĐỊNH" (Xuất hiện lúc 6.45s, giữ 1.7s tới hết cảnh 8.15s)
+      tl.fromTo(
+        "#bottomLabelBadge",
+        { opacity: 0, y: 50, scale: 0.92 },
+        { opacity: 1, y: 0, scale: 1, duration: 0.5, ease: "power3.out" },
+        6.45
+      );
+
+      // Cuối scene: Diagram luồng tiền mờ dần nhẹ
+      tl.to(
+        "#transactionFlow",
+        { opacity: 0.4, duration: 0.6, ease: "power1.out" },
+        7.2
+      );
+
+      // Bắt buộc theo hợp đồng HyperFrames: Đăng ký timeline paused vào window.__timelines["scene-s06"]
+      window.__timelines["scene-s06"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

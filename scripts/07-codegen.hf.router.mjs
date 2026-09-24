@@ -425,7 +425,7 @@ while (attempt < MAX_ATTEMPTS) {
     finalFiles = files;
     finalVerdict = reviewText;
 
-    if (/VERDICT:\s*PASS/i.test(reviewText)) {
+    if (/VERDICT:\s*[*_#\s]*PASS/i.test(reviewText)) {
       break;
     }
     appendCodegenIssue([{ stage: "review", detail: reviewText.slice(0, 2000) }]);
@@ -435,7 +435,7 @@ while (attempt < MAX_ATTEMPTS) {
   }
 }
 
-const passed = !!(finalVerdict && /VERDICT:\s*PASS/i.test(finalVerdict));
+const passed = !!(finalVerdict && /VERDICT:\s*[*_#\s]*PASS/i.test(finalVerdict));
 
 if (passed) {
   // --- Chuyển đổi TẤT ĐỊNH standalone -> sub-composition (KHÔNG AI) — tổng quát hoá đúng logic

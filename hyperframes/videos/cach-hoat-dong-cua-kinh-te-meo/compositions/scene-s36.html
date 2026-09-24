@@ -1,0 +1,630 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        padding: 0;
+        background: #E7E3D9;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+
+      .clip {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+      }
+
+      /* Vox Grid Paper Background */
+      .grid-bg {
+        position: absolute;
+        inset: 0;
+        background-color: #E7E3D9;
+        background-image:
+          linear-gradient(rgba(20, 20, 20, 0.26) 1.5px, transparent 1.5px),
+          linear-gradient(90deg, rgba(20, 20, 20, 0.26) 1.5px, transparent 1.5px);
+        background-size: 84px 84px;
+        background-position: -1.5px -1.5px;
+      }
+
+      .grain-overlay {
+        position: absolute;
+        inset: 0;
+        opacity: 0.16;
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+        pointer-events: none;
+        mix-blend-mode: multiply;
+      }
+
+      .signature-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 10px;
+        background: #FF6A1A;
+        z-index: 100;
+      }
+
+      /* Editorial Top Meta Header */
+      .editorial-header {
+        position: absolute;
+        top: 180px;
+        left: 60px;
+        right: 60px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 3px solid #141414;
+        padding-bottom: 14px;
+        z-index: 10;
+      }
+
+      .header-pill {
+        background: #141414;
+        color: #F7F4EC;
+        font-size: 22px;
+        font-weight: 900;
+        letter-spacing: 1.5px;
+        padding: 6px 16px;
+        text-transform: uppercase;
+        border-radius: 4px;
+      }
+
+      .header-meta {
+        font-size: 20px;
+        font-weight: 700;
+        color: #141414;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+      }
+
+      /* Collage Video Card */
+      .video-card {
+        position: absolute;
+        top: 260px;
+        left: 60px;
+        width: 960px;
+        height: 1120px;
+        background: #141414;
+        border: 4px solid #141414;
+        box-shadow: 14px 14px 0px rgba(20, 20, 20, 0.95);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        transform-origin: 50% 50%;
+      }
+
+      .video-tape-header {
+        background: #F5F0E4;
+        color: #141414;
+        font-size: 20px;
+        font-weight: 900;
+        padding: 10px 24px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 3px solid #141414;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+      }
+
+      /* High-contrast badge: Black on Orange pill (5.63:1 contrast) */
+      .tape-tag {
+        background: #FF6A1A;
+        color: #141414;
+        font-weight: 900;
+        padding: 4px 12px;
+        border-radius: 3px;
+        letter-spacing: 1px;
+      }
+
+      .video-viewport {
+        position: relative;
+        flex: 1;
+        width: 100%;
+        overflow: hidden;
+        background: #000;
+      }
+
+      .video-viewport video {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .video-card-footer {
+        background: #141414;
+        color: #F7F4EC;
+        font-size: 18px;
+        font-weight: 700;
+        padding: 12px 24px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        letter-spacing: 1px;
+      }
+
+      .rec-dot {
+        width: 14px;
+        height: 14px;
+        background: #FF6A1A;
+        border-radius: 50%;
+        display: inline-block;
+      }
+
+      /* Overlay Badges & Cards */
+      .overlay-badge {
+        position: absolute;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transform-origin: 50% 50%;
+      }
+
+      .icon-box {
+        width: 100px;
+        height: 100px;
+        background: #141414;
+        border: 4px solid #141414;
+        box-shadow: 8px 8px 0px #FF6A1A;
+        border-radius: 12px;
+        display: grid;
+        place-items: center;
+      }
+
+      .icon-svg {
+        width: 58px;
+        height: 58px;
+      }
+
+      .banner-label {
+        background: #FF6A1A;
+        color: #141414;
+        border: 4px solid #141414;
+        box-shadow: 10px 10px 0px #141414;
+        padding: 18px 28px;
+        font-size: 30px;
+        font-weight: 900;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        border-radius: 4px;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      .banner-sub {
+        font-size: 16px;
+        font-weight: 900;
+        letter-spacing: 2px;
+        color: #141414;
+      }
+
+      .fanpage-card {
+        background: #141414;
+        color: #F7F4EC;
+        border: 4px solid #141414;
+        box-shadow: 12px 12px 0px #FF6A1A;
+        padding: 22px 30px;
+        border-radius: 6px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        width: 880px;
+      }
+
+      .fanpage-meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 18px;
+        font-weight: 900;
+        letter-spacing: 1.5px;
+        color: #FF6A1A;
+        text-transform: uppercase;
+        border-bottom: 2px solid rgba(247, 244, 236, 0.25);
+        padding-bottom: 6px;
+      }
+
+      .fanpage-title {
+        font-size: 34px;
+        font-weight: 900;
+        line-height: 1.3;
+        color: #F7F4EC;
+      }
+
+      .cancer-card {
+        background: #141414;
+        color: #F7F4EC;
+        border: 4px solid #141414;
+        border-left: 14px solid #FF6A1A;
+        box-shadow: 10px 10px 0px rgba(20, 20, 20, 0.85);
+        padding: 20px 28px;
+        border-radius: 4px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        width: 760px;
+      }
+
+      .cancer-alert {
+        color: #FF6A1A;
+        font-size: 18px;
+        font-weight: 900;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+      }
+
+      .cancer-text {
+        font-size: 32px;
+        font-weight: 900;
+        letter-spacing: 0.5px;
+        color: #F7F4EC;
+      }
+
+      .punch-card {
+        position: absolute;
+        top: 1020px;
+        left: 60px;
+        right: 60px;
+        background: #141414;
+        border: 5px solid #FF6A1A;
+        box-shadow: 16px 16px 0px #141414;
+        padding: 36px 32px;
+        border-radius: 6px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        gap: 12px;
+        transform-origin: 50% 50%;
+      }
+
+      .punch-tag {
+        background: #FF6A1A;
+        color: #141414;
+        font-size: 20px;
+        font-weight: 900;
+        padding: 6px 18px;
+        letter-spacing: 2.5px;
+        text-transform: uppercase;
+        border-radius: 3px;
+      }
+
+      .punch-headline {
+        font-size: 64px;
+        font-weight: 900;
+        line-height: 1.15;
+        color: #F7F4EC;
+        letter-spacing: -0.5px;
+        text-transform: uppercase;
+        margin: 0;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s36"
+      data-width="1080"
+      data-height="1920"
+      data-duration="9.9"
+    >
+      <!-- Base Background Paper & Grain -->
+      <div class="grid-bg"></div>
+      <div class="grain-overlay"></div>
+      <div class="signature-bar"></div>
+
+      <!-- Top Editorial Header -->
+      <header id="header-bar" class="editorial-header">
+        <span class="header-pill">HỒ SƠ TIẾP THỊ</span>
+        <span class="header-meta">CHIÊU TRÒ TRUYỀN THÔNG</span>
+      </header>
+
+      <!-- Main Video Frame Container -->
+      <div id="video-frame" class="video-card">
+        <div class="video-tape-header">
+          <span>CHIẾN DỊCH THAO TÚNG</span>
+          <span class="tape-tag">BĂNG CHUYỀN MARKETING</span>
+        </div>
+        <div class="video-viewport" data-layout-allow-overflow="true">
+          <video
+            id="video-marketing"
+            data-start="0"
+            data-duration="9.9"
+            data-media-start="0"
+            data-track-index="0"
+            data-layout-allow-overflow="true"
+            muted
+            playsinline
+            preload="auto"
+            src="assets/vid-18-fake-commercial-production-factory.mp4"
+          ></video>
+        </div>
+        <div class="video-card-footer">
+          <span class="rec-dot"></span>
+          <span>GHI HÌNH CHIẾN DỊCH TẨY NÃO KHÁCH HÀNG</span>
+        </div>
+      </div>
+
+      <!-- Track 1: Overlay 1 - Icon Phone (0.26s to 2.66s) -->
+      <div
+        id="clip-icon-phone"
+        class="clip"
+        data-start="0.26"
+        data-duration="2.4"
+        data-track-index="1"
+      >
+        <div class="overlay-badge" style="top: 320px; left: 80px;">
+          <div class="icon-box">
+            <svg
+              class="icon-svg"
+              viewBox="0 0 64 64"
+              fill="none"
+              stroke="#FF6A1A"
+              stroke-width="5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <rect class="path-phone-rect" x="16" y="8" width="32" height="48" rx="6" />
+              <line class="path-phone-line" x1="26" y1="15" x2="38" y2="15" />
+              <circle cx="32" cy="48" r="2.5" />
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- Track 2: Overlay 2 - Label KOL Livestream (0.96s to 3.36s) -->
+      <div
+        id="clip-label-kol"
+        class="clip"
+        data-start="0.96"
+        data-duration="2.4"
+        data-track-index="2"
+      >
+        <div class="overlay-badge" style="top: 326px; left: 200px;">
+          <div class="banner-label">
+            <span class="banner-sub">// CHIẾN THUẬT 01</span>
+            <span>KOL LIVESTREAM ĂN PATE</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Track 3: Overlay 3 - Label Fanpage Tạo Trend (2.73s to 5.23s) -->
+      <div
+        id="clip-label-fanpage"
+        class="clip"
+        data-start="2.73"
+        data-duration="2.5"
+        data-track-index="3"
+      >
+        <div class="overlay-badge" style="top: 1160px; left: 100px;">
+          <div class="fanpage-card">
+            <div class="fanpage-meta">
+              <span>ĐỊNH HƯỚNG DƯ LUẬN // SEEDING</span>
+              <span>TRUYỀN THÔNG 24/7</span>
+            </div>
+            <div class="fanpage-title">FANPAGE TẠO TREND SÀNH ĂN</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Track 1: Overlay 4 - Icon Warning (6.44s to 8.84s) -->
+      <div
+        id="clip-icon-warning"
+        class="clip"
+        data-start="6.44"
+        data-duration="2.4"
+        data-track-index="1"
+      >
+        <div class="overlay-badge" style="top: 320px; left: 80px;">
+          <div class="icon-box">
+            <svg
+              class="icon-svg"
+              viewBox="0 0 64 64"
+              fill="none"
+              stroke="#FF6A1A"
+              stroke-width="5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path class="path-warn-tri" d="M32 9 L56 51 L8 51 Z" />
+              <line class="path-warn-line" x1="32" y1="23" x2="32" y2="35" />
+              <circle cx="32" cy="43" r="2.5" />
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- Track 2: Overlay 5 - Label Ung Thư (7.59s to 9.79s) -->
+      <div
+        id="clip-label-cancer"
+        class="clip"
+        data-start="7.59"
+        data-duration="2.2"
+        data-track-index="2"
+      >
+        <div class="overlay-badge" style="top: 326px; left: 200px;">
+          <div class="cancer-card">
+            <span class="cancer-alert">NGUY HIỂM // THỦ ĐOẠN KHỐNG</span>
+            <span class="cancer-text">THỔI PHỒNG TRỊ UNG THƯ</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Track 4: Overlay 6 - Punch Phrase (9.20s to 9.90s) -->
+      <div
+        id="clip-punch-marketing"
+        class="clip"
+        data-start="9.20"
+        data-duration="0.7"
+        data-track-index="4"
+      >
+        <div class="punch-card">
+          <span class="punch-tag">BẢN CHẤT CHIẾN DỊCH</span>
+          <h1 class="punch-headline">NGHỆ THUẬT MARKETING</h1>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const tl = gsap.timeline({ paused: true });
+
+      // 1. Entrance & Camera pan-left on video
+      tl.fromTo(
+        "#video-frame",
+        { scale: 0.94, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.55, ease: "power3.out" },
+        0
+      );
+
+      tl.fromTo(
+        "#header-bar",
+        { y: -30, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.45, ease: "power2.out" },
+        0.1
+      );
+
+      tl.fromTo(
+        "#video-marketing",
+        { x: 20, scale: 1.04 },
+        { x: -20, scale: 1.04, duration: 9.9, ease: "none" },
+        0
+      );
+
+      // 2. Stroke self-drawing setup helper
+      function prepareStroke(el, fallbackLen) {
+        if (!el) return fallbackLen;
+        const len = (typeof el.getTotalLength === "function" && el.getTotalLength() > 0)
+          ? el.getTotalLength()
+          : fallbackLen;
+        el.style.strokeDasharray = len;
+        el.style.strokeDashoffset = len;
+        return len;
+      }
+
+      const phoneRect = document.querySelector(".path-phone-rect");
+      const phoneLine = document.querySelector(".path-phone-line");
+      const warnTri = document.querySelector(".path-warn-tri");
+      const warnLine = document.querySelector(".path-warn-line");
+
+      prepareStroke(phoneRect, 150);
+      prepareStroke(phoneLine, 12);
+      prepareStroke(warnTri, 130);
+      prepareStroke(warnLine, 12);
+
+      // 3. Overlay 1: Phone Icon (0.26s to 2.66s)
+      tl.fromTo(
+        "#clip-icon-phone .overlay-badge",
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.42, ease: "power3.out" },
+        0.26
+      );
+      if (phoneRect) {
+        tl.to(phoneRect, { strokeDashoffset: 0, duration: 0.45, ease: "power2.out" }, 0.38);
+      }
+      if (phoneLine) {
+        tl.to(phoneLine, { strokeDashoffset: 0, duration: 0.3, ease: "power2.out" }, 0.52);
+      }
+      tl.to(
+        "#clip-icon-phone .overlay-badge",
+        { opacity: 0, scale: 0.9, duration: 0.22, ease: "power2.in" },
+        2.40
+      );
+
+      // 4. Overlay 2: KOL Livestream (0.96s to 3.36s)
+      tl.fromTo(
+        "#clip-label-kol .banner-label",
+        { x: -40, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.45, ease: "power3.out" },
+        0.96
+      );
+      tl.to(
+        "#clip-label-kol .banner-label",
+        { opacity: 0, x: -20, duration: 0.24, ease: "power2.in" },
+        3.10
+      );
+
+      // 5. Overlay 3: Fanpage Tạo Trend (2.73s to 5.23s)
+      tl.fromTo(
+        "#clip-label-fanpage .fanpage-card",
+        { y: 35, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.48, ease: "power3.out" },
+        2.73
+      );
+      tl.to(
+        "#clip-label-fanpage .fanpage-card",
+        { opacity: 0, y: 15, duration: 0.25, ease: "power2.in" },
+        4.95
+      );
+
+      // 6. Overlay 4: Warning Icon (6.44s to 8.84s)
+      tl.fromTo(
+        "#clip-icon-warning .overlay-badge",
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.42, ease: "power3.out" },
+        6.44
+      );
+      if (warnTri) {
+        tl.to(warnTri, { strokeDashoffset: 0, duration: 0.45, ease: "power2.out" }, 6.55);
+      }
+      if (warnLine) {
+        tl.to(warnLine, { strokeDashoffset: 0, duration: 0.3, ease: "power2.out" }, 6.75);
+      }
+      tl.to(
+        "#clip-icon-warning .overlay-badge",
+        { opacity: 0, scale: 0.9, duration: 0.22, ease: "power2.in" },
+        8.58
+      );
+
+      // 7. Overlay 5: Ung Thư Label (7.59s to 9.79s)
+      tl.fromTo(
+        "#clip-label-cancer .cancer-card",
+        { x: -40, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.45, ease: "power3.out" },
+        7.59
+      );
+      tl.to(
+        "#clip-label-cancer .cancer-card",
+        { opacity: 0, x: -20, duration: 0.24, ease: "power2.in" },
+        9.52
+      );
+
+      // 8. Overlay 6: Punch Phrase (9.20s to 9.90s)
+      tl.fromTo(
+        "#clip-punch-marketing .punch-card",
+        { scale: 0.88, opacity: 0, y: 20 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.38, ease: "power3.out" },
+        9.20
+      );
+
+      // Deterministic registration with HyperFrames
+      window.__timelines["scene-s36"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

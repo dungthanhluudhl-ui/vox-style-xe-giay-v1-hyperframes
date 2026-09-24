@@ -1,0 +1,726 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+      :root {
+        --color-bg: #E7E3D9;
+        --color-card: #F5F0E4;
+        --color-ink: #141414;
+        --color-orange: #FF6A1A;
+        --color-on-dark: #F7F4EC;
+        --color-text-sub: #D4CFBF;
+        --color-grid: rgba(20, 20, 20, 0.28);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: var(--color-ink);
+        color: var(--color-on-dark);
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        background-color: var(--color-bg);
+        overflow: hidden;
+      }
+
+      /* Tầng 1: Background & Video Layer (z-index: 1) */
+      #bg-layer {
+        position: absolute;
+        inset: 0;
+        z-index: 1;
+        overflow: hidden;
+      }
+
+      #hero-video {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center;
+        filter: contrast(1.08) brightness(0.92);
+      }
+
+      .grid-overlay {
+        position: absolute;
+        inset: 0;
+        background-image:
+          linear-gradient(to right, var(--color-grid) 1.5px, transparent 1.5px),
+          linear-gradient(to bottom, var(--color-grid) 1.5px, transparent 1.5px);
+        background-size: 84px 84px;
+        mix-blend-mode: multiply;
+        pointer-events: none;
+      }
+
+      .spotlight-vignette {
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(
+          circle at 50% 46%,
+          transparent 35%,
+          rgba(20, 20, 20, 0.6) 72%,
+          rgba(20, 20, 20, 0.92) 100%
+        );
+        pointer-events: none;
+      }
+
+      /* Tầng 2: Graphics Layer chính (z-index: 10) */
+      .clip {
+        position: absolute;
+        inset: 0;
+      }
+
+      #graphics-layer {
+        z-index: 10;
+        pointer-events: none;
+      }
+
+      /* Editorial Top Header */
+      .header-tag {
+        position: absolute;
+        top: 170px;
+        left: 60px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        background: rgba(20, 20, 20, 0.94);
+        border-left: 6px solid var(--color-orange);
+        padding: 10px 22px;
+        border-radius: 4px;
+        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.5);
+      }
+
+      .header-dot {
+        width: 10px;
+        height: 10px;
+        background-color: var(--color-orange);
+        border-radius: 50%;
+      }
+
+      .header-text {
+        font-size: 22px;
+        font-weight: 700;
+        color: var(--color-on-dark);
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+      }
+
+      /* Base Beat Section */
+      .beat-section {
+        position: absolute;
+        top: 255px;
+        left: 60px;
+        right: 60px;
+        opacity: 0;
+      }
+
+      /* Cards & Badges */
+      .badge-card {
+        display: flex;
+        align-items: center;
+        gap: 22px;
+        background: rgba(20, 20, 20, 0.95);
+        border: 2px solid rgba(255, 106, 26, 0.7);
+        border-radius: 12px;
+        padding: 22px 28px;
+        box-shadow: 0 16px 36px rgba(0, 0, 0, 0.55);
+      }
+
+      .badge-card.warning-theme {
+        border-color: var(--color-orange);
+        box-shadow: 0 16px 40px rgba(255, 106, 26, 0.22), 0 16px 36px rgba(0, 0, 0, 0.55);
+      }
+
+      .icon-box {
+        width: 72px;
+        height: 72px;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(255, 106, 26, 0.16);
+        border-radius: 10px;
+        border: 2px solid rgba(255, 106, 26, 0.45);
+      }
+
+      .icon-svg {
+        width: 56px;
+        height: 56px;
+      }
+
+      .badge-text-group {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      .badge-sub {
+        font-size: 19px;
+        font-weight: 700;
+        color: var(--color-orange);
+        letter-spacing: 2px;
+        text-transform: uppercase;
+      }
+
+      .badge-title {
+        font-size: 36px;
+        font-weight: 900;
+        color: var(--color-on-dark);
+        line-height: 1.25;
+      }
+
+      /* Flow Diagram (Beat 1) */
+      .flow-diagram {
+        margin-top: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: rgba(20, 20, 20, 0.93);
+        border: 2px dashed rgba(255, 106, 26, 0.5);
+        border-radius: 12px;
+        padding: 26px 30px;
+        box-shadow: 0 14px 32px rgba(0, 0, 0, 0.5);
+      }
+
+      .flow-node {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        background: #1e1e1e;
+        border: 2px solid rgba(255, 106, 26, 0.6);
+        border-radius: 8px;
+        padding: 16px 20px;
+        width: 270px;
+        text-align: center;
+      }
+
+      .node-badge {
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--color-orange);
+        margin-bottom: 4px;
+        letter-spacing: 1px;
+      }
+
+      .node-label {
+        font-size: 26px;
+        font-weight: 900;
+        color: var(--color-on-dark);
+      }
+
+      .node-sub {
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--color-text-sub);
+        margin-top: 4px;
+      }
+
+      .flow-arrow-wrap {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .arrow-svg {
+        width: 140px;
+        height: 32px;
+      }
+
+      .arrow-caption {
+        font-size: 17px;
+        font-weight: 700;
+        color: var(--color-on-dark);
+        background: rgba(255, 106, 26, 0.22);
+        border: 1px solid var(--color-orange);
+        padding: 4px 14px;
+        border-radius: 4px;
+      }
+
+      /* Pyramid Shatter (Beat 2) */
+      .pyramid-wrap {
+        position: relative;
+        width: 100%;
+        height: 330px;
+        margin-top: 24px;
+      }
+
+      .pyramid-shard {
+        position: absolute;
+        background: rgba(20, 20, 20, 0.95);
+        border: 2px solid var(--color-orange);
+        border-radius: 8px;
+        padding: 16px 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 12px 28px rgba(0, 0, 0, 0.6);
+      }
+
+      .shard-inner {
+        font-size: 23px;
+        font-weight: 900;
+        color: var(--color-on-dark);
+        text-align: center;
+        letter-spacing: 0.5px;
+      }
+
+      .shard-top {
+        top: 10px;
+        left: 280px;
+        width: 400px;
+        background: #2b180d;
+        border-color: #ff8533;
+      }
+
+      .shard-left {
+        top: 105px;
+        left: 50px;
+        width: 390px;
+      }
+
+      .shard-right {
+        top: 105px;
+        left: 520px;
+        width: 390px;
+      }
+
+      .fracture-stamp {
+        position: absolute;
+        top: 225px;
+        left: 50%;
+        transform: translateX(-50%) rotate(-3deg);
+        background: var(--color-orange);
+        color: var(--color-ink);
+        border: 3px solid var(--color-ink);
+        padding: 12px 36px;
+        font-size: 30px;
+        font-weight: 900;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        border-radius: 6px;
+        box-shadow: 0 16px 36px rgba(0, 0, 0, 0.6);
+      }
+
+      /* Punch Phrase (Beat 3) */
+      #beat-3-wrap {
+        position: absolute;
+        top: 760px;
+        left: 60px;
+        right: 60px;
+        opacity: 0;
+      }
+
+      .punch-card {
+        background: rgba(20, 20, 20, 0.96);
+        border: 3px solid var(--color-orange);
+        border-radius: 14px;
+        padding: 38px 46px;
+        box-shadow: 0 28px 70px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(255, 106, 26, 0.35);
+      }
+
+      .punch-tag-strip {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 22px;
+      }
+
+      .punch-tag {
+        font-size: 19px;
+        font-weight: 900;
+        background: var(--color-orange);
+        color: var(--color-ink);
+        padding: 5px 14px;
+        border-radius: 4px;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+      }
+
+      .punch-status {
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--color-text-sub);
+        letter-spacing: 1px;
+      }
+
+      .punch-headline {
+        margin: 0 0 24px 0;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      .punch-line-1 {
+        font-size: 44px;
+        font-weight: 900;
+        color: var(--color-on-dark);
+        line-height: 1.15;
+      }
+
+      .punch-line-2 {
+        font-size: 64px;
+        font-weight: 900;
+        color: var(--color-orange);
+        line-height: 1.15;
+      }
+
+      .punch-footer {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .footer-bar {
+        width: 100%;
+        height: 3px;
+        background: rgba(255, 106, 26, 0.45);
+      }
+
+      .footer-desc {
+        font-size: 21px;
+        font-weight: 700;
+        color: var(--color-text-sub);
+        letter-spacing: 1px;
+        text-transform: uppercase;
+      }
+
+      /* Persistent Brand Signature Bottom Bar */
+      #bottom-brand-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 12px;
+        background-color: var(--color-orange);
+        z-index: 100;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s44"
+      data-width="1080"
+      data-height="1920"
+      data-duration="6.81"
+    >
+      <!-- Background & Video Layer -->
+      <div id="bg-layer">
+        <video
+          id="hero-video"
+          data-start="0"
+          data-duration="6.81"
+          data-media-start="1.1"
+          src="assets/vid-14-ponzi-scheme-investment-scam.mp4"
+          muted
+          playsinline
+          data-layout-allow-overflow="true"
+        ></video>
+        <div class="grid-overlay"></div>
+        <div class="spotlight-vignette"></div>
+      </div>
+
+      <!-- Graphics Layer -->
+      <div
+        id="graphics-layer"
+        class="clip"
+        data-start="0"
+        data-duration="6.81"
+        data-track-index="1"
+      >
+        <!-- Top Editorial Header -->
+        <div id="header-tag" class="header-tag">
+          <span class="header-dot"></span>
+          <span class="header-text">ĐIỀU TRA: MÔ HÌNH LỪA ĐẢO PONZI</span>
+        </div>
+
+        <!-- BEAT 1: Quy chế vận hành lấy mới trả cũ (0.13s -> 2.15s) -->
+        <div id="beat-1-wrap" class="beat-section">
+          <div id="beat-1-card" class="badge-card">
+            <div class="icon-box">
+              <svg class="icon-svg" viewBox="0 0 80 80">
+                <path
+                  id="path-fall-line"
+                  d="M 12 24 L 32 44 L 46 32 L 68 62"
+                  fill="none"
+                  stroke="#FF6A1A"
+                  stroke-width="6"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+                <path
+                  id="path-fall-arrow"
+                  d="M 52 62 L 68 62 L 68 46"
+                  fill="none"
+                  stroke="#FF6A1A"
+                  stroke-width="6"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </div>
+            <div class="badge-text-group">
+              <div class="badge-sub">GIAI ĐOẠN 1: QUY CHẾ VẬN HÀNH</div>
+              <div class="badge-title">LẤY CÁ MỚI TRẢ CÁ CŨ</div>
+            </div>
+          </div>
+
+          <div id="ponzi-flow-diag" class="flow-diagram">
+            <div class="flow-node">
+              <div class="node-badge">NGUỒN VỐN MỚI</div>
+              <div class="node-label">MÈO MỚI</div>
+              <div class="node-sub">Đổ cá vào hệ thống</div>
+            </div>
+            <div class="flow-arrow-wrap">
+              <svg viewBox="0 0 140 32" class="arrow-svg">
+                <path
+                  d="M 8 16 L 118 16"
+                  fill="none"
+                  stroke="#FF6A1A"
+                  stroke-width="4"
+                  stroke-dasharray="8 6"
+                />
+                <polygon points="116,8 134,16 116,24" fill="#FF6A1A" />
+              </svg>
+              <span class="arrow-caption">Lấy trả lãi ảo</span>
+            </div>
+            <div class="flow-node">
+              <div class="node-badge">LÃI SUẤT TRÊN TRỜI</div>
+              <div class="node-label">MÈO CŨ</div>
+              <div class="node-sub">Nhận cá từ mèo mới</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- BEAT 2: Báo động vỡ trận & Kim tự tháp sụp đổ (2.28s -> 4.85s) -->
+        <div id="beat-2-wrap" class="beat-section">
+          <div id="beat-2-card" class="badge-card warning-theme">
+            <div class="icon-box">
+              <svg class="icon-svg" viewBox="0 0 80 80">
+                <path
+                  id="path-warn-tri"
+                  d="M 40 14 L 70 66 L 10 66 Z"
+                  fill="none"
+                  stroke="#FF6A1A"
+                  stroke-width="6"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+                <path
+                  id="path-warn-excl"
+                  d="M 40 32 L 40 48"
+                  fill="none"
+                  stroke="#FF6A1A"
+                  stroke-width="6"
+                  stroke-linecap="round"
+                />
+                <circle id="path-warn-dot" cx="40" cy="58" r="3.5" fill="#FF6A1A" />
+              </svg>
+            </div>
+            <div class="badge-text-group">
+              <div class="badge-sub">BÁO ĐỘNG ĐỎ: ĐỨT GÃY DÒNG TIỀN</div>
+              <div class="badge-title">MẤT KHẢ NĂNG THANH TOÁN</div>
+            </div>
+          </div>
+
+          <div id="pyramid-collapse-box" class="pyramid-wrap">
+            <div class="pyramid-shard shard-top" id="shard-1">
+              <div class="shard-inner">KẺ CẦM ĐẦU CUỖM CÁ</div>
+            </div>
+            <div class="pyramid-shard shard-left" id="shard-2">
+              <div class="shard-inner">MÈO CŨ MẤT TRẮNG</div>
+            </div>
+            <div class="pyramid-shard shard-right" id="shard-3">
+              <div class="shard-inner">KHÔNG CÒN CÁ MỚI</div>
+            </div>
+            <div id="fracture-stamp" class="fracture-stamp">
+              <span>VÒNG LẶP SỤP ĐỔ!</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- BEAT 3: Bản chất - Đa cấp lừa đảo Ponzi (5.01s -> 6.81s) -->
+        <div id="beat-3-wrap">
+          <div id="punch-card" class="punch-card">
+            <div class="punch-tag-strip">
+              <span class="punch-tag">BẢN CHẤT HỆ THỐNG</span>
+              <span class="punch-status">KẾT LUẬN ĐIỀU TRA</span>
+            </div>
+            <h1 class="punch-headline">
+              <span class="punch-line-1">BẢN CHẤT MÔ HÌNH</span>
+              <span class="punch-line-2">ĐA CẤP LỪA ĐẢO PONZI</span>
+            </h1>
+            <div class="punch-footer">
+              <span class="footer-bar"></span>
+              <span class="footer-desc">ÔM TRỌN SỐ CÁ RỒI BIẾN MẤT</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Signature Orange Bar at Bottom -->
+      <div id="bottom-brand-bar"></div>
+    </div>
+
+    <script>
+      // Prepare SVG path draw properties deterministically
+      document.querySelectorAll(".icon-svg path").forEach(function (path) {
+        var len = (path.getTotalLength && path.getTotalLength()) || 180;
+        path.style.strokeDasharray = len + "";
+        path.style.strokeDashoffset = len + "";
+      });
+
+      // Master paused timeline for seekable rendering
+      var tl = gsap.timeline({ paused: true });
+
+      // 1. Camera pan-left on hero video
+      tl.fromTo(
+        "#hero-video",
+        { scale: 1.05, x: 20 },
+        { scale: 1.05, x: -20, duration: 6.81, ease: "none" },
+        0
+      );
+
+      // 2. Editorial Header entrance
+      tl.fromTo(
+        "#header-tag",
+        { y: -20, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.4, ease: "power3.out" },
+        0.08
+      );
+
+      // 3. BEAT 1 (0.13s -> 2.15s)
+      tl.fromTo(
+        "#beat-1-wrap",
+        { opacity: 0, y: 25 },
+        { opacity: 1, y: 0, duration: 0.38, ease: "power3.out" },
+        0.13
+      );
+      tl.to(
+        "#path-fall-line",
+        { strokeDashoffset: 0, duration: 0.42, ease: "power2.out" },
+        0.18
+      );
+      tl.to(
+        "#path-fall-arrow",
+        { strokeDashoffset: 0, duration: 0.28, ease: "power2.out" },
+        0.5
+      );
+      tl.fromTo(
+        "#ponzi-flow-diag",
+        { opacity: 0, scale: 0.95 },
+        { opacity: 1, scale: 1, duration: 0.35, ease: "power3.out" },
+        0.35
+      );
+      tl.fromTo(
+        ".flow-node",
+        { opacity: 0, y: 15 },
+        { opacity: 1, y: 0, duration: 0.3, stagger: 0.1, ease: "power3.out" },
+        0.45
+      );
+
+      // Beat 1 exit before Beat 2 enters
+      tl.to(
+        "#beat-1-wrap",
+        { opacity: 0, y: -20, duration: 0.2, ease: "power2.in" },
+        2.05
+      );
+
+      // 4. BEAT 2 (2.28s -> 4.85s)
+      tl.fromTo(
+        "#beat-2-wrap",
+        { opacity: 0, y: 25 },
+        { opacity: 1, y: 0, duration: 0.35, ease: "power3.out" },
+        2.28
+      );
+      tl.to(
+        "#path-warn-tri",
+        { strokeDashoffset: 0, duration: 0.42, ease: "power2.out" },
+        2.3
+      );
+      tl.to(
+        "#path-warn-excl",
+        { strokeDashoffset: 0, duration: 0.25, ease: "power2.out" },
+        2.52
+      );
+      tl.fromTo(
+        "#path-warn-dot",
+        { scale: 0 },
+        { scale: 1, transformOrigin: "center center", duration: 0.18, ease: "power3.out" },
+        2.68
+      );
+      tl.fromTo(
+        ".pyramid-shard",
+        { opacity: 0, scale: 0.9 },
+        { opacity: 1, scale: 1, duration: 0.3, stagger: 0.06, ease: "power3.out" },
+        2.38
+      );
+
+      // Shatter explosion at 2.85s ("MẤT KHẢ NĂNG THANH TOÁN")
+      tl.fromTo(
+        "#fracture-stamp",
+        { scale: 1.8, opacity: 0, rotation: -10 },
+        { scale: 1, opacity: 1, rotation: -3, duration: 0.26, ease: "power4.out" },
+        2.85
+      );
+      tl.to(
+        "#shard-1",
+        { y: -45, rotation: -15, opacity: 0.1, duration: 0.8, ease: "power2.in" },
+        2.88
+      );
+      tl.to(
+        "#shard-2",
+        { x: -60, y: 35, rotation: -20, opacity: 0.1, duration: 0.8, ease: "power2.in" },
+        2.88
+      );
+      tl.to(
+        "#shard-3",
+        { x: 60, y: 35, rotation: 20, opacity: 0.1, duration: 0.8, ease: "power2.in" },
+        2.9
+      );
+
+      // Beat 2 exit before Beat 3 enters
+      tl.to(
+        "#beat-2-wrap",
+        { opacity: 0, y: -20, duration: 0.22, ease: "power2.in" },
+        4.65
+      );
+
+      // 5. BEAT 3: Punch Phrase Climax (5.01s -> 6.81s)
+      tl.fromTo(
+        "#beat-3-wrap",
+        { opacity: 0, y: 35, scale: 0.94 },
+        { opacity: 1, y: 0, scale: 1, duration: 0.45, ease: "power3.out" },
+        5.01
+      );
+      tl.fromTo(
+        ".footer-bar",
+        { scaleX: 0 },
+        { scaleX: 1, transformOrigin: "left center", duration: 0.35, ease: "power3.out" },
+        5.25
+      );
+
+      // Register master timeline
+      window.__timelines = window.__timelines || {};
+      window.__timelines["scene-s44"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

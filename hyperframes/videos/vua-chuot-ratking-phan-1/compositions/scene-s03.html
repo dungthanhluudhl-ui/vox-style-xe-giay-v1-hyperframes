@@ -1,0 +1,510 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #e7e3d9;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        perspective: 1400px;
+      }
+
+      /* Nền lưới 84px + Grain chuẩn phong cách Vox Style DNA */
+      #bg-grid {
+        position: absolute;
+        inset: 0;
+        z-index: 1;
+        background-color: #e7e3d9;
+        background-image:
+          linear-gradient(to right, rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px),
+          linear-gradient(to bottom, rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px);
+        background-size: 84px 84px;
+        pointer-events: none;
+      }
+
+      #bg-grain {
+        position: absolute;
+        inset: 0;
+        z-index: 2;
+        opacity: 0.18;
+        mix-blend-mode: multiply;
+        pointer-events: none;
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+      }
+
+      /* Thanh cam nhận diện thương hiệu cố định mép dưới */
+      #orange-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 12px;
+        background-color: #ff6a1a;
+        z-index: 999;
+        pointer-events: none;
+      }
+
+      /* Layout clip tiêu chuẩn */
+      .clip {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+
+      .media-fill {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+        z-index: 10;
+      }
+
+      /* Khung overlay các lớp đồ họa chữ */
+      .overlay-layer {
+        pointer-events: none;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        z-index: 30;
+      }
+
+      /* SHOT 1: Tiêu đề xé dán RAT KING */
+      .punch-container {
+        position: absolute;
+        top: 360px;
+        left: 0;
+        right: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .punch-card {
+        background-color: #141414;
+        color: #f7f4ec;
+        padding: 24px 44px;
+        border: 4px solid #141414;
+        box-shadow: 10px 10px 0px #ff7a1a;
+        text-align: center;
+        transform-origin: 50% 50%;
+        will-change: transform, opacity;
+      }
+
+      .punch-subtitle {
+        font-size: 26px;
+        font-weight: 700;
+        color: #ff6a1a;
+        letter-spacing: 6px;
+        text-transform: uppercase;
+        margin-bottom: 6px;
+      }
+
+      .punch-title {
+        font-size: 82px;
+        font-weight: 900;
+        line-height: 1.1;
+        letter-spacing: 4px;
+        margin: 0;
+        text-transform: uppercase;
+      }
+
+      .label-container {
+        position: absolute;
+        top: 610px;
+        left: 0;
+        right: 0;
+        display: flex;
+        justify-content: center;
+      }
+
+      .info-pill {
+        display: inline-flex;
+        align-items: center;
+        background-color: #f5f0e4;
+        color: #141414;
+        border: 3px solid #141414;
+        padding: 14px 28px;
+        font-size: 32px;
+        font-weight: 900;
+        letter-spacing: 2px;
+        box-shadow: 6px 6px 0px #141414;
+        transform-origin: 50% 50%;
+        will-change: transform, opacity;
+      }
+
+      .pill-dot {
+        width: 14px;
+        height: 14px;
+        background-color: #ff6a1a;
+        margin-right: 14px;
+        display: inline-block;
+      }
+
+      /* SHOT 2: Specimen tag phân loại học */
+      .specimen-card {
+        position: absolute;
+        top: 340px;
+        background-color: #f5f0e4;
+        color: #141414;
+        border: 4px solid #141414;
+        padding: 26px 42px;
+        box-shadow: 8px 8px 0px #141414;
+        text-align: center;
+        transform-origin: 50% 50%;
+        will-change: transform, opacity;
+      }
+
+      .specimen-tag {
+        font-size: 22px;
+        font-weight: 700;
+        color: #141414;
+        letter-spacing: 4px;
+        text-transform: uppercase;
+        margin-bottom: 8px;
+        border-bottom: 2px solid #ff6a1a;
+        padding-bottom: 6px;
+        display: inline-block;
+      }
+
+      .specimen-latin {
+        font-size: 64px;
+        font-weight: 900;
+        font-style: italic;
+        line-height: 1.15;
+        letter-spacing: 2px;
+        margin: 0;
+      }
+
+      /* SHOT 3: Thẻ cảnh báo đính chính */
+      .warning-badge {
+        position: absolute;
+        top: 320px;
+        background-color: #141414;
+        color: #f7f4ec;
+        border-left: 10px solid #ff6a1a;
+        padding: 18px 36px;
+        box-shadow: 8px 8px 0px rgba(20, 20, 20, 0.4);
+        transform-origin: 50% 50%;
+        will-change: transform, opacity;
+      }
+
+      .warning-tag {
+        font-size: 20px;
+        font-weight: 700;
+        color: #ff6a1a;
+        letter-spacing: 3px;
+        text-transform: uppercase;
+        margin-bottom: 4px;
+      }
+
+      .warning-title {
+        font-size: 40px;
+        font-weight: 900;
+        letter-spacing: 2px;
+        margin: 0;
+      }
+
+      /* SHOT 4: Con dấu Strike Stamp */
+      .stamp-stage {
+        pointer-events: none;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 50;
+      }
+
+      .strike-stamp {
+        background-color: rgba(20, 20, 20, 0.94);
+        border: 6px dashed #ff6a1a;
+        padding: 40px 60px;
+        border-radius: 8px;
+        box-shadow: 14px 14px 0px #141414;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        transform-origin: 50% 50%;
+        will-change: transform, opacity;
+      }
+
+      .stamp-svg {
+        width: 240px;
+        height: 240px;
+        margin-bottom: 16px;
+      }
+
+      .stamp-svg path {
+        fill: none;
+        stroke: #ff6a1a;
+        stroke-width: 28;
+        stroke-linecap: square;
+        stroke-linejoin: miter;
+      }
+
+      .stamp-text {
+        font-size: 54px;
+        font-weight: 900;
+        color: #f7f4ec;
+        letter-spacing: 4px;
+        text-transform: uppercase;
+        margin: 0;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s03"
+      data-start="0"
+      data-width="1080"
+      data-height="1920"
+      data-duration="9.1"
+      data-layout-allow-overflow="true"
+    >
+      <!-- Nền giấy ngà ô vuông + hạt grain chuẩn Style DNA -->
+      <div id="bg-grid"></div>
+      <div id="bg-grain"></div>
+
+      <!-- ==================== SHOT S03-1 (0.0s -> 2.94s) ==================== -->
+      <!-- Video là direct-child của root, sở hữu data-start và playback framework -->
+      <video
+        id="vid-04-media"
+        class="media-fill"
+        data-start="0"
+        data-duration="2.94"
+        data-track-index="0"
+        muted
+        playsinline
+        src="assets/vid-04-rat-king-cutout-animation.mp4"
+        data-media-start="0.5"
+      ></video>
+
+      <div
+        id="overlay-s1"
+        class="clip overlay-layer"
+        data-start="0"
+        data-duration="2.94"
+        data-track-index="1"
+        data-layout-allow-overflow="true"
+      >
+        <div class="punch-container">
+          <div id="punch-rat-king" class="punch-card">
+            <div class="punch-subtitle">Danh Xưng</div>
+            <h1 class="punch-title">RAT KING</h1>
+          </div>
+        </div>
+        <div class="label-container">
+          <div id="label-rare" class="info-pill">
+            <span class="pill-dot"></span>
+            HIỆN TƯỢNG CỰC HIẾM
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================== SHOT S03-2 (2.94s -> 5.66s) ==================== -->
+      <div
+        id="shot-2-visual"
+        class="clip"
+        data-start="2.94"
+        data-duration="2.72"
+        data-track-index="0"
+        data-layout-allow-overflow="true"
+        style="z-index: 10;"
+      >
+        <div id="tremble-box" style="width: 100%; height: 100%; transform-origin: 50% 50%; will-change: transform;">
+          <img
+            id="img-01-media"
+            class="media-fill"
+            src="assets/img-01-rat-king-cutout-title.jpeg"
+            alt="Chuột đen Rattus rattus"
+          />
+        </div>
+      </div>
+
+      <div
+        id="overlay-s2"
+        class="clip overlay-layer"
+        data-start="2.94"
+        data-duration="2.72"
+        data-track-index="1"
+        data-layout-allow-overflow="true"
+      >
+        <div id="label-rattus" class="specimen-card">
+          <div class="specimen-tag">Phân loại học • Chuột đen</div>
+          <h2 class="specimen-latin">Rattus rattus</h2>
+        </div>
+      </div>
+
+      <!-- ==================== SHOT S03-3 (5.66s -> 7.54s) ==================== -->
+      <video
+        id="vid-05-media"
+        class="media-fill"
+        data-start="5.66"
+        data-duration="1.88"
+        data-track-index="0"
+        muted
+        playsinline
+        src="assets/vid-05-cutout-leader-prohibition-red-cross.mp4"
+        data-media-start="0.8"
+        style="transform-style: preserve-3d; transform-origin: 50% 50%; will-change: transform, opacity;"
+      ></video>
+
+      <div
+        id="overlay-s3"
+        class="clip overlay-layer"
+        data-start="5.66"
+        data-duration="1.88"
+        data-track-index="1"
+        data-layout-allow-overflow="true"
+      >
+        <div id="label-misconception" class="warning-badge">
+          <div class="warning-tag">Đính chính văn hóa</div>
+          <h2 class="warning-title">HIỂU LẦM PHỔ BIẾN</h2>
+        </div>
+      </div>
+
+      <!-- ==================== SHOT S03-4 (7.54s -> 9.10s) ==================== -->
+      <div
+        id="shot-4-visual"
+        class="clip"
+        data-start="7.54"
+        data-duration="1.56"
+        data-track-index="0"
+        data-layout-allow-overflow="true"
+        style="z-index: 10;"
+      >
+        <img
+          id="img-04-media"
+          class="media-fill"
+          src="assets/img-04-splinter-ninja-turtles-red-cross.jpeg"
+          alt="Splinter và 4 ninja rùa"
+        />
+      </div>
+
+      <div
+        id="overlay-s4"
+        class="clip stamp-stage"
+        data-start="7.54"
+        data-duration="1.56"
+        data-track-index="1"
+        data-layout-allow-overflow="true"
+      >
+        <div id="stamp-strike" class="strike-stamp">
+          <svg class="stamp-svg" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+            <path id="cross-slash-1" d="M 35 35 L 165 165" stroke-dasharray="185" stroke-dashoffset="185" />
+            <path id="cross-slash-2" d="M 165 35 L 35 165" stroke-dasharray="185" stroke-dashoffset="185" />
+          </svg>
+          <h3 class="stamp-text">KHÔNG PHẢI!</h3>
+        </div>
+      </div>
+
+      <!-- Thanh cam cố định mép dưới nhận diện phong cách -->
+      <div id="orange-bar" data-layout-ignore></div>
+    </div>
+
+    <script>
+      // Khởi tạo GSAP timeline gốc dạng paused theo HyperFrames composition contract
+      const tl = gsap.timeline({ paused: true });
+
+      // === SHOT S03-1 (0.0s -> 2.94s) ===
+      // Punch-phrase "RAT KING" xuất hiện dứt khoát tại 0.64s (atMs: 12500)
+      tl.fromTo(
+        "#punch-rat-king",
+        { scale: 0.25, opacity: 0, y: 35 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.45, ease: "power4.out" },
+        0.64,
+      );
+
+      // Label "HIỆN TƯỢNG CỰC HIẾM" trượt lên tại 2.26s (atMs: 14120)
+      tl.fromTo(
+        "#label-rare",
+        { y: 30, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.35, ease: "power3.out" },
+        2.26,
+      );
+
+      // === SHOT S03-2 (2.94s -> 5.66s) ===
+      // Camera zoom-in cận cảnh ảnh img-01
+      tl.fromTo(
+        "#img-01-media",
+        { scale: 1.0 },
+        { scale: 1.12, duration: 2.72, ease: "sine.out" },
+        2.94,
+      );
+
+      // Tremble nhẹ 1.2 độ lệch pha tạo cảm giác rình rập (chu kỳ tất định, finite repeat)
+      tl.to(
+        "#tremble-box",
+        { rotation: 1.2, duration: 0.22, yoyo: true, repeat: 11, ease: "sine.inOut" },
+        2.94,
+      );
+
+      // Nhãn phân loại học "Rattus rattus" xuất hiện tại 4.29s (atMs: 16150)
+      tl.fromTo(
+        "#label-rattus",
+        { scale: 0.7, opacity: 0, y: -25 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.42, ease: "power3.out" },
+        4.29,
+      );
+
+      // === SHOT S03-3 (5.66s -> 7.54s) ===
+      // Cú lật 3D (flip) hé lộ hoạt hình Splinter và Ninja Rùa
+      tl.fromTo(
+        "#vid-05-media",
+        { rotationY: 90, opacity: 0 },
+        { rotationY: 0, opacity: 1, duration: 0.55, ease: "power3.out" },
+        5.66,
+      );
+
+      // Label "HIỂU LẦM PHỔ BIẾN" xuất hiện tại 6.07s (atMs: 17930)
+      tl.fromTo(
+        "#label-misconception",
+        { y: -30, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.38, ease: "power3.out" },
+        6.07,
+      );
+
+      // === SHOT S03-4 (7.54s -> 9.10s) ===
+      // Đóng dấu X đỏ cam sắc nét (Strike) đè lên hình tại 7.83s (atMs: 19690)
+      tl.fromTo(
+        "#stamp-strike",
+        { scale: 2.7, opacity: 0, rotation: -22 },
+        { scale: 1.0, opacity: 1, rotation: -6, duration: 0.24, ease: "power4.in" },
+        7.83,
+      );
+
+      // Recoil nảy giật lùi nhẹ lúc đáp dấu
+      tl.to("#stamp-strike", { scale: 1.08, duration: 0.1, ease: "power1.out" }, 8.07);
+      tl.to("#stamp-strike", { scale: 1.0, duration: 0.14, ease: "power2.out" }, 8.17);
+
+      // Nét gạch chéo SVG tự vẽ dứt khoát
+      tl.to("#cross-slash-1", { strokeDashoffset: 0, duration: 0.18, ease: "power2.out" }, 7.95);
+      tl.to("#cross-slash-2", { strokeDashoffset: 0, duration: 0.18, ease: "power2.out" }, 8.07);
+
+      // Đăng ký timeline cho HyperFrames runtime
+      window.__timelines["scene-s03"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

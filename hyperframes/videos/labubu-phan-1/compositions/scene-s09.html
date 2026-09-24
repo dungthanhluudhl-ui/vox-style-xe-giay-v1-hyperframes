@@ -1,0 +1,558 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #F5F0E4;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+
+      /* Global Shared Layout & Decorative Layers */
+      .scene-bg {
+        position: absolute;
+        inset: 0;
+        background-color: #F5F0E4;
+        z-index: 1;
+      }
+      .grain-overlay {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: 200;
+      }
+      .bottom-orange-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 12px;
+        background-color: #FF6A1A;
+        z-index: 300;
+      }
+
+      /* Shot Container Layout (plain full-frame wrappers, timing driven by GSAP & timed media) */
+      .shot-container {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+        pointer-events: none;
+      }
+      #shot-1 {
+        z-index: 10;
+      }
+      #shot-2 {
+        opacity: 0;
+        z-index: 20;
+      }
+
+      /* Card Framing (Vox Collage Style) */
+      .media-card {
+        position: absolute;
+        top: 310px;
+        left: 60px;
+        width: 960px;
+        height: 1100px;
+        background-color: #141414;
+        border: 4px solid #141414;
+        border-radius: 24px;
+        overflow: hidden;
+        box-shadow: 14px 14px 0px rgba(20, 20, 20, 0.18);
+        transform-origin: 50% 50%;
+        will-change: transform, opacity;
+      }
+      .media-viewport {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .shot-media {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        will-change: transform;
+      }
+
+      /* Paper Tape Accent */
+      .tape-accent {
+        position: absolute;
+        top: 16px;
+        right: 50px;
+        width: 130px;
+        height: 32px;
+        background-color: rgba(255, 106, 26, 0.95);
+        border: 2px solid #141414;
+        border-radius: 4px;
+        transform: rotate(3deg);
+        z-index: 30;
+      }
+      .s2-tape {
+        top: 16px;
+        left: 50px;
+        right: auto;
+        transform: rotate(-3deg);
+      }
+
+      /* Header Bar & Overlays (Shot 1) */
+      .s1-header-bar {
+        position: absolute;
+        top: 180px;
+        left: 60px;
+        right: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        z-index: 50;
+      }
+      .s1-punch-badge {
+        display: inline-flex;
+        align-items: center;
+        background-color: #141414;
+        color: #F7F4EC;
+        padding: 16px 28px;
+        border-radius: 14px;
+        border-left: 10px solid #FF6A1A;
+        box-shadow: 8px 8px 0px rgba(20, 20, 20, 0.2);
+        will-change: transform, opacity;
+      }
+      .s1-punch-text {
+        font-size: 44px;
+        font-weight: 900;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        margin: 0;
+        line-height: 1.1;
+      }
+      .s1-clock-card {
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        background-color: #F5F0E4;
+        border: 3px solid #141414;
+        padding: 10px 20px;
+        border-radius: 14px;
+        box-shadow: 6px 6px 0px rgba(20, 20, 20, 0.15);
+        will-change: transform, opacity;
+      }
+      .clock-label {
+        font-size: 22px;
+        font-weight: 900;
+        color: #141414;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      /* Floating Tags / Hashtag Badges */
+      .tag-badge {
+        position: absolute;
+        display: inline-flex;
+        align-items: center;
+        padding: 10px 22px;
+        border-radius: 10px;
+        font-size: 26px;
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        will-change: transform, opacity;
+        z-index: 40;
+      }
+      .tag-dark {
+        background-color: #141414;
+        color: #F7F4EC;
+        border: 2px solid #FF6A1A;
+        box-shadow: 6px 6px 0px rgba(255, 106, 26, 0.45);
+      }
+      .tag-orange {
+        background-color: #FF6A1A;
+        color: #141414;
+        border: 2px solid #141414;
+        box-shadow: 6px 6px 0px rgba(20, 20, 20, 0.25);
+      }
+      .tag-cream {
+        background-color: #F5F0E4;
+        color: #141414;
+        border: 3px solid #141414;
+        box-shadow: 6px 6px 0px rgba(20, 20, 20, 0.25);
+      }
+
+      /* Shot 2 Typography & Viral Explosion Overlays */
+      .s2-top-block {
+        position: absolute;
+        top: 175px;
+        left: 60px;
+        right: 60px;
+        z-index: 50;
+      }
+      .s2-editorial-label {
+        display: inline-block;
+        background-color: #FF6A1A;
+        color: #141414;
+        font-size: 24px;
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        padding: 8px 18px;
+        border-radius: 8px;
+        border: 2px solid #141414;
+        box-shadow: 4px 4px 0px rgba(20, 20, 20, 0.2);
+        margin-bottom: 12px;
+        will-change: transform, opacity;
+      }
+      .s2-headline-banner {
+        display: block;
+        will-change: transform, opacity;
+      }
+      .s2-headline-text {
+        margin: 0;
+        font-size: 64px;
+        font-weight: 900;
+        line-height: 1.15;
+        color: #141414;
+        text-transform: uppercase;
+        letter-spacing: -0.5px;
+      }
+      .s2-headline-accent {
+        display: inline-block;
+        background-color: #141414;
+        color: #F7F4EC;
+        padding: 4px 18px;
+        border-radius: 8px;
+        margin-left: 10px;
+      }
+
+      /* Viral Surge Pills on Shot 2 */
+      #s2-bubble-1 {
+        top: 1040px;
+        left: 90px;
+      }
+      #s2-bubble-2 {
+        top: 1120px;
+        right: 90px;
+      }
+      #s2-bubble-3 {
+        top: 1200px;
+        left: 90px;
+      }
+      #s2-bubble-4 {
+        top: 1280px;
+        right: 90px;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s09"
+      data-width="1080"
+      data-height="1920"
+      data-duration="6.81"
+    >
+      <!-- Base Background Card Tone -->
+      <div class="scene-bg" aria-hidden="true"></div>
+
+      <!-- Procedural Film Grain Overlay -->
+      <svg class="grain-overlay" aria-hidden="true" width="100%" height="100%">
+        <filter id="noiseFilter">
+          <feTurbulence type="fractalNoise" baseFrequency="0.75" numOctaves="3" stitchTiles="stitch" />
+          <feColorMatrix type="matrix" values="0 0 0 0 0.08  0 0 0 0 0.08  0 0 0 0 0.08  0 0 0 0 0.18 0" />
+        </filter>
+        <rect width="100%" height="100%" filter="url(#noiseFilter)" style="mix-blend-mode: multiply;" />
+      </svg>
+
+      <!-- Permanent Bottom Orange Brand Bar -->
+      <div class="bottom-orange-bar" aria-hidden="true"></div>
+
+      <!-- ========================================================
+           SHOT 1: S09-1 (0.0s -> 3.6s, duration: 3.6s)
+           Asset: vid-07 (Key trend video, trim 1.0s to 4.6s)
+           Plain container div without timing attributes (timing is owned
+           directly by the <video data-start="0" data-duration="3.6"> element).
+           Camera: Zoom-in. TransitionIn: Grow.
+           ======================================================== -->
+      <div id="shot-1" class="shot-container">
+        <!-- Top Overlay Header -->
+        <div class="s1-header-bar">
+          <div id="s1-punch-phrase" class="s1-punch-badge">
+            <h1 class="s1-punch-text">GIAI ĐOẠN 2023 - 2025</h1>
+          </div>
+
+          <div id="s1-clock-badge" class="s1-clock-card">
+            <svg id="s1-clock-svg" width="44" height="44" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle id="clock-rim" cx="24" cy="24" r="20" stroke="#FF6A1A" stroke-width="4" stroke-linecap="round" />
+              <line id="clock-hour" x1="24" y1="24" x2="24" y2="13" stroke="#141414" stroke-width="4" stroke-linecap="round" />
+              <line id="clock-minute" x1="24" y1="24" x2="33" y2="24" stroke="#141414" stroke-width="3.5" stroke-linecap="round" />
+            </svg>
+            <span class="clock-label">CAO TRÀO</span>
+          </div>
+        </div>
+
+        <!-- Video Card Frame -->
+        <div id="shot1-card" class="media-card">
+          <div class="tape-accent" aria-hidden="true" data-layout-allow-overflow="true"></div>
+          <div class="media-viewport" data-layout-allow-overflow="true">
+            <video
+              id="shot1-video"
+              class="shot-media"
+              src="assets/vid-07-viral-trend-keychain-hype.mp4"
+              data-start="0"
+              data-duration="3.6"
+              data-media-start="1"
+              data-layout-allow-overflow="true"
+              muted
+              playsinline
+            ></video>
+          </div>
+        </div>
+
+        <!-- Trend Stickers inside Shot 1 -->
+        <div id="s1-tag-1" class="tag-badge tag-dark" style="top: 1230px; left: 90px;">
+          #BLINDBOX_HYPE
+        </div>
+        <div id="s1-tag-2" class="tag-badge tag-orange" style="top: 1310px; left: 90px;">
+          #XU_HƯỚNG_GIỚI_TRẺ
+        </div>
+      </div>
+
+      <!-- ========================================================
+           SHOT 2: S09-2 (3.6s -> 6.81s, duration: 3.21s)
+           Asset: img-06 (Gen Z viral cutout social trend)
+           Plain container div without timing attributes (controlled via GSAP).
+           Camera: Pan-right. TransitionIn: Punch.
+           ======================================================== -->
+      <div id="shot-2" class="shot-container">
+        <!-- Top Editorial Titles -->
+        <div class="s2-top-block">
+          <div id="s2-label" class="s2-editorial-label">
+            VƯỢT XA GIẢI TRÍ
+          </div>
+          <div id="s2-punch-phrase" class="s2-headline-banner">
+            <h2 class="s2-headline-text">
+              LÀN SÓNG<span class="s2-headline-accent">VĂN HÓA</span>
+            </h2>
+          </div>
+        </div>
+
+        <!-- Hero Image Card Frame -->
+        <div id="shot2-card" class="media-card" style="top: 360px; height: 1050px;">
+          <div class="tape-accent s2-tape" aria-hidden="true" data-layout-allow-overflow="true"></div>
+          <div class="media-viewport" data-layout-allow-overflow="true">
+            <img
+              id="shot2-img"
+              class="shot-media"
+              src="assets/img-06-genz-viral-social-trend.jpeg"
+              alt="Gen Z Viral Social Trend"
+              data-layout-allow-overflow="true"
+            />
+          </div>
+        </div>
+
+        <!-- Viral Explosion Hashtags & Bubbles -->
+        <div id="s2-bubble-1" class="tag-badge tag-dark">
+          #LÀN_SÓNG_MẠNG_XÃ_HỘI
+        </div>
+        <div id="s2-bubble-2" class="tag-badge tag-orange">
+          +500% ĐỘ PHỦ SÓNG
+        </div>
+        <div id="s2-bubble-3" class="tag-badge tag-cream">
+          TRÀO LƯU ĐẠI CHÚNG
+        </div>
+        <div id="s2-bubble-4" class="tag-badge tag-dark">
+          #VIRAL_COMMUNITY
+        </div>
+      </div>
+    </div>
+
+    <!-- GSAP Seekable Deterministic Orchestration -->
+    <script>
+      const tl = gsap.timeline({ paused: true });
+
+      // Setup SVG Clock Stroke Geometry
+      const clockRim = document.getElementById("clock-rim");
+      const clockHour = document.getElementById("clock-hour");
+      const clockMinute = document.getElementById("clock-minute");
+      if (clockRim && clockHour && clockMinute) {
+        const rimLength = clockRim.getTotalLength();
+        clockRim.style.strokeDasharray = rimLength;
+        clockRim.style.strokeDashoffset = rimLength;
+
+        const hourLength = clockHour.getTotalLength();
+        clockHour.style.strokeDasharray = hourLength;
+        clockHour.style.strokeDashoffset = hourLength;
+
+        const minuteLength = clockMinute.getTotalLength();
+        clockMinute.style.strokeDasharray = minuteLength;
+        clockMinute.style.strokeDashoffset = minuteLength;
+      }
+
+      /* ========================================================
+         SHOT 1 ANIMATIONS (0.0s - 3.6s)
+         ======================================================== */
+      // Card TransitionIn: Grow from 0.65 to 1.0 with smooth settle
+      tl.fromTo(
+        "#shot1-card",
+        { scale: 0.65, opacity: 0, y: 40 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.65, ease: "power3.out" },
+        0.05
+      );
+
+      // Camera motion: Continuous zoom-in on video
+      tl.fromTo(
+        "#shot1-video",
+        { scale: 1.0 },
+        { scale: 1.12, duration: 3.5, ease: "sine.inOut" },
+        0.05
+      );
+
+      // Punch Phrase: GIAI ĐOẠN 2023 - 2025 (atMs: 58840 -> offset 0.64s, holdMs: 1800)
+      tl.fromTo(
+        "#s1-punch-phrase",
+        { x: -50, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.45, ease: "power3.out" },
+        0.64
+      );
+      tl.to(
+        "#s1-punch-phrase",
+        { opacity: 0, duration: 0.35, ease: "power2.in" },
+        2.44
+      );
+
+      // Icon Clock: (atMs: 59480 -> offset 1.28s, holdMs: 1500)
+      tl.fromTo(
+        "#s1-clock-badge",
+        { scale: 0.7, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.4, ease: "power3.out" },
+        1.28
+      );
+      if (clockRim && clockHour && clockMinute) {
+        tl.to("#clock-rim", { strokeDashoffset: 0, duration: 0.5, ease: "power2.out" }, 1.35);
+        tl.to("#clock-hour", { strokeDashoffset: 0, duration: 0.3, ease: "power2.out" }, 1.55);
+        tl.to("#clock-minute", { strokeDashoffset: 0, duration: 0.3, ease: "power2.out" }, 1.65);
+      }
+      tl.to(
+        "#s1-clock-badge",
+        { opacity: 0, duration: 0.3, ease: "power2.in" },
+        2.78
+      );
+
+      // Shot 1 Trend Stickers Entrance
+      tl.fromTo(
+        "#s1-tag-1",
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.4, ease: "power3.out" },
+        1.1
+      );
+      tl.fromTo(
+        "#s1-tag-2",
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.4, ease: "power3.out" },
+        1.5
+      );
+
+      // Shot 1 Child Elements Outro Fade (before 3.6s scene transition)
+      tl.to(
+        ["#shot1-card", "#s1-tag-1", "#s1-tag-2"],
+        { opacity: 0, duration: 0.25, ease: "power2.in" },
+        3.35
+      );
+
+      /* ========================================================
+         SHOT 1 -> SHOT 2 TRANSITION AT 3.6s
+         ======================================================== */
+      tl.set("#shot-1", { opacity: 0 }, 3.6);
+      tl.set("#shot-2", { opacity: 1 }, 3.6);
+
+      /* ========================================================
+         SHOT 2 ANIMATIONS (3.6s - 6.81s)
+         ======================================================== */
+      // TransitionIn: Punch (sudden slam entrance 1.14 -> 1.0)
+      tl.fromTo(
+        "#shot2-card",
+        { scale: 1.14, opacity: 0, y: -20 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.38, ease: "power4.out" },
+        3.6
+      );
+
+      // Camera motion: pan-right + subtle drift on hero image
+      tl.fromTo(
+        "#shot2-img",
+        { x: -30, scale: 1.06 },
+        { x: 25, scale: 1.06, duration: 3.2, ease: "sine.inOut" },
+        3.6
+      );
+
+      // Label: VƯỢT XA GIẢI TRÍ (starts at 4.0s, exits at 4.85s -> completely gone by 5.1s before punch phrase enters)
+      tl.fromTo(
+        "#s2-label",
+        { x: -40, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.38, ease: "power3.out" },
+        4.0
+      );
+      tl.to(
+        "#s2-label",
+        { opacity: 0, duration: 0.25, ease: "power2.in" },
+        4.85
+      );
+
+      // Punch Phrase: LÀN SÓNG VĂN HÓA (atMs: 63410 -> offset 5.21s)
+      tl.fromTo(
+        "#s2-punch-phrase",
+        { scale: 0.88, opacity: 0, y: 25 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.45, ease: "power3.out" },
+        5.21
+      );
+
+      // Viral Surge Bubbles: Multiplying outward to visualize the cultural wave
+      tl.fromTo(
+        "#s2-bubble-1",
+        { scale: 0, opacity: 0, x: -30 },
+        { scale: 1, opacity: 1, x: 0, duration: 0.42, ease: "power3.out" },
+        4.25
+      );
+      tl.fromTo(
+        "#s2-bubble-2",
+        { scale: 0, opacity: 0, x: 30 },
+        { scale: 1, opacity: 1, x: 0, duration: 0.42, ease: "power3.out" },
+        4.60
+      );
+      tl.fromTo(
+        "#s2-bubble-3",
+        { scale: 0, opacity: 0, x: -30 },
+        { scale: 1, opacity: 1, x: 0, duration: 0.42, ease: "power3.out" },
+        4.95
+      );
+      tl.fromTo(
+        "#s2-bubble-4",
+        { scale: 0, opacity: 0, x: 30 },
+        { scale: 1, opacity: 1, x: 0, duration: 0.42, ease: "power3.out" },
+        5.30
+      );
+
+      // Register the seekable paused timeline with HyperFrames
+      window.__timelines["scene-s09"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

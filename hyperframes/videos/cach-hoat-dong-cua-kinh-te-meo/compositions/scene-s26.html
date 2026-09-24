@@ -1,0 +1,599 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap">
+      <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: #E7E3D9;
+      color: #141414;
+      font-family: "Be Vietnam Pro", sans-serif;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    #root {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #E7E3D9;
+    }
+
+    .clip {
+      position: absolute;
+      inset: 0;
+    }
+
+    /* Nền lưới giấy ngà đặc trưng Vox (84px cell) */
+    .grid-bg {
+      position: absolute;
+      inset: 0;
+      background-image: 
+        linear-gradient(to right, rgba(20, 20, 20, 0.18) 1.5px, transparent 1.5px),
+        linear-gradient(to bottom, rgba(20, 20, 20, 0.18) 1.5px, transparent 1.5px);
+      background-size: 84px 84px;
+      z-index: 1;
+    }
+
+    /* Hạt nhiễu grain giấy ngà */
+    .grain-layer {
+      position: absolute;
+      inset: 0;
+      opacity: 0.18;
+      mix-blend-mode: multiply;
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    /* Thanh cam nhận diện thương hiệu cố định mép đáy */
+    .bottom-brand-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 14px;
+      background-color: #FF6A1A;
+      z-index: 50;
+    }
+
+    #scene-stage {
+      position: absolute;
+      inset: 0;
+      z-index: 5;
+      will-change: transform, opacity;
+    }
+
+    /* 1. Header Bar */
+    .header-bar {
+      position: absolute;
+      top: 170px;
+      left: 50px;
+      right: 50px;
+      height: 56px;
+      background-color: #F5F0E4;
+      border: 3px solid #141414;
+      box-shadow: 4px 4px 0 #141414;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      border-radius: 6px;
+    }
+
+    .header-title {
+      font-size: 21px;
+      font-weight: 900;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      color: #141414;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .header-title::before {
+      content: "";
+      width: 12px;
+      height: 12px;
+      background-color: #FF6A1A;
+      border-radius: 2px;
+    }
+
+    .header-badge {
+      background-color: #FF6A1A;
+      color: #141414;
+      font-size: 18px;
+      font-weight: 900;
+      padding: 3px 12px;
+      border-radius: 4px;
+      border: 2px solid #141414;
+    }
+
+    /* 2. Hero Frame (Ken Burns Window) */
+    .hero-frame {
+      position: absolute;
+      top: 245px;
+      left: 50px;
+      right: 50px;
+      height: 720px;
+      background-color: #F5F0E4;
+      border: 3px solid #141414;
+      box-shadow: 8px 8px 0 #141414;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .image-viewport {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    #hero-img {
+      position: absolute;
+      width: 114%;
+      height: 114%;
+      top: -7%;
+      left: -7%;
+      object-fit: cover;
+      will-change: transform;
+    }
+
+    .cross-mark {
+      position: absolute;
+      width: 16px;
+      height: 16px;
+      z-index: 10;
+      pointer-events: none;
+    }
+    .cross-tl { top: 10px; left: 10px; }
+    .cross-tr { top: 10px; right: 10px; }
+    .cross-bl { bottom: 10px; left: 10px; }
+    .cross-br { bottom: 10px; right: 10px; }
+    .cross-mark::before {
+      content: "";
+      position: absolute;
+      top: 7px; left: 0; right: 0;
+      height: 2px; background: rgba(20, 20, 20, 0.6);
+    }
+    .cross-mark::after {
+      content: "";
+      position: absolute;
+      left: 7px; top: 0; bottom: 0;
+      width: 2px; background: rgba(20, 20, 20, 0.6);
+    }
+
+    /* 3. Diagram 3 Khay Dòng Tiền */
+    .diagram-panel {
+      position: absolute;
+      top: 985px;
+      left: 50px;
+      right: 50px;
+      height: 215px;
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 14px;
+      z-index: 10;
+    }
+
+    .tray-box {
+      position: relative;
+      background-color: #F5F0E4;
+      border: 3px solid #141414;
+      box-shadow: 4px 4px 0 #141414;
+      border-radius: 8px;
+      padding: 12px 10px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      overflow: hidden;
+      will-change: transform, border-color;
+    }
+
+    .tray-indicator {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 6px;
+      background-color: #FF6A1A;
+      opacity: 0;
+      will-change: opacity;
+    }
+
+    .tray-label {
+      font-size: 14px;
+      font-weight: 900;
+      color: #262626;
+      text-transform: uppercase;
+    }
+
+    .tray-amount {
+      font-size: 36px;
+      font-weight: 900;
+      line-height: 1.1;
+      color: #141414;
+      margin: 4px 0;
+    }
+
+    .tray-sub {
+      font-size: 13px;
+      font-weight: 700;
+      color: #262626;
+      line-height: 1.3;
+      border-top: 1.5px dashed #141414;
+      padding-top: 6px;
+    }
+
+    /* 4. Container chung cho các thẻ Callout / Punch Cards */
+    .callout-container {
+      position: absolute;
+      top: 1225px;
+      left: 50px;
+      right: 50px;
+      height: 235px;
+      z-index: 20;
+    }
+
+    .callout-card {
+      position: absolute;
+      inset: 0;
+      background-color: #F5F0E4;
+      border: 3px solid #141414;
+      box-shadow: 6px 6px 0 #141414;
+      border-radius: 8px;
+      padding: 20px 24px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      opacity: 0;
+      pointer-events: none;
+      will-change: transform, opacity;
+    }
+
+    .callout-pill {
+      display: inline-block;
+      background-color: #FF6A1A;
+      color: #141414;
+      font-size: 15px;
+      font-weight: 900;
+      text-transform: uppercase;
+      padding: 3px 10px;
+      border-radius: 3px;
+      border: 1.5px solid #141414;
+      margin-bottom: 8px;
+    }
+
+    .callout-main {
+      font-size: 30px;
+      font-weight: 900;
+      line-height: 1.25;
+      color: #141414;
+      text-transform: uppercase;
+    }
+
+    .callout-sub {
+      font-size: 17px;
+      font-weight: 700;
+      color: #262626;
+      margin-top: 6px;
+      line-height: 1.35;
+    }
+
+    .warn-icon-box {
+      flex-shrink: 0;
+      width: 72px;
+      height: 72px;
+      background-color: #F5F0E4;
+      border: 2.5px solid #141414;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Punch Phrase Card */
+    .punch-card {
+      position: absolute;
+      inset: 0;
+      background-color: #141414;
+      border: 4px solid #FF6A1A;
+      box-shadow: 8px 8px 0 #141414;
+      border-radius: 8px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      opacity: 0;
+      pointer-events: none;
+      will-change: transform, opacity;
+    }
+
+    .punch-tag {
+      display: inline-block;
+      background-color: #FF6A1A;
+      color: #141414;
+      font-size: 16px;
+      font-weight: 900;
+      text-transform: uppercase;
+      padding: 4px 16px;
+      border-radius: 4px;
+      margin-bottom: 12px;
+    }
+
+    .punch-title {
+      font-size: 46px;
+      font-weight: 900;
+      line-height: 1.2;
+      color: #F7F4EC;
+      text-transform: uppercase;
+      letter-spacing: -0.5px;
+    }
+  </style>
+
+  <div id="root"
+       data-composition-id="scene-s26"
+       data-start="0"
+       data-width="1080"
+       data-height="1920"
+       data-duration="12">
+
+    <!-- Lớp nền giấy ngà + Hạt grain -->
+    <div class="grid-bg"></div>
+    <svg class="grain-layer" width="100%" height="100%">
+      <filter id="noiseFilter">
+        <feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" stitchTiles="stitch" />
+        <feColorMatrix type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 1 0 0" />
+      </filter>
+      <rect width="100%" height="100%" filter="url(#noiseFilter)" />
+    </svg>
+
+    <!-- Thanh cam cố định mép đáy -->
+    <div class="bottom-brand-bar"></div>
+
+    <!-- Clip Scene S26 duy nhất (12.0s) -->
+    <section id="scene-s26" class="clip" data-start="0" data-duration="12">
+      <div id="scene-stage">
+        
+        <!-- 1. Header Bar -->
+        <header class="header-bar">
+          <div class="header-title">PHÂN BỔ TÀI CHÍNH MÈO</div>
+          <div class="header-badge">TỔNG: 8-9 CÁ</div>
+        </header>
+
+        <!-- 2. Hero Media Window -->
+        <div class="hero-frame">
+          <div class="image-viewport">
+            <img id="hero-img" 
+                 src="assets/img-11-paper-cutout-asset-allocation.jpeg" 
+                 alt="Phân bổ tài nguyên vào 3 khay">
+          </div>
+          <div class="cross-mark cross-tl"></div>
+          <div class="cross-mark cross-tr"></div>
+          <div class="cross-mark cross-bl"></div>
+          <div class="cross-mark cross-br"></div>
+        </div>
+
+        <!-- 3. Diagram 3 Khay Dòng Tiền -->
+        <div class="diagram-panel">
+          <div id="tray-1" class="tray-box">
+            <div id="tray-ind-1" class="tray-indicator"></div>
+            <div>
+              <div class="tray-label">KHAY 1: CHI TIÊU</div>
+              <div class="tray-amount">5 CÁ</div>
+            </div>
+            <div class="tray-sub">Ăn uống • Tiền nhà • Đi lại</div>
+          </div>
+
+          <div id="tray-2" class="tray-box">
+            <div id="tray-ind-2" class="tray-indicator"></div>
+            <div>
+              <div class="tray-label">KHAY 2: BẢO VỆ</div>
+              <div class="tray-amount">1 CÁ</div>
+            </div>
+            <div class="tray-sub">Khóa két • Dự phòng rủi ro</div>
+          </div>
+
+          <div id="tray-3" class="tray-box">
+            <div id="tray-ind-3" class="tray-indicator"></div>
+            <div>
+              <div class="tray-label">KHAY 3: NHÀN RỖI</div>
+              <div class="tray-amount">2 CÁ</div>
+            </div>
+            <div class="tray-sub">Tiền dư • Chờ phương án</div>
+          </div>
+        </div>
+
+        <!-- 4. Khối Callout & Punch Cards (Hiển thị tuần tự) -->
+        <div class="callout-container">
+          
+          <!-- Callout 1: Chi phí thiết yếu: 5 cá (0.77s - 3.10s) -->
+          <div id="callout-1" class="callout-card">
+            <div style="flex: 1;">
+              <div class="callout-pill">NHÓM CHI TIÊU BẮT BUỘC</div>
+              <div class="callout-main">CHI PHÍ THIẾT YẾU: 5 CÁ</div>
+              <div class="callout-sub">Mỗi tháng tiêu trôi đi: ăn uống, nhà ở, sinh hoạt</div>
+            </div>
+          </div>
+
+          <!-- Callout 2: Cảnh báo ốm đau / mất việc (3.20s - 5.75s) -->
+          <div id="callout-2" class="callout-card">
+            <div class="warn-icon-box">
+              <svg width="48" height="48" viewBox="0 0 100 100" fill="none">
+                <path id="warn-tri" d="M 50 14 L 92 86 L 8 86 Z" stroke="#141414" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" />
+                <line id="warn-line" x1="50" y1="38" x2="50" y2="62" stroke="#FF6A1A" stroke-width="8" stroke-linecap="round" />
+                <circle id="warn-dot" cx="50" cy="75" r="5" fill="#FF6A1A" />
+              </svg>
+            </div>
+            <div style="flex: 1;">
+              <div class="callout-pill">PHÒNG NGỪA BIẾN CỐ</div>
+              <div class="callout-main">LÚC ỐM ĐAU • MẤT VIỆC</div>
+              <div class="callout-sub">Không có nguồn thu thì vẫn phải có cá để sống</div>
+            </div>
+          </div>
+
+          <!-- Callout 3: Cất két dự phòng: 1 cá (6.03s - 7.95s) -->
+          <div id="callout-3" class="callout-card">
+            <div style="flex: 1;">
+              <div class="callout-pill">BẢO CHỨNG SINH TỒN</div>
+              <div class="callout-main">CẤT KÉT DỰ PHÒNG: 1 CÁ</div>
+              <div class="callout-sub">Khóa chặt vào két sắt, tuyệt đối không đụng vào</div>
+            </div>
+          </div>
+
+          <!-- Punch Card: Quỹ dự phòng khẩn cấp (8.15s - 10.05s) -->
+          <div id="punch-card" class="punch-card">
+            <div class="punch-tag">KHÁI NIỆM THEN CHỐT</div>
+            <div class="punch-title">QUỸ DỰ PHÒNG KHẨN CẤP</div>
+          </div>
+
+          <!-- Callout 5: Tiền dư nhàn rỗi: 2 cá (10.25s - 12.0s) -->
+          <div id="callout-5" class="callout-card">
+            <div style="flex: 1;">
+              <div class="callout-pill">CHƯA CÓ KẾ HOẠCH</div>
+              <div class="callout-main">TIỀN DƯ NHÀN RỖI: 2 CÁ</div>
+              <div class="callout-sub">Không biết để làm gì, nằm chờ phương án mới</div>
+            </div>
+          </div>
+
+        </div><!-- /.callout-container -->
+
+      </div><!-- /#scene-stage -->
+    </section>
+
+  </div><!-- /#root -->
+
+  <!-- GSAP Animation -->
+  <script>
+    window.__timelines = window.__timelines || {};
+    const tl = gsap.timeline({ paused: true });
+
+    // Setup nét vẽ SVG cảnh báo
+    const warnTri = document.getElementById("warn-tri");
+    const warnLine = document.getElementById("warn-line");
+    const triLen = warnTri ? Math.ceil(warnTri.getTotalLength()) : 260;
+    const lineLen = warnLine ? Math.ceil(warnLine.getTotalLength()) : 30;
+
+    if (warnTri) {
+      warnTri.style.strokeDasharray = triLen;
+      warnTri.style.strokeDashoffset = triLen;
+    }
+    if (warnLine) {
+      warnLine.style.strokeDasharray = lineLen;
+      warnLine.style.strokeDashoffset = lineLen;
+    }
+
+    // 1. Scene Entrance (0.0s - 0.6s)
+    tl.fromTo("#scene-stage",
+      { scale: 0.96, opacity: 0, y: 30 },
+      { scale: 1, opacity: 1, y: 0, duration: 0.6, ease: "power3.out" },
+      0.0
+    );
+
+    // 2. Ken Burns pan-left (0.0s - 12.0s)
+    tl.fromTo("#hero-img",
+      { scale: 1.08, x: 24 },
+      { scale: 1.15, x: -28, duration: 12.0, ease: "none" },
+      0.0
+    );
+
+    // 3. Beat 1: Chi phí thiết yếu: 5 cá (0.77s - 3.10s)
+    tl.to("#tray-1", { borderColor: "#FF6A1A", y: -4, duration: 0.35, ease: "power2.out" }, 0.77);
+    tl.to("#tray-ind-1", { opacity: 1, duration: 0.35 }, 0.77);
+    tl.fromTo("#callout-1",
+      { opacity: 0, y: 24 },
+      { opacity: 1, y: 0, duration: 0.35, ease: "power3.out" },
+      0.77
+    );
+    tl.to("#callout-1",
+      { opacity: 0, y: -16, duration: 0.25, ease: "power2.in" },
+      2.85
+    );
+    tl.to("#tray-1", { borderColor: "#141414", y: 0, duration: 0.25, ease: "power2.in" }, 2.95);
+    tl.to("#tray-ind-1", { opacity: 0, duration: 0.25 }, 2.95);
+
+    // 4. Beat 2: Nguy cơ ốm đau / mất việc (3.20s - 5.75s)
+    tl.fromTo("#callout-2",
+      { opacity: 0, y: 24 },
+      { opacity: 1, y: 0, duration: 0.35, ease: "power3.out" },
+      3.20
+    );
+    if (warnTri) {
+      tl.fromTo(warnTri,
+        { strokeDashoffset: triLen },
+        { strokeDashoffset: 0, duration: 0.45, ease: "power2.out" },
+        3.25
+      );
+    }
+    if (warnLine) {
+      tl.fromTo(warnLine,
+        { strokeDashoffset: lineLen },
+        { strokeDashoffset: 0, duration: 0.25, ease: "power2.out" },
+        3.50
+      );
+    }
+    tl.fromTo("#warn-dot",
+      { scale: 0, opacity: 0 },
+      { scale: 1, opacity: 1, duration: 0.2, ease: "power3.out" },
+      3.65
+    );
+    tl.to("#callout-2",
+      { opacity: 0, y: -16, duration: 0.25, ease: "power2.in" },
+      5.50
+    );
+
+    // 5. Beat 3: Cất két dự phòng: 1 cá (6.03s - 7.95s)
+    tl.to("#tray-2", { borderColor: "#FF6A1A", y: -4, duration: 0.35, ease: "power2.out" }, 6.03);
+    tl.to("#tray-ind-2", { opacity: 1, duration: 0.35 }, 6.03);
+    tl.fromTo("#callout-3",
+      { opacity: 0, y: 24 },
+      { opacity: 1, y: 0, duration: 0.35, ease: "power3.out" },
+      6.03
+    );
+    tl.to("#callout-3",
+      { opacity: 0, y: -16, duration: 0.25, ease: "power2.in" },
+      7.80
+    );
+
+    // 6. Beat 4: Punch Phrase - QUỸ DỰ PHÒNG KHẨN CẤP (8.15s - 10.05s)
+    tl.fromTo("#punch-card",
+      { opacity: 0, scale: 0.92, y: 20 },
+      { opacity: 1, scale: 1, y: 0, duration: 0.38, ease: "power3.out" },
+      8.15
+    );
+    tl.to("#punch-card",
+      { opacity: 0, scale: 0.95, y: -12, duration: 0.25, ease: "power2.in" },
+      9.80
+    );
+    tl.to("#tray-2", { borderColor: "#141414", y: 0, duration: 0.25, ease: "power2.in" }, 9.90);
+    tl.to("#tray-ind-2", { opacity: 0, duration: 0.25 }, 9.90);
+
+    // 7. Beat 5: Tiền dư nhàn rỗi: 2 cá (10.25s - 12.0s)
+    tl.to("#tray-3", { borderColor: "#FF6A1A", y: -4, duration: 0.35, ease: "power2.out" }, 10.25);
+    tl.to("#tray-ind-3", { opacity: 1, duration: 0.35 }, 10.25);
+    tl.fromTo("#callout-5",
+      { opacity: 0, y: 24 },
+      { opacity: 1, y: 0, duration: 0.35, ease: "power3.out" },
+      10.25
+    );
+
+    // Đăng ký paused timeline duy nhất cho composition "scene-s26"
+    window.__timelines["scene-s26"] = tl;
+  </script>
+
+    </template>
+  </body>
+</html>

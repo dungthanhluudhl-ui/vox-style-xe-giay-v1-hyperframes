@@ -1,0 +1,475 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+      *, *::before, *::after {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #F5F0E4;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: #F5F0E4;
+      }
+      .clip {
+        position: absolute;
+        inset: 0;
+      }
+
+      /* Khung camera và ảnh nền */
+      .viewport-stage {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+        background-color: #141414;
+      }
+      .bg-media-container {
+        position: absolute;
+        width: 1240px;
+        height: 2200px;
+        top: -140px;
+        left: -80px;
+        will-change: transform, opacity;
+      }
+      .bg-media {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+        filter: contrast(1.1) brightness(0.92);
+      }
+
+      /* Lớp phủ phim hạt & mờ viền phong cách tài liệu phóng sự */
+      .film-vignette {
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(circle at 50% 45%, rgba(245, 240, 228, 0.05) 30%, rgba(20, 20, 20, 0.68) 95%);
+        pointer-events: none;
+        mix-blend-mode: multiply;
+      }
+      .top-gradient {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 480px;
+        background: linear-gradient(180deg, rgba(20, 20, 20, 0.85) 0%, rgba(20, 20, 20, 0) 100%);
+        pointer-events: none;
+      }
+
+      /* SVG Vết nứt sàn nhà phát quang màu cam */
+      .fissure-svg {
+        position: absolute;
+        inset: 0;
+        width: 1080px;
+        height: 1920px;
+        pointer-events: none;
+        z-index: 10;
+      }
+      .fissure-stroke-glow {
+        fill: none;
+        stroke: #FF6A1A;
+        stroke-width: 14;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        opacity: 0.45;
+        filter: drop-shadow(0 0 12px #FF6A1A);
+      }
+      .fissure-stroke-core {
+        fill: none;
+        stroke: #F7F4EC;
+        stroke-width: 5;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
+      /* Lớp chứa UI Overlays */
+      .overlay-layer {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        z-index: 20;
+      }
+
+      /* 1. Punch phrase Card ("VÌ SAO SỤP ĐỔ?") */
+      .punch-card-wrapper {
+        position: absolute;
+        top: 320px;
+        left: 54px;
+        right: 54px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        transform-origin: center center;
+        will-change: transform, opacity;
+      }
+      .punch-card {
+        background-color: #141414;
+        border: 4px solid #FF6A1A;
+        border-radius: 18px;
+        padding: 30px 48px;
+        box-shadow: 12px 14px 0px rgba(20, 20, 20, 0.55);
+        text-align: center;
+        width: 100%;
+        max-width: 940px;
+      }
+      .punch-tagline {
+        display: inline-block;
+        background-color: #FF6A1A;
+        color: #141414;
+        font-size: 26px;
+        font-weight: 900;
+        letter-spacing: 3px;
+        text-transform: uppercase;
+        padding: 6px 20px;
+        border-radius: 6px;
+        margin-bottom: 18px;
+      }
+      .punch-headline {
+        margin: 0;
+        font-size: 78px;
+        font-weight: 900;
+        line-height: 1.15;
+        letter-spacing: -1px;
+        text-transform: uppercase;
+        color: #F7F4EC;
+      }
+      .punch-accent {
+        color: #FF6A1A;
+        display: inline-block;
+      }
+
+      /* 2. Warning Icon Component — căn giữa bằng flexbox (tránh xung đột CSS transform và GSAP) */
+      .warning-badge-wrapper {
+        position: absolute;
+        top: 760px;
+        left: 0;
+        right: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        pointer-events: none;
+      }
+      .warning-badge {
+        position: relative;
+        width: 150px;
+        height: 150px;
+        background-color: #141414;
+        border: 4px solid #FF6A1A;
+        border-radius: 50%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        box-shadow: 0px 10px 25px rgba(255, 106, 26, 0.45);
+        transform-origin: center center;
+        will-change: transform, opacity;
+      }
+      .warning-badge svg {
+        width: 86px;
+        height: 86px;
+      }
+
+      /* 3. Label "BONG BÓNG ĐẦU CƠ" */
+      .bubble-label-wrapper {
+        position: absolute;
+        top: 1140px;
+        left: 60px;
+        right: 60px;
+        display: flex;
+        justify-content: center;
+        transform-origin: center center;
+        will-change: transform, opacity;
+      }
+      .bubble-label {
+        background-color: #FF6A1A;
+        color: #141414;
+        border: 3px solid #141414;
+        border-radius: 12px;
+        padding: 20px 42px;
+        box-shadow: 8px 8px 0px #141414;
+        display: inline-flex;
+        align-items: center;
+        gap: 18px;
+      }
+      .bubble-icon-arrow {
+        width: 36px;
+        height: 36px;
+        stroke: #141414;
+        stroke-width: 4;
+        fill: none;
+        will-change: transform;
+      }
+      .bubble-text {
+        font-size: 42px;
+        font-weight: 900;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        line-height: 1;
+      }
+
+      /* Thanh cam nhận diện thương hiệu cố định mép dưới */
+      .brand-bottom-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 10px;
+        background-color: #FF6A1A;
+        z-index: 100;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s03"
+      data-start="0"
+      data-width="1080"
+      data-height="1920"
+      data-duration="6.84"
+    >
+      <div class="clip" id="scene-clip" data-start="0" data-duration="6.84">
+        <!-- Viewport & Hình ảnh background -->
+        <div class="viewport-stage">
+          <!-- Cờ data-layout-allow-overflow đặt trên chính container vượt khung -->
+          <div class="bg-media-container" id="bg-container" data-layout-allow-overflow="true">
+            <img
+              class="bg-media"
+              id="bg-image"
+              src="assets/img-05-speculative-hype-market-crash.jpeg"
+              alt="Cơn sốt ảo và vết nứt thị trường"
+            />
+          </div>
+          <div class="film-vignette"></div>
+          <div class="top-gradient"></div>
+        </div>
+
+        <!-- SVG Vết nứt sàn nhà phát quang -->
+        <svg class="fissure-svg" viewBox="0 0 1080 1920">
+          <g id="crack-lines">
+            <!-- Glow layer bên ngoài -->
+            <path
+              id="fissure-glow-main"
+              class="fissure-stroke-glow"
+              d="M 540 680 L 510 820 L 570 980 L 460 1140 L 530 1310 L 480 1520 L 550 1740 L 520 1920"
+            />
+            <path
+              id="fissure-glow-branch"
+              class="fissure-stroke-glow"
+              d="M 570 980 L 690 1090 L 740 1240 M 460 1140 L 340 1260 L 290 1390"
+            />
+            <!-- Lõi nứt sắc nét bên trong -->
+            <path
+              id="fissure-core-main"
+              class="fissure-stroke-core"
+              d="M 540 680 L 510 820 L 570 980 L 460 1140 L 530 1310 L 480 1520 L 550 1740 L 520 1920"
+            />
+            <path
+              id="fissure-core-branch"
+              class="fissure-stroke-core"
+              d="M 570 980 L 690 1090 L 740 1240 M 460 1140 L 340 1260 L 290 1390"
+            />
+          </g>
+        </svg>
+
+        <!-- Lớp phủ thông tin chính (Overlays) -->
+        <div class="overlay-layer">
+          <!-- 1. Punch phrase Card: "VÌ SAO SỤP ĐỔ?" -->
+          <div class="punch-card-wrapper" id="punch-card">
+            <div class="punch-card">
+              <span class="punch-tagline">TÂM ĐIỂM NGHI VẤN</span>
+              <h1 class="punch-headline">
+                VÌ SAO <span class="punch-accent">SỤP ĐỔ?</span>
+              </h1>
+            </div>
+          </div>
+
+          <!-- 2. Warning Icon (animates on #warning-badge, no CSS transform conflict) -->
+          <div class="warning-badge-wrapper">
+            <div class="warning-badge" id="warning-badge">
+              <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path
+                  id="warning-triangle"
+                  d="M 50 15 L 86 80 L 14 80 Z"
+                  stroke="#FF6A1A"
+                  stroke-width="7"
+                  stroke-linejoin="round"
+                  stroke-linecap="round"
+                />
+                <line
+                  id="warning-bar"
+                  x1="50" y1="38" x2="50" y2="58"
+                  stroke="#F7F4EC"
+                  stroke-width="7"
+                  stroke-linecap="round"
+                />
+                <circle
+                  id="warning-dot"
+                  cx="50" cy="70" r="4.5"
+                  fill="#F7F4EC"
+                />
+              </svg>
+            </div>
+          </div>
+
+          <!-- 3. Label: "BONG BÓNG ĐẦU CƠ" -->
+          <div class="bubble-label-wrapper" id="bubble-label">
+            <div class="bubble-label">
+              <svg class="bubble-icon-arrow" id="bubble-arrow" viewBox="0 0 24 24">
+                <path d="M 12 3 L 12 21 M 12 21 L 5 14 M 12 21 L 19 14" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              <span class="bubble-text">BONG BÓNG ĐẦU CƠ</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Thanh cam cố định nhận diện thương hiệu -->
+        <div class="brand-bottom-bar"></div>
+      </div>
+    </div>
+
+    <!-- GSAP Choreography Timeline -->
+    <script>
+      const tl = gsap.timeline({ paused: true });
+
+      // Chuẩn bị các stroke cho vết nứt SVG (Path progressive draw)
+      const fissurePaths = [
+        document.getElementById("fissure-glow-main"),
+        document.getElementById("fissure-glow-branch"),
+        document.getElementById("fissure-core-main"),
+        document.getElementById("fissure-core-branch")
+      ];
+
+      fissurePaths.forEach(path => {
+        if (path) {
+          const len = path.getTotalLength();
+          path.style.strokeDasharray = (len + 10).toString();
+          path.style.strokeDashoffset = (len + 10).toString();
+        }
+      });
+
+      // Chuẩn bị stroke cho warning icon
+      const warningTriangle = document.getElementById("warning-triangle");
+      if (warningTriangle) {
+        const triLen = warningTriangle.getTotalLength();
+        warningTriangle.style.strokeDasharray = (triLen + 5).toString();
+        warningTriangle.style.strokeDashoffset = (triLen + 5).toString();
+      }
+
+      /* -------------------------------------------------------------
+         PHASE 1: ZOOM-THROUGH ENTRANCE & CAMERA PAN TỪ TRÊN XUỐNG
+         Thời gian: 0.00s -> 6.84s
+      ------------------------------------------------------------- */
+      // Zoom-through lao thẳng vào tâm chấn đám đông (0.0s -> 0.9s)
+      tl.fromTo(
+        "#bg-container",
+        { scale: 1.48, x: -30, y: 10, opacity: 0.35 },
+        { scale: 1.18, x: 0, y: -60, opacity: 1, duration: 0.9, ease: "power3.out" },
+        0
+      );
+
+      // Pan quét chậm tiếp nối từ đám đông nửa trên xuống vết nứt sàn nhà (0.9s -> 6.84s)
+      tl.to(
+        "#bg-container",
+        { scale: 1.28, x: 28, y: -200, duration: 5.94, ease: "none" },
+        0.9
+      );
+
+      /* -------------------------------------------------------------
+         PHASE 2: VẾT NỨT SÀN NHÀ PHÁT QUANG RẠCH ĐÔI KHUNG HÌNH
+         Thời gian: 0.35s -> 1.50s
+      ------------------------------------------------------------- */
+      tl.to(
+        ["#fissure-glow-main", "#fissure-core-main"],
+        { strokeDashoffset: 0, duration: 0.95, ease: "power2.out" },
+        0.35
+      );
+      tl.to(
+        ["#fissure-glow-branch", "#fissure-core-branch"],
+        { strokeDashoffset: 0, duration: 0.65, ease: "power2.out" },
+        0.75
+      );
+
+      /* -------------------------------------------------------------
+         PHASE 3: PUNCH PHRASE "VÌ SAO SỤP ĐỔ?"
+         Shotlist: atMs 14640 (tương đối: 1.20s), holdMs 2200ms
+      ------------------------------------------------------------- */
+      tl.fromTo(
+        "#punch-card",
+        { scale: 0.72, opacity: 0, y: 55 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.55, ease: "power3.out" },
+        1.20
+      );
+
+      // Sau 2.2s giữ vững (3.40s), punch-phrase thu nhẹ lên để tạo không gian
+      tl.to(
+        "#punch-card",
+        { scale: 0.92, y: -35, opacity: 0.95, duration: 0.45, ease: "power2.out" },
+        3.40
+      );
+
+      /* -------------------------------------------------------------
+         PHASE 4: ICON WARNING TỰ VẼ
+         Shotlist: atMs 17200 (tương đối: 3.76s), holdMs 1800ms
+      ------------------------------------------------------------- */
+      tl.fromTo(
+        "#warning-badge",
+        { scale: 0, opacity: 0, rotation: -20 },
+        { scale: 1, opacity: 1, rotation: 0, duration: 0.45, ease: "power3.out" },
+        3.76
+      );
+
+      tl.to(
+        "#warning-triangle",
+        { strokeDashoffset: 0, duration: 0.5, ease: "power2.out" },
+        3.80
+      );
+
+      tl.fromTo(
+        ["#warning-bar", "#warning-dot"],
+        { scale: 0, opacity: 0, transformOrigin: "50% 50%" },
+        { scale: 1, opacity: 1, duration: 0.25, stagger: 0.1, ease: "power3.out" },
+        4.10
+      );
+
+      /* -------------------------------------------------------------
+         PHASE 5: LABEL "BONG BÓNG ĐẦU CƠ"
+         Shotlist: atMs 18440 (tương đối: 5.00s), holdMs 1800ms
+      ------------------------------------------------------------- */
+      tl.fromTo(
+        "#bubble-label",
+        { scale: 0.75, opacity: 0, y: 35 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.5, ease: "power3.out" },
+        5.00
+      );
+
+      // Nhịp nảy nhấn mạnh mũi tên chỉ báo rủi ro (dùng giá trị tuyệt đối xác định)
+      tl.fromTo(
+        "#bubble-arrow",
+        { y: -6 },
+        { y: 6, duration: 0.4, yoyo: true, repeat: 3, ease: "power1.inOut" },
+        5.40
+      );
+
+      // Đăng ký timeline cho HyperFrames seek runtime
+      window.__timelines = window.__timelines || {};
+      window.__timelines["scene-s03"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

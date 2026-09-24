@@ -1,0 +1,689 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #E7E3D9;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      /* Root composition chuẩn HyperFrames */
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+
+      /* Base Background Layers */
+      .bg-paper {
+        position: absolute;
+        inset: 0;
+        background-color: #E7E3D9;
+      }
+
+      /* Lưới ô vuông 84px chuẩn Vox DNA */
+      .bg-grid {
+        position: absolute;
+        inset: 0;
+        background-image:
+          linear-gradient(to right, rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px),
+          linear-gradient(to bottom, rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px);
+        background-size: 84px 84px;
+        opacity: 0.35;
+      }
+
+      /* Grain texture giả lập giấy báo thủ công */
+      .bg-grain {
+        position: absolute;
+        inset: 0;
+        opacity: 0.18;
+        mix-blend-mode: multiply;
+        pointer-events: none;
+      }
+
+      /* Spotlight variant: vignette tối ban đầu */
+      .spotlight-vignette {
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(circle at 50% 50%, rgba(20, 20, 20, 0) 35%, rgba(20, 20, 20, 0.38) 75%, rgba(20, 20, 20, 0.7) 100%);
+        pointer-events: none;
+        z-index: 5;
+      }
+
+      /* Dramatic freeze spotlight: làm tối mạnh nền xung quanh chủ thể.
+         Nằm ở z-index: 8, bên dưới camera-rig (z-index: 10) để làm tối nền mà không che mất nội dung chat */
+      .dramatic-freeze-spotlight {
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(circle at 50% 50%, rgba(20, 20, 20, 0.25) 20%, rgba(20, 20, 20, 0.85) 65%, #141414 100%);
+        opacity: 0;
+        pointer-events: none;
+        z-index: 8;
+      }
+
+      /* Camera Rig zoom-in chậm xuyên suốt scene */
+      #camera-rig {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transform-origin: 50% 50%;
+        z-index: 10;
+      }
+
+      /* Mockup điện thoại chứa tin nhắn chat & video lừa đảo vid-03
+         Đặt từ y = 380px đến y = 1440px (trong dải an toàn [160, 1529px]) */
+      .phone-mockup {
+        position: absolute;
+        top: 380px;
+        left: 140px;
+        width: 800px;
+        height: 1060px;
+        background-color: #141414;
+        border-radius: 54px;
+        padding: 16px;
+        box-shadow:
+          0 32px 70px rgba(20, 20, 20, 0.45),
+          0 10px 24px rgba(20, 20, 20, 0.25),
+          0 0 0 6px #E7E3D9,
+          0 0 0 9px #141414;
+        overflow: hidden;
+        transform-origin: 50% 50%;
+      }
+
+      .phone-screen {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        background-color: #0d0f12;
+        border-radius: 40px;
+        overflow: hidden;
+      }
+
+      /* Header thanh chat */
+      .chat-header {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 84px;
+        background-color: rgba(20, 20, 20, 0.95);
+        border-bottom: 2px solid rgba(255, 106, 26, 0.4);
+        display: flex;
+        align-items: center;
+        padding: 0 24px;
+        gap: 16px;
+        z-index: 20;
+      }
+
+      .chat-avatar {
+        width: 46px;
+        height: 46px;
+        border-radius: 50%;
+        background-color: #FF6A1A;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #141414;
+        font-weight: 900;
+        font-size: 24px;
+      }
+
+      .chat-info {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .chat-title {
+        color: #F7F4EC;
+        font-size: 22px;
+        font-weight: 900;
+        letter-spacing: -0.3px;
+      }
+
+      .chat-sub {
+        color: #FF6A1A;
+        font-size: 15px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .online-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background-color: #00e676;
+      }
+
+      /* Video element hiển thị hoạt cảnh cắt dán lừa đảo vid-03 */
+      .phone-video-wrap {
+        position: absolute;
+        top: 84px;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        overflow: hidden;
+      }
+
+      .phone-video-wrap video {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+
+      /* Tin nhắn chat nổi bật trong màn hình (y = 1290px -> 1410px) */
+      .chat-bubble-alert {
+        position: absolute;
+        bottom: 30px;
+        left: 20px;
+        right: 20px;
+        background-color: rgba(20, 20, 20, 0.94);
+        border: 2px solid #FF6A1A;
+        border-radius: 20px;
+        padding: 18px 22px;
+        box-shadow: 0 12px 28px rgba(0, 0, 0, 0.55);
+        z-index: 22;
+        transform-origin: 50% 100%;
+      }
+
+      .chat-bubble-tag {
+        display: inline-block;
+        background-color: #FF6A1A;
+        color: #141414;
+        font-size: 15px;
+        font-weight: 900;
+        padding: 4px 10px;
+        border-radius: 6px;
+        margin-bottom: 8px;
+      }
+
+      .chat-bubble-text {
+        color: #F7F4EC;
+        font-size: 20px;
+        font-weight: 700;
+        line-height: 1.35;
+        margin: 0;
+      }
+
+      /* Chiếc bẫy kim loại (Trap jaws) kẹp chặt lấy điện thoại */
+      .trap-container {
+        position: absolute;
+        top: 620px;
+        left: 80px;
+        width: 920px;
+        height: 600px;
+        pointer-events: none;
+        z-index: 35;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+
+      .trap-jaw-top {
+        width: 100%;
+        height: 130px;
+        transform-origin: 50% 0%;
+      }
+
+      .trap-jaw-bottom {
+        width: 100%;
+        height: 130px;
+        transform-origin: 50% 100%;
+      }
+
+      /* Lớp phủ vỡ mảnh Shatter Entrance */
+      #shatter-overlay {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        z-index: 80;
+      }
+
+      .shatter-piece {
+        position: absolute;
+        transform-origin: center center;
+        will-change: transform, opacity;
+      }
+
+      /* =========================================================================
+         OVERLAYS & LABELS — KHỚP CHUẨN XÁC VỚI SHOTLIST TIMING & PHÂN VÙNG Y:
+         - Top Zone (y = 180px): Icon phone (1.12s) + Label "NHÓM CHAT LỪA ĐẢO" (2.08s)
+         - Mid Zone (y = 720px): Icon warning (3.00s) + Label "BẪY VIỆC NHẸ LƯƠNG CAO" (3.77s)
+         - Bottom Zone (y = 1040px): Label "BẮT ĐÓNG TIỀN TRƯỚC" (7.28s)
+         - Header Finale Zone (y = 170px): Punch-phrase "CHIÊU TRÒ LỪA ĐẢO" (8.29s)
+         ========================================================================= */
+
+      /* Overlay Icon 1: Phone (atMs: 271820 -> 1.12s, holdMs: 2400 -> đến 3.52s) */
+      .overlay-icon-phone {
+        position: absolute;
+        top: 180px;
+        left: 90px;
+        width: 80px;
+        height: 80px;
+        background-color: #FF6A1A;
+        border: 3px solid #141414;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 12px 28px rgba(20, 20, 20, 0.4);
+        z-index: 51;
+        transform-origin: 50% 50%;
+      }
+
+      .overlay-icon-phone svg {
+        width: 44px;
+        height: 44px;
+      }
+
+      /* Overlay Label 1: NHÓM CHAT LỪA ĐẢO (atMs: 272780 -> 2.08s, holdMs: 2200 -> đến 4.28s) */
+      .overlay-label-scam {
+        position: absolute;
+        top: 180px;
+        left: 190px;
+        width: 800px;
+        height: 80px;
+        background-color: #141414;
+        border-left: 8px solid #FF6A1A;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        padding: 0 24px;
+        box-shadow: 0 16px 36px rgba(20, 20, 20, 0.45);
+        z-index: 50;
+        transform-origin: 0% 50%;
+      }
+
+      .overlay-label-scam .label-text {
+        color: #F7F4EC;
+        font-size: 32px;
+        font-weight: 900;
+        letter-spacing: 0.5px;
+      }
+
+      /* Overlay Icon 2: Warning (atMs: 273700 -> 3.00s, holdMs: 2400 -> đến 5.40s) */
+      .overlay-icon-warning {
+        position: absolute;
+        top: 720px;
+        left: 90px;
+        width: 84px;
+        height: 84px;
+        background-color: #141414;
+        border: 3px solid #FF6A1A;
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 16px 36px rgba(0, 0, 0, 0.6);
+        z-index: 53;
+        transform-origin: 50% 50%;
+      }
+
+      .overlay-icon-warning svg {
+        width: 48px;
+        height: 48px;
+      }
+
+      /* Overlay Label 2: BẪY VIỆC NHẸ LƯƠNG CAO (atMs: 274470 -> 3.77s, holdMs: 2200 -> đến 5.97s) */
+      .overlay-label-trap {
+        position: absolute;
+        top: 720px;
+        left: 194px;
+        width: 796px;
+        height: 84px;
+        background-color: #141414;
+        border: 3px solid #FF6A1A;
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        padding: 0 24px;
+        box-shadow: 0 20px 48px rgba(0, 0, 0, 0.6);
+        z-index: 52;
+        transform-origin: 0% 50%;
+      }
+
+      .overlay-label-trap .label-text {
+        color: #F7F4EC;
+        font-size: 32px;
+        font-weight: 900;
+        letter-spacing: 0.2px;
+      }
+
+      /* Overlay Label 3: BẮT ĐÓNG TIỀN TRƯỚC (atMs: 277980 -> 7.28s, holdMs: 2200 -> đến 9.05s) */
+      .overlay-label-deposit {
+        position: absolute;
+        top: 1040px;
+        left: 90px;
+        width: 900px;
+        height: 96px;
+        background-color: #FF6A1A;
+        border: 4px solid #141414;
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 16px;
+        box-shadow: 0 24px 50px rgba(20, 20, 20, 0.5);
+        z-index: 55;
+        transform-origin: 50% 50%;
+      }
+
+      .overlay-label-deposit .deposit-text {
+        color: #141414;
+        font-size: 38px;
+        font-weight: 900;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+      }
+
+      /* Overlay 4: PUNCH-PHRASE "CHIÊU TRÒ LỪA ĐẢO" (atMs: 278990 -> 8.29s, holdMs: 1600 -> đến 9.05s) */
+      .punch-phrase-card {
+        position: absolute;
+        top: 170px;
+        left: 80px;
+        width: 920px;
+        height: 166px;
+        background-color: #141414;
+        border: 4px solid #FF6A1A;
+        border-radius: 24px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 30px 70px rgba(0, 0, 0, 0.75);
+        z-index: 60;
+        transform-origin: 50% 50%;
+      }
+
+      .punch-tag {
+        color: #FF6A1A;
+        font-size: 20px;
+        font-weight: 900;
+        letter-spacing: 3px;
+        text-transform: uppercase;
+        margin-bottom: 4px;
+      }
+
+      .punch-title {
+        color: #F7F4EC;
+        font-size: 58px;
+        font-weight: 900;
+        line-height: 1.15;
+        letter-spacing: -0.5px;
+        text-transform: uppercase;
+        margin: 0;
+      }
+
+      /* Thanh cam đáy khung hình nhận diện Vox DNA bắt buộc */
+      #bottom-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 16px;
+        background-color: #FF6A1A;
+        z-index: 999;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s30"
+      data-width="1080"
+      data-height="1920"
+      data-duration="9.05"
+    >
+      <!-- Nền giấy ngà + lưới + hạt nhiễu chuẩn Vox DNA -->
+      <div class="bg-paper"></div>
+      <div class="bg-grid"></div>
+
+      <!-- SVG Grain Filter -->
+      <svg class="bg-grain" width="1080" height="1920" xmlns="http://www.w3.org/2000/svg">
+        <filter id="noiseFilter">
+          <feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" stitchTiles="stitch" />
+          <feColorMatrix type="matrix" values="0 0 0 0 0   0 0 0 0 0   0 0 0 0 0  0 0 0 0.45 0" />
+        </filter>
+        <rect width="100%" height="100%" filter="url(#noiseFilter)" />
+      </svg>
+
+      <!-- Spotlight Vignette ban đầu -->
+      <div class="spotlight-vignette"></div>
+
+      <!-- Spotlight tối kịch tính lúc freeze-frame cuối -->
+      <div id="dramatic-spotlight" class="dramatic-freeze-spotlight"></div>
+
+      <!-- Camera Rig bao bọc điện thoại -->
+      <div id="camera-rig">
+        <div id="phone-mockup" class="phone-mockup">
+          <div class="phone-screen">
+            <!-- Chat header -->
+            <div class="chat-header">
+              <div class="chat-avatar">💸</div>
+              <div class="chat-info">
+                <span class="chat-title">VIỆC NHẸ LƯƠNG CAO ONLINE</span>
+                <span class="chat-sub"><span class="online-dot"></span> 8.940 thành viên hoạt động</span>
+              </div>
+            </div>
+
+            <!-- Video vid-03 có data-start và data-duration tường minh -->
+            <div class="phone-video-wrap">
+              <video
+                id="vid-03"
+                data-start="0"
+                data-duration="9.05"
+                muted
+                playsinline
+                src="assets/vid-03-job-scam-paper-cutout.mp4"
+              ></video>
+            </div>
+
+            <!-- Bong bóng tin nhắn mồi chài (kết thúc ở 6.95s trước khi bẫy sập) -->
+            <div id="chat-alert" class="chat-bubble-alert" data-layout-allow-overlap="true">
+              <span class="chat-bubble-tag">NHIỆM VỤ DỄ DÀNG</span>
+              <p class="chat-bubble-text">Không cần làm gì - Ngồi chơi kiếm cá mỗi ngày! Nhận ngay 500k sau 10 phút.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Chiếc bẫy kẹp kim loại ngoạm lấy điện thoại -->
+      <div class="trap-container" data-layout-allow-overflow="true">
+        <svg id="trap-jaw-top" class="trap-jaw-top" viewBox="0 0 920 130" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M 20 20 L 900 20 L 900 50 L 860 110 L 820 50 L 780 110 L 740 50 L 700 110 L 660 50 L 620 110 L 580 50 L 540 110 L 500 50 L 460 110 L 420 50 L 380 110 L 340 50 L 300 110 L 260 50 L 220 110 L 180 50 L 140 110 L 100 50 L 60 110 L 20 50 Z" fill="#141414" stroke="#FF6A1A" stroke-width="6" />
+        </svg>
+        <svg id="trap-jaw-bottom" class="trap-jaw-bottom" viewBox="0 0 920 130" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M 20 110 L 900 110 L 900 80 L 860 20 L 820 80 L 780 20 L 740 80 L 700 20 L 660 80 L 620 20 L 580 80 L 540 20 L 500 80 L 460 20 L 420 80 L 380 20 L 340 80 L 300 20 L 260 80 L 220 20 L 180 80 L 140 20 L 100 80 L 60 20 L 20 80 Z" fill="#141414" stroke="#FF6A1A" stroke-width="6" />
+        </svg>
+      </div>
+
+      <!-- Lớp phủ vỡ mảnh Shatter lúc vào cảnh -->
+      <div id="shatter-overlay" data-layout-allow-overflow="true">
+        <svg class="shatter-piece" id="sh-1" style="top: 0; left: 0; width: 560px; height: 700px;" viewBox="0 0 560 700">
+          <polygon points="0,0 560,0 380,700 0,540" fill="#141414" />
+        </svg>
+        <svg class="shatter-piece" id="sh-2" style="top: 0; right: 0; width: 540px; height: 620px;" viewBox="0 0 540 620">
+          <polygon points="0,0 540,0 540,620 140,580" fill="#FF6A1A" />
+        </svg>
+        <svg class="shatter-piece" id="sh-3" style="top: 500px; left: 0; width: 440px; height: 800px;" viewBox="0 0 440 800">
+          <polygon points="0,0 440,240 320,800 0,800" fill="#E7E3D9" stroke="#141414" stroke-width="4" />
+        </svg>
+        <svg class="shatter-piece" id="sh-4" style="top: 480px; right: 0; width: 580px; height: 760px;" viewBox="0 0 580 760">
+          <polygon points="200,0 580,120 580,760 0,640" fill="#141414" />
+        </svg>
+        <svg class="shatter-piece" id="sh-5" style="bottom: 0; left: 0; width: 600px; height: 600px;" viewBox="0 0 600 600">
+          <polygon points="0,0 600,280 480,600 0,600" fill="#FF6A1A" />
+        </svg>
+        <svg class="shatter-piece" id="sh-6" style="bottom: 0; right: 0; width: 520px; height: 560px;" viewBox="0 0 520 560">
+          <polygon points="180,0 520,80 520,560 0,560" fill="#141414" />
+        </svg>
+      </div>
+
+      <!-- OVERLAY 1: Icon Phone (1.12s -> 3.52s) -->
+      <div id="overlay-phone-icon" class="overlay-icon-phone" data-layout-allow-overlap="true">
+        <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="14" y="6" width="20" height="36" rx="5" stroke="#141414" stroke-width="4" />
+          <line x1="21" y1="36" x2="27" y2="36" stroke="#141414" stroke-width="4" stroke-linecap="round" />
+          <line x1="22" y1="12" x2="26" y2="12" stroke="#141414" stroke-width="4" stroke-linecap="round" />
+        </svg>
+      </div>
+
+      <!-- OVERLAY 1: Label NHÓM CHAT LỪA ĐẢO (2.08s -> 4.28s) -->
+      <div id="overlay-chat-label" class="overlay-label-scam" data-layout-allow-overlap="true">
+        <span class="label-text">NHÓM CHAT LỪA ĐẢO</span>
+      </div>
+
+      <!-- OVERLAY 2: Icon Warning (3.00s -> 5.40s) -->
+      <div id="overlay-warning-icon" class="overlay-icon-warning" data-layout-allow-overlap="true">
+        <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M24 6 L44 42 H4 Z" fill="#FF6A1A" stroke="#FF6A1A" stroke-width="2" />
+          <line x1="24" y1="18" x2="24" y2="28" stroke="#141414" stroke-width="4" stroke-linecap="round" />
+          <circle cx="24" cy="35" r="2.5" fill="#141414" />
+        </svg>
+      </div>
+
+      <!-- OVERLAY 2: Label BẪY VIỆC NHẸ LƯƠNG CAO (3.77s -> 5.97s) -->
+      <div id="overlay-trap-label" class="overlay-label-trap" data-layout-allow-overlap="true">
+        <span class="label-text">BẪY VIỆC NHẸ LƯƠNG CAO</span>
+      </div>
+
+      <!-- OVERLAY 3: Label BẮT ĐÓNG TIỀN TRƯỚC (7.28s -> 9.05s) -->
+      <div id="overlay-deposit-danger" class="overlay-label-deposit" data-layout-allow-overlap="true">
+        <span class="deposit-text">⚠️ BẮT ĐÓNG TIỀN TRƯỚC</span>
+      </div>
+
+      <!-- OVERLAY 4: Punch-phrase "CHIÊU TRÒ LỪA ĐẢO" (8.29s -> 9.05s) -->
+      <div id="punch-card" class="punch-phrase-card" data-layout-allow-overlap="true">
+        <span class="punch-tag">BÓC TRẦN THỦ ĐOẠN</span>
+        <h1 class="punch-title">CHIÊU TRÒ LỪA ĐẢO</h1>
+      </div>
+
+      <!-- Chữ ký thị giác nhận diện: Thanh cam đáy khung hình -->
+      <div id="bottom-bar"></div>
+    </div>
+
+    <script>
+      // Khởi tạo GSAP timeline ở trạng thái paused theo HyperFrames contract
+      const tl = gsap.timeline({ paused: true });
+
+      // 1. Trạng thái khởi tạo tường minh (Explicit initial states để render tất định khi seek)
+      gsap.set("#camera-rig", { scale: 1 });
+      gsap.set("#phone-mockup", { scale: 0.94, opacity: 0 });
+      gsap.set("#chat-alert", { scale: 0, opacity: 0 });
+      gsap.set("#trap-jaw-top", { y: -300, opacity: 0 });
+      gsap.set("#trap-jaw-bottom", { y: 300, opacity: 0 });
+      gsap.set("#overlay-phone-icon", { scale: 0, opacity: 0 });
+      gsap.set("#overlay-chat-label", { scale: 0.85, opacity: 0, x: -20 });
+      gsap.set("#overlay-warning-icon", { scale: 0, opacity: 0 });
+      gsap.set("#overlay-trap-label", { scale: 0.85, opacity: 0, y: 25 });
+      gsap.set("#overlay-deposit-danger", { scale: 0, opacity: 0 });
+      gsap.set("#punch-card", { scale: 0.85, opacity: 0 });
+      gsap.set("#dramatic-spotlight", { opacity: 0 });
+
+      // 2. Camera slow zoom-in suốt 9.05s
+      tl.to("#camera-rig", { scale: 1.06, duration: 9.05, ease: "none" }, 0);
+
+      // 3. Entrance: Vỡ mảnh Shatter bung ra ngoài (0.02s -> 0.65s)
+      tl.to("#sh-1", { x: -450, y: -450, rotation: -35, opacity: 0, duration: 0.65, ease: "power4.out" }, 0.02);
+      tl.to("#sh-2", { x: 450, y: -450, rotation: 30, opacity: 0, duration: 0.65, ease: "power4.out" }, 0.02);
+      tl.to("#sh-3", { x: -400, y: 150, rotation: -25, opacity: 0, duration: 0.65, ease: "power4.out" }, 0.05);
+      tl.to("#sh-4", { x: 450, y: 180, rotation: 25, opacity: 0, duration: 0.65, ease: "power4.out" }, 0.05);
+      tl.to("#sh-5", { x: -420, y: 480, rotation: -40, opacity: 0, duration: 0.65, ease: "power4.out" }, 0.08);
+      tl.to("#sh-6", { x: 420, y: 480, rotation: 35, opacity: 0, duration: 0.65, ease: "power4.out" }, 0.08);
+
+      // 4. Điện thoại xuất hiện mượt mà sau khi vỡ mảnh
+      tl.to("#phone-mockup", { scale: 1, opacity: 1, duration: 0.6, ease: "power3.out" }, 0.1);
+
+      // Bong bóng tin nhắn lừa đảo hiện lên trong màn hình (t = 0.6s)
+      tl.to("#chat-alert", { scale: 1, opacity: 1, duration: 0.45, ease: "power3.out" }, 0.6);
+
+      // 5. Overlay Icon Phone: xuất hiện lúc 1.12s, kết thúc lúc 3.52s (holdMs: 2400)
+      tl.fromTo(
+        "#overlay-phone-icon",
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.35, ease: "power3.out" },
+        1.12
+      );
+      tl.to("#overlay-phone-icon", { scale: 0.5, opacity: 0, duration: 0.3, ease: "power3.in" }, 3.52);
+
+      // 6. Overlay Label "NHÓM CHAT LỪA ĐẢO": xuất hiện lúc 2.08s, kết thúc lúc 4.28s (holdMs: 2200)
+      tl.fromTo(
+        "#overlay-chat-label",
+        { scale: 0.85, opacity: 0, x: -20 },
+        { scale: 1, opacity: 1, x: 0, duration: 0.4, ease: "power3.out" },
+        2.08
+      );
+      tl.to("#overlay-chat-label", { scale: 0.9, opacity: 0, y: -15, duration: 0.35, ease: "power3.in" }, 4.28);
+
+      // 7. Overlay Icon Warning: xuất hiện lúc 3.00s, kết thúc lúc 5.40s (holdMs: 2400)
+      tl.fromTo(
+        "#overlay-warning-icon",
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.35, ease: "power3.out" },
+        3.00
+      );
+      tl.to("#overlay-warning-icon", { scale: 0.5, opacity: 0, duration: 0.3, ease: "power3.in" }, 5.40);
+
+      // 8. Overlay Label "BẪY VIỆC NHẸ LƯƠNG CAO": xuất hiện lúc 3.77s, kết thúc lúc 5.97s (holdMs: 2200)
+      tl.fromTo(
+        "#overlay-trap-label",
+        { scale: 0.85, opacity: 0, y: 25 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.4, ease: "power3.out" },
+        3.77
+      );
+      tl.to("#overlay-trap-label", { scale: 0.9, opacity: 0, y: 20, duration: 0.35, ease: "power3.in" }, 5.97);
+
+      // 9. Bẫy sập: Tin nhắn biến mất lúc 6.95s, bẫy kim loại ngoạm lấy chiếc điện thoại (t = 7.0s)
+      tl.to("#chat-alert", { scale: 0.8, opacity: 0, duration: 0.25, ease: "power3.in" }, 6.95);
+      tl.to("#trap-jaw-top", { y: 0, opacity: 1, duration: 0.28, ease: "power4.in" }, 7.0);
+      tl.to("#trap-jaw-bottom", { y: 0, opacity: 1, duration: 0.28, ease: "power4.in" }, 7.0);
+
+      // Rung chấn điện thoại khi bẫy kim loại va chạm (7.25s)
+      tl.to("#phone-mockup", { y: 8, duration: 0.05, ease: "none" }, 7.25);
+      tl.to("#phone-mockup", { y: -8, duration: 0.05, ease: "none" }, 7.30);
+      tl.to("#phone-mockup", { y: 0, duration: 0.08, ease: "power2.out" }, 7.35);
+
+      // 10. Overlay Label "BẮT ĐÓNG TIỀN TRƯỚC": xuất hiện lúc 7.28s kéo dài đến cuối (atMs: 277980 -> 7.28s)
+      tl.fromTo(
+        "#overlay-deposit-danger",
+        { scale: 1.25, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.3, ease: "power4.out" },
+        7.28
+      );
+
+      // 11. Freeze Frame & Spotlight kịch tính làm tối nền (8.0s -> 9.05s)
+      tl.to("#dramatic-spotlight", { opacity: 0.88, duration: 0.35, ease: "power2.out" }, 8.0);
+
+      // 12. Overlay 4: Punch-phrase "CHIÊU TRÒ LỪA ĐẢO": xuất hiện lúc 8.29s (atMs: 278990 -> 8.29s)
+      tl.fromTo(
+        "#punch-card",
+        { scale: 0.85, opacity: 0, y: 25 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.4, ease: "power4.out" },
+        8.29
+      );
+
+      // Đăng ký timeline gốc duy nhất cho HyperFrames engine
+      window.__timelines = window.__timelines || {};
+      window.__timelines["scene-s30"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

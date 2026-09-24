@@ -1,0 +1,508 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #0d0f12;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      /* Root composition */
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: #E7E3D9;
+      }
+
+      /* Base clip container */
+      .clip {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+      }
+
+      /* Image stage with Ken Burns */
+      .media-wrapper {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transform-origin: 50% 45%;
+        will-change: transform, filter;
+      }
+
+      .hero-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+        transform-origin: 50% 45%;
+        will-change: transform;
+      }
+
+      /* Spotlight vignette overlay - variant "spotlight" */
+      .spotlight-vignette {
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(
+          circle at 50% 42%,
+          rgba(15, 15, 15, 0.15) 20%,
+          rgba(15, 15, 15, 0.6) 65%,
+          rgba(10, 10, 10, 0.92) 100%
+        );
+        pointer-events: none;
+        z-index: 2;
+      }
+
+      /* Technical graph paper grid - 84px */
+      .grid-layer {
+        position: absolute;
+        inset: 0;
+        background-image:
+          linear-gradient(to right, rgba(20, 20, 20, 0.22) 1.5px, transparent 1.5px),
+          linear-gradient(to bottom, rgba(20, 20, 20, 0.22) 1.5px, transparent 1.5px);
+        background-size: 84px 84px;
+        mix-blend-mode: multiply;
+        pointer-events: none;
+        z-index: 3;
+      }
+
+      /* Noise grain layer */
+      .grain-layer {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        mix-blend-mode: multiply;
+        opacity: 0.18;
+        z-index: 4;
+      }
+
+      /* Top Chapter Badge */
+      .chapter-tag {
+        position: absolute;
+        top: 180px;
+        left: 60px;
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 22px;
+        background-color: #141414;
+        border-left: 6px solid #FF6A1A;
+        border-radius: 4px;
+        z-index: 10;
+      }
+
+      .chapter-tag-text {
+        color: #F7F4EC;
+        font-size: 26px;
+        font-weight: 900;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+      }
+
+      /* Overlay 1: Stamp Ban sign */
+      .stamp-ban-container {
+        position: absolute;
+        top: 470px;
+        left: 0;
+        right: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 12;
+        pointer-events: none;
+      }
+
+      .ban-badge {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 30px 48px;
+        background: rgba(20, 20, 20, 0.94);
+        border: 4px solid #FF6A1A;
+        border-radius: 20px;
+        box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
+        transform-origin: 50% 50%;
+      }
+
+      .ban-svg {
+        width: 140px;
+        height: 140px;
+        margin-bottom: 16px;
+      }
+
+      .ban-text {
+        color: #F7F4EC;
+        font-size: 44px;
+        font-weight: 900;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        margin: 0;
+      }
+
+      .ban-subtext {
+        color: #FF6A1A;
+        font-size: 24px;
+        font-weight: 700;
+        margin-top: 6px;
+        letter-spacing: 1px;
+      }
+
+      /* Overlay 2 & 3: Information Cards */
+      .editorial-card-container {
+        position: absolute;
+        top: 980px;
+        left: 60px;
+        right: 60px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        z-index: 15;
+        pointer-events: none;
+      }
+
+      .editorial-card {
+        width: 100%;
+        max-width: 940px;
+        padding: 28px 40px;
+        background-color: #141414;
+        border: 3px solid rgba(255, 106, 26, 0.7);
+        border-radius: 16px;
+        box-shadow: 0 18px 48px rgba(0, 0, 0, 0.65);
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .card-header-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .card-accent-pill {
+        background-color: #FF6A1A;
+        color: #141414;
+        font-size: 22px;
+        font-weight: 900;
+        padding: 4px 14px;
+        border-radius: 6px;
+        text-transform: uppercase;
+      }
+
+      .card-header-note {
+        color: #FF6A1A;
+        font-size: 22px;
+        font-weight: 700;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+      }
+
+      .card-title {
+        color: #F7F4EC;
+        font-size: 54px;
+        font-weight: 900;
+        line-height: 1.25;
+        margin: 4px 0 0 0;
+        letter-spacing: -0.5px;
+      }
+
+      .card-detail {
+        color: #B8B3A8;
+        font-size: 28px;
+        font-weight: 700;
+        line-height: 1.35;
+        margin: 6px 0 0 0;
+      }
+
+      /* Overlay 4: Punch-phrase Climax Banner */
+      .punch-phrase-wrapper {
+        position: absolute;
+        top: 1250px;
+        left: 60px;
+        right: 60px;
+        display: flex;
+        justify-content: center;
+        z-index: 20;
+        pointer-events: none;
+      }
+
+      .punch-phrase-box {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        padding: 24px 44px;
+        background-color: #FF6A1A;
+        border: 4px solid #141414;
+        border-radius: 18px;
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7);
+        transform-origin: 50% 50%;
+      }
+
+      .punch-text {
+        color: #141414;
+        font-size: 64px;
+        font-weight: 900;
+        letter-spacing: 1px;
+        line-height: 1.2;
+        margin: 0;
+        text-transform: uppercase;
+      }
+
+      /* Fixed brand bottom bar */
+      .bottom-orange-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 1080px;
+        height: 12px;
+        background-color: #FF6A1A;
+        z-index: 100;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s06"
+      data-width="1080"
+      data-height="1920"
+      data-duration="8.27"
+    >
+      <!-- Scene Clip: S06 -->
+      <section id="scene-s06" class="clip" data-start="0" data-duration="8.27">
+        
+        <!-- Ken Burns Media Layer -->
+        <div id="media-stage" class="media-wrapper">
+          <img
+            id="hero-img"
+            class="hero-image"
+            src="assets/img-17-monopoly-threat-extortion-cutout.jpeg"
+            alt="Mèo Mafia chèn ép tiểu thương"
+          />
+        </div>
+
+        <!-- Spotlight Vignette for dramatic extortion tension -->
+        <div class="spotlight-vignette"></div>
+
+        <!-- Vox Technical Grid -->
+        <div class="grid-layer"></div>
+
+        <!-- Paper Grain Texture -->
+        <svg class="grain-layer" viewBox="0 0 1080 1920" xmlns="http://www.w3.org/2000/svg">
+          <filter id="grain-filter">
+            <feTurbulence type="fractalNoise" baseFrequency="0.75" numOctaves="3" stitchTiles="stitch" />
+            <feColorMatrix type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 0.22 0" />
+          </filter>
+          <rect width="100%" height="100%" filter="url(#grain-filter)" />
+        </svg>
+
+        <!-- Chapter Narrative Tag -->
+        <div id="chapter-badge" class="chapter-tag">
+          <span class="chapter-tag-text">CƠ CHẾ ĐỘC QUYỀN</span>
+        </div>
+
+        <!-- Overlay 1: Ban / Cấm kinh doanh Icon Stamp -->
+        <div id="ban-overlay" class="stamp-ban-container">
+          <div id="ban-card" class="ban-badge">
+            <svg class="ban-svg" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle
+                id="ban-circle"
+                cx="50"
+                cy="50"
+                r="42"
+                stroke="#FF6A1A"
+                stroke-width="10"
+                stroke-linecap="round"
+              />
+              <path
+                id="ban-slash"
+                d="M 21 21 L 79 79"
+                stroke="#FF6A1A"
+                stroke-width="10"
+                stroke-linecap="round"
+              />
+            </svg>
+            <p class="ban-text">CẤM LÀM BÁNH</p>
+            <span class="ban-subtext">TRIỆT HẠ LÒ BÁNH NHỎ</span>
+          </div>
+        </div>
+
+        <!-- Overlay 2: Chèn ép đối thủ -->
+        <div id="label-chen-ep" class="editorial-card-container">
+          <div class="editorial-card">
+            <div class="card-header-row">
+              <span class="card-accent-pill">CHIẾN THUẬT</span>
+              <span class="card-header-note">BẢO KÊ &amp; ĐE DỌA</span>
+            </div>
+            <h2 class="card-title">CHÈN ÉP ĐỐI THỦ</h2>
+            <p class="card-detail">Thành lập băng nhóm xua đuổi các tiệm bánh khác</p>
+          </div>
+        </div>
+
+        <!-- Overlay 3: Cưỡng ép chia lãi -->
+        <div id="label-chia-lai" class="editorial-card-container">
+          <div class="editorial-card">
+            <div class="card-header-row">
+              <span class="card-accent-pill">CƠ CHẾ</span>
+              <span class="card-header-note">TỐNG TIỀN KINH DOANH</span>
+            </div>
+            <h2 class="card-title">CƯỠNG ÉP CHIA LÃI</h2>
+            <p class="card-detail">Bắt buộc trích nộp lợi nhuận để được phép tồn tại</p>
+          </div>
+        </div>
+
+        <!-- Overlay 4: Punch-phrase "TỔ CHỨC MAFIA" -->
+        <div id="punch-container" class="punch-phrase-wrapper">
+          <div id="punch-card" class="punch-phrase-box">
+            <h1 class="punch-text">TỔ CHỨC MAFIA</h1>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- Signature persistent orange bottom bar -->
+      <div class="bottom-orange-bar"></div>
+    </div>
+
+    <!-- GSAP Choreography Timeline -->
+    <script>
+      // Single paused timeline strictly registered on window.__timelines["scene-s06"]
+      const tl = gsap.timeline({ paused: true });
+
+      // Setup initial geometry for SVG paths in Ban icon
+      const banCircle = document.getElementById("ban-circle");
+      const banSlash = document.getElementById("ban-slash");
+      if (banCircle && banSlash) {
+        const circleLen = banCircle.getTotalLength();
+        const slashLen = banSlash.getTotalLength();
+        banCircle.style.strokeDasharray = circleLen;
+        banCircle.style.strokeDashoffset = circleLen;
+        banSlash.style.strokeDasharray = slashLen;
+        banSlash.style.strokeDashoffset = slashLen;
+      }
+
+      // Initial visibility states for seek determinism
+      gsap.set("#chapter-badge", { opacity: 0, x: -30 });
+      gsap.set("#ban-overlay", { opacity: 0 });
+      gsap.set("#label-chen-ep", { opacity: 0 });
+      gsap.set("#label-chia-lai", { opacity: 0 });
+      gsap.set("#punch-container", { opacity: 0 });
+
+      // -------------------------------------------------------------
+      // Phase 0: Entrance Animation "strike" & Ken Burns (0.00s -> 8.27s)
+      // -------------------------------------------------------------
+      // Strike impact slam on the scene media
+      tl.fromTo(
+        "#media-stage",
+        { scale: 1.14, filter: "brightness(1.5)" },
+        { scale: 1.0, filter: "brightness(1.0)", duration: 0.42, ease: "power4.out" },
+        0
+      );
+
+      // Smooth Ken Burns slow zoom-in into menacing mafia figure
+      tl.to(
+        "#hero-img",
+        { scale: 1.15, y: -45, duration: 7.85, ease: "none" },
+        0.42
+      );
+
+      // Chapter badge reveal
+      tl.to(
+        "#chapter-badge",
+        { opacity: 1, x: 0, duration: 0.5, ease: "power3.out" },
+        0.3
+      );
+
+      // -------------------------------------------------------------
+      // Phase 1: Ban Sign Stamp (1.17s -> 3.57s)
+      // -------------------------------------------------------------
+      // Strike slam of the ban badge
+      tl.fromTo(
+        "#ban-card",
+        { scale: 2.1, rotation: -14, opacity: 0 },
+        { scale: 1.0, rotation: -4, opacity: 1, duration: 0.36, ease: "power4.out" },
+        1.17
+      );
+      tl.to("#ban-overlay", { opacity: 1, duration: 0.1 }, 1.17);
+
+      // Draw SVG strokes
+      tl.to(
+        "#ban-circle",
+        { strokeDashoffset: 0, duration: 0.45, ease: "power2.out" },
+        1.25
+      );
+      tl.to(
+        "#ban-slash",
+        { strokeDashoffset: 0, duration: 0.32, ease: "power2.out" },
+        1.45
+      );
+
+      // Ban card exit before next label
+      tl.to(
+        "#ban-overlay",
+        { opacity: 0, scale: 0.88, duration: 0.35, ease: "power2.in" },
+        3.22
+      );
+
+      // -------------------------------------------------------------
+      // Phase 2: Label "CHÈN ÉP ĐỐI THỦ" (3.81s -> 6.01s)
+      // -------------------------------------------------------------
+      tl.fromTo(
+        "#label-chen-ep",
+        { opacity: 0, y: 36, scale: 0.95 },
+        { opacity: 1, y: 0, scale: 1.0, duration: 0.45, ease: "power3.out" },
+        3.81
+      );
+
+      tl.to(
+        "#label-chen-ep",
+        { opacity: 0, y: -24, duration: 0.38, ease: "power2.in" },
+        5.63
+      );
+
+      // -------------------------------------------------------------
+      // Phase 3: Label "CƯỠNG ÉP CHIA LÃI" (6.40s -> 8.27s)
+      // -------------------------------------------------------------
+      tl.fromTo(
+        "#label-chia-lai",
+        { opacity: 0, y: 36, scale: 0.95 },
+        { opacity: 1, y: 0, scale: 1.0, duration: 0.45, ease: "power3.out" },
+        6.40
+      );
+
+      // -------------------------------------------------------------
+      // Phase 4: Punch-Phrase "TỔ CHỨC MAFIA" Climax (7.15s -> 8.27s)
+      // -------------------------------------------------------------
+      // Aggressive strike pop on the punch-phrase
+      tl.fromTo(
+        "#punch-card",
+        { scale: 1.38, opacity: 0, y: 30 },
+        { scale: 1.0, opacity: 1, y: 0, duration: 0.38, ease: "power4.out" },
+        7.15
+      );
+      tl.to("#punch-container", { opacity: 1, duration: 0.1 }, 7.15);
+
+      // Register the built timeline to the framework
+      window.__timelines["scene-s06"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

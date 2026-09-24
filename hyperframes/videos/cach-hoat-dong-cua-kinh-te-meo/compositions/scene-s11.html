@@ -1,0 +1,668 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+      *, *::before, *::after {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #E7E3D9;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+
+      /* Quy ước HyperFrames: .clip có position absolute inset 0 */
+      .clip {
+        position: absolute;
+        inset: 0;
+      }
+
+      /* Lớp nền giấy ngà + lưới ô vuông 84px chuẩn STYLE_DNA */
+      .bg-layer {
+        position: absolute;
+        inset: 0;
+        background-color: #E7E3D9;
+        z-index: 1;
+      }
+
+      .grid-canvas {
+        position: absolute;
+        inset: 0;
+        background-image:
+          linear-gradient(to right, rgba(20, 20, 20, 0.25) 1.5px, transparent 1.5px),
+          linear-gradient(to bottom, rgba(20, 20, 20, 0.25) 1.5px, transparent 1.5px);
+        background-size: 84px 84px;
+      }
+
+      .grain-overlay {
+        position: absolute;
+        inset: 0;
+        opacity: 0.18;
+        mix-blend-mode: multiply;
+        pointer-events: none;
+        background-image: radial-gradient(rgba(20, 20, 20, 0.3) 1px, transparent 1px);
+        background-size: 4px 4px;
+      }
+
+      /* Container chính cho transition vào cảnh (punch) */
+      .punch-wrapper {
+        position: absolute;
+        inset: 0;
+        z-index: 2;
+        transform-origin: 50% 45%;
+        will-change: transform, opacity;
+      }
+
+      /* Top Header: An toàn trên vùng safe-zone y=160, đảm bảo WCAG AA contrast */
+      .scene-header {
+        position: absolute;
+        top: 175px;
+        left: 50px;
+        right: 50px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        text-transform: uppercase;
+      }
+
+      /* Badge nền đen chữ cam đạt contrast ratio 6.38:1 trên #141414 */
+      .meta-badge {
+        background-color: #141414;
+        color: #FF6A1A;
+        font-size: 18px;
+        font-weight: 900;
+        padding: 6px 14px;
+        border-radius: 6px;
+        letter-spacing: 1.5px;
+        display: inline-block;
+      }
+
+      /* Tiêu đề mực đen #141414 trên nền be ngà #E7E3D9 đạt contrast ratio >14:1 */
+      .meta-title {
+        color: #141414;
+        font-size: 26px;
+        font-weight: 900;
+        letter-spacing: 1px;
+      }
+
+      /* Khung split collage 980x860px */
+      .split-frame-wrapper {
+        position: absolute;
+        top: 245px;
+        left: 50px;
+        width: 980px;
+        height: 860px;
+      }
+
+      .split-frame {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        border: 4px solid #141414;
+        background-color: #141414;
+        box-shadow: 12px 12px 0px rgba(20, 20, 20, 0.95);
+        overflow: hidden;
+      }
+
+      /* Container camera pan-right trên ảnh nền */
+      .pan-container {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 1240px;
+        height: 100%;
+        will-change: transform;
+      }
+
+      .hero-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center;
+        display: block;
+      }
+
+      /* Vạch chia cắt đôi khung hình (Split border) */
+      .split-divider {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 50%;
+        width: 4px;
+        background-color: #FF6A1A;
+        transform: translateX(-50%);
+        z-index: 5;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+      }
+
+      /* Huy hiệu VS được định vị trực tiếp trong split-frame để không escape offset parent */
+      .divider-badge {
+        position: absolute;
+        top: 25px;
+        left: 50%;
+        margin-left: -33px;
+        width: 66px;
+        height: 46px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #FF6A1A;
+        color: #141414;
+        font-weight: 900;
+        font-size: 22px;
+        border-radius: 20px;
+        border: 3px solid #141414;
+        z-index: 6;
+      }
+
+      /* Các nhãn phân định hai vùng rừng */
+      .region-overlay {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        z-index: 4;
+        pointer-events: none;
+      }
+
+      .left-region {
+        left: 0;
+        width: 50%;
+      }
+
+      .right-region {
+        right: 0;
+        width: 50%;
+      }
+
+      .region-tag {
+        position: absolute;
+        top: 24px;
+        font-size: 20px;
+        font-weight: 900;
+        padding: 8px 18px;
+        border-radius: 8px;
+        text-transform: uppercase;
+        border: 3px solid #141414;
+        box-shadow: 4px 4px 0px #141414;
+      }
+
+      .tag-left {
+        left: 20px;
+        background-color: #F5F0E4;
+        color: #141414;
+      }
+
+      .tag-right {
+        right: 20px;
+        background-color: #FF6A1A;
+        color: #141414;
+      }
+
+      /* Dấu gạch chéo X đỏ trên pate nội địa */
+      .cross-mark-container {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 260px;
+        height: 260px;
+        pointer-events: none;
+      }
+
+      .svg-cross {
+        width: 100%;
+        height: 100%;
+      }
+
+      .cross-line {
+        fill: none;
+        stroke: #E02E1B;
+        stroke-width: 16;
+        stroke-linecap: round;
+        filter: drop-shadow(4px 4px 0px #141414);
+      }
+
+      /* Mũi tên trinh sát sang rừng bạn */
+      .arrow-recon-container {
+        position: absolute;
+        top: 50%;
+        left: 30px;
+        right: 30px;
+        transform: translateY(-50%);
+        height: 120px;
+        pointer-events: none;
+      }
+
+      .svg-arrow {
+        width: 100%;
+        height: 100%;
+      }
+
+      .recon-path {
+        fill: none;
+        stroke: #FF6A1A;
+        stroke-width: 12;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        filter: drop-shadow(4px 4px 0px #141414);
+      }
+
+      /* Khu vực thông tin hạ tầng / Overlays (1140px - 1400px, nằm an toàn trên safe-zone 1529px) */
+      .overlay-card {
+        position: absolute;
+        top: 1150px;
+        left: 50px;
+        width: 980px;
+        height: 160px;
+        background-color: #141414;
+        border-radius: 20px;
+        padding: 24px 36px;
+        border: 4px solid #141414;
+        display: flex;
+        align-items: center;
+        gap: 32px;
+        visibility: hidden;
+        opacity: 0;
+        will-change: transform, opacity;
+      }
+
+      .card-opportunity {
+        box-shadow: 10px 10px 0px #FF6A1A;
+      }
+
+      .card-local-pate {
+        box-shadow: 10px 10px 0px #E02E1B;
+      }
+
+      .icon-box {
+        width: 96px;
+        height: 96px;
+        border-radius: 16px;
+        border: 3px solid #141414;
+        display: grid;
+        place-items: center;
+        flex-shrink: 0;
+      }
+
+      .icon-box-rise {
+        background-color: #FF6A1A;
+      }
+
+      .icon-box-fall {
+        background-color: #E02E1B;
+      }
+
+      .svg-icon {
+        width: 56px;
+        height: 56px;
+      }
+
+      .draw-path {
+        fill: none;
+        stroke-width: 5;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
+      .stroke-dark {
+        stroke: #141414;
+      }
+
+      .stroke-light {
+        stroke: #F7F4EC;
+      }
+
+      .card-text-group {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      .card-category {
+        font-size: 20px;
+        font-weight: 700;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        color: #FF6A1A;
+      }
+
+      .card-main-label {
+        font-size: 40px;
+        font-weight: 900;
+        color: #F7F4EC;
+        text-transform: uppercase;
+        margin: 0;
+      }
+
+      /* Punch Phrase: Cao trào quyết định khảo sát (9.51s - 12.0s) */
+      .punch-phrase-container {
+        position: absolute;
+        top: 1140px;
+        left: 50px;
+        width: 980px;
+        height: 250px;
+        background-color: #141414;
+        border: 4px solid #FF6A1A;
+        border-radius: 24px;
+        box-shadow: 12px 12px 0px rgba(20, 20, 20, 0.9);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        padding: 24px 40px;
+        visibility: hidden;
+        opacity: 0;
+        will-change: transform, opacity;
+      }
+
+      .punch-phrase-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #FF6A1A;
+        color: #141414;
+        font-size: 22px;
+        font-weight: 900;
+        padding: 6px 24px;
+        border-radius: 30px;
+        margin-bottom: 14px;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        transform-origin: 50% 50%;
+        will-change: transform;
+      }
+
+      .punch-phrase-text {
+        font-size: 54px;
+        font-weight: 900;
+        line-height: 1.25;
+        color: #F7F4EC;
+        margin: 0;
+        text-transform: uppercase;
+      }
+
+      /* Chữ ký thị giác: Dải cam cố định ở mép dưới cùng */
+      .bottom-orange-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 12px;
+        background-color: #FF6A1A;
+        z-index: 100;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s11"
+      data-width="1080"
+      data-height="1920"
+      data-duration="12"
+    >
+      <!-- Nền giấy ngà + Lưới ô vuông 84px -->
+      <div class="bg-layer">
+        <div class="grid-canvas"></div>
+        <div class="grain-overlay"></div>
+      </div>
+
+      <!-- Punch Entrance Wrapper -->
+      <div id="punch-wrapper" class="punch-wrapper">
+        <!-- Header thông tin đạt chuẩn WCAG AA contrast -->
+        <div class="scene-header">
+          <div class="meta-badge">CHIẾN LƯỢC</div>
+          <span class="meta-title">THỊ TRƯỜNG PATE</span>
+        </div>
+
+        <!-- Bố cục Split Collage so sánh hai vùng -->
+        <div class="split-frame-wrapper">
+          <div class="split-frame">
+            <!-- Nền ảnh di chuyển nhẹ sang phải (pan-right), cho phép overflow vì là camera pan -->
+            <div id="pan-container" class="pan-container" data-layout-allow-overflow="true">
+              <img
+                id="hero-img"
+                class="hero-img"
+                src="assets/img-01-smuggling-customs-evasion-cutout.jpeg"
+                alt="Biên giới rừng chia cắt"
+              />
+            </div>
+
+            <!-- Đường cắt đôi khung hình (Split border) -->
+            <div class="split-divider"></div>
+            <!-- Huy hiệu VS đặt làm direct child của split-frame -->
+            <div class="divider-badge">VS</div>
+
+            <!-- Vùng trái: Rừng nhà -->
+            <div id="left-region" class="region-overlay left-region">
+              <div class="region-tag tag-left">RỪNG NHÀ</div>
+              <div class="cross-mark-container">
+                <svg viewBox="0 0 100 100" class="svg-cross">
+                  <path d="M 20 20 L 80 80" class="cross-line cross-1" />
+                  <path d="M 80 20 L 20 80" class="cross-line cross-2" />
+                </svg>
+              </div>
+            </div>
+
+            <!-- Vùng phải: Rừng bên cạnh -->
+            <div id="right-region" class="region-overlay right-region">
+              <div class="region-tag tag-right">RỪNG BẠN</div>
+              <div class="arrow-recon-container">
+                <svg viewBox="0 0 200 80" class="svg-arrow">
+                  <path d="M 20 40 L 160 40 M 130 15 L 165 40 L 130 65" class="recon-path" />
+                </svg>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Overlay Card 1: Icon rise + "TÌM KIẾM CƠ HỘI MỚI" (0.88s - 3.7s) -->
+        <div id="card-opportunity" class="overlay-card card-opportunity">
+          <div class="icon-box icon-box-rise">
+            <svg viewBox="0 0 48 48" class="svg-icon">
+              <path d="M8 38 L20 26 L28 34 L38 14" class="draw-path stroke-dark path-rise" />
+              <polyline points="26 14 38 14 38 26" class="draw-path stroke-dark path-rise-arrow" />
+            </svg>
+          </div>
+          <div class="card-text-group">
+            <span class="card-category">ĐỘNG CƠ KINH TẾ</span>
+            <h2 class="card-main-label">TÌM KIẾM CƠ HỘI MỚI</h2>
+          </div>
+        </div>
+
+        <!-- Overlay Card 2: Icon fall + "PATE NỘI: ĐẮT & KÉM" (6.10s - 9.1s) -->
+        <div id="card-local-pate" class="overlay-card card-local-pate">
+          <div class="icon-box icon-box-fall">
+            <svg viewBox="0 0 48 48" class="svg-icon">
+              <path d="M8 12 L20 24 L28 16 L38 36" class="draw-path stroke-light path-fall" />
+              <polyline points="38 24 38 36 26 36" class="draw-path stroke-light path-fall-arrow" />
+            </svg>
+          </div>
+          <div class="card-text-group">
+            <span class="card-category">THỰC TRẠNG ĐỘC QUYỀN</span>
+            <h2 class="card-main-label">PATE NỘI: ĐẮT & KÉM</h2>
+          </div>
+        </div>
+
+        <!-- Punch Phrase: "SANG RỪNG BẠN KHẢO SÁT" (9.51s - 12.0s) -->
+        <div id="punch-phrase" class="punch-phrase-container">
+          <div class="punch-phrase-badge">QUYẾT ĐỊNH ĐỘT PHÁ</div>
+          <h1 class="punch-phrase-text">SANG RỪNG BẠN KHẢO SÁT</h1>
+        </div>
+      </div>
+
+      <!-- Dải cam chữ ký thương hiệu -->
+      <div class="bottom-orange-bar"></div>
+    </div>
+
+    <script>
+      // Thiết lập đo và chuẩn bị nét vẽ SVG
+      function initSvgPath(selector) {
+        const el = document.querySelector(selector);
+        if (!el) return 100;
+        const len = el.getTotalLength ? el.getTotalLength() : 100;
+        el.style.strokeDasharray = len + "";
+        el.style.strokeDashoffset = len + "";
+        return len;
+      }
+
+      const lenCross1 = initSvgPath(".cross-1");
+      const lenCross2 = initSvgPath(".cross-2");
+      const lenRise = initSvgPath(".path-rise");
+      const lenRiseArr = initSvgPath(".path-rise-arrow");
+      const lenFall = initSvgPath(".path-fall");
+      const lenFallArr = initSvgPath(".path-fall-arrow");
+      const lenRecon = initSvgPath(".recon-path");
+
+      // Khởi tạo duy nhất 1 GSAP timeline paused cho HyperFrames seek
+      const tl = gsap.timeline({ paused: true });
+
+      // 1. Transition vào cảnh (Punch entrance) tại t = 0s
+      tl.fromTo(
+        "#punch-wrapper",
+        { scale: 1.06, opacity: 0 },
+        { scale: 1.0, opacity: 1, duration: 0.5, ease: "power3.out" },
+        0
+      );
+
+      // 2. Camera motion: pan-right nhẹ nhàng trên ảnh bối cảnh (0s - 12s)
+      tl.fromTo(
+        "#pan-container",
+        { x: 0 },
+        { x: -180, duration: 12.0, ease: "none" },
+        0
+      );
+
+      // 3. Beat 1: Overlay icon rise & nhãn "TÌM KIẾM CƠ HỘI MỚI"
+      // Icon rise atMs: 87580 -> t = 0.88s
+      tl.fromTo(
+        "#card-opportunity",
+        { autoAlpha: 0, y: 35, scale: 0.96 },
+        { autoAlpha: 1, y: 0, scale: 1.0, duration: 0.45, ease: "power3.out" },
+        0.88
+      );
+
+      tl.fromTo(
+        ".path-rise",
+        { strokeDashoffset: lenRise },
+        { strokeDashoffset: 0, duration: 0.4, ease: "power2.out" },
+        0.95
+      );
+
+      tl.fromTo(
+        ".path-rise-arrow",
+        { strokeDashoffset: lenRiseArr },
+        { strokeDashoffset: 0, duration: 0.3, ease: "power2.out" },
+        1.25
+      );
+
+      // Card 1 rút lui tại 3.7s
+      tl.to(
+        "#card-opportunity",
+        { autoAlpha: 0, y: -25, duration: 0.35, ease: "power2.in" },
+        3.7
+      );
+
+      // 4. Beat 2: Pate nội đắt & kém (vùng trái đỏ + X mark + card fall)
+      // Chuyển nền vùng trái sang sắc đỏ cảnh báo tại 5.8s
+      tl.fromTo(
+        "#left-region",
+        { backgroundColor: "rgba(20, 20, 20, 0)" },
+        { backgroundColor: "rgba(224, 46, 27, 0.28)", duration: 0.4 },
+        5.8
+      );
+
+      // Icon fall atMs: 92800 -> t = 6.10s
+      tl.fromTo(
+        "#card-local-pate",
+        { autoAlpha: 0, y: 35, scale: 0.96 },
+        { autoAlpha: 1, y: 0, scale: 1.0, duration: 0.45, ease: "power3.out" },
+        6.10
+      );
+
+      // Nét vẽ X đỏ lần lượt hai gạch (từ 6.12s)
+      tl.fromTo(
+        ".cross-1",
+        { strokeDashoffset: lenCross1 },
+        { strokeDashoffset: 0, duration: 0.35, ease: "power2.out" },
+        6.12
+      );
+
+      tl.fromTo(
+        ".cross-2",
+        { strokeDashoffset: lenCross2 },
+        { strokeDashoffset: 0, duration: 0.35, ease: "power2.out" },
+        6.32
+      );
+
+      // Icon fall vẽ đường nét
+      tl.fromTo(
+        ".path-fall",
+        { strokeDashoffset: lenFall },
+        { strokeDashoffset: 0, duration: 0.4, ease: "power2.out" },
+        6.20
+      );
+
+      tl.fromTo(
+        ".path-fall-arrow",
+        { strokeDashoffset: lenFallArr },
+        { strokeDashoffset: 0, duration: 0.3, ease: "power2.out" },
+        6.50
+      );
+
+      // Card 2 rút lui tại 9.1s
+      tl.to(
+        "#card-local-pate",
+        { autoAlpha: 0, y: -25, duration: 0.35, ease: "power2.in" },
+        9.10
+      );
+
+      // 5. Beat 3: Mũi tên trinh sát vượt biên & Punch phrase
+      // Mũi tên trinh sát vẽ sang rừng bạn tại 9.25s
+      tl.fromTo(
+        ".recon-path",
+        { strokeDashoffset: lenRecon },
+        { strokeDashoffset: 0, duration: 0.5, ease: "power2.out" },
+        9.25
+      );
+
+      // Punch phrase: SANG RỪNG BẠN KHẢO SÁT atMs: 96210 -> t = 9.51s
+      tl.fromTo(
+        "#punch-phrase",
+        { autoAlpha: 0, scale: 0.9, y: 30 },
+        { autoAlpha: 1, scale: 1.0, y: 0, duration: 0.55, ease: "power3.out" },
+        9.51
+      );
+
+      tl.fromTo(
+        ".punch-phrase-badge",
+        { scale: 0 },
+        { scale: 1.0, duration: 0.35, ease: "power3.out" },
+        9.70
+      );
+
+      // Đăng ký timeline cho HyperFrames
+      window.__timelines = window.__timelines || {};
+      window.__timelines["scene-s11"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

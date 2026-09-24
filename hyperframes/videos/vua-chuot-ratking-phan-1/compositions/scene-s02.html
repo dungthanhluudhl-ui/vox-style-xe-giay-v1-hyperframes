@@ -1,0 +1,517 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #F5F0E4;
+      color: #141414;
+      font-family: "Be Vietnam Pro", sans-serif;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+    #root {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #F5F0E4;
+    }
+    .clip {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    /* Video element for Shot 1 - sized with lateral pan clearance */
+    #s02-vid {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: -60px;
+      width: 1200px;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      z-index: 1;
+    }
+
+    /* Image element for Shot 2 - full frame with Ken Burns zoom */
+    #shot-2-img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      z-index: 1;
+    }
+
+    /* Overlay containers */
+    #shot-1-overlay {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      z-index: 10;
+      pointer-events: none;
+    }
+    #shot-2-overlay {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      z-index: 10;
+      pointer-events: none;
+    }
+
+    /* Archival frame shadow vignette */
+    .dossier-frame {
+      position: absolute;
+      inset: 0;
+      box-shadow: inset 0 0 80px rgba(20, 20, 20, 0.3);
+      pointer-events: none;
+      z-index: 25;
+    }
+
+    /* Archival header bar */
+    .dossier-header-bar {
+      position: absolute;
+      top: 170px;
+      left: 60px;
+      right: 60px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 20;
+    }
+    .archive-stamp {
+      background-color: #141414;
+      color: #F7F4EC;
+      font-size: 20px;
+      font-weight: 900;
+      padding: 10px 20px;
+      border-radius: 4px;
+      letter-spacing: 2px;
+      box-shadow: 4px 4px 0px #FF6A1A;
+    }
+    .archive-status {
+      background-color: #F5F0E4;
+      color: #141414;
+      font-size: 18px;
+      font-weight: 700;
+      padding: 8px 18px;
+      border-radius: 4px;
+      border: 2px solid #141414;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .status-indicator {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background-color: #FF6A1A;
+      display: inline-block;
+    }
+
+    /* Shot 1 - Overlay Label: BẾ TẮC LÝ THUYẾT */
+    #label-stagnation {
+      position: absolute;
+      top: 360px;
+      left: 60px;
+      background-color: #141414;
+      border: 2px solid #FF6A1A;
+      box-shadow: 6px 6px 0px #FF6A1A;
+      border-radius: 8px;
+      padding: 18px 28px;
+      z-index: 30;
+      max-width: 580px;
+    }
+    .label-tag-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+    .label-dot {
+      width: 8px;
+      height: 8px;
+      background-color: #FF6A1A;
+      border-radius: 50%;
+      display: inline-block;
+    }
+    .label-category {
+      font-size: 18px;
+      font-weight: 700;
+      color: #FF6A1A;
+      letter-spacing: 2px;
+    }
+    .label-main-text {
+      font-size: 44px;
+      font-weight: 900;
+      color: #F7F4EC;
+      line-height: 1.15;
+      letter-spacing: 0.5px;
+    }
+
+    /* Shot 1 - Overlay Icon: WARNING CALLOUT */
+    #warning-badge {
+      position: absolute;
+      top: 540px;
+      left: 60px;
+      background-color: #141414;
+      border: 2px solid rgba(255, 106, 26, 0.7);
+      border-radius: 8px;
+      box-shadow: 6px 6px 0px rgba(20, 20, 20, 0.4);
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      z-index: 30;
+      max-width: 580px;
+    }
+    .warning-icon-wrap {
+      flex-shrink: 0;
+      width: 64px;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .warning-svg {
+      display: block;
+    }
+    .warning-text-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .warning-title {
+      font-size: 24px;
+      font-weight: 900;
+      color: #FF6A1A;
+      letter-spacing: 1px;
+    }
+    .warning-sub {
+      font-size: 20px;
+      font-weight: 700;
+      color: #F7F4EC;
+      letter-spacing: 0.5px;
+    }
+
+    /* Shot 2 - Punch Phrase: HỒ SƠ MẪU VẬT */
+    #punch-card {
+      position: absolute;
+      top: 380px;
+      left: 60px;
+      right: 60px;
+      background-color: #141414;
+      border: 2px solid #FF6A1A;
+      box-shadow: 10px 10px 0px #FF6A1A;
+      border-radius: 10px;
+      padding: 34px 40px;
+      z-index: 30;
+    }
+    .punch-tag {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 12px;
+    }
+    .punch-badge {
+      background-color: #FF6A1A;
+      color: #141414;
+      font-size: 18px;
+      font-weight: 900;
+      padding: 4px 12px;
+      border-radius: 4px;
+      letter-spacing: 1px;
+    }
+    .punch-id {
+      color: #F7F4EC;
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: 2px;
+    }
+    .punch-text {
+      margin: 0;
+      font-size: 68px;
+      font-weight: 900;
+      color: #F7F4EC;
+      line-height: 1.2;
+      letter-spacing: 1px;
+    }
+    #punch-rule-line {
+      display: block;
+      width: 100%;
+      height: 4px;
+      background-color: #FF6A1A;
+      margin: 20px 0 16px 0;
+    }
+    .punch-caption {
+      font-size: 22px;
+      font-weight: 700;
+      color: #F7F4EC;
+      opacity: 0.92;
+      letter-spacing: 1.5px;
+    }
+
+    /* Persistent bottom brand bar */
+    #brand-bottom-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 1080px;
+      height: 12px;
+      background-color: #FF6A1A;
+      z-index: 100;
+    }
+  </style>
+
+  <div
+    id="root"
+    data-composition-id="scene-s02"
+    data-start="0"
+    data-width="1080"
+    data-height="1920"
+    data-duration="5.18"
+    data-layout-allow-overflow="true"
+  >
+    <!-- Persistent Dossier Frame Vignette -->
+    <div class="dossier-frame" data-layout-ignore="true"></div>
+
+    <!-- SHOT 1 MEDIA (0s to 3.12s) - Timed directly for HyperFrames media ownership -->
+    <video
+      id="s02-vid"
+      src="assets/vid-01-rat-king-mystery-document.mp4"
+      muted
+      playsinline
+      data-start="0"
+      data-duration="3.12"
+      data-media-start="1"
+      data-layout-allow-overflow="true"
+    ></video>
+
+    <!-- SHOT 1 OVERLAYS (0s to 3.12s) -->
+    <div
+      id="shot-1-overlay"
+      class="clip"
+      data-start="0"
+      data-duration="3.12"
+      data-layout-allow-overflow="true"
+    >
+      <!-- Archival Header Bar -->
+      <div id="dossier-header-1" class="dossier-header-bar" data-layout-allow-overflow="true">
+        <div class="archive-stamp">HỒ SƠ LƯU TRỮ #02</div>
+        <div class="archive-status">
+          <span class="status-indicator"></span>CHƯA CÓ LỜI GIẢI
+        </div>
+      </div>
+
+      <!-- Label: BẾ TẮC LÝ THUYẾT -->
+      <div id="label-stagnation" data-layout-allow-overflow="true">
+        <div class="label-tag-header">
+          <span class="label-dot"></span>
+          <span class="label-category">KHOA HỌC // NGHỊCH LÝ</span>
+        </div>
+        <div class="label-main-text">BẾ TẮC LÝ THUYẾT</div>
+      </div>
+
+      <!-- Warning Callout Icon -->
+      <div id="warning-badge" data-layout-allow-overflow="true">
+        <div class="warning-icon-wrap">
+          <svg class="warning-svg" viewBox="0 0 80 80" width="64" height="64">
+            <path
+              id="warn-triangle"
+              d="M 40 10 L 72 68 L 8 68 Z"
+              fill="none"
+              stroke="#FF6A1A"
+              stroke-width="6"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+            <line
+              id="warn-exclamation"
+              x1="40"
+              y1="28"
+              x2="40"
+              y2="48"
+              stroke="#F7F4EC"
+              stroke-width="5"
+              stroke-linecap="round"
+            />
+            <circle id="warn-point" cx="40" cy="58" r="3" fill="#F7F4EC" />
+          </svg>
+        </div>
+        <div class="warning-text-wrap">
+          <span class="warning-title">KHÔNG CÓ CƠ CHẾ</span>
+          <span class="warning-sub">CHƯA THỂ GIẢI THÍCH</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- SHOT 2 MEDIA (3.12s to 5.18s) -->
+    <img
+      id="shot-2-img"
+      class="clip"
+      src="assets/img-03-mystery-rat-king-dossier.jpeg"
+      alt="Hồ sơ mẫu vật Rat King"
+      data-start="3.12"
+      data-duration="2.06"
+      data-layout-allow-overflow="true"
+    />
+
+    <!-- SHOT 2 OVERLAYS (3.12s to 5.18s) -->
+    <div
+      id="shot-2-overlay"
+      class="clip"
+      data-start="3.12"
+      data-duration="2.06"
+      data-layout-allow-overflow="true"
+    >
+      <!-- Archival Header 2 -->
+      <div id="dossier-header-2" class="dossier-header-bar" data-layout-allow-overflow="true">
+        <div class="archive-stamp">MẪU VẬT KHOA HỌC</div>
+        <div class="archive-status">
+          <span class="status-indicator"></span>GHI NHẬN THỰC ĐỊA
+        </div>
+      </div>
+
+      <!-- Punch Phrase: HỒ SƠ MẪU VẬT -->
+      <div id="punch-card" data-layout-allow-overflow="true">
+        <div class="punch-tag">
+          <span class="punch-badge">TƯ LIỆU GỐC</span>
+          <span class="punch-id">#RAT-KING-02</span>
+        </div>
+        <h1 class="punch-text">HỒ SƠ MẪU VẬT</h1>
+        <span id="punch-rule-line"></span>
+        <div class="punch-caption">BẰNG CHỨNG LƯU TRỮ VẬT LÝ</div>
+      </div>
+    </div>
+
+    <!-- Fixed Bottom Brand Bar -->
+    <div id="brand-bottom-bar" data-layout-ignore="true"></div>
+  </div>
+
+  <script>
+    // Setup warning triangle stroke length deterministically
+    const tri = document.getElementById("warn-triangle");
+    if (tri) {
+      const len = Math.ceil(tri.getTotalLength ? tri.getTotalLength() : 197);
+      tri.style.strokeDasharray = len + "";
+      tri.style.strokeDashoffset = len + "";
+    }
+
+    // Build the master timeline
+    window.__timelines = window.__timelines || {};
+    const tl = gsap.timeline({ paused: true });
+
+    // --- SHOT 1 CHOREOGRAPHY (0s to 3.12s) ---
+    // TransitionIn: Unfold document overlay from top
+    tl.fromTo(
+      "#shot-1-overlay",
+      { scaleY: 0.88, opacity: 0, transformOrigin: "50% 15%" },
+      { scaleY: 1, opacity: 1, duration: 0.65, ease: "power3.out" },
+      0
+    );
+
+    // CameraMotion: Archival pan right across Shot 1
+    tl.fromTo(
+      "#s02-vid",
+      { x: -35 },
+      { x: 35, duration: 3.12, ease: "none" },
+      0
+    );
+
+    // Header 1 entrance
+    tl.fromTo(
+      "#dossier-header-1",
+      { y: -30, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.5, ease: "power3.out" },
+      0.15
+    );
+
+    // Overlay Label: "BẾ TẮC LÝ THUYẾT" at 0.97s (holds 1.70s -> exits at 2.67s)
+    tl.fromTo(
+      "#label-stagnation",
+      { scale: 0.88, opacity: 0, y: 24 },
+      { scale: 1, opacity: 1, y: 0, duration: 0.45, ease: "power3.out" },
+      0.97
+    );
+    tl.to(
+      "#label-stagnation",
+      { opacity: 0, y: -15, duration: 0.35, ease: "power2.in" },
+      2.67
+    );
+
+    // Overlay Warning Callout at 2.12s (holds until end of shot at 3.12s)
+    tl.fromTo(
+      "#warning-badge",
+      { scale: 0.88, opacity: 0, y: 20 },
+      { scale: 1, opacity: 1, y: 0, duration: 0.4, ease: "power3.out" },
+      2.12
+    );
+    tl.to(
+      "#warn-triangle",
+      { strokeDashoffset: 0, duration: 0.45, ease: "power2.out" },
+      2.18
+    );
+    tl.fromTo(
+      "#warn-exclamation, #warn-point",
+      { scale: 0, opacity: 0 },
+      { scale: 1, opacity: 1, duration: 0.25, ease: "power3.out", stagger: 0.06 },
+      2.45
+    );
+
+    // --- SHOT 2 CHOREOGRAPHY (3.12s to 5.18s) ---
+    // CameraMotion: Ken Burns push (1.0x to 1.07x) on dossier specimen
+    tl.fromTo(
+      "#shot-2-img",
+      { scale: 1.0, transformOrigin: "50% 50%" },
+      { scale: 1.07, duration: 2.06, ease: "power1.out" },
+      3.12
+    );
+
+    // Header 2 entrance
+    tl.fromTo(
+      "#dossier-header-2",
+      { y: -25, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.4, ease: "power3.out" },
+      3.15
+    );
+
+    // Punch Phrase: "HỒ SƠ MẪU VẬT" at 3.84s (holds through 5.18s)
+    tl.fromTo(
+      "#punch-card",
+      { scale: 0.9, opacity: 0, y: 35 },
+      { scale: 1, opacity: 1, y: 0, duration: 0.45, ease: "power3.out" },
+      3.84
+    );
+    tl.fromTo(
+      "#punch-rule-line",
+      { scaleX: 0, transformOrigin: "0% 50%" },
+      { scaleX: 1, duration: 0.4, ease: "power2.out" },
+      4.05
+    );
+
+    // Register single paused timeline on window.__timelines
+    window.__timelines["scene-s02"] = tl;
+  </script>
+
+    </template>
+  </body>
+</html>

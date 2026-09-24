@@ -156,6 +156,33 @@ Từ bước 5 trở đi cần **cả 2 nhánh đã xong** (Stage 5 đọc cả 
   - Sau cả 2 fix: Stage 7b PASS sạch (4/4 scene, audio, caption-track, `hyperframes check` ok=true).
 - [x] Render bản đầy đủ (2026-09-23) — `out/vua-chuot-ratking-phan-1-full.mp4`, **32.067s** (khớp audio thật 32.039s), 1080×1920 h264/aac, 60.0MB. `completion-manifest.json` xác nhận mọi field `*Ok` đều `true`.
 
+### Video "labubu-phan-1" (chủ đề mới — sự sụp đổ của trào lưu blind box/Labubu, input lấy từ `Vox style 3.1_test/.../Lóng/Labubu_phan1`, script dạng văn xuôi sẵn không cần chuyển từ SRT)
+- [x] Nhận script + audio (2026-09-23) — audio 71.262s. Không có media nguồn sẵn.
+- [x] Transcribe (whisper.cpp) + align với script gốc qua 9router (2026-09-23) — 360/360 caption khớp 100% số từ script gốc, timestamp cuối 70.8s hợp lý với audio thật.
+- [x] Tạo media qua Google Flow (Stage 2b, 2026-09-23) — 7 ảnh + 7 video (768×1376/720×1280, 8.0s/clip) qua account "default", không cần fallback, không lặp lỗi collage khổ ngang (xác nhận bằng ffprobe).
+- [x] Phân tích + chuẩn hoá tên media qua 9router[vision] (2026-09-23) — 14/14 asset.
+- [x] Scene Plan (2026-09-23) — 10 scene, dùng đủ 14/14 asset (S08 text-only theo thiết kế).
+- [x] Shotlist (2026-09-23) — 15 shot / 10 scene, không còn bug "undefined" ở icon.
+- [x] Dựng composition qua nhánh HyperFrames (2026-09-23) — chạy thẳng 10 scene song song, 6/10 PASS ngay lần đầu (S01,S02,S03,S05,S07,S08); 4 scene FAIL nội dung (S04, S06, S09, S10) được Claude đọc log + sửa bằng `--issue-file` targeted, S04/S06/S10 PASS ngay lần retry đầu. S09 cần 3 vòng issue-file: vòng 1 sửa đúng lỗi contrast WCAG AA ban đầu nhưng làm lộ vấn đề kiến trúc timing shot-wrapper; vòng 2 (hướng dẫn của Claude) áp dụng SAI cách sửa (đẩy `data-start` lên wrapper bọc `<video>`), vi phạm rule cứng `media_missing_data_start`/`video_nested_in_timed_element` — Claude đọc thẳng source code linter (`hyperframes` CLI, `dist/cli.js`) để xác nhận đúng contract thay vì đoán tiếp, viết vòng 3 đảo ngược đúng phần sai (giữ `data-start` trên `<video>`, không đặt lên wrapper, giữ nguyên `tl.set` opacity thủ công) + sửa thêm 1 lỗi overlap label thật — PASS ngay lần thử đó. 10/10 scene PASS.
+- [x] Stage 7b integration check PASS (2026-09-23) — 10/10 scene, có audio, có caption-track, `hyperframes check` ok=true.
+- [x] Render bản đầy đủ (2026-09-23) — `out/labubu-phan-1-full.mp4`, **70.800s** (khớp audio thật 71.262s), 1080×1920 h264/aac, 266.6MB. `completion-manifest.json` xác nhận mọi field `*Ok` đều `true`. **Chưa được người dùng xem/xác nhận.**
+
+### Video "cach-hoat-dong-cua-kinh-te-meo" (chủ đề mới — giải thích các khái niệm kinh tế qua ẩn dụ "Mèo", video DÀI NHẤT từ trước tới nay: audio 460.5s/7.67 phút, script 2235 từ, gấp ~3.5-6x mọi video trước)
+- [x] Nhận script + audio (2026-09-23) từ `Vox style 3.1_test/.../Lóng/cách hoạt động của nền kinh tế`.
+- [x] Transcribe (whisper.cpp, ~29 phút do audio dài + chạy CPU-only, xem memory `project_whisper_gpu_cpu`) + align với script gốc qua 9router (2026-09-23) — 2235/2235 caption khớp 100% script gốc.
+- [x] Tạo media qua Google Flow (Stage 2b, 2026-09-23) — 21 ảnh + 20 video (768×1376/720×1280, 8.0s/clip) qua account "default", quy mô lớn nhất từ trước tới nay (trước đó tối đa 7+7).
+- [x] Phân tích + chuẩn hoá tên media qua 9router[vision] (2026-09-23) — 41/41 asset.
+- [x] Scene Plan (2026-09-23) — **51 scene** (nhiều nhất từ trước tới nay), dùng 40/41 asset, mọi scene ≥5.13s.
+- [x] Shotlist (2026-09-23) — 52 shot / 51 scene.
+- [x] **2 lỗi framework thật phát hiện + sửa do quy mô script lớn (áp dụng mọi video dài sau này):**
+  1. `scripts/05-scene-plan.router.mjs` và `scripts/06-shotlist.router.mjs` gọi 9router 1 lần duy nhất, KHÔNG có cơ chế retry/chia nhỏ khi tràn token (khác Stage 2 đã có) — với script 2235 từ, timeout mặc định 120s + `maxTokens: 8000` không đủ. Đã tăng: Stage 5 timeout 120s→240s + maxTokens 8000→16000; Stage 6 timeout 120s→300s + maxTokens 8000→24000.
+  2. `scripts/07-codegen.hf.router.mjs` parse `VERDICT: PASS` bằng regex `/VERDICT:\s*PASS/i` không khớp khi reviewer viết markdown bold (`VERDICT: **PASS**`) — khiến scene PASS thật bị phân loại nhầm FAIL. Sửa regex thành `/VERDICT:\s*[*_#\s]*PASS/i`.
+- [x] Dựng composition qua nhánh HyperFrames (2026-09-23) — chạy thẳng 51 scene song song (concurrency=10, đã xác nhận với người dùng trước khi chạy do quy mô lớn chưa từng làm): 43/51 PASS ngay lần đầu. 8 scene FAIL được Claude điều tra bằng cách tự chạy `hyperframes check --json` trực tiếp (không dựa mô tả reviewer — phát hiện 3/8 là báo động giả: S25/S27/S38 reviewer nghi ngờ nhưng check thực tế hoàn toàn sạch). 4 lỗi content thật sửa bằng `--issue-file`: S03 (2 dòng chữ giá đè nhau), S30 (lớp "dramatic spotlight" che khuất chat bubble), S31 (contrast chữ thấp), S43 (card đè lên node sơ đồ). Tất cả PASS trong 1-2 lần retry sau khi có issue-file đúng lỗi thật.
+- [x] Stage 7b integration check — lần đầu FAIL: scene S18 (`#punch-phrase-wrapper` đặt `top:1300px`) lấn vào vùng an toàn phụ đề (y>1529px), lỗi chỉ lộ ra khi ráp chung với caption-track thật (đúng gotcha đã ghi nhận từ video `su-kien-thien-an-mon`). Sửa `top` xuống `1160px`, ráp lại, Stage 7b PASS lần 2 (51/51 scene, audio, caption-track, `hyperframes check` ok=true).
+- [x] Render bản đầy đủ (2026-09-23) — `out/cach-hoat-dong-cua-kinh-te-meo-full.mp4`, **453.700s**, 1080×1920 h264/aac, 1216.6MB, render mất 32 phút (capture 24m18s + encode 6m13s, GPU hardware NVIDIA GTX 1660 SUPER — xác nhận render chạy 100% local, không phụ thuộc hạ tầng cloud).
+- [x] **Gotcha mới: `completion-manifest.json` có `ffprobeOk: false`** (video 453.700s vs audio gốc 460.523s, lệch 6.823s) — đã điều tra bằng `ffmpeg silencedetect` xác nhận đây là 7.16s khoảng lặng THẬT ở cuối audio gốc (sau câu thoại cuối), không phải nội dung bị mất. Người dùng đã xem cảnh báo và xác nhận chấp nhận. **Bài học tổng quát**: `ffprobeOk` so sánh naive với độ dài file audio gốc, không tính trường hợp audio có đuôi lặng dài — không tự động coi `ffprobeOk: false` là lỗi thật, luôn dùng `ffmpeg silencedetect` kiểm tra trước khi kết luận (xem chi tiết `pipeline/videos/cach-hoat-dong-cua-kinh-te-meo/run-log.md`).
+- [x] **Người dùng đã xem cảnh báo duration và xác nhận chấp nhận bản render hiện tại (2026-09-24).**
+
 ## Archive: pipeline Remotion cũ (4 video đầu, `archive/remotion-legacy/`)
 
 Giữ lại đúng nguyên trạng để tham khảo/sửa lỗi cho 4 video archive — KHÔNG áp dụng cho video mới.

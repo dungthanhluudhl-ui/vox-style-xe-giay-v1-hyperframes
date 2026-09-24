@@ -1,0 +1,719 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap"
+    />
+      <style>
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        width: 1080px;
+        height: 1920px;
+        background-color: #e7e3d9;
+        font-family: "Be Vietnam Pro", sans-serif;
+        color: #141414;
+        overflow: hidden;
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+      .clip {
+        position: absolute;
+        inset: 0;
+      }
+
+      /* Nền giấy ngà + lưới kẻ 84px đặc trưng Vox */
+      .bg-grid {
+        position: absolute;
+        inset: 0;
+        background-color: #e7e3d9;
+        background-image:
+          linear-gradient(rgba(20, 20, 20, 0.22) 1.5px, transparent 1.5px),
+          linear-gradient(90deg, rgba(20, 20, 20, 0.22) 1.5px, transparent 1.5px);
+        background-size: 84px 84px;
+        background-position: -1px -1px;
+      }
+      .grain-overlay {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background-image: radial-gradient(rgba(20, 20, 20, 0.08) 1px, transparent 1px);
+        background-size: 4px 4px;
+        opacity: 0.6;
+        mix-blend-mode: multiply;
+      }
+
+      /* Thanh cam nhận diện cố định đáy */
+      .brand-bottom-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 14px;
+        background-color: #ff6a1a;
+        z-index: 100;
+      }
+
+      /* Wrapper chính hiệu ứng 3D flip */
+      #scene-wrapper {
+        position: absolute;
+        inset: 0;
+        transform-origin: 50% 25%;
+        will-change: transform, opacity;
+        perspective: 1200px;
+      }
+
+      /* Khu vực tiêu đề / Punch phrase */
+      .header-zone {
+        position: absolute;
+        top: 176px;
+        left: 60px;
+        right: 60px;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .tag-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        background-color: #141414;
+        color: #f7f4ec;
+        padding: 8px 18px;
+        border-radius: 6px;
+        font-size: 16px;
+        font-weight: 900;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        margin-bottom: 14px;
+      }
+      .tag-dot {
+        width: 10px;
+        height: 10px;
+        background-color: #ff6a1a;
+        border-radius: 50%;
+      }
+      .punch-phrase {
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+      .punch-line {
+        font-size: 56px;
+        font-weight: 900;
+        line-height: 1.18;
+        color: #141414;
+        letter-spacing: -0.5px;
+      }
+      .punch-line.highlight {
+        display: inline-block;
+        background-color: #ff6a1a;
+        color: #141414;
+        padding: 2px 14px;
+        border: 3px solid #141414;
+        border-radius: 6px;
+        box-shadow: 4px 4px 0px #141414;
+        width: fit-content;
+      }
+
+      /* Cửa sổ tranh minh hoạ A-roll / B-roll cắt giấy */
+      #hero-frame {
+        position: absolute;
+        top: 386px;
+        left: 60px;
+        width: 960px;
+        height: 680px;
+        background-color: #141414;
+        border: 3px solid #141414;
+        border-radius: 12px;
+        box-shadow: 8px 8px 0px rgba(20, 20, 20, 0.95);
+        overflow: hidden;
+      }
+      .photo-banner {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 42px;
+        background-color: #141414;
+        color: #f7f4ec;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 16px;
+        font-size: 14px;
+        font-weight: 900;
+        letter-spacing: 0.5px;
+        z-index: 10;
+        border-bottom: 2px solid rgba(255, 255, 255, 0.15);
+      }
+      .photo-tag {
+        color: #ff6a1a;
+      }
+      #hero-viewport {
+        position: absolute;
+        top: 42px;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        overflow: hidden;
+        background-color: #f5f0e4;
+      }
+      #hero-img {
+        position: absolute;
+        top: 0;
+        left: -40px;
+        width: 1040px;
+        height: 100%;
+        object-fit: cover;
+        object-position: center 88%;
+        will-change: transform;
+      }
+      .photo-stamp {
+        position: absolute;
+        bottom: 14px;
+        right: 14px;
+        background-color: #ff6a1a;
+        color: #141414;
+        font-size: 14px;
+        font-weight: 900;
+        padding: 6px 12px;
+        border: 2px solid #141414;
+        border-radius: 6px;
+        box-shadow: 3px 3px 0px #141414;
+        z-index: 10;
+        letter-spacing: 0.5px;
+      }
+
+      /* Khối sơ đồ cơ chế kinh tế 3 bước */
+      #diagram-container {
+        position: absolute;
+        top: 1098px;
+        left: 60px;
+        width: 960px;
+        height: 360px;
+      }
+      .step-card {
+        position: absolute;
+        left: 0;
+        width: 960px;
+        height: 94px;
+        background-color: #f5f0e4;
+        border: 3px solid #141414;
+        border-radius: 12px;
+        box-shadow: 5px 5px 0px #141414;
+        display: flex;
+        align-items: center;
+        padding: 0 20px;
+        will-change: transform, opacity;
+      }
+      #step-1 {
+        top: 0;
+      }
+      #step-2 {
+        top: 126px;
+      }
+      #step-3 {
+        top: 252px;
+        background-color: #fffdf8;
+        box-shadow: 6px 6px 0px #ff6a1a, 6px 6px 0px 3px #141414;
+      }
+
+      .step-badge {
+        width: 44px;
+        height: 44px;
+        background-color: #ff6a1a;
+        color: #141414;
+        font-size: 20px;
+        font-weight: 900;
+        border: 2px solid #141414;
+        border-radius: 8px;
+        display: grid;
+        place-items: center;
+        margin-right: 16px;
+        flex-shrink: 0;
+      }
+      .step-icon-box {
+        width: 52px;
+        height: 52px;
+        margin-right: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+      .step-icon-svg {
+        width: 50px;
+        height: 50px;
+      }
+      .step-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+      }
+      .step-title {
+        font-size: 27px;
+        font-weight: 900;
+        color: #141414;
+        line-height: 1.2;
+        letter-spacing: 0.3px;
+      }
+      .step-desc {
+        font-size: 18px;
+        font-weight: 700;
+        color: #333333;
+        line-height: 1.25;
+        margin-top: 4px;
+      }
+      .step-status {
+        font-size: 14px;
+        font-weight: 900;
+        padding: 6px 14px;
+        border: 2px solid #141414;
+        border-radius: 6px;
+        background-color: #e7e3d9;
+        color: #141414;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-left: 14px;
+        flex-shrink: 0;
+      }
+      .step-status.active {
+        background-color: #ff6a1a;
+        color: #141414;
+      }
+      .step-status.success {
+        background-color: #141414;
+        color: #f7f4ec;
+      }
+
+      /* Đường mũi tên nối giữa các bước */
+      .connector-wrap {
+        position: absolute;
+        left: 57px;
+        width: 18px;
+        height: 32px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        transform-origin: top center;
+        z-index: 5;
+      }
+      #connector-1-2 {
+        top: 94px;
+      }
+      #connector-2-3 {
+        top: 220px;
+      }
+      .connector-line {
+        width: 4px;
+        height: 22px;
+        background-color: #ff6a1a;
+      }
+      .connector-arrow {
+        width: 0;
+        height: 0;
+        border-left: 6px solid transparent;
+        border-right: 6px solid transparent;
+        border-top: 8px solid #ff6a1a;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s49"
+      data-start="0"
+      data-width="1080"
+      data-height="1920"
+      data-duration="8.84"
+    >
+      <section id="scene-s49" class="clip" data-start="0" data-duration="8.84">
+        <!-- Nền giấy + lưới kẻ Vox -->
+        <div class="bg-grid"></div>
+        <div class="grain-overlay"></div>
+
+        <!-- Khối nội dung xoay 3D flip -->
+        <div id="scene-wrapper">
+          <!-- 1. Header & Punch phrase -->
+          <div class="header-zone">
+            <div class="tag-pill">
+              <span class="tag-dot"></span>
+              <span class="tag-text">CƠ CHẾ KÍCH CẦU KINH TẾ</span>
+            </div>
+            <h1 class="punch-phrase">
+              <span class="punch-line">VAY VỐN NGOẠI LỰC</span>
+              <span class="punch-line highlight">ĐẨY MẠNH HẠ TẦNG</span>
+            </h1>
+          </div>
+
+          <!-- 2. Hero photo: nửa dưới tranh img-20 đàn mèo xây dựng hạ tầng -->
+          <div id="hero-frame">
+            <div class="photo-banner">
+              <span class="photo-tag">BẢN VẼ CÔNG TRƯỜNG</span>
+              <span>CẦU ĐƯỜNG • TRƯỜNG HỌC • NHÀ MÁY PATE</span>
+            </div>
+            <div id="hero-viewport" data-layout-allow-overflow="true">
+              <img
+                id="hero-img"
+                src="assets/img-20-public-debt-infrastructure-loan-cutout.jpeg"
+                alt="Đàn mèo thi công công trình hạ tầng"
+              />
+            </div>
+            <div class="photo-stamp">DỰ ÁN ĐẦU TƯ CÔNG TRỌNG ĐIỂM</div>
+          </div>
+
+          <!-- 3. Sơ đồ cơ chế phân bổ vốn & tạo sức mua -->
+          <div id="diagram-container">
+            <!-- Bước 1: Vay vốn rừng lân cận -->
+            <div class="step-card" id="step-1">
+              <div class="step-badge">01</div>
+              <div class="step-icon-box">
+                <svg
+                  id="icon-money"
+                  class="step-icon-svg"
+                  viewBox="0 0 54 54"
+                  fill="none"
+                >
+                  <rect
+                    x="5"
+                    y="11"
+                    width="44"
+                    height="32"
+                    rx="6"
+                    stroke="#141414"
+                    stroke-width="3.5"
+                    fill="#FFFDF8"
+                  />
+                  <circle
+                    cx="27"
+                    cy="27"
+                    r="9"
+                    stroke="#FF6A1A"
+                    stroke-width="3.5"
+                    fill="#FF6A1A"
+                    fill-opacity="0.16"
+                  />
+                  <path
+                    d="M27 22v10M23.5 25h7M23.5 29h7"
+                    stroke="#141414"
+                    stroke-width="2.5"
+                    stroke-linecap="round"
+                  />
+                  <circle cx="12" cy="27" r="2.5" fill="#141414" />
+                  <circle cx="42" cy="27" r="2.5" fill="#141414" />
+                </svg>
+              </div>
+              <div class="step-content">
+                <div class="step-title" id="label-1-title">VAY VỐN RỪNG LÂN CẬN</div>
+                <div class="step-desc" id="label-1-sub">
+                  Vay dự trữ cá ngoại biên để mở rộng ngân sách
+                </div>
+              </div>
+              <div class="step-status">TIẾP NHẬN</div>
+            </div>
+
+            <!-- Đường nối 1 -> 2 -->
+            <div class="connector-wrap" id="connector-1-2">
+              <div class="connector-line"></div>
+              <div class="connector-arrow"></div>
+            </div>
+
+            <!-- Bước 2: Xây công trình hạ tầng -->
+            <div class="step-card" id="step-2">
+              <div class="step-badge">02</div>
+              <div class="step-icon-box">
+                <svg
+                  id="icon-rise"
+                  class="step-icon-svg"
+                  viewBox="0 0 54 54"
+                  fill="none"
+                >
+                  <rect
+                    x="5"
+                    y="5"
+                    width="44"
+                    height="44"
+                    rx="8"
+                    stroke="#141414"
+                    stroke-width="3.5"
+                    fill="#FFFDF8"
+                  />
+                  <path
+                    d="M11 39L23 27L31 33L43 15"
+                    stroke="#FF6A1A"
+                    stroke-width="4.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                  <polyline
+                    points="31 15 43 15 43 27"
+                    stroke="#FF6A1A"
+                    stroke-width="4.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                  <line
+                    x1="11"
+                    y1="43"
+                    x2="43"
+                    y2="43"
+                    stroke="#141414"
+                    stroke-width="3.5"
+                    stroke-linecap="round"
+                  />
+                </svg>
+              </div>
+              <div class="step-content">
+                <div class="step-title" id="label-2-title">XÂY CÔNG TRÌNH HẠ TẦNG</div>
+                <div class="step-desc" id="label-2-sub">
+                  Thuê mèo xây cầu đường • trường học • nhà máy pate
+                </div>
+              </div>
+              <div class="step-status active">THI CÔNG</div>
+            </div>
+
+            <!-- Đường nối 2 -> 3 -->
+            <div class="connector-wrap" id="connector-2-3">
+              <div class="connector-line"></div>
+              <div class="connector-arrow"></div>
+            </div>
+
+            <!-- Bước 3: Tạo việc làm & sức mua -->
+            <div class="step-card" id="step-3">
+              <div class="step-badge">03</div>
+              <div class="step-icon-box">
+                <svg
+                  id="icon-step-3"
+                  class="step-icon-svg"
+                  viewBox="0 0 54 54"
+                  fill="none"
+                >
+                  <rect
+                    x="5"
+                    y="5"
+                    width="44"
+                    height="44"
+                    rx="8"
+                    stroke="#141414"
+                    stroke-width="3.5"
+                    fill="#FFFDF8"
+                  />
+                  <path
+                    d="M13 16h6l4.5 18h18l4-14H22"
+                    stroke="#141414"
+                    stroke-width="3.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                  <circle cx="26" cy="40" r="3.5" fill="#FF6A1A" />
+                  <circle cx="39" cy="40" r="3.5" fill="#FF6A1A" />
+                </svg>
+              </div>
+              <div class="step-content">
+                <div class="step-title" id="label-3-title">TẠO VIỆC LÀM & SỨC MUA</div>
+                <div class="step-desc" id="label-3-sub">
+                  Nhận lương cá → Kích thích mua pate & tiêu dùng
+                </div>
+              </div>
+              <div class="step-status success">PHỤC HỒI</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Thanh cam signature đáy màn hình -->
+        <div class="brand-bottom-bar"></div>
+      </section>
+    </div>
+
+    <script>
+      const tl = gsap.timeline({ paused: true });
+
+      // 0.0s: Chuyển cảnh vào (flip entrance) theo kịch bản
+      tl.fromTo(
+        "#scene-wrapper",
+        { rotationX: 18, y: 40, opacity: 0 },
+        { rotationX: 0, y: 0, opacity: 1, duration: 0.65, ease: "power3.out" },
+        0
+      );
+
+      // Camera pan-left chuyển động đều trên nền ảnh suốt thời lượng 8.84s
+      tl.fromTo(
+        "#hero-img",
+        { x: 30 },
+        { x: -30, duration: 8.84, ease: "none" },
+        0
+      );
+
+      // Tiêu đề & punch phrase vào cảnh
+      tl.fromTo(
+        ".tag-pill",
+        { y: -16, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.45, ease: "power3.out" },
+        0.1
+      );
+      tl.fromTo(
+        ".punch-line",
+        { y: 28, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.55, stagger: 0.1, ease: "power3.out" },
+        0.2
+      );
+      tl.fromTo(
+        "#hero-frame",
+        { scale: 0.96, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.6, ease: "power3.out" },
+        0.25
+      );
+      tl.fromTo(
+        ".photo-stamp",
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.4, ease: "power3.out" },
+        0.7
+      );
+
+      // 1.57s (427580ms): Overlay icon "money" xuất hiện
+      tl.fromTo(
+        "#step-1",
+        { y: 22, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.45, ease: "power3.out" },
+        1.57
+      );
+      tl.fromTo(
+        "#icon-money",
+        { scale: 0, rotation: -14 },
+        { scale: 1, rotation: 0, duration: 0.42, ease: "power3.out" },
+        1.57
+      );
+
+      // 2.12s (428130ms): Overlay label "VAY VỐN RỪNG LÂN CẬN" xuất hiện
+      tl.fromTo(
+        "#label-1-title",
+        { x: 22, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.4, ease: "power3.out" },
+        2.12
+      );
+      tl.fromTo(
+        "#label-1-sub",
+        { x: 16, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.35, ease: "power2.out" },
+        2.22
+      );
+      tl.fromTo(
+        "#step-1 .step-status",
+        { scale: 0.8, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.3, ease: "power3.out" },
+        2.3
+      );
+
+      // 2.85s: Mũi tên dẫn truyền từ Bước 1 sang Bước 2
+      tl.fromTo(
+        "#connector-1-2",
+        { scaleY: 0 },
+        { scaleY: 1, duration: 0.35, ease: "power2.out" },
+        2.85
+      );
+
+      // 3.31s (429320ms): Overlay icon "rise" xuất hiện
+      tl.fromTo(
+        "#step-2",
+        { y: 22, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.45, ease: "power3.out" },
+        3.31
+      );
+      tl.fromTo(
+        "#icon-rise",
+        { scale: 0, rotation: -14 },
+        { scale: 1, rotation: 0, duration: 0.42, ease: "power3.out" },
+        3.31
+      );
+
+      // 3.88s (429890ms): Overlay label "XÂY CÔNG TRÌNH HẠ TẦNG" xuất hiện
+      tl.fromTo(
+        "#label-2-title",
+        { x: 22, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.4, ease: "power3.out" },
+        3.88
+      );
+      tl.fromTo(
+        "#label-2-sub",
+        { x: 16, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.35, ease: "power2.out" },
+        3.98
+      );
+      tl.fromTo(
+        "#step-2 .step-status",
+        { scale: 0.8, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.3, ease: "power3.out" },
+        4.08
+      );
+
+      // 5.85s: Mũi tên dẫn truyền từ Bước 2 sang Bước 3
+      tl.fromTo(
+        "#connector-2-3",
+        { scaleY: 0 },
+        { scaleY: 1, duration: 0.35, ease: "power2.out" },
+        5.85
+      );
+
+      // 6.37s (432380ms): Overlay label "TẠO VIỆC LÀM & SỨC MUA" xuất hiện
+      tl.fromTo(
+        "#step-3",
+        { scale: 0.94, y: 22, opacity: 0 },
+        { scale: 1, y: 0, opacity: 1, duration: 0.5, ease: "power3.out" },
+        6.37
+      );
+      tl.fromTo(
+        "#icon-step-3",
+        { scale: 0 },
+        { scale: 1, duration: 0.4, ease: "power3.out" },
+        6.37
+      );
+      tl.fromTo(
+        "#label-3-title",
+        { x: 22, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.4, ease: "power3.out" },
+        6.37
+      );
+      tl.fromTo(
+        "#label-3-sub",
+        { x: 16, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.35, ease: "power2.out" },
+        6.47
+      );
+      tl.fromTo(
+        "#step-3 .step-status",
+        { scale: 0.8, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.35, ease: "power3.out" },
+        6.55
+      );
+
+      // Nhịp nhấn thị giác khẳng định mục tiêu phục hồi kinh tế
+      tl.fromTo(
+        "#step-3",
+        { scale: 1 },
+        { scale: 1.018, duration: 0.28, yoyo: true, repeat: 1, ease: "power2.out" },
+        7.15
+      );
+
+      // Đăng ký timeline cho HyperFrames
+      window.__timelines = window.__timelines || {};
+      window.__timelines["scene-s49"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

@@ -1,0 +1,562 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap"
+    />
+      <style>
+      :root {
+        --bg-paper: #e7e3d9;
+        --bg-card: #f5f0e4;
+        --ink: #141414;
+        --orange: #ff6a1a;
+        --grid-line: rgba(20, 20, 20, 0.32);
+        --on-dark: #f7f4ec;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        width: 1080px;
+        height: 1920px;
+        background-color: var(--bg-paper);
+        color: var(--ink);
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+      .clip {
+        position: absolute;
+        inset: 0;
+      }
+      .grid-bg {
+        position: absolute;
+        inset: 0;
+        background-color: var(--bg-paper);
+        background-image:
+          linear-gradient(var(--grid-line) 1.5px, transparent 1.5px),
+          linear-gradient(90deg, var(--grid-line) 1.5px, transparent 1.5px);
+        background-size: 84px 84px;
+        background-position: -1.5px -1.5px;
+        z-index: 1;
+      }
+      .grain-overlay {
+        position: absolute;
+        inset: 0;
+        filter: url(#grain-filter);
+        opacity: 0.18;
+        mix-blend-mode: multiply;
+        pointer-events: none;
+        z-index: 2;
+      }
+      .video-frame {
+        position: absolute;
+        left: 60px;
+        right: 60px;
+        top: 180px;
+        height: 600px;
+        border: 5px solid var(--ink);
+        border-radius: 18px;
+        background-color: var(--ink);
+        box-shadow: 10px 12px 0px var(--ink);
+        overflow: hidden;
+        z-index: 10;
+      }
+      .video-inner {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+      }
+      #bg-video {
+        width: 110%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+        max-width: none;
+      }
+      .tape {
+        position: absolute;
+        width: 110px;
+        height: 32px;
+        background: rgba(245, 240, 228, 0.85);
+        border: 1px solid rgba(20, 20, 20, 0.25);
+        z-index: 25;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+      }
+      .tape-tl {
+        top: 165px;
+        left: 90px;
+        transform: rotate(-6deg);
+      }
+      .tape-tr {
+        top: 165px;
+        right: 90px;
+        transform: rotate(5deg);
+      }
+      .peel-sheet {
+        position: absolute;
+        inset: 0;
+        background: var(--bg-paper);
+        background-image:
+          linear-gradient(var(--grid-line) 1.5px, transparent 1.5px),
+          linear-gradient(90deg, var(--grid-line) 1.5px, transparent 1.5px);
+        background-size: 84px 84px;
+        z-index: 50;
+        transform-origin: 0% 0%;
+        border-bottom: 8px solid var(--orange);
+      }
+      .scene-meta-tag {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 16px;
+        background: rgba(20, 20, 20, 0.9);
+        color: var(--on-dark);
+        border-radius: 6px;
+        font-size: 18px;
+        font-weight: 900;
+        letter-spacing: 1.2px;
+        z-index: 15;
+      }
+      .scene-meta-tag .dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--orange);
+      }
+      #flow-container {
+        position: absolute;
+        left: 60px;
+        right: 60px;
+        top: 820px;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        z-index: 20;
+      }
+      .flow-card {
+        padding: 22px 26px;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        gap: 22px;
+        opacity: 0;
+      }
+      #card-phase-1 {
+        background: var(--bg-card);
+        border: 4.5px solid var(--ink);
+        box-shadow: 8px 10px 0px var(--ink);
+      }
+      #card-phase-2 {
+        background: var(--ink);
+        border: 4.5px solid var(--orange);
+        box-shadow: 8px 10px 0px var(--orange);
+      }
+      .icon-box {
+        width: 76px;
+        height: 76px;
+        flex-shrink: 0;
+        display: grid;
+        place-items: center;
+      }
+      .icon-box svg {
+        width: 72px;
+        height: 72px;
+      }
+      .card-content {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+      .card-tag {
+        display: inline-block;
+        padding: 3px 8px;
+        background: var(--ink);
+        color: var(--orange);
+        border-radius: 4px;
+        font-size: 15px;
+        font-weight: 900;
+        letter-spacing: 1px;
+        width: fit-content;
+      }
+      .card-tag-alt {
+        background: transparent;
+        padding: 0;
+        color: var(--orange);
+      }
+      .card-title {
+        font-size: 32px;
+        font-weight: 900;
+        line-height: 1.25;
+      }
+      #card-phase-1 .card-title {
+        color: var(--ink);
+      }
+      #card-phase-2 .card-title {
+        color: var(--on-dark);
+      }
+      .flow-indicator {
+        align-self: center;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 18px;
+        background: var(--orange);
+        color: var(--ink);
+        border: 2px solid var(--ink);
+        border-radius: 20px;
+        font-size: 15px;
+        font-weight: 900;
+        letter-spacing: 1.2px;
+        box-shadow: 4px 4px 0px var(--ink);
+        opacity: 0;
+      }
+      #punch-container {
+        position: absolute;
+        left: 60px;
+        right: 60px;
+        top: 860px;
+        z-index: 30;
+      }
+      #punch-card {
+        background: var(--ink);
+        border: 6px solid var(--orange);
+        border-radius: 20px;
+        box-shadow: 14px 16px 0px var(--orange);
+        padding: 44px 36px;
+        text-align: center;
+        opacity: 0;
+      }
+      .punch-badge {
+        display: inline-block;
+        font-size: 19px;
+        font-weight: 900;
+        letter-spacing: 2px;
+        color: var(--orange);
+        margin-bottom: 14px;
+      }
+      .punch-title {
+        font-size: 64px;
+        font-weight: 900;
+        line-height: 1.2;
+        color: var(--on-dark);
+        margin: 0;
+        letter-spacing: -0.5px;
+      }
+      .punch-desc {
+        font-size: 26px;
+        font-weight: 700;
+        line-height: 1.35;
+        color: var(--bg-paper);
+        margin: 18px 0 0 0;
+      }
+      .bottom-brand-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 12px;
+        background: var(--orange);
+        z-index: 100;
+      }
+    </style>
+
+    <svg width="0" height="0" style="position: absolute">
+      <defs>
+        <filter id="grain-filter">
+          <feTurbulence
+            type="fractalNoise"
+            baseFrequency="0.85"
+            numOctaves="3"
+            stitchTiles="stitch"
+          />
+          <feColorMatrix type="saturate" values="0" />
+        </filter>
+      </defs>
+    </svg>
+
+    <div
+      id="root"
+      data-composition-id="scene-s40"
+      data-width="1080"
+      data-height="1920"
+      data-duration="5.89"
+    >
+      <div class="grid-bg"></div>
+      <div class="grain-overlay"></div>
+
+      <div class="video-frame">
+        <div class="video-inner" data-layout-allow-overflow="true">
+          <video
+            id="bg-video"
+            src="assets/vid-04-paper-cutout-cats-stock-meeting.mp4"
+            muted
+            playsinline
+            data-start="0"
+            data-duration="5.89"
+            data-media-start="2"
+            data-layout-allow-overflow="true"
+          ></video>
+        </div>
+        <div class="scene-meta-tag">
+          <div class="dot"></div>
+          HỘI ĐỒNG QUẢN TRỊ // KẾT SỔ TÀI CHÍNH
+        </div>
+      </div>
+
+      <div class="tape tape-tl"></div>
+      <div class="tape tape-tr"></div>
+
+      <div id="peel-sheet" class="peel-sheet" data-layout-ignore="true"></div>
+
+      <section
+        id="flow-clip"
+        class="clip"
+        data-start="0.8"
+        data-duration="3.4"
+      >
+        <div id="flow-container">
+          <div id="card-phase-1" class="flow-card">
+            <div class="icon-box">
+              <svg viewBox="0 0 72 72">
+                <path
+                  class="draw-path"
+                  d="M 8 64 L 64 64"
+                  stroke="#141414"
+                  stroke-width="4.5"
+                  stroke-linecap="round"
+                  fill="none"
+                />
+                <path
+                  class="draw-path"
+                  d="M 20 64 L 20 46"
+                  stroke="#FF6A1A"
+                  stroke-width="6"
+                  stroke-linecap="round"
+                  fill="none"
+                />
+                <path
+                  class="draw-path"
+                  d="M 36 64 L 36 32"
+                  stroke="#FF6A1A"
+                  stroke-width="6"
+                  stroke-linecap="round"
+                  fill="none"
+                />
+                <path
+                  class="draw-path"
+                  d="M 14 50 L 30 36 L 44 42 L 60 18"
+                  stroke="#FF6A1A"
+                  stroke-width="5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  fill="none"
+                />
+              </svg>
+            </div>
+            <div class="card-content">
+              <div class="card-tag">GIAI ĐOẠN 01 // KẾT QUẢ KINH DOANH</div>
+              <div class="card-title">DOANH THU KINH DOANH LÃI</div>
+            </div>
+          </div>
+
+          <div id="flow-arrow-badge" class="flow-indicator">
+            <span>▼ PHÂN PHỐI LỢI NHUẬN ▼</span>
+          </div>
+
+          <div id="card-phase-2" class="flow-card">
+            <div class="icon-box">
+              <svg viewBox="0 0 72 72">
+                <ellipse
+                  class="draw-path"
+                  cx="36"
+                  cy="20"
+                  rx="24"
+                  ry="10"
+                  stroke="#FF6A1A"
+                  stroke-width="4"
+                  fill="none"
+                />
+                <path
+                  class="draw-path"
+                  d="M 12 20 L 12 38 C 12 48, 60 48, 60 38 L 60 20"
+                  stroke="#FF6A1A"
+                  stroke-width="4"
+                  fill="none"
+                />
+                <path
+                  class="draw-path"
+                  d="M 12 38 L 12 56 C 12 66, 60 66, 60 56 L 60 38"
+                  stroke="#FF6A1A"
+                  stroke-width="4"
+                  fill="none"
+                />
+              </svg>
+            </div>
+            <div class="card-content">
+              <div class="card-tag card-tag-alt">GIAI ĐOẠN 02 // NGHĨA VỤ TÀI CHÍNH</div>
+              <div class="card-title">CHIA ĐỀU TỪNG CỔ ĐÔNG</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section
+        id="punch-clip"
+        class="clip"
+        data-start="4.2"
+        data-duration="1.69"
+      >
+        <div id="punch-container">
+          <div id="punch-card">
+            <div class="punch-badge">KHÁI NIỆM TÀI CHÍNH CỐT LÕI</div>
+            <h1 class="punch-title">PHÂN CHIA CỔ TỨC</h1>
+            <p class="punch-desc">Lợi nhuận chia cho người đã góp vốn sở hữu</p>
+          </div>
+        </div>
+      </section>
+
+      <div class="bottom-brand-bar"></div>
+    </div>
+
+    <script>
+      document.querySelectorAll(".draw-path").forEach((p) => {
+        const len = p.getTotalLength();
+        p.style.strokeDasharray = `${len}`;
+        p.style.strokeDashoffset = `${len}`;
+      });
+
+      const tl = gsap.timeline({ paused: true });
+
+      tl.fromTo(
+        "#peel-sheet",
+        { x: 0, y: 0, rotation: 0 },
+        {
+          x: -1200,
+          y: -460,
+          rotation: -22,
+          duration: 0.72,
+          ease: "power2.inOut",
+        },
+        0
+      );
+      tl.to("#peel-sheet", { opacity: 0, duration: 0.05 }, 0.72);
+
+      tl.fromTo(
+        "#bg-video",
+        { x: 0 },
+        {
+          x: -45,
+          duration: 5.89,
+          ease: "none",
+        },
+        0
+      );
+
+      tl.to(
+        "#card-phase-1 .draw-path",
+        {
+          strokeDashoffset: 0,
+          duration: 0.5,
+          stagger: 0.08,
+          ease: "power2.out",
+        },
+        0.97
+      );
+
+      tl.fromTo(
+        "#card-phase-1",
+        { scale: 0.88, opacity: 0, y: 20 },
+        {
+          scale: 1,
+          opacity: 1,
+          y: 0,
+          duration: 0.45,
+          ease: "power3.out",
+        },
+        1.1
+      );
+
+      tl.fromTo(
+        "#flow-arrow-badge",
+        { scale: 0.6, opacity: 0, y: -8 },
+        {
+          scale: 1,
+          opacity: 1,
+          y: 0,
+          duration: 0.35,
+          ease: "power3.out",
+        },
+        2.0
+      );
+
+      tl.to(
+        "#card-phase-2 .draw-path",
+        {
+          strokeDashoffset: 0,
+          duration: 0.6,
+          stagger: 0.1,
+          ease: "power2.out",
+        },
+        2.34
+      );
+
+      tl.fromTo(
+        "#card-phase-2",
+        { scale: 0.88, opacity: 0, y: 20 },
+        {
+          scale: 1,
+          opacity: 1,
+          y: 0,
+          duration: 0.45,
+          ease: "power3.out",
+        },
+        2.5
+      );
+
+      tl.to(
+        "#flow-container",
+        {
+          opacity: 0,
+          y: -16,
+          duration: 0.28,
+          ease: "power2.in",
+        },
+        3.92
+      );
+
+      tl.fromTo(
+        "#punch-card",
+        { scale: 0.85, opacity: 0, y: 28 },
+        {
+          scale: 1,
+          opacity: 1,
+          y: 0,
+          duration: 0.45,
+          ease: "power3.out",
+        },
+        4.25
+      );
+
+      window.__timelines["scene-s40"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

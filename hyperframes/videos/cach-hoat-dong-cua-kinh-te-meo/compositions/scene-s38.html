@@ -1,0 +1,613 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap"
+    />
+      <style>
+      * {
+        box-sizing: border-box;
+      }
+      html, body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        background-color: #E7E3D9;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: #E7E3D9;
+      }
+      /* Nền lưới ô vuông 84px đặc trưng của Vox Style DNA */
+      .grid-backdrop {
+        position: absolute;
+        inset: 0;
+        background-image: 
+          linear-gradient(to right, rgba(20, 20, 20, 0.16) 1.5px, transparent 1.5px),
+          linear-gradient(to bottom, rgba(20, 20, 20, 0.16) 1.5px, transparent 1.5px);
+        background-size: 84px 84px;
+        pointer-events: none;
+        z-index: 1;
+      }
+      /* Phủ hạt grain mô phỏng chất liệu giấy in thủ công */
+      .grain-overlay {
+        position: absolute;
+        inset: 0;
+        opacity: 0.18;
+        mix-blend-mode: multiply;
+        pointer-events: none;
+        z-index: 2;
+        background-image: radial-gradient(rgba(20, 20, 20, 0.35) 1px, transparent 0);
+        background-size: 6px 6px;
+      }
+      /* Perspective wrapper bên ngoài để hiệu ứng 3D flip hiển thị chính xác */
+      #stage-perspective-wrap {
+        position: absolute;
+        inset: 0;
+        perspective: 1200px;
+        z-index: 5;
+      }
+      /* Sân khấu 3D cho hiệu ứng transitionIn flip */
+      #scene-stage {
+        position: absolute;
+        inset: 0;
+        transform-style: preserve-3d;
+        transform-origin: 50% 50%;
+        will-change: transform, opacity;
+      }
+      /* Khung Video: Thẻ video duy nhất sở hữu thời lượng 0s - 8.95s */
+      #video-container {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+        z-index: 10;
+      }
+      #bg-video {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+        will-change: transform;
+      }
+      .video-tint {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(180deg, rgba(231, 227, 217, 0.25) 0%, rgba(20, 20, 20, 0.35) 100%);
+        mix-blend-mode: multiply;
+        pointer-events: none;
+      }
+      .vignette-band {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(180deg, rgba(20, 20, 20, 0.65) 0%, rgba(20, 20, 20, 0.05) 30%, rgba(20, 20, 20, 0.05) 70%, rgba(20, 20, 20, 0.7) 100%);
+        pointer-events: none;
+      }
+      /* Thanh cam nhận diện thương hiệu luôn cố định ở mép đáy */
+      .bottom-orange-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 14px;
+        background-color: #FF6A1A;
+        z-index: 900;
+      }
+      /* Quy ước chuẩn của HyperFrames: .clip có position: absolute; inset: 0 */
+      .clip {
+        position: absolute;
+        inset: 0;
+      }
+      .card-clip {
+        pointer-events: none;
+        z-index: 50;
+      }
+      /* Vị trí neo cho các card overlay trong dải an toàn (y: 160 - 1529) */
+      .card-anchor {
+        position: absolute;
+        left: 60px;
+        right: 60px;
+        top: 220px;
+      }
+      /* Các Card Editorial */
+      .editorial-card {
+        position: relative;
+        width: 100%;
+        border-radius: 12px;
+        will-change: transform, opacity;
+      }
+      /* Card 1 & 3: Phong cách nền kem viền mực đen */
+      .card-cream {
+        background-color: #F5F0E4;
+        border: 4px solid #141414;
+        box-shadow: 12px 12px 0px #141414;
+        padding: 32px 34px;
+        opacity: 0;
+      }
+      .card-row {
+        display: flex;
+        align-items: center;
+        gap: 28px;
+      }
+      .icon-box {
+        width: 104px;
+        height: 104px;
+        background: #141414;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+      .card-text-block {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .tag-badge {
+        display: inline-flex;
+        align-items: center;
+        background: #141414;
+        color: #F7F4EC;
+        border-left: 4px solid #FF6A1A;
+        font-size: 18px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        padding: 4px 14px;
+        border-radius: 4px;
+        width: fit-content;
+      }
+      .card-title-dark {
+        font-size: 42px;
+        font-weight: 900;
+        color: #141414;
+        line-height: 1.15;
+        margin: 0;
+        text-transform: uppercase;
+      }
+      .card-subtitle {
+        font-size: 21px;
+        font-weight: 700;
+        color: #141414;
+        margin: 0;
+      }
+      /* Card 2: Phong cách punch phrase nền đen viền cam */
+      .card-dark {
+        background-color: #141414;
+        border: 4px solid #FF6A1A;
+        box-shadow: 14px 14px 0px rgba(255, 106, 26, 0.45);
+        padding: 36px 42px;
+        opacity: 0;
+      }
+      .punch-label {
+        font-size: 20px;
+        font-weight: 700;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        color: #FF6A1A;
+        margin-bottom: 8px;
+      }
+      .punch-headline {
+        font-size: 60px;
+        font-weight: 900;
+        color: #F7F4EC;
+        line-height: 1.12;
+        margin: 0 0 24px 0;
+        text-transform: uppercase;
+      }
+      .diagram-container {
+        border-top: 2px dashed rgba(247, 244, 236, 0.25);
+        padding-top: 22px;
+        display: flex;
+        align-items: center;
+        gap: 32px;
+      }
+      .diagram-chart {
+        width: 124px;
+        height: 124px;
+        flex-shrink: 0;
+      }
+      .diagram-info {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .diagram-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 21px;
+        font-weight: 700;
+        color: #F7F4EC;
+      }
+      .share-dot {
+        width: 14px;
+        height: 14px;
+        border-radius: 3px;
+        flex-shrink: 0;
+      }
+      .share-orange { background-color: #FF6A1A; }
+      .share-cream { background-color: #F5F0E4; }
+      .share-gray { background-color: #A8A296; }
+      /* Card 3 có khoảng trống bên phải dành riêng cho con dấu */
+      #card-beat-3 {
+        padding-right: 160px;
+      }
+      /* Con dấu xác nhận cổ đông nằm trọn vẹn trong vùng của card */
+      #stamp-seal {
+        position: absolute;
+        right: 24px;
+        top: 20px;
+        width: 124px;
+        height: 124px;
+        border: 4px solid #FF6A1A;
+        border-radius: 50%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background: #141414;
+        color: #FF6A1A;
+        font-weight: 900;
+        box-shadow: 0 4px 14px rgba(20, 20, 20, 0.45);
+        opacity: 0;
+        will-change: transform, opacity;
+      }
+      .stamp-text-top {
+        font-size: 13px;
+        letter-spacing: 1px;
+        color: #F7F4EC;
+      }
+      .stamp-text-center {
+        font-size: 20px;
+        line-height: 1.1;
+        color: #FF6A1A;
+      }
+      /* Đường nét vẽ tay chuẩn SVG */
+      .draw-stroke {
+        fill: none;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+    </style>
+
+    <!-- Composition Root: Standalone 1080x1920 @ 8.95s -->
+    <div
+      id="root"
+      data-composition-id="scene-s38"
+      data-width="1080"
+      data-height="1920"
+      data-duration="8.95"
+    >
+      <!-- Nền giấy ngà và lưới ô vuông -->
+      <div class="grid-backdrop"></div>
+      <div class="grain-overlay"></div>
+
+      <!-- Khung phối cảnh 3D -->
+      <div id="stage-perspective-wrap">
+        <!-- Sân khấu phối cảnh cho chuyển cảnh flip -->
+        <div id="scene-stage">
+          <!-- Khung Video: Thẻ video duy nhất sở hữu thời lượng 0s - 8.95s -->
+          <div id="video-container">
+            <video
+              id="bg-video"
+              data-start="0"
+              data-duration="8.95"
+              data-track-index="0"
+              src="assets/vid-04-paper-cutout-cats-stock-meeting.mp4"
+              muted
+              playsinline
+            ></video>
+            <div class="video-tint"></div>
+            <div class="vignette-band"></div>
+          </div>
+
+          <!-- BEAT 1 (t = 1.2s - 4.2s): "GÓP CÁ MUA CỔ PHẦN" + Icon Money -->
+          <div id="clip-beat-1" class="clip card-clip" data-start="1.2" data-duration="3.0">
+            <div class="card-anchor">
+              <div id="card-beat-1" class="editorial-card card-cream">
+                <div class="card-row">
+                  <div class="icon-box">
+                    <svg width="76" height="76" viewBox="0 0 100 100">
+                      <circle
+                        id="coin-circle"
+                        class="draw-stroke"
+                        cx="50"
+                        cy="50"
+                        r="40"
+                        stroke="#FF6A1A"
+                        stroke-width="5"
+                      />
+                      <path
+                        id="fish-body"
+                        class="draw-stroke"
+                        d="M 28 50 C 38 38, 58 38, 70 50 C 58 62, 38 62, 28 50 Z"
+                        stroke="#F7F4EC"
+                        stroke-width="4.5"
+                      />
+                      <path
+                        id="fish-tail"
+                        class="draw-stroke"
+                        d="M 70 50 L 78 40 L 78 60 Z"
+                        stroke="#F7F4EC"
+                        stroke-width="4"
+                      />
+                      <circle cx="38" cy="48" r="2.5" fill="#FF6A1A" />
+                    </svg>
+                  </div>
+                  <div class="card-text-block">
+                    <div class="tag-badge">ĐÓNG GÓP TÀI SẢN</div>
+                    <h2 id="card-1-heading" class="card-title-dark">GÓP CÁ MUA CỔ PHẦN</h2>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- BEAT 2 (t = 4.2s - 6.2s): PUNCH PHRASE "CÔNG TY CỔ PHẦN" + Diagram Phân Chia Cổ Phần -->
+          <div id="clip-beat-2" class="clip card-clip" data-start="4.2" data-duration="2.0">
+            <div class="card-anchor">
+              <div id="card-beat-2" class="editorial-card card-dark">
+                <div class="punch-label">MÔ HÌNH DOANH NGHIỆP</div>
+                <h1 class="punch-headline">CÔNG TY CỔ PHẦN</h1>
+
+                <div class="diagram-container">
+                  <div class="diagram-chart">
+                    <svg width="124" height="124" viewBox="0 0 140 140">
+                      <!-- Lát 1: Mèo chủ trì 45% (Cam) -->
+                      <path
+                        id="pie-slice-1"
+                        d="M 74 66 L 74 12 A 54 54 0 0 1 125 82 Z"
+                        fill="#FF6A1A"
+                        stroke="#141414"
+                        stroke-width="3"
+                      />
+                      <!-- Lát 2: Mèo rừng nhóm A 30% (Kem) -->
+                      <path
+                        id="pie-slice-2"
+                        d="M 68 72 L 119 88 A 54 54 0 0 1 14 72 Z"
+                        fill="#F5F0E4"
+                        stroke="#141414"
+                        stroke-width="3"
+                      />
+                      <!-- Lát 3: Mèo rừng nhóm B 25% (Xám) -->
+                      <path
+                        id="pie-slice-3"
+                        d="M 68 68 L 14 68 A 54 54 0 0 1 68 14 Z"
+                        fill="#A8A296"
+                        stroke="#141414"
+                        stroke-width="3"
+                      />
+                    </svg>
+                  </div>
+                  <div class="diagram-info">
+                    <div class="diagram-row">
+                      <span class="share-dot share-orange"></span>
+                      <span>45% CỔ PHẦN: MÈO CHỦ TRÌ</span>
+                    </div>
+                    <div class="diagram-row">
+                      <span class="share-dot share-cream"></span>
+                      <span>30% CỔ PHẦN: MÈO RỪNG A</span>
+                    </div>
+                    <div class="diagram-row">
+                      <span class="share-dot share-gray"></span>
+                      <span>25% CỔ PHẦN: MÈO RỪNG B</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- BEAT 3 (t = 6.2s - 8.95s): "TƯ CÁCH CỔ ĐÔNG" + Document & Stamp -->
+          <div id="clip-beat-3" class="clip card-clip" data-start="6.2" data-duration="2.75">
+            <div class="card-anchor">
+              <div id="card-beat-3" class="editorial-card card-cream">
+                <div class="card-row">
+                  <div class="icon-box">
+                    <svg width="76" height="76" viewBox="0 0 100 100">
+                      <rect
+                        id="doc-frame"
+                        class="draw-stroke"
+                        x="22"
+                        y="14"
+                        width="56"
+                        height="72"
+                        rx="5"
+                        stroke="#FF6A1A"
+                        stroke-width="4.5"
+                      />
+                      <line
+                        id="doc-line-1"
+                        class="draw-stroke"
+                        x1="32"
+                        y1="28"
+                        x2="68"
+                        y2="28"
+                        stroke="#F7F4EC"
+                        stroke-width="4"
+                      />
+                      <line
+                        id="doc-line-2"
+                        class="draw-stroke"
+                        x1="32"
+                        y1="40"
+                        x2="68"
+                        y2="40"
+                        stroke="#F7F4EC"
+                        stroke-width="3"
+                      />
+                      <line
+                        id="doc-line-3"
+                        class="draw-stroke"
+                        x1="32"
+                        y1="52"
+                        x2="56"
+                        y2="52"
+                        stroke="#F7F4EC"
+                        stroke-width="3"
+                      />
+                      <circle cx="56" cy="68" r="7" fill="#FF6A1A" />
+                    </svg>
+                  </div>
+                  <div class="card-text-block">
+                    <div class="tag-badge">QUYỀN LỢI ĐÍNH KÈM</div>
+                    <h2 class="card-title-dark">TƯ CÁCH CỔ ĐÔNG</h2>
+                    <p class="card-subtitle">SỞ HỮU MỘT PHẦN CÔNG TY MÈO</p>
+                  </div>
+                </div>
+
+                <!-- Con dấu xác nhận cổ đông đóng xuống ở 7.84s -->
+                <div id="stamp-seal">
+                  <span class="stamp-text-top">XÁC NHẬN</span>
+                  <span class="stamp-text-center">CỔ ĐÔNG</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Dải cam thương hiệu mép đáy khung hình -->
+      <div class="bottom-orange-bar"></div>
+    </div>
+
+    <!-- GSAP Seekable Timeline Runtime -->
+    <script>
+      // Thiết lập nét vẽ SVG tự động bằng getTotalLength chuẩn
+      document.querySelectorAll(".draw-stroke").forEach((path) => {
+        let len = 200;
+        try {
+          if (typeof path.getTotalLength === "function") {
+            len = Math.ceil(path.getTotalLength());
+          }
+        } catch (e) {
+          len = 200;
+        }
+        path.style.strokeDasharray = len;
+        path.style.strokeDashoffset = len;
+      });
+
+      // Tạo timeline chính duy nhất và đăng ký paused
+      const tl = gsap.timeline({ paused: true });
+
+      // 0s: Transition In "flip" mở sân khấu 3D
+      tl.fromTo(
+        "#scene-stage",
+        { rotationY: -14, scale: 0.94, opacity: 0 },
+        { rotationY: 0, scale: 1, opacity: 1, duration: 0.65, ease: "power3.out" },
+        0
+      );
+
+      // Camera pan-right mượt mà suốt thời lượng video
+      tl.fromTo(
+        "#bg-video",
+        { scale: 1.08, x: 30 },
+        { scale: 1.08, x: -30, duration: 8.95, ease: "none" },
+        0
+      );
+
+      // BEAT 1 (data-start="1.2", duration="3.0"): Card 1 & Icon Money xuất hiện
+      tl.fromTo(
+        "#card-beat-1",
+        { scale: 0.88, opacity: 0, y: 30 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.45, ease: "power3.out" },
+        1.32
+      );
+      tl.to("#coin-circle", { strokeDashoffset: 0, duration: 0.45, ease: "power2.out" }, 1.4);
+      tl.to("#fish-body", { strokeDashoffset: 0, duration: 0.4, ease: "power2.out" }, 1.6);
+      tl.to("#fish-tail", { strokeDashoffset: 0, duration: 0.3, ease: "power2.out" }, 1.8);
+
+      // 2.55s: Nhấn mạnh tiêu đề Góp Cá Mua Cổ Phần
+      tl.to(
+        "#card-1-heading",
+        { scale: 1.05, duration: 0.18, ease: "power2.out" },
+        2.55
+      );
+      tl.to(
+        "#card-1-heading",
+        { scale: 1.0, duration: 0.18, ease: "power2.in" },
+        2.73
+      );
+
+      // 3.90s: Card 1 thu lại trước khi clip 1 kết thúc ở 4.2s
+      tl.to(
+        "#card-beat-1",
+        { opacity: 0, y: -20, scale: 0.96, duration: 0.25, ease: "power2.in" },
+        3.9
+      );
+
+      // BEAT 2 (data-start="4.2", duration="2.0"): PUNCH PHRASE "CÔNG TY CỔ PHẦN" & Diagram Pie Shares
+      tl.fromTo(
+        "#card-beat-2",
+        { scale: 0.88, opacity: 0, y: 32 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.45, ease: "power3.out" },
+        4.35
+      );
+      tl.fromTo(
+        "#pie-slice-1",
+        { scale: 0.5, opacity: 0, transformOrigin: "74px 66px" },
+        { scale: 1, opacity: 1, duration: 0.4, ease: "power3.out" },
+        4.5
+      );
+      tl.fromTo(
+        "#pie-slice-2",
+        { scale: 0.5, opacity: 0, transformOrigin: "68px 72px" },
+        { scale: 1, opacity: 1, duration: 0.4, ease: "power3.out" },
+        4.6
+      );
+      tl.fromTo(
+        "#pie-slice-3",
+        { scale: 0.5, opacity: 0, transformOrigin: "68px 68px" },
+        { scale: 1, opacity: 1, duration: 0.4, ease: "power3.out" },
+        4.7
+      );
+
+      // 5.95s: Card 2 exit trước khi clip 2 kết thúc ở 6.2s
+      tl.to(
+        "#card-beat-2",
+        { opacity: 0, y: -18, scale: 0.96, duration: 0.2, ease: "power2.in" },
+        5.95
+      );
+
+      // BEAT 3 (data-start="6.2", duration="2.75"): Card 3 & Chứng chỉ cổ đông
+      tl.fromTo(
+        "#card-beat-3",
+        { scale: 0.88, opacity: 0, y: 30 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.45, ease: "power3.out" },
+        6.25
+      );
+      tl.to("#doc-frame", { strokeDashoffset: 0, duration: 0.45, ease: "power2.out" }, 6.35);
+      tl.to("#doc-line-1", { strokeDashoffset: 0, duration: 0.35, ease: "power2.out" }, 6.6);
+      tl.to("#doc-line-2", { strokeDashoffset: 0, duration: 0.3, ease: "power2.out" }, 6.8);
+      tl.to("#doc-line-3", { strokeDashoffset: 0, duration: 0.25, ease: "power2.out" }, 7.0);
+
+      // 7.84s: Đóng con dấu cổ đông dứt khoát
+      tl.fromTo(
+        "#stamp-seal",
+        { scale: 2.2, opacity: 0, rotation: -26 },
+        { scale: 1, opacity: 1, rotation: -8, duration: 0.32, ease: "power4.out" },
+        7.84
+      );
+
+      // Đăng ký timeline chính thức cho HyperFrames seek
+      window.__timelines["scene-s38"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

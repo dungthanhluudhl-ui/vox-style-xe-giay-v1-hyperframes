@@ -1,0 +1,574 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        padding: 0;
+        width: 1080px;
+        height: 1920px;
+        background-color: #E7E3D9;
+        font-family: "Be Vietnam Pro", sans-serif;
+        color: #141414;
+        overflow: hidden;
+      }
+
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        background-color: #E7E3D9;
+        overflow: hidden;
+      }
+
+      /* Quy ước bắt buộc: .clip có position: absolute; inset: 0 */
+      .clip {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+        pointer-events: none;
+      }
+
+      /* ==================== 1. VIDEO LAYER & GRAIN ==================== */
+      #scene-video {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 1080px;
+        height: 1920px;
+        object-fit: cover;
+        opacity: 0.90;
+        z-index: 2;
+        transform-origin: 50% 50%;
+        will-change: transform, opacity;
+      }
+
+      /* Lớp phủ giấy ngà nhẹ để hòa trộn video vào phong cách Vox collage */
+      .video-tint {
+        position: absolute;
+        inset: 0;
+        background: #E7E3D9;
+        mix-blend-mode: color;
+        opacity: 0.22;
+        pointer-events: none;
+        z-index: 3;
+      }
+
+      /* Grain overlay 18% opacity, mix-blend-mode: multiply đặt trên video */
+      .grain-overlay {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        opacity: 0.18;
+        mix-blend-mode: multiply;
+        pointer-events: none;
+        z-index: 4;
+      }
+
+      /* ==================== 2. CHART BACKGROUND (NO TEXT LABELS) ==================== */
+      /* Style DNA: 4 đường kẻ ngang đậm ở 20, 40, 60, 80% chiều cao + left-edge orange tick marks */
+      #chart-bg {
+        position: absolute;
+        inset: 0;
+        z-index: 5;
+        pointer-events: none;
+      }
+
+      .chart-line {
+        position: absolute;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: rgba(20, 20, 20, 0.32);
+        display: flex;
+        align-items: center;
+      }
+
+      .line-20 { top: 384px; }
+      .line-40 { top: 768px; }
+      .line-60 { top: 1152px; }
+      .line-80 { top: 1536px; }
+
+      .chart-tick {
+        width: 24px;
+        height: 6px;
+        background-color: #FF6A1A;
+        margin-left: 40px;
+      }
+
+      /* ==================== 3. OVERLAYS ==================== */
+
+      /* Overlay 1 & 2: Check icon + SẢN XUẤT HOẠT ĐỘNG LẠI */
+      #clip-production {
+        z-index: 10;
+      }
+
+      .badge-card {
+        position: absolute;
+        top: 240px;
+        left: 60px;
+        height: auto;
+        background-color: #F5F0E4;
+        border: 4px solid #141414;
+        box-shadow: 8px 8px 0px #141414;
+        padding: 24px 32px;
+        display: flex;
+        align-items: center;
+        gap: 24px;
+        transform-origin: left center;
+        will-change: transform, opacity;
+      }
+
+      .check-svg-box {
+        width: 64px;
+        height: 64px;
+        flex-shrink: 0;
+      }
+
+      .badge-content {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      .badge-kicker {
+        font-size: 22px;
+        font-weight: 700;
+        color: #141414;
+        letter-spacing: 1.5px;
+      }
+
+      .badge-title {
+        font-size: 34px;
+        font-weight: 900;
+        color: #141414;
+        line-height: 1.25;
+      }
+
+      /* Overlay 3: Rise icon & GDP Trend curve */
+      #clip-rise {
+        z-index: 11;
+      }
+
+      .trend-card {
+        position: absolute;
+        top: 1040px;
+        left: 60px;
+        right: 60px;
+        height: auto;
+        background-color: #F5F0E4;
+        border: 4px solid #141414;
+        box-shadow: 10px 10px 0px #141414;
+        padding: 28px 36px;
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+        will-change: transform, opacity;
+      }
+
+      .trend-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .trend-tag {
+        font-size: 26px;
+        font-weight: 900;
+        color: #141414;
+        letter-spacing: 1px;
+      }
+
+      .trend-pill {
+        background-color: #141414;
+        color: #F7F4EC;
+        font-size: 22px;
+        font-weight: 900;
+        padding: 8px 18px;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .pill-arrow {
+        color: #FF6A1A;
+        font-size: 24px;
+      }
+
+      .trend-svg-wrap {
+        width: 100%;
+        height: 180px;
+      }
+
+      /* Overlay 4: Punch-phrase CHÍNH SÁCH TÀI KHÓA */
+      #clip-punch {
+        z-index: 12;
+      }
+
+      .punch-card {
+        position: absolute;
+        top: 480px;
+        left: 60px;
+        right: 60px;
+        height: auto;
+        background-color: #141414;
+        border-left: 14px solid #FF6A1A;
+        box-shadow: 12px 12px 0px rgba(20, 20, 20, 0.4);
+        padding: 44px 48px;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        transform-origin: center center;
+        will-change: transform, opacity;
+      }
+
+      .punch-kicker {
+        font-size: 24px;
+        font-weight: 700;
+        color: #FF6A1A;
+        letter-spacing: 3px;
+      }
+
+      .punch-heading {
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .punch-word-1 {
+        font-size: 64px;
+        font-weight: 900;
+        color: #F7F4EC;
+        line-height: 1.1;
+        letter-spacing: -0.5px;
+      }
+
+      .punch-word-2 {
+        font-size: 72px;
+        font-weight: 900;
+        color: #FF6A1A;
+        line-height: 1.1;
+        letter-spacing: -0.5px;
+      }
+
+      /* Overlay 5: Label PHỤC HỒI KINH TẾ */
+      #clip-summary {
+        z-index: 13;
+      }
+
+      .summary-card {
+        position: absolute;
+        top: 600px;
+        left: 80px;
+        right: 80px;
+        height: auto;
+        background-color: #141414;
+        border: 4px solid #141414;
+        box-shadow: 10px 10px 0px #FF6A1A;
+        padding: 38px 44px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        transform-origin: center center;
+        will-change: transform, opacity;
+      }
+
+      .summary-kicker {
+        font-size: 22px;
+        font-weight: 700;
+        color: #FF6A1A;
+        letter-spacing: 2px;
+      }
+
+      .summary-title {
+        font-size: 54px;
+        font-weight: 900;
+        color: #F7F4EC;
+        line-height: 1.2;
+      }
+
+      .summary-decor-bar {
+        width: 100%;
+        height: 6px;
+        background-color: #FF6A1A;
+        margin-top: 10px;
+        transform-origin: left center;
+      }
+
+      /* ==================== 4. THANH CAM ĐÁY CỐ ĐỊNH ==================== */
+      .signature-bottom-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 12px;
+        background-color: #FF6A1A;
+        z-index: 100;
+      }
+    </style>
+
+    <!-- Root composition: 1080x1920, 7.91s duration (442760ms - 434850ms) -->
+    <div
+      id="root"
+      data-composition-id="scene-s50"
+      data-start="0"
+      data-width="1080"
+      data-height="1920"
+      data-duration="7.91"
+    >
+      <!-- Timed Media Element: vid-05 có data-start="0" và data-duration="7.91" trực tiếp -->
+      <video
+        id="scene-video"
+        data-start="0"
+        data-duration="7.91"
+        data-track-index="0"
+        data-media-start="0"
+        src="assets/vid-05-paper-cutout-public-debt-loan.mp4"
+        muted
+        playsinline
+        preload="auto"
+      ></video>
+
+      <!-- Video Tint Overlay -->
+      <div class="video-tint"></div>
+
+      <!-- SVG Grain Filter (persistent overlay trên video) -->
+      <svg class="grain-overlay" aria-hidden="true">
+        <filter id="noiseFilter">
+          <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="3" stitchTiles="stitch" />
+        </filter>
+        <rect width="100%" height="100%" filter="url(#noiseFilter)" />
+      </svg>
+
+      <!-- Background Chart Grid: 4 đường kẻ ngang + tick cam (thuần visual motif, không text) -->
+      <div id="chart-bg">
+        <div class="chart-line line-20"><div class="chart-tick"></div></div>
+        <div class="chart-line line-40"><div class="chart-tick"></div></div>
+        <div class="chart-line line-60"><div class="chart-tick"></div></div>
+        <div class="chart-line line-80"><div class="chart-tick"></div></div>
+      </div>
+
+      <!-- Clip 1: Icon Check + Label "SẢN XUẤT HOẠT ĐỘNG LẠI" (0.67s -> 3.60s) -->
+      <div id="clip-production" class="clip" data-start="0.67" data-duration="2.93" data-track-index="1">
+        <div id="production-card" class="badge-card">
+          <div class="check-svg-box">
+            <svg viewBox="0 0 64 64" width="64" height="64">
+              <circle cx="32" cy="32" r="28" fill="#141414" stroke="#FF6A1A" stroke-width="3.5" />
+              <path
+                id="check-path"
+                d="M18 33 L28 43 L46 21"
+                fill="none"
+                stroke="#FF6A1A"
+                stroke-width="5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </div>
+          <div id="production-text" class="badge-content">
+            <span class="badge-kicker">HOẠT ĐỘNG</span>
+            <span class="badge-title">SẢN XUẤT HOẠT ĐỘNG LẠI</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Clip 2: Icon Rise & Trend GDP Vector (2.55s -> 4.75s) -->
+      <div id="clip-rise" class="clip" data-start="2.55" data-duration="2.20" data-track-index="2">
+        <div id="rise-card" class="trend-card">
+          <div class="trend-header">
+            <span class="trend-tag">TĂNG TRƯỞNG KINH TẾ</span>
+            <div class="trend-pill">
+              <span class="pill-arrow">▲</span>
+              <span>VỌT THẲNG</span>
+            </div>
+          </div>
+          <div class="trend-svg-wrap">
+            <svg id="trend-svg" viewBox="0 0 880 180" width="100%" height="100%">
+              <line x1="20" y1="150" x2="860" y2="150" stroke="rgba(20,20,20,0.25)" stroke-width="2" stroke-dasharray="6 6" />
+              <line x1="20" y1="90" x2="860" y2="90" stroke="rgba(20,20,20,0.25)" stroke-width="2" stroke-dasharray="6 6" />
+              <line x1="20" y1="30" x2="860" y2="30" stroke="rgba(20,20,20,0.25)" stroke-width="2" stroke-dasharray="6 6" />
+              <path
+                id="trend-path"
+                d="M 30 150 L 220 142 L 400 125 C 540 110, 640 65, 740 28 L 820 18"
+                fill="none"
+                stroke="#FF6A1A"
+                stroke-width="7"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <polygon id="trend-arrowhead" points="840,16 808,8 818,36" fill="#FF6A1A" style="transform-origin: 820px 18px;" />
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- Clip 3: Punch-phrase "CHÍNH SÁCH TÀI KHÓA" (4.06s -> 5.86s) -->
+      <div id="clip-punch" class="clip" data-start="4.06" data-duration="1.80" data-track-index="1">
+        <div id="punch-card" class="punch-card">
+          <span class="punch-kicker">ĐỘNG LỰC CỐT LÕI</span>
+          <div class="punch-heading">
+            <span class="punch-word-1">CHÍNH SÁCH</span>
+            <span class="punch-word-2">TÀI KHÓA</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Clip 4: Label "PHỤC HỒI KINH TẾ" (6.25s -> 7.91s) -->
+      <div id="clip-summary" class="clip" data-start="6.25" data-duration="1.66" data-track-index="2">
+        <div id="summary-card" class="summary-card">
+          <span class="summary-kicker">KẾT QUẢ TỔNG THỂ</span>
+          <span class="summary-title">PHỤC HỒI KINH TẾ</span>
+          <div id="summary-bar" class="summary-decor-bar"></div>
+        </div>
+      </div>
+
+      <!-- Thanh cam đáy cố định nhận diện thương hiệu -->
+      <div class="signature-bottom-bar"></div>
+    </div>
+
+    <!-- GSAP Animation Script -->
+    <script>
+      // Đăng ký timeline chính, paused: true theo HyperFrames contract
+      const tl = gsap.timeline({ paused: true });
+
+      // 1. SETUP SVG PATHS (Đo độ dài thực tế cho stroke-dashoffset)
+      const checkPath = document.getElementById("check-path");
+      const checkLen = checkPath.getTotalLength();
+      checkPath.style.strokeDasharray = `${checkLen}`;
+      checkPath.style.strokeDashoffset = `${checkLen}`;
+
+      const trendPath = document.getElementById("trend-path");
+      const trendLen = trendPath.getTotalLength();
+      trendPath.style.strokeDasharray = `${trendLen}`;
+      trendPath.style.strokeDashoffset = `${trendLen}`;
+
+      // 2. ENTRANCE TRANSITION & CAMERA MOTION: Unfold mở rộng + Zoom-out êm
+      // Unfold mở rộng khung hình lúc t = 0 -> 0.75s
+      tl.fromTo(
+        "#scene-video",
+        { scaleY: 0.35, scaleX: 0.92, opacity: 0 },
+        { scaleY: 1.08, scaleX: 1.08, opacity: 0.90, duration: 0.75, ease: "power3.out" },
+        0
+      );
+
+      // Camera Zoom-out từ 1.08 về 1.00 suốt thời lượng còn lại
+      tl.to(
+        "#scene-video",
+        { scaleX: 1.0, scaleY: 1.0, duration: 7.16, ease: "none" },
+        0.75
+      );
+
+      // 3. OVERLAY 1 & 2: Check icon (0.67s) + Label SẢN XUẤT HOẠT ĐỘNG LẠI (1.40s)
+      // Thẻ badge xuất hiện lúc 0.67s với spring-pop settle (power3.out)
+      tl.fromTo(
+        "#production-card",
+        { scale: 0.85, opacity: 0, y: -25 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.45, ease: "power3.out" },
+        0.67
+      );
+
+      // Check icon vẽ đường nét mực cam lúc 0.75s
+      tl.fromTo(
+        checkPath,
+        { strokeDashoffset: checkLen },
+        { strokeDashoffset: 0, duration: 0.45, ease: "power2.out" },
+        0.75
+      );
+
+      // Label "SẢN XUẤT HOẠT ĐỘNG LẠI" xuất hiện bổ sung lúc 1.40s
+      tl.fromTo(
+        "#production-text",
+        { opacity: 0, x: -18 },
+        { opacity: 1, x: 0, duration: 0.40, ease: "power2.out" },
+        1.40
+      );
+
+      // Thẻ fade out êm lúc 3.20s trước khi clip kết thúc ở 3.60s
+      tl.to(
+        "#production-card",
+        { opacity: 0, y: -20, duration: 0.35, ease: "power2.in" },
+        3.20
+      );
+
+      // 4. OVERLAY 3: Icon Rise & Trendline tăng trưởng GDP (2.55s -> 4.75s)
+      tl.fromTo(
+        "#rise-card",
+        { scale: 0.90, opacity: 0, y: 35 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.45, ease: "power3.out" },
+        2.55
+      );
+
+      // Đường biểu đồ GDP vọt thẳng lên trên nền chart
+      tl.fromTo(
+        trendPath,
+        { strokeDashoffset: trendLen },
+        { strokeDashoffset: 0, duration: 0.70, ease: "power2.out" },
+        2.65
+      );
+
+      // Đầu mũi tên bật ra xác lập đỉnh phục hồi
+      tl.fromTo(
+        "#trend-arrowhead",
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.30, ease: "power3.out" },
+        3.30
+      );
+
+      // Thẻ trend fade out lúc 4.40s trước khi clip kết thúc ở 4.75s
+      tl.to(
+        "#rise-card",
+        { opacity: 0, y: -15, duration: 0.30, ease: "power2.in" },
+        4.40
+      );
+
+      // 5. OVERLAY 4: Punch-phrase "CHÍNH SÁCH TÀI KHÓA" (4.06s -> 5.86s)
+      // Entrance pop dứt khoát lúc 4.06s
+      tl.fromTo(
+        "#punch-card",
+        { scale: 0.88, opacity: 0, y: 30 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.48, ease: "power3.out" },
+        4.06
+      );
+
+      // Giữ chắc khung hình > 1.6s theo quy tắc punch phrase rồi fade out lúc 5.50s
+      tl.to(
+        "#punch-card",
+        { opacity: 0, scale: 0.96, duration: 0.30, ease: "power2.in" },
+        5.50
+      );
+
+      // 6. OVERLAY 5: Label "PHỤC HỒI KINH TẾ" (6.25s -> 7.91s)
+      tl.fromTo(
+        "#summary-card",
+        { scale: 0.92, opacity: 0, y: 20 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.42, ease: "power3.out" },
+        6.25
+      );
+
+      // Thanh gạch chân cam kéo dài xác lập kết quả
+      tl.fromTo(
+        "#summary-bar",
+        { scaleX: 0 },
+        { scaleX: 1, duration: 0.38, ease: "power2.out" },
+        6.45
+      );
+
+      // Đăng ký timeline chính vào HyperFrames runtime
+      window.__timelines["scene-s50"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>
