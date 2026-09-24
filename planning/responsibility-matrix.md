@@ -296,6 +296,39 @@ HyperFrames-cụ-thể tổng quát hoá được (contrast, template-literal se
 
 **Bug thật đã sửa ở tầng ráp (`sync-root-hf-lib.mjs`), áp dụng cho MỌI video:** CSS `.clip` (style mọi slot `data-composition-src` trong `index.html`) phải có `isolation: isolate` — thiếu dòng này, z-index dùng NỘI BỘ trong 1 scene có thể thoát stacking context và đè lên slot khác (kể cả `caption-track` dù luôn nằm sau trong DOM). Xem memory `feedback_incremental_buildout` bài học #5 để biết đầy đủ cách phát hiện + tại sao track-index không liên quan.
 
+**Bug render TRỐNG HÌNH (S23/S47, video `cach-hoat-dong-cua-kinh-te-meo`) — CONFIRMED thật nhưng
+nguyên nhân gốc CHƯA xác định được, KHÔNG có chặn tự động (điều tra 2026-09-24):**
+- **Đã confirmed thật** (qua vision QA/điều tra trực tiếp, không phải suy đoán): CHỈ S23 và S47
+  render trống dù `hyperframes check` PASS hoàn toàn — đã sửa bằng regenerate Stage 7 (commit
+  `2a31aab`).
+- **Đính chính 1 lỗi tài liệu đã tự lan truyền:** bản ghi trước đó của mục này từng nói S38 cũng
+  "CONFIRMED trống qua vision QA" — SAI, đã kiểm tra lại và không có căn cứ. Theo
+  `planning/README.md:180` (nhật ký build gốc), S38 thực ra là 1 trong 3 báo động giả của reviewer
+  (cùng S25/S27) — `hyperframes check` thực tế hoàn toàn sạch, không hề có bằng chứng trống hình.
+  Không có file nào trong repo ghi nhận từng chạy vision QA trên S38. Claim sai này tự nó bắt nguồn
+  từ 1 tài liệu kế hoạch trước đó mà Claude tin theo mà không kiểm chứng lại bằng dữ liệu thật
+  trong repo — bài học: luôn tra lại nguồn gốc (`run-log.md`/`planning/README.md`/`codegen-issues.jsonl`)
+  trước khi ghi 1 claim "đã confirmed" vào tài liệu dự án, không chép lại nguyên văn từ kế hoạch cũ.
+- **Giả thuyết ban đầu (rút ra từ bisection HẸP, chỉ trong phạm vi S23/S47) đã bị bác bỏ khi kiểm
+  chứng rộng hơn trên cả 51 scene bằng regex tất định:**
+  - Pattern "1 tween GSAP full-duration + `ease:\"none\"` trên hero": khớp 30/51 scene (59%), gồm
+    cả S24/S31 — 2 scene đã xác nhận render TỐT trước đó. Đây là kỹ thuật Ken Burns pan/zoom
+    chuẩn dùng khắp video, KHÔNG phải chỉ báo lỗi.
+  - Pattern CSS `perspective`/`transform-style: preserve-3d`: khớp 3/51 scene (S13, S32, S38).
+    Sau khi đính chính S38 ở trên, KHÔNG còn scene nào trong 3 ca này có bằng chứng thật là trống
+    hình — S13/S32 người dùng tự xem video xác nhận bình thường, S38 là báo động giả reviewer.
+    Pattern này KHÔNG phải chỉ báo đáng tin.
+- **Kết luận:** nguyên nhân gốc thật của lỗi render trống ở S23/S47 chưa xác định được ở mức
+  pattern cấu trúc tất định — có thể là lỗi hiếm/ngẫu nhiên (timing, headless Chrome/GPU capture),
+  không phải quy tắc code cụ thể có thể chặn bằng regex. Đã thử viết code chặn tĩnh cho
+  `scripts/lib/hf-check.mjs`/`07-codegen.hf.router.mjs`/`07b-integration-check.hf.mjs` rồi
+  **revert lại hoàn toàn** vì false-positive quá cao (sẽ chặn nhầm phần lớn scene hợp lệ tương
+  lai).
+- **Quyết định (người dùng, 2026-09-24):** KHÔNG đầu tư thêm công cụ/điều tra lúc này — chỉ ghi
+  chú lại để theo dõi thủ công. Nếu lỗi render-trống tái diễn ở video khác hoặc tần suất tăng lên,
+  audit lại từ đầu (không dựa trên 2 giả thuyết đã bác bỏ này). Không mở lại việc sửa/điều tra
+  S13/S32/S38.
+
 ### Sự cố integration CSS sau Stage 7 — video `su-kien-thien-an-mon`, S10 (2026-09-22)
 
 **Trạng thái:** đã audit và xác nhận nguyên nhân; **chưa sửa code**. Đây là backlog cải tiến cho
@@ -662,7 +695,9 @@ hoặc người dùng nhắc lại.
 **P1 — tốc độ và độ tin cậy:**
 
 1. ✅ Ghi dependency DAG/bảng `depends_on` cho Stage 1/2/2b/3/5; mặc định chạy Stage 1 + 2b song
-   song, rồi Stage 3 ngay sau 2b. (Đã tài liệu hoá ở mục 2b bên trên.)
+   song, rồi Stage 3 ngay sau 2b. (Đã tài liệu hoá ở mục 2b bên trên.) Từ nay DAG này CŨNG được
+   enforce trực tiếp trong code qua `scripts/run-stages-1-6.mjs` (`Promise.all` cho 2 nhánh, Stage
+   5/6 chỉ chạy sau khi cả 2 nhánh settle), không chỉ dừng ở tài liệu.
 2. ✅ Chính thức hoá Stage 7b assembled integration check. (`scripts/07b-integration-check.hf.mjs`,
    commit `91edca2`.)
 3. ✅ Thêm caption safe-zone contract vào generator/reviewer/fixture verify. (`scripts/lib/caption-zone.mjs`

@@ -20,9 +20,8 @@ phong cách trong một lưới ảnh.
   Cam là màu DUY NHẤT được dùng làm điểm nhấn — không thêm màu nhấn thứ hai.
 - **Font**: Be Vietnam Pro, weight 700/900 (chỉ dùng nét đậm/rất đậm, không dùng regular
   cho tiêu đề), hỗ trợ dấu tiếng Việt đầy đủ.
-- **Nền cảnh mặc định**: lưới ô vuông 84px, nét `rgba(20,20,20,0.32)`, phủ lớp grain (hạt
-  nhiễu) 18% opacity, blend "multiply" — cho cảm giác giấy thật chứ không phẳng lì kỹ
-  thuật số. Ba biến thể khác: `chart` (đường kẻ ngang đậm cho cảnh số liệu), `card` (nền
+- **Nền cảnh mặc định**: lưới ô vuông 84px, nét `rgba(20,20,20,0.32)`. Ba biến thể khác:
+  `chart` (đường kẻ ngang đậm cho cảnh số liệu), `card` (nền
   phẳng không lưới cho cảnh tiêu đề/trích dẫn), `spotlight` (vignette tối cho cảnh
   cảnh báo/hệ quả). **Chọn biến thể có chủ đích theo từng cảnh**, đừng để mọi cảnh dùng
   mặc định `grid`.

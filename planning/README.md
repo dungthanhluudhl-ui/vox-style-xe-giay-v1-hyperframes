@@ -18,6 +18,19 @@ cuối file) — không migrate lại, không phát triển tiếp trên nhánh 
 
 ## Các bước dựng 1 video (chạy với `--video=<slug>` ở mọi script `.router.mjs`)
 
+**Mặc định — chạy 1 lệnh duy nhất cho Stage 1-7:**
+```
+node scripts/run-stages-1-6.mjs --video=<slug>
+```
+Tự động hoá ĐÚNG 2 nhánh song song mô tả bên dưới (Stage 1-6, enforced trong code — không còn phụ
+thuộc trí nhớ agent), rồi tự chạy tiếp Stage 7 (`07-codegen-hf-parallel.mjs`) trừ khi truyền
+`--skip-stage7`. Hỗ trợ resume từ giữa khi cần sửa 1 nhánh riêng: `--transcript-from=1|2|skip`,
+`--media-from=2b|3|skip` (vd `--media-from=3` nếu Stage 2b đã chạy xong nhưng Stage 3 lỗi). Dừng
+lại sau Stage 7 — KHÔNG tự động chạy tiếp Stage 7b/8/9 (integration check/render), vẫn cần chạy tay
+bước 9-10 dưới đây sau khi Stage 7 xong.
+
+### Chạy tay từng bước (debug/resume 1 phần, vd `--issue-file=...`, hoặc khi orchestrator trên chưa đủ)
+
 Bước 1-4 chạy theo **2 nhánh song song** (mặc định đã kiểm chứng thật ở video `ban-an-35-phan-1`,
 xem `planning/responsibility-matrix.md` mục 2b) — Nhánh B không đọc gì từ Nhánh A nên chạy đồng
 thời để rút ngắn tổng thời gian, không cần chờ tuần tự như trước:

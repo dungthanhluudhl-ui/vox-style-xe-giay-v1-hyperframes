@@ -40,6 +40,10 @@ export function videoPaths(slug, root = process.cwd()) {
     shotlistMd: path.join(root, "planning", "videos", slug, "shotlist.md"),
     manifestJson: path.join(root, "pipeline", "videos", slug, "media-analysis", "manifest.json"),
     transcriptsDir: path.join(root, "pipeline", "videos", slug, "transcripts"),
+    // Output THÔ của Stage 1 (trước khi Stage 2 sửa/align) — convention đã dùng thật qua run-log.md
+    // của nhiều video trước khi có field riêng này (scripts/run-stages-1-6.mjs dùng làm output
+    // Stage 1 + input Stage 2).
+    rawCaptionsFile: path.join(root, "pipeline", "videos", slug, "transcripts", "raw-captions.json"),
     contactSheetDir: path.join(root, "pipeline", "videos", slug, "contact-sheet"),
     runLog: path.join(root, "pipeline", "videos", slug, "run-log.md"),
     mediaGenerateLog: path.join(root, "pipeline", "videos", slug, "media-generate-log.md"),
