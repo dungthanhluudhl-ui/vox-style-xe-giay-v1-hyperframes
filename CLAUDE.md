@@ -101,8 +101,13 @@ việc cùng nhau.
 
 ## Tài liệu kỹ thuật tham chiếu (đọc khi cần chi tiết, không lặp lại nội dung ở đây)
 - `planning/README.md` — quy trình dựng 1 video, trạng thái hiện tại của repo.
-- `planning/responsibility-matrix.md` — ai/gì đảm nhiệm task nào, quy ước `--video=<slug>`,
-  quy tắc không batch nhiều scene, cách chạy song song an toàn.
+- `planning/responsibility-matrix.md` — tham chiếu ỔN ĐỊNH: ai/gì đảm nhiệm task nào, quy ước
+  `--video=<slug>`, quy tắc không batch nhiều scene, cách chạy song song an toàn. An toàn đọc mặc
+  định mỗi session (được giữ nhỏ, không chứa nhật ký sự cố có ngày).
+- `planning/incident-log.md` — nhật ký audit/sự cố CÓ NGÀY CỤ THỂ (tách khỏi
+  `responsibility-matrix.md` để file đó không phình to theo thời gian). CHỈ đọc khi đang điều tra
+  1 vấn đề có khả năng đã gặp trước đó (grep từ khoá/tên video/mã lỗi liên quan) — không đọc mặc
+  định, không đọc trọn file.
 - `planning/style-dna/` — style DNA dùng chung cho mọi video (đọc `style-dna/README.md` trước).
 - `planning/style-dna-integration.md` — cách style DNA áp dụng riêng cho repo này.
 - `pipeline/videos/<slug>/run-log.md` — nhật ký chi tiết từng bước của một video cụ thể.
