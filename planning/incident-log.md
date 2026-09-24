@@ -8,6 +8,44 @@ grep tên video/mã lỗi/từ khoá liên quan, không đọc trọn file).
 
 ---
 
+### Bug thật — Stage 2b chấp nhận nhầm 1 file lẻ thay vì zip project (2026-09-25)
+
+**Phát hiện khi:** Kilo Code dựng video `hinh-phat-treo-co-o-nhat-ban` (30 ảnh đã tạo thành công
+qua Giai đoạn 1). Người dùng tự phát hiện ra lỗi lúc pipeline đã chạy tới Stage 7 — không có cảnh
+báo nào trước đó.
+
+**Nguyên nhân gốc (do người dùng mô tả lại từ log agent, đã xác nhận qua đọc code thật):** ở Giai
+đoạn 3 (`scripts/02b-media-generate.router.mjs`), model điều khiển browser bấm nhầm menu "More
+options" CẠNH 1 media item cụ thể (không phải menu tổng ở thanh trên cùng), tải bản 720p của riêng
+item đó, rồi tự kết luận SAI "không có mục Download project" và báo `done`. `sortDownloadsIntoMedia()`
+xử lý đồng nhất cả zip lẫn file lẻ, và gate cũ (`imagesAdded.length===0 && videosAdded.length===0`)
+CHỈ fail khi 0 file — 1 file lẻ vẫn qua được. Orchestrator vì vậy tiếp tục Stage 3-7 với dữ liệu
+thiếu gần như hoàn toàn (1/30 ảnh, 0 video) mà không ai biết.
+
+**Đã sửa** (`scripts/02b-media-generate.router.mjs`):
+1. `sortDownloadsIntoMedia()` thêm `requireZip` (mặc định `true`): nếu không có `.zip`, trả ngay
+   `{zipFound:false, strayFiles}` mà KHÔNG đụng gì tới `imagesDir`/`videosDir` — không còn nhét
+   nhầm file lẻ vào thư mục media chính thức.
+2. Prompt Giai đoạn 3 bỏ hẳn phương án "tải từng item lẻ" — bắt buộc phải tìm đúng "Download
+   project" ở menu ⋮ thanh trên cùng; nếu thật sự không thấy, model phải trả `action=blocked`,
+   không tự chuyển sang tải lẻ rồi báo `done`.
+3. Thêm 3 lần thử có giới hạn trước khi kết luận fail hẳn (theo đúng yêu cầu người dùng: dao động/
+   ảo giác của agent không hẳn là thật sự thiếu zip, và không nên tốn lại Giai đoạn 1+2 — ảnh/video
+   đã tạo xong, chỉ cần tải lại): lần 2 thử lại NGAY trong session hiện tại; nếu vẫn fail, lần 3
+   ĐÓNG trình duyệt rồi MỞ LẠI project qua đúng URL đã lưu ở `flow-project.json` (cùng cơ chế
+   `--resume-project` có sẵn, tự động, không cần cờ CLI) để thử với trạng thái "sạch". Chỉ thật sự
+   trả `ok:false` (giữ `STAGE_DIR`, gọi `hintBrowserOpen()`) sau khi cả 3 lần đều không thấy zip.
+
+**Đã kiểm chứng:** unit test độc lập (copy logic `sortDownloadsIntoMedia`, không chạy Flow thật) —
+case 1 file lẻ không zip → đúng `zipFound:false`, không copy gì; case có zip 2 ảnh+1 video → đúng
+phân loại. CHƯA test với Flow thật trong phiên sửa (tránh đụng account/session Flow đang có tiến
+trình khác dùng) — cần xác nhận hành vi thật ở lần dựng video kế tiếp.
+
+**Không đụng:** dữ liệu đã sai của `hinh-phat-treo-co-o-nhat-ban` (thuộc tiến trình khác đang xử lý
+riêng, ngoài phạm vi sửa lỗi script này).
+
+---
+
 ### Sự cố integration CSS sau Stage 7 — video `su-kien-thien-an-mon`, S10 (2026-09-22)
 
 **Trạng thái:** đã audit và xác nhận nguyên nhân; **chưa sửa code**. Đây là backlog cải tiến cho

@@ -262,6 +262,14 @@ ${prompts.join("\n")}
 QUAN TRỌNG: TUYỆT ĐỐI KHÔNG gộp nhiều cảnh vào chung 1 ảnh duy nhất (không tạo dạng lưới/collage/contact-sheet/storyboard nhiều ô trong 1 ảnh, không vẽ minh hoạ "danh sách prompt"). Phải có đủ ${prompts.length} ảnh riêng biệt xuất hiện trong khu vực media, mỗi ảnh khổ dọc 9:16, không phải khổ ngang.`;
 }
 
+// ---- Goal cho Giai đoạn 3 (tải file) — BẮT BUỘC phải là 1 file .zip của "Download project"
+// (xem planning/incident-log.md, bug thật 2026-09-25: model bấm nhầm menu, tải 1 item lẻ, tự kết
+// luận sai "không có Download project" rồi báo done). KHÔNG còn cho phép fallback tải từng item lẻ
+// — nếu thật sự không tìm thấy, model phải trả action=blocked, KHÔNG tự chuyển sang tải lẻ.
+function buildDownloadProjectGoal({ retryNote = "" } = {}) {
+  return `TRƯỚC TIÊN, cuộn (scroll) qua HẾT khu vực media của project để xác nhận CHẮC CHẮN không còn ảnh/video nào đang xử lý (spinner/%/nút Stop) — đây là lỗi thật đã xảy ra: bấm tải cả project khi 1 video chưa render xong, dẫn tới thiếu file trong zip. Nếu còn item dang dở, dùng action=wait (ngắn, 2-4s) rồi kiểm tra lại, lặp lại tới khi chắc chắn TẤT CẢ đã xong.${retryNote} CHỈ SAU ĐÓ mới tải: tìm nút "More options" (biểu tượng 3 chấm dọc ⋮, ở thanh trên cùng gần avatar account — KHÔNG PHẢI nút "More options for the project" cạnh từng ảnh), bấm vào đó để mở menu, rồi chọn ĐÚNG mục "Download project" trong menu — Flow sẽ tự đóng gói TOÀN BỘ ảnh/video của project thành 1 file .zip DUY NHẤT và tải về. TUYỆT ĐỐI KHÔNG tải từng ảnh/video riêng lẻ (action=download trên 1 item cụ thể) — CHỈ được coi là hoàn tất khi đã tải được đúng 1 file .zip của CẢ project. Nếu đã tìm kỹ nhưng THẬT SỰ không thấy mục "Download project" trong menu đó, trả action=blocked với reason mô tả rõ những gì bạn thấy trong menu đó — KHÔNG tự chuyển sang tải item lẻ rồi báo done.`;
+}
+
 function buildAnimatePrompt() {
   return `Tiếp theo, bạn hãy tạo chuyển động kiểu vox style cho các hình ảnh bạn vừa tạo nêu trên để tôi dùng nó để ghép lại thành video hoàn chỉnh. Sử dụng model lite để tiết kiệm tối đa chi phí và không cần có âm thanh cho video.`;
 }
@@ -529,21 +537,30 @@ async function waitForDownloadsToSettle(stagingDir, log, { timeoutMs = 60000, qu
   return false;
 }
 
-// ---- Giải nén zip (nếu có, từ "Download project") + phân loại MỌI file trong stagingDir theo
-// đuôi vào đúng imagesDir/videosDir. KHÔNG ghi đè file đã có sẵn (thêm hậu tố nếu trùng tên) —
-// không phá dữ liệu cũ. Xử lý đồng nhất cả 2 đường tải: zip (giải nén trước) và tải từng item
-// lẻ (fallback khi không tìm thấy "Download project" — file đã nằm phẳng sẵn trong stagingDir).
-function sortDownloadsIntoMedia(stagingDir, imagesDir, videosDir, log) {
+// ---- Giải nén zip (từ "Download project") + phân loại MỌI file trong stagingDir theo đuôi vào
+// đúng imagesDir/videosDir. KHÔNG ghi đè file đã có sẵn (thêm hậu tố nếu trùng tên) — không phá
+// dữ liệu cũ.
+// `requireZip: true` (mặc định — bắt buộc từ sau bug thật 2026-09-25, xem planning/incident-log.md):
+// nếu KHÔNG có file .zip nào trong stagingDir, trả về NGAY { zipFound:false, strayFiles } mà KHÔNG
+// đụng gì tới imagesDir/videosDir — tránh nhét nhầm 1 file lẻ (model bấm nhầm menu tải riêng 1 item
+// thay vì "Download project") vào thư mục media chính thức trước khi biết chắc đây có phải zip
+// project thật hay không. Bug thật đã xảy ra: model tải nhầm 1 file 720p của 1 item, tự kết luận
+// sai "không có Download project", báo done — gate cũ chỉ check ">0 file" nên không bắt được.
+function sortDownloadsIntoMedia(stagingDir, imagesDir, videosDir, log, { requireZip = true } = {}) {
   fs.mkdirSync(imagesDir, { recursive: true });
   fs.mkdirSync(videosDir, { recursive: true });
 
+  const topLevelFiles = fs.readdirSync(stagingDir).filter((f) => !/\.(crdownload|part|tmp)$/i.test(f));
+  const zipFiles = topLevelFiles.filter((f) => /\.zip$/i.test(f));
+  if (requireZip && zipFiles.length === 0) {
+    return { imagesAdded: [], videosAdded: [], skipped: [], zipFound: false, strayFiles: topLevelFiles };
+  }
+
   const extractDir = path.join(stagingDir, "_extracted");
-  for (const f of fs.readdirSync(stagingDir)) {
-    if (/\.zip$/i.test(f)) {
-      const zip = new AdmZip(path.join(stagingDir, f));
-      zip.extractAllTo(extractDir, true);
-      log(`  → giải nén ${f} vào ${extractDir}`);
-    }
+  for (const f of zipFiles) {
+    const zip = new AdmZip(path.join(stagingDir, f));
+    zip.extractAllTo(extractDir, true);
+    log(`  → giải nén ${f} vào ${extractDir}`);
   }
 
   const files = [];
@@ -555,7 +572,7 @@ function sortDownloadsIntoMedia(stagingDir, imagesDir, videosDir, log) {
     }
   })(stagingDir);
 
-  const result = { imagesAdded: [], videosAdded: [], skipped: [] };
+  const result = { imagesAdded: [], videosAdded: [], skipped: [], zipFound: zipFiles.length > 0, strayFiles: [] };
   for (const full of files) {
     const ext = path.extname(full).toLowerCase();
     const destDir = /\.(jpe?g|png)$/i.test(ext) ? imagesDir : /\.(mp4|mov|webm)$/i.test(ext) ? videosDir : null;
@@ -699,8 +716,7 @@ async function attemptWithAccount(accountName, { skipResume }) {
 
   const phase3 = await runPhase({
     phaseName: "3-tai-file",
-    phaseGoal:
-      'TRƯỚC TIÊN, cuộn (scroll) qua HẾT khu vực media của project để xác nhận CHẮC CHẮN không còn ảnh/video nào đang xử lý (spinner/%/nút Stop) — đây là lỗi thật đã xảy ra: bấm tải cả project khi 1 video chưa render xong, dẫn tới thiếu file trong zip. Nếu còn item dang dở, dùng action=wait (ngắn, 2-4s) rồi kiểm tra lại, lặp lại tới khi chắc chắn TẤT CẢ đã xong. CHỈ SAU ĐÓ mới tải: cách NHANH NHẤT là tìm nút "More options" (biểu tượng 3 chấm dọc ⋮, ở thanh trên cùng gần avatar account — KHÔNG PHẢI nút "More options for the project" cạnh từng ảnh), bấm vào đó để mở menu, rồi chọn mục "Download project" trong menu — Flow sẽ tự đóng gói TOÀN BỘ ảnh/video của project thành 1 file zip và tải về trong MỘT hành động download duy nhất. Chỉ dùng cách tải từng item riêng lẻ (action=download trên từng ảnh/video) nếu không tìm thấy "Download project" trong menu đó. Trả done ngay sau khi việc tải (zip hoặc từng item) đã bắt đầu/hoàn tất, không cần tải trùng lặp.',
+    phaseGoal: buildDownloadProjectGoal(),
     messageToSend: null,
     maxSteps: 15,
     downloadedRef,
@@ -714,7 +730,103 @@ async function attemptWithAccount(accountName, { skipResume }) {
   logLine("\nĐang chờ file tải thực sự ổn định trên đĩa (tất định, không tin lời model 'đã tải xong')...");
   await waitForDownloadsToSettle(STAGE_DIR, logLine);
 
-  const sorted = sortDownloadsIntoMedia(STAGE_DIR, vp.imagesDir, vp.videosDir, logLine);
+  let sorted = sortDownloadsIntoMedia(STAGE_DIR, vp.imagesDir, vp.videosDir, logLine);
+
+  // Bug thật đã xảy ra (2026-09-25, video hinh-phat-treo-co-o-nhat-ban): model bấm nhầm menu của
+  // 1 media item, tải bản 720p của riêng item đó, rồi tự kết luận sai "không có Download project"
+  // và báo done — 1 file lẻ vẫn "thành công" theo gate cũ trong khi 30 ảnh/video đã tạo bị bỏ sót
+  // hoàn toàn. Không kết luận fail ngay ở lần đầu — có thể do dao động/ảo giác của agent chứ không
+  // hẳn do thật sự thiếu nút "Download project". Thử tối đa 3 lần trước khi bỏ cuộc, KHÔNG tốn lại
+  // Giai đoạn 1+2 (ảnh/video đã tạo xong, chỉ tải lại):
+  if (!sorted.zipFound) {
+    logLine(
+      `\n⚠ Không tìm thấy file .zip trong lượt tải (chỉ thấy: ${sorted.strayFiles.join(", ") || "(rỗng)"}) — model nhiều khả năng đã tải NHẦM 1 item lẻ thay vì "Download project". Thử lại lần 2 (cùng session)...`,
+    );
+    for (const f of sorted.strayFiles) fs.rmSync(path.join(STAGE_DIR, f), { force: true });
+
+    const phase3retry1 = await runPhase({
+      phaseName: "3-tai-file-retry1",
+      phaseGoal: buildDownloadProjectGoal({
+        retryNote:
+          " LƯU Ý: lần thử trước bạn đã BẤM NHẦM và tải về 1 item lẻ thay vì zip project — lần này tìm kỹ đúng nút 'More options' ở THANH TRÊN CÙNG gần avatar account (không phải nút 3 chấm cạnh từng ảnh/video riêng lẻ).",
+      }),
+      messageToSend: null,
+      maxSteps: 15,
+      downloadedRef,
+    });
+    if (phase3retry1.status !== "done") {
+      stopEarly(phase3retry1, "3-tai-file-retry1");
+      return { ok: false, result: phase3retry1, phaseName: "3-tai-file-retry1" };
+    }
+    await waitForDownloadsToSettle(STAGE_DIR, logLine);
+    sorted = sortDownloadsIntoMedia(STAGE_DIR, vp.imagesDir, vp.videosDir, logLine);
+
+    if (!sorted.zipFound) {
+      logLine(
+        `\n⚠ Lần 2 (cùng session) vẫn không thấy .zip (chỉ thấy: ${sorted.strayFiles.join(", ") || "(rỗng)"}) — đóng trình duyệt, mở lại project (KHÔNG tạo lại ảnh/video) để thử với trạng thái sạch, tránh dao động của agent...`,
+      );
+      for (const f of sorted.strayFiles) fs.rmSync(path.join(STAGE_DIR, f), { force: true });
+      await ab(["close"]).catch(() => {});
+
+      let projectUrl = resumeProjectArg;
+      if (!projectUrl && fs.existsSync(FLOW_PROJECT_FILE)) {
+        try {
+          projectUrl = JSON.parse(fs.readFileSync(FLOW_PROJECT_FILE, "utf8")).url;
+        } catch {
+          /* bỏ qua, xử lý ở check !projectUrl dưới đây */
+        }
+      }
+      if (!projectUrl) {
+        const result = {
+          status: "error",
+          reason: `Không tải được .zip sau 2 lần thử và không có URL project đã lưu để mở lại (thư mục tạm: ${STAGE_DIR}).`,
+        };
+        logLine(`\n⚠ ${result.reason}`);
+        hintBrowserOpen();
+        return { ok: false, result, phaseName: "3-tai-file-retry2-no-url" };
+      }
+
+      const reopenResult = await ab(["--profile", PROFILE_DIR, "--headed", "--download-path", STAGE_DIR, "open", projectUrl]);
+      if (!reopenResult.success) {
+        const result = { status: "error", reason: `Không mở lại được project để thử lần cuối: ${reopenResult.error}` };
+        logLine(`\n⚠ ${result.reason}`);
+        hintBrowserOpen();
+        return { ok: false, result, phaseName: "3-tai-file-reopen-failed" };
+      }
+      logLine(`Đã mở lại: ${reopenResult.data.title} (${reopenResult.data.url})`);
+
+      const phase3retry2 = await runPhase({
+        phaseName: "3-tai-file-retry2",
+        phaseGoal: buildDownloadProjectGoal({
+          retryNote:
+            " LƯU Ý: đây là lần mở lại project sau khi 2 lần thử trước đều tải nhầm/không tìm thấy zip — trang vừa được tải lại (reload), hãy quan sát kỹ trước khi thao tác.",
+        }),
+        messageToSend: null,
+        maxSteps: 15,
+        downloadedRef,
+      });
+      if (phase3retry2.status !== "done") {
+        stopEarly(phase3retry2, "3-tai-file-retry2");
+        return { ok: false, result: phase3retry2, phaseName: "3-tai-file-retry2" };
+      }
+      await waitForDownloadsToSettle(STAGE_DIR, logLine);
+      sorted = sortDownloadsIntoMedia(STAGE_DIR, vp.imagesDir, vp.videosDir, logLine);
+
+      if (!sorted.zipFound) {
+        const result = {
+          status: "error",
+          reason: `Đã thử 3 lần (2 lần trong session + 1 lần mở lại project sạch) vẫn không tải được .zip (chỉ thấy: ${sorted.strayFiles.join(", ") || "(rỗng)"}) — cần can thiệp tay bằng --resume-project hoặc kiểm tra tay ${STAGE_DIR}.`,
+        };
+        logLine(`\n⚠ ${result.reason}`);
+        hintBrowserOpen();
+        return { ok: false, result, phaseName: "3-tai-file-zip-failed" };
+      }
+      logLine("  → Lần thử lại (mở lại project): đã tìm thấy file .zip, tiếp tục.");
+    } else {
+      logLine("  → Lần thử lại lần 2 (cùng session): đã tìm thấy file .zip, tiếp tục.");
+    }
+  }
+
   logLine(
     `Đã phân loại: ${sorted.imagesAdded.length} ảnh → ${vp.imagesDir}, ${sorted.videosAdded.length} video → ${vp.videosDir}` +
       (sorted.skipped.length ? `, bỏ qua ${sorted.skipped.length} file không nhận diện được: ${sorted.skipped.join(", ")}` : ""),
