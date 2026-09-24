@@ -1,0 +1,535 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+      *, *::before, *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #E7E3D9;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: #E7E3D9;
+      }
+
+      /* Quy ước clip layout chuẩn mực của HyperFrames */
+      .clip {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+      }
+
+      /* Lớp nền Chart: Lưới ô vuông 84px + 4 đường kẻ ngang dữ liệu */
+      .bg-grid {
+        position: absolute;
+        inset: 0;
+        background-size: 84px 84px;
+        background-image:
+          linear-gradient(to right, rgba(20, 20, 20, 0.12) 1.5px, transparent 1.5px),
+          linear-gradient(to bottom, rgba(20, 20, 20, 0.12) 1.5px, transparent 1.5px);
+        pointer-events: none;
+        z-index: 1;
+      }
+
+      .chart-line {
+        position: absolute;
+        left: 0;
+        right: 0;
+        height: 2px;
+        border-top: 2px dashed rgba(20, 20, 20, 0.28);
+        pointer-events: none;
+        z-index: 2;
+      }
+
+      .chart-line::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: -4px;
+        width: 18px;
+        height: 8px;
+        background: #FF6A1A;
+      }
+
+      .chart-line-1 { top: 384px; }
+      .chart-line-2 { top: 768px; }
+      .chart-line-3 { top: 1152px; }
+      .chart-line-4 { top: 1536px; }
+
+      /* Grain giấy mộc đặc trưng Vox */
+      .bg-grain {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        opacity: 0.18;
+        mix-blend-mode: multiply;
+        pointer-events: none;
+        z-index: 3;
+      }
+
+      /* Toàn màn hình cho ảnh/video nền với object-fit cover */
+      .media-full {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+        transform-origin: 50% 50%;
+        will-change: transform;
+        z-index: 5;
+      }
+
+      /* Flash chớp sáng cho transition Strike ở Shot 1 */
+      .strike-flash {
+        position: absolute;
+        inset: 0;
+        background-color: #F7F4EC;
+        pointer-events: none;
+        z-index: 10;
+        opacity: 0;
+      }
+
+      /* Khối layout định vị các Card chữ tại nửa trên khung hình */
+      .card-layer {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
+        padding-top: 210px;
+        pointer-events: none;
+        z-index: 30;
+      }
+
+      /* Card phong cách cắt dán Vox */
+      .vox-card {
+        width: 960px;
+        height: auto;
+        border-radius: 14px;
+        box-shadow: 8px 12px 0px rgba(20, 20, 20, 0.85);
+        display: flex;
+        flex-direction: column;
+        pointer-events: none;
+        transform-origin: 50% 50%;
+        will-change: transform, opacity;
+      }
+
+      .theme-dark {
+        background: #141414;
+        border: 4px solid #141414;
+        border-left: 16px solid #FF6A1A;
+        padding: 24px 32px;
+      }
+
+      .theme-light {
+        background: #F5F0E4;
+        border: 4px solid #141414;
+        border-left: 16px solid #141414;
+        padding: 24px 32px;
+      }
+
+      .theme-accent {
+        background: #141414;
+        border: 4px solid #FF6A1A;
+        border-left: 16px solid #FF6A1A;
+        padding: 24px 32px;
+      }
+
+      /* Pill tag phía trên tiêu đề */
+      .vox-tag {
+        display: inline-flex;
+        align-items: center;
+        align-self: flex-start;
+        font-size: 22px;
+        font-weight: 900;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        padding: 6px 16px;
+        border-radius: 6px;
+        margin-bottom: 12px;
+      }
+
+      .tag-orange {
+        background: #FF6A1A;
+        color: #141414;
+      }
+
+      .tag-black {
+        background: #141414;
+        color: #F7F4EC;
+      }
+
+      .vox-header-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 12px;
+      }
+
+      .icon-box {
+        width: 58px;
+        height: 58px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #141414;
+        border-radius: 8px;
+      }
+
+      .icon-svg {
+        width: 44px;
+        height: 44px;
+      }
+
+      #s3-check-path {
+        stroke-dasharray: 80;
+        stroke-dashoffset: 80;
+      }
+
+      #s4-warn-tri {
+        stroke-dasharray: 180;
+        stroke-dashoffset: 180;
+      }
+
+      .vox-headline {
+        font-size: 64px;
+        font-weight: 900;
+        line-height: 1.18;
+        letter-spacing: -0.5px;
+        text-transform: uppercase;
+      }
+
+      .headline-dark {
+        color: #F7F4EC;
+      }
+
+      .headline-light {
+        color: #141414;
+      }
+
+      .highlight-orange {
+        color: #FF6A1A;
+      }
+
+      /* Dải cam nhận diện Vox cố định ở mép đáy */
+      #bottom-bar {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 12px;
+        background-color: #FF6A1A;
+        z-index: 999;
+        pointer-events: none;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s07"
+      data-width="1080"
+      data-height="1920"
+      data-duration="10.994"
+    >
+      <!-- Lớp nền Chart & Grain giấy mộc xuyên suốt -->
+      <div class="bg-grid"></div>
+      <div class="chart-line chart-line-1"></div>
+      <div class="chart-line chart-line-2"></div>
+      <div class="chart-line chart-line-3"></div>
+      <div class="chart-line chart-line-4"></div>
+
+      <svg class="bg-grain" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+        <filter id="grain-filter">
+          <feTurbulence type="fractalNoise" baseFrequency="0.75" numOctaves="3" result="noise" />
+          <feColorMatrix type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 0.18 0" />
+        </filter>
+        <rect width="100%" height="100%" filter="url(#grain-filter)" />
+      </svg>
+
+      <!-- SHOT 1: vid-02 (t: 0.000s -> 2.660s) - Video độc lập mang data-start -->
+      <video
+        id="vid-02"
+        class="media-full"
+        data-start="0"
+        data-duration="2.66"
+        data-media-start="1"
+        muted
+        playsinline
+        preload="auto"
+        src="assets/vid-02-vintage-bicycle-paper-cutout.mp4"
+      ></video>
+
+      <!-- SHOT 1 Flash chớp sáng hiệu ứng Strike -->
+      <div id="s1-strike-flash" class="clip strike-flash" data-start="0" data-duration="0.5"></div>
+
+      <!-- SHOT 1 Overlay: Punch Phrase BẢO VẬT XE ĐẠP -->
+      <div id="s1-punch-clip" class="clip card-layer" data-start="0" data-duration="2.66">
+        <div id="s1-punch-card" class="vox-card theme-dark">
+          <div class="vox-tag tag-orange">Tài sản bao cấp</div>
+          <h1 class="vox-headline headline-dark">BẢO VẬT XE ĐẠP</h1>
+        </div>
+      </div>
+
+      <!-- SHOT 2: img-08 (t: 2.660s -> 5.360s) -->
+      <img
+        id="img-08"
+        class="clip media-full"
+        data-start="2.66"
+        data-duration="2.7"
+        src="assets/img-08-vintage-bicycle-pedestal-cutout.jpeg"
+        alt="Xe đạp Thống Nhất trên bục"
+      />
+
+      <!-- SHOT 2 Overlay: Label NGANG GIÁ TRỊ Ô TÔ -->
+      <div id="s2-label-clip" class="clip card-layer" data-start="2.66" data-duration="2.7">
+        <div id="s2-label-card" class="vox-card theme-light">
+          <div class="vox-tag tag-black">Vị thế gia đình</div>
+          <h2 class="vox-headline headline-light">NGANG GIÁ TRỊ Ô TÔ</h2>
+        </div>
+      </div>
+
+      <!-- SHOT 3: vid-04 (t: 5.360s -> 8.360s) - Video độc lập mang data-start -->
+      <video
+        id="vid-04"
+        class="media-full"
+        data-start="5.36"
+        data-duration="3"
+        data-media-start="1.5"
+        muted
+        playsinline
+        preload="auto"
+        src="assets/vid-04-state-vs-black-market-price.mp4"
+      ></video>
+
+      <!-- SHOT 3 Overlay: Label Giá Mậu Dịch + Icon Check -->
+      <div id="s3-label-clip" class="clip card-layer" data-start="5.36" data-duration="3">
+        <div id="s3-label-card" class="vox-card theme-light">
+          <div class="vox-header-row">
+            <div class="vox-tag tag-black">Giá mậu dịch</div>
+            <div class="icon-box">
+              <svg class="icon-svg" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path
+                  id="s3-check-path"
+                  d="M14 33 L26 45 L50 19"
+                  stroke="#FF6A1A"
+                  stroke-width="8"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </div>
+          </div>
+          <h2 class="vox-headline headline-light">LỐP PHÂN PHỐI: 2-3Đ</h2>
+        </div>
+      </div>
+
+      <!-- SHOT 4: img-04 (t: 8.360s -> 10.994s) -->
+      <img
+        id="img-04"
+        class="clip media-full"
+        data-start="8.36"
+        data-duration="2.634"
+        src="assets/img-04-black-market-price-gap.jpeg"
+        alt="Chênh lệch giá chợ đen"
+      />
+
+      <!-- SHOT 4 Overlay: Punch Phrase Chợ đen tăng vọt + Icon Warning -->
+      <div id="s4-punch-clip" class="clip card-layer" data-start="8.36" data-duration="2.634">
+        <div id="s4-punch-card" class="vox-card theme-accent">
+          <div class="vox-header-row">
+            <div class="vox-tag tag-orange">Thị trường tự do</div>
+            <div class="icon-box">
+              <svg class="icon-svg" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path
+                  id="s4-warn-tri"
+                  d="M32 10 L56 52 L8 52 Z"
+                  stroke="#FF6A1A"
+                  stroke-width="6"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+                <line id="s4-warn-line" x1="32" y1="24" x2="32" y2="37" stroke="#FF6A1A" stroke-width="6" stroke-linecap="round" />
+                <circle id="s4-warn-dot" cx="32" cy="45" r="3.5" fill="#FF6A1A" />
+              </svg>
+            </div>
+          </div>
+          <h1 class="vox-headline headline-dark">CHỢ ĐEN: <span class="highlight-orange">40–50 ĐỒNG</span></h1>
+        </div>
+      </div>
+
+      <!-- Dải cam đáy thương hiệu Vox -->
+      <div id="bottom-bar"></div>
+    </div>
+
+    <script>
+      // Khởi tạo GSAP Timeline chính ở trạng thái paused theo hợp đồng HyperFrames
+      const tl = gsap.timeline({ paused: true });
+
+      // Đo chính xác chiều dài nét vẽ SVG bằng DOM API
+      const checkPath = document.getElementById("s3-check-path");
+      let checkLen = 80;
+      if (checkPath && checkPath.getTotalLength) {
+        checkLen = checkPath.getTotalLength();
+        checkPath.style.strokeDasharray = checkLen;
+        checkPath.style.strokeDashoffset = checkLen;
+      }
+
+      const warnTri = document.getElementById("s4-warn-tri");
+      let triLen = 180;
+      if (warnTri && warnTri.getTotalLength) {
+        triLen = warnTri.getTotalLength();
+        warnTri.style.strokeDasharray = triLen;
+        warnTri.style.strokeDashoffset = triLen;
+      }
+
+      // -------------------------------------------------------------
+      // SHOT 1 (t = 0.000s -> 2.660s)
+      // Transition Strike: Flash chớp sáng + camera shake & zoom-in trên #vid-02
+      // -------------------------------------------------------------
+      tl.fromTo("#s1-strike-flash", { opacity: 0.85 }, { opacity: 0, duration: 0.22, ease: "power2.out" }, 0);
+
+      // Camera shake & zoom trên #vid-02 dùng baseline tl.set tại t=0 và các bước tl.to kế tiếp
+      tl.set("#vid-02", { scale: 1.0, x: 12, y: -8 }, 0);
+      tl.to("#vid-02", { scale: 1.01, x: -6, y: 4, duration: 0.06, ease: "none" }, 0);
+      tl.to("#vid-02", { scale: 1.02, x: 4, y: -2, duration: 0.06, ease: "none" }, 0.06);
+      tl.to("#vid-02", { scale: 1.03, x: 0, y: 0, duration: 0.12, ease: "power2.out" }, 0.12);
+      tl.to("#vid-02", { scale: 1.14, x: 0, y: 0, duration: 2.42, ease: "power1.out" }, 0.24);
+
+      // Card BẢO VẬT XE ĐẠP: entrance fromTo tại 0.360s, exit tl.to tại 2.360s
+      tl.fromTo(
+        "#s1-punch-card",
+        { scale: 0.86, y: 32, opacity: 0 },
+        { scale: 1, y: 0, opacity: 1, duration: 0.44, ease: "power3.out" },
+        0.36
+      );
+      tl.to(
+        "#s1-punch-card",
+        { y: -16, opacity: 0, duration: 0.22, ease: "power2.in" },
+        2.36
+      );
+
+      // -------------------------------------------------------------
+      // SHOT 2 (t = 2.660s -> 5.360s)
+      // Cut chuyển cảnh, Pan-right camera mở rộng căn phòng bao cấp
+      // -------------------------------------------------------------
+      tl.fromTo(
+        "#img-08",
+        { scale: 1.15, x: -36, y: 0 },
+        { scale: 1.15, x: 36, y: 0, duration: 2.70, ease: "sine.inOut" },
+        2.66
+      );
+
+      // Card "NGANG GIÁ TRỊ Ô TÔ": entrance fromTo tại 3.360s, exit tl.to tại 5.140s
+      tl.fromTo(
+        "#s2-label-card",
+        { scale: 0.88, y: 28, opacity: 0 },
+        { scale: 1, y: 0, opacity: 1, duration: 0.42, ease: "power3.out" },
+        3.36
+      );
+      tl.to(
+        "#s2-label-card",
+        { y: -14, opacity: 0, duration: 0.20, ease: "power2.in" },
+        5.14
+      );
+
+      // -------------------------------------------------------------
+      // SHOT 3 (t = 5.360s -> 8.360s)
+      // Cut chuyển cảnh, bằng chứng mậu dịch phân phối giá 2-3 đồng
+      // -------------------------------------------------------------
+      tl.fromTo(
+        "#vid-04",
+        { scale: 1.0, x: 0, y: 0 },
+        { scale: 1.03, x: 0, y: 0, duration: 3.00, ease: "sine.out" },
+        5.36
+      );
+
+      // Card giá phân phối: entrance fromTo tại 6.360s, exit tl.to tại 8.140s
+      tl.fromTo(
+        "#s3-label-card",
+        { scale: 0.86, y: 30, opacity: 0 },
+        { scale: 1, y: 0, opacity: 1, duration: 0.40, ease: "power3.out" },
+        6.36
+      );
+
+      // Icon Check tự vẽ nét SVG tại 6.660s
+      tl.fromTo(
+        "#s3-check-path",
+        { strokeDashoffset: checkLen },
+        { strokeDashoffset: 0, duration: 0.45, ease: "power2.out" },
+        6.66
+      );
+      tl.to(
+        "#s3-label-card",
+        { y: -15, opacity: 0, duration: 0.20, ease: "power2.in" },
+        8.14
+      );
+
+      // -------------------------------------------------------------
+      // SHOT 4 (t = 8.360s -> 10.994s)
+      // Ken Burns zoom đẩy mạnh vào tiền và nhãn giá chợ đen 40-50 đồng
+      // -------------------------------------------------------------
+      tl.fromTo(
+        "#img-04",
+        { scale: 1.05, x: 0, y: 0 },
+        { scale: 1.20, x: 0, y: -22, duration: 2.634, ease: "power1.out" },
+        8.36
+      );
+
+      // Card "CHỢ ĐEN: 40-50 ĐỒNG" xuất hiện tại 8.760s và giữ vững tới hết cảnh
+      tl.fromTo(
+        "#s4-punch-card",
+        { scale: 0.85, y: 34, opacity: 0 },
+        { scale: 1, y: 0, opacity: 1, duration: 0.44, ease: "power3.out" },
+        8.76
+      );
+
+      // Icon Warning tự vẽ tam giác và hiện chấm than
+      tl.fromTo(
+        "#s4-warn-tri",
+        { strokeDashoffset: triLen },
+        { strokeDashoffset: 0, duration: 0.42, ease: "power2.out" },
+        8.96
+      );
+      tl.fromTo(
+        "#s4-warn-line",
+        { opacity: 0 },
+        { opacity: 1, duration: 0.20, ease: "power2.out" },
+        9.22
+      );
+      tl.fromTo(
+        "#s4-warn-dot",
+        { opacity: 0 },
+        { opacity: 1, duration: 0.20, ease: "power2.out" },
+        9.30
+      );
+
+      // Đăng ký timeline cho runtime HyperFrames
+      window.__timelines = window.__timelines || {};
+      window.__timelines["scene-s07"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

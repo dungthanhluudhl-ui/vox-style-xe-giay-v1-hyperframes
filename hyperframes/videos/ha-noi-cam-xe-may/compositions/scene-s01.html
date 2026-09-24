@@ -1,0 +1,399 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #E7E3D9;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+
+      /* Quy ước bắt buộc: .clip phải dùng inset: 0, KHÔNG hardcode width/height cứng */
+      .clip {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+      }
+
+      /* Biến thể nền Spotlight: ngà ở trung tâm, tối dần về các góc mép */
+      .bg-spotlight {
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(
+          circle at 50% 50%,
+          #E7E3D9 25%,
+          #D9D4C7 65%,
+          rgba(30, 28, 26, 0.35) 100%
+        );
+        z-index: 1;
+      }
+
+      /* Lưới ô vuông 84px đặc trưng Vox DNA */
+      .bg-grid {
+        position: absolute;
+        inset: 0;
+        background-size: 84px 84px;
+        background-image:
+          linear-gradient(to right, rgba(20, 20, 20, 0.08) 1.5px, transparent 1.5px),
+          linear-gradient(to bottom, rgba(20, 20, 20, 0.08) 1.5px, transparent 1.5px);
+        z-index: 2;
+        pointer-events: none;
+      }
+
+      /* Camera / Shot container */
+      .camera-viewport {
+        position: absolute;
+        inset: 0;
+        z-index: 3;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transform-origin: 50% 50%;
+        will-change: transform;
+      }
+
+      /* Lớp Collage Art (chủ thể xe cộ + biển cấm rách) */
+      .collage-frame {
+        position: absolute;
+        top: 140px;
+        width: 980px;
+        height: 1420px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 4px solid #141414;
+        background-color: #F5F0E4;
+        box-shadow: 10px 10px 0px #FF6A1A;
+        overflow: hidden;
+      }
+
+      .collage-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+
+      /* Viền giấy xé decor góc trên & dưới */
+      .paper-rip-tag {
+        position: absolute;
+        top: 24px;
+        left: 24px;
+        background-color: #141414;
+        color: #F7F4EC;
+        padding: 8px 18px;
+        font-size: 22px;
+        font-weight: 900;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        border: 2px solid #FF6A1A;
+        box-shadow: 4px 4px 0px #FF6A1A;
+        z-index: 5;
+      }
+
+      /* Lớp Punch Phrase: BẤT LỰC GẦN 10 NĂM */
+      .punch-phrase-wrapper {
+        position: absolute;
+        top: 380px;
+        left: 60px;
+        right: 60px;
+        z-index: 20;
+        display: flex;
+        justify-content: center;
+        pointer-events: none;
+      }
+
+      .punch-card {
+        background-color: #F5F0E4;
+        border: 5px solid #141414;
+        box-shadow: 10px 10px 0px #FF6A1A;
+        padding: 26px 48px;
+        text-align: center;
+        max-width: 920px;
+        transform-origin: 50% 50%;
+        will-change: transform, opacity;
+      }
+
+      .punch-card-title {
+        margin: 0;
+        font-size: 64px;
+        font-weight: 900;
+        line-height: 1.25;
+        color: #141414;
+        letter-spacing: -0.5px;
+        text-transform: uppercase;
+      }
+
+      /* Lớp Label + Icon: LỆNH CẤM BẤT THÀNH + Ban Icon */
+      .annotation-wrapper {
+        position: absolute;
+        top: 1140px;
+        left: 80px;
+        right: 80px;
+        z-index: 25;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 24px;
+        pointer-events: none;
+      }
+
+      .status-badge {
+        background-color: #141414;
+        border: 4px solid #FF6A1A;
+        box-shadow: 6px 6px 0px rgba(255, 106, 26, 0.45);
+        padding: 18px 36px;
+        border-radius: 6px;
+        will-change: transform, opacity;
+      }
+
+      .status-text {
+        margin: 0;
+        font-size: 44px;
+        font-weight: 900;
+        color: #F7F4EC;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+      }
+
+      .icon-card {
+        width: 92px;
+        height: 92px;
+        background-color: #F5F0E4;
+        border: 4px solid #141414;
+        box-shadow: 6px 6px 0px #FF6A1A;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 10px;
+        will-change: transform, opacity;
+      }
+
+      .ban-svg {
+        width: 68px;
+        height: 68px;
+        overflow: visible;
+      }
+
+      .ban-path {
+        fill: none;
+        stroke: #FF6A1A;
+        stroke-width: 10;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
+      /* Chữ ký thị giác: Dải cam mỏng cố định mép đáy */
+      .bottom-brand-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 14px;
+        background-color: #FF6A1A;
+        z-index: 100;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s01"
+      data-width="1080"
+      data-height="1920"
+      data-duration="5.12"
+    >
+      <!-- Scene 01 Clip -->
+      <section id="scene-s01" class="clip" data-start="0" data-duration="5.12">
+        <!-- Nền Spotlight và Lưới Grid -->
+        <div class="bg-spotlight"></div>
+        <div class="bg-grid"></div>
+
+        <!-- Camera Viewport thực hiện Punch và Slow Zoom-in -->
+        <div id="camera-rig" class="camera-viewport">
+          <!-- Khung tranh collage cắt dán -->
+          <div id="collage-box" class="collage-frame">
+            <div class="paper-rip-tag">HÀ NỘI // HỒ SƠ CHÍNH SÁCH</div>
+            <img
+              id="hero-img"
+              class="collage-image"
+              src="assets/img-06-hanoi-motorbike-ban-collage.jpeg"
+              alt="Hanoi Motorbike Ban Collage"
+            />
+          </div>
+        </div>
+
+        <!-- Punch phrase: BẤT LỰC GẦN 10 NĂM -->
+        <div class="punch-phrase-wrapper">
+          <div id="punch-card" class="punch-card">
+            <h1 id="punch-text" class="punch-card-title">BẤT LỰC GẦN 10 NĂM</h1>
+          </div>
+        </div>
+
+        <!-- Secondary Label & Self-drawing Ban Icon -->
+        <div class="annotation-wrapper">
+          <div id="status-badge" class="status-badge">
+            <div id="status-text" class="status-text">LỆNH CẤM BẤT THÀNH</div>
+          </div>
+          <div id="icon-card" class="icon-card">
+            <svg class="ban-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+              <!-- Vòng tròn cấm -->
+              <circle
+                id="ban-circle"
+                class="ban-path"
+                cx="50"
+                cy="50"
+                r="38"
+              />
+              <!-- Đường chéo cấm -->
+              <line
+                id="ban-slash"
+                class="ban-path"
+                x1="24"
+                y1="24"
+                x2="76"
+                y2="76"
+              />
+            </svg>
+          </div>
+        </div>
+
+        <!-- Thanh cam signature ở đáy khung hình -->
+        <div class="bottom-brand-bar"></div>
+      </section>
+    </div>
+
+    <!-- Animation Logic GSAP -->
+    <script>
+      // 1. Chuẩn bị hiệu ứng vẽ SVG stroke cho icon ban
+      const banCircle = document.getElementById("ban-circle");
+      const banSlash = document.getElementById("ban-slash");
+
+      const circleLength = banCircle.getTotalLength();
+      const slashLength = banSlash.getTotalLength();
+
+      banCircle.style.strokeDasharray = circleLength;
+      banCircle.style.strokeDashoffset = circleLength;
+
+      banSlash.style.strokeDasharray = slashLength;
+      banSlash.style.strokeDashoffset = slashLength;
+
+      // 2. Tạo duy nhất 1 paused timeline cho composition "scene-s01"
+      const tl = gsap.timeline({ paused: true });
+
+      // Cú đấm punch mở màn: Camera & hero snap từ 1.15 về 1.00 trong 0.4s
+      tl.fromTo(
+        "#camera-rig",
+        { scale: 1.15 },
+        { scale: 1.0, duration: 0.4, ease: "power4.out" },
+        0
+      );
+
+      // Camera motion: zoom-in chậm dần xuyên suốt thời lượng còn lại (0.4s -> 5.12s)
+      tl.to(
+        "#camera-rig",
+        { scale: 1.06, duration: 4.72, ease: "sine.inOut" },
+        0.4
+      );
+
+      // Nhịp rung nhẹ collage để chủ thể sống động không bị đông cứng
+      tl.fromTo(
+        "#collage-box",
+        { rotation: -0.6 },
+        { rotation: 0.6, duration: 2.2, ease: "sine.inOut", yoyo: true, repeat: 1 },
+        0.4
+      );
+
+      // Khởi tạo trạng thái ban đầu của Punch phrase
+      tl.set("#punch-card", { scale: 0.6, opacity: 0, y: 35 }, 0);
+
+      // 0.9s: Punch phrase đập vào khung hình đồng bộ lời thoại
+      tl.to(
+        "#punch-card",
+        {
+          scale: 1,
+          opacity: 1,
+          y: 0,
+          duration: 0.45,
+          ease: "back.out(1.4)",
+        },
+        0.9
+      );
+
+      // Khởi tạo trạng thái ban đầu của Annotation & Icon
+      tl.set("#status-badge", { opacity: 0, y: 30 }, 0);
+      tl.set("#icon-card", { opacity: 0, scale: 0.4 }, 0);
+
+      // 3.5s: Nhãn "LỆNH CẤM BẤT THÀNH" trượt vào
+      tl.to(
+        "#status-badge",
+        {
+          opacity: 1,
+          y: 0,
+          duration: 0.35,
+          ease: "power3.out",
+        },
+        3.5
+      );
+
+      // 3.75s: Khung icon bật lên
+      tl.to(
+        "#icon-card",
+        {
+          opacity: 1,
+          scale: 1,
+          duration: 0.3,
+          ease: "back.out(1.6)",
+        },
+        3.75
+      );
+
+      // 3.8s: Đường tròn icon ban tự vẽ dần
+      tl.to(
+        banCircle,
+        {
+          strokeDashoffset: 0,
+          duration: 0.38,
+          ease: "power2.out",
+        },
+        3.8
+      );
+
+      // 4.05s: Vạch gạch chéo tự vẽ hoàn tất biểu tượng ban
+      tl.to(
+        banSlash,
+        {
+          strokeDashoffset: 0,
+          duration: 0.28,
+          ease: "power2.out",
+        },
+        4.05
+      );
+
+      // 3. BẮT BUỘC: Đăng ký timeline đã build xong vào window.__timelines["scene-s01"]
+      window.__timelines["scene-s01"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

@@ -1,0 +1,583 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+    * {
+      box-sizing: border-box;
+      user-select: none;
+    }
+    body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      background: #F5F0E4;
+      color: #141414;
+      font-family: "Be Vietnam Pro", sans-serif;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    #root {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #F5F0E4;
+    }
+
+    /* Đáy khung hình: thanh cam cố định theo nhận diện thương hiệu Vox */
+    .bottom-signature-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 12px;
+      background: #FF6A1A;
+      z-index: 900;
+    }
+
+    /* Lưới toạ độ nền dạng Card */
+    .card-watermark {
+      position: absolute;
+      top: 90px;
+      left: 60px;
+      right: 60px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 18px;
+      font-weight: 900;
+      letter-spacing: 1.5px;
+      color: #141414;
+      text-transform: uppercase;
+      z-index: 10;
+      border-bottom: 2px solid rgba(20, 20, 20, 0.25);
+      padding-bottom: 12px;
+    }
+    .card-watermark .tag {
+      background: #141414;
+      color: #F7F4EC;
+      padding: 4px 12px;
+      border-radius: 4px;
+      font-size: 15px;
+      font-weight: 900;
+      letter-spacing: 1.5px;
+    }
+
+    /* KHU VỰC 1: Sơ đồ luồng (Flow Diagram) ở phần trên [175px - 335px] */
+    .flow-container {
+      position: absolute;
+      top: 175px;
+      left: 60px;
+      width: 960px;
+      height: 160px;
+      background: #FFFFFF;
+      border: 3px solid #141414;
+      border-radius: 16px;
+      box-shadow: 8px 8px 0px #141414;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 32px;
+      z-index: 20;
+    }
+
+    .flow-node {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+    .flow-badge {
+      background: #141414;
+      color: #F7F4EC;
+      font-size: 22px;
+      font-weight: 900;
+      padding: 10px 18px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      letter-spacing: 0.5px;
+    }
+    .flow-node-sub {
+      font-size: 14px;
+      font-weight: 700;
+      color: #141414;
+      text-transform: uppercase;
+    }
+
+    /* Mũi tên kết nối có đoạn đứt gãy */
+    .flow-bridge {
+      position: relative;
+      flex: 1;
+      height: 60px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 0 16px;
+    }
+    .bridge-line-wrap {
+      width: 100%;
+      height: 8px;
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+    .bridge-line-left {
+      flex: 1;
+      height: 4px;
+      background: #141414;
+    }
+    .bridge-gap {
+      width: 110px;
+      height: 30px;
+      border: 2px dashed #141414;
+      background: #FFF2E8;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 900;
+      color: #141414;
+      letter-spacing: 0.5px;
+    }
+    .bridge-line-right {
+      flex: 1;
+      height: 4px;
+      background: #141414;
+    }
+    .bridge-caption {
+      margin-top: 6px;
+      font-size: 13px;
+      font-weight: 900;
+      color: #141414;
+      background: #FF6A1A;
+      padding: 3px 10px;
+      border-radius: 4px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      display: inline-block;
+    }
+
+    /* KHU VỰC 2: Khung hình Video cắt dán (Card Collage) [365px - 1235px] */
+    .video-card-frame {
+      position: absolute;
+      top: 365px;
+      left: 60px;
+      width: 960px;
+      height: 870px;
+      background: #141414;
+      border: 4px solid #141414;
+      border-radius: 20px;
+      box-shadow: 12px 12px 0px #141414;
+      overflow: hidden;
+      z-index: 15;
+    }
+
+    /* Viewport zoom của camera */
+    .video-viewport {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      width: 100%;
+      height: 100%;
+    }
+
+    .video-inner {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      transform-origin: 50% 68%;
+    }
+
+    #vid-06 {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    /* Lớp phủ chuyển sắc nhẹ bảo vệ độ tương phản */
+    .video-overlay-gradient {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, rgba(20,20,20,0.35) 0%, rgba(20,20,20,0.1) 40%, rgba(20,20,20,0.55) 100%);
+      pointer-events: none;
+    }
+
+    /* Thước đo / Tag định vị ngõ hẹp */
+    .lane-coordinate-tag {
+      position: absolute;
+      bottom: 24px;
+      left: 24px;
+      background: rgba(20, 20, 20, 0.9);
+      border-left: 4px solid #FF6A1A;
+      padding: 8px 16px;
+      border-radius: 4px;
+      color: #F7F4EC;
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: 1px;
+    }
+
+    /* OVERLAY 1: "ĐỨT GÃY CHẶNG CUỐI" (t = 0.88s -> 2.88s) */
+    .overlay-gap-box {
+      position: absolute;
+      top: 400px;
+      left: 95px;
+      width: 890px;
+      background: #141414;
+      border-left: 8px solid #FF6A1A;
+      border-radius: 12px;
+      padding: 22px 28px;
+      box-shadow: 8px 8px 0px rgba(0, 0, 0, 0.5);
+      z-index: 30;
+      opacity: 0;
+      pointer-events: none;
+    }
+    .overlay-header-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 6px;
+    }
+    .status-pill {
+      background: #FF6A1A;
+      color: #141414;
+      font-size: 15px;
+      font-weight: 900;
+      padding: 4px 10px;
+      border-radius: 4px;
+      letter-spacing: 1px;
+    }
+    .status-sub {
+      color: #F7F4EC;
+      font-size: 18px;
+      font-weight: 700;
+      opacity: 0.9;
+      letter-spacing: 0.5px;
+    }
+    .overlay-title-large {
+      font-size: 44px;
+      font-weight: 900;
+      color: #F7F4EC;
+      margin: 0;
+      line-height: 1.2;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    /* OVERLAY 2 & 3: Pin vị trí & "KHOẢNG TRỐNG KẾT NỐI" (t = 3.38s -> 5.68s) */
+    .pin-marker-group {
+      position: absolute;
+      top: 590px;
+      left: 100px;
+      width: 880px;
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      z-index: 30;
+      pointer-events: none;
+    }
+    .pin-icon-box {
+      width: 90px;
+      height: 90px;
+      background: #141414;
+      border: 3px solid #FF6A1A;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.5);
+      flex-shrink: 0;
+      opacity: 0;
+    }
+    .distance-callout-card {
+      background: #141414;
+      border: 3px solid #141414;
+      border-radius: 14px;
+      padding: 16px 26px;
+      box-shadow: 6px 6px 0px #FF6A1A;
+      flex: 1;
+      opacity: 0;
+    }
+    .callout-metric-row {
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+    }
+    .callout-distance {
+      font-size: 32px;
+      font-weight: 900;
+      color: #FF6A1A;
+    }
+    .callout-desc {
+      font-size: 16px;
+      font-weight: 700;
+      color: #F7F4EC;
+      opacity: 0.85;
+      text-transform: uppercase;
+    }
+    .callout-main-text {
+      font-size: 38px;
+      font-weight: 900;
+      color: #F7F4EC;
+      margin-top: 4px;
+      text-transform: uppercase;
+      line-height: 1.15;
+    }
+
+    /* KHU VỰC 3: Punch-phrase "MẮT XÍCH DUY NHẤT" [1265px - 1485px] */
+    /* Nằm cao hơn y = 1520px để hoàn toàn không chạm vào Caption Zone */
+    .punch-phrase-container {
+      position: absolute;
+      top: 1265px;
+      left: 60px;
+      width: 960px;
+      height: 220px;
+      background: #141414;
+      border: 3px solid #141414;
+      border-radius: 18px;
+      box-shadow: 10px 10px 0px #FF6A1A;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 0 40px;
+      z-index: 25;
+      opacity: 0;
+      pointer-events: none;
+    }
+    .punch-phrase-tagline {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 20px;
+      font-weight: 900;
+      color: #FF6A1A;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    .tagline-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #FF6A1A;
+    }
+    .punch-phrase-headline {
+      font-size: 64px;
+      font-weight: 900;
+      color: #F7F4EC;
+      margin: 0;
+      line-height: 1.15;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+    .punch-phrase-sub {
+      margin-top: 8px;
+      font-size: 20px;
+      font-weight: 700;
+      color: #F7F4EC;
+      opacity: 0.85;
+    }
+  </style>
+
+  <div
+    id="root"
+    data-composition-id="scene-s06"
+    data-width="1080"
+    data-height="1920"
+    data-duration="8.6"
+  >
+    <!-- Watermark ngữ cảnh & phân tích giao thông -->
+    <div class="card-watermark">
+      <span>GIAO THÔNG ĐÔ THỊ // HÀ NỘI</span>
+      <span class="tag">CƠ CHẾ KẾT NỐI</span>
+    </div>
+
+    <!-- Sơ đồ luồng (Flow) Metro -> Ngõ đứt gãy -->
+    <div id="flow-header" class="flow-container">
+      <!-- Node Ga -->
+      <div class="flow-node">
+        <div class="flow-badge">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FF6A1A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="4" y="3" width="16" height="15" rx="3"></rect>
+            <path d="M4 11h16"></path>
+            <path d="M12 3v8"></path>
+            <circle cx="8" cy="15" r="1" fill="#FF6A1A"></circle>
+            <circle cx="16" cy="15" r="1" fill="#FF6A1A"></circle>
+            <path d="m8 19-3 3"></path>
+            <path d="m16 19 3 3"></path>
+          </svg>
+          GA METRO
+        </div>
+        <span class="flow-node-sub">ĐIỂM ĐẾN TẬP TRUNG</span>
+      </div>
+
+      <!-- Đoạn gãy / rẽ nhánh -->
+      <div class="flow-bridge">
+        <div class="bridge-line-wrap">
+          <div class="bridge-line-left"></div>
+          <div class="bridge-gap">ĐỨT GÃY</div>
+          <div class="bridge-line-right"></div>
+        </div>
+        <span class="bridge-caption">KHOẢNG CÁCH CHẶNG CUỐI</span>
+      </div>
+
+      <!-- Node Ngõ nhỏ / Chợ / Nhà -->
+      <div class="flow-node">
+        <div class="flow-badge">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FF6A1A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+            <polyline points="9 22 9 12 15 12 15 22"></polyline>
+          </svg>
+          NGÕ SÂU / CHỢ
+        </div>
+        <span class="flow-node-sub">ĐÍCH ĐẾN THỰC TẾ</span>
+      </div>
+    </div>
+
+    <!-- Card Video phóng sự: Xe máy luồn lách qua ngõ nhỏ -->
+    <div id="video-card" class="video-card-frame">
+      <div class="video-viewport" data-layout-allow-overflow="true">
+        <div id="video-inner" class="video-inner" data-layout-allow-overflow="true">
+          <video
+            id="vid-06"
+            src="assets/vid-06-motorbike-riding-narrow-alley.mp4"
+            data-start="0"
+            data-duration="8.6"
+            data-media-start="0"
+            muted
+            playsinline
+          ></video>
+        </div>
+      </div>
+      <div class="video-overlay-gradient"></div>
+      <div class="lane-coordinate-tag">NGÕ ĐẶC TRƯNG // BỀ RỘNG &lt; 2M</div>
+    </div>
+
+    <!-- OVERLAY 1: "ĐỨT GÃY CHẶNG CUỐI" (t = 0.88s -> 2.88s) -->
+    <div id="overlay-gap" class="overlay-gap-box">
+      <div class="overlay-header-row">
+        <span class="status-pill">ĐIỂM NGHẼN</span>
+        <span class="status-sub">BÁN KÍNH PHỤC VỤ HẠ TẦNG</span>
+      </div>
+      <h2 class="overlay-title-large">ĐỨT GÃY CHẶNG CUỐI</h2>
+    </div>
+
+    <!-- OVERLAY 2 & 3: Pin vị trí & "KHOẢNG TRỐNG KẾT NỐI" (t = 3.38s -> 5.68s) -->
+    <div class="pin-marker-group">
+      <div id="pin-icon-wrap" class="pin-icon-box">
+        <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#FF6A1A" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"></path>
+          <circle cx="12" cy="10" r="3" fill="#141414"></circle>
+        </svg>
+      </div>
+      <div id="overlay-distance" class="distance-callout-card">
+        <div class="callout-metric-row">
+          <span class="callout-distance">1.5 - 3.0 KM</span>
+          <span class="callout-desc">NGOÀI TẦM ĐI BỘ TIỆN LỢI</span>
+        </div>
+        <div class="callout-main-text">KHOẢNG TRỐNG KẾT NỐI</div>
+      </div>
+    </div>
+
+    <!-- OVERLAY 4: Punch-phrase "MẮT XÍCH DUY NHẤT" (t = 6.48s -> 8.6s) -->
+    <div id="punch-phrase-box" class="punch-phrase-container">
+      <div class="punch-phrase-tagline">
+        <span class="tagline-dot"></span>
+        PHƯƠNG TIỆN ĐỘC TÔN
+      </div>
+      <h1 class="punch-phrase-headline">MẮT XÍCH DUY NHẤT</h1>
+      <div class="punch-phrase-sub">LUỒN LÁCH TỪ GA TRỰC TIẾP VỀ CỬA NHÀ</div>
+    </div>
+
+    <!-- Thanh cam đặc trưng thương hiệu ở đáy khung -->
+    <div class="bottom-signature-bar"></div>
+  </div>
+
+  <script>
+    // Khởi tạo Timeline chuẩn HyperFrames: paused: true và gán vào window.__timelines["scene-s06"]
+    const tl = gsap.timeline({ paused: true });
+
+    // 1. Entrance zoom-through mở cảnh: Card video lao tới và định vị trên nền card #F5F0E4
+    tl.fromTo(
+      "#video-card",
+      { scale: 1.15, opacity: 0 },
+      { scale: 1.0, opacity: 1, duration: 0.6, ease: "power3.out" },
+      0.0
+    );
+    tl.fromTo(
+      "#flow-header",
+      { y: -30, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.5, ease: "power3.out" },
+      0.15
+    );
+
+    // 2. Camera motion trên video: scale 1.5x canh tâm vào bánh xe, tiếp tục zoom chậm vào ngõ hẹp
+    tl.fromTo(
+      "#video-inner",
+      { scale: 1.5, y: 0 },
+      { scale: 1.68, y: -25, duration: 8.6, ease: "none" },
+      0.0
+    );
+
+    // 3. Overlay 1: "ĐỨT GÃY CHẶNG CUỐI" (xuất hiện tại t = 0.88s, giữ 2.0s đến t = 2.88s)
+    tl.fromTo(
+      "#overlay-gap",
+      { opacity: 0, y: 30, scale: 0.96 },
+      { opacity: 1, y: 0, scale: 1, duration: 0.45, ease: "power3.out" },
+      0.88
+    );
+    tl.to(
+      "#overlay-gap",
+      { opacity: 0, y: -20, duration: 0.35, ease: "power2.in" },
+      2.88
+    );
+
+    // 4. Overlay 2: Icon pin xuất hiện (t = 3.38s, giữ đến t = 5.68s)
+    tl.fromTo(
+      "#pin-icon-wrap",
+      { opacity: 0, scale: 0 },
+      { opacity: 1, scale: 1, duration: 0.4, ease: "power3.out" },
+      3.38
+    );
+
+    // 5. Overlay 3: "KHOẢNG TRỐNG KẾT NỐI" (xuất hiện t = 3.88s, rút lui cùng pin tại t = 5.68s)
+    tl.fromTo(
+      "#overlay-distance",
+      { opacity: 0, x: -30 },
+      { opacity: 1, x: 0, duration: 0.45, ease: "power3.out" },
+      3.88
+    );
+    tl.to(
+      ["#pin-icon-wrap", "#overlay-distance"],
+      { opacity: 0, y: -20, duration: 0.35, ease: "power2.in" },
+      5.68
+    );
+
+    // 6. Overlay 4: Punch-phrase "MẮT XÍCH DUY NHẤT" (xuất hiện tại t = 6.48s, giữ vững đến hết scene 8.6s)
+    tl.fromTo(
+      "#punch-phrase-box",
+      { opacity: 0, y: 35, scale: 0.95 },
+      { opacity: 1, y: 0, scale: 1, duration: 0.5, ease: "power3.out" },
+      6.48
+    );
+
+    // Đăng ký timeline cho HyperFrames seek runtime
+    window.__timelines = window.__timelines || {};
+    window.__timelines["scene-s06"] = tl;
+  </script>
+
+    </template>
+  </body>
+</html>

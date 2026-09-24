@@ -1,0 +1,540 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        padding: 0;
+        background: #E7E3D9;
+        font-family: "Be Vietnam Pro", sans-serif;
+        color: #141414;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: #F5F0E4;
+        perspective: 1200px;
+      }
+      .clip {
+        position: absolute;
+        overflow: hidden;
+      }
+
+      /* Card Background & Archival Framing */
+      .card-surface {
+        position: absolute;
+        inset: 0;
+        background-color: #F5F0E4;
+        z-index: 1;
+      }
+      .archival-frame {
+        position: absolute;
+        inset: 32px;
+        border: 2px solid rgba(20, 20, 20, 0.12);
+        pointer-events: none;
+        z-index: 5;
+      }
+      .corner-mark {
+        position: absolute;
+        width: 20px;
+        height: 20px;
+        z-index: 6;
+      }
+      .corner-tl { top: 24px; left: 24px; border-top: 3px solid #141414; border-left: 3px solid #141414; }
+      .corner-tr { top: 24px; right: 24px; border-top: 3px solid #141414; border-right: 3px solid #141414; }
+      .corner-bl { bottom: 24px; left: 24px; border-bottom: 3px solid #141414; border-left: 3px solid #141414; }
+      .corner-br { bottom: 24px; right: 24px; border-bottom: 3px solid #141414; border-right: 3px solid #141414; }
+
+      /* Media Viewport Container */
+      .media-viewport {
+        position: absolute;
+        top: 250px;
+        left: 60px;
+        right: 60px;
+        height: 930px;
+        overflow: hidden;
+        border-radius: 12px;
+        background: #141414;
+        border: 2.5px solid #141414;
+        box-shadow: 0 16px 36px rgba(20, 20, 20, 0.14), 0 2px 8px rgba(20, 20, 20, 0.08);
+        transform-origin: top center;
+        z-index: 10;
+      }
+      .media-content {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+        transform-origin: center center;
+      }
+
+      /* Archival Badges */
+      .archival-badge {
+        top: 170px;
+        left: 60px;
+        height: 56px;
+        display: inline-flex;
+        align-items: center;
+        background: #141414;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 10px 26px rgba(20, 20, 20, 0.18);
+        z-index: 20;
+      }
+      .badge-tag {
+        background: #FF6A1A;
+        color: #141414;
+        font-weight: 900;
+        font-size: 22px;
+        padding: 0 16px;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        letter-spacing: 1px;
+      }
+      .badge-text {
+        color: #F7F4EC;
+        font-weight: 900;
+        font-size: 26px;
+        padding: 0 22px;
+        letter-spacing: 1px;
+      }
+
+      /* Callout Label - Shot 1 */
+      .annotation-callout {
+        top: 1210px;
+        left: 60px;
+        display: inline-flex;
+        align-items: center;
+        gap: 16px;
+        z-index: 25;
+      }
+      .callout-indicator {
+        position: relative;
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .indicator-dot {
+        width: 14px;
+        height: 14px;
+        background: #FF6A1A;
+        border-radius: 50%;
+        box-shadow: 0 0 10px #FF6A1A;
+      }
+      .pulse-ring {
+        position: absolute;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        border: 2px solid #FF6A1A;
+        transform-origin: center;
+      }
+      .callout-card {
+        background: #141414;
+        padding: 14px 26px;
+        border-radius: 10px;
+        border-left: 6px solid #FF6A1A;
+        box-shadow: 0 12px 30px rgba(20, 20, 20, 0.28);
+        display: flex;
+        align-items: center;
+        gap: 14px;
+      }
+      .callout-accent {
+        color: #FF6A1A;
+        font-weight: 900;
+        font-size: 34px;
+      }
+      .callout-equal {
+        color: #D2CFC5;
+        font-weight: 700;
+        font-size: 28px;
+      }
+      .callout-desc {
+        color: #F7F4EC;
+        font-weight: 900;
+        font-size: 34px;
+      }
+
+      /* Icon Money Badge - Shot 2 */
+      .icon-money-badge {
+        top: 270px;
+        right: 80px;
+        background: #141414;
+        padding: 10px 18px;
+        border-radius: 12px;
+        display: inline-flex;
+        align-items: center;
+        gap: 14px;
+        box-shadow: 0 10px 28px rgba(20, 20, 20, 0.3);
+        z-index: 25;
+      }
+      .icon-caption {
+        color: #F7F4EC;
+        font-weight: 700;
+        font-size: 20px;
+        letter-spacing: 0.5px;
+      }
+
+      /* Denomination Ladder - Shot 2 */
+      .denom-ladder {
+        top: 1205px;
+        left: 60px;
+        right: 60px;
+        background: rgba(20, 20, 20, 0.95);
+        border-radius: 14px;
+        padding: 16px 20px;
+        box-shadow: 0 14px 34px rgba(20, 20, 20, 0.32);
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        border: 1.5px solid rgba(255, 255, 255, 0.12);
+        z-index: 25;
+      }
+      .ladder-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .ladder-title {
+        color: #D2CFC5;
+        font-size: 18px;
+        font-weight: 700;
+        letter-spacing: 1.5px;
+      }
+      .ladder-chips {
+        display: flex;
+        gap: 8px;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .denom-chip {
+        flex: 1;
+        height: 50px;
+        background: rgba(255, 255, 255, 0.08);
+        border: 1.5px solid rgba(255, 255, 255, 0.15);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #F7F4EC;
+        font-size: 24px;
+        font-weight: 900;
+        transform-origin: center center;
+      }
+      .chip-max {
+        border: 1.5px dashed rgba(255, 106, 26, 0.7);
+      }
+
+      /* Ceiling Stamp - Shot 2 */
+      .ceiling-stamp {
+        top: 1335px;
+        left: 60px;
+        right: 60px;
+        display: flex;
+        justify-content: flex-start;
+        z-index: 30;
+      }
+      .ceiling-badge {
+        background: #141414;
+        border: 3px solid #FF6A1A;
+        border-radius: 10px;
+        padding: 12px 24px;
+        box-shadow: 0 14px 36px rgba(255, 106, 26, 0.22);
+        display: inline-flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+      .ceiling-tag {
+        color: #FF6A1A;
+        font-weight: 700;
+        font-size: 18px;
+        letter-spacing: 1px;
+      }
+      .ceiling-title {
+        color: #F7F4EC;
+        font-weight: 900;
+        font-size: 38px;
+        letter-spacing: 0.5px;
+        line-height: 1.2;
+      }
+
+      /* Brand Bottom Bar */
+      .bottom-orange-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 10px;
+        background: #FF6A1A;
+        z-index: 100;
+        pointer-events: none;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s02"
+      data-start="0"
+      data-width="1080"
+      data-height="1920"
+      data-duration="11.06"
+    >
+      <!-- Base Archival Surface & Framing -->
+      <div class="card-surface"></div>
+      <div class="archival-frame"></div>
+      <div class="corner-mark corner-tl"></div>
+      <div class="corner-mark corner-tr"></div>
+      <div class="corner-mark corner-bl"></div>
+      <div class="corner-mark corner-br"></div>
+      <div class="bottom-orange-bar"></div>
+
+      <!-- Media Box Viewport -->
+      <div id="media-viewport" class="media-viewport">
+        <!-- Shot 1 Video (0s -> 6.06s) -->
+        <video
+          id="shot1-video"
+          class="clip media-content"
+          src="assets/vid-06-vintage-vietnamese-banknotes-display.mp4"
+          data-start="0"
+          data-duration="6.06"
+          data-media-start="0.5"
+          muted
+          playsinline
+        ></video>
+
+        <!-- Shot 2 Image (6.06s -> 11.06s) -->
+        <img
+          id="shot2-image"
+          class="clip media-content"
+          src="assets/img-07-vietnam-historical-banknotes-1970s.jpeg"
+          alt="Bảng tư liệu tiền giấy thập niên 1970"
+          data-start="6.06"
+          data-duration="5.00"
+        />
+      </div>
+
+      <!-- Shot 1 Overlays -->
+      <div id="badge-shot1-title" class="clip archival-badge" data-start="1.06" data-duration="2.40">
+        <span class="badge-tag">TƯ LIỆU</span>
+        <span class="badge-text">MỆNH GIÁ THỜI XƯA</span>
+      </div>
+
+      <div id="badge-shot1-sub" class="clip annotation-callout" data-start="4.46" data-duration="1.60">
+        <div class="callout-indicator">
+          <span id="shot1-pulse-ring" class="pulse-ring"></span>
+          <span class="indicator-dot"></span>
+        </div>
+        <div class="callout-card">
+          <span class="callout-accent">5 HÀO</span>
+          <span class="callout-equal">=</span>
+          <span class="callout-desc">0.5 ĐỒNG</span>
+        </div>
+      </div>
+
+      <!-- Shot 2 Overlays -->
+      <div id="badge-shot2-title" class="clip archival-badge" data-start="6.46" data-duration="2.00">
+        <span class="badge-tag">HỆ THỐNG</span>
+        <span class="badge-text">BẬC THANG TIỀN TỆ</span>
+      </div>
+
+      <div id="icon-money-badge" class="clip icon-money-badge" data-start="7.36" data-duration="2.50">
+        <svg viewBox="0 0 100 64" width="70" height="46">
+          <rect id="svg-money-rect" x="4" y="4" width="92" height="56" rx="8" fill="none" stroke="#FF6A1A" stroke-width="4" />
+          <circle id="svg-money-circle" cx="50" cy="32" r="14" fill="none" stroke="#F7F4EC" stroke-width="3" />
+          <path id="svg-money-lines" d="M 18 32 L 28 32 M 72 32 L 82 32" fill="none" stroke="#F7F4EC" stroke-width="3" stroke-linecap="round" />
+        </svg>
+        <span class="icon-caption">TIỀN GIẤY 1970s</span>
+      </div>
+
+      <div id="denom-ladder" class="clip denom-ladder" data-start="6.30" data-duration="4.76">
+        <div class="ladder-header">
+          <span class="ladder-title">DÃY MỆNH GIÁ TĂNG DẦN</span>
+        </div>
+        <div class="ladder-chips">
+          <div class="denom-chip" id="chip-1d">1đ</div>
+          <div class="denom-chip" id="chip-2d">2đ</div>
+          <div class="denom-chip" id="chip-5d">5đ</div>
+          <div class="denom-chip" id="chip-10d">10đ</div>
+          <div class="denom-chip" id="chip-20d">20đ</div>
+          <div class="denom-chip" id="chip-50d">50đ</div>
+          <div class="denom-chip chip-max" id="chip-100d">100đ</div>
+        </div>
+      </div>
+
+      <div id="badge-shot2-ceiling" class="clip ceiling-stamp" data-start="9.86" data-duration="1.20">
+        <div class="ceiling-badge">
+          <span class="ceiling-tag">MỆNH GIÁ CAO NHẤT</span>
+          <span class="ceiling-title">KỊCH TRẦN 100 ĐỒNG</span>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const tl = gsap.timeline({ paused: true });
+
+      // Setup initial SVG stroke dashoffset
+      const pathRect = document.getElementById("svg-money-rect");
+      const pathCircle = document.getElementById("svg-money-circle");
+      const pathLines = document.getElementById("svg-money-lines");
+      if (pathRect) {
+        const len1 = pathRect.getTotalLength();
+        pathRect.style.strokeDasharray = String(len1);
+        pathRect.style.strokeDashoffset = String(len1);
+      }
+      if (pathCircle) {
+        const len2 = pathCircle.getTotalLength();
+        pathCircle.style.strokeDasharray = String(len2);
+        pathCircle.style.strokeDashoffset = String(len2);
+      }
+      if (pathLines) {
+        const len3 = pathLines.getTotalLength();
+        pathLines.style.strokeDasharray = String(len3);
+        pathLines.style.strokeDashoffset = String(len3);
+      }
+
+      // ==========================================
+      // SHOT 1: vid-06 (0s -> 6.06s)
+      // ==========================================
+
+      // Entrance Unfold of Media Viewport
+      tl.fromTo(
+        "#media-viewport",
+        { rotationX: -26, scale: 0.94, opacity: 0 },
+        { rotationX: 0, scale: 1, opacity: 1, duration: 0.8, ease: "power3.out" },
+        0.05
+      );
+
+      // Camera motion: zoom-in
+      tl.fromTo(
+        "#shot1-video",
+        { scale: 1.0 },
+        { scale: 1.15, duration: 6.06, ease: "none" },
+        0
+      );
+
+      // Title overlay: "MỆNH GIÁ THỜI XƯA" (1.06s -> 3.46s)
+      tl.fromTo(
+        "#badge-shot1-title",
+        { y: -24, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.45, ease: "power3.out" },
+        1.06
+      );
+      tl.to(
+        "#badge-shot1-title",
+        { y: -16, opacity: 0, duration: 0.3, ease: "power2.in" },
+        3.16
+      );
+
+      // Sub overlay: "5 HÀO = 0.5 ĐỒNG" (4.46s -> 6.06s)
+      tl.fromTo(
+        "#badge-shot1-sub",
+        { scale: 0.88, opacity: 0, y: 18 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.45, ease: "power3.out" },
+        4.46
+      );
+      tl.fromTo(
+        "#shot1-pulse-ring",
+        { scale: 1, opacity: 0.8 },
+        { scale: 1.85, opacity: 0, duration: 0.75, repeat: 1, ease: "power1.out" },
+        4.46
+      );
+
+      // ==========================================
+      // SHOT 2: img-07 (6.06s -> 11.06s)
+      // ==========================================
+
+      // Camera motion: pan-right
+      tl.fromTo(
+        "#shot2-image",
+        { scale: 1.22, x: 45 },
+        { scale: 1.26, x: -55, duration: 5.0, ease: "none" },
+        6.06
+      );
+
+      // Title overlay: "BẬC THANG TIỀN TỆ" (6.46s -> 8.46s)
+      tl.fromTo(
+        "#badge-shot2-title",
+        { y: -24, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.4, ease: "power3.out" },
+        6.46
+      );
+      tl.to(
+        "#badge-shot2-title",
+        { y: -16, opacity: 0, duration: 0.3, ease: "power2.in" },
+        8.16
+      );
+
+      // Denomination Ladder entrance (6.30s)
+      tl.fromTo(
+        "#denom-ladder",
+        { y: 18, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.4, ease: "power3.out" },
+        6.30
+      );
+
+      // Stepping denomination chips along with voiceover
+      tl.to("#chip-1d", { backgroundColor: "#FF6A1A", color: "#141414", borderColor: "#FF6A1A", scale: 1.08, duration: 0.22, ease: "power2.out" }, 6.60);
+      tl.to("#chip-2d", { backgroundColor: "#FF6A1A", color: "#141414", borderColor: "#FF6A1A", scale: 1.08, duration: 0.22, ease: "power2.out" }, 7.10);
+
+      // Money SVG icon appears & draws (7.36s -> 9.86s)
+      tl.fromTo(
+        "#icon-money-badge",
+        { scale: 0.85, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.35, ease: "power3.out" },
+        7.36
+      );
+      if (pathRect) {
+        tl.to(pathRect, { strokeDashoffset: 0, duration: 0.5, ease: "power2.out" }, 7.36);
+      }
+      if (pathCircle) {
+        tl.to(pathCircle, { strokeDashoffset: 0, duration: 0.4, ease: "power2.out" }, 7.50);
+      }
+      if (pathLines) {
+        tl.to(pathLines, { strokeDashoffset: 0, duration: 0.35, ease: "power2.out" }, 7.62);
+      }
+      tl.to(
+        "#icon-money-badge",
+        { opacity: 0, scale: 0.9, duration: 0.3, ease: "power2.in" },
+        9.56
+      );
+
+      tl.to("#chip-5d", { backgroundColor: "#FF6A1A", color: "#141414", borderColor: "#FF6A1A", scale: 1.08, duration: 0.22, ease: "power2.out" }, 7.60);
+      tl.to("#chip-10d", { backgroundColor: "#FF6A1A", color: "#141414", borderColor: "#FF6A1A", scale: 1.08, duration: 0.22, ease: "power2.out" }, 8.10);
+      tl.to("#chip-20d", { backgroundColor: "#FF6A1A", color: "#141414", borderColor: "#FF6A1A", scale: 1.08, duration: 0.22, ease: "power2.out" }, 8.60);
+      tl.to("#chip-50d", { backgroundColor: "#FF6A1A", color: "#141414", borderColor: "#FF6A1A", scale: 1.08, duration: 0.22, ease: "power2.out" }, 9.20);
+
+      // KỊCH TRẦN 100 ĐỒNG (9.86s -> 11.06s)
+      tl.fromTo(
+        "#badge-shot2-ceiling",
+        { scale: 0.86, opacity: 0, y: 14 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.38, ease: "power3.out" },
+        9.86
+      );
+      tl.to(
+        "#chip-100d",
+        { backgroundColor: "#FF6A1A", color: "#141414", borderColor: "#FF6A1A", scale: 1.15, duration: 0.3, ease: "power3.out" },
+        9.86
+      );
+
+      // Register the paused timeline with exact composition-id
+      window.__timelines["scene-s02"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

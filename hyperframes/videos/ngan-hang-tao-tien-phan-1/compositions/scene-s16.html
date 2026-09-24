@@ -1,0 +1,759 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap"
+    />
+      <style>
+      *, *::before, *::after {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #e7e3d9;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: #e7e3d9;
+      }
+      /* Nền dạng chart */
+      .bg-chart-layer {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        z-index: 1;
+      }
+      .chart-grid-v {
+        position: absolute;
+        inset: 0;
+        background-image: linear-gradient(
+          to right,
+          rgba(20, 20, 20, 0.08) 1.5px,
+          transparent 1.5px
+        );
+        background-size: 84px 100%;
+      }
+      .chart-rule {
+        position: absolute;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background-color: rgba(20, 20, 20, 0.22);
+      }
+      .chart-rule::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: -4px;
+        width: 16px;
+        height: 10px;
+        background-color: #ff6a1a;
+      }
+      .chart-rule-1 { top: 20%; }
+      .chart-rule-2 { top: 40%; }
+      .chart-rule-3 { top: 60%; }
+      .chart-rule-4 { top: 80%; }
+      .bg-grain {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        opacity: 0.18;
+        mix-blend-mode: multiply;
+        background-image: radial-gradient(rgba(20, 20, 20, 0.6) 1px, transparent 0);
+        background-size: 4px 4px;
+        z-index: 2;
+      }
+      .brand-bottom-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 14px;
+        background-color: #ff6a1a;
+        z-index: 900;
+        pointer-events: none;
+      }
+      .clip {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+      }
+      /* Header an toàn trên */
+      .header-meta {
+        position: absolute;
+        top: 175px;
+        left: 80px;
+        right: 80px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        z-index: 50;
+      }
+      .header-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 20px;
+        font-weight: 900;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        color: #141414;
+      }
+      .header-tag .bullet {
+        width: 10px;
+        height: 10px;
+        background-color: #ff6a1a;
+      }
+      .header-badge {
+        background-color: #141414;
+        color: #f7f4ec;
+        font-size: 18px;
+        font-weight: 700;
+        padding: 6px 16px;
+        border-radius: 4px;
+        letter-spacing: 1px;
+      }
+      /* Hero Card dùng chung 1 asset duy nhất */
+      .hero-card {
+        position: absolute;
+        top: 250px;
+        left: 80px;
+        right: 80px;
+        height: 640px;
+        background-color: #f5f0e4;
+        border: 4px solid #141414;
+        box-shadow: 12px 14px 0 rgba(20, 20, 20, 0.18);
+        overflow: hidden;
+        z-index: 20;
+      }
+      .hero-card-img-wrap {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+      .hero-card-img {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+        will-change: transform;
+      }
+      .card-corner-tag {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        background-color: #ff6a1a;
+        color: #141414;
+        font-size: 22px;
+        font-weight: 900;
+        padding: 8px 18px;
+        border: 3px solid #141414;
+        letter-spacing: 1.5px;
+        z-index: 5;
+      }
+      /* Data Panel */
+      .data-panel {
+        position: absolute;
+        top: 920px;
+        left: 80px;
+        right: 80px;
+        height: 340px;
+        background-color: #141414;
+        border-radius: 16px;
+        padding: 28px 36px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        box-shadow: 0 16px 32px rgba(20, 20, 20, 0.25);
+        z-index: 30;
+      }
+      .panel-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 2px solid rgba(247, 244, 236, 0.12);
+        padding-bottom: 14px;
+      }
+      .panel-title {
+        color: #ff6a1a;
+        font-size: 20px;
+        font-weight: 900;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+      }
+      .panel-sub {
+        color: rgba(247, 244, 236, 0.7);
+        font-size: 18px;
+        font-weight: 700;
+      }
+      /* Nội dung Data Panel S16-1 */
+      .crash-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding-top: 10px;
+      }
+      .price-col {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .price-label {
+        font-size: 18px;
+        font-weight: 700;
+        color: rgba(247, 244, 236, 0.65);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+      .old-price-box {
+        position: relative;
+        display: inline-block;
+      }
+      .price-val-old {
+        font-size: 38px;
+        font-weight: 900;
+        color: #f7f4ec;
+        margin: 0;
+        line-height: 1.1;
+        position: relative;
+        z-index: 1;
+      }
+      .strike-bar {
+        position: absolute;
+        top: 50%;
+        left: -6px;
+        right: -6px;
+        height: 6px;
+        background-color: #ff6a1a;
+        transform-origin: left center;
+        transform: scaleX(0);
+        pointer-events: none;
+        z-index: 2;
+      }
+      .crash-chart-svg {
+        width: 140px;
+        height: 80px;
+      }
+      .new-price-wrap {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 6px;
+      }
+      .price-val-new {
+        font-size: 48px;
+        font-weight: 900;
+        color: #ff6a1a;
+        margin: 0;
+        line-height: 1.1;
+      }
+      .drop-pct-pill {
+        display: inline-flex;
+        align-items: center;
+        background-color: #ff6a1a;
+        color: #141414;
+        font-size: 20px;
+        font-weight: 900;
+        padding: 4px 12px;
+        border-radius: 6px;
+      }
+      /* Nội dung Data Panel S16-2 */
+      .surge-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding-top: 10px;
+      }
+      .surge-counter-col {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .counter-display {
+        font-size: 56px;
+        font-weight: 900;
+        color: #f7f4ec;
+        margin: 0;
+        line-height: 1;
+        letter-spacing: -1px;
+      }
+      .counter-unit {
+        color: #ff6a1a;
+        font-size: 32px;
+        margin-left: 8px;
+      }
+      .surge-status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background-color: rgba(255, 106, 26, 0.15);
+        border: 2px solid #ff6a1a;
+        color: #ff6a1a;
+        font-size: 19px;
+        font-weight: 900;
+        padding: 6px 14px;
+        border-radius: 6px;
+        width: fit-content;
+      }
+      .surge-chart-svg {
+        width: 160px;
+        height: 90px;
+      }
+      /* Punch Phrase Banners */
+      .punch-phrase-banner {
+        position: absolute;
+        top: 1290px;
+        left: 80px;
+        right: 80px;
+        height: 120px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 36px;
+        border-radius: 12px;
+        z-index: 60;
+      }
+      .punch-dark {
+        background-color: #141414;
+        border: 4px solid #ff6a1a;
+        box-shadow: 8px 10px 0 rgba(20, 20, 20, 0.2);
+      }
+      .punch-dark .punch-text {
+        color: #f7f4ec;
+      }
+      .punch-orange {
+        background-color: #ff6a1a;
+        border: 4px solid #141414;
+        box-shadow: 8px 10px 0 rgba(20, 20, 20, 0.2);
+      }
+      .punch-orange .punch-text {
+        color: #141414;
+      }
+      .punch-text {
+        font-size: 48px;
+        font-weight: 900;
+        margin: 0;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      .icon-box {
+        width: 58px;
+        height: 58px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+      /* Nhãn trôi dạt S16-1 */
+      .floating-label {
+        position: absolute;
+        top: 360px;
+        left: 60px;
+        background-color: #ff6a1a;
+        color: #141414;
+        font-size: 32px;
+        font-weight: 900;
+        padding: 12px 28px;
+        border: 3px solid #141414;
+        box-shadow: 8px 8px 0 #141414;
+        transform: rotate(-4deg);
+        z-index: 70;
+        letter-spacing: 1px;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s16"
+      data-start="0"
+      data-width="1080"
+      data-height="1920"
+      data-duration="6.94"
+    >
+      <!-- Nền đồ thị Chart chung -->
+      <div class="bg-chart-layer">
+        <div class="chart-grid-v"></div>
+        <div class="chart-rule chart-rule-1"></div>
+        <div class="chart-rule chart-rule-2"></div>
+        <div class="chart-rule chart-rule-3"></div>
+        <div class="chart-rule chart-rule-4"></div>
+      </div>
+      <div class="bg-grain"></div>
+
+      <!-- Thanh thương hiệu cố định mép đáy -->
+      <div class="brand-bottom-bar"></div>
+
+      <!-- Hero Card chung (sử dụng duy nhất 1 thẻ img để tránh duplicate media) -->
+      <div id="hero-card" class="hero-card">
+        <div class="hero-card-img-wrap">
+          <img
+            id="hero-img"
+            src="assets/img-10-virtual-currency-market-manipulation.jpeg"
+            alt="Thị trường thẻ ảo FC Online"
+            class="hero-card-img"
+          />
+          <div id="corner-tag-s1" class="card-corner-tag">RONALDO R9</div>
+          <div id="corner-tag-s2" class="card-corner-tag" style="opacity: 0;">NGUỒN CUNG BP</div>
+        </div>
+      </div>
+
+      <!-- ============================================================= -->
+      <!-- SHOT 1: TỤT DỐC: CÒN 50 CỦ (0s -> 4.06s)                      -->
+      <!-- ============================================================= -->
+      <section
+        id="shot-1"
+        class="clip"
+        data-start="0"
+        data-duration="4.06"
+        data-track-index="1"
+      >
+        <!-- Header Meta -->
+        <div class="header-meta">
+          <div class="header-tag">
+            <span class="bullet"></span>
+            <span>FC ONLINE // THỊ TRƯỜNG</span>
+          </div>
+          <div class="header-badge">CẬP NHẬT 2 THÁNG</div>
+        </div>
+
+        <!-- Overlay label: MÙA THẺ MỚI -->
+        <div id="s1-label-season" class="floating-label">
+          MÙA THẺ MỚI
+        </div>
+
+        <!-- Data Panel: Biểu đồ lao dốc -->
+        <div id="s1-data-panel" class="data-panel">
+          <div class="panel-header">
+            <span class="panel-title">MỨC GIÁ CHUYỂN NHƯỢNG BP</span>
+            <span class="panel-sub">GIẢM MẠNH</span>
+          </div>
+
+          <div class="crash-row">
+            <div class="price-col">
+              <span class="price-label">Trước cập nhật</span>
+              <div class="old-price-box" data-layout-allow-occlusion="true">
+                <p class="price-val-old" data-layout-allow-occlusion="true">500.000.000</p>
+                <div id="s1-strike-bar" class="strike-bar" data-layout-allow-occlusion="true"></div>
+              </div>
+            </div>
+
+            <!-- SVG Biểu đồ rơi -->
+            <svg class="crash-chart-svg" viewBox="0 0 140 80" fill="none">
+              <path
+                id="s1-crash-path"
+                class="draw-path"
+                d="M10 15 L50 25 L85 65 L125 70"
+                stroke="#FF6A1A"
+                stroke-width="5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <circle cx="125" cy="70" r="5" fill="#FF6A1A" />
+            </svg>
+
+            <div id="s1-new-price-wrap" class="new-price-wrap">
+              <span class="price-label">Hiện tại</span>
+              <p class="price-val-new">50.000.000</p>
+              <span class="drop-pct-pill">-90% BP</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Punch Phrase: TỤT DỐC: CÒN 50 CỦ -->
+        <div id="s1-punch-phrase" class="punch-phrase-banner punch-dark">
+          <h2 class="punch-text">TỤT DỐC: CÒN 50 CỦ</h2>
+          <div id="s1-icon-fall" class="icon-box">
+            <svg viewBox="0 0 48 48" fill="none" width="48" height="48">
+              <path
+                id="s1-icon-fall-path"
+                class="draw-path"
+                d="M8 12 L22 26 L30 18 L40 34"
+                stroke="#FF6A1A"
+                stroke-width="5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <polyline
+                id="s1-icon-fall-arrow"
+                class="draw-path"
+                points="26 34 40 34 40 20"
+                stroke="#FF6A1A"
+                stroke-width="5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================================= -->
+      <!-- SHOT 2: LẠM PHÁT NGHÌN TỶ (4.06s -> 6.94s)                    -->
+      <!-- ============================================================= -->
+      <section
+        id="shot-2"
+        class="clip"
+        data-start="4.06"
+        data-duration="2.88"
+        data-track-index="1"
+      >
+        <!-- Header Meta -->
+        <div class="header-meta">
+          <div class="header-tag">
+            <span class="bullet"></span>
+            <span>BÙNG NỔ NGUỒN CUNG // LẠM PHÁT</span>
+          </div>
+          <div class="header-badge">QUY MÔ KỶ LỤC</div>
+        </div>
+
+        <!-- Data Panel: Biểu đồ dựng đứng lạm phát -->
+        <div id="s2-data-panel" class="data-panel">
+          <div class="panel-header">
+            <span class="panel-title">TỔNG GIÁ TRỊ THỊ TRƯỜNG</span>
+            <span class="panel-sub">TĂNG TRƯỞNG PHI MÃ</span>
+          </div>
+
+          <div class="surge-row">
+            <div class="surge-counter-col">
+              <span class="price-label">Giá trị ước tính</span>
+              <p class="counter-display">
+                <span id="s2-counter-num">50</span>
+                <span class="counter-unit">TỶ BP</span>
+              </p>
+              <div class="surge-status-badge">
+                <span>▲</span>
+                <span>CỰC ĐẠI LẠM PHÁT</span>
+              </div>
+            </div>
+
+            <!-- SVG Biểu đồ dựng đứng -->
+            <svg class="surge-chart-svg" viewBox="0 0 160 90" fill="none">
+              <path
+                id="s2-surge-path"
+                class="draw-path"
+                d="M10 75 L60 65 L105 40 L145 10"
+                stroke="#FF6A1A"
+                stroke-width="6"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <circle cx="145" cy="10" r="6" fill="#FF6A1A" />
+            </svg>
+          </div>
+        </div>
+
+        <!-- Punch Phrase: LẠM PHÁT NGHÌN TỶ -->
+        <div id="s2-punch-phrase" class="punch-phrase-banner punch-orange">
+          <h2 class="punch-text">LẠM PHÁT NGHÌN TỶ</h2>
+          <div id="s2-icon-rise" class="icon-box">
+            <svg viewBox="0 0 48 48" fill="none" width="48" height="48">
+              <path
+                id="s2-icon-rise-path"
+                class="draw-path"
+                d="M8 36 L22 22 L30 28 L40 12"
+                stroke="#141414"
+                stroke-width="5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <polyline
+                id="s2-icon-rise-arrow"
+                class="draw-path"
+                points="26 12 40 12 40 26"
+                stroke="#141414"
+                stroke-width="5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <script>
+      // Khởi tạo đo đạc SVG Stroke Paths chính xác
+      document.querySelectorAll(".draw-path").forEach((p) => {
+        const len = p.getTotalLength();
+        p.style.strokeDasharray = (len + 1) + "px";
+        p.style.strokeDashoffset = (len + 1) + "px";
+      });
+
+      // Tạo timeline GSAP tất định, paused
+      const tl = gsap.timeline({ paused: true });
+
+      // =================================================================
+      // HERO CARD CHUNG & CAMERA MOTION
+      // =================================================================
+      // Strike transition entrance cho hero card
+      tl.fromTo(
+        "#hero-card",
+        { y: 50, scale: 0.95, opacity: 0 },
+        { y: 0, scale: 1, opacity: 1, duration: 0.45, ease: "power4.out" },
+        0.05
+      );
+
+      // S16-1: Camera zoom-out tập trung vào thẻ Ronaldo R9
+      tl.fromTo(
+        "#hero-img",
+        { transformOrigin: "center 20%", scale: 1.25, y: 0, x: 0 },
+        { scale: 1.1, duration: 4.06, ease: "none" },
+        0
+      );
+
+      // S16-2: Cut sang khu vực tiền ảo bùng nổ + Camera pan-right
+      tl.set("#hero-img", { transformOrigin: "center 80%", scale: 1.35, y: -75, x: -35 }, 4.06);
+      tl.to("#hero-img", { x: 35, duration: 2.88, ease: "none" }, 4.06);
+
+      // Chuyển corner tag tương ứng
+      tl.to("#corner-tag-s1", { opacity: 0, duration: 0.1 }, 4.06);
+      tl.fromTo("#corner-tag-s2", { opacity: 0, scale: 0.8 }, { opacity: 1, scale: 1, duration: 0.25, ease: "power2.out" }, 4.06);
+
+      // =================================================================
+      // CHOREOGRAPHY SHOT 1: (0s -> 4.06s)
+      // =================================================================
+      tl.fromTo(
+        "#s1-data-panel",
+        { y: 60, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.45, ease: "power3.out" },
+        0.2
+      );
+
+      // Strike-through gạch cam giá 500M BP
+      tl.to(
+        "#s1-strike-bar",
+        { scaleX: 1, duration: 0.35, ease: "power2.inOut" },
+        0.75
+      );
+
+      // Vẽ biểu đồ tụt dốc
+      tl.to(
+        "#s1-crash-path",
+        { strokeDashoffset: 0, duration: 0.65, ease: "power2.out" },
+        0.85
+      );
+
+      // Giá mới 50M nảy vào
+      tl.fromTo(
+        "#s1-new-price-wrap",
+        { scale: 0.75, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.4, ease: "power3.out" },
+        1.15
+      );
+
+      // Overlay label: MÙA THẺ MỚI (1.75s, hold 1.6s)
+      tl.fromTo(
+        "#s1-label-season",
+        { scale: 0.6, opacity: 0, rotation: -12 },
+        { scale: 1, opacity: 1, rotation: -4, duration: 0.38, ease: "power3.out" },
+        1.75
+      );
+      tl.to(
+        "#s1-label-season",
+        { opacity: 0, scale: 0.9, duration: 0.25, ease: "power1.in" },
+        3.35
+      );
+
+      // Punch Phrase: TỤT DỐC: CÒN 50 CỦ (3.40s)
+      tl.fromTo(
+        "#s1-punch-phrase",
+        { y: 35, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.35, ease: "power4.out" },
+        3.40
+      );
+
+      // Icon fall (3.52s)
+      tl.fromTo(
+        "#s1-icon-fall",
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.28, ease: "power3.out" },
+        3.52
+      );
+      tl.to(
+        "#s1-icon-fall-path",
+        { strokeDashoffset: 0, duration: 0.32, ease: "power2.out" },
+        3.55
+      );
+      tl.to(
+        "#s1-icon-fall-arrow",
+        { strokeDashoffset: 0, duration: 0.25, ease: "power2.out" },
+        3.7
+      );
+
+      // =================================================================
+      // CHOREOGRAPHY SHOT 2: (4.06s -> 6.94s)
+      // =================================================================
+      tl.fromTo(
+        "#s2-data-panel",
+        { y: 40, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.35, ease: "power3.out" },
+        4.15
+      );
+
+      // Biểu đồ dựng đứng vẽ lên
+      tl.to(
+        "#s2-surge-path",
+        { strokeDashoffset: 0, duration: 0.75, ease: "power2.inOut" },
+        4.25
+      );
+
+      // Bộ đếm nhảy số phi mã: 50 -> 5000 Tỷ BP
+      tl.to(
+        "#s2-counter-num",
+        {
+          innerText: 5000,
+          snap: { innerText: 50 },
+          duration: 1.1,
+          ease: "power2.out",
+        },
+        4.35
+      );
+
+      // Punch Phrase: LẠM PHÁT NGHÌN TỶ (5.04s)
+      tl.fromTo(
+        "#s2-punch-phrase",
+        { y: 35, opacity: 0, scale: 0.92 },
+        { y: 0, opacity: 1, scale: 1, duration: 0.38, ease: "power4.out" },
+        5.04
+      );
+
+      // Icon rise (5.14s)
+      tl.fromTo(
+        "#s2-icon-rise",
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.28, ease: "power3.out" },
+        5.14
+      );
+      tl.to(
+        "#s2-icon-rise-path",
+        { strokeDashoffset: 0, duration: 0.32, ease: "power2.out" },
+        5.18
+      );
+      tl.to(
+        "#s2-icon-rise-arrow",
+        { strokeDashoffset: 0, duration: 0.25, ease: "power2.out" },
+        5.35
+      );
+
+      // Đăng ký timeline duy nhất cho HyperFrames
+      window.__timelines["scene-s16"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

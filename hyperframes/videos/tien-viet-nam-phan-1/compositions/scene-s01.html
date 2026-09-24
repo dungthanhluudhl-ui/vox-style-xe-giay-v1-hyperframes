@@ -1,0 +1,525 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+      * {
+        box-sizing: border-box;
+      }
+      html, body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        background-color: #E7E3D9;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: #E7E3D9;
+      }
+
+      /* Quy ước chuẩn của HyperFrames Core cho timed clip */
+      .clip {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+      }
+
+      /* Wrapper camera không mang data-start để chứa media và camera motion */
+      .visual-wrap {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+        pointer-events: none;
+      }
+      .camera-wrap {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+      }
+
+      /* Lưới đồ họa chuẩn Vox DNA: 84px cell */
+      .vox-grid-overlay {
+        position: absolute;
+        inset: 0;
+        background-size: 84px 84px;
+        background-image:
+          linear-gradient(to right, rgba(20, 20, 20, 0.28) 1.5px, transparent 1.5px),
+          linear-gradient(to bottom, rgba(20, 20, 20, 0.28) 1.5px, transparent 1.5px);
+        mix-blend-mode: multiply;
+        pointer-events: none;
+        z-index: 5;
+      }
+
+      /* Lớp phủ hạt nhiễu grain multiply 18% */
+      .grain-overlay {
+        position: absolute;
+        inset: 0;
+        background-image: radial-gradient(rgba(20, 20, 20, 0.16) 1px, transparent 0);
+        background-size: 4px 4px;
+        mix-blend-mode: multiply;
+        pointer-events: none;
+        z-index: 6;
+      }
+
+      /* Lớp phủ màu giấy ngà kraft nhẹ trên nền media */
+      .paper-tint {
+        position: absolute;
+        inset: 0;
+        background-color: #E7E3D9;
+        mix-blend-mode: multiply;
+        opacity: 0.18;
+        pointer-events: none;
+        z-index: 4;
+      }
+
+      /* Thanh cam nhận diện thương hiệu cố định mép đáy */
+      #bottom-orange-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 16px;
+        background-color: #FF6A1A;
+        z-index: 100;
+        pointer-events: none;
+      }
+
+      /* Video shot 1 */
+      #vid-07 {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        filter: saturate(0.85) contrast(1.05);
+        display: block;
+      }
+
+      /* Punch Phrase: Thẻ tiêu đề đen mực viền cam */
+      #punch-phrase-card {
+        position: absolute;
+        top: 360px;
+        left: 70px;
+        right: 70px;
+        height: auto;
+        background-color: #141414;
+        border-left: 12px solid #FF6A1A;
+        border-radius: 4px;
+        padding: 32px 36px;
+        box-shadow: 14px 14px 0px rgba(20, 20, 20, 0.35);
+        z-index: 10;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .tag-subtitle {
+        font-size: 22px;
+        font-weight: 900;
+        color: #FF6A1A;
+        letter-spacing: 3px;
+        text-transform: uppercase;
+        margin-bottom: 12px;
+      }
+      .punch-title {
+        margin: 0;
+        font-size: 60px;
+        font-weight: 900;
+        color: #F7F4EC;
+        line-height: 1.18;
+        text-transform: uppercase;
+      }
+
+      /* Question Icon badge */
+      #shot-1-icon {
+        position: absolute;
+        top: 720px;
+        left: 470px;
+        width: 140px;
+        height: 140px;
+        z-index: 11;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .icon-circle-bg {
+        width: 140px;
+        height: 140px;
+        background-color: #141414;
+        border: 4px solid #FF6A1A;
+        border-radius: 50%;
+        box-shadow: 10px 10px 0px rgba(20, 20, 20, 0.3);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      /* Media ảnh shot 2 */
+      #img-01 {
+        position: absolute;
+        top: -60px;
+        left: -5%;
+        width: 110%;
+        height: 125%;
+        object-fit: cover;
+        filter: contrast(1.05);
+        display: block;
+      }
+
+      /* Label 1: Chu kỳ lịch sử */
+      #label-1-card {
+        position: absolute;
+        top: 260px;
+        left: 70px;
+        height: auto;
+        z-index: 12;
+      }
+      .label-box-dark {
+        background-color: #141414;
+        border-left: 10px solid #FF6A1A;
+        border-radius: 4px;
+        padding: 20px 32px;
+        box-shadow: 12px 12px 0px rgba(20, 20, 20, 0.3);
+        display: inline-block;
+      }
+      .label-meta {
+        font-size: 20px;
+        font-weight: 700;
+        color: #FF6A1A;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        margin-bottom: 6px;
+      }
+      .label-heading {
+        margin: 0;
+        font-size: 44px;
+        font-weight: 900;
+        color: #F7F4EC;
+        text-transform: uppercase;
+      }
+      .timeline-track-bar {
+        margin-top: 14px;
+        height: 4px;
+        width: 320px;
+        background-color: #FF6A1A;
+        transform-origin: 0% 50%;
+      }
+
+      /* Label 2: Lạm phát phi mã */
+      #label-2-card {
+        position: absolute;
+        top: 1060px;
+        left: 70px;
+        right: 70px;
+        height: auto;
+        background-color: #141414;
+        border: 4px solid #FF6A1A;
+        border-radius: 6px;
+        padding: 28px 36px;
+        box-shadow: 14px 14px 0px rgba(255, 106, 26, 0.35);
+        z-index: 12;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .crisis-left {
+        display: flex;
+        flex-direction: column;
+      }
+      .crisis-tag {
+        font-size: 22px;
+        font-weight: 900;
+        color: #FF6A1A;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        margin-bottom: 8px;
+      }
+      .crisis-title {
+        margin: 0;
+        font-size: 52px;
+        font-weight: 900;
+        color: #F7F4EC;
+        text-transform: uppercase;
+        line-height: 1.15;
+      }
+      .crisis-sub {
+        margin-top: 8px;
+        font-size: 22px;
+        font-weight: 700;
+        color: #E7E3D9;
+      }
+
+      /* Rise Icon */
+      #shot-2-rise-icon {
+        width: 110px;
+        height: 110px;
+        background-color: rgba(20, 20, 20, 0.7);
+        border: 2px solid #FF6A1A;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s01"
+      data-width="1080"
+      data-height="1920"
+      data-duration="9.14"
+    >
+      <!-- SHOT 1: Video lớp nền (untimed wrapper, video mang data-start để không vi phạm video_nested_in_timed_element) -->
+      <div id="shot-1-visual" class="visual-wrap">
+        <div id="shot-1-camera" class="camera-wrap">
+          <video
+            id="vid-07"
+            src="assets/vid-07-vietnam-currency-timeline-inflation.mp4"
+            data-start="0"
+            data-duration="4.8"
+            data-media-start="1"
+            muted
+            playsinline
+          ></video>
+        </div>
+      </div>
+
+      <!-- SHOT 1: Lớp Overlays (0s -> 4.8s) -->
+      <div id="shot-1-overlays" class="clip" data-start="0" data-duration="4.8">
+        <!-- Punch phrase "BÍ ẨN NHỮNG SỐ 0" -->
+        <div id="punch-phrase-card">
+          <div class="tag-subtitle">CÂU HỎI TIỀN TỆ</div>
+          <h1 class="punch-title">BÍ ẨN NHỮNG SỐ 0</h1>
+        </div>
+
+        <!-- Icon "question" vẽ nét động -->
+        <div id="shot-1-icon">
+          <div class="icon-circle-bg">
+            <svg width="80" height="80" viewBox="0 0 80 80">
+              <path
+                id="q-mark-path"
+                d="M 28 30 C 28 18, 52 18, 52 30 C 52 40, 40 44, 40 54"
+                fill="none"
+                stroke="#FF6A1A"
+                stroke-width="7"
+                stroke-linecap="round"
+              />
+              <circle cx="40" cy="65" r="4.5" fill="#FF6A1A" />
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- SHOT 2: Media ảnh Ken Burns (4.8s -> 9.14s) -->
+      <div id="shot-2-clip" class="clip" data-start="4.8" data-duration="4.34">
+        <div id="shot-2-camera" class="camera-wrap">
+          <img
+            id="img-01"
+            src="assets/img-01-vietnam-currency-history-timeline.jpeg"
+            alt="Lịch sử tiền tệ Việt Nam"
+          />
+        </div>
+      </div>
+
+      <!-- SHOT 2: Lớp Overlays (4.8s -> 9.14s) -->
+      <div id="shot-2-overlays" class="clip" data-start="4.8" data-duration="4.34">
+        <!-- Label 1: "CHU KỲ LỊCH SỬ" -->
+        <div id="label-1-card">
+          <div class="label-box-dark">
+            <div class="label-meta">TRỤC THỜI GIAN</div>
+            <h2 class="label-heading">CHU KỲ LỊCH SỬ</h2>
+            <div id="timeline-line" class="timeline-track-bar"></div>
+          </div>
+        </div>
+
+        <!-- Label 2: "LẠM PHÁT PHI MÃ" & Icon "rise" -->
+        <div id="label-2-card">
+          <div class="crisis-left">
+            <div class="crisis-tag">CƠN LỐC TIỀN TỆ</div>
+            <h2 class="crisis-title">LẠM PHÁT PHI MÃ</h2>
+            <div class="crisis-sub">ĐỈNH ĐIỂM 1986 — 774%</div>
+          </div>
+
+          <div id="shot-2-rise-icon">
+            <svg width="80" height="80" viewBox="0 0 84 84">
+              <!-- Trục nền mờ -->
+              <line x1="12" y1="72" x2="72" y2="72" stroke="rgba(247,244,236,0.3)" stroke-width="2" />
+              <line x1="12" y1="12" x2="12" y2="72" stroke="rgba(247,244,236,0.3)" stroke-width="2" />
+              <!-- Đường cong tăng phi mã tự vẽ -->
+              <path
+                id="rise-path"
+                d="M 16 68 Q 44 64, 52 40 T 70 18"
+                fill="none"
+                stroke="#FF6A1A"
+                stroke-width="6"
+                stroke-linecap="round"
+              />
+              <!-- Mũi tên chỉ đỉnh -->
+              <polyline
+                id="rise-arrow"
+                points="58 18, 70 18, 70 30"
+                fill="none"
+                stroke="#FF6A1A"
+                stroke-width="6"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- Các lớp phong cách Vox xuyên suốt toàn video -->
+      <div class="paper-tint"></div>
+      <div class="vox-grid-overlay"></div>
+      <div class="grain-overlay"></div>
+
+      <!-- Thanh cam đáy cố định nhận diện thương hiệu -->
+      <div id="bottom-orange-bar"></div>
+    </div>
+
+    <script>
+      // Khởi tạo GSAP Timeline duy nhất và paused cho HyperFrames
+      const tl = gsap.timeline({ paused: true });
+
+      // Đo nét vẽ SVG thực tế và thiết lập strokeDash
+      const qPath = document.getElementById("q-mark-path");
+      const qLen = qPath ? qPath.getTotalLength() : 80;
+      if (qPath) {
+        qPath.style.strokeDasharray = qLen;
+        qPath.style.strokeDashoffset = qLen;
+      }
+
+      const risePath = document.getElementById("rise-path");
+      const riseLen = risePath ? risePath.getTotalLength() : 120;
+      if (risePath) {
+        risePath.style.strokeDasharray = riseLen;
+        risePath.style.strokeDashoffset = riseLen;
+      }
+
+      // ==========================================
+      // SHOT 1: 0s -> 4.8s
+      // ==========================================
+      // Transition in (Zoom-through 2.2 -> 1.0) kết hợp Camera slow zoom-in (1.0 -> 1.12)
+      tl.fromTo(
+        "#shot-1-camera",
+        { scale: 2.2, opacity: 0.75 },
+        { scale: 1.0, opacity: 1.0, duration: 0.7, ease: "power3.out" },
+        0
+      );
+      tl.to(
+        "#shot-1-camera",
+        { scale: 1.12, duration: 4.1, ease: "none" },
+        0.7
+      );
+
+      // Punch-phrase "BÍ ẨN NHỮNG SỐ 0" (vào lúc 0.5s, exit dùng to() tại 3.0s)
+      tl.fromTo(
+        "#punch-phrase-card",
+        { y: 50, opacity: 0, scale: 0.94 },
+        { y: 0, opacity: 1, scale: 1, duration: 0.5, ease: "power3.out" },
+        0.5
+      );
+      tl.to(
+        "#punch-phrase-card",
+        { y: -30, opacity: 0, duration: 0.35, ease: "power2.in" },
+        3.0
+      );
+
+      // Icon "question" (vào lúc 0.8s, exit dùng to() tại 2.8s)
+      tl.fromTo(
+        "#shot-1-icon",
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.4, ease: "power3.out" },
+        0.8
+      );
+      if (qPath) {
+        tl.fromTo(
+          qPath,
+          { strokeDashoffset: qLen },
+          { strokeDashoffset: 0, duration: 0.5, ease: "power2.out" },
+          0.9
+        );
+      }
+      tl.to(
+        "#shot-1-icon",
+        { scale: 0.8, opacity: 0, duration: 0.3, ease: "power2.in" },
+        2.8
+      );
+
+      // ==========================================
+      // SHOT 2: 4.8s -> 9.14s
+      // ==========================================
+      // Camera motion: Ken Burns pan dọc từ dưới lên (y: 30 -> -240, scale: 1.04 -> 1.10)
+      tl.fromTo(
+        "#shot-2-camera",
+        { y: 30, scale: 1.04 },
+        { y: -240, scale: 1.10, duration: 4.34, ease: "none" },
+        4.8
+      );
+
+      // Label 1: "CHU KỲ LỊCH SỬ" (vào lúc 5.2s, exit dùng to() tại 7.2s)
+      tl.fromTo(
+        "#label-1-card",
+        { x: -60, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.45, ease: "power3.out" },
+        5.2
+      );
+      tl.fromTo(
+        "#timeline-line",
+        { scaleX: 0 },
+        { scaleX: 1, duration: 0.5, ease: "power3.out" },
+        5.35
+      );
+      tl.to(
+        "#label-1-card",
+        { x: -40, opacity: 0, duration: 0.35, ease: "power2.in" },
+        7.2
+      );
+
+      // Label 2: "LẠM PHÁT PHI MÃ" (vào lúc 7.6s, chỉ dùng y và opacity để không xung đột scale)
+      tl.fromTo(
+        "#label-2-card",
+        { y: 40, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.45, ease: "power3.out" },
+        7.6
+      );
+
+      // Icon "rise" (vào lúc 7.8s)
+      tl.fromTo(
+        "#shot-2-rise-icon",
+        { opacity: 0, y: 15 },
+        { opacity: 1, y: 0, duration: 0.35, ease: "power3.out" },
+        7.8
+      );
+      if (risePath) {
+        tl.fromTo(
+          risePath,
+          { strokeDashoffset: riseLen },
+          { strokeDashoffset: 0, duration: 0.5, ease: "power2.out" },
+          7.95
+        );
+      }
+      tl.fromTo(
+        "#rise-arrow",
+        { opacity: 0 },
+        { opacity: 1, duration: 0.25, ease: "power2.out" },
+        8.25
+      );
+
+      // Đăng ký timeline chính duy nhất cho HyperFrames
+      window.__timelines["scene-s01"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

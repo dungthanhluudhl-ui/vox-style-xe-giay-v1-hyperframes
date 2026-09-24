@@ -1,0 +1,603 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #0b0f14;
+        color: #F7F4EC;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: #E7E3D9;
+        color: #141414;
+      }
+
+      /* Quy ước clip: inset: 0, định vị tuyệt đối và z-index cao hơn toàn bộ nền */
+      .clip {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+        pointer-events: none;
+        z-index: 10;
+      }
+
+      /* Thanh cam chữ ký thương hiệu ở mép dưới */
+      #brand-bottom-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 12px;
+        background-color: #FF6A1A;
+        z-index: 99;
+      }
+
+      /* Camera Rig bao bọc video và chuyển động máy quay (z-index: 1) */
+      #camera-rig {
+        position: absolute;
+        inset: 0;
+        transform-origin: 50% 50%;
+        will-change: transform;
+        z-index: 1;
+      }
+
+      /* Thẻ video chính hiển thị tài xế công nghệ và dữ liệu */
+      #driver-video {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      /* Gradient phủ bảo đảm độ tương phản tối cho chữ */
+      .video-vignette {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(
+          180deg,
+          rgba(231, 227, 217, 0.45) 0%,
+          rgba(20, 20, 20, 0.25) 30%,
+          rgba(20, 20, 20, 0.55) 70%,
+          rgba(20, 20, 20, 0.90) 100%
+        );
+        pointer-events: none;
+      }
+
+      /* Nền biến thể Chart: 4 đường kẻ ngang cố định và tick mark cam (z-index: 2) */
+      #chart-grid-layer {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        z-index: 2;
+      }
+      .chart-line {
+        position: absolute;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background-color: rgba(20, 20, 20, 0.28);
+      }
+      .chart-line-1 { top: 20%; }
+      .chart-line-2 { top: 40%; }
+      .chart-line-3 { top: 60%; }
+      .chart-line-4 { top: 80%; }
+
+      .chart-tick {
+        position: absolute;
+        left: 0;
+        width: 28px;
+        height: 6px;
+        background-color: #FF6A1A;
+        border-radius: 0 4px 4px 0;
+      }
+      .chart-tick-1 { top: calc(20% - 2px); }
+      .chart-tick-2 { top: calc(40% - 2px); }
+      .chart-tick-3 { top: calc(60% - 2px); }
+      .chart-tick-4 { top: calc(80% - 2px); }
+
+      /* =================== OVERLAY 1: NHÃN PHÂN LOẠI =================== */
+      #label-tech-driver {
+        position: absolute;
+        top: 220px;
+        left: 60px;
+        display: inline-flex;
+        align-items: center;
+        background-color: #141414;
+        padding: 16px 28px;
+        border-radius: 8px;
+        border-left: 8px solid #FF6A1A;
+        box-shadow: 0 16px 36px rgba(0, 0, 0, 0.4);
+        opacity: 0;
+        will-change: transform, opacity;
+        z-index: 10;
+      }
+      .badge-accent {
+        width: 14px;
+        height: 14px;
+        background-color: #FF6A1A;
+        border-radius: 50%;
+        margin-right: 16px;
+        flex-shrink: 0;
+        position: relative;
+        z-index: 15;
+      }
+      .badge-text {
+        font-size: 28px;
+        font-weight: 900;
+        color: #F7F4EC;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        line-height: 1.2;
+        position: relative;
+        z-index: 20;
+      }
+
+      /* =================== OVERLAY 2: CON SỐ DỮ LIỆU THỐNG KÊ =================== */
+      #data-card {
+        position: absolute;
+        top: 260px;
+        left: 60px;
+        right: 60px;
+        background-color: #141414;
+        border: 2px solid rgba(255, 106, 26, 0.4);
+        border-left: 12px solid #FF6A1A;
+        border-radius: 18px;
+        padding: 36px 40px;
+        box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6);
+        opacity: 0;
+        will-change: transform, opacity;
+        z-index: 10;
+      }
+      .data-header {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 24px;
+        position: relative;
+        z-index: 15;
+      }
+      .data-tag {
+        font-size: 22px;
+        font-weight: 900;
+        color: #FF6A1A;
+        letter-spacing: 3px;
+        text-transform: uppercase;
+        position: relative;
+        z-index: 20;
+      }
+      .data-rule {
+        flex: 1;
+        height: 2px;
+        background-color: rgba(247, 244, 236, 0.2);
+        position: relative;
+        z-index: 15;
+      }
+      .data-body {
+        display: flex;
+        align-items: center;
+        gap: 24px;
+        position: relative;
+        z-index: 15;
+      }
+      .icon-person-wrap {
+        flex-shrink: 0;
+        width: 90px;
+        height: 90px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: rgba(255, 106, 26, 0.12);
+        border-radius: 16px;
+        position: relative;
+        z-index: 15;
+      }
+      .svg-icon-person {
+        width: 70px;
+        height: 70px;
+      }
+      .draw-path {
+        fill: none;
+      }
+      .data-numbers-wrap {
+        display: flex;
+        align-items: baseline;
+        gap: 8px;
+        position: relative;
+        z-index: 15;
+      }
+      .data-prefix {
+        font-size: 64px;
+        font-weight: 900;
+        color: #FF6A1A;
+        line-height: 1;
+        position: relative;
+        z-index: 20;
+      }
+      .data-counter {
+        font-size: 78px;
+        font-weight: 900;
+        color: #F7F4EC;
+        line-height: 1;
+        letter-spacing: -1px;
+        position: relative;
+        z-index: 20;
+      }
+      .data-footer {
+        margin-top: 24px;
+        position: relative;
+        z-index: 15;
+      }
+      .data-punch-phrase {
+        margin: 0;
+        font-size: 38px;
+        font-weight: 900;
+        color: #F7F4EC;
+        letter-spacing: 1px;
+        line-height: 1.25;
+        text-transform: uppercase;
+        position: relative;
+        z-index: 20;
+      }
+
+      /* =================== OVERLAY 3: CẢNH BÁO NGUY CƠ MẤT VIỆC =================== */
+      #consequence-card {
+        position: absolute;
+        top: 300px;
+        left: 60px;
+        right: 60px;
+        background-color: #141414;
+        border: 3px solid #FF6A1A;
+        border-radius: 20px;
+        padding: 40px;
+        box-shadow: 10px 14px 0px rgba(255, 106, 26, 0.35), 0 30px 60px rgba(0, 0, 0, 0.65);
+        opacity: 0;
+        will-change: transform, opacity;
+        z-index: 10;
+      }
+      .consequence-badge {
+        display: inline-block;
+        background-color: #FF6A1A;
+        color: #141414;
+        font-size: 20px;
+        font-weight: 900;
+        padding: 6px 18px;
+        border-radius: 6px;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        margin-bottom: 24px;
+        position: relative;
+        z-index: 20;
+      }
+      .consequence-content {
+        display: flex;
+        align-items: center;
+        gap: 28px;
+        position: relative;
+        z-index: 15;
+      }
+      .ban-icon-wrap {
+        flex-shrink: 0;
+        width: 100px;
+        height: 100px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: rgba(255, 106, 26, 0.12);
+        border-radius: 50%;
+        position: relative;
+        z-index: 15;
+      }
+      .svg-ban {
+        width: 84px;
+        height: 84px;
+      }
+      .consequence-text-wrap {
+        flex: 1;
+        position: relative;
+        z-index: 15;
+      }
+      .consequence-title {
+        margin: 0;
+        font-size: 46px;
+        font-weight: 900;
+        color: #F7F4EC;
+        line-height: 1.15;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        position: relative;
+        z-index: 20;
+      }
+      .consequence-underline {
+        height: 6px;
+        background-color: #FF6A1A;
+        border-radius: 3px;
+        margin-top: 12px;
+        transform-origin: 0% 50%;
+        will-change: transform;
+        position: relative;
+        z-index: 15;
+      }
+      .consequence-desc {
+        margin: 12px 0 0 0;
+        font-size: 26px;
+        font-weight: 700;
+        color: #E7E3D9;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        position: relative;
+        z-index: 20;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s08"
+      data-width="1080"
+      data-height="1920"
+      data-duration="9.28"
+    >
+      <!-- Dải cam chữ ký thương hiệu -->
+      <div id="brand-bottom-bar"></div>
+
+      <!-- Lớp lưới Chart số liệu cố định (z-index: 2) -->
+      <div id="chart-grid-layer">
+        <div class="chart-line chart-line-1"></div>
+        <div class="chart-tick chart-tick-1"></div>
+
+        <div class="chart-line chart-line-2"></div>
+        <div class="chart-tick chart-tick-2"></div>
+
+        <div class="chart-line chart-line-3"></div>
+        <div class="chart-tick chart-tick-3"></div>
+
+        <div class="chart-line chart-line-4"></div>
+        <div class="chart-tick chart-tick-4"></div>
+      </div>
+
+      <!-- Camera Rig điều khiển zoom & tremble cho toàn cảnh video (z-index: 1) -->
+      <div id="camera-rig" data-layout-allow-overflow>
+        <!-- Video nền tài xế xem smartphone & số liệu tuyến đường -->
+        <video
+          id="driver-video"
+          muted
+          playsinline
+          data-start="0"
+          data-duration="9.28"
+          data-media-start="0"
+          src="assets/vid-03-ride-hailing-driver-route-data.mp4"
+        ></video>
+
+        <!-- Lớp phủ ánh sáng gradient -->
+        <div class="video-vignette"></div>
+      </div>
+
+      <!-- OVERLAY 1: Nhãn mở đầu phân loại (0.48s - 2.48s, z-index: 10) -->
+      <div id="clip-label-tech" class="clip" data-start="0.48" data-duration="2.0">
+        <div id="label-tech-driver" data-layout-allow-occlusion="true">
+          <div class="badge-accent"></div>
+          <span class="badge-text">XE ÔM CÔNG NGHỆ</span>
+        </div>
+      </div>
+
+      <!-- OVERLAY 2: Punch-phrase & Con số thống kê 126.500 (3.58s - 6.08s, z-index: 10) -->
+      <div id="clip-data-stat" class="clip" data-start="3.58" data-duration="2.5">
+        <div id="data-card" data-layout-allow-occlusion="true">
+          <div class="data-header">
+            <span class="data-tag">THỐNG KÊ CHÍNH THỨC</span>
+            <div class="data-rule"></div>
+          </div>
+          <div class="data-body">
+            <div class="icon-person-wrap">
+              <svg viewBox="0 0 100 100" class="svg-icon-person">
+                <circle
+                  cx="50"
+                  cy="32"
+                  r="18"
+                  stroke="#FF6A1A"
+                  stroke-width="8"
+                  stroke-linecap="round"
+                  class="draw-path"
+                />
+                <path
+                  d="M 20 86 C 20 62, 34 56, 50 56 C 66 56, 80 62, 80 86"
+                  stroke="#FF6A1A"
+                  stroke-width="8"
+                  stroke-linecap="round"
+                  class="draw-path"
+                />
+              </svg>
+            </div>
+            <div class="data-numbers-wrap">
+              <span class="data-prefix">&gt;</span>
+              <span class="data-counter" id="counter-val">0</span>
+            </div>
+          </div>
+          <div class="data-footer">
+            <h2 class="data-punch-phrase">TÀI XẾ ĐÃ ĐƯỢC BÁO CÁO</h2>
+          </div>
+        </div>
+      </div>
+
+      <!-- OVERLAY 3: Cảnh báo mất việc & Dấu gạch chéo ban (7.28s - 9.28s, z-index: 10) -->
+      <div id="clip-consequence" class="clip" data-start="7.28" data-duration="2.0">
+        <div id="consequence-card" data-layout-allow-occlusion="true">
+          <div class="consequence-badge">HỆ QUẢ TRỰC TIẾP</div>
+          <div class="consequence-content">
+            <div class="ban-icon-wrap">
+              <svg viewBox="0 0 120 120" class="svg-ban">
+                <circle
+                  cx="60"
+                  cy="60"
+                  r="48"
+                  stroke="#FF6A1A"
+                  stroke-width="10"
+                  class="draw-path"
+                />
+                <line
+                  x1="26"
+                  y1="26"
+                  x2="94"
+                  y2="94"
+                  stroke="#FF6A1A"
+                  stroke-width="10"
+                  stroke-linecap="round"
+                  class="draw-path"
+                />
+              </svg>
+            </div>
+            <div class="consequence-text-wrap">
+              <h2 class="consequence-title">NGUY CƠ MẤT VIỆC</h2>
+              <div class="consequence-underline" id="strike-underline"></div>
+              <p class="consequence-desc">LẤY ĐI NGUỒN SINH KẾ</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Tạo timeline GSAP tất định, paused: true
+      const tl = gsap.timeline({ paused: true });
+
+      // 1. PUNCH ENTRANCE & CAMERA ZOOM SUỐT TOÀN SHOT (0s -> 8.0s)
+      tl.fromTo(
+        "#camera-rig",
+        { scale: 1.0, y: 0, x: 0, rotation: 0 },
+        { scale: 1.06, y: -10, x: 0, rotation: 0, duration: 0.5, ease: "power4.out" },
+        0
+      );
+      tl.to(
+        "#camera-rig",
+        { scale: 1.25, y: -40, duration: 7.5, ease: "none" },
+        0.5
+      );
+
+      // 2. OVERLAY 1: Nhãn "XE ÔM CÔNG NGHỆ" (50200ms -> t = 0.48s, giữ 2.0s)
+      tl.fromTo(
+        "#label-tech-driver",
+        { y: 24, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.45, ease: "power3.out" },
+        0.48
+      );
+      tl.to(
+        "#label-tech-driver",
+        { y: -24, opacity: 0, duration: 0.35, ease: "power2.in" },
+        2.05
+      );
+
+      // 3. OVERLAY 2: Con số thống kê & Icon Person (53300ms -> t = 3.58s)
+      tl.fromTo(
+        "#data-card",
+        { scale: 0.88, opacity: 0, y: 30 },
+        { scale: 1.0, opacity: 1, y: 0, duration: 0.5, ease: "power3.out" },
+        3.58
+      );
+
+      // Icon Person vẽ nét tuần tự bằng hằng số độ dài tĩnh, không dùng hàm trong GSAP vars
+      const dataPaths = document.querySelectorAll("#data-card .draw-path");
+      dataPaths.forEach((p, idx) => {
+        const len = Math.ceil(p.getTotalLength()) + 2;
+        p.style.strokeDasharray = len + "px";
+        p.style.strokeDashoffset = len + "px";
+        tl.fromTo(
+          p,
+          { strokeDashoffset: len },
+          { strokeDashoffset: 0, duration: 0.65, ease: "power2.out" },
+          3.78 + idx * 0.15
+        );
+      });
+
+      // Bộ đếm số liệu nhảy nhanh chạm mốc 126.500
+      const counterState = { val: 0 };
+      const counterEl = document.getElementById("counter-val");
+      tl.fromTo(
+        counterState,
+        { val: 0 },
+        {
+          val: 126500,
+          duration: 1.15,
+          ease: "power2.out",
+          onUpdate: () => {
+            if (counterEl) {
+              counterEl.innerText = Math.floor(counterState.val).toLocaleString("vi-VN");
+            }
+          },
+        },
+        3.65
+      );
+
+      // Card 2 fade out trước khi hết clip lúc 6.08s
+      tl.to(
+        "#data-card",
+        { y: -30, opacity: 0, duration: 0.38, ease: "power2.in" },
+        5.65
+      );
+
+      // 4. OVERLAY 3: "NGUY CƠ MẤT VIỆC" & Icon Ban (57000ms -> t = 7.28s)
+      tl.fromTo(
+        "#consequence-card",
+        { scale: 0.88, opacity: 0, y: 30 },
+        { scale: 1.0, opacity: 1, y: 0, duration: 0.45, ease: "power3.out" },
+        7.28
+      );
+
+      // Icon ban vẽ nét và gạch chéo bằng hằng số độ dài tĩnh
+      const consequencePaths = document.querySelectorAll("#consequence-card .draw-path");
+      consequencePaths.forEach((p, idx) => {
+        const len = Math.ceil(p.getTotalLength()) + 2;
+        p.style.strokeDasharray = len + "px";
+        p.style.strokeDashoffset = len + "px";
+        tl.fromTo(
+          p,
+          { strokeDashoffset: len },
+          { strokeDashoffset: 0, duration: 0.45, ease: "power2.out" },
+          7.48 + idx * 0.12
+        );
+      });
+
+      // Nét cam nhấn mạnh dưới tiêu đề mở rộng dứt khoát
+      tl.fromTo(
+        "#strike-underline",
+        { scaleX: 0 },
+        { scaleX: 1, duration: 0.35, ease: "power4.out" },
+        7.75
+      );
+
+      // 5. HIỆU ỨNG IDLE TREMBLE (RUNG LO LẮNG) Ở 1.28s CUỐI (8.0s -> 9.28s)
+      tl.to("#camera-rig", { x: -6, y: -37, rotation: -0.4, duration: 0.09, ease: "none" }, 8.00);
+      tl.to("#camera-rig", { x: 5, y: -43, rotation: 0.3, duration: 0.09, ease: "none" }, 8.09);
+      tl.to("#camera-rig", { x: -5, y: -38, rotation: -0.3, duration: 0.09, ease: "none" }, 8.18);
+      tl.to("#camera-rig", { x: 4, y: -42, rotation: 0.2, duration: 0.09, ease: "none" }, 8.27);
+      tl.to("#camera-rig", { x: -4, y: -39, rotation: -0.2, duration: 0.09, ease: "none" }, 8.36);
+      tl.to("#camera-rig", { x: 3, y: -41, rotation: 0.2, duration: 0.09, ease: "none" }, 8.45);
+      tl.to("#camera-rig", { x: -3, y: -40, rotation: -0.1, duration: 0.09, ease: "none" }, 8.54);
+      tl.to("#camera-rig", { x: 3, y: -39, rotation: 0.1, duration: 0.09, ease: "none" }, 8.63);
+      tl.to("#camera-rig", { x: -2, y: -41, rotation: -0.1, duration: 0.09, ease: "none" }, 8.72);
+      tl.to("#camera-rig", { x: 2, y: -40, rotation: 0.1, duration: 0.09, ease: "none" }, 8.81);
+      tl.to("#camera-rig", { x: -1, y: -40, rotation: 0, duration: 0.10, ease: "none" }, 8.90);
+      tl.to("#camera-rig", { x: 0, y: -40, rotation: 0, duration: 0.10, ease: "power2.out" }, 9.00);
+
+      // Đăng ký timeline gốc cho HyperFrames
+      window.__timelines["scene-s08"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

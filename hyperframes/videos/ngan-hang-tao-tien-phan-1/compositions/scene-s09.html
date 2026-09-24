@@ -1,0 +1,510 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap"
+    />
+      <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        padding: 0;
+        background: #e7e3d9;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+
+      /* Base paper texture layers */
+      .bg-layer {
+        position: absolute;
+        inset: 0;
+        background-color: #e7e3d9;
+        z-index: 1;
+        pointer-events: none;
+      }
+
+      .grid-pattern {
+        position: absolute;
+        inset: 0;
+        background-size: 84px 84px;
+        background-image:
+          linear-gradient(to right, rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px),
+          linear-gradient(to bottom, rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px);
+        opacity: 0.65;
+      }
+
+      .grain-overlay {
+        position: absolute;
+        inset: 0;
+        background-image: radial-gradient(rgba(20, 20, 20, 0.08) 1px, transparent 0);
+        background-size: 5px 5px;
+        opacity: 0.7;
+      }
+
+      /* HyperFrames core standard clip positioning */
+      .clip {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+      }
+
+      /* Vox signature persistent bottom accent bar */
+      .bottom-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 14px;
+        background-color: #ff6a1a;
+        z-index: 100;
+        pointer-events: none;
+      }
+
+      /* Shot 1 container (plain wrapper, no timed data-start to prevent nested timing conflicts) */
+      .shot-container {
+        position: absolute;
+        inset: 0;
+        z-index: 10;
+      }
+
+      /* Motion Rigs */
+      .motion-rig {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      #wobble-drop-rig {
+        transform-origin: 50% 50%;
+        will-change: transform, opacity;
+      }
+
+      #camera-zoom-1 {
+        transform-origin: 50% 50%;
+        will-change: transform;
+      }
+
+      /* Collage Card Frames */
+      .collage-frame {
+        position: absolute;
+        top: 340px;
+        left: 80px;
+        width: 920px;
+        height: 1020px;
+        background: #f5f0e4;
+        border: 6px solid #141414;
+        box-shadow: 16px 16px 0px #ff6a1a, 24px 24px 0px #141414;
+        overflow: hidden;
+      }
+
+      .collage-frame video,
+      .collage-frame img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      /* Punch Phrase Overlay (S09-1) */
+      .punch-wrap {
+        position: absolute;
+        top: 175px;
+        left: 80px;
+        right: 80px;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        z-index: 40;
+        pointer-events: none;
+        opacity: 0;
+        will-change: transform, opacity;
+      }
+
+      .tag-pill {
+        display: inline-block;
+        background: #ff6a1a;
+        color: #141414;
+        font-size: 24px;
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        padding: 8px 22px;
+        border-radius: 4px;
+        margin-bottom: 12px;
+        box-shadow: 4px 4px 0px #141414;
+      }
+
+      .punch-box {
+        background: #141414;
+        padding: 22px 34px;
+        border-radius: 8px;
+        box-shadow: 10px 10px 0px #ff6a1a;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      .punch-text {
+        font-size: 50px;
+        font-weight: 900;
+        line-height: 1.15;
+        color: #f7f4ec;
+        text-transform: uppercase;
+        letter-spacing: -0.5px;
+      }
+
+      .punch-highlight {
+        font-size: 58px;
+        font-weight: 900;
+        line-height: 1.1;
+        color: #ff6a1a;
+        text-transform: uppercase;
+        letter-spacing: -0.5px;
+      }
+
+      /* Self-drawing SVG Icon Badge (S09-1) */
+      .icon-badge {
+        position: absolute;
+        top: 1180px;
+        right: 80px;
+        background: #f5f0e4;
+        border: 5px solid #141414;
+        border-radius: 50%;
+        width: 176px;
+        height: 176px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 8px 8px 0px #ff6a1a, 14px 14px 0px #141414;
+        z-index: 50;
+        pointer-events: none;
+        opacity: 0;
+        will-change: transform, opacity;
+      }
+
+      .scale-svg {
+        width: 94px;
+        height: 94px;
+      }
+
+      .scale-stroke {
+        stroke: #141414;
+        stroke-width: 4;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        fill: none;
+      }
+
+      .icon-subtext {
+        font-size: 16px;
+        font-weight: 900;
+        color: #141414;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        margin-top: 3px;
+      }
+
+      /* Callout Cards (S09-2) */
+      .callout-card {
+        position: absolute;
+        background: #141414;
+        border: 4px solid #ff6a1a;
+        box-shadow: 10px 10px 0px rgba(20, 20, 20, 0.45);
+        padding: 22px 30px;
+        border-radius: 6px;
+        z-index: 45;
+        pointer-events: none;
+        opacity: 0;
+        will-change: transform, opacity;
+      }
+
+      .callout-pill {
+        display: inline-block;
+        background: #ff6a1a;
+        color: #141414;
+        font-size: 20px;
+        font-weight: 900;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        padding: 5px 16px;
+        border-radius: 3px;
+        margin-bottom: 8px;
+      }
+
+      .callout-title {
+        font-size: 38px;
+        font-weight: 900;
+        color: #f7f4ec;
+        text-transform: uppercase;
+        letter-spacing: -0.5px;
+        line-height: 1.2;
+      }
+
+      .callout-desc {
+        font-size: 22px;
+        font-weight: 700;
+        color: #e7e3d9;
+        margin-top: 6px;
+        letter-spacing: 0.5px;
+      }
+
+      .callout-goods {
+        top: 200px;
+        left: 70px;
+        width: 580px;
+      }
+
+      .callout-services {
+        top: 1240px;
+        right: 70px;
+        width: 600px;
+      }
+    </style>
+
+    <!-- Composition Root: 1080x1920 portrait @30fps, 9.04s total scene duration -->
+    <div
+      id="root"
+      data-composition-id="scene-s09"
+      data-start="0"
+      data-width="1080"
+      data-height="1920"
+      data-duration="9.04"
+    >
+      <!-- Base Paper Grid Background -->
+      <div class="bg-layer">
+        <div class="grid-pattern"></div>
+        <div class="grain-overlay"></div>
+      </div>
+
+      <!-- ========================================================= -->
+      <!-- SHOT 1: S09-1 (t = 0.0s to 5.0s, vid-01)                  -->
+      <!-- Untimed wrapper allows video to own its timing directly    -->
+      <!-- ========================================================= -->
+      <div id="shot-1" class="shot-container">
+        <!-- Wobble-drop physics entrance rig -->
+        <div id="wobble-drop-rig" class="motion-rig">
+          <!-- Continuous camera zoom-in rig -->
+          <div id="camera-zoom-1" class="motion-rig">
+            <div class="collage-frame">
+              <!-- Video owns its own start/duration without nested timed ancestor -->
+              <video
+                id="vid-scale"
+                data-start="0"
+                data-duration="5.0"
+                data-media-start="0.5"
+                src="assets/vid-01-value-balance-scale-cutout.mp4"
+                muted
+                playsinline
+                preload="auto"
+              ></video>
+            </div>
+          </div>
+        </div>
+
+        <!-- Punch phrase overlay: "VẬT TRAO ĐỔI GIÁ TRỊ" -->
+        <div id="punch-wrap-1" class="punch-wrap">
+          <div class="tag-pill">QUAN HỆ BẢN CHẤT</div>
+          <div class="punch-box">
+            <span class="punch-text">VẬT TRAO ĐỔI</span>
+            <span class="punch-highlight">GIÁ TRỊ</span>
+          </div>
+        </div>
+
+        <!-- Progressively drawn SVG Scale Icon Badge -->
+        <div id="icon-badge-1" class="icon-badge">
+          <svg class="scale-svg" viewBox="0 0 100 100">
+            <!-- Stand and Base -->
+            <path class="scale-stroke" d="M 22 84 L 78 84 M 50 84 L 50 28" />
+            <!-- Fulcrum pivot -->
+            <circle cx="50" cy="28" r="4.5" fill="#FF6A1A" stroke="#141414" stroke-width="3" />
+            <!-- Tilted beam: left money side high, right goods side low -->
+            <path class="scale-stroke" d="M 18 20 L 82 36" />
+            <!-- Left pan (money) -->
+            <path class="scale-stroke" d="M 18 20 L 10 44 M 18 20 L 26 44 M 7 44 Q 18 52 29 44" />
+            <!-- Right pan (necessities) -->
+            <path class="scale-stroke" d="M 82 36 L 72 62 M 82 36 L 92 62 M 69 62 Q 82 70 95 62" />
+          </svg>
+          <span class="icon-subtext">CÁN CÂN</span>
+        </div>
+      </div>
+
+      <!-- ========================================================= -->
+      <!-- SHOT 2: S09-2 (t = 5.0s to 9.04s, img-01)                 -->
+      <!-- Standard timed clip, active from 5.0s to 9.04s            -->
+      <!-- ========================================================= -->
+      <section
+        id="shot-2"
+        class="clip"
+        data-start="5.0"
+        data-duration="4.04"
+        data-track-index="0"
+        style="z-index: 20;"
+      >
+        <div id="shot-2-card" class="collage-frame">
+          <!-- Cutout close-up image with pan-left camera movement -->
+          <img
+            id="img-necessities"
+            src="assets/img-01-value-balance-money-necessities.jpeg"
+            alt="Cận cảnh đĩa cân hàng hóa và dịch vụ thiết yếu"
+          />
+        </div>
+
+        <!-- Label 1: HÀNG HÓA THỰC TẾ -->
+        <div id="callout-goods" class="callout-card callout-goods">
+          <div class="callout-pill">GIÁ TRỊ CỐT LÕI</div>
+          <div class="callout-title">HÀNG HÓA THỰC TẾ</div>
+          <div class="callout-desc">Lương thực • Quần áo • Đồ ăn</div>
+        </div>
+
+        <!-- Label 2: DỊCH VỤ THIẾT YẾU -->
+        <div id="callout-services" class="callout-card callout-services">
+          <div class="callout-pill">GIÁ TRỊ CỐT LÕI</div>
+          <div class="callout-title">DỊCH VỤ THIẾT YẾU</div>
+          <div class="callout-desc">Y tế • Khám bệnh • Bác sĩ</div>
+        </div>
+      </section>
+
+      <!-- Persistent bottom orange accent bar -->
+      <div class="bottom-bar"></div>
+    </div>
+
+    <script>
+      // Single paused master timeline bound to window.__timelines["scene-s09"]
+      const tl = gsap.timeline({ paused: true });
+
+      // Measure SVG path lengths for self-drawing stroke animation
+      document.querySelectorAll(".scale-stroke").forEach((p) => {
+        const len = p.getTotalLength();
+        p.style.strokeDasharray = `${len}`;
+        p.style.strokeDashoffset = `${len}`;
+      });
+
+      // ==========================================
+      // SHOT 1: S09-1 (0.0s -> 5.0s)
+      // ==========================================
+
+      // 1. Wobble-drop physics entrance (clean chained sequence without overlapping timestamps)
+      tl.fromTo(
+        "#wobble-drop-rig",
+        { y: -360, rotation: -7, opacity: 0, scale: 0.94 },
+        { y: 0, opacity: 1, scale: 1, duration: 0.45, ease: "power2.in" },
+        0
+      )
+        .to("#wobble-drop-rig", { rotation: 5, y: -16, duration: 0.2, ease: "power1.out" })
+        .to("#wobble-drop-rig", { rotation: -2.5, y: 0, duration: 0.18, ease: "power1.inOut" })
+        .to("#wobble-drop-rig", { rotation: 1.2, duration: 0.14, ease: "power1.inOut" })
+        .to("#wobble-drop-rig", { rotation: 0, duration: 0.13, ease: "power1.out" });
+
+      // 2. Camera zoom-in: Continuous gentle punch-in across Shot 1
+      tl.fromTo(
+        "#camera-zoom-1",
+        { scale: 1 },
+        { scale: 1.07, duration: 5.0, ease: "none" },
+        0
+      );
+
+      // 3. Punch phrase overlay (atMs 73230 -> 2.03s, hold 2.2s -> 4.23s)
+      tl.fromTo(
+        "#punch-wrap-1",
+        { scale: 0.88, opacity: 0, y: -24 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.38, ease: "power3.out" },
+        2.03
+      );
+      tl.to(
+        "#punch-wrap-1",
+        { opacity: 0, y: -12, duration: 0.22, ease: "power2.in" },
+        4.23
+      );
+
+      // 4. Scale icon badge pop entrance (atMs 75380 -> 4.18s)
+      tl.fromTo(
+        "#icon-badge-1",
+        { scale: 0, opacity: 0, rotation: -12 },
+        { scale: 1, opacity: 1, rotation: 0, duration: 0.35, ease: "power3.out" },
+        4.1
+      );
+
+      // Progressive SVG path draw for the scale icon
+      tl.to(
+        ".scale-stroke",
+        { strokeDashoffset: 0, duration: 0.55, ease: "power2.out", stagger: 0.06 },
+        4.25
+      );
+
+      // Fade out Shot 1 container right before Shot 2 cut
+      tl.to(
+        "#shot-1",
+        { opacity: 0, duration: 0.15, ease: "power1.in" },
+        4.85
+      );
+
+      // ==========================================
+      // SHOT 2: S09-2 (5.0s -> 9.04s)
+      // ==========================================
+
+      // 1. Transition in: Dissolve reveal of Shot 2 card
+      tl.fromTo(
+        "#shot-2-card",
+        { opacity: 0, scale: 0.96 },
+        { opacity: 1, scale: 1, duration: 0.35, ease: "power2.out" },
+        5.0
+      );
+
+      // 2. Camera motion: Slow cinematic pan-left emphasizing the weighted goods pan
+      tl.fromTo(
+        "#img-necessities",
+        { x: 30, scale: 1.06 },
+        { x: -30, scale: 1.06, duration: 4.04, ease: "none" },
+        5.0
+      );
+
+      // 3. Label 1: "HÀNG HÓA THỰC TẾ" (atMs 77010 -> 5.81s, hold to 7.35s)
+      tl.fromTo(
+        "#callout-goods",
+        { x: -45, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.38, ease: "power3.out" },
+        5.81
+      );
+      tl.to(
+        "#callout-goods",
+        { x: -16, opacity: 0, duration: 0.22, ease: "power2.in" },
+        7.35
+      );
+
+      // 4. Label 2: "DỊCH VỤ THIẾT YẾU" (atMs 78760 -> 7.56s, holds to end of shot)
+      tl.fromTo(
+        "#callout-services",
+        { x: 45, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.38, ease: "power3.out" },
+        7.56
+      );
+
+      // Bind timeline to the HyperFrames registry
+      window.__timelines["scene-s09"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

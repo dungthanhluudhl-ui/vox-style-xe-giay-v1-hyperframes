@@ -1,0 +1,640 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap">
+      <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: #0d0f12;
+      color: #141414;
+      font-family: "Be Vietnam Pro", sans-serif;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+    #root {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+    .clip {
+      position: absolute;
+      inset: 0;
+    }
+    .vox-paper-bg {
+      position: absolute;
+      inset: 0;
+      background-color: #E7E3D9;
+      background-image:
+        linear-gradient(to right, rgba(20, 20, 20, 0.16) 1.5px, transparent 1.5px),
+        linear-gradient(to bottom, rgba(20, 20, 20, 0.16) 1.5px, transparent 1.5px);
+      background-size: 84px 84px;
+    }
+    .vox-grain-overlay {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.18;
+      mix-blend-mode: multiply;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+    }
+    .bottom-orange-bar {
+      position: absolute;
+      left: 0; right: 0; bottom: 0;
+      height: 10px;
+      background-color: #FF6A1A;
+      z-index: 100;
+    }
+    #scene-content {
+      position: absolute;
+      inset: 0;
+      will-change: clip-path, transform;
+    }
+    /* Untweened wrapper cô lập hoàn toàn CSS rotation 45deg, tránh xung đột transform với GSAP */
+    .peel-wrapper {
+      position: absolute;
+      top: -300px; right: -300px;
+      width: 900px; height: 900px;
+      transform: rotate(45deg);
+      transform-origin: top right;
+      pointer-events: none;
+      z-index: 90;
+    }
+    #peel-curl {
+      width: 100%; height: 100%;
+      background: linear-gradient(135deg, rgba(20, 20, 20, 0.28) 0%, rgba(245, 240, 228, 0.95) 45%, #F5F0E4 50%, #E7E3D9 100%);
+      box-shadow: -15px 15px 35px rgba(20, 20, 20, 0.35);
+    }
+    .dossier-header {
+      position: absolute;
+      top: 175px; left: 60px; right: 60px;
+      height: 84px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 2.5px solid #141414;
+      padding-bottom: 12px;
+      z-index: 10;
+    }
+    .dossier-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: #141414;
+      color: #F7F4EC;
+      padding: 6px 14px;
+      font-size: 19px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      border-radius: 4px;
+    }
+    .dossier-tag-dot {
+      width: 8px; height: 8px; border-radius: 50%; background-color: #FF6A1A;
+    }
+    .dossier-title {
+      font-size: 25px;
+      font-weight: 900;
+      color: #141414;
+      letter-spacing: -0.5px;
+      text-transform: uppercase;
+    }
+    .diagram-stage {
+      position: absolute;
+      top: 275px; left: 60px; right: 60px;
+      height: 730px;
+      z-index: 10;
+    }
+    .diagram-svg {
+      width: 100%; height: 100%; overflow: visible;
+    }
+    /* Transform origin cho các phần tử đồ họa được khai báo tĩnh tại CSS */
+    #gauge-needle {
+      transform-origin: 0px 0px;
+    }
+    #valve-wheel {
+      transform-origin: 0px 0px;
+    }
+    #ban-overlay {
+      transform-origin: 0px 0px;
+    }
+    /* Con dấu dập kiểm soát nhà nước */
+    .state-stamp-wrapper {
+      position: absolute;
+      top: 615px; left: 50%;
+      width: 360px; height: 140px;
+      margin-left: -180px;
+      transform-origin: center center;
+      z-index: 25;
+      pointer-events: none;
+    }
+    .state-stamp-box {
+      width: 100%; height: 100%;
+      background: #141414;
+      border: 3.5px solid #F7F4EC;
+      border-radius: 8px;
+      box-shadow: 8px 8px 0px #FF6A1A;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 16px;
+      outline: 2px dashed #FF6A1A;
+      outline-offset: -6px;
+    }
+    .stamp-text-sub {
+      font-size: 17px;
+      font-weight: 900;
+      color: #FF6A1A;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      line-height: 1.2;
+    }
+    .stamp-text-main {
+      font-size: 30px;
+      font-weight: 900;
+      color: #F7F4EC;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      line-height: 1.2;
+      margin: 4px 0 2px;
+    }
+    .stamp-text-desc {
+      font-size: 13px;
+      font-weight: 700;
+      color: #F7F4EC;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      opacity: 0.9;
+      line-height: 1.2;
+    }
+    .punch-card {
+      position: absolute;
+      top: 1030px; left: 60px; right: 60px;
+      height: 160px;
+      background-color: #141414;
+      border-radius: 14px;
+      padding: 22px 32px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      box-shadow: 10px 10px 0px #FF6A1A;
+      z-index: 20;
+    }
+    .punch-eyebrow {
+      font-size: 20px; font-weight: 700; color: #FF6A1A; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 4px;
+    }
+    .punch-headline {
+      font-size: 64px; font-weight: 900; color: #F7F4EC; line-height: 1.15; letter-spacing: -0.5px; text-transform: uppercase;
+    }
+    .ratio-card {
+      position: absolute;
+      top: 1220px; left: 60px; right: 60px;
+      height: 250px;
+      background-color: #F5F0E4;
+      border: 2.5px solid #141414;
+      border-radius: 14px;
+      padding: 24px 28px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      box-shadow: 6px 6px 0px rgba(20, 20, 20, 0.15);
+      z-index: 15;
+    }
+    .ratio-header {
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .ratio-badge {
+      background-color: #FF6A1A; color: #141414; padding: 6px 16px; font-size: 22px; font-weight: 900; border-radius: 6px; letter-spacing: 0.5px; text-transform: uppercase;
+    }
+    .ratio-caption {
+      font-size: 20px; font-weight: 700; color: #141414; text-transform: uppercase;
+    }
+    .distribution-bar-wrapper {
+      position: relative; width: 100%; height: 58px; background-color: #E7E3D9; border: 2.5px solid #141414; border-radius: 8px; overflow: hidden; display: flex;
+    }
+    /* Kích thước meter được set cố định tại CSS, animation dùng scaleX với origin left center */
+    .bar-digital {
+      width: 92%;
+      height: 100%;
+      background-color: #141414;
+      color: #F7F4EC;
+      display: flex;
+      align-items: center;
+      padding-left: 20px;
+      font-size: 21px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      overflow: hidden;
+      white-space: nowrap;
+      transform-origin: left center;
+      will-change: transform;
+    }
+    .bar-cash {
+      width: 8%;
+      height: 100%;
+      background-color: #FF6A1A;
+      color: #141414;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      font-weight: 900;
+      border-left: 2px solid #141414;
+      overflow: hidden;
+      white-space: nowrap;
+      transform-origin: left center;
+      will-change: transform;
+    }
+    .ratio-footer {
+      display: flex; justify-content: space-between; align-items: center; font-size: 20px; font-weight: 700; color: #141414;
+    }
+    .ratio-annotation {
+      display: flex; align-items: center; gap: 10px; color: #141414;
+    }
+    .annotation-pill {
+      width: 12px; height: 12px; border-radius: 3px; background-color: #FF6A1A;
+    }
+  </style>
+
+  <div id="root" data-composition-id="scene-s11" data-width="1080" data-height="1920" data-duration="5.32">
+    <section id="scene-s11" class="clip" data-start="0" data-duration="5.32">
+      <div class="vox-paper-bg"></div>
+      <div class="vox-grain-overlay"></div>
+
+      <!-- Untweened wrapper cho peel curl -->
+      <div class="peel-wrapper">
+        <div id="peel-curl"></div>
+      </div>
+
+      <div id="scene-content">
+        <header id="header-card" class="dossier-header">
+          <div class="dossier-tag">
+            <span class="dossier-tag-dot"></span>
+            <span>QUẢN LÝ TIỀN TỆ</span>
+          </div>
+          <div class="dossier-title">QUY CHẾ PHÁT HÀNH TIỀN MẶT</div>
+        </header>
+
+        <div id="diagram-container" class="diagram-stage">
+          <svg class="diagram-svg" viewBox="0 0 960 730">
+            <defs>
+              <pattern id="hatch-pattern" width="12" height="12" patternTransform="rotate(45 0 0)" patternUnits="userSpaceOnUse">
+                <line x1="0" y1="0" x2="0" y2="12" stroke="#141414" stroke-width="1.8" opacity="0.35" />
+              </pattern>
+            </defs>
+
+            <g id="diagram-group">
+              <!-- KHỐI 1: Kho bạc / Nhà máy in tiền -->
+              <g id="vault-box">
+                <rect x="260" y="20" width="440" height="96" rx="8" fill="#F5F0E4" stroke="#141414" stroke-width="3" />
+                <rect x="270" y="30" width="420" height="76" rx="4" fill="url(#hatch-pattern)" />
+                <rect x="330" y="44" width="300" height="48" rx="6" fill="#141414" />
+                <text x="480" y="76" text-anchor="middle" fill="#F7F4EC" font-size="22" font-weight="900" font-family="'Be Vietnam Pro', sans-serif" letter-spacing="1">NHÀ MÁY IN TIỀN QUỐC GIA</text>
+              </g>
+
+              <!-- Đồng hồ đo áp lực phát hành tiền -->
+              <g transform="translate(140, 160)">
+                <g id="gauge-group">
+                  <circle cx="0" cy="0" r="54" fill="#F5F0E4" stroke="#141414" stroke-width="3" />
+                  <circle cx="0" cy="0" r="46" fill="none" stroke="rgba(20,20,20,0.18)" stroke-width="1" />
+                  <path d="M -35 15 A 38 38 0 1 1 35 15" fill="none" stroke="#141414" stroke-width="3" stroke-dasharray="2 6" />
+                  <path d="M 15 -35 A 38 38 0 0 1 35 15" fill="none" stroke="#FF6A1A" stroke-width="5" />
+                  <line id="gauge-needle" x1="0" y1="0" x2="0" y2="-34" stroke="#FF6A1A" stroke-width="4" stroke-linecap="round" />
+                  <circle cx="0" cy="0" r="7" fill="#141414" />
+                  <text x="0" y="78" text-anchor="middle" fill="#141414" font-size="16" font-weight="700" font-family="'Be Vietnam Pro', sans-serif">ÁP LỰC IN</text>
+                </g>
+              </g>
+
+              <!-- ĐƯỜNG ỐNG DẪN DÒNG TIỀN MẶT PHÍA TRÊN -->
+              <g id="upper-pipe">
+                <rect x="410" y="116" width="140" height="236" fill="#F5F0E4" stroke="#141414" stroke-width="3" />
+                <line x1="435" y1="116" x2="435" y2="352" stroke="rgba(20,20,20,0.12)" stroke-width="2" />
+                <line x1="525" y1="116" x2="525" y2="352" stroke="rgba(20,20,20,0.12)" stroke-width="2" />
+
+                <g id="cash-stream-top">
+                  <g class="flow-bill-top" transform="translate(432, 140)">
+                    <rect width="96" height="42" rx="4" fill="#FF6A1A" stroke="#141414" stroke-width="2" />
+                    <circle cx="48" cy="21" r="9" fill="#F5F0E4" stroke="#141414" stroke-width="1.5" />
+                    <line x1="14" y1="21" x2="30" y2="21" stroke="#141414" stroke-width="2" stroke-linecap="round" />
+                    <line x1="66" y1="21" x2="82" y2="21" stroke="#141414" stroke-width="2" stroke-linecap="round" />
+                  </g>
+                  <g class="flow-bill-top" transform="translate(432, 204)">
+                    <rect width="96" height="42" rx="4" fill="#F5F0E4" stroke="#141414" stroke-width="2" />
+                    <circle cx="48" cy="21" r="9" fill="#FF6A1A" stroke="#141414" stroke-width="1.5" />
+                    <line x1="14" y1="21" x2="30" y2="21" stroke="#141414" stroke-width="2" stroke-linecap="round" />
+                    <line x1="66" y1="21" x2="82" y2="21" stroke="#141414" stroke-width="2" stroke-linecap="round" />
+                  </g>
+                  <g class="flow-bill-top" transform="translate(432, 268)">
+                    <rect width="96" height="42" rx="4" fill="#FF6A1A" stroke="#141414" stroke-width="2" />
+                    <circle cx="48" cy="21" r="9" fill="#F5F0E4" stroke="#141414" stroke-width="1.5" />
+                    <line x1="14" y1="21" x2="30" y2="21" stroke="#141414" stroke-width="2" stroke-linecap="round" />
+                    <line x1="66" y1="21" x2="82" y2="21" stroke="#141414" stroke-width="2" stroke-linecap="round" />
+                  </g>
+                </g>
+              </g>
+
+              <!-- KHỐI VAN KHÓA CƠ KHÍ & NGÀM CHẶN -->
+              <g id="valve-mechanism">
+                <rect x="380" y="340" width="200" height="18" rx="3" fill="#141414" />
+                <rect x="360" y="358" width="240" height="120" rx="8" fill="#E7E3D9" stroke="#141414" stroke-width="3" />
+
+                <g id="clamp-left">
+                  <rect x="370" y="372" width="60" height="92" rx="4" fill="#141414" />
+                  <polygon points="430,372 455,418 430,464" fill="#141414" />
+                </g>
+                <g id="clamp-right">
+                  <rect x="530" y="372" width="60" height="92" rx="4" fill="#141414" />
+                  <polygon points="530,372 505,418 530,464" fill="#141414" />
+                </g>
+
+                <rect x="600" y="410" width="70" height="16" fill="#141414" />
+
+                <!-- Bánh xe van khóa đặt trong group định vị tĩnh (710, 418) -->
+                <g transform="translate(710, 418)">
+                  <g id="valve-wheel">
+                    <circle cx="0" cy="0" r="50" fill="none" stroke="#FF6A1A" stroke-width="10" />
+                    <circle cx="0" cy="0" r="50" fill="none" stroke="#141414" stroke-width="3" />
+                    <circle cx="0" cy="0" r="14" fill="#141414" />
+                    <line x1="-50" y1="0" x2="50" y2="0" stroke="#141414" stroke-width="5" />
+                    <line x1="0" y1="-50" x2="0" y2="50" stroke="#141414" stroke-width="5" />
+                    <line x1="-35" y1="-35" x2="35" y2="35" stroke="#141414" stroke-width="5" />
+                    <line x1="-35" y1="35" x2="35" y2="-35" stroke="#141414" stroke-width="5" />
+                  </g>
+                </g>
+
+                <rect x="420" y="478" width="120" height="16" rx="3" fill="#141414" />
+              </g>
+
+              <!-- ĐƯỜNG ỐNG DƯỚI BỊ THẮT HẸP -->
+              <g id="lower-pipe">
+                <rect x="460" y="494" width="40" height="170" fill="#F5F0E4" stroke="#141414" stroke-width="3" />
+
+                <!-- Đồng xu nhỏ giọt đặt trong group định vị tĩnh (480, 560) -->
+                <g transform="translate(480, 560)">
+                  <g id="trickle-coin">
+                    <circle cx="0" cy="0" r="14" fill="#FF6A1A" stroke="#141414" stroke-width="2.5" />
+                    <circle cx="0" cy="0" r="9" fill="none" stroke="#141414" stroke-width="1.5" />
+                    <line x1="0" y1="-5" x2="0" y2="5" stroke="#141414" stroke-width="2" stroke-linecap="round" />
+                  </g>
+                </g>
+
+                <g class="flow-bill-bottom" transform="translate(432, 510)">
+                  <rect width="96" height="42" rx="4" fill="#F5F0E4" stroke="#141414" stroke-width="2" opacity="0.4" />
+                </g>
+              </g>
+
+              <!-- BIỂU TƯỢNG BAN (CẤM / NGĂN CHẶN) đặt trong group định vị tĩnh (480, 418) -->
+              <g transform="translate(480, 418)">
+                <g id="ban-overlay">
+                  <circle cx="0" cy="0" r="70" fill="none" stroke="#FF6A1A" stroke-width="12" />
+                  <line id="ban-slash" x1="-48" y1="-48" x2="48" y2="48" stroke="#FF6A1A" stroke-width="12" stroke-linecap="round" />
+                  <circle cx="0" cy="0" r="70" fill="none" stroke="#141414" stroke-width="3" />
+                </g>
+              </g>
+            </g>
+          </svg>
+        </div>
+
+        <!-- CON DẤU KIỂM SOÁT NHÀ NƯỚC DẬP NIÊM PHONG (HTML flex layout, opt-out overlap & occlusion có chủ đích) -->
+        <div id="state-stamp" class="state-stamp-wrapper" data-layout-allow-overlap="true" data-layout-allow-occlusion="true">
+          <div class="state-stamp-box">
+            <div class="stamp-text-sub">NGÂN HÀNG NHÀ NƯỚC</div>
+            <div class="stamp-text-main">ĐÃ NIÊM PHONG</div>
+            <div class="stamp-text-desc">KIỂM SOÁT PHÁP LÝ TỐI CAO</div>
+          </div>
+        </div>
+
+        <!-- 3. Overlay Punch Phrase -->
+        <div id="punch-card" class="punch-card">
+          <div class="punch-eyebrow">CHÍNH SÁCH TIỀN TỆ</div>
+          <div class="punch-headline">SIẾT CHẶT VAN IN</div>
+        </div>
+
+        <!-- 4. Overlay Label: "TỶ TRỌNG SIÊU NHỎ" & Biểu đồ phân bổ M2 -->
+        <div id="data-card" class="ratio-card">
+          <div class="ratio-header">
+            <div id="tiny-share-badge" class="ratio-badge">TỶ TRỌNG SIÊU NHỎ</div>
+            <div class="ratio-caption">TỔNG LƯỢNG TIỀN (M2)</div>
+          </div>
+
+          <div class="distribution-bar-wrapper">
+            <div id="meter-digital" class="bar-digital">TIỀN GỬI &amp; SỐ HÓA (92%)</div>
+            <div id="meter-cash" class="bar-cash">8%</div>
+          </div>
+
+          <div class="ratio-footer">
+            <div class="ratio-annotation">
+              <span class="annotation-pill"></span>
+              <span>Tiền giấy mặt chỉ chiếm tỷ lệ tối thiểu</span>
+            </div>
+            <div style="font-size: 18px; color: #141414; opacity: 0.85;">NGĂN LẠM PHÁT</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bottom-orange-bar"></div>
+    </section>
+  </div>
+
+  <script>
+    const tl = gsap.timeline({ paused: true });
+
+    // Khởi tạo transform-origin tường minh ngay tại mốc t=0 (không animate transformOrigin)
+    tl.set("#peel-curl", { transformOrigin: "top right" }, 0);
+    tl.set("#vault-box", { transformOrigin: "50% 50%" }, 0);
+    tl.set("#gauge-group", { transformOrigin: "0px 0px" }, 0);
+    tl.set("#gauge-needle", { transformOrigin: "0px 0px" }, 0);
+    tl.set("#valve-wheel", { transformOrigin: "0px 0px" }, 0);
+    tl.set("#ban-overlay", { transformOrigin: "0px 0px" }, 0);
+    tl.set("#state-stamp", { transformOrigin: "50% 50%" }, 0);
+    tl.set(["#meter-digital", "#meter-cash"], { transformOrigin: "left center" }, 0);
+
+    // 0.0s - 0.7s: Peel Transition mở màn cảnh
+    tl.fromTo(
+      "#peel-curl",
+      { x: 0, y: 0, opacity: 1 },
+      { x: 1200, y: -800, opacity: 0, duration: 0.7, ease: "power2.inOut" },
+      0
+    );
+
+    tl.fromTo(
+      "#scene-content",
+      { clipPath: "polygon(0 0, 100% 0, 100% 0, 0 0)" },
+      { clipPath: "polygon(0 0, 100% 0, 100% 100%, 0 100%)", duration: 0.65, ease: "power3.out" },
+      0
+    );
+
+    // Xuất hiện Header & Kho tiền
+    tl.fromTo(
+      "#header-card",
+      { y: -30, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.5, ease: "power3.out" },
+      0.15
+    );
+
+    tl.fromTo(
+      "#vault-box",
+      { scale: 0.88, opacity: 0 },
+      { scale: 1, opacity: 1, duration: 0.55, ease: "power3.out" },
+      0.22
+    );
+
+    // Đồng hồ áp lực và dòng tiền mặt bắt đầu chảy
+    tl.fromTo(
+      "#gauge-group",
+      { scale: 0, opacity: 0 },
+      { scale: 1, opacity: 1, duration: 0.45, ease: "power3.out" },
+      0.3
+    );
+
+    // Gauge needle writer 1: tăng áp lực từ -60 đến 48
+    tl.fromTo(
+      "#gauge-needle",
+      { rotation: -60 },
+      { rotation: 48, duration: 0.7, ease: "power2.out" },
+      0.4
+    );
+
+    tl.fromTo(
+      ".flow-bill-top",
+      { y: -35, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.4, stagger: 0.08, ease: "power2.out" },
+      0.45
+    );
+
+    // Gauge needle writer 2: giảm áp lực từ 48 về -42 (endpoint tường minh)
+    tl.fromTo(
+      "#gauge-needle",
+      { rotation: 48 },
+      { rotation: -42, duration: 0.45, ease: "power3.in" },
+      1.25
+    );
+
+    // Valve wheel writer: xoay từ 0 đến 220 độ
+    tl.fromTo(
+      "#valve-wheel",
+      { rotation: 0 },
+      { rotation: 220, duration: 0.5, ease: "power2.inOut" },
+      1.3
+    );
+
+    // Clamps siết chặt với endpoint tường minh
+    tl.fromTo(
+      "#clamp-left",
+      { x: 0 },
+      { x: 38, duration: 0.35, ease: "power3.in" },
+      1.35
+    );
+
+    tl.fromTo(
+      "#clamp-right",
+      { x: 0 },
+      { x: -38, duration: 0.35, ease: "power3.in" },
+      1.35
+    );
+
+    // 1.54s: Overlay Icon Ban xuất hiện
+    tl.fromTo(
+      "#ban-overlay",
+      { scale: 0, opacity: 0 },
+      { scale: 1, opacity: 1, duration: 0.35, ease: "power3.out" },
+      1.54
+    );
+
+    // 1.50s - 1.78s: Con dấu kiểm soát dập mạnh xuống niêm phong
+    tl.fromTo(
+      "#state-stamp",
+      { scale: 2.2, opacity: 0, rotation: 16 },
+      { scale: 1, opacity: 1, rotation: -6, duration: 0.28, ease: "power4.in" },
+      1.50
+    );
+
+    // Rung chấn hữu hạn toàn bộ máy móc sau cú dập (kết thúc tại 1.78 + 0.24 = 2.02s)
+    tl.fromTo(
+      "#diagram-group",
+      { y: 0 },
+      { y: 6, duration: 0.06, yoyo: true, repeat: 3, ease: "power1.inOut" },
+      1.78
+    );
+
+    // Cắt giảm dòng tiền dưới
+    tl.fromTo(
+      ".flow-bill-bottom",
+      { opacity: 0.4, scale: 1 },
+      { opacity: 0, scale: 0.6, duration: 0.2, ease: "power2.in" },
+      1.55
+    );
+
+    // Trickle coin writer 1: rơi giọt từ -20 đến 35
+    tl.fromTo(
+      "#trickle-coin",
+      { y: -20, opacity: 0 },
+      { y: 35, opacity: 1, duration: 0.45, ease: "power2.out" },
+      1.75
+    );
+
+    // 1.96s: Overlay Punch Phrase "SIẾT CHẶT VAN IN"
+    tl.fromTo(
+      "#punch-card",
+      { scale: 0.86, opacity: 0, y: 35 },
+      { scale: 1, opacity: 1, y: 0, duration: 0.5, ease: "power3.out" },
+      1.96
+    );
+
+    // 3.26s: Overlay Label "TỶ TRỌNG SIÊU NHỎ" & Biểu đồ phân bổ M2
+    tl.fromTo(
+      "#data-card",
+      { y: 40, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.5, ease: "power3.out" },
+      3.26
+    );
+
+    tl.fromTo(
+      "#tiny-share-badge",
+      { scale: 0, opacity: 0 },
+      { scale: 1, opacity: 1, duration: 0.35, ease: "power3.out" },
+      3.35
+    );
+
+    // Animate meter fills bằng scaleX từ 0 với transform-origin left center (hình học width cố định)
+    tl.fromTo(
+      "#meter-digital",
+      { scaleX: 0 },
+      { scaleX: 1, duration: 0.65, ease: "power3.out" },
+      3.42
+    );
+
+    tl.fromTo(
+      "#meter-cash",
+      { scaleX: 0 },
+      { scaleX: 1, duration: 0.5, ease: "power3.out" },
+      3.55
+    );
+
+    // Gauge needle writer 3: micro-motion từ -42 đến -36 (kết thúc tại 4.0 + 1.1 = 5.1s <= 5.32s)
+    tl.fromTo(
+      "#gauge-needle",
+      { rotation: -42 },
+      { rotation: -36, duration: 1.1, ease: "sine.inOut" },
+      4.0
+    );
+
+    // Trickle coin writer 2: dao động hữu hạn yoyo repeat 1 từ 35 đến 45 (kết thúc tại 4.1 + 1.1 = 5.2s <= 5.32s)
+    tl.fromTo(
+      "#trickle-coin",
+      { y: 35 },
+      { y: 45, duration: 0.55, yoyo: true, repeat: 1, ease: "sine.inOut" },
+      4.1
+    );
+
+    window.__timelines = window.__timelines || {};
+    window.__timelines["scene-s11"] = tl;
+  </script>
+
+    </template>
+  </body>
+</html>

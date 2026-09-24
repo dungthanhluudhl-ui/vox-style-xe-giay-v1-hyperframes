@@ -1,0 +1,440 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background: #F5F0E4;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: #F5F0E4;
+      }
+      .clip {
+        position: absolute;
+        inset: 0;
+      }
+
+      /* 3D Flip Scene Viewport */
+      .scene-viewport {
+        position: absolute;
+        inset: 0;
+        perspective: 1400px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .flipper-layer {
+        position: absolute;
+        inset: 0;
+        transform-style: preserve-3d;
+        transform-origin: 50% 50%;
+        will-change: transform, opacity;
+      }
+
+      /* Top Header Breadcrumb / Pill (Safe Zone y: 160-240px) */
+      .header-pill {
+        position: absolute;
+        top: 176px;
+        left: 60px;
+        font-weight: 900;
+        font-size: 26px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: #141414;
+        background: #E7E3D9;
+        border: 3px solid #141414;
+        border-radius: 999px;
+        padding: 10px 28px;
+        box-shadow: 4px 6px 0px #141414;
+        z-index: 10;
+      }
+
+      /* Collage Card Container (Safe Zone y: 270 - 1520px) */
+      .photo-card {
+        position: absolute;
+        top: 270px;
+        left: 60px;
+        width: 960px;
+        height: 1200px;
+        border-radius: 16px;
+        border: 4px solid #141414;
+        background: #E7E3D9;
+        box-shadow: 14px 18px 0px rgba(20, 20, 20, 0.16);
+        overflow: hidden;
+      }
+
+      .photo-inner {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+      }
+
+      .photo-inner img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+        transform-origin: 50% 40%;
+        will-change: transform;
+      }
+
+      /* Corner decorative paper tape */
+      .paper-tape {
+        position: absolute;
+        top: 250px;
+        right: 80px;
+        background: #FF6A1A;
+        color: #141414;
+        font-weight: 900;
+        font-size: 20px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        padding: 8px 24px;
+        border: 3px solid #141414;
+        box-shadow: 4px 5px 0px #141414;
+        transform: rotate(5deg);
+        z-index: 20;
+      }
+
+      /* Annotation Section: Tag 'PHƯƠNG TIỆN' + Strikethrough */
+      .annotation-group {
+        position: absolute;
+        top: 890px;
+        left: 100px;
+        z-index: 30;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+      }
+
+      /* Sub-label 'HƠN CẢ ĐI LẠI' */
+      .label-more {
+        background: #141414;
+        color: #F7F4EC;
+        font-weight: 900;
+        font-size: 28px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        padding: 10px 22px;
+        border-radius: 8px;
+        border: 2px solid #141414;
+        box-shadow: 5px 5px 0px #FF6A1A;
+        will-change: transform, opacity;
+      }
+
+      /* Card tag 'PHƯƠNG TIỆN' */
+      .tag-struck-wrap {
+        position: relative;
+        display: inline-block;
+        will-change: transform, opacity;
+      }
+
+      .tag-vehicle {
+        background: #F7F4EC;
+        color: #141414;
+        font-weight: 900;
+        font-size: 38px;
+        letter-spacing: 0.02em;
+        text-transform: uppercase;
+        padding: 14px 28px;
+        border-radius: 10px;
+        border: 3px solid #141414;
+        box-shadow: 6px 8px 0px rgba(20, 20, 20, 0.2);
+        display: inline-block;
+      }
+
+      .strikethrough-svg {
+        position: absolute;
+        top: 50%;
+        left: -8px;
+        width: calc(100% + 16px);
+        height: 24px;
+        transform: translateY(-50%);
+        pointer-events: none;
+      }
+
+      /* Punch Phrase: 'CÔNG CỤ SINH KẾ' with Money Icon */
+      .punch-container {
+        position: absolute;
+        top: 1060px;
+        left: 90px;
+        width: 900px;
+        background: #FF6A1A;
+        border: 5px solid #141414;
+        border-radius: 18px;
+        padding: 24px 32px;
+        box-shadow: 12px 14px 0px #141414;
+        z-index: 40;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 24px;
+        will-change: transform, opacity;
+      }
+
+      .punch-text {
+        font-weight: 900;
+        font-size: 54px;
+        line-height: 1.15;
+        letter-spacing: -0.01em;
+        text-transform: uppercase;
+        color: #141414;
+        flex: 1;
+      }
+
+      .punch-icon-wrap {
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #F5F0E4;
+        border: 3px solid #141414;
+        border-radius: 12px;
+        padding: 10px 14px;
+        box-shadow: 4px 4px 0px #141414;
+      }
+
+      /* SVG Paths for self-drawing */
+      .draw-path {
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
+      /* Bottom signature orange bar */
+      .bottom-orange-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 14px;
+        background: #FF6A1A;
+        z-index: 100;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s07"
+      data-width="1080"
+      data-height="1920"
+      data-duration="5"
+    >
+      <section id="scene-s07" class="clip" data-start="0" data-duration="5">
+        <div class="scene-viewport">
+          <div id="flipper" class="flipper-layer">
+            <!-- Header Breadcrumb Tag -->
+            <div id="header-tag" class="header-pill">GÓC NHÌN ĐÔ THỊ</div>
+
+            <!-- Paper Tape Corner Accent -->
+            <div id="tape-tag" class="paper-tape">THỰC TẾ</div>
+
+            <!-- Central Photo Card Frame -->
+            <div id="photo-frame" class="photo-card">
+              <div class="photo-inner">
+                <img
+                  id="hero-img"
+                  src="assets/img-05-ride-hailing-driver-map-stats.jpeg"
+                  alt="Tài xế xe ôm công nghệ xem bản đồ lộ trình"
+                />
+              </div>
+            </div>
+
+            <!-- Annotation Group (Label + Struck Word) -->
+            <div class="annotation-group">
+              <div id="label-more" class="label-more">HƠN CẢ ĐI LẠI</div>
+
+              <div id="tag-vehicle-wrap" class="tag-struck-wrap">
+                <div id="tag-vehicle-text" class="tag-vehicle">PHƯƠNG TIỆN</div>
+                <svg class="strikethrough-svg" viewBox="0 0 320 24" preserveAspectRatio="none">
+                  <path
+                    id="slash-path"
+                    class="draw-path"
+                    d="M 6 18 L 314 6"
+                    fill="none"
+                    stroke="#FF6A1A"
+                    stroke-width="9"
+                  />
+                </svg>
+              </div>
+            </div>
+
+            <!-- Punch Phrase: CÔNG CỤ SINH KẾ + Money Icon -->
+            <div id="punch-card" class="punch-container">
+              <div class="punch-text">CÔNG CỤ SINH KẾ</div>
+              <div class="punch-icon-wrap">
+                <svg class="money-icon" viewBox="0 0 100 70" width="86" height="60">
+                  <rect
+                    id="money-rect"
+                    class="draw-path"
+                    x="6"
+                    y="6"
+                    width="88"
+                    height="58"
+                    rx="8"
+                    fill="none"
+                    stroke="#141414"
+                    stroke-width="5"
+                  />
+                  <circle
+                    id="money-circle"
+                    class="draw-path"
+                    cx="50"
+                    cy="35"
+                    r="15"
+                    fill="none"
+                    stroke="#FF6A1A"
+                    stroke-width="5"
+                  />
+                  <path
+                    id="money-line1"
+                    class="draw-path"
+                    d="M 18 18 L 18 52"
+                    fill="none"
+                    stroke="#141414"
+                    stroke-width="4"
+                  />
+                  <path
+                    id="money-line2"
+                    class="draw-path"
+                    d="M 82 18 L 82 52"
+                    fill="none"
+                    stroke="#141414"
+                    stroke-width="4"
+                  />
+                </svg>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Signature Fixed Bottom Orange Bar -->
+        <div class="bottom-orange-bar"></div>
+      </section>
+    </div>
+
+    <script>
+      // 1. Prepare SVG path measurements for deterministic draw animation
+      const paths = document.querySelectorAll(".draw-path");
+      paths.forEach((p) => {
+        const len = p.getTotalLength();
+        p.style.strokeDasharray = (len + 1) + "px";
+        p.style.strokeDashoffset = (len + 1) + "px";
+      });
+
+      // 2. Build paused GSAP timeline
+      const tl = gsap.timeline({ paused: true });
+
+      // Phase 1: 3D Flip transition in (0.0s - 0.75s)
+      tl.fromTo(
+        "#flipper",
+        { rotationY: -70, opacity: 0, scale: 0.95 },
+        { rotationY: 0, opacity: 1, scale: 1, duration: 0.75, ease: "power3.out" },
+        0
+      );
+
+      // Phase 1b: Continuous slow zoom-in on photo (0.0s - 5.0s)
+      tl.fromTo(
+        "#hero-img",
+        { scale: 1 },
+        { scale: 1.07, duration: 5.0, ease: "none" },
+        0
+      );
+
+      // Phase 1c: Header pill & paper tape entrance
+      tl.fromTo(
+        "#header-tag",
+        { y: -30, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.5, ease: "power3.out" },
+        0.3
+      );
+      tl.fromTo(
+        "#tape-tag",
+        { scale: 0, opacity: 0, rotation: -10 },
+        { scale: 1, opacity: 1, rotation: 5, duration: 0.45, ease: "power3.out" },
+        0.4
+      );
+
+      // Phase 2: Tag 'PHƯƠNG TIỆN' enters (0.5s)
+      tl.fromTo(
+        "#tag-vehicle-wrap",
+        { scale: 0.7, opacity: 0, y: 30 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.5, ease: "power3.out" },
+        0.5
+      );
+
+      // Phase 3: Overlay label 'HƠN CẢ ĐI LẠI' appears at 1.28s (46000ms relative)
+      tl.fromTo(
+        "#label-more",
+        { scale: 0.7, opacity: 0, y: 20 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.45, ease: "power3.out" },
+        1.28
+      );
+
+      // Phase 4: Strikethrough slash cuts across 'PHƯƠNG TIỆN' (2.1s)
+      tl.to(
+        "#slash-path",
+        { strokeDashoffset: 0, duration: 0.35, ease: "power2.out" },
+        2.1
+      );
+      tl.to(
+        "#tag-vehicle-text",
+        { opacity: 0.45, duration: 0.35, ease: "power1.out" },
+        2.1
+      );
+
+      // Phase 5: Punch Phrase 'CÔNG CỤ SINH KẾ' arrives at 3.28s (48000ms relative)
+      tl.fromTo(
+        "#punch-card",
+        { scale: 0.82, opacity: 0, y: 40 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.55, ease: "power3.out" },
+        3.28
+      );
+
+      // Phase 6: Money icon self-drawing at 3.58s (48300ms relative)
+      tl.to(
+        "#money-rect",
+        { strokeDashoffset: 0, duration: 0.45, ease: "power2.out" },
+        3.58
+      );
+      tl.to(
+        "#money-circle",
+        { strokeDashoffset: 0, duration: 0.4, ease: "power2.out" },
+        3.7
+      );
+      tl.to(
+        "#money-line1",
+        { strokeDashoffset: 0, duration: 0.3, ease: "power2.out" },
+        3.8
+      );
+      tl.to(
+        "#money-line2",
+        { strokeDashoffset: 0, duration: 0.3, ease: "power2.out" },
+        3.85
+      );
+
+      // 3. Register timeline synchronously on window.__timelines
+      window.__timelines["scene-s07"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

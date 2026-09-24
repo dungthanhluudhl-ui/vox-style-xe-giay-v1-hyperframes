@@ -1,0 +1,514 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+      *, *::before, *::after {
+        box-sizing: border-box;
+      }
+      html, body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        background-color: #F5F0E4;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: #F5F0E4;
+      }
+      .scene-container {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+      }
+      #shot-1-container {
+        z-index: 10;
+      }
+      #shot-2-container {
+        z-index: 20;
+        opacity: 0;
+      }
+
+      /* Card Framing & Collage Layers */
+      .card-outer {
+        position: absolute;
+        top: 190px;
+        left: 60px;
+        width: 960px;
+        height: 1260px;
+      }
+      .card-underlay-left {
+        position: absolute;
+        inset: 0;
+        background-color: #E7E3D9;
+        border: 2px solid rgba(20, 20, 20, 0.2);
+        border-radius: 20px;
+        transform: rotate(-1.5deg);
+        z-index: 1;
+      }
+      .card-underlay-right {
+        position: absolute;
+        inset: 0;
+        background-color: #E7E3D9;
+        border: 2px solid rgba(20, 20, 20, 0.2);
+        border-radius: 20px;
+        transform: rotate(1.5deg);
+        z-index: 1;
+      }
+      .card-frame {
+        position: absolute;
+        inset: 0;
+        background-color: #141414;
+        border: 3px solid #141414;
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 24px 60px rgba(20, 20, 20, 0.22);
+        z-index: 2;
+      }
+      .media-viewport {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+      .media-content {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+
+      /* Diagram Label Ribbons */
+      .diagram-pill {
+        position: absolute;
+        top: 24px;
+        left: 24px;
+        height: auto;
+        background-color: #141414;
+        color: #F7F4EC;
+        padding: 10px 22px;
+        border-radius: 8px;
+        border: 2px solid #FF6A1A;
+        font-size: 20px;
+        font-weight: 900;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        z-index: 10;
+        box-shadow: 0 8px 24px rgba(20, 20, 20, 0.25);
+        transform-origin: 0% 50%;
+        opacity: 0;
+      }
+      .diagram-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background-color: #FF6A1A;
+        flex-shrink: 0;
+      }
+
+      /* Vox Badges */
+      .overlay-badge {
+        position: absolute;
+        height: auto;
+        display: inline-flex;
+        align-items: center;
+        gap: 16px;
+        background-color: #141414;
+        padding: 16px 26px;
+        border-radius: 14px;
+        box-shadow: 0 16px 36px rgba(20, 20, 20, 0.28);
+        border: 2px solid rgba(255, 106, 26, 0.4);
+        z-index: 70;
+        opacity: 0;
+      }
+      .badge-accent {
+        width: 8px;
+        height: 30px;
+        background-color: #FF6A1A;
+        border-radius: 4px;
+        flex-shrink: 0;
+      }
+      .badge-text {
+        font-size: 28px;
+        font-weight: 900;
+        color: #F7F4EC;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        line-height: 1;
+        white-space: nowrap;
+      }
+
+      /* Animated SVG Icons */
+      .icon-box {
+        position: absolute;
+        width: 96px;
+        height: 96px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #141414;
+        border-radius: 16px;
+        border: 2px solid #FF6A1A;
+        box-shadow: 0 16px 36px rgba(20, 20, 20, 0.3);
+        z-index: 70;
+        opacity: 0;
+      }
+      .icon-box svg path,
+      .rise-card svg path {
+        fill: none;
+      }
+
+      /* Punch Phrase */
+      .punch-container {
+        position: absolute;
+        top: 290px;
+        left: 80px;
+        right: 80px;
+        height: auto;
+        background-color: #141414;
+        padding: 24px 32px;
+        border-radius: 18px;
+        border-left: 8px solid #FF6A1A;
+        box-shadow: 0 24px 60px rgba(20, 20, 20, 0.35);
+        z-index: 80;
+        opacity: 0;
+      }
+      .punch-label {
+        font-size: 20px;
+        font-weight: 900;
+        color: #FF6A1A;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        margin-bottom: 8px;
+      }
+      .punch-heading {
+        margin: 0;
+        font-size: 52px;
+        font-weight: 900;
+        color: #F7F4EC;
+        line-height: 1.25;
+        letter-spacing: -0.01em;
+        white-space: nowrap;
+      }
+
+      /* Rise Metric Pill */
+      .rise-card {
+        position: absolute;
+        bottom: 460px;
+        right: 80px;
+        height: auto;
+        background-color: #141414;
+        border: 2px solid #FF6A1A;
+        border-radius: 16px;
+        padding: 16px 24px;
+        display: inline-flex;
+        align-items: center;
+        gap: 16px;
+        box-shadow: 0 18px 40px rgba(20, 20, 20, 0.3);
+        z-index: 80;
+        opacity: 0;
+      }
+      .rise-text {
+        font-size: 26px;
+        font-weight: 900;
+        color: #F7F4EC;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        white-space: nowrap;
+      }
+
+      /* Permanent Bottom Orange Accent Line */
+      #brand-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 10px;
+        background-color: #FF6A1A;
+        z-index: 999;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s02"
+      data-width="1080"
+      data-height="1920"
+      data-duration="12.2"
+    >
+      <!-- SHOT 1 (S02-1): 0.0s - 7.7s -->
+      <div id="shot-1-container" class="scene-container">
+        <div id="shot-1-card" class="card-outer">
+          <div class="card-underlay-left" data-layout-allow-overflow="true"></div>
+          <div class="card-frame">
+            <div id="shot-1-media" class="media-viewport" data-layout-allow-overflow="true">
+              <video
+                id="vid-05"
+                class="media-content"
+                data-start="0"
+                data-duration="7.7"
+                data-media-start="0.2"
+                src="assets/vid-05-elderly-savings-investment-cutout.mp4"
+                muted
+                playsinline
+              ></video>
+            </div>
+            <div id="pill-1" class="diagram-pill">
+              <span class="diagram-dot"></span>
+              <span>TÍCH LŨY TIẾT KIỆM</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Shot 1 Overlays -->
+        <div id="badge-tai-chinh" class="overlay-badge" style="top: 280px; left: 80px;">
+          <div class="badge-accent"></div>
+          <span class="badge-text">TÀI CHÍNH BÌNH DÂN</span>
+        </div>
+
+        <div id="icon-scale-wrap" class="icon-box" style="top: 220px; right: 80px;">
+          <svg id="icon-scale" viewBox="0 0 100 100" width="60" height="60" fill="none" stroke="#FF6A1A" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M 50 18 L 50 82 M 32 82 L 68 82" />
+            <path d="M 22 36 L 78 36" />
+            <path d="M 22 36 L 12 56 M 22 36 L 32 56 M 10 56 Q 22 66 34 56 Z" />
+            <path d="M 78 36 L 68 56 M 78 36 L 88 56 M 66 56 Q 78 66 90 56 Z" />
+          </svg>
+        </div>
+
+        <div id="badge-tu-tin" class="overlay-badge" style="top: 400px; left: 80px;">
+          <div class="badge-accent"></div>
+          <span class="badge-text">TỰ TIN ĐẦU TƯ</span>
+        </div>
+      </div>
+
+      <!-- SHOT 2 (S02-2): 7.7s - 12.2s -->
+      <div id="shot-2-container" class="scene-container">
+        <div id="shot-2-card" class="card-outer">
+          <div class="card-underlay-right" data-layout-allow-overflow="true"></div>
+          <div class="card-frame">
+            <div id="shot-2-bob" style="width: 100%; height: 100%; position: relative;">
+              <div id="shot-2-media" class="media-viewport" data-layout-allow-overflow="true">
+                <img
+                  id="img-05"
+                  src="assets/img-05-elderly-savings-growth-chart.jpeg"
+                  alt="Biểu đồ tiết kiệm"
+                  class="media-content"
+                />
+              </div>
+            </div>
+            <div id="pill-2" class="diagram-pill">
+              <span class="diagram-dot"></span>
+              <span>HÀNH TRÌNH THỰC TẾ</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Shot 2 Overlays -->
+        <div id="punch-goc-nhin" class="punch-container">
+          <div class="punch-label">TÔN CHỈ KÊNH LẮNG</div>
+          <h1 class="punch-heading">GÓC NHÌN THỰC CHIẾN</h1>
+        </div>
+
+        <div id="icon-rise-wrap" class="rise-card">
+          <svg id="icon-rise" viewBox="0 0 100 100" width="50" height="50" fill="none" stroke="#FF6A1A" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M 16 76 L 42 50 L 60 62 L 86 26" />
+            <path d="M 68 26 L 86 26 L 86 44" />
+          </svg>
+          <span class="rise-text">TĂNG TRƯỞNG</span>
+        </div>
+      </div>
+
+      <!-- Permanent Bottom Orange Accent Line -->
+      <div id="brand-bar"></div>
+    </div>
+
+    <script>
+      const scalePaths = document.querySelectorAll("#icon-scale path");
+      const scaleLens = [];
+      scalePaths.forEach((path, i) => {
+        const len = Math.ceil(path.getTotalLength()) || 160;
+        scaleLens[i] = len;
+        path.style.strokeDasharray = `${len}`;
+        path.style.strokeDashoffset = `${len}`;
+      });
+
+      const risePaths = document.querySelectorAll("#icon-rise path");
+      const riseLens = [];
+      risePaths.forEach((path, i) => {
+        const len = Math.ceil(path.getTotalLength()) || 180;
+        riseLens[i] = len;
+        path.style.strokeDasharray = `${len}`;
+        path.style.strokeDashoffset = `${len}`;
+      });
+
+      const tl = gsap.timeline({ paused: true });
+
+      /* SHOT 1 MOTION (0.0s - 7.7s) */
+      tl.fromTo(
+        "#shot-1-card",
+        { scaleY: 0.82, opacity: 0, transformOrigin: "50% 10%" },
+        { scaleY: 1, opacity: 1, duration: 0.7, ease: "power3.out" },
+        0.0
+      );
+
+      tl.fromTo(
+        "#shot-1-media",
+        { scale: 1.08, x: -25 },
+        { scale: 1.08, x: 25, duration: 7.7, ease: "none" },
+        0.0
+      );
+
+      tl.fromTo(
+        "#pill-1",
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.4, ease: "power3.out" },
+        0.7
+      );
+
+      /* Overlay 1: TÀI CHÍNH BÌNH DÂN (3.7s - 5.7s) */
+      tl.fromTo(
+        "#badge-tai-chinh",
+        { y: 24, scale: 0.9, opacity: 0 },
+        { y: 0, scale: 1, opacity: 1, duration: 0.45, ease: "power3.out" },
+        3.7
+      );
+      tl.fromTo(
+        "#badge-tai-chinh",
+        { y: 0, opacity: 1 },
+        { y: -16, opacity: 0, duration: 0.3, ease: "power2.in" },
+        5.4
+      );
+
+      /* Overlay 2: Icon Scale (4.78s - 6.58s) */
+      tl.fromTo(
+        "#icon-scale-wrap",
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.4, ease: "power3.out" },
+        4.78
+      );
+      scalePaths.forEach((path, i) => {
+        tl.fromTo(
+          path,
+          { strokeDashoffset: scaleLens[i] },
+          { strokeDashoffset: 0, duration: 0.5, ease: "power2.out" },
+          4.85 + i * 0.08
+        );
+      });
+      tl.fromTo(
+        "#icon-scale-wrap",
+        { scale: 1, opacity: 1 },
+        { scale: 0.85, opacity: 0, duration: 0.28, ease: "power2.in" },
+        6.3
+      );
+
+      /* Overlay 3: TỰ TIN ĐẦU TƯ (6.51s - 7.65s) */
+      tl.fromTo(
+        "#badge-tu-tin",
+        { y: 24, scale: 0.92, opacity: 0 },
+        { y: 0, scale: 1, opacity: 1, duration: 0.4, ease: "power3.out" },
+        6.51
+      );
+      tl.fromTo(
+        "#badge-tu-tin",
+        { opacity: 1 },
+        { opacity: 0, duration: 0.15, ease: "none" },
+        7.5
+      );
+
+      /* TRANSITION TO SHOT 2 AT 7.7s */
+      tl.fromTo(
+        "#shot-1-container",
+        { opacity: 1 },
+        { opacity: 0, duration: 0.01 },
+        7.7
+      );
+
+      /* SHOT 2 MOTION (7.7s - 12.2s) */
+      tl.fromTo(
+        "#shot-2-container",
+        { opacity: 0 },
+        { opacity: 1, duration: 0.5, ease: "power2.out" },
+        7.7
+      );
+
+      tl.fromTo(
+        "#shot-2-media",
+        { scale: 1.0 },
+        { scale: 1.08, duration: 4.4, ease: "sine.inOut" },
+        7.7
+      );
+
+      const bobDur = 0.7;
+      const bobRepeat = Math.max(0, Math.floor(4.2 / bobDur) - 1);
+      tl.fromTo(
+        "#shot-2-bob",
+        { y: 0 },
+        { y: -4, duration: bobDur, ease: "sine.inOut", yoyo: true, repeat: bobRepeat },
+        7.7
+      );
+
+      tl.fromTo(
+        "#pill-2",
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.4, ease: "power3.out" },
+        7.9
+      );
+
+      /* Overlay 4: Punch-phrase GÓC NHÌN THỰC CHIẾN (8.67s - 10.67s) */
+      tl.fromTo(
+        "#punch-goc-nhin",
+        { y: 30, scale: 0.94, opacity: 0 },
+        { y: 0, scale: 1, opacity: 1, duration: 0.5, ease: "power3.out" },
+        8.67
+      );
+      tl.fromTo(
+        "#punch-goc-nhin",
+        { y: 0, opacity: 1 },
+        { y: -20, opacity: 0, duration: 0.32, ease: "power2.in" },
+        10.35
+      );
+
+      /* Overlay 5: Icon Rise (10.18s - 11.98s) */
+      tl.fromTo(
+        "#icon-rise-wrap",
+        { scale: 0, opacity: 0, y: 16 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.4, ease: "power3.out" },
+        10.18
+      );
+      risePaths.forEach((path, i) => {
+        tl.fromTo(
+          path,
+          { strokeDashoffset: riseLens[i] },
+          { strokeDashoffset: 0, duration: 0.5, ease: "power2.out" },
+          10.25 + i * 0.1
+        );
+      });
+      tl.fromTo(
+        "#icon-rise-wrap",
+        { opacity: 1, y: 0 },
+        { opacity: 0, y: -10, duration: 0.25, ease: "power2.in" },
+        11.73
+      );
+
+      window.__timelines["scene-s02"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

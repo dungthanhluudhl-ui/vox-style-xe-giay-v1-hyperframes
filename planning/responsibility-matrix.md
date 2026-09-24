@@ -751,6 +751,135 @@ hoặc người dùng nhắc lại.
 - Tài liệu `README.md`, `planning/README.md` và `responsibility-matrix.md` phải thống nhất về một
   lệnh render chuẩn và điều kiện preview/vision QA.
 
+## 8b. Audit end-to-end — video "ha-noi-cam-xe-may" (2026-09-24/25), session hoàn toàn mới
+
+Dựng THẬT 1 video mới từ đầu tới cuối (input: audio 85.76s + script text thật của người dùng, KHÔNG
+có media nguồn sẵn → bắt buộc qua Stage 2b Google Flow thật), đóng vai 1 session hoàn toàn mới (chỉ
+đi theo `planning/README.md`, không dựa trí nhớ phiên trước), để audit theo 4 câu hỏi người dùng nêu.
+Video hoàn tất thành công: `out/ha-noi-cam-xe-may-full.mp4` (97.2MB, 85.733s khớp audio 85.760s,
+1080×1920 h264, `completion-manifest.json` mọi field `*Ok`=true). Đây là lần đầu
+`scripts/run-stages-1-6.mjs` (checkpoint trước) chạy THẬT với Stage 2b Google Flow thật (lần trước
+chỉ test bằng slug giả ở bước precheck).
+
+### 1. Tài liệu/chỉ dẫn — rõ ràng, mạch lạc, có mâu thuẫn gây quyết định sai/tốn token không?
+- ✅ **Tốt**: đi đúng theo `planning/README.md` không cần suy đoán thêm — orchestrator mới chạy đúng
+  y hệt tài liệu mô tả, intake (copy audio/script vào đúng path convention) không mơ hồ.
+- ⚠️ **Lỗ hổng thật, tốn token oan đã xảy ra**: `scripts/07-codegen.hf.router.mjs:403-405` cắt output
+  `hyperframes check` thô xuống còn 2000 ký tự (console), 2000 ký tự (ghi vào
+  `pipeline/codegen-issues.jsonl`), và CHỈ 4000 ký tự gửi lại cho generator để sửa ở lần retry. Xảy
+  ra thật với scene S08: JSON thật có 5 mục (`lint`/`runtime`/`layout`/`motion`/`contrast`), lỗi
+  THẬT nằm ở `layout` (8 lỗi `text_occluded`) nhưng `lint` (chỉ có warning, không phải lỗi thật) đã
+  chiếm hết ngân sách 4000 ký tự trước khi tới `layout` — generator KHÔNG BAO GIỜ thấy lỗi thật qua
+  cả 3 lần thử, tốn oan 3 vòng generate+verify(+review) thật (chi phí API/thời gian thật) rồi vẫn
+  fail, phải Claude tự chạy lại `npx hyperframes check --json` trực tiếp trên
+  `hyperframes/.gen-tmp/<slug>-s08/` mới thấy lỗi thật. Xác nhận đúng giả thuyết: khi đưa lỗi thật
+  (8 selector cụ thể) vào `--issue-file` thủ công, generator sửa đúng ngay lần đầu. **Đề xuất (chưa
+  sửa — thuộc logic pipeline, để người dùng quyết định)**: không cắt mù theo số ký tự — hoặc tăng
+  giới hạn nhiều, hoặc ưu tiên đưa các mục `ok:false`/`errorCount>0` lên trước khi cắt, hoặc luôn kèm
+  1 dòng tóm tắt `{category: ok/errorCount}` của cả 5 mục trước phần chi tiết dù có bị cắt tiếp theo.
+- ⚠️ **Không phải lỗi tài liệu, nhưng đáng ghi chú**: Stage 1 (`01-audio-transcribe.local.mjs`, qua
+  `transcribe()` của `@remotion/install-whisper-cpp` với `tokenLevelTimestamps: true`) in ra
+  **17.456/17.768 dòng (98,2%)** tổng output của cả lần chạy orchestrator — toàn bộ là debug thô
+  per-token DTW timestamp của whisper.cpp, không phải lỗi. Với audio chỉ 85s đã vậy; video dài hơn
+  (vd 450s) sẽ tỉ lệ thuận nặng hơn. Không tài liệu nào cảnh báo trước — 1 agent tương lai cần đọc
+  log để debug 1 lỗi khác sẽ tốn token oan lọc qua hàng chục nghìn dòng này trước khi tới phần liên
+  quan.
+- ⚠️ Numbering "Stage N" trong `planning/README.md` (đánh số theo thứ tự bước trong tài liệu) không
+  luôn khớp 1-1 với tiền tố file script (`0N-*.mjs`) — vd bước gọi `07-codegen-hf-parallel.mjs` được
+  đánh số "8." trong danh sách. Có giải thích (mục "vì sao không có scripts/04-*") nhưng vẫn có thể
+  gây lệch khi 1 agent map nhanh "Stage N" ↔ tên file.
+
+### 2. Cấu trúc thư mục/file — khoa học, có dư thừa không, cần dọn gì không?
+- ✅ Convention `content/`, `public/`, `planning/`, `pipeline/`, `hyperframes/` × `videos/<slug>/` áp
+  dụng nhất quán, không cần tạo gì ngoài quy ước.
+- ✅ `.gitignore` che đúng `hyperframes/.gen-tmp/` và `out/` (xác nhận bằng `git check-ignore -v`,
+  không phải đọc mắt) — không rác lọt vào git status sau khi dựng xong.
+- ✅ `hyperframes/.gen-tmp/` tự dọn sạch — dù 2 scene (S02, S08) fail 3 lần + phải retry 2-3 vòng
+  (S05 retry 2 vòng), thư mục tạm không tích tụ rác (kiểm tra `du -sh` = 8.0K, rỗng sau khi xong).
+- ℹ️ Vẫn còn nghi vấn cũ CHƯA xác minh lại trong phiên này: thư mục `.kilo/worktrees/blue-marmoset/`
+  chứa bản sao riêng của `planning/README.md`/`responsibility-matrix.md` (phát hiện qua grep ở phiên
+  trước) — nếu đây là worktree mồ côi của công cụ khác, nên dọn hoặc xác nhận mục đích, vì 1 agent
+  tương lai `grep -r` toàn repo có thể vô tình đọc nhầm bản sao cũ trong đó.
+
+### 3. Script — đầy đủ/tối ưu/chạy đúng, lỗi/retry/chậm bất thường, naming đồng bộ?
+- ✅ Orchestrator `run-stages-1-6.mjs` chạy đúng thiết kế ở lần đầu dùng thật (log xác nhận
+  `[01-transcribe]`/`[02b-media]` in CHỒNG THỜI GIAN thật, không nối đuôi).
+- ⚠️ Xem lỗ hổng truncation ở mục 1 — đây vừa là vấn đề tài liệu vừa là bug script thật, ảnh hưởng
+  trực tiếp tốc độ/độ tin cậy Stage 7.
+- ⚠️ **Xác nhận sống lại đúng lớp lỗi đã biết "standalone PASS ≠ assembled PASS"**: S05 PASS sạch ở
+  Stage 7 (verify standalone), nhưng Stage 7b (project đã ráp) bắt lỗi `content_overlap` thật (7 lỗi)
+  giữa `.punch-text` (div cha) và `span.punch-accent` (con) — không phải case lý thuyết cũ, là lỗi
+  SỐNG xảy ra ngay trong phiên này. Sửa vòng 1 (tách 2 span riêng, CSS flex/gap hợp lệ, không chồng
+  hình học thật) giảm còn 4 lỗi nhưng KHÔNG hết — nghi ngờ đây là false-positive của checker với 2
+  span tô màu khác nhau nằm cùng dòng (chưa xác minh bằng vision QA để chắc chắn 100%). Sửa vòng 2
+  dùng đúng cơ chế có sẵn `data-layout-allow-overlap` đặt trên phần tử cha cụ thể (không phải root)
+  → Stage 7b PASS. Tổng cộng tốn 2 vòng generate+verify+review thật cho riêng scene này.
+- Tỉ lệ PASS lần đầu ở Stage 7: 10/12 (83%) — khớp baseline lịch sử đã ghi nhận (~85-90%), không bất
+  thường; cả 2 fail đều là lỗi nội dung thật (không phải hạ tầng/mạng).
+- Render: 270.0s cho 85.7s output (2572 frame), capture mode "screenshot" (KHÔNG fast-capture) vì
+  scene S07 dùng CSS 3D (`perspective`/`transform-style: preserve-3d`/`backface-visibility`) — lý do
+  cụ thể khác với giả thuyết "mix-blend-mode phổ biến" đã ghi trước đó cho video khác (mục P1.6) →
+  nguyên nhân capture mode chậm KHÔNG cố định 1 lý do, thay đổi theo từng video, không nên giả định
+  trước.
+- Bất đối xứng CLI đã biết (không phải lỗi mới, nhắc lại để lưu ý): Stage 1/2 nhận input/output qua
+  **positional args bắt buộc**, mọi stage khác chỉ dùng `--video=` + flag tuỳ chọn — orchestrator mới
+  đã che khuất khác biệt này cho luồng chính, nhưng ai debug tay Stage 1/2 riêng lẻ vẫn cần nhớ.
+
+### 4. Bất cập khác phát sinh trong lúc dựng
+- Script input kết thúc bằng câu cụt có chủ đích ("Thế nên...") — pipeline xử lý bình thường, không
+  crash, Scene Plan dùng luôn làm nhịp kết — xác nhận pipeline chịu được input "trông như chưa xong".
+- Toàn bộ 2 vòng sửa Stage 7 (S02, S08) + 2 vòng sửa Stage 7b (S05) đều là lỗi NỘI DUNG thật do đúng
+  lớp QA bắt được (không phải crash/timeout/lỗi hạ tầng) — hệ thống gate đang làm đúng việc của nó,
+  nhưng tổng thời gian/token thật cho 1 video 12-scene, media tự sinh hoàn toàn qua Stage 2b: cần ước
+  tính lại cho video dài hơn dựa trên số liệu thật này thay vì đoán.
+- **Dữ liệu mới cho câu hỏi mở về bug render trống** (xem mục "Bug render TRỐNG HÌNH..." trong mục 6
+  phía trên): scene S07 video này dùng `preserve-3d` — đã kiểm tra bằng `ffmpeg signalstats` (đo dải
+  sáng tối thật của frame, KHÔNG dùng vision QA) tại 3 mốc thời gian rải khắp scene (45.2s/47.0s/
+  49.3s), cả 3 đều cho dải Y-luminance rộng (13-236), KHÔNG phải frame trống/phẳng màu — thêm 1 bằng
+  chứng thật củng cố kết luận đã ghi: `preserve-3d` một mình KHÔNG phải chỉ báo tin cậy cho lỗi render
+  trống. Không kết luận thêm gì mới về nguyên nhân gốc, giữ nguyên quyết định "theo dõi thủ công" đã
+  chốt.
+
+### Kết luận ngắn cho người dùng
+Pipeline hiện tại VẬN HÀNH ĐƯỢC end-to-end thật, không crash/treo ở tầng hạ tầng. Vấn đề thật đáng
+chú ý nhất là **bug truncation ở Stage 7 retry-feedback** (mục 1/3) — gây tốn oan API/thời gian thật
+và có thể lặp lại ở bất kỳ video nào khác có lỗi verify nằm ở phần JSON bị cắt mất. Đây là ứng viên
+sửa ưu tiên cao nhất nếu muốn tối ưu tiếp, nhưng CHƯA sửa trong phiên này (thuộc logic pipeline đang
+audit, để người dùng quyết định theo đúng nguyên tắc audit không tự sửa).
+
+## 8c. Audit worktree Kilo Code (`.kilo/worktrees/blue-marmoset`) — 2026-09-25
+
+Người dùng xác nhận `.kilo/` là workspace tự tạo của **Kilo Code** (agent extension khác, cùng loại
+với Claude Code, chạy trên cùng IDE) — đã dùng nó dựng vài video end-to-end trước đây. Audit 2 câu
+hỏi: (1) worktree có cần cập nhật gì để chạy đúng/hiệu quả với pipeline vừa cải tiến không, (2) Kilo
+có tuân thủ chỉ dẫn/pipeline trong lúc chạy không, có tự ý tạo/xoá/sửa thư mục bất thường không.
+
+**1. Trạng thái worktree — ĐÃ đồng bộ:** `git worktree list` xác nhận worktree ở detached HEAD
+`2a31aab` (main đang ở `98a6c84`, đúng 1 commit sau — chính là commit orchestrator+bỏ-grain của
+checkpoint hôm nay). `git status --short` trong worktree hoàn toàn sạch (không uncommitted/untracked)
+→ an toàn 100% để `git checkout 98a6c84` (đã làm, xác nhận `git log -1 --oneline` = `98a6c84`, status
+vẫn sạch sau đó). Không có file cấu hình riêng của Kilo Code trong repo (không `.kilocode/`, không
+`AGENTS.md` gốc; `.kilo/` chỉ có `worktrees/` + 1 `.gitignore` nội bộ cho node_modules/lockfile/
+`agent-manager.json` của chính Kilo) — Kilo dựa thẳng vào `CLAUDE.md`/`planning/README.md` chung với
+Claude, không có tài liệu riêng cần cập nhật. Diff `CLAUDE.md` giữa worktree/main trước khi sync chỉ
+khác CRLF/LF (xác nhận bằng `diff` sau khi bỏ `\r`) — không phải nội dung lỗi thời. **CHƯA xong hoàn
+toàn**: 2 bug fix Stage 1/Stage 7 (mục 8b) vẫn CHƯA commit trên `main` — worktree cần đồng bộ thêm 1
+lần (`git -C .kilo/worktrees/blue-marmoset checkout <commit mới>`) sau khi 2 fix đó được commit.
+
+**2. Tuân thủ pipeline trong quá khứ — KHÔNG tìm được bằng chứng, cả tốt lẫn xấu:**
+`git -C .kilo/worktrees/blue-marmoset reflog` chỉ toàn dòng `checkout: moving from X to Y` — **không
+một dòng `commit:` nào** từng được tạo từ trong worktree này. `git fsck --unreachable --no-reflogs`
+trên toàn object database (worktree dùng chung với repo chính) trả về **0 commit mồ côi**. Kết luận
+thật: không có dấu vết git nào cho thấy Kilo Code từng tạo thay đổi còn tồn tại ở đây — nếu Kilo có
+dựng video thật, kết quả đó hiện không còn (đã dọn, hoặc chưa từng ghi commit). **Không thể kết luận
+Kilo có tuân thủ đúng pipeline hay không chỉ từ git** — cần người dùng chỉ rõ video/thời điểm cụ thể
+nếu muốn audit sâu 1 lần chạy thật của Kilo.
+
+Phát hiện phụ, không liên quan Kilo (gặp lúc quét cấu trúc để đối chiếu): `hyperframes/videos/an-le-64/`
+tồn tại dù `an-le-64` là 1 trong 4 video Remotion-legacy — xác nhận qua `git log` đây là scaffold TEST
+từ giai đoạn di trú HyperFrames cũ (commit `9e9223b`, trước khi chốt KHÔNG migrate 4 video cũ), có từ
+lâu, không phải rác mới/không phải do Kilo.
+
 ## 9. Theo dõi POC đổi model tier sang biến thể rẻ hơn (2026-09-22)
 
 Các model `-flash-medium` dưới đây **chưa từng được test ở đâu trong repo** — theo văn hoá dự án

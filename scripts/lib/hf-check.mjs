@@ -82,3 +82,41 @@ export function findRootLayoutFlagsInProject(projectDir) {
   }
   return violations;
 }
+
+const CHECK_CATEGORIES = ["lint", "runtime", "layout", "motion", "contrast"];
+
+/** Tóm tắt `raw` (output thô "hyperframes check --json") thành dạng ngắn, ưu tiên KHÔNG mất lỗi
+ * thật khi bị cắt xuống `maxChars` sau đó — bug thật đã xảy ra (video ha-noi-cam-xe-may, scene S08,
+ * 2026-09-24): cắt mù theo số ký tự khiến mục `lint` (đứng đầu JSON, dù chỉ có warning) chiếm hết
+ * ngân sách trước khi tới mục thật sự ok:false (layout.text_occluded) — model sửa lỗi 3 lần đều
+ * KHÔNG THẤY lỗi thật. Ở đây: in 1 dòng tóm tắt ok/errorCount/warningCount cho ĐỦ 5 mục trước (dòng
+ * này luôn sống sót dù bị cắt), rồi liệt kê chi tiết finding dạng 1 dòng/finding (bỏ
+ * bbox/sourceFile/dataAttributes/fixHint — nặng, không cần cho model sửa lỗi), ĐẶT mục ok:false lên
+ * TRƯỚC mục ok:true để lỗi thật luôn nằm ở đầu, sống sót qua giới hạn cắt cuối cùng. Nếu `raw` không
+ * parse được JSON (vd infraError là text crash thô), fallback về cắt thô như hành vi cũ. */
+export function summarizeCheckRaw(raw, maxChars) {
+  let parsed;
+  try {
+    const start = raw.indexOf("{");
+    parsed = JSON.parse(start >= 0 ? raw.slice(start) : raw);
+  } catch {
+    return raw.slice(0, maxChars);
+  }
+  const present = CHECK_CATEGORIES.filter((c) => parsed[c] && typeof parsed[c] === "object");
+  const summaryLine = (c) => `${c}: ok=${parsed[c].ok} errors=${parsed[c].errorCount ?? "?"} warnings=${parsed[c].warningCount ?? "?"}`;
+  const header = `ok=${parsed.ok}\n` + present.map(summaryLine).join("\n") + "\n";
+
+  const ordered = [...present.filter((c) => parsed[c].ok === false), ...present.filter((c) => parsed[c].ok !== false)];
+  let body = "";
+  for (const c of ordered) {
+    const findings = parsed[c].findings;
+    if (!findings?.length) continue;
+    body += `\n--- ${c} findings ---\n`;
+    for (const f of findings) {
+      body += `[${f.severity}] ${f.code} @ ${f.selector || "?"} (t=${f.time ?? "?"}): ${f.message}\n`;
+    }
+  }
+
+  const combined = header + body;
+  return combined.length > maxChars ? combined.slice(0, maxChars) + "\n...[cắt bớt]" : combined;
+}

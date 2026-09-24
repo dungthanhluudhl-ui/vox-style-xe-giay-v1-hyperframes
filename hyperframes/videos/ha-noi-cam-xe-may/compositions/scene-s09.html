@@ -1,0 +1,499 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background: #E7E3D9;
+        font-family: "Be Vietnam Pro", sans-serif;
+        color: #141414;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: #E7E3D9;
+      }
+
+      /* Quy ước clip của HyperFrames core: full viewport, positioning con tuyệt đối */
+      .clip {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+      }
+
+      /* Nền biến thể "chart" với 4 vạch ngang đậm (20%, 40%, 60%, 80%) và mốc tick cam */
+      .bg-chart-layer {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        z-index: 1;
+      }
+      .chart-line {
+        position: absolute;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background-color: rgba(20, 20, 20, 0.28);
+      }
+      .chart-tick-left {
+        position: absolute;
+        left: 0;
+        width: 32px;
+        height: 6px;
+        background-color: #FF6A1A;
+      }
+      .chart-tick-right {
+        position: absolute;
+        right: 0;
+        width: 18px;
+        height: 2px;
+        background-color: rgba(20, 20, 20, 0.45);
+      }
+
+      /* Header biên tập phía trên khung hình (Safe zone: y = 56px -> 110px) */
+      .editorial-header {
+        position: absolute;
+        top: 56px;
+        left: 60px;
+        right: 60px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 2px solid rgba(20, 20, 20, 0.3);
+        padding-bottom: 16px;
+        pointer-events: none;
+        z-index: 2;
+      }
+      .editorial-tag {
+        font-size: 20px;
+        font-weight: 900;
+        color: #141414;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+      }
+      .editorial-badge {
+        background-color: #141414;
+        color: #F7F4EC;
+        font-size: 16px;
+        font-weight: 900;
+        padding: 4px 12px;
+        border-radius: 4px;
+        letter-spacing: 1px;
+      }
+
+      /* Khung card chứa video tư liệu (Split / Background-photo collage) */
+      #video-card {
+        position: absolute;
+        top: 242px;
+        left: 60px;
+        width: 960px;
+        height: 980px;
+        border: 4px solid #141414;
+        border-radius: 20px;
+        background-color: #141414;
+        box-shadow: 16px 20px 0px rgba(20, 20, 20, 0.32);
+        overflow: hidden;
+        transform-origin: 50% 10%;
+        will-change: transform, opacity;
+        z-index: 3;
+      }
+
+      /* Thanh tiêu đề của video card */
+      .video-card-topbar {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 52px;
+        background-color: #141414;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 24px;
+        border-bottom: 2px solid rgba(247, 244, 236, 0.15);
+        z-index: 5;
+      }
+      .topbar-left {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .record-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background-color: #FF6A1A;
+      }
+      .topbar-title {
+        color: #F7F4EC;
+        font-size: 18px;
+        font-weight: 700;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+      }
+      .topbar-code {
+        color: #FF6A1A;
+        font-size: 18px;
+        font-weight: 900;
+      }
+
+      /* Cửa sổ viewport chứa video và crop 1.5x */
+      .video-viewport {
+        position: absolute;
+        top: 52px;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        overflow: hidden;
+        background-color: #0b0f14;
+      }
+      #vid-02 {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center 30%;
+        transform-origin: center center;
+        will-change: transform;
+      }
+
+      /* Overlay 1: Nhãn vẽ tay "VƯỢT SỨC NGƯỜI NGHÈO" */
+      .hand-drawn-badge {
+        position: absolute;
+        top: 168px;
+        left: 60px;
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        background-color: #141414;
+        color: #F7F4EC;
+        border: 3px solid #FF6A1A;
+        border-radius: 12px;
+        padding: 12px 24px;
+        box-shadow: 8px 10px 0px rgba(20, 20, 20, 0.35);
+        transform-origin: left center;
+        will-change: transform, opacity;
+      }
+      .badge-marker {
+        color: #FF6A1A;
+        font-size: 24px;
+        line-height: 1;
+      }
+      .badge-text {
+        font-size: 32px;
+        font-weight: 900;
+        letter-spacing: 1px;
+        line-height: 1;
+        text-transform: uppercase;
+      }
+
+      /* Overlay 2 & 3: Punch-card "15 – 30 TRIỆU" & Icon "fall" */
+      .punch-card {
+        position: absolute;
+        top: 1258px;
+        left: 60px;
+        width: 960px;
+        height: 224px;
+        background-color: #141414;
+        border: 4px solid #141414;
+        border-top: 6px solid #FF6A1A;
+        border-radius: 20px;
+        padding: 20px 32px;
+        box-shadow: 16px 20px 0px rgba(20, 20, 20, 0.35);
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        transform-origin: center center;
+        will-change: transform, opacity;
+      }
+      .punch-top-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .punch-tag {
+        background-color: #FF6A1A;
+        color: #141414;
+        font-size: 20px;
+        font-weight: 900;
+        padding: 4px 14px;
+        border-radius: 6px;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+      }
+      .punch-source-hint {
+        color: #F7F4EC;
+        opacity: 0.8;
+        font-size: 18px;
+        font-weight: 700;
+      }
+      .punch-main-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .punch-headline-group {
+        display: flex;
+        flex-direction: column;
+      }
+      .punch-headline {
+        font-size: 74px;
+        font-weight: 900;
+        color: #F7F4EC;
+        line-height: 1.05;
+        margin: 0;
+        letter-spacing: -0.5px;
+      }
+      .punch-subcaption {
+        font-size: 22px;
+        font-weight: 700;
+        color: #FF6A1A;
+        margin-top: 6px;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+      }
+
+      /* SVG Icon "fall" tự vẽ nét */
+      .icon-container {
+        width: 96px;
+        height: 96px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: rgba(255, 106, 26, 0.12);
+        border: 2px solid #FF6A1A;
+        border-radius: 16px;
+        will-change: transform;
+      }
+      .fall-icon-svg {
+        width: 76px;
+        height: 76px;
+      }
+      .draw-stroke {
+        fill: none;
+        stroke: #F7F4EC;
+        stroke-width: 8;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+      .accent-stroke {
+        stroke: #FF6A1A;
+        stroke-width: 7;
+      }
+
+      /* Thanh cam nhận diện thương hiệu cố định ở đáy khung hình */
+      .bottom-orange-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 10px;
+        background-color: #FF6A1A;
+        z-index: 100;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s09"
+      data-start="0"
+      data-width="1080"
+      data-height="1920"
+      data-duration="6.4"
+    >
+      <!-- Lớp nền biến thể "chart" với 4 vạch ngang cố định -->
+      <div class="bg-chart-layer">
+        <!-- Đường 20% (384px) -->
+        <div class="chart-line" style="top: 384px;"></div>
+        <div class="chart-tick-left" style="top: 382px;"></div>
+        <div class="chart-tick-right" style="top: 384px;"></div>
+
+        <!-- Đường 40% (768px) -->
+        <div class="chart-line" style="top: 768px;"></div>
+        <div class="chart-tick-left" style="top: 766px;"></div>
+        <div class="chart-tick-right" style="top: 768px;"></div>
+
+        <!-- Đường 60% (1152px) -->
+        <div class="chart-line" style="top: 1152px;"></div>
+        <div class="chart-tick-left" style="top: 1150px;"></div>
+        <div class="chart-tick-right" style="top: 1152px;"></div>
+
+        <!-- Đường 80% (1536px) -->
+        <div class="chart-line" style="top: 1536px;"></div>
+        <div class="chart-tick-left" style="top: 1534px;"></div>
+        <div class="chart-tick-right" style="top: 1536px;"></div>
+      </div>
+
+      <!-- Header cố định phong cách tài liệu điều tra -->
+      <div class="editorial-header">
+        <div class="editorial-tag">HÀ NỘI · KỊCH BẢN CHUYỂN ĐỔI XE ĐIỆN</div>
+        <div class="editorial-badge">BẰNG CHỨNG 09</div>
+      </div>
+
+      <!-- Khung hiển thị video chính: chứa thẻ video có data-start chuẩn contract -->
+      <div id="video-card">
+        <div class="video-card-topbar">
+          <div class="topbar-left">
+            <span class="record-dot"></span>
+            <span class="topbar-title">TƯ LIỆU THỰC TẾ · GÁNH NẶNG TÀI CHÍNH</span>
+          </div>
+          <span class="topbar-code">SEC: 09</span>
+        </div>
+        <div class="video-viewport" data-layout-allow-overflow="true">
+          <video
+            id="vid-02"
+            src="assets/vid-02-family-financial-burden-cutout.mp4"
+            data-start="0"
+            data-duration="6.4"
+            data-media-start="1"
+            data-track-index="0"
+            data-layout-allow-overflow="true"
+            muted
+            playsinline
+          ></video>
+        </div>
+      </div>
+
+      <!-- Overlay 1: Nhãn vẽ tay "VƯỢT SỨC NGƯỜI NGHÈO" (1.2s -> 3.2s) -->
+      <div id="label-clip" class="clip" data-start="1.2" data-duration="2.0" data-track-index="1" style="z-index: 10;">
+        <div class="hand-drawn-badge">
+          <span class="badge-marker">▲</span>
+          <span class="badge-text">VƯỢT SỨC NGƯỜI NGHÈO</span>
+        </div>
+      </div>
+
+      <!-- Overlay 2 & 3: Punch-phrase "15 – 30 TRIỆU" & Icon "fall" (4.8s -> 6.4s) -->
+      <div id="punch-clip" class="clip" data-start="4.8" data-duration="1.6" data-track-index="2" style="z-index: 20;">
+        <div class="punch-card">
+          <div class="punch-top-row">
+            <span class="punch-tag">GIÁ XE ĐIỆN PHỔ THÔNG</span>
+            <span class="punch-source-hint">KHẢO SÁT THỊ TRƯỜNG</span>
+          </div>
+          <div class="punch-main-row">
+            <div class="punch-headline-group">
+              <div class="punch-headline">15 – 30 TRIỆU</div>
+              <div class="punch-subcaption">GẤP 3 – 5 LẦN THU NHẬP THÁNG</div>
+            </div>
+            <div class="icon-container">
+              <svg class="fall-icon-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <!-- Trục mũi tên rơi thẳng đứng -->
+                <path id="fall-arrow-shaft" class="draw-stroke" d="M 50 16 L 50 68" />
+                <!-- Đầu mũi tên cắm xuống -->
+                <path id="fall-arrow-head" class="draw-stroke" d="M 32 50 L 50 68 L 68 50" />
+                <!-- Thanh chấn động va đập mặt sàn -->
+                <path id="fall-impact-base" class="draw-stroke accent-stroke" d="M 18 84 L 82 84" />
+                <!-- Tia chấn động bật ra 2 bên -->
+                <path id="fall-spark-l" class="draw-stroke accent-stroke" d="M 30 74 L 20 64" />
+                <path id="fall-spark-r" class="draw-stroke accent-stroke" d="M 70 74 L 80 64" />
+              </svg>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Thanh cam đáy cố định -->
+      <div class="bottom-orange-bar"></div>
+    </div>
+
+    <script>
+      // 1. Đo độ dài thực tế của từng nét vẽ SVG cho icon "fall"
+      var shaftEl = document.getElementById("fall-arrow-shaft");
+      var headEl = document.getElementById("fall-arrow-head");
+      var baseEl = document.getElementById("fall-impact-base");
+      var sparkLEl = document.getElementById("fall-spark-l");
+      var sparkREl = document.getElementById("fall-spark-r");
+
+      var shaftLen = shaftEl.getTotalLength();
+      var headLen = headEl.getTotalLength();
+      var baseLen = baseEl.getTotalLength();
+      var sparkLLen = sparkLEl.getTotalLength();
+      var sparkRLen = sparkREl.getTotalLength();
+
+      shaftEl.style.strokeDasharray = shaftLen;
+      headEl.style.strokeDasharray = headLen;
+      baseEl.style.strokeDasharray = baseLen;
+      sparkLEl.style.strokeDasharray = sparkLLen;
+      sparkREl.style.strokeDasharray = sparkRLen;
+
+      // 2. Khởi tạo timeline paused duy nhất cho composition
+      var tl = gsap.timeline({ paused: true });
+
+      // --- PHẦN 1: VIDEO CARD WOBBLE-DROP & CAMERA ZOOM-IN (t = 0.0s) ---
+      // Rơi xuống đập vào khung nhìn mô phỏng sức nặng tài chính (luôn nằm trọn trong canvas)
+      tl.fromTo(
+        "#video-card",
+        { y: -100, rotation: -3.5, opacity: 0 },
+        { y: 0, rotation: 0, opacity: 1, duration: 0.58, ease: "power2.in" },
+        0
+      );
+      // Hiệu ứng lắc lư chấn động (wobble settle) dứt khoát sau khi tiếp đất
+      tl.to("#video-card", { rotation: 2.2, y: -8, duration: 0.14, ease: "power1.out" }, 0.58);
+      tl.to("#video-card", { rotation: -1.4, y: 0, duration: 0.14, ease: "power1.inOut" }, 0.72);
+      tl.to("#video-card", { rotation: 0.6, y: 0, duration: 0.12, ease: "power1.inOut" }, 0.86);
+      tl.to("#video-card", { rotation: 0, y: 0, duration: 0.12, ease: "power1.out" }, 0.98);
+
+      // Camera motion zoom-in: Video phóng đại 1.45x -> 1.62x liên tục trong suốt 6.4s
+      tl.fromTo(
+        "#vid-02",
+        { scale: 1.45 },
+        { scale: 1.62, duration: 6.4, ease: "none" },
+        0
+      );
+
+      // --- PHẦN 2: LABEL "VƯỢT SỨC NGƯỜI NGHÈO" (t = 1.2s -> 3.2s) ---
+      tl.fromTo(
+        ".hand-drawn-badge",
+        { scale: 0.75, opacity: 0, y: 18 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.35, ease: "power3.out" },
+        1.2
+      );
+      tl.to(
+        ".hand-drawn-badge",
+        { opacity: 0, y: -12, duration: 0.2, ease: "power2.in" },
+        3.0
+      );
+
+      // --- PHẦN 3: PUNCH-CARD "15 – 30 TRIỆU" (t = 4.8s -> 6.4s) ---
+      tl.fromTo(
+        ".punch-card",
+        { scale: 0.9, opacity: 0, y: 24 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.36, ease: "power3.out" },
+        4.8
+      );
+
+      // --- PHẦN 4: ICON "FALL" TỰ VẼ NÉT & CHẤN ĐỘNG (t = 5.0s -> 6.4s) ---
+      tl.fromTo("#fall-arrow-shaft", { strokeDashoffset: shaftLen }, { strokeDashoffset: 0, duration: 0.24, ease: "power2.out" }, 5.0);
+      tl.fromTo("#fall-arrow-head", { strokeDashoffset: headLen }, { strokeDashoffset: 0, duration: 0.22, ease: "power2.out" }, 5.12);
+      tl.fromTo("#fall-impact-base", { strokeDashoffset: baseLen }, { strokeDashoffset: 0, duration: 0.18, ease: "power2.out" }, 5.24);
+      tl.fromTo("#fall-spark-l", { strokeDashoffset: sparkLLen }, { strokeDashoffset: 0, duration: 0.16, ease: "power2.out" }, 5.32);
+      tl.fromTo("#fall-spark-r", { strokeDashoffset: sparkRLen }, { strokeDashoffset: 0, duration: 0.16, ease: "power2.out" }, 5.32);
+
+      // Chấn động nhẹ của biểu tượng khi va chạm sàn
+      tl.fromTo(
+        ".icon-container",
+        { y: -8 },
+        { y: 0, duration: 0.2, ease: "power2.out" },
+        5.26
+      );
+
+      // 3. Đăng ký timeline cho HyperFrames seek renderer
+      window.__timelines["scene-s09"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

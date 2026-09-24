@@ -69,6 +69,14 @@ console.log("Chuyển sang wav 16kHz mono...");
 execSync(`ffmpeg -y -v error -i "${inputPath}" -ar 16000 -ac 1 "${wavPath}"`, { stdio: "inherit" });
 
 console.log(`Transcribing (model=${model}, language=${language}${useCuda ? ", CUDA" : ""})...`);
+// printOutput mặc định true ở @remotion/install-whisper-cpp — khi true, thư viện tự
+// process.stdout.write() MỌI chunk thô từ whisper.cpp con, gồm toàn bộ dump per-token DTW timestamp
+// (beam search 5-best) — đo thật: 17.456/17.768 dòng (98,2%) tổng log 1 lần chạy orchestrator cho
+// audio chỉ 85s (xem responsibility-matrix.md mục 8b). Tắt hẳn (printOutput: false) — đã xác nhận
+// qua đọc code thư viện: phát hiện progress/tự-kill-khi-treo chạy độc lập trong onData(), không phụ
+// thuộc printOutput, nên tắt chỉ mất phần ECHO console, không đổi hành vi transcribe. Thay bằng
+// onProgress in tiến độ mỗi mốc 10% để không hoàn toàn im lặng khi audio dài.
+let lastLoggedPct = -1;
 const whisperCppOutput = await transcribe({
   model,
   whisperPath: whisperRoot,
@@ -76,6 +84,14 @@ const whisperCppOutput = await transcribe({
   inputPath: wavPath,
   tokenLevelTimestamps: true,
   language,
+  printOutput: false,
+  onProgress: (fraction) => {
+    const pct = Math.floor(fraction * 100 / 10) * 10;
+    if (pct !== lastLoggedPct) {
+      lastLoggedPct = pct;
+      console.log(`  whisper progress: ${pct}%`);
+    }
+  },
   ...(modelFolder ? { modelFolder } : {}),
   // flash-attn mặc định bật ở whisper.cpp 1.9.0 làm whisper.cpp âm thầm tắt dtw_token_timestamps
   // (cần cho tokens[0].t_dtw mà toCaptions() đọc) — tắt flash-attn ở nhánh CUDA để giữ dtw hoạt động.

@@ -1,0 +1,646 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+      *, *::before, *::after {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        padding: 0;
+        background: #E7E3D9;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+
+      /* Core Clip Layout */
+      .clip {
+        position: absolute;
+        inset: 0;
+      }
+
+      /* Background Chart Grid: 4 Ruled Horizontal Lines & Ticks (Chart Variant) */
+      .chart-line {
+        position: absolute;
+        left: 60px;
+        right: 60px;
+        height: 2px;
+        background: rgba(20, 20, 20, 0.25);
+        pointer-events: none;
+        z-index: 1;
+      }
+
+      .chart-tick {
+        position: absolute;
+        left: 60px;
+        width: 24px;
+        height: 5px;
+        background: #FF6A1A;
+        transform: translateY(-2px);
+        pointer-events: none;
+        z-index: 1;
+      }
+
+      /* Camera Container */
+      #camera-rig {
+        position: absolute;
+        inset: 0;
+        transform-origin: 540px 960px;
+        will-change: transform;
+        z-index: 5;
+      }
+
+      /* Header Category Tag */
+      .header-wrapper {
+        position: absolute;
+        top: 170px;
+        left: 70px;
+        right: 70px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
+
+      .header-kicker {
+        background: #141414;
+        color: #F7F4EC;
+        padding: 8px 18px;
+        font-size: 20px;
+        font-weight: 900;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+      }
+
+      .header-rule {
+        flex: 1;
+        height: 2px;
+        background: rgba(20, 20, 20, 0.35);
+      }
+
+      /* Center Row Helper for safe positioning without translate(-50%,-50%) */
+      .center-slot {
+        position: absolute;
+        left: 0;
+        width: 1080px;
+        display: flex;
+        justify-content: center;
+        pointer-events: none;
+      }
+
+      /* Main Pillar Container */
+      .pillar-container {
+        position: absolute;
+        left: 360px;
+        width: 360px;
+        top: 520px;
+        height: 720px;
+      }
+
+      /* Baseline Datum */
+      .datum-line {
+        position: absolute;
+        left: -30px;
+        right: -30px;
+        bottom: 0;
+        height: 4px;
+        background: #141414;
+        transform-origin: center;
+      }
+
+      /* Top Massive Block (92% - 97%) */
+      #pillar-top-block {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 360px;
+        height: 648px;
+        background: #141414;
+        border: 4px solid #141414;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        padding: 24px;
+        text-align: center;
+        box-shadow: 10px 10px 0px rgba(20, 20, 20, 0.15);
+        transform-origin: bottom center;
+        will-change: transform, opacity;
+      }
+
+      .block-pattern {
+        position: absolute;
+        inset: 0;
+        opacity: 0.12;
+        background-image: repeating-linear-gradient(
+          -45deg,
+          #F7F4EC,
+          #F7F4EC 2px,
+          transparent 2px,
+          transparent 12px
+        );
+        pointer-events: none;
+      }
+
+      .stat-top-number {
+        font-size: 56px;
+        font-weight: 900;
+        color: #F7F4EC;
+        line-height: 1.1;
+        margin: 0;
+        position: relative;
+        z-index: 1;
+      }
+
+      .stat-top-title {
+        font-size: 20px;
+        font-weight: 900;
+        color: #FF6A1A;
+        letter-spacing: 2px;
+        margin-top: 12px;
+        position: relative;
+        z-index: 1;
+        text-transform: uppercase;
+      }
+
+      .stat-top-desc {
+        font-size: 18px;
+        font-weight: 700;
+        color: rgba(247, 244, 236, 0.85);
+        margin-top: 14px;
+        line-height: 1.4;
+        max-width: 270px;
+        position: relative;
+        z-index: 1;
+      }
+
+      /* Laser Cut Divider */
+      #laser-cut {
+        position: absolute;
+        top: 650px;
+        left: 0;
+        width: 360px;
+        height: 5px;
+        background: #FF6A1A;
+        box-shadow: 0 0 10px #FF6A1A;
+        transform-origin: left center;
+        z-index: 10;
+      }
+
+      /* Bottom Slice (3% - 8%) */
+      #pillar-bottom-slice {
+        position: absolute;
+        top: 658px;
+        left: 0;
+        width: 360px;
+        height: 52px;
+        background: #252525;
+        border: 4px solid #141414;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        transform-origin: top center;
+        will-change: transform, background-color, border-color;
+        z-index: 8;
+      }
+
+      .slice-text {
+        font-size: 26px;
+        font-weight: 900;
+        color: #F7F4EC;
+        letter-spacing: 1px;
+      }
+
+      /* Callout Annotation for 3% - 8% */
+      #slice-callout {
+        position: absolute;
+        left: 740px;
+        top: 1160px;
+        width: 240px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        opacity: 0;
+        will-change: transform, opacity;
+      }
+
+      .callout-line {
+        width: 36px;
+        height: 3px;
+        background: #FF6A1A;
+        flex-shrink: 0;
+      }
+
+      .callout-card {
+        background: #141414;
+        border-left: 4px solid #FF6A1A;
+        padding: 10px 16px;
+        box-shadow: 6px 6px 0 rgba(20, 20, 20, 0.15);
+      }
+
+      .callout-title {
+        font-size: 18px;
+        font-weight: 900;
+        color: #FF6A1A;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin: 0;
+      }
+
+      .callout-subtitle {
+        font-size: 15px;
+        font-weight: 700;
+        color: #F7F4EC;
+        margin: 4px 0 0 0;
+      }
+
+      /* Overlay 1: "GIẤY VÀ XU" Badge */
+      #label-paper-coin {
+        background: #141414;
+        border: 4px solid #FF6A1A;
+        box-shadow: 10px 10px 0px rgba(255, 106, 26, 0.3);
+        padding: 20px 48px;
+        text-align: center;
+        opacity: 0;
+        pointer-events: auto;
+        will-change: transform, opacity;
+      }
+
+      .badge-category {
+        font-size: 18px;
+        font-weight: 900;
+        color: #FF6A1A;
+        letter-spacing: 3px;
+        text-transform: uppercase;
+        margin-bottom: 6px;
+      }
+
+      .badge-main {
+        font-size: 42px;
+        font-weight: 900;
+        color: #F7F4EC;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        margin: 0;
+      }
+
+      /* Overlay 2: Punch-phrase "CHỈ CHIẾM 3% - 8%" */
+      #punch-card {
+        width: 880px;
+        background: #141414;
+        border: 4px solid #FF6A1A;
+        box-shadow: 12px 12px 0px rgba(20, 20, 20, 0.25);
+        padding: 24px 36px;
+        text-align: center;
+        opacity: 0;
+        pointer-events: auto;
+        will-change: transform, opacity;
+      }
+
+      .punch-kicker {
+        font-size: 20px;
+        font-weight: 700;
+        color: rgba(247, 244, 236, 0.78);
+        letter-spacing: 3px;
+        text-transform: uppercase;
+        margin-bottom: 8px;
+      }
+
+      .punch-headline {
+        font-size: 62px;
+        font-weight: 900;
+        color: #F7F4EC;
+        line-height: 1.15;
+        margin: 0;
+      }
+
+      .punch-highlight {
+        color: #FF6A1A;
+      }
+
+      .punch-sub {
+        font-size: 21px;
+        font-weight: 900;
+        color: #E7E3D9;
+        letter-spacing: 2px;
+        margin-top: 10px;
+        text-transform: uppercase;
+      }
+
+      /* Overlay 3: Density Representation Icon */
+      #density-badge {
+        background: #F5F0E4;
+        border: 3px solid #141414;
+        box-shadow: 8px 8px 0px rgba(20, 20, 20, 0.2);
+        padding: 16px 26px;
+        display: flex;
+        align-items: center;
+        gap: 22px;
+        opacity: 0;
+        pointer-events: auto;
+        will-change: transform, opacity;
+      }
+
+      .density-grid {
+        display: grid;
+        grid-template-columns: repeat(10, 1fr);
+        gap: 5px;
+        width: 145px;
+      }
+
+      .density-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: rgba(20, 20, 20, 0.3);
+        transform-origin: center;
+      }
+
+      .density-dot.active {
+        background: #FF6A1A;
+        box-shadow: 0 0 6px #FF6A1A;
+      }
+
+      .density-info {
+        text-align: left;
+      }
+
+      .density-title {
+        font-size: 18px;
+        font-weight: 900;
+        color: #141414;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin: 0;
+      }
+
+      .density-sub {
+        font-size: 15px;
+        font-weight: 700;
+        color: rgba(20, 20, 20, 0.8);
+        margin-top: 4px;
+      }
+
+      /* Signature Bottom Orange Bar */
+      #brand-bottom-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 14px;
+        background: #FF6A1A;
+        z-index: 100;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s05"
+      data-width="1080"
+      data-height="1920"
+      data-duration="8.4"
+    >
+      <!-- Single Clean Timed Scene Clip -->
+      <section id="scene-s05" class="clip" data-start="0" data-duration="8.4">
+        <!-- 4 Ruled Horizontal Lines (20%, 40%, 60%, 80%) for Chart Variant -->
+        <div class="chart-line" style="top: 384px;" data-layout-ignore="true"></div>
+        <div class="chart-tick" style="top: 384px;" data-layout-ignore="true"></div>
+
+        <div class="chart-line" style="top: 768px;" data-layout-ignore="true"></div>
+        <div class="chart-tick" style="top: 768px;" data-layout-ignore="true"></div>
+
+        <div class="chart-line" style="top: 1152px;" data-layout-ignore="true"></div>
+        <div class="chart-tick" style="top: 1152px;" data-layout-ignore="true"></div>
+
+        <div class="chart-line" style="top: 1536px;" data-layout-ignore="true"></div>
+        <div class="chart-tick" style="top: 1536px;" data-layout-ignore="true"></div>
+
+        <!-- Camera Rig for gentle documentary zoom -->
+        <div id="camera-rig">
+          <!-- Category Header -->
+          <div class="header-wrapper" id="header-tag">
+            <span class="header-kicker">THỐNG KÊ KINH TẾ // DỮ LIỆU</span>
+            <div class="header-rule"></div>
+          </div>
+
+          <!-- Central Data Pillar Group -->
+          <div class="pillar-container" id="pillar-group">
+            <div class="datum-line" id="pillar-base-line" data-layout-ignore="true"></div>
+
+            <!-- Massive Top Segment (92% - 97%) -->
+            <div id="pillar-top-block" data-layout-allow-occlusion="true" data-layout-allow-overlap="true">
+              <div class="block-pattern" data-layout-ignore="true"></div>
+              <h2 class="stat-top-number">92% – 97%</h2>
+              <div class="stat-top-title">TIỀN GHI SỔ & SỐ HOÁ</div>
+              <div class="stat-top-desc">Tín dụng ngân hàng, số dư tài khoản và giao dịch điện tử</div>
+            </div>
+
+            <!-- Laser Cut Line -->
+            <div id="laser-cut" data-layout-ignore="true"></div>
+
+            <!-- Bottom Slice (3% - 8%) -->
+            <div id="pillar-bottom-slice" data-layout-allow-occlusion="true" data-layout-allow-overlap="true">
+              <span class="slice-text" id="slice-label">3% – 8%</span>
+            </div>
+          </div>
+
+          <!-- Slice Callout Annotation -->
+          <div id="slice-callout" data-layout-allow-occlusion="true" data-layout-allow-overlap="true">
+            <div class="callout-line"></div>
+            <div class="callout-card">
+              <p class="callout-title">TIỀN MẶT</p>
+              <p class="callout-subtitle">Lát cắt siêu mỏng</p>
+            </div>
+          </div>
+
+          <!-- Overlay 1: "GIẤY VÀ XU" (1.32s - 3.12s) -->
+          <div class="center-slot" style="top: 280px; z-index: 20;">
+            <div id="label-paper-coin" data-layout-allow-occlusion="true" data-layout-allow-overlap="true">
+              <div class="badge-category">PHÂN LOẠI TIỀN MẶT</div>
+              <h1 class="badge-main">GIẤY VÀ XU</h1>
+            </div>
+          </div>
+
+          <!-- Overlay 2: Punch Phrase "CHỈ CHIẾM 3% - 8%" (5.8s - 8.2s) -->
+          <div class="center-slot" style="top: 270px; z-index: 25;">
+            <div id="punch-card" data-layout-allow-occlusion="true" data-layout-allow-overlap="true">
+              <div class="punch-kicker">NGHE THÌ CHO SANG MỒM THÔI...</div>
+              <h2 class="punch-headline">CHỈ CHIẾM <span class="punch-highlight">3% – 8%</span></h2>
+              <div class="punch-sub">TỔNG LƯỢNG TIỀN ĐANG LƯU THÔNG</div>
+            </div>
+          </div>
+
+          <!-- Overlay 3: Density Representation Icon (7.3s - 8.4s) -->
+          <div class="center-slot" style="top: 1300px; z-index: 15;">
+            <div id="density-badge" data-layout-allow-occlusion="true" data-layout-allow-overlap="true">
+              <div class="density-grid" id="density-dots-container">
+                <!-- 20 dots: 1 active orange, 19 muted -->
+                <div class="density-dot active"></div>
+                <div class="density-dot"></div>
+                <div class="density-dot"></div>
+                <div class="density-dot"></div>
+                <div class="density-dot"></div>
+                <div class="density-dot"></div>
+                <div class="density-dot"></div>
+                <div class="density-dot"></div>
+                <div class="density-dot"></div>
+                <div class="density-dot"></div>
+                <div class="density-dot"></div>
+                <div class="density-dot"></div>
+                <div class="density-dot"></div>
+                <div class="density-dot"></div>
+                <div class="density-dot"></div>
+                <div class="density-dot"></div>
+                <div class="density-dot"></div>
+                <div class="density-dot"></div>
+                <div class="density-dot"></div>
+                <div class="density-dot"></div>
+              </div>
+              <div class="density-info">
+                <p class="density-title">MẬT ĐỘ LƯU HÀNH: ~1 / 20</p>
+                <p class="density-sub">Đa số tiền chỉ tồn tại dưới dạng số liệu</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Signature Bottom Orange Bar -->
+      <div id="brand-bottom-bar" data-layout-ignore="true"></div>
+    </div>
+
+    <!-- GSAP Seekable Timeline -->
+    <script>
+      const tl = gsap.timeline({ paused: true });
+
+      // 0. Slow documentary camera zoom-in from explicit 1.0 to 1.025
+      tl.fromTo("#camera-rig",
+        { scale: 1 },
+        { scale: 1.025, duration: 8.4, ease: "none" },
+        0
+      );
+
+      // 1. Entrance (Punch) at 0.15s
+      tl.fromTo("#header-tag",
+        { opacity: 0, y: -20 },
+        { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" },
+        0.15
+      );
+
+      tl.fromTo("#pillar-base-line",
+        { scaleX: 0 },
+        { scaleX: 1, duration: 0.45, ease: "power2.out" },
+        0.2
+      );
+
+      // Pillar shoots up with explicit endpoint values
+      tl.fromTo("#pillar-top-block",
+        { scaleY: 0, opacity: 0, y: 0 },
+        { scaleY: 1, opacity: 1, y: 0, duration: 0.7, ease: "power4.out" },
+        0.3
+      );
+
+      tl.fromTo("#pillar-bottom-slice",
+        { scaleY: 0, opacity: 0, y: 0 },
+        { scaleY: 1, opacity: 1, y: 0, duration: 0.45, ease: "power3.out" },
+        0.5
+      );
+
+      // 2. Overlay 1: "GIẤY VÀ XU" (entrance: 1.32s, hold 1.8s -> exit: 3.12s)
+      tl.fromTo("#label-paper-coin",
+        { opacity: 0, scale: 0.88, y: 15 },
+        { opacity: 1, scale: 1, y: 0, duration: 0.4, ease: "power3.out" },
+        1.32
+      );
+
+      tl.to("#label-paper-coin", {
+        opacity: 0,
+        y: -15,
+        scale: 0.95,
+        duration: 0.3,
+        ease: "power2.in"
+      }, 3.12);
+
+      // 3. The Separation & Reveal (3.6s - 4.8s)
+      // Laser incision across the base using scaleX on transforms
+      tl.fromTo("#laser-cut",
+        { scaleX: 0, opacity: 1 },
+        { scaleX: 1, opacity: 1, duration: 0.35, ease: "power2.inOut" },
+        3.6
+      );
+
+      tl.to("#laser-cut", {
+        opacity: 0,
+        duration: 0.2,
+        ease: "power1.out"
+      }, 3.95);
+
+      // Pillar separates: Top block moves up, bottom slice moves down & turns orange
+      tl.to("#pillar-top-block", {
+        y: -24,
+        duration: 0.55,
+        ease: "power3.out"
+      }, 3.95);
+
+      tl.to("#pillar-bottom-slice", {
+        y: 20,
+        backgroundColor: "#FF6A1A",
+        borderColor: "#FF6A1A",
+        duration: 0.55,
+        ease: "power3.out"
+      }, 3.95);
+
+      tl.to("#slice-label", {
+        color: "#141414",
+        duration: 0.25
+      }, 4.05);
+
+      // Slice callout appears smoothly
+      tl.fromTo("#slice-callout",
+        { opacity: 0, x: -14 },
+        { opacity: 1, x: 0, duration: 0.4, ease: "power2.out" },
+        4.25
+      );
+
+      // 4. Overlay 2: Punch Phrase "CHỈ CHIẾM 3% - 8%" (entrance: 5.8s, hold 2.4s)
+      tl.fromTo("#punch-card",
+        { opacity: 0, scale: 0.9, y: -20 },
+        { opacity: 1, scale: 1, y: 0, duration: 0.5, ease: "power3.out" },
+        5.8
+      );
+
+      // 5. Overlay 3: Density Icon (entrance: 7.3s, hold to end)
+      tl.fromTo("#density-badge",
+        { opacity: 0, scale: 0.88, y: 18 },
+        { opacity: 1, scale: 1, y: 0, duration: 0.45, ease: "power3.out" },
+        7.3
+      );
+
+      // Pulse the active density dot (finite repeat, seek-safe)
+      tl.fromTo(".density-dot.active",
+        { scale: 1 },
+        { scale: 1.35, duration: 0.32, yoyo: true, repeat: 1, ease: "power2.out" },
+        7.65
+      );
+
+      // Register the paused timeline with exact composition ID
+      window.__timelines["scene-s05"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

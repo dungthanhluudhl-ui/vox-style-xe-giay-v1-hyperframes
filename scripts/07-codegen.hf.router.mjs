@@ -33,7 +33,7 @@ import { callModel, extractText, loadModelRouting, appendRunLog } from "./lib/ro
 import { getVideoSlug, videoPaths } from "./lib/video-paths.mjs";
 import { syncRootHf, standaloneToSubComposition } from "./lib/sync-root-hf-lib.mjs";
 import { getCaptionZoneArg } from "./lib/caption-zone.mjs";
-import { HF_VERSION, runHyperframesCheck, findRootLayoutFlags } from "./lib/hf-check.mjs";
+import { HF_VERSION, runHyperframesCheck, findRootLayoutFlags, summarizeCheckRaw } from "./lib/hf-check.mjs";
 
 const root = process.cwd();
 const routing = loadModelRouting();
@@ -400,9 +400,9 @@ while (attempt < MAX_ATTEMPTS) {
 
     const v = verify(files);
     if (!v.passed) {
-      console.log("Verify (hyperframes check) FAILED:\n" + v.raw.slice(0, 2000));
-      appendCodegenIssue([{ stage: v.infraError ? "verify-infra-error" : "verify-hf-check", detail: v.raw.slice(0, 2000) }]);
-      feedback = "hyperframes check FAILED:\n" + v.raw.slice(0, 4000);
+      console.log("Verify (hyperframes check) FAILED:\n" + summarizeCheckRaw(v.raw, 2000));
+      appendCodegenIssue([{ stage: v.infraError ? "verify-infra-error" : "verify-hf-check", detail: summarizeCheckRaw(v.raw, 2000) }]);
+      feedback = "hyperframes check FAILED:\n" + summarizeCheckRaw(v.raw, 4000);
       continue;
     }
     console.log("Verify (hyperframes check) PASS.");

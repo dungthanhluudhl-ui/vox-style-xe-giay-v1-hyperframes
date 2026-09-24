@@ -1,0 +1,364 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+      *, *::before, *::after {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #E7E3D9;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: #E7E3D9;
+      }
+
+      /* Quy ước clip: định vị tuyệt đối theo khung, không ép width/height cứng */
+      .clip {
+        position: absolute;
+        inset: 0;
+      }
+
+      /* Lớp nền lưới giấy ngà đặc trưng phong cách Vox */
+      .paper-grid-bg {
+        position: absolute;
+        inset: 0;
+        background-image:
+          linear-gradient(rgba(20, 20, 20, 0.08) 1.5px, transparent 1.5px),
+          linear-gradient(90deg, rgba(20, 20, 20, 0.08) 1.5px, transparent 1.5px);
+        background-size: 84px 84px;
+        pointer-events: none;
+        z-index: 1;
+      }
+
+      /* Lớp hạt giấy (grain) hòa trộn multiply */
+      .grain-layer {
+        position: absolute;
+        inset: 0;
+        opacity: 0.18;
+        mix-blend-mode: multiply;
+        pointer-events: none;
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+        z-index: 12;
+      }
+
+      /* Biến thể Spotlight: vignette tối đậm ở viền ngoài tạo không khí ngột ngạt */
+      .spotlight-vignette {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background: radial-gradient(
+          circle at 50% 46%,
+          rgba(20, 20, 20, 0.04) 22%,
+          rgba(20, 20, 20, 0.52) 68%,
+          rgba(14, 14, 14, 0.88) 100%
+        );
+        mix-blend-mode: multiply;
+        z-index: 10;
+      }
+
+      /* Khối hiển thị Video / Ảnh */
+      .media-asset {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+
+      #vid-09 {
+        object-position: center 36%;
+        transform-origin: center 40%;
+        z-index: 2;
+      }
+
+      #img-02 {
+        object-position: center 42%;
+        transform-origin: center center;
+        z-index: 2;
+      }
+
+      /* Thanh cam nhận diện thương hiệu cố định mép đáy */
+      #bottom-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 14px;
+        background-color: #FF6A1A;
+        z-index: 100;
+        pointer-events: none;
+      }
+
+      /* Nhãn chỉ dẫn vẽ tay (Label Badge) ở Shot 1 */
+      .clip.label-badge {
+        top: 240px;
+        left: 60px;
+        right: auto;
+        bottom: auto;
+        width: auto;
+        height: auto;
+        overflow: visible;
+        display: inline-flex;
+        align-items: center;
+        gap: 14px;
+        background: rgba(20, 20, 20, 0.92);
+        border: 1.5px solid rgba(255, 106, 26, 0.5);
+        border-left: 6px solid #FF6A1A;
+        padding: 16px 26px;
+        border-radius: 8px;
+        box-shadow: 0 10px 32px rgba(0, 0, 0, 0.55);
+        z-index: 20;
+        opacity: 0;
+        white-space: nowrap;
+      }
+
+      .label-indicator {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background-color: #FF6A1A;
+        display: inline-block;
+      }
+
+      .label-text {
+        font-family: "Be Vietnam Pro", sans-serif;
+        font-weight: 700;
+        font-size: 26px;
+        letter-spacing: 0.08em;
+        color: #F7F4EC;
+        text-transform: uppercase;
+        margin: 0;
+      }
+
+      /* Biểu tượng cảnh báo Warning ở Shot 1 */
+      .clip.warning-badge {
+        top: 236px;
+        right: 60px;
+        left: auto;
+        bottom: auto;
+        width: 76px;
+        height: 76px;
+        overflow: visible;
+        display: grid;
+        place-items: center;
+        background: rgba(20, 20, 20, 0.92);
+        border: 2px solid #FF6A1A;
+        border-radius: 12px;
+        box-shadow: 0 10px 32px rgba(0, 0, 0, 0.55);
+        z-index: 20;
+        opacity: 0;
+      }
+
+      .warning-icon {
+        width: 46px;
+        height: 46px;
+      }
+
+      /* Thẻ Tiêu đề / Punch-phrase ở Shot 2 */
+      .clip.punch-card {
+        top: auto;
+        bottom: 450px;
+        left: 60px;
+        right: 60px;
+        width: auto;
+        height: auto;
+        overflow: visible;
+        background: rgba(20, 20, 20, 0.94);
+        border: 1.5px solid rgba(255, 106, 26, 0.35);
+        border-left: 8px solid #FF6A1A;
+        border-radius: 14px;
+        padding: 34px 42px;
+        box-shadow: 0 18px 48px rgba(0, 0, 0, 0.65);
+        z-index: 25;
+        opacity: 0;
+      }
+
+      .punch-eyebrow {
+        display: block;
+        font-family: "Be Vietnam Pro", sans-serif;
+        font-weight: 700;
+        font-size: 22px;
+        letter-spacing: 0.16em;
+        color: #FF6A1A;
+        text-transform: uppercase;
+        margin-bottom: 10px;
+      }
+
+      .punch-title {
+        margin: 0;
+        font-family: "Be Vietnam Pro", sans-serif;
+        font-weight: 900;
+        font-size: 64px;
+        line-height: 1.25;
+        color: #F7F4EC;
+        text-transform: uppercase;
+        letter-spacing: -0.01em;
+      }
+
+      .punch-rule {
+        display: block;
+        width: 100%;
+        height: 4px;
+        background-color: #FF6A1A;
+        margin-top: 22px;
+        transform-origin: left center;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s01"
+      data-width="1080"
+      data-height="1920"
+      data-duration="7"
+    >
+      <!-- Lớp nền giấy ngà và họa tiết ánh sáng dùng chung cho cả scene -->
+      <div class="paper-grid-bg"></div>
+      <div class="spotlight-vignette"></div>
+      <div class="grain-layer"></div>
+
+      <!-- SHOT 1: Video cậu bé chịu áp lực kinh tế gia đình (0s -> 4s) -->
+      <video
+        id="vid-09"
+        data-start="0"
+        data-duration="4"
+        data-media-start="1"
+        muted
+        playsinline
+        src="assets/vid-09-child-stress-family-conflict-money.mp4"
+        class="media-asset"
+      ></video>
+
+      <!-- Overlay Label: ÁP LỰC MƯU SINH (atMs 1290, holdMs 1800) -->
+      <aside id="shot-1-label" class="clip label-badge" data-start="0" data-duration="4">
+        <span class="label-indicator"></span>
+        <span class="label-text">ÁP LỰC MƯU SINH</span>
+      </aside>
+
+      <!-- Overlay Icon: Warning (atMs 3410) -->
+      <aside id="shot-1-warning" class="clip warning-badge" data-start="0" data-duration="4">
+        <svg class="warning-icon" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <polygon points="32,8 58,54 6,54" stroke="#FF6A1A" stroke-width="5" stroke-linejoin="round" fill="rgba(255, 106, 26, 0.16)" />
+          <line x1="32" y1="23" x2="32" y2="38" stroke="#FF6A1A" stroke-width="4.5" stroke-linecap="round" />
+          <circle cx="32" cy="46" r="3" fill="#FF6A1A" />
+        </svg>
+      </aside>
+
+      <!-- SHOT 2: Cắt dán tĩnh và mở đầu chủ đề nguồn gốc tiền tệ (4s -> 7s) -->
+      <img
+        id="img-02"
+        class="clip media-asset"
+        data-start="4"
+        data-duration="3"
+        src="assets/img-02-child-stress-parents-conflict.jpeg"
+        alt="Áp lực tài chính và xung đột gia đình"
+      />
+
+      <!-- Overlay Punch-phrase: NGUỒN GỐC TIỀN TỆ (atMs 5400, holdMs 1600) -->
+      <article id="shot-2-punch-card" class="clip punch-card" data-start="4" data-duration="3">
+        <span class="punch-eyebrow">CHỦ ĐỀ CHÍNH</span>
+        <h1 class="punch-title">NGUỒN GỐC TIỀN TỆ</h1>
+        <span id="punch-accent" class="punch-rule"></span>
+      </article>
+
+      <!-- Chữ ký thị giác: thanh cam mỏng ở mép đáy -->
+      <div id="bottom-bar"></div>
+    </div>
+
+    <script>
+      const tl = gsap.timeline({ paused: true });
+
+      // ==========================================
+      // SHOT 1 CHOREOGRAPHY (0.0s -> 4.0s)
+      // ==========================================
+
+      // Transition In: rise nhẹ nhàng với ease power3 chuẩn
+      tl.fromTo(
+        "#vid-09",
+        { y: 55, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.65, ease: "power3.out" },
+        0
+      );
+
+      // Camera motion: zoom-in Ken Burns chậm rãi vào gương mặt đứa trẻ
+      tl.fromTo(
+        "#vid-09",
+        { scale: 1.0 },
+        { scale: 1.14, duration: 4.0, ease: "sine.inOut" },
+        0
+      );
+
+      // Label "ÁP LỰC MƯU SINH" (xuất hiện lúc 1.29s, biến mất lúc 3.09s)
+      tl.fromTo(
+        "#shot-1-label",
+        { y: 26, opacity: 0, scale: 0.94 },
+        { y: 0, opacity: 1, scale: 1.0, duration: 0.45, ease: "power3.out" },
+        1.29
+      );
+      tl.to(
+        "#shot-1-label",
+        { y: -16, opacity: 0, duration: 0.35, ease: "power2.in" },
+        3.09
+      );
+
+      // Icon cảnh báo warning xuất hiện nhịp điệu lúc 3.41s
+      tl.fromTo(
+        "#shot-1-warning",
+        { scale: 0, opacity: 0, rotation: -14 },
+        { scale: 1, opacity: 1, rotation: 0, duration: 0.4, ease: "power3.out" },
+        3.41
+      );
+
+      // ==========================================
+      // SHOT 2 CHOREOGRAPHY (4.0s -> 7.0s)
+      // ==========================================
+
+      // Idle motion: dao động sway nhẹ tạo cảm giác hữu cơ
+      tl.fromTo(
+        "#img-02",
+        { rotation: -1.2, scale: 1.02 },
+        { rotation: 1.2, scale: 1.06, duration: 3.0, ease: "sine.inOut" },
+        4.0
+      );
+
+      // Punch-phrase "NGUỒN GỐC TIỀN TỆ" (xuất hiện lúc 5.4s, giữ nguyên đến 7.0s)
+      tl.fromTo(
+        "#shot-2-punch-card",
+        { y: 36, opacity: 0, scale: 0.94 },
+        { y: 0, opacity: 1, scale: 1.0, duration: 0.5, ease: "power3.out" },
+        5.4
+      );
+
+      // Đường kẻ cam mở rộng dứt khoát làm điểm nhấn
+      tl.fromTo(
+        "#punch-accent",
+        { scaleX: 0 },
+        { scaleX: 1, duration: 0.45, ease: "power2.out" },
+        5.6
+      );
+
+      // Đăng ký timeline paused vào window.__timelines
+      window.__timelines["scene-s01"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>
