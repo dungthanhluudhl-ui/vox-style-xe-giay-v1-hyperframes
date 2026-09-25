@@ -1,0 +1,620 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap"
+    />
+      <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #e7e3d9;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+
+      .clip {
+        position: absolute;
+        inset: 0;
+      }
+
+      /* Nền lưới ô vuông 84px chuẩn mực theo Vox DNA */
+      .grid-background {
+        position: absolute;
+        inset: 0;
+        background-color: #e7e3d9;
+        background-image:
+          linear-gradient(to right, rgba(20, 20, 20, 0.28) 1.5px, transparent 1.5px),
+          linear-gradient(to bottom, rgba(20, 20, 20, 0.28) 1.5px, transparent 1.5px);
+        background-size: 84px 84px;
+        z-index: 1;
+      }
+
+      /* Chữ ký thị giác nhận diện: Thanh cam cố định mép đáy */
+      .bottom-orange-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 12px;
+        background-color: #ff6a1a;
+        z-index: 100;
+      }
+
+      /* Sân khấu 3D cho hiệu ứng Flip lật mở tài liệu */
+      .stage-perspective {
+        position: absolute;
+        inset: 0;
+        perspective: 1400px;
+        z-index: 10;
+      }
+
+      /* Punch Phrase: ÁN TỬ BÍ MẬT (nằm trong vùng an toàn trên) */
+      .punch-wrapper {
+        position: absolute;
+        top: 180px;
+        left: 0;
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        z-index: 40;
+      }
+      .punch-container {
+        display: flex;
+        align-items: center;
+        background: #141414;
+        border-radius: 8px;
+        border-left: 10px solid #ff6a1a;
+        padding: 16px 36px;
+        box-shadow: 0 16px 36px rgba(20, 20, 20, 0.32);
+        opacity: 0;
+      }
+      .punch-tag {
+        font-size: 22px;
+        font-weight: 900;
+        color: #ff6a1a;
+        letter-spacing: 2px;
+        margin-right: 20px;
+        text-transform: uppercase;
+        border-right: 2px solid rgba(247, 244, 236, 0.35);
+        padding-right: 20px;
+      }
+      .punch-text {
+        font-size: 56px;
+        font-weight: 900;
+        color: #f7f4ec;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        margin: 0;
+        line-height: 1.1;
+      }
+
+      /* Cụm tài liệu quyển lịch treo tường (Căn giữa 1080px: left 80px, width 920px) */
+      .calendar-assembly {
+        position: absolute;
+        top: 310px;
+        left: 80px;
+        width: 920px;
+        height: 1030px;
+        will-change: transform, opacity;
+      }
+
+      /* Móc xỏ lịch treo tường */
+      .calendar-hanger {
+        position: absolute;
+        top: 0;
+        left: 390px;
+        width: 140px;
+        height: 36px;
+        display: flex;
+        justify-content: space-around;
+        align-items: center;
+        z-index: 25;
+      }
+      .hanger-ring {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        border: 5px solid #141414;
+        background: #e7e3d9;
+      }
+
+      /* Tờ lịch tài liệu (Document card phong cách Vox) */
+      .calendar-sheet {
+        position: absolute;
+        top: 36px;
+        left: 0;
+        width: 920px;
+        height: 994px;
+        background-color: #f5f0e4;
+        border: 4px solid #141414;
+        border-radius: 14px;
+        box-shadow: 16px 20px 0px rgba(20, 20, 20, 0.9);
+        padding: 30px 36px;
+        display: flex;
+        flex-direction: column;
+        z-index: 15;
+      }
+
+      /* Tiêu đề lịch hành quyết */
+      .calendar-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 4px solid #141414;
+        padding-bottom: 16px;
+        margin-bottom: 16px;
+      }
+      .cal-title-left {
+        font-size: 34px;
+        font-weight: 900;
+        color: #141414;
+        letter-spacing: 1px;
+      }
+      .cal-title-right {
+        font-size: 20px;
+        font-weight: 900;
+        background: #141414;
+        color: #f7f4ec;
+        padding: 6px 16px;
+        border-radius: 6px;
+        letter-spacing: 1px;
+      }
+
+      /* Hàng tiêu đề thứ trong tuần */
+      .weekdays-row {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 10px;
+        margin-bottom: 12px;
+      }
+      .weekday-label {
+        font-size: 22px;
+        font-weight: 900;
+        text-align: center;
+        color: #141414;
+      }
+
+      /* Khung chứa lưới ngày và các lớp đè (Jail bar, crosshair scanner) */
+      .days-container {
+        position: relative;
+        width: 100%;
+        height: 690px;
+      }
+
+      /* Lưới 35 ô ngày trống trơn không số (Visual relationship: sự chờ đợi vô định) */
+      .days-grid {
+        position: absolute;
+        inset: 0;
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        grid-template-rows: repeat(5, 1fr);
+        gap: 10px;
+      }
+      .cal-day {
+        background: #ffffff;
+        border: 2px solid rgba(20, 20, 20, 0.35);
+        border-radius: 6px;
+        box-shadow: 2px 2px 0px rgba(20, 20, 20, 0.1);
+      }
+      .cal-day.empty {
+        background: rgba(20, 20, 20, 0.04);
+        border: 2px dashed rgba(20, 20, 20, 0.25);
+        box-shadow: none;
+      }
+
+      /* Song sắt xà lim lồng đè khớp 100% diện tích lưới ngày */
+      .jail-cell-backdrop {
+        position: absolute;
+        inset: 0;
+        border: 5px solid #141414;
+        background: rgba(20, 20, 20, 0.04);
+        pointer-events: none;
+        z-index: 18;
+        display: flex;
+        justify-content: space-evenly;
+        border-radius: 8px;
+        opacity: 0;
+      }
+      .jail-bar {
+        width: 10px;
+        height: 100%;
+        background: #141414;
+      }
+      .jail-cross-bar {
+        position: absolute;
+        width: 100%;
+        height: 14px;
+        background: #141414;
+      }
+      .jail-cross-bar.bar-top {
+        top: 170px;
+      }
+      .jail-cross-bar.bar-bot {
+        bottom: 170px;
+      }
+
+      /* Con trỏ quét ô ngày ngẫu nhiên */
+      .scanner-crosshair {
+        position: absolute;
+        width: 112px;
+        height: 126px;
+        top: 0;
+        left: 0;
+        border: 4px solid #ff6a1a;
+        background: rgba(255, 106, 26, 0.18);
+        border-radius: 6px;
+        z-index: 22;
+        pointer-events: none;
+        opacity: 0;
+      }
+      .scanner-target-dot {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        margin-top: -6px;
+        margin-left: -6px;
+        width: 12px;
+        height: 12px;
+        background: #ff6a1a;
+        border-radius: 50%;
+      }
+
+      /* Dấu chấm hỏi cam khổng lồ đóng dấu lên xà lim */
+      .question-stamp-container {
+        position: absolute;
+        top: 310px;
+        left: 270px;
+        width: 380px;
+        height: 380px;
+        z-index: 30;
+        pointer-events: none;
+        opacity: 0;
+      }
+      .stamp-circle {
+        width: 380px;
+        height: 380px;
+        border-radius: 50%;
+        border: 8px solid #ff6a1a;
+        background: #f5f0e4;
+        box-shadow: 12px 16px 0px #141414;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+      .question-svg {
+        width: 230px;
+        height: 270px;
+      }
+
+      /* Nhãn trạng thái: BẤT KỲ THỜI ĐIỂM (safe zone dưới) */
+      .status-wrapper {
+        position: absolute;
+        top: 1390px;
+        left: 0;
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        z-index: 40;
+      }
+      .status-badge {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        background: #141414;
+        border: 3px solid #ff6a1a;
+        border-radius: 12px;
+        padding: 16px 36px;
+        box-shadow: 8px 12px 0px rgba(20, 20, 20, 0.7);
+        opacity: 0;
+      }
+      .status-dot {
+        width: 18px;
+        height: 18px;
+        background-color: #ff6a1a;
+        border-radius: 50%;
+      }
+      .status-text {
+        font-size: 32px;
+        font-weight: 900;
+        color: #f7f4ec;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s03"
+      data-start="0"
+      data-width="1080"
+      data-height="1920"
+      data-duration="6"
+    >
+      <!-- Nền lưới 84px cố định -->
+      <div class="grid-background"></div>
+
+      <!-- Thanh cam thương hiệu đáy khung hình -->
+      <div class="bottom-orange-bar"></div>
+
+      <!-- Clip cảnh chính 6 giây (16240ms - 22240ms) -->
+      <section id="scene-s03" class="clip" data-start="0" data-duration="6">
+        <div class="stage-perspective">
+          <!-- 1. Punch phrase: ÁN TỬ BÍ MẬT (từ 2.32s) -->
+          <div class="punch-wrapper">
+            <div id="punch-phrase" class="punch-container">
+              <div class="punch-tag">NGHỊCH LÝ</div>
+              <div class="punch-text">ÁN TỬ BÍ MẬT</div>
+            </div>
+          </div>
+
+          <!-- 2. Quyển lịch trống và cửa xà lim (Flip vào từ 0.05s) -->
+          <div id="calendar-assembly" class="calendar-assembly">
+            <div class="calendar-hanger">
+              <div class="hanger-ring"></div>
+              <div class="hanger-ring"></div>
+            </div>
+
+            <div class="calendar-sheet">
+              <!-- Tiêu đề lịch -->
+              <div class="calendar-header">
+                <div class="cal-title-left">LỊCH HÀNH QUYẾT</div>
+                <div class="cal-title-right">KHÔNG NGÀY HẸN</div>
+              </div>
+
+              <!-- Hàng thứ trong tuần -->
+              <div class="weekdays-row">
+                <div class="weekday-label">T2</div>
+                <div class="weekday-label">T3</div>
+                <div class="weekday-label">T4</div>
+                <div class="weekday-label">T5</div>
+                <div class="weekday-label">T6</div>
+                <div class="weekday-label">T7</div>
+                <div class="weekday-label">CN</div>
+              </div>
+
+              <!-- Khung lưới ngày và các overlay liên quan -->
+              <div class="days-container">
+                <!-- Lưới 35 ô ngày trống trơn -->
+                <div class="days-grid">
+                  <div class="cal-day"></div><div class="cal-day"></div><div class="cal-day"></div><div class="cal-day"></div><div class="cal-day"></div><div class="cal-day"></div><div class="cal-day"></div>
+                  <div class="cal-day"></div><div class="cal-day"></div><div class="cal-day"></div><div class="cal-day"></div><div class="cal-day"></div><div class="cal-day"></div><div class="cal-day"></div>
+                  <div class="cal-day"></div><div class="cal-day"></div><div class="cal-day"></div><div class="cal-day"></div><div class="cal-day"></div><div class="cal-day"></div><div class="cal-day"></div>
+                  <div class="cal-day"></div><div class="cal-day"></div><div class="cal-day"></div><div class="cal-day"></div><div class="cal-day"></div><div class="cal-day"></div><div class="cal-day"></div>
+                  <div class="cal-day"></div><div class="cal-day"></div><div class="cal-day"></div><div class="cal-day empty"></div><div class="cal-day empty"></div><div class="cal-day empty"></div><div class="cal-day empty"></div>
+                </div>
+
+                <!-- Cánh cửa sắt xà lim sập đè lên lưới ngày -->
+                <div id="jail-cell" class="jail-cell-backdrop">
+                  <div class="jail-cross-bar bar-top"></div>
+                  <div class="jail-cross-bar bar-bot"></div>
+                  <div class="jail-bar"></div>
+                  <div class="jail-bar"></div>
+                  <div class="jail-bar"></div>
+                  <div class="jail-bar"></div>
+                  <div class="jail-bar"></div>
+                  <div class="jail-bar"></div>
+                  <div class="jail-bar"></div>
+                </div>
+
+                <!-- Con trỏ quét ô ngày bất định -->
+                <div id="scanner-crosshair" class="scanner-crosshair">
+                  <div class="scanner-target-dot"></div>
+                </div>
+              </div>
+
+              <!-- Dấu chấm hỏi cam khổng lồ đóng dấu (từ 1.34s) -->
+              <div id="question-stamp" class="question-stamp-container">
+                <div class="stamp-circle">
+                  <svg
+                    class="question-svg"
+                    viewBox="0 0 120 150"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <!-- Bóng mực đen của hook -->
+                    <path
+                      d="M32 46 C32 18, 88 18, 88 44 C88 62, 60 70, 60 92"
+                      stroke="#141414"
+                      stroke-width="20"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                    <!-- Nét cam rực rỡ của hook -->
+                    <path
+                      d="M32 46 C32 18, 88 18, 88 44 C88 62, 60 70, 60 92"
+                      stroke="#FF6A1A"
+                      stroke-width="12"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                    <!-- Chấm tròn dấu hỏi -->
+                    <circle cx="60" cy="124" r="14" fill="#141414" />
+                    <circle cx="60" cy="124" r="9" fill="#FF6A1A" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 3. Nhãn trạng thái: BẤT KỲ THỜI ĐIỂM (từ 4.59s) -->
+          <div class="status-wrapper">
+            <div id="status-label" class="status-badge">
+              <div class="status-dot"></div>
+              <div class="status-text">BẤT KỲ THỜI ĐIỂM</div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <script>
+      const tl = gsap.timeline({ paused: true });
+
+      // Đăng ký duy nhất 1 timeline gốc với HyperFrames runtime
+      window.__timelines["scene-s03"] = tl;
+
+      // Đoạn 1: Hiệu ứng Flip 3D mở màn cho Quyển lịch (0.05s) - một tween duy nhất cho vị trí
+      tl.fromTo(
+        "#calendar-assembly",
+        {
+          rotationX: -60,
+          y: 60,
+          opacity: 0,
+          transformOrigin: "50% 20%",
+        },
+        {
+          rotationX: 0,
+          y: 0,
+          opacity: 1,
+          duration: 0.75,
+          ease: "power3.out",
+        },
+        0.05,
+      );
+
+      // Các ô ngày hiện so le nhịp nhàng
+      tl.fromTo(
+        ".cal-day",
+        {
+          opacity: 0,
+          scale: 0.88,
+        },
+        {
+          opacity: 1,
+          scale: 1,
+          duration: 0.35,
+          stagger: 0.015,
+          ease: "power2.out",
+        },
+        0.35,
+      );
+
+      // Cánh cửa sắt xà lim sập xuống trên nền lưới ngày (0.75s)
+      tl.fromTo(
+        "#jail-cell",
+        {
+          opacity: 0,
+          scaleY: 0,
+          transformOrigin: "50% 0%",
+        },
+        {
+          opacity: 1,
+          scaleY: 1,
+          duration: 0.45,
+          ease: "power3.out",
+        },
+        0.75,
+      );
+
+      // Đoạn 2: Dấu chấm hỏi cam khổng lồ đóng dấu (atMs: 17580 -> 1.34s)
+      tl.fromTo(
+        "#question-stamp",
+        {
+          scale: 2.2,
+          opacity: 0,
+          rotation: -16,
+          transformOrigin: "50% 50%",
+        },
+        {
+          scale: 1,
+          opacity: 1,
+          rotation: 0,
+          duration: 0.48,
+          ease: "power3.out",
+        },
+        1.34,
+      );
+
+      // Đoạn 3: Punch Phrase "ÁN TỬ BÍ MẬT" xuất hiện (atMs: 18560 -> 2.32s)
+      tl.fromTo(
+        "#punch-phrase",
+        {
+          y: -30,
+          opacity: 0,
+          scale: 0.94,
+        },
+        {
+          y: 0,
+          opacity: 1,
+          scale: 1,
+          duration: 0.5,
+          ease: "power3.out",
+        },
+        2.32,
+      );
+
+      // Đoạn 4: Khung ngắm quét bất định xuất hiện và nhảy qua các ô ngày (3.10s - 4.40s)
+      // Entrance crosshair
+      tl.fromTo(
+        "#scanner-crosshair",
+        {
+          opacity: 0,
+          scale: 1.4,
+          x: 122,
+          y: 0,
+        },
+        {
+          opacity: 1,
+          scale: 1,
+          x: 122,
+          y: 0,
+          duration: 0.25,
+          ease: "power2.out",
+        },
+        3.1,
+      );
+
+      // Di chuyển tuần tự bằng keyframes trong 1 tween duy nhất, bảo đảm tính tất định
+      tl.to(
+        "#scanner-crosshair",
+        {
+          keyframes: [
+            { x: 366, y: 0, duration: 0.22, ease: "power2.inOut" },
+            { x: 244, y: 140, duration: 0.22, ease: "power2.inOut", delay: 0.08 },
+            { x: 610, y: 280, duration: 0.22, ease: "power2.inOut", delay: 0.08 },
+            { opacity: 0.4, duration: 0.25, ease: "power1.out", delay: 0.1 },
+          ],
+        },
+        3.35,
+      );
+
+      // Đoạn 5: Nhãn trạng thái "BẤT KỲ THỜI ĐIỂM" xuất hiện (atMs: 20830 -> 4.59s)
+      tl.fromTo(
+        "#status-label",
+        {
+          y: 24,
+          opacity: 0,
+          scale: 0.94,
+        },
+        {
+          y: 0,
+          opacity: 1,
+          scale: 1,
+          duration: 0.45,
+          ease: "power3.out",
+        },
+        4.59,
+      );
+    </script>
+  
+    </template>
+  </body>
+</html>

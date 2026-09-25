@@ -1,0 +1,821 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap">
+      <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      width: 1080px;
+      height: 1920px;
+      overflow: hidden;
+      background: #F5F0E4;
+      font-family: "Be Vietnam Pro", sans-serif;
+      color: #141414;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    #root {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #F5F0E4;
+    }
+
+    .clip {
+      position: absolute;
+      inset: 0;
+    }
+
+    .editorial-border {
+      position: absolute;
+      top: 36px;
+      left: 36px;
+      right: 36px;
+      bottom: 36px;
+      border: 2px solid rgba(20, 20, 20, 0.18);
+      pointer-events: none;
+    }
+
+    .corner-mark {
+      position: absolute;
+      width: 14px;
+      height: 14px;
+      border-color: #141414;
+      border-style: solid;
+      pointer-events: none;
+    }
+    .corner-tl { top: 30px; left: 30px; border-width: 3px 0 0 3px; }
+    .corner-tr { top: 30px; right: 30px; border-width: 3px 3px 0 0; }
+    .corner-bl { bottom: 30px; left: 30px; border-width: 0 0 3px 3px; }
+    .corner-br { bottom: 30px; right: 30px; border-width: 0 3px 3px 0; }
+
+    #camera-stage {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 1080px;
+      height: 1920px;
+      will-change: transform;
+    }
+
+    /* Header Safe Zone: 160px - 390px */
+    .header-zone {
+      position: absolute;
+      top: 165px;
+      left: 60px;
+      right: 60px;
+      z-index: 10;
+    }
+
+    .meta-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .meta-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      background: #141414;
+      color: #F7F4EC;
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      border-radius: 4px;
+    }
+
+    .tag-dot {
+      width: 8px;
+      height: 8px;
+      background: #FF6A1A;
+      border-radius: 50%;
+    }
+
+    .meta-ref {
+      font-size: 16px;
+      font-weight: 900;
+      color: #141414;
+      letter-spacing: 1px;
+    }
+
+    .punch-wrapper {
+      position: relative;
+      display: inline-block;
+    }
+
+    .punch-phrase {
+      font-size: 68px;
+      font-weight: 900;
+      line-height: 1.15;
+      color: #141414;
+      text-transform: uppercase;
+      letter-spacing: -0.5px;
+      will-change: transform, opacity;
+    }
+
+    .punch-underline {
+      height: 8px;
+      background: #FF6A1A;
+      margin-top: 12px;
+      transform-origin: left center;
+      width: 100%;
+    }
+
+    .sub-cue {
+      font-size: 20px;
+      font-weight: 700;
+      color: #141414;
+      margin-top: 14px;
+      letter-spacing: 0.5px;
+    }
+
+    .sub-cue-pill {
+      background: #141414;
+      color: #F7F4EC;
+      padding: 3px 10px;
+      border-radius: 4px;
+      font-weight: 900;
+    }
+
+    /* Flow Container: 410px down to 1350px (Well within 1529px safe bottom) */
+    .flow-container {
+      position: absolute;
+      top: 410px;
+      left: 60px;
+      right: 60px;
+      height: 940px;
+    }
+
+    .bridge-svg {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .flow-node {
+      position: absolute;
+      background: #E7E3D9;
+      border: 3px solid #141414;
+      box-shadow: 5px 5px 0 #141414;
+      border-radius: 12px;
+      z-index: 2;
+    }
+
+    /* Node 1: Origin Gate (Top-Left) */
+    #node-origin {
+      top: 0;
+      left: 0;
+      width: 450px;
+      padding: 16px 20px;
+    }
+
+    /* Danger Warning Box (Top-Right, parallel to Node 1) */
+    #danger-box {
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 470px;
+      padding: 16px 20px;
+      background: #141414;
+      border: 3px solid #141414;
+      border-radius: 12px;
+      box-shadow: 5px 5px 0 rgba(20, 20, 20, 0.3);
+      z-index: 2;
+    }
+
+    .node-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+
+    .node-icon-box {
+      width: 40px;
+      height: 40px;
+      background: #141414;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .node-step-tag {
+      display: inline-block;
+      padding: 2px 8px;
+      background: #141414;
+      color: #F7F4EC;
+      font-size: 13px;
+      font-weight: 900;
+      border-radius: 4px;
+      margin-bottom: 4px;
+    }
+
+    .danger-step-tag {
+      display: inline-block;
+      padding: 2px 8px;
+      background: #FF6A1A;
+      color: #141414;
+      font-size: 13px;
+      font-weight: 900;
+      border-radius: 4px;
+      margin-bottom: 4px;
+    }
+
+    .node-title {
+      font-size: 22px;
+      font-weight: 900;
+      line-height: 1.2;
+      color: #141414;
+    }
+
+    .danger-title {
+      font-size: 22px;
+      font-weight: 900;
+      line-height: 1.2;
+      color: #F7F4EC;
+    }
+
+    .node-desc {
+      font-size: 15px;
+      font-weight: 700;
+      color: #141414;
+      line-height: 1.35;
+    }
+
+    .danger-desc {
+      font-size: 15px;
+      font-weight: 700;
+      color: #F7F4EC;
+      line-height: 1.35;
+    }
+
+    .danger-strike {
+      position: absolute;
+      top: 52%;
+      left: 14px;
+      right: 14px;
+      height: 4px;
+      background: #FF6A1A;
+      transform-origin: left center;
+      transform: scaleX(0);
+      z-index: 4;
+    }
+
+    /* Node 2: Central Suitcase (Full Width, strictly below Node 1) */
+    #node-suitcase {
+      top: 175px;
+      left: 0;
+      right: 0;
+      background: #F5F0E4;
+      border: 4px solid #141414;
+      box-shadow: 6px 6px 0 #141414;
+      padding: 20px 24px;
+      z-index: 2;
+    }
+
+    .suitcase-top-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 2px dashed rgba(20, 20, 20, 0.25);
+      padding-bottom: 12px;
+      margin-bottom: 14px;
+    }
+
+    .suitcase-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: #141414;
+      color: #F7F4EC;
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-size: 16px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .case-id {
+      font-size: 15px;
+      font-weight: 900;
+      color: #141414;
+      letter-spacing: 1px;
+    }
+
+    .suitcase-headline {
+      font-size: 26px;
+      font-weight: 900;
+      color: #141414;
+      line-height: 1.25;
+      margin-bottom: 16px;
+    }
+
+    .skills-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+
+    .skill-card {
+      background: #E7E3D9;
+      border: 2px solid #141414;
+      border-radius: 8px;
+      padding: 12px 10px;
+      text-align: center;
+      box-shadow: 2px 2px 0 #141414;
+    }
+
+    .skill-icon-svg {
+      width: 26px;
+      height: 26px;
+      margin-bottom: 6px;
+      stroke: #141414;
+    }
+
+    .skill-title {
+      font-size: 15px;
+      font-weight: 900;
+      color: #141414;
+      line-height: 1.2;
+    }
+
+    .skill-status {
+      font-size: 12px;
+      font-weight: 900;
+      background: #FF6A1A;
+      color: #141414;
+      padding: 3px 6px;
+      border-radius: 4px;
+      margin-top: 6px;
+      display: inline-block;
+      letter-spacing: 0.5px;
+    }
+
+    /* Node 3: Employment Destination (Full Width, strictly below Node 2) */
+    #node-dest {
+      top: 465px;
+      left: 0;
+      right: 0;
+      background: #E7E3D9;
+      padding: 20px 24px;
+      z-index: 2;
+    }
+
+    .dest-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+
+    .check-status-row {
+      margin-top: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #141414;
+      border: 2px solid #FF6A1A;
+      border-radius: 8px;
+      padding: 12px 18px;
+    }
+
+    .check-left-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .check-icon-circle {
+      width: 36px;
+      height: 36px;
+      background: #FF6A1A;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .check-label-primary {
+      font-size: 18px;
+      font-weight: 900;
+      color: #F7F4EC;
+      letter-spacing: 0.5px;
+    }
+
+    .check-label-sub {
+      font-size: 13px;
+      font-weight: 700;
+      color: #F7F4EC;
+    }
+
+    .check-tag-badge {
+      background: #FF6A1A;
+      color: #141414;
+      font-size: 13px;
+      font-weight: 900;
+      padding: 4px 10px;
+      border-radius: 4px;
+      letter-spacing: 0.5px;
+    }
+
+    /* Barrier Seal: CHỐNG TÁI PHẠM (Full Width, strictly below Node 3) */
+    #barrier-seal {
+      position: absolute;
+      top: 730px;
+      left: 0;
+      right: 0;
+      background: #141414;
+      border: 3px solid #FF6A1A;
+      border-radius: 12px;
+      box-shadow: 6px 6px 0 rgba(20, 20, 20, 0.3);
+      padding: 18px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 3;
+      will-change: transform, opacity;
+    }
+
+    .barrier-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .barrier-icon-badge {
+      width: 48px;
+      height: 48px;
+      background: #FF6A1A;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .barrier-title-main {
+      font-size: 28px;
+      font-weight: 900;
+      color: #F7F4EC;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      line-height: 1.1;
+    }
+
+    .barrier-sub-main {
+      font-size: 14px;
+      font-weight: 700;
+      color: #F7F4EC;
+      margin-top: 4px;
+    }
+
+    .barrier-stamp-tag {
+      background: #FF6A1A;
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 900;
+      color: #141414;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      white-space: nowrap;
+    }
+
+    .vox-bottom-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 12px;
+      background-color: #FF6A1A;
+      z-index: 100;
+    }
+  </style>
+
+  <div id="root" data-composition-id="scene-s34" data-width="1080" data-height="1920" data-duration="7" data-start="0">
+    <div id="scene-s34" class="clip" data-start="0" data-duration="7">
+      
+      <div id="editorial-border" class="editorial-border"></div>
+      <div class="corner-mark corner-tl"></div>
+      <div class="corner-mark corner-tr"></div>
+      <div class="corner-mark corner-bl"></div>
+      <div class="corner-mark corner-br"></div>
+
+      <div id="camera-stage">
+        
+        <div id="header-zone" class="header-zone">
+          <div id="meta-bar" class="meta-bar">
+            <div id="meta-tag" class="meta-tag">
+              <span class="tag-dot"></span>
+              QUY TRÌNH HÒA NHẬP // FLOW-DIAGRAM
+            </div>
+            <div id="meta-ref" class="meta-ref">FIG. 34-1</div>
+          </div>
+
+          <div id="punch-wrapper" class="punch-wrapper">
+            <h1 id="punch-phrase" class="punch-phrase">HÀNH TRANG TỰ DO</h1>
+            <div id="punch-underline" class="punch-underline"></div>
+          </div>
+
+          <div id="sub-cue" class="sub-cue">
+            <span class="sub-cue-pill">DẠY NGHỀ CHUẨN</span> → KẾT NỐI DOANH NGHIỆP → ỔN ĐỊNH CUỘC SỐNG
+          </div>
+        </div>
+
+        <div id="flow-container" class="flow-container">
+          
+          <svg class="bridge-svg" viewBox="0 0 960 830" fill="none">
+            <path id="bridge-path-1" d="M 225 140 L 225 175" stroke="#141414" stroke-width="4" stroke-dasharray="6 4" />
+            <path id="bridge-path-2" d="M 480 435 L 480 465" stroke="#141414" stroke-width="4" />
+            <path id="bridge-path-3" d="M 480 695 L 480 730" stroke="#FF6A1A" stroke-width="4" stroke-dasharray="6 4" />
+          </svg>
+
+          <!-- Node 1: Origin Gate (Top Left) -->
+          <div id="node-origin" class="flow-node">
+            <div class="node-header">
+              <div class="node-icon-box">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#F7F4EC" stroke-width="2.5">
+                  <rect x="3" y="3" width="18" height="18" rx="2" />
+                  <line x1="9" y1="3" x2="9" y2="21" />
+                  <line x1="15" y1="3" x2="15" y2="21" />
+                </svg>
+              </div>
+              <div>
+                <span class="node-step-tag">BƯỚC 01 // KHỞI ĐIỂM</span>
+                <div class="node-title">CỔNG TRẠI GIAM</div>
+              </div>
+            </div>
+            <div class="node-desc">Hoàn thành thời gian chấp hành án phạt và bước ra tái hòa nhập.</div>
+          </div>
+
+          <!-- Danger Box: Warning (Top Right, Disjoint from Node 1) -->
+          <div id="danger-box">
+            <div class="node-header">
+              <div class="node-icon-box" style="background:#FF6A1A;">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#141414" stroke-width="2.5">
+                  <circle cx="12" cy="12" r="10" />
+                  <line x1="12" y1="8" x2="12" y2="12" />
+                  <line x1="12" y1="16" x2="12.01" y2="16" />
+                </svg>
+              </div>
+              <div>
+                <span class="danger-step-tag">NGUY CƠ // THIẾU NGHỀ</span>
+                <div class="danger-title">DỄ TÁI PHẠM</div>
+              </div>
+            </div>
+            <div class="danger-desc">Bế tắc nguồn sống, không có doanh nghiệp tiếp nhận nếu thiếu kỹ năng.</div>
+            <div id="danger-strike" class="danger-strike"></div>
+          </div>
+
+          <!-- Node 2: Central Suitcase (Strictly below Node 1 & Danger Box) -->
+          <div id="node-suitcase" class="flow-node">
+            <div class="suitcase-top-row">
+              <div class="suitcase-badge">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FF6A1A" stroke-width="2.5">
+                  <rect x="2" y="7" width="20" height="14" rx="3" />
+                  <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2" />
+                </svg>
+                VALI HÀNH TRANG NGHỀ NGHIỆP
+              </div>
+              <div class="case-id">KỸ NĂNG CỐT LÕI</div>
+            </div>
+
+            <div class="suitcase-headline">Trang bị sinh kế tự chủ khi tái hòa nhập</div>
+
+            <div class="skills-grid">
+              <div class="skill-card">
+                <svg class="skill-icon-svg" viewBox="0 0 24 24" fill="none" stroke-width="2.2">
+                  <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
+                </svg>
+                <div class="skill-title">CƠ KHÍ & HÀN</div>
+                <div class="skill-status">CẤP CHỨNG CHỈ</div>
+              </div>
+
+              <div class="skill-card">
+                <svg class="skill-icon-svg" viewBox="0 0 24 24" fill="none" stroke-width="2.2">
+                  <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+                  <line x1="3" y1="6" x2="21" y2="6" />
+                  <path d="M16 10a4 4 0 0 1-8 0" />
+                </svg>
+                <div class="skill-title">MAY MẶC CN</div>
+                <div class="skill-status">CHUẨN TAY NGHỀ</div>
+              </div>
+
+              <div class="skill-card">
+                <svg class="skill-icon-svg" viewBox="0 0 24 24" fill="none" stroke-width="2.2">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                  <polyline points="9 12 11 14 15 10" />
+                </svg>
+                <div class="skill-title">KỶ LUẬT LAO ĐỘNG</div>
+                <div class="skill-status">TỰ GIÁC CAO</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Node 3: Employment Destination (Strictly below Node 2) -->
+          <div id="node-dest" class="flow-node">
+            <div class="dest-header">
+              <div class="node-icon-box" style="background:#FF6A1A;">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#141414" stroke-width="2.5">
+                  <rect x="4" y="2" width="16" height="20" rx="2" />
+                  <line x1="9" y1="6" x2="15" y2="6" />
+                  <line x1="9" y1="10" x2="15" y2="10" />
+                  <line x1="9" y1="14" x2="15" y2="14" />
+                </svg>
+              </div>
+              <div>
+                <span class="node-step-tag">BƯỚC 02 // ĐÍCH ĐẾN</span>
+                <div class="node-title">THỊ TRƯỜNG LAO ĐỘNG TỰ DO</div>
+              </div>
+            </div>
+            <div class="node-desc">Tiếp cận việc làm lương thiện, xóa bỏ mặc cảm và hòa nhập tự nhiên vào cộng đồng.</div>
+
+            <!-- Check Overlay Box (Trigger at 3.95s) -->
+            <div id="check-badge-row" class="check-status-row" style="opacity: 0;">
+              <div class="check-left-group">
+                <div class="check-icon-circle">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                    <path id="check-path" d="M 5 12 L 10 17 L 19 7" stroke="#141414" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
+                  </svg>
+                </div>
+                <div>
+                  <div class="check-label-primary">VIỆC LÀM LƯƠNG THIỆN</div>
+                  <div class="check-label-sub">THU NHẬP ỔN ĐỊNH • ĐÃ TIẾP NHẬN DOANH NGHIỆP</div>
+                </div>
+              </div>
+              <div class="check-tag-badge">ĐÃ KẾT NỐI</div>
+            </div>
+          </div>
+
+          <!-- Barrier Seal: CHỐNG TÁI PHẠM (Trigger at 5.62s, strictly below Node 3) -->
+          <div id="barrier-seal" style="opacity: 0;">
+            <div class="barrier-left">
+              <div class="barrier-icon-badge">
+                <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#141414" stroke-width="2.8">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                </svg>
+              </div>
+              <div>
+                <div class="barrier-title-main">CHỐNG TÁI PHẠM</div>
+                <div class="barrier-sub-main">TRIỆT TIÊU CON ĐƯỜNG PHẠM TỘI TRỞ LẠI</div>
+              </div>
+            </div>
+            <div class="barrier-stamp-tag">MỤC TIÊU BỀN VỮNG</div>
+          </div>
+
+        </div>
+      </div>
+
+      <div id="vox-bottom-bar" class="vox-bottom-bar"></div>
+
+    </div>
+  </div>
+
+  <script>
+    const tl = gsap.timeline({ paused: true });
+
+    // Setup SVG stroke drawing for checkmark path
+    const checkPath = document.getElementById("check-path");
+    if (checkPath) {
+      const len = checkPath.getTotalLength() || 30;
+      checkPath.style.strokeDasharray = len;
+      checkPath.style.strokeDashoffset = len;
+    }
+
+    // Setup bridge paths
+    const bridge1 = document.getElementById("bridge-path-1");
+    const bridge2 = document.getElementById("bridge-path-2");
+    const bridge3 = document.getElementById("bridge-path-3");
+
+    [bridge1, bridge2, bridge3].forEach(p => {
+      if (p) {
+        const pLen = p.getTotalLength();
+        p.style.strokeDasharray = pLen;
+        p.style.strokeDashoffset = pLen;
+      }
+    });
+
+    // 1. Pan-right camera motion across duration
+    tl.fromTo("#camera-stage", 
+      { x: 8 }, 
+      { x: -8, duration: 7.0, ease: "none" }, 
+      0
+    );
+
+    // Initial transition: punch into top nodes
+    tl.fromTo("#node-origin", 
+      { scale: 0.9, opacity: 0, y: -15 }, 
+      { scale: 1, opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, 
+      0.2
+    );
+
+    tl.fromTo("#danger-box", 
+      { scale: 0.9, opacity: 0, y: -15 }, 
+      { scale: 1, opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, 
+      0.3
+    );
+
+    if (bridge1) {
+      tl.to(bridge1, { strokeDashoffset: 0, duration: 0.6, ease: "power2.out" }, 0.5);
+    }
+
+    // 2. Punch-phrase: "HÀNH TRANG TỰ DO" (Offset = 1.18s, atMs = 275420, holdMs = 1800)
+    tl.fromTo("#punch-phrase", 
+      { scale: 1.2, opacity: 0, y: 15 }, 
+      { scale: 1, opacity: 1, y: 0, duration: 0.45, ease: "power4.out" }, 
+      1.18
+    );
+
+    tl.fromTo("#punch-underline", 
+      { scaleX: 0 }, 
+      { scaleX: 1, duration: 0.4, ease: "power2.out" }, 
+      1.35
+    );
+
+    tl.fromTo("#sub-cue", 
+      { opacity: 0, y: 8 }, 
+      { opacity: 1, y: 0, duration: 0.35, ease: "power2.out" }, 
+      1.45
+    );
+
+    // 3. Central Suitcase arrives (1.8s) & bridge 2 extends
+    tl.fromTo("#node-suitcase", 
+      { scale: 0.88, opacity: 0, y: 25 }, 
+      { scale: 1, opacity: 1, y: 0, duration: 0.6, ease: "power3.out" }, 
+      1.8
+    );
+
+    tl.fromTo(".skill-card", 
+      { y: 20, opacity: 0 }, 
+      { y: 0, opacity: 1, duration: 0.4, stagger: 0.1, ease: "power3.out" }, 
+      2.1
+    );
+
+    if (bridge2) {
+      tl.to(bridge2, { strokeDashoffset: 0, duration: 0.7, ease: "power2.out" }, 2.6);
+    }
+
+    // 4. Employment Destination node arrives (3.1s)
+    tl.fromTo("#node-dest", 
+      { y: 25, opacity: 0 }, 
+      { y: 0, opacity: 1, duration: 0.55, ease: "power3.out" }, 
+      3.1
+    );
+
+    // 5. Icon Overlay: "check" (Offset = 3.95s, atMs = 278190, holdMs = 1400)
+    tl.fromTo("#check-badge-row", 
+      { scale: 0.85, opacity: 0, y: 10 }, 
+      { scale: 1, opacity: 1, y: 0, duration: 0.35, ease: "power3.out" }, 
+      3.95
+    );
+
+    if (checkPath) {
+      tl.to(checkPath, { strokeDashoffset: 0, duration: 0.35, ease: "power2.out" }, 4.1);
+    }
+
+    if (bridge3) {
+      tl.to(bridge3, { strokeDashoffset: 0, duration: 0.6, ease: "power2.out" }, 4.7);
+    }
+
+    // 6. Label Overlay: "CHỐNG TÁI PHẠM" (Offset = 5.62s, atMs = 279860, holdMs = 1600)
+    tl.fromTo("#barrier-seal", 
+      { scale: 1.15, opacity: 0, y: 15 }, 
+      { scale: 1, opacity: 1, y: 0, duration: 0.35, ease: "power4.out" }, 
+      5.62
+    );
+
+    // Strike-through line across danger warning
+    tl.fromTo("#danger-strike", 
+      { scaleX: 0 }, 
+      { scaleX: 1, duration: 0.35, ease: "power2.inOut" }, 
+      5.85
+    );
+
+    window.__timelines = window.__timelines || {};
+    window.__timelines["scene-s34"] = tl;
+  </script>
+
+    </template>
+  </body>
+</html>

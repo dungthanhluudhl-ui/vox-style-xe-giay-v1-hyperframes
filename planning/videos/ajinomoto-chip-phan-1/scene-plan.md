@@ -1,0 +1,49 @@
+# Scene Plan — ajinomoto-chip-phan-1
+
+> Sinh bởi `scripts/05-scene-plan.router.mjs` qua ag/gemini-3.8-flash-high. Nguồn dữ liệu: `planning/videos/ajinomoto-chip-phan-1/scene-plan.json`. Sửa tay thì sửa cả 2 file cho khớp.
+
+Tổng thời lượng: 162.100s · 19 scene
+
+| # | Thời gian | Lời thoại | Chức năng | Quan hệ hình ảnh | Ngôn ngữ thị giác | Nền | Asset | Vào cảnh |
+|---|---|---|---|---|---|---|---|---|
+| S01 | 0.000s–9.420s | Chào các bạn, để hiểu được những bí ẩn vì sao Ajinomoto lại viết lại luật chơi ngành công nghiệp chip và AI trên toàn cầu, chúng ta hãy đến với nhân vật này: | hook | Lớp bao bì bột ngọt Ajinomoto đỏ trắng bị xé toạc để lộ cấu trúc vi mạch bán dẫn và ánh sáng AI neon phát quang từ bên dưới. | cutout + background-photo | spotlight | vid-07 | punch |
+| S02 | 9.420s–19.540s | Ông tên là Kikunae Ikeda, người Nhật Bản, là một tiến sĩ hóa học từng du học tại Đức và sau này là giáo sư Đại học Hoàng gia Tokyo. | definition | Hồ sơ cá nhân và học hàm giáo sư của Ikeda mở rộng từ phòng thí nghiệm Đức sang Đại học Hoàng gia Tokyo với các mốc học vị đóng dấu. | document + background-photo | card | img-06 | rise |
+| S03 | 19.540s–30.840s | Trong một bữa cơm, vợ ông Ikeda bưng ra một bát nước canh. Ông ăn vào thì bất ngờ thấy hương vị đậm đà trong bát canh này. Ông hỏi vợ thì bà nói rằng canh được nấu từ tảo bẹ. | cause | Bát nước canh gia đình bốc khói được chiếu cận cảnh, tách lớp hương vị đậm đà kết nối trực tiếp đến nhánh rong biển tảo bẹ dashi. | cutout + background-photo | grid | vid-04, img-07 | unfold |
+| S04 | 30.840s–42.300s | Ông Ikeda nghĩ rằng nếu như có thể chiết xuất được vị ngon của tảo bẹ đưa vào nhiều món ăn thì sẽ cải thiện được chế độ dinh dưỡng của người Nhật, giúp họ cao lớn, khỏe mạnh và xây dựng đất nước. | mechanism | Một nhánh tảo bẹ phân rã thành biểu đồ dinh dưỡng vi lượng, chuyển hóa thành mũi tên tăng trưởng tầm vóc và thể lực cho người dân Nhật. | diagram + background-photo | chart | img-07 | grow |
+| S05 | 42.300s–51.270s | Ông Ikeda lao vào nghiên cứu. Cuối cùng, ông tìm ra được vị ngon đó chính là glutamate. Ông đặt tên cho nó là Umami. | evidence | Dung dịch cô đặc kết tinh dần thành tinh thể bột trắng glutamate, nhãn tên 'UMAMI' tự vẽ nổi bật và phát sáng trên nền tối. | cutout + annotated | spotlight | vid-06 | strike |
+| S06 | 51.270s–58.520s | Nghiên cứu xong, ông Ikeda tìm đến một người bạn là ông Suzuki và cả hai bắt tay hợp tác. | causal-chain | Hai bàn tay doanh nhân và nhà khoa học tiến lại bắt chặt vào nhau, tạo thành nút giao hợp tác với logo thương hiệu xuất hiện ở trung tâm. | cutout + background-photo | card | vid-05 | wobble-drop |
+| S07 | 58.520s–69.400s | Họ đặt tên thương hiệu bột ngọt này là Ajinomoto, dịch nôm na là "tinh hoa của vị", mở đầu cho sự ra đời của tập đoàn Ajinomoto lớn mạnh toàn cầu như hiện nay. | definition | Dòng chữ Hán 'Ajinomoto' giải nghĩa thành 'Tinh hoa của vị' được đóng dấu lên mẫu chai thủy tinh đầu tiên, tỏa nhánh thành mạng lưới phân phối. | document + background-photo | grid | img-08 | peel |
+| S08 | 69.400s–82.030s | Năm 1949, Ajinomoto chính thức niêm yết trên sàn chứng khoán. Để phát triển, Ajinomoto có một hướng đi rất riêng: họ muốn trở thành đế chế khoa học hóa sinh của thế giới, | evidence | Biểu đồ giá cổ phiếu năm 1949 vươn thẳng đứng trên nền sàn Tokyo, từ đó rẽ nhánh sang chiến lược chuyển dịch thành đế chế hóa sinh. | diagram + background-photo | chart | img-02 | spiral |
+| S09 | 82.030s–91.580s | lấy nền tảng cốt lõi là axit amin. Và đây chính là chìa khóa mở ra cánh cửa để họ bước vào cuộc chơi của chuỗi sản xuất chip tiên tiến bậc nhất toàn cầu. | mechanism | Mô hình cấu trúc phân tử axit amin tự sắp xếp và phóng chiếu thành đường dây mạch bán dẫn tiên tiến cho ngành công nghiệp chip. | diagram + flow | grid | vid-08 | zoom-through |
+| S10 | 91.580s–98.590s | Năm 2021, thế giới trải qua một cuộc khủng hoảng chip. Giám đốc tài chính của Intel từng khẳng định: | cause | Dây chuyền cung ứng chip toàn cầu bị đứt gãy từng mắt xích, các chỉ số sản xuất tụt dốc kèm tem 'hết hàng' phủ đỏ khắp bản đồ. | data + background-photo | chart | vid-03 | shatter |
+| S11 | 98.590s–106.160s | việc thiếu chip không phải do thiếu tấm nền silicon, mà là do thiếu chất nền ABF của Ajinomoto. | reversal | Tấm silicon thông thường bị gạch chéo cam phủ định, nhường vị trí trung tâm cho lớp màng phim mỏng ABF của Ajinomoto kèm trích dẫn Intel. | quote + split | spotlight | img-05 | flip |
+| S12 | 106.160s–111.880s | Phát biểu này đã khẳng định vị thế tối quan trọng của Ajinomoto trong toàn bộ chuỗi sản xuất chip. | evidence | Một nhãn bao bì gia vị thực phẩm bình thường nở rộng và khóa chặt vào mắt xích trung tâm của chuỗi sản xuất chất bán dẫn thế giới. | cutout + background-photo | card | img-01 | punch |
+| S13 | 111.880s–119.040s | Tại sao một công ty thường được biết đến là ông lớn ngành thực phẩm lại có tầm ảnh hưởng lớn đến lĩnh vực chip tiên tiến nhất hành tinh? | paradox | Khung hình phân tách hai nửa đối kháng: bên trái là gói bột ngọt gia vị, bên phải là tấm bán dẫn AI, co kéo giành giật lãnh thổ màn hình. | split + background-photo | spotlight | img-01 | peel |
+| S14 | 119.040s–127.860s | Hãy quay trở lại lịch sử: Vào những năm 1990, thế giới bùng nổ máy tính cá nhân, tốc độ xử lý của chip phát triển như vũ bão và vấn đề bắt đầu nảy sinh. | causal-chain | Trục thời gian trượt nhanh về mốc 1990, các khối máy tính cá nhân xếp lớp dày đặc và kim xung nhịp xử lý tăng vọt chạm ngưỡng trần. | timeline + background-photo | grid | img-04 | rise |
+| S15 | 127.860s–133.290s | Đây là con chip. Các bạn biết rằng con chip là một trong những phát minh phức tạp nhất của loài người. | definition | Một bàn tay nhấc con chip nhỏ bé lên khỏi đống linh kiện, ánh sáng tín hiệu từ trung tâm chip tỏa sáng xuyên qua các lớp giấy cắt. | cutout + background-photo | card | vid-01 | grow |
+| S16 | 133.290s–141.660s | Kích thước chip máy tính chỉ bằng nửa bàn tay, chip điện thoại chỉ bằng móng tay, nhưng bên trong chứa đến hàng tỷ bóng bán dẫn. | mechanism | Đường đo kích thước thu nhỏ từ nửa bàn tay xuống móng tay, đồng thời bộ đếm hàng tỷ bóng bán dẫn tăng tốc lấp đầy không gian vi mạch. | diagram + annotated | chart | img-04 | unfold |
+| S17 | 141.660s–149.870s | Con chip cần hàng nghìn chân tiếp xúc để truyền dữ liệu. Ví dụ chip Core i7 thế hệ 14 có đến 1.700 chân. | evidence | Mặt đáy chip lật lên làm xuất hiện lưới ma trận đếm số từ 1 đến 1.700 chân tiếp xúc kim loại dày đặc trên diện tích vài centimet vuông. | data + diagram | chart | vid-02 | strike |
+| S18 | 149.870s–156.460s | Mật độ chân cắm dày đặc, khoảng cách giữa chúng nhỏ hơn cả sợi tóc, mắt thường không thể thấy được. | mechanism | Kính lúp phóng đại một sợi tóc đặt song song với khe hở chân chip, làm hiện rõ khoảng cách vật lý nhỏ đến mức vô hình với mắt thường. | diagram + annotated | grid | img-03 | zoom-through |
+| S19 | 156.460s–162.100s | Nhưng bo mạch máy tính thì lại rất to, khoảng cách giữa các điểm tiếp xúc lại rất lớn... | paradox | Mặt cắt chip với chân cắm siêu vi bị kéo căng để cố gắng nối vào các lỗ tiếp xúc khổng lồ thưa thớt của bo mạch chủ, tạo ra xung đột khoảng cách. | split + diagram | spotlight | img-03 | shatter |
+
+## Ghi chú từng scene
+
+- **S01**: Dùng video xé giấy vid-07 làm hook lật mở bí mật công nghệ ngay 10 giây đầu; nền spotlight tạo không khí kịch tính.
+- **S02**: Minh hoạ nhân vật lịch sử với chân dung nhà khoa học và tư liệu học thuật, chuyển tông sang nền card trang nhã.
+- **S03**: Gộp vid-04 (hoạt hoạ bưng bát canh phòng tatami) và img-07 hỗ trợ chi tiết; nhịp chuyển động mở ra khám phá bất ngờ.
+- **S04**: Dùng nền chart kẻ ngang thể hiện khát vọng nâng cao thể trạng dân tộc qua số liệu dinh dưỡng, overlay diagram trên ảnh nền.
+- **S05**: Video nhà khoa học cầm lọ phát sáng có nhãn UMAMI (vid-06), điểm rơi dứt khoát strike nhấn mạnh phát minh then chốt.
+- **S06**: Dùng vid-05 hoạt họa bắt tay thương mại; nhịp vào wobble-drop có độ đầm, thời lượng 7.25s đủ chuẩn tiếp thu.
+- **S07**: Dùng img-08 làm nền tư liệu lịch sử chai Ajinomoto cổ điển; hiệu ứng dán nhãn bóc tách peel bổ sung định vị thương hiệu.
+- **S08**: Dùng img-02 thể hiện mối liên hệ giữa sàn chứng khoán Tokyo và công thức hoá học 'Amino Acid Empire', nền chart hỗ trợ đường đo tài chính.
+- **S09**: Dùng vid-08 chuyển động dòng chảy nối từ phân tử hóa học sang mạch bán dẫn; cú zoom-through đưa người xem bước thẳng vào thế giới vi mạch.
+- **S10**: Dùng vid-03 thể hiện biểu đồ khủng hoảng sụt giảm và xé rách tư liệu; hiệu ứng shatter vỡ vụn diễn tả sự đứt gãy cung ứng.
+- **S11**: Tuân thủ quy tắc 'Không phải X mà là Y': phủ định silicon trước khi làm nổi bật chất nền ABF; img-05 làm nền biểu thị thế bế tắc.
+- **S12**: Dùng img-01 tái khẳng định sự hiện diện độc tôn của Ajinomoto trong chuỗi bán dẫn; punch dứt khoát làm sáng tỏ vị thế then chốt.
+- **S13**: Đặt câu hỏi cốt lõi bằng bố cục chia đôi split đối lập cực độ giữa bột ngọt và chip siêu máy tính; 7.16s tạo khoảng lặng suy ngẫm.
+- **S14**: Dùng img-04 minh hoạ thời kỳ bùng nổ PC thập niên 1990 với máy tính cổ điển, kết hợp timeline chuyển hướng ngược thời gian.
+- **S15**: Dùng vid-01 cận cảnh bàn tay nâng con chip vi mạch phát sáng, grow phóng to nhấn mạnh sự kỳ diệu của phát minh phức tạp nhất.
+- **S16**: Quy tắc đo kích thước: so sánh chip với bàn tay và móng tay người xem bằng thước đo tỷ lệ thật, overlay trên nền img-04.
+- **S17**: Dùng vid-02 đồ họa mạch CPU kết hợp bộ đếm chạy số đến 1.700; strike mang lại cảm giác va đập công nghệ dứt khoát.
+- **S18**: Dùng img-03 (so sánh chân vi xử lý với kính lúp); thể hiện mật độ cực hạn bằng cách đối sánh trực tiếp với sợi tóc quen thuộc.
+- **S19**: Đoạn kết mở ra bài toán kỹ thuật nan giải: khoảng cách siêu vi của chip đối lập với lỗ cắm to của bo mạch; shatter tạo cảm giác bất khả thi dẫn sang phần 2.

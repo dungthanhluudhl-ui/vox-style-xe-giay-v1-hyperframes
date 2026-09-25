@@ -1,0 +1,597 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap">
+      <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #E7E3D9;
+      font-family: "Be Vietnam Pro", sans-serif;
+      color: #141414;
+    }
+
+    #root {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #E7E3D9;
+    }
+
+    /* Quy chuẩn clip của HyperFrames: tuyệt đối phủ kín khung hình */
+    .clip {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    /* Lưới ô vuông 84px chuẩn Vox DNA */
+    .persistent-grid {
+      position: absolute;
+      inset: 0;
+      background-size: 84px 84px;
+      background-image:
+        linear-gradient(to right, rgba(20, 20, 20, 0.28) 1.5px, transparent 1.5px),
+        linear-gradient(to bottom, rgba(20, 20, 20, 0.28) 1.5px, transparent 1.5px);
+      mix-blend-mode: multiply;
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    /* Thanh cam đáy khung hình - Chữ ký thị giác Vox */
+    .persistent-bottom-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 16px;
+      background-color: #FF6A1A;
+      z-index: 99;
+    }
+
+    /* Tag hồ sơ trên góc an toàn (Y >= 160px) */
+    .top-metadata-tag {
+      position: absolute;
+      top: 172px;
+      left: 48px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      z-index: 40;
+      pointer-events: none;
+    }
+
+    .tag-marker {
+      width: 8px;
+      height: 22px;
+      background-color: #FF6A1A;
+      border: 1.5px solid #141414;
+    }
+
+    .tag-text {
+      font-size: 20px;
+      font-weight: 700;
+      color: #141414;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      background: rgba(231, 227, 217, 0.96);
+      padding: 4px 12px;
+      border: 1.5px solid #141414;
+    }
+
+    /* Khung media hiển thị ảnh/video */
+    .stage-container,
+    .unfold-rig,
+    .dissolve-rig,
+    .tremble-rig,
+    .camera-rig {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      transform-origin: 50% 50%;
+    }
+
+    #shot-1-stage {
+      z-index: 2;
+    }
+
+    .shot-media {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transform-origin: 50% 50%;
+    }
+
+    .media-vignette {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 50% 50%, transparent 55%, rgba(20, 20, 20, 0.4) 100%);
+      mix-blend-mode: multiply;
+      pointer-events: none;
+      z-index: 4;
+    }
+
+    /* ===== OVERLAYS SHOT 1 ===== */
+    #clip-sand-dune {
+      z-index: 30;
+    }
+
+    .vox-badge {
+      position: absolute;
+      top: 250px;
+      left: 48px;
+      background: #F5F0E4;
+      border: 3px solid #141414;
+      box-shadow: 6px 6px 0px #141414;
+      padding: 24px 30px;
+      max-width: 540px;
+      transform-origin: 0% 50%;
+    }
+
+    .badge-pill {
+      display: inline-block;
+      background: #FF6A1A;
+      color: #141414;
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      padding: 4px 12px;
+      margin-bottom: 10px;
+      border: 1.5px solid #141414;
+    }
+
+    .badge-title {
+      font-size: 46px;
+      font-weight: 900;
+      line-height: 1.15;
+      color: #141414;
+    }
+
+    .badge-sub {
+      font-size: 20px;
+      font-weight: 700;
+      color: rgba(20, 20, 20, 0.85);
+      margin-top: 8px;
+      letter-spacing: 0.5px;
+    }
+
+    #clip-stamp-useless {
+      z-index: 35;
+    }
+
+    .stamp-container {
+      position: absolute;
+      top: 920px;
+      left: 0;
+      width: 100%;
+      display: flex;
+      justify-content: center;
+    }
+
+    .vox-stamp-alert {
+      background: #141414;
+      border: 3.5px solid #FF6A1A;
+      box-shadow: 8px 8px 0px rgba(20, 20, 20, 0.5);
+      padding: 24px 34px;
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      border-radius: 4px;
+      transform-origin: 50% 50%;
+    }
+
+    .ban-svg {
+      width: 76px;
+      height: 76px;
+      display: block;
+      flex-shrink: 0;
+    }
+
+    .stamp-content {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .stamp-tag {
+      display: inline-block;
+      align-self: flex-start;
+      background: #FF6A1A;
+      color: #141414;
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      padding: 3px 10px;
+      margin-bottom: 6px;
+    }
+
+    .stamp-text {
+      font-size: 42px;
+      font-weight: 900;
+      color: #F7F4EC;
+      letter-spacing: 1px;
+      line-height: 1.1;
+    }
+
+    /* ===== OVERLAYS SHOT 2 ===== */
+    #clip-shot-2-media {
+      z-index: 3;
+    }
+
+    #clip-flow-diagram {
+      z-index: 30;
+    }
+
+    .flow-wrapper {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    .flow-svg-layer {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    .flow-path {
+      fill: none;
+      stroke: #FF6A1A;
+      stroke-width: 14;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .diagram-card {
+      position: absolute;
+      top: 260px;
+      left: 48px;
+      background: #F5F0E4;
+      border: 3px solid #141414;
+      box-shadow: 6px 6px 0px #141414;
+      padding: 24px 32px;
+      max-width: 580px;
+      transform-origin: 0% 50%;
+    }
+
+    .diagram-tag {
+      display: inline-block;
+      background: #FF6A1A;
+      color: #141414;
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      padding: 4px 12px;
+      margin-bottom: 10px;
+      border: 1.5px solid #141414;
+    }
+
+    .diagram-title {
+      font-size: 46px;
+      font-weight: 900;
+      line-height: 1.15;
+      color: #141414;
+    }
+
+    .diagram-desc {
+      font-size: 20px;
+      font-weight: 700;
+      color: rgba(20, 20, 20, 0.85);
+      margin-top: 8px;
+      line-height: 1.3;
+    }
+
+    #clip-submerged-banner {
+      z-index: 35;
+    }
+
+    /* Banner báo động đặt phía trên safe zone (bottom: 430px > 391px) */
+    .vox-alert-banner {
+      position: absolute;
+      bottom: 430px;
+      left: 48px;
+      right: 48px;
+      background: #141414;
+      border: 3px solid #FF6A1A;
+      box-shadow: 8px 8px 0px rgba(20, 20, 20, 0.45);
+      border-radius: 4px;
+      overflow: hidden;
+      transform-origin: 50% 100%;
+    }
+
+    .alert-header-stripe {
+      height: 8px;
+      background: #FF6A1A;
+      width: 100%;
+    }
+
+    .alert-body {
+      padding: 28px 36px;
+    }
+
+    .alert-pill {
+      display: inline-block;
+      background: #FF6A1A;
+      color: #141414;
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      padding: 4px 14px;
+      margin-bottom: 12px;
+    }
+
+    .alert-title {
+      font-size: 52px;
+      font-weight: 900;
+      color: #F7F4EC;
+      line-height: 1.15;
+      letter-spacing: 0.5px;
+    }
+
+    .alert-sub {
+      font-size: 22px;
+      font-weight: 700;
+      color: #FF6A1A;
+      margin-top: 10px;
+      letter-spacing: 1px;
+    }
+  </style>
+
+  <!-- Root độc lập, không mang data-start, tránh biến root thành timed ancestor -->
+  <div id="root" data-composition-id="scene-s02" data-width="1080" data-height="1920" data-duration="9.96">
+    <!-- Nền lưới ô vuông tĩnh phủ toàn canvas -->
+    <div class="persistent-grid"></div>
+
+    <!-- Nhãn chủ đề cố định vùng an toàn trên -->
+    <div class="top-metadata-tag">
+      <div class="tag-marker"></div>
+      <div class="tag-text">HỒ SƠ KHẢO SÁT &bull; HIỆN TRƯỜNG THIÊN TAI</div>
+    </div>
+
+    <!-- ==================== SHOT 1 (0.00s - 5.20s) ==================== -->
+    <!-- Media Rig: Thẻ video mang data-start và data-duration tường minh, không lồng trong timed ancestor -->
+    <div class="stage-container" id="shot-1-stage">
+      <div class="unfold-rig" id="shot-1-unfold">
+        <div class="camera-rig" id="shot-1-camera">
+          <video
+            id="vid-04-media"
+            class="shot-media"
+            src="assets/vid-04-storm-surge-flood-diagram.mp4"
+            muted
+            playsinline
+            data-start="0"
+            data-duration="5.2"
+            data-media-start="0.5"
+          ></video>
+          <div class="media-vignette"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Overlay 1: BÃI CÁT TỰ NHIÊN -->
+    <div id="clip-sand-dune" class="clip" data-start="0" data-duration="5.2">
+      <div class="vox-badge" id="badge-sand-dune">
+        <div class="badge-pill">ĐỊA HÌNH KHẢO SÁT</div>
+        <div class="badge-title">BÃI CÁT TỰ NHIÊN</div>
+        <div class="badge-sub">ĐỘ CAO TRUNG BÌNH THẤP</div>
+      </div>
+    </div>
+
+    <!-- Overlay 2: VÔ DỤNG (Ban stamp) -->
+    <div id="clip-stamp-useless" class="clip" data-start="0" data-duration="5.2">
+      <div class="stamp-container">
+        <div class="vox-stamp-alert" id="stamp-useless">
+          <svg class="ban-svg" viewBox="0 0 100 100">
+            <circle cx="50" cy="50" r="40" fill="none" stroke="#FF6A1A" stroke-width="10" />
+            <line x1="22" y1="22" x2="78" y2="78" stroke="#FF6A1A" stroke-width="10" stroke-linecap="round" />
+          </svg>
+          <div class="stamp-content">
+            <div class="stamp-tag">ĐÁNH GIÁ PHÒNG THỦ</div>
+            <div class="stamp-text">HOÀN TOÀN VÔ DỤNG</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== SHOT 2 (5.20s - 9.96s) ==================== -->
+    <!-- Media Rig: Ken Burns zoom chậm 1.0x -> 1.14x vào khu dân cư -->
+    <div id="clip-shot-2-media" class="clip" data-start="5.2" data-duration="4.76">
+      <div class="dissolve-rig" id="shot-2-dissolve">
+        <div class="tremble-rig" id="shot-2-tremble">
+          <div class="camera-rig" id="shot-2-camera">
+            <img
+              id="img-05-media"
+              class="shot-media"
+              src="assets/img-05-storm-surge-flood-diagram.jpg"
+              alt="Sơ đồ triều cường tràn qua cồn cát vào làng ven biển"
+            >
+            <div class="media-vignette"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Overlay Diagram: Mũi tên dòng chảy và Card "HƯỚNG NƯỚC XÂM NHẬP" -->
+    <div id="clip-flow-diagram" class="clip" data-start="5.2" data-duration="4.76">
+      <div class="flow-wrapper" id="flow-content-wrapper">
+        <svg class="flow-svg-layer" viewBox="0 0 1080 1920">
+          <defs>
+            <marker id="arrow-head" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#FF6A1A" />
+            </marker>
+            <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+              <feDropShadow dx="3" dy="3" stdDeviation="2" flood-color="#141414" flood-opacity="0.6" />
+            </filter>
+          </defs>
+          <path id="flow-path-1" class="flow-path" d="M 120 780 C 340 830, 560 860, 880 900" marker-end="url(#arrow-head)" filter="url(#shadow)" />
+          <path id="flow-path-2" class="flow-path" d="M 90 980 C 320 1030, 560 1060, 910 1090" marker-end="url(#arrow-head)" filter="url(#shadow)" />
+          <path id="flow-path-3" class="flow-path" d="M 140 1180 C 370 1220, 610 1250, 860 1280" marker-end="url(#arrow-head)" filter="url(#shadow)" />
+        </svg>
+
+        <div class="diagram-card" id="card-flow-direction">
+          <div class="diagram-tag">CƠ CHẾ XÂM NHẬP</div>
+          <div class="diagram-title">HƯỚNG NƯỚC XÂM NHẬP</div>
+          <div class="diagram-desc">NƯỚC TRIỀU TRÀN QUA ĐỈNH CỒN CÁT</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Overlay Alert Banner: NGẬP TOÀN KHU DÂN CƯ -->
+    <div id="clip-submerged-banner" class="clip" data-start="5.2" data-duration="4.76">
+      <div class="vox-alert-banner" id="banner-submerged">
+        <div class="alert-header-stripe"></div>
+        <div class="alert-body">
+          <div class="alert-pill">THIỆT HẠI DIỆN RỘNG</div>
+          <div class="alert-title">NGẬP TOÀN KHU DÂN CƯ</div>
+          <div class="alert-sub">THỜI GIAN NHẤN CHÌM: CHỈ TRONG VÀI GIÂY</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Thanh cam đáy cố định -->
+    <div class="persistent-bottom-bar"></div>
+  </div>
+
+  <script>
+    // Khởi tạo GSAP Timeline chính ở trạng thái paused
+    const tl = gsap.timeline({ paused: true });
+
+    // ==========================================
+    // CHOREOGRAPHY SHOT 1 (0.00s -> 5.20s)
+    // ==========================================
+
+    // 1. Mở cảnh kiểu Unfold: Bung mở nếp gấp giấy theo trục Y trên container con
+    tl.fromTo("#shot-1-unfold",
+      { scaleY: 0.08, opacity: 0 },
+      { scaleY: 1, opacity: 1, duration: 0.65, ease: "power3.out" },
+      0
+    );
+
+    // 2. Camera pan trôi nhẹ sang phải theo hướng nước tràn bờ
+    tl.fromTo("#shot-1-camera",
+      { scale: 1.15, x: 20 },
+      { scale: 1.15, x: -40, duration: 5.2, ease: "none" },
+      0
+    );
+
+    // 3. Overlay 1: BÃI CÁT TỰ NHIÊN (xuất hiện tại 1.12s, giữ 2.2s, rút lui tại 3.32s)
+    tl.fromTo("#badge-sand-dune",
+      { scale: 0.8, opacity: 0, y: 30 },
+      { scale: 1, opacity: 1, y: 0, duration: 0.45, ease: "power3.out" },
+      1.12
+    );
+    tl.to("#badge-sand-dune",
+      { opacity: 0, y: -20, duration: 0.35, ease: "power2.in" },
+      3.32
+    );
+
+    // 4. Overlay 2: VÔ DỤNG (Ban icon đóng dấu tại 4.49s đúng chữ "vô dụng", giữ đến 5.20s)
+    tl.fromTo("#stamp-useless",
+      { scale: 1.5, opacity: 0, rotation: -12 },
+      { scale: 1, opacity: 1, rotation: -3, duration: 0.32, ease: "back.out(1.4)" },
+      4.49
+    );
+    tl.to("#stamp-useless",
+      { opacity: 0, scale: 0.95, duration: 0.14, ease: "power2.in" },
+      5.05
+    );
+
+    // Rút lui rig 1 để chuyển cảnh sạch sẽ sang Shot 2
+    tl.to("#shot-1-unfold",
+      { opacity: 0, duration: 0.25, ease: "power2.in" },
+      4.95
+    );
+
+    // ==========================================
+    // CHOREOGRAPHY SHOT 2 (5.20s -> 9.96s)
+    // ==========================================
+
+    // 1. Chuyển cảnh hòa tan (dissolve) mượt mà sang Shot 2 tại 5.20s
+    tl.fromTo("#shot-2-dissolve",
+      { opacity: 0 },
+      { opacity: 1, duration: 0.45, ease: "power2.out" },
+      5.20
+    );
+
+    // 2. Ken Burns zoom chậm 1.0x -> 1.14x vào khu làng ven biển bị ngập
+    tl.fromTo("#shot-2-camera",
+      { scale: 1.0, y: 0 },
+      { scale: 1.14, y: -25, duration: 4.76, ease: "sine.out" },
+      5.20
+    );
+
+    // Idle motion rung lắc nhẹ kiểu tremble trên các mảnh nhà giấy (hữu hạn, seek-safe)
+    tl.fromTo("#shot-2-tremble",
+      { rotation: -0.3 },
+      { rotation: 0.3, duration: 0.26, repeat: 7, yoyo: true, ease: "sine.inOut" },
+      5.60
+    );
+
+    // 3. Overlay Diagram: Mũi tên dòng chảy và Card "HƯỚNG NƯỚC XÂM NHẬP" (tại 6.00s)
+    tl.fromTo("#card-flow-direction",
+      { scale: 0.85, opacity: 0, x: -30 },
+      { scale: 1, opacity: 1, x: 0, duration: 0.4, ease: "power3.out" },
+      6.00
+    );
+
+    // Chuẩn bị stroke-dasharray đo thực tế từ hình học SVG
+    const flowP1 = document.getElementById("flow-path-1");
+    const flowP2 = document.getElementById("flow-path-2");
+    const flowP3 = document.getElementById("flow-path-3");
+
+    const len1 = flowP1 && flowP1.getTotalLength ? flowP1.getTotalLength() : 850;
+    const len2 = flowP2 && flowP2.getTotalLength ? flowP2.getTotalLength() : 850;
+    const len3 = flowP3 && flowP3.getTotalLength ? flowP3.getTotalLength() : 850;
+
+    if (flowP1) {
+      flowP1.style.strokeDasharray = `${len1}`;
+      flowP1.style.strokeDashoffset = `${len1}`;
+    }
+    if (flowP2) {
+      flowP2.style.strokeDasharray = `${len2}`;
+      flowP2.style.strokeDashoffset = `${len2}`;
+    }
+    if (flowP3) {
+      flowP3.style.strokeDasharray = `${len3}`;
+      flowP3.style.strokeDashoffset = `${len3}`;
+    }
+
+    // Tự vẽ nét mũi tên dòng chảy tràn qua cồn cát bằng fromTo tất định
+    tl.fromTo("#flow-path-1", { strokeDashoffset: len1 }, { strokeDashoffset: 0, duration: 0.65, ease: "power2.out" }, 6.08);
+    tl.fromTo("#flow-path-2", { strokeDashoffset: len2 }, { strokeDashoffset: 0, duration: 0.65, ease: "power2.out" }, 6.20);
+    tl.fromTo("#flow-path-3", { strokeDashoffset: len3 }, { strokeDashoffset: 0, duration: 0.65, ease: "power2.out" }, 6.32);
+
+    // Nhóm sơ đồ dòng chảy rút lui tại 7.95s để nhường điểm nhìn cho cảnh báo ngập
+    tl.to("#flow-content-wrapper",
+      { opacity: 0, duration: 0.3, ease: "power2.in" },
+      7.95
+    );
+
+    // 4. Overlay: NGẬP TOÀN KHU DÂN CƯ (punch in tại 8.33s, giữ tối thiểu 1.63s đến hết scene)
+    tl.fromTo("#banner-submerged",
+      { scale: 0.88, opacity: 0, y: 35 },
+      { scale: 1, opacity: 1, y: 0, duration: 0.45, ease: "power3.out" },
+      8.33
+    );
+
+    // Đăng ký timeline duy nhất cho runtime HyperFrames seek (không tạo lại registry đã có sẵn)
+    window.__timelines["scene-s02"] = tl;
+  </script>
+
+    </template>
+  </body>
+</html>

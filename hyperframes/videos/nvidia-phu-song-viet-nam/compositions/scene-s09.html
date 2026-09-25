@@ -1,0 +1,528 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+      *, *::before, *::after {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #E7E3D9;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+
+      /* Base full-frame clip layout following hyperframes contract */
+      .clip {
+        position: absolute;
+        inset: 0;
+      }
+
+      /* Spotlight Canvas Background Layer (Untimed, persists throughout scene S09) */
+      .bg-spotlight-layer {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+      }
+
+      .bg-grid {
+        position: absolute;
+        inset: 0;
+        background-size: 84px 84px;
+        background-image:
+          linear-gradient(to right, rgba(20, 20, 20, 0.22) 1.5px, transparent 1.5px),
+          linear-gradient(to bottom, rgba(20, 20, 20, 0.22) 1.5px, transparent 1.5px);
+      }
+
+      .bg-vignette {
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(
+          circle at 50% 46%,
+          rgba(20, 20, 20, 0.3) 0%,
+          rgba(15, 15, 15, 0.78) 65%,
+          rgba(10, 10, 10, 0.95) 100%
+        );
+      }
+
+      /* Top Editorial Classification Bar */
+      .top-editorial-bar {
+        position: absolute;
+        top: 180px;
+        left: 70px;
+        right: 70px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        z-index: 30;
+      }
+
+      .category-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        background: rgba(20, 20, 20, 0.92);
+        border: 2px solid #FF6A1A;
+        border-radius: 6px;
+        padding: 8px 18px;
+        font-size: 22px;
+        font-weight: 900;
+        color: #F7F4EC;
+        letter-spacing: 2.5px;
+        text-transform: uppercase;
+      }
+
+      .category-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background-color: #FF6A1A;
+      }
+
+      .scene-index-badge {
+        font-size: 22px;
+        font-weight: 700;
+        color: #F7F4EC;
+        background: rgba(20, 20, 20, 0.85);
+        padding: 8px 16px;
+        border-radius: 6px;
+        letter-spacing: 1.5px;
+      }
+
+      /* Hero Media - Shot 1 Video Clip */
+      #vid-01-media {
+        position: absolute;
+        top: 270px;
+        left: 70px;
+        width: 940px;
+        height: 1040px;
+        object-fit: cover;
+        border-radius: 14px;
+        border: 4px solid #141414;
+        box-shadow: 0 0 0 2px #FF6A1A, 14px 14px 0 #141414;
+        background-color: #000;
+        z-index: 10;
+        transform-origin: 50% 40%;
+      }
+
+      /* Hero Card - Shot 2 Image & Optical Split Overlay */
+      .hero-card-inner {
+        position: absolute;
+        top: 270px;
+        left: 70px;
+        width: 940px;
+        height: 1040px;
+        border-radius: 14px;
+        border: 4px solid #141414;
+        box-shadow: 0 0 0 2px #FF6A1A, 14px 14px 0 #141414;
+        overflow: hidden;
+        background-color: #000;
+        z-index: 10;
+        transform-origin: 50% 50%;
+      }
+
+      .card-inner-media {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+
+      /* Split Optical Divider in Shot 2 */
+      .mirror-split-overlay {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        z-index: 20;
+      }
+
+      .mirror-axis-line {
+        position: absolute;
+        top: 520px;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: #FF6A1A;
+        box-shadow: 0 0 16px rgba(255, 106, 26, 0.85);
+        transform-origin: 50% 50%;
+      }
+
+      .mirror-tag {
+        position: absolute;
+        left: 36px;
+        background: rgba(20, 20, 20, 0.94);
+        border: 2px solid #FF6A1A;
+        border-radius: 4px;
+        padding: 8px 18px;
+        font-size: 20px;
+        font-weight: 900;
+        color: #F7F4EC;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .mirror-tag.top-tag {
+        top: 456px;
+      }
+
+      .mirror-tag.bottom-tag {
+        top: 540px;
+      }
+
+      .mirror-tag-arrow {
+        color: #FF6A1A;
+        font-size: 18px;
+      }
+
+      /* Person Vocabulary Icon Badge in Shot 1 */
+      .icon-slot {
+        pointer-events: none;
+        z-index: 25;
+      }
+
+      .icon-badge {
+        position: absolute;
+        top: 300px;
+        right: 100px;
+        width: 96px;
+        height: 96px;
+        border-radius: 50%;
+        background: #141414;
+        border: 3px solid #FF6A1A;
+        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.55);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .icon-badge svg {
+        display: block;
+      }
+
+      /* Stamp Badge in Shot 2 */
+      .stamp-slot {
+        pointer-events: none;
+        z-index: 25;
+      }
+
+      .stamp-badge {
+        position: absolute;
+        top: 300px;
+        left: 100px;
+        background: #FF6A1A;
+        color: #141414;
+        border-radius: 6px;
+        padding: 12px 24px;
+        font-size: 28px;
+        font-weight: 900;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+      }
+
+      /* Punch Phrase Cards */
+      .punch-phrase-slot {
+        pointer-events: none;
+        z-index: 40;
+      }
+
+      .punch-phrase-card {
+        position: absolute;
+        top: 1350px;
+        left: 70px;
+        width: 940px;
+        background: #141414;
+        border-left: 10px solid #FF6A1A;
+        border-radius: 8px;
+        padding: 24px 34px;
+        box-shadow: 0 16px 36px rgba(0, 0, 0, 0.45);
+      }
+
+      .punch-kicker {
+        font-size: 22px;
+        font-weight: 700;
+        color: #FF6A1A;
+        letter-spacing: 3px;
+        text-transform: uppercase;
+        margin-bottom: 8px;
+      }
+
+      .punch-heading {
+        margin: 0;
+        font-size: 50px;
+        font-weight: 900;
+        line-height: 1.25;
+        color: #F7F4EC;
+        letter-spacing: -0.5px;
+        text-transform: uppercase;
+      }
+
+      /* Signature Orange Bar at canvas bottom */
+      #bottom-brand-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 12px;
+        background-color: #FF6A1A;
+        z-index: 100;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s09"
+      data-width="1080"
+      data-height="1920"
+      data-duration="7.74"
+    >
+      <!-- Base Spotlight Canvas Background (Untimed, persists throughout Scene S09) -->
+      <div class="bg-spotlight-layer">
+        <div class="bg-grid"></div>
+        <div class="bg-vignette"></div>
+      </div>
+
+      <!-- Top Editorial Classification Bar -->
+      <div class="top-editorial-bar">
+        <div class="category-pill">
+          <span class="category-dot"></span>
+          <span>BÀI HỌC TRUYỀN THÔNG</span>
+        </div>
+        <div class="scene-index-badge">09 / 12</div>
+      </div>
+
+      <!-- ============================================================== -->
+      <!-- SHOT 1 (0.00s -> 4.08s): vid-01 reflection + wobble-drop       -->
+      <!-- ============================================================== -->
+
+      <!-- Video clip: direct child of #root, timed by framework -->
+      <video
+        id="vid-01-media"
+        data-start="0"
+        data-duration="4.08"
+        data-media-start="1.5"
+        src="assets/vid-01-female-leader-reflection-cutout.mp4"
+        muted
+        playsinline
+      ></video>
+
+      <!-- Person Vocabulary Icon (Animated SVG Path Draw) -->
+      <div id="icon-person-slot" class="clip icon-slot" data-start="2.41" data-duration="1.67">
+        <div id="icon-person-badge" class="icon-badge">
+          <svg viewBox="0 0 48 48" width="52" height="52" fill="none">
+            <circle id="person-head" cx="24" cy="14" r="7" stroke="#FF6A1A" stroke-width="3.5" />
+            <path id="person-body" d="M10 38 C10 29 16 25 24 25 C32 25 38 29 38 38" stroke="#FF6A1A" stroke-width="3.5" stroke-linecap="round" />
+          </svg>
+        </div>
+      </div>
+
+      <!-- Punch Phrase 1: HÌNH ẢNH NGƯỜI ĐỨNG ĐẦU -->
+      <div id="punch-1-slot" class="clip punch-phrase-slot" data-start="0.68" data-duration="2.20">
+        <div id="punch-1-card" class="punch-phrase-card">
+          <div class="punch-kicker">MẶT GƯƠNG QUANG HỌC</div>
+          <h1 class="punch-heading">HÌNH ẢNH NGƯỜI ĐỨNG ĐẦU</h1>
+        </div>
+      </div>
+
+      <!-- ============================================================== -->
+      <!-- SHOT 2 (4.08s -> 7.74s): img-08 split mirror reflection collage -->
+      <!-- ============================================================== -->
+
+      <!-- Hero Card Clip for Shot 2 -->
+      <div id="shot2-hero" class="clip" data-start="4.08" data-duration="3.66">
+        <div class="hero-card-inner">
+          <img
+            id="img-08-media"
+            class="card-inner-media"
+            src="assets/img-08-corporate-leader-reflection-growth.jpg"
+            alt="Corporate Leader Reflection and Growth"
+          />
+
+          <!-- Split Mirror Optical Graphics Overlay -->
+          <div class="mirror-split-overlay">
+            <div id="mirror-divider-line" class="mirror-axis-line"></div>
+            <div id="mirror-tag-top" class="mirror-tag top-tag">
+              <span class="mirror-tag-arrow">▲</span>
+              <span>DIỆN MẠO DOANH NGHIỆP</span>
+            </div>
+            <div id="mirror-tag-bottom" class="mirror-tag bottom-tag">
+              <span class="mirror-tag-arrow">▼</span>
+              <span>HÀNH VI LÃNH ĐẠO</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Secondary Stamp Badge: UY TÍN TỔ CHỨC -->
+      <div id="stamp-uy-tin-slot" class="clip stamp-slot" data-start="6.33" data-duration="1.41">
+        <div id="label-uy-tin" class="stamp-badge">
+          UY TÍN TỔ CHỨC
+        </div>
+      </div>
+
+      <!-- Punch Phrase 2: TẤM GƯƠNG DOANH NGHIỆP -->
+      <div id="punch-2-slot" class="clip punch-phrase-slot" data-start="4.48" data-duration="2.60">
+        <div id="punch-2-card" class="punch-phrase-card">
+          <div class="punch-kicker">QUY LUẬT PHẢN CHIẾU</div>
+          <h1 class="punch-heading">TẤM GƯƠNG DOANH NGHIỆP</h1>
+        </div>
+      </div>
+
+      <!-- Signature Orange Bar at canvas bottom -->
+      <div id="bottom-brand-bar"></div>
+    </div>
+
+    <!-- Animation Runtime Contract -->
+    <script>
+      // Setup SVG Path Lengths synchronously for deterministic path drawing
+      const personHead = document.getElementById("person-head");
+      const personBody = document.getElementById("person-body");
+      if (personHead && personBody) {
+        const lenHead = personHead.getTotalLength ? personHead.getTotalLength() : 44;
+        personHead.style.strokeDasharray = lenHead + "px";
+        personHead.style.strokeDashoffset = lenHead + "px";
+
+        const lenBody = personBody.getTotalLength ? personBody.getTotalLength() : 55;
+        personBody.style.strokeDasharray = lenBody + "px";
+        personBody.style.strokeDashoffset = lenBody + "px";
+      }
+
+      // Root GSAP Master Timeline (Seekable, Paused)
+      const tl = gsap.timeline({ paused: true });
+
+      // ==========================================
+      // CHOREOGRAPHY: SHOT 1 (0.00s -> 4.08s)
+      // ==========================================
+
+      // Wobble-drop entrance on Shot 1 video element
+      tl.fromTo(
+        "#vid-01-media",
+        { y: -160, rotation: -2.4, opacity: 0 },
+        { y: 0, rotation: 0, opacity: 1, duration: 0.75, ease: "power3.out" },
+        0
+      );
+
+      // Camera motion: slow zoom-in on the video framing
+      tl.fromTo(
+        "#vid-01-media",
+        { scale: 1 },
+        { scale: 1.06, duration: 4.08, ease: "none" },
+        0
+      );
+
+      // Punch Phrase 1 ("HÌNH ẢNH NGƯỜI ĐỨNG ĐẦU"): atMs 64820 -> 0.68s, hold 2.20s -> 2.88s
+      tl.fromTo(
+        "#punch-1-card",
+        { y: 35, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.45, ease: "power3.out" },
+        0.68
+      );
+      tl.to(
+        "#punch-1-card",
+        { opacity: 0, y: -20, duration: 0.25, ease: "power2.in" },
+        2.60
+      );
+
+      // Person Icon Badge entrance: atMs 66550 -> 2.41s
+      tl.fromTo(
+        "#icon-person-badge",
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.35, ease: "power3.out" },
+        2.41
+      );
+
+      // Progressive SVG path draw for the icon
+      if (personHead && personBody) {
+        tl.to(
+          personHead,
+          { strokeDashoffset: 0, duration: 0.35, ease: "power2.out" },
+          2.52
+        );
+        tl.to(
+          personBody,
+          { strokeDashoffset: 0, duration: 0.45, ease: "power2.out" },
+          2.65
+        );
+      }
+
+      // ==========================================
+      // CHOREOGRAPHY: SHOT 2 (4.08s -> 7.74s)
+      // ==========================================
+
+      // Camera motion: pan-up on the split mirror graphics
+      tl.fromTo(
+        "#img-08-media",
+        { y: 30, scale: 1.03 },
+        { y: -30, scale: 1.08, duration: 3.66, ease: "none" },
+        4.08
+      );
+
+      // Mirror Optical Axis line draw
+      tl.fromTo(
+        "#mirror-divider-line",
+        { scaleX: 0, opacity: 0 },
+        { scaleX: 1, opacity: 1, duration: 0.5, ease: "power3.out" },
+        4.18
+      );
+
+      // Mirror directional callouts
+      tl.fromTo(
+        "#mirror-tag-top",
+        { y: 15, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.35, ease: "power2.out" },
+        4.35
+      );
+      tl.fromTo(
+        "#mirror-tag-bottom",
+        { y: -15, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.35, ease: "power2.out" },
+        4.35
+      );
+
+      // Punch Phrase 2 ("TẤM GƯƠNG DOANH NGHIỆP"): atMs 68620 -> 4.48s, hold 2.60s -> 7.08s
+      tl.fromTo(
+        "#punch-2-card",
+        { y: 35, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.45, ease: "power3.out" },
+        4.48
+      );
+      tl.to(
+        "#punch-2-card",
+        { opacity: 0, y: -20, duration: 0.25, ease: "power2.in" },
+        6.80
+      );
+
+      // Secondary Label ("UY TÍN TỔ CHỨC"): atMs 70470 -> 6.33s
+      tl.fromTo(
+        "#label-uy-tin",
+        { x: -35, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.45, ease: "power3.out" },
+        6.33
+      );
+
+      // Register timeline for seek-driven frame rendering
+      window.__timelines["scene-s09"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

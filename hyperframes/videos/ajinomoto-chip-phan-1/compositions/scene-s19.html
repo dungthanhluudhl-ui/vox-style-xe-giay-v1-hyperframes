@@ -1,0 +1,553 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap"
+    />
+      <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+        background: #e7e3d9;
+        font-family: "Be Vietnam Pro", sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: #e7e3d9;
+      }
+
+      /* Quy ước clip của HyperFrames */
+      .clip {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+      }
+
+      /* Nền lưới kỹ thuật 84px chuẩn Vox DNA */
+      .grid-layer {
+        position: absolute;
+        inset: 0;
+        background-size: 84px 84px;
+        background-image:
+          linear-gradient(to right, rgba(20, 20, 20, 0.28) 1.5px, transparent 1.5px),
+          linear-gradient(to bottom, rgba(20, 20, 20, 0.28) 1.5px, transparent 1.5px);
+        pointer-events: none;
+      }
+
+      /* Spotlight vignette tạo kịch tính cho nghịch lý kỹ thuật */
+      .spotlight-layer {
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(
+          circle at 50% 45%,
+          transparent 40%,
+          rgba(20, 20, 20, 0.38) 85%,
+          rgba(20, 20, 20, 0.58) 100%
+        );
+        pointer-events: none;
+      }
+
+      /* Dải cam thương hiệu ở đáy canvas - không chứa text */
+      .bottom-orange-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 1080px;
+        height: 8px;
+        background-color: #ff6a1a;
+        z-index: 100;
+      }
+
+      /* Label định danh kỹ thuật phía trên */
+      #s19-label {
+        position: absolute;
+        top: 176px;
+        left: 60px;
+        height: 60px;
+        display: flex;
+        align-items: center;
+        background: #141414;
+        border-left: 6px solid #ff6a1a;
+        padding: 0 24px;
+        border-radius: 4px;
+        box-shadow: 4px 4px 0 rgba(20, 20, 20, 0.3);
+        z-index: 20;
+      }
+
+      #s19-label span {
+        color: #f7f4ec;
+        font-size: 26px;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+      }
+
+      /* Khung minh họa chính (Image collage + Diagram) */
+      #s19-visual-frame {
+        position: absolute;
+        top: 260px;
+        left: 60px;
+        width: 960px;
+        height: 720px;
+        background: #f5f0e4;
+        border: 3px solid #141414;
+        box-shadow: 8px 8px 0 #141414;
+        border-radius: 8px;
+        overflow: hidden;
+        z-index: 10;
+        transform-origin: 50% 50%;
+      }
+
+      #s19-asset-img {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center 38%;
+        transform-origin: 50% 50%;
+      }
+
+      /* Lớp phủ tối nhẹ để làm nổi diagram */
+      .img-overlay {
+        position: absolute;
+        inset: 0;
+        background: rgba(20, 20, 20, 0.22);
+      }
+
+      /* Diagram đồ họa biểu diễn xung đột quy mô */
+      #s19-diagram-layer {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+      }
+
+      /* Callout chip siêu nhỏ */
+      #callout-chip {
+        position: absolute;
+        top: 50px;
+        left: 50px;
+        background: #141414;
+        border: 2px solid #f7f4ec;
+        border-radius: 6px;
+        padding: 10px 18px;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.4);
+      }
+
+      #callout-chip .tag-title {
+        color: #ff6a1a;
+        font-size: 20px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+      }
+
+      #callout-chip .tag-value {
+        color: #f7f4ec;
+        font-size: 28px;
+        font-weight: 900;
+      }
+
+      /* Callout lỗ bo mạch khổng lồ */
+      #callout-board {
+        position: absolute;
+        bottom: 50px;
+        right: 50px;
+        background: #141414;
+        border: 2px solid #ff6a1a;
+        border-radius: 6px;
+        padding: 10px 18px;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 4px;
+        box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.4);
+      }
+
+      #callout-board .tag-title {
+        color: #f7f4ec;
+        font-size: 20px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+      }
+
+      #callout-board .tag-value {
+        color: #ff6a1a;
+        font-size: 28px;
+        font-weight: 900;
+      }
+
+      /* SVG đường giằng / mũi tên đo khoảng cách kéo căng */
+      #tension-svg {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+      }
+
+      /* Badge so sánh tỷ lệ chênh lệch x25 */
+      #ratio-badge {
+        position: absolute;
+        top: 295px;
+        left: 360px;
+        background: #ff6a1a;
+        color: #141414;
+        padding: 12px 24px;
+        border-radius: 6px;
+        border: 2px solid #141414;
+        box-shadow: 4px 4px 0 #141414;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        transform-origin: 50% 50%;
+      }
+
+      #ratio-badge .ratio-text {
+        font-size: 18px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      #ratio-badge .ratio-num {
+        font-size: 38px;
+        font-weight: 900;
+        line-height: 1;
+      }
+
+      /* Crack / Shatter lines biểu diễn đứt gãy công nghệ (cliffhanger) */
+      #shatter-svg {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: 15;
+      }
+
+      /* PUNCH PHRASE CARD - Bố trí tại dedicated safe zone: bottom <= 1220px */
+      #s19-punch-card {
+        position: absolute;
+        top: 1008px;
+        left: 60px;
+        width: 960px;
+        height: 168px;
+        background: #141414;
+        border-radius: 12px;
+        border: 2px solid #141414;
+        box-shadow: 6px 6px 0 #ff6a1a;
+        padding: 24px 36px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        z-index: 30;
+        transform-origin: 50% 50%;
+      }
+
+      #s19-punch-sub {
+        color: #ff6a1a;
+        font-size: 22px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        margin-bottom: 6px;
+      }
+
+      #s19-punch-main {
+        color: #f7f4ec;
+        font-size: 58px;
+        font-weight: 900;
+        line-height: 1.15;
+        letter-spacing: -0.02em;
+        text-transform: uppercase;
+      }
+
+      /* Vùng từ y = 1220px đến đáy (1920px) hoàn toàn trống, dành riêng cho caption rail */
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s19"
+      data-start="0"
+      data-width="1080"
+      data-height="1920"
+      data-duration="5.64"
+    >
+      <!-- Clip toàn màn hình duy nhất kiểm soát timing của Scene S19 -->
+      <div id="s19-clip" class="clip" data-start="0" data-duration="5.64" data-track-index="0">
+        <!-- Nền lưới & Vignette -->
+        <div class="grid-layer"></div>
+        <div class="spotlight-layer"></div>
+
+        <!-- Label kỹ thuật phía trên -->
+        <div id="s19-label">
+          <span>BO MẠCH CHỦ CỠ LỚN</span>
+        </div>
+
+        <!-- Khung ảnh kỹ thuật + Lớp phủ Diagram -->
+        <div id="s19-visual-frame">
+          <img
+            id="s19-asset-img"
+            src="assets/img-03-computer-hardware-scale-comparison.jpg"
+            alt="So sánh quy mô phần cứng máy tính"
+          />
+          <div class="img-overlay"></div>
+
+          <!-- Diagram minh họa xung đột khoảng cách -->
+          <div id="s19-diagram-layer">
+            <!-- Mũi tên và dây giằng kéo dãn khoảng cách -->
+            <svg id="tension-svg" viewBox="0 0 960 720">
+              <!-- Vòng tròn quét vi xử lý -->
+              <circle
+                id="target-chip"
+                cx="140"
+                cy="190"
+                r="64"
+                fill="none"
+                stroke="#F7F4EC"
+                stroke-width="3"
+                stroke-dasharray="8 6"
+              />
+              <!-- Vòng tròn quét lỗ bo mạch -->
+              <circle
+                id="target-board"
+                cx="780"
+                cy="510"
+                r="90"
+                fill="none"
+                stroke="#FF6A1A"
+                stroke-width="4"
+                stroke-dasharray="10 6"
+              />
+
+              <!-- Đường nối căng thẳng giữa 2 quy mô -->
+              <path
+                id="tension-line"
+                d="M 190 230 L 710 460"
+                fill="none"
+                stroke="#FF6A1A"
+                stroke-width="6"
+              />
+
+              <!-- Các đường giằng phụ thể hiện lực căng -->
+              <path
+                id="tension-sub-1"
+                d="M 180 260 L 700 490"
+                fill="none"
+                stroke="#F7F4EC"
+                stroke-width="2"
+                stroke-dasharray="6 6"
+              />
+              <path
+                id="tension-sub-2"
+                d="M 200 200 L 720 430"
+                fill="none"
+                stroke="#F7F4EC"
+                stroke-width="2"
+                stroke-dasharray="6 6"
+              />
+            </svg>
+
+            <!-- Callout chi tiết cực nhỏ -->
+            <div id="callout-chip">
+              <span class="tag-title">CHÂN VI XỬ LÝ</span>
+              <span class="tag-value">~0.1 mm</span>
+            </div>
+
+            <!-- Callout chi tiết cực lớn -->
+            <div id="callout-board">
+              <span class="tag-title">LỖ TIẾP XÚC BO MẠCH</span>
+              <span class="tag-value">~2.5 mm</span>
+            </div>
+
+            <!-- Badge nhấn mạnh độ lệch 25x -->
+            <div id="ratio-badge">
+              <span class="ratio-text">CHÊNH LỆCH</span>
+              <span class="ratio-num">25×</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Crack / Shatter FX báo hiệu nút thắt bế tắc -->
+        <svg id="shatter-svg" viewBox="0 0 1080 1920">
+          <path
+            id="shatter-crack-1"
+            d="M 540 620 L 490 680 L 530 750 L 460 840 L 480 920 L 390 1010"
+            fill="none"
+            stroke="#FF6A1A"
+            stroke-width="5"
+            stroke-linecap="round"
+          />
+          <path
+            id="shatter-crack-2"
+            d="M 530 750 L 610 800 L 580 870 L 670 940 L 640 1010"
+            fill="none"
+            stroke="#141414"
+            stroke-width="4"
+            stroke-linecap="round"
+          />
+        </svg>
+
+        <!-- Punch phrase card đặt an toàn phía trên y = 1220px (top: 1008px, bottom: 1176px <= 1220px) -->
+        <div id="s19-punch-card">
+          <div id="s19-punch-sub">XUNG ĐỘT QUY MÔ VẬT LÝ</div>
+          <div id="s19-punch-main">KHOẢNG CÁCH QUÁ LỚN</div>
+        </div>
+
+        <!-- Dải cam cố định đáy khung hình (Vox Signature) -->
+        <div class="bottom-orange-bar"></div>
+      </div>
+    </div>
+
+    <script>
+      // Khởi tạo timeline chính ở trạng thái paused
+      const tl = gsap.timeline({ paused: true });
+
+      // Chuẩn bị đường nét SVG cho hiệu ứng vẽ đường chuẩn xác
+      const tensionLine = document.querySelector("#tension-line");
+      const tensionSub1 = document.querySelector("#tension-sub-1");
+      const tensionSub2 = document.querySelector("#tension-sub-2");
+      const crack1 = document.querySelector("#shatter-crack-1");
+      const crack2 = document.querySelector("#shatter-crack-2");
+
+      [tensionLine, tensionSub1, tensionSub2, crack1, crack2].forEach((el) => {
+        if (el) {
+          const len = el.getTotalLength();
+          el.style.strokeDasharray = len;
+          el.style.strokeDashoffset = len;
+        }
+      });
+
+      // 1. Giai đoạn 0.0s - 0.7s: Mở cảnh, Frame visual xuất hiện cùng camera zoom chậm
+      tl.fromTo(
+        "#s19-visual-frame",
+        { scale: 0.94, opacity: 0, y: 24 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.65, ease: "power3.out" },
+        0.05
+      );
+
+      tl.fromTo(
+        "#s19-asset-img",
+        { scale: 1.14 },
+        { scale: 1.0, duration: 5.5, ease: "none" },
+        0
+      );
+
+      // 2. Giai đoạn 0.62s: Label xuất hiện theo đúng shotlist (157080ms - 156460ms = 0.62s)
+      tl.fromTo(
+        "#s19-label",
+        { x: -50, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.5, ease: "power3.out" },
+        0.62
+      );
+
+      // 3. Giai đoạn 1.0s - 2.8s: Phân rã kỹ thuật, Diagram & Thước đo khoảng cách
+      tl.fromTo(
+        "#callout-chip",
+        { scale: 0, opacity: 0, y: -16 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.45, ease: "power3.out" },
+        1.0
+      );
+
+      tl.fromTo(
+        "#callout-board",
+        { scale: 0, opacity: 0, y: 16 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.45, ease: "power3.out" },
+        1.2
+      );
+
+      // Mũi tên kéo dãn và đường nối căng thẳng
+      tl.to(
+        tensionLine,
+        { strokeDashoffset: 0, duration: 0.75, ease: "power2.out" },
+        1.35
+      );
+
+      tl.to(
+        [tensionSub1, tensionSub2],
+        { strokeDashoffset: 0, duration: 0.6, ease: "power2.out" },
+        1.55
+      );
+
+      // Badge chênh lệch quy mô x25 pop-in dứt khoát
+      tl.fromTo(
+        "#ratio-badge",
+        { scale: 0, opacity: 0, rotation: -8 },
+        { scale: 1, opacity: 1, rotation: 0, duration: 0.5, ease: "power3.out" },
+        1.8
+      );
+
+      // 4. Giai đoạn 3.08s: Punch-phrase "KHOẢNG CÁCH QUÁ LỚN" xuất hiện (159540ms - 156460ms = 3.08s)
+      // Đặt an toàn với bottom = 1176px <= 1220px, giữ vững đến hết scene
+      tl.fromTo(
+        "#s19-punch-card",
+        { y: 36, opacity: 0, scale: 0.94 },
+        { y: 0, opacity: 1, scale: 1, duration: 0.55, ease: "power3.out" },
+        3.08
+      );
+
+      // 5. Giai đoạn 4.15s - 5.64s: Shatter Cliffhanger (vết nứt rạn đứt gãy báo hiệu bế tắc trước phần 2)
+      tl.to(
+        crack1,
+        { strokeDashoffset: 0, duration: 0.45, ease: "power3.out" },
+        4.15
+      );
+
+      tl.to(
+        crack2,
+        { strokeDashoffset: 0, duration: 0.4, ease: "power3.out" },
+        4.35
+      );
+
+      // Rung chấn kỹ thuật (micro-jitter có tính toán tất định)
+      tl.to(
+        "#s19-visual-frame",
+        { x: -5, duration: 0.05, ease: "none" },
+        4.2
+      )
+      .to(
+        "#s19-visual-frame",
+        { x: 5, duration: 0.05, ease: "none" },
+        4.25
+      )
+      .to(
+        "#s19-visual-frame",
+        { x: -3, duration: 0.05, ease: "none" },
+        4.3
+      )
+      .to(
+        "#s19-visual-frame",
+        { x: 0, duration: 0.05, ease: "none" },
+        4.35
+      );
+
+      // Đăng ký timeline cho runtime HyperFrames
+      window.__timelines["scene-s19"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

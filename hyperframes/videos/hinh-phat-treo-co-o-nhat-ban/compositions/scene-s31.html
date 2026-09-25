@@ -1,0 +1,597 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+      *, *::before, *::after {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #F5F0E4; /* Biến thể card phẳng theo STYLE_DNA */
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: #F5F0E4;
+      }
+
+      .clip {
+        position: absolute;
+        inset: 0;
+      }
+
+      /* Thanh cam nhận diện thương hiệu cố định mép đáy */
+      #bottom-signature-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 16px;
+        background-color: #FF6A1A;
+        z-index: 100;
+      }
+
+      /* Khung bao nội dung chính - Giới hạn an toàn (Safe-zone: Top 160px, Bottom 391px, Left/Right 40px) */
+      .canvas-content {
+        position: absolute;
+        top: 175px;
+        left: 50px;
+        right: 50px;
+        bottom: 410px;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+        gap: 30px;
+      }
+
+      /* Header nhóm tiêu đề & badge */
+      .header-group {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+      }
+
+      .category-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background-color: #FF6A1A;
+        color: #141414;
+        font-weight: 900;
+        font-size: 22px;
+        letter-spacing: 1.5px;
+        padding: 8px 20px;
+        border-radius: 999px;
+        text-transform: uppercase;
+      }
+
+      .header-title {
+        margin: 0;
+        font-size: 48px;
+        font-weight: 900;
+        line-height: 1.25;
+        color: #141414;
+        letter-spacing: -0.5px;
+      }
+
+      /* 1. SECTION TIMELINE: TIẾN TRÌNH 2 NĂM */
+      .timeline-box {
+        position: relative;
+        background-color: #FFFFFF;
+        border: 4px solid #141414;
+        border-radius: 20px;
+        padding: 28px 36px 32px 36px;
+        box-shadow: 8px 8px 0px #141414;
+      }
+
+      .timeline-meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 22px;
+      }
+
+      .timeline-label {
+        font-size: 24px;
+        font-weight: 900;
+        color: #141414;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+
+      .timeline-badge-2y {
+        background-color: #141414;
+        color: #F7F4EC;
+        font-size: 22px;
+        font-weight: 900;
+        padding: 6px 18px;
+        border-radius: 8px;
+        letter-spacing: 0.5px;
+      }
+
+      /* Thanh ray tiến độ */
+      .progress-rail {
+        position: relative;
+        width: 100%;
+        height: 32px;
+        background-color: #E7E3D9;
+        border: 3px solid #141414;
+        border-radius: 16px;
+        overflow: hidden;
+      }
+
+      .progress-fill {
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 100%;
+        width: 100%;
+        background-color: #FF6A1A;
+        transform-origin: left center;
+        transform: scaleX(0);
+      }
+
+      /* Các mốc thời gian */
+      .milestone-markers {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 14px;
+        align-items: flex-start;
+      }
+
+      .marker-step {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .marker-tick {
+        width: 3px;
+        height: 12px;
+        background-color: #141414;
+      }
+
+      .marker-text {
+        font-size: 19px;
+        font-weight: 700;
+        color: #141414;
+      }
+
+      /* Mốc 2 năm tích lũy: dùng badge cam chữ đen để đạt contrast WCAG AA > 6:1 */
+      .marker-step.active .marker-text {
+        background-color: #FF6A1A;
+        color: #141414;
+        font-weight: 900;
+        padding: 4px 10px;
+        border-radius: 6px;
+      }
+
+      /* 2. SECTION OUTCOMES (2 Thẻ song song theo chuỗi nhân quả) */
+      .outcomes-container {
+        display: flex;
+        flex-direction: column;
+        gap: 26px;
+        flex: 1;
+      }
+
+      /* Card 1: Chứng chỉ hành nghề */
+      .cert-card {
+        position: relative;
+        background-color: #FFFFFF;
+        border: 4px solid #141414;
+        border-radius: 20px;
+        padding: 28px 36px;
+        box-shadow: 8px 8px 0px #FF6A1A;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        overflow: hidden;
+      }
+
+      .cert-content {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+        max-width: 620px;
+      }
+
+      /* Tag văn bằng pháp lý: nền cam chữ đen đạt contrast WCAG AA > 6:1 */
+      .cert-tag {
+        display: inline-block;
+        font-size: 16px;
+        font-weight: 900;
+        color: #141414;
+        background-color: #FF6A1A;
+        padding: 4px 12px;
+        border-radius: 6px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+
+      .cert-headline {
+        margin: 0;
+        font-size: 38px;
+        font-weight: 900;
+        color: #141414;
+        line-height: 1.25;
+      }
+
+      .cert-sub {
+        margin: 0;
+        font-size: 22px;
+        font-weight: 700;
+        color: #333333;
+      }
+
+      /* Dấu mộc đỏ đóng chéo */
+      .cert-stamp-wrapper {
+        position: relative;
+        width: 160px;
+        height: 160px;
+        flex-shrink: 0;
+      }
+
+      .cert-stamp {
+        width: 150px;
+        height: 150px;
+        border: 4px dashed #B71C1C;
+        border-radius: 50%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        color: #B71C1C;
+        text-align: center;
+        transform: rotate(-10deg);
+        background-color: #FFFFFF;
+        outline: 3px solid #B71C1C;
+        outline-offset: -10px;
+      }
+
+      .stamp-line-1 {
+        font-size: 13px;
+        font-weight: 900;
+        letter-spacing: 1.5px;
+      }
+      .stamp-star {
+        font-size: 18px;
+        line-height: 1;
+        margin: 3px 0;
+      }
+      .stamp-line-2 {
+        font-size: 18px;
+        font-weight: 900;
+        letter-spacing: 1px;
+      }
+
+      /* Card 2: Hòm tiền tích lũy thù lao */
+      .money-card {
+        position: relative;
+        background-color: #141414;
+        border: 4px solid #141414;
+        border-radius: 20px;
+        padding: 28px 36px;
+        box-shadow: 8px 8px 0px rgba(20, 20, 20, 0.35);
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+
+      .money-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .money-title-group {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+      }
+
+      .money-icon-svg {
+        width: 44px;
+        height: 44px;
+      }
+
+      .money-card-label {
+        font-size: 22px;
+        font-weight: 900;
+        color: #FF6A1A;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+
+      .freedom-badge {
+        background-color: #FF6A1A;
+        color: #141414;
+        font-size: 18px;
+        font-weight: 900;
+        padding: 6px 16px;
+        border-radius: 8px;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+      }
+
+      .money-counter-row {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        border-top: 2px dashed rgba(247, 244, 236, 0.3);
+        padding-top: 14px;
+      }
+
+      .money-counter-label {
+        font-size: 24px;
+        font-weight: 700;
+        color: #F7F4EC;
+      }
+
+      .money-amount {
+        font-size: 46px;
+        font-weight: 900;
+        color: #FF6A1A;
+        letter-spacing: 1px;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s31"
+      data-start="0"
+      data-width="1080"
+      data-height="1920"
+      data-duration="8"
+    >
+      <!-- Scene Clip độc lập: S31 (8 giây) với id để Studio nhận diện -->
+      <section id="scene-s31" class="clip" data-start="0" data-duration="8">
+        <div class="canvas-content">
+          <!-- Nhóm Tiêu đề & Bối cảnh -->
+          <div class="header-group" id="header-group">
+            <div class="category-pill" id="cat-pill">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#141414" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+              </svg>
+              ĐỘNG LỰC TÁI HOÀ NHẬP
+            </div>
+            <h1 class="header-title" id="main-title">QUY CHẾ LAO ĐỘNG TẠI TRẠI</h1>
+          </div>
+
+          <!-- 1. Thanh tiến trình Timeline: 2 năm tích lũy -->
+          <div class="timeline-box" id="timeline-box">
+            <div class="timeline-meta">
+              <span class="timeline-label">TIẾN TRÌNH HOÀN THÀNH</span>
+              <span class="timeline-badge-2y" id="badge-2y">THỜI HẠN 2 NĂM</span>
+            </div>
+
+            <!-- Đường ray tiến độ -->
+            <div class="progress-rail">
+              <div class="progress-fill" id="progress-fill"></div>
+            </div>
+
+            <!-- Các mốc ranh giới -->
+            <div class="milestone-markers">
+              <div class="marker-step">
+                <div class="marker-tick"></div>
+                <span class="marker-text">Bắt đầu</span>
+              </div>
+              <div class="marker-step" id="step-6m">
+                <div class="marker-tick"></div>
+                <span class="marker-text">6 Tháng</span>
+              </div>
+              <div class="marker-step" id="step-12m">
+                <div class="marker-tick"></div>
+                <span class="marker-text">1 Năm</span>
+              </div>
+              <div class="marker-step" id="step-18m">
+                <div class="marker-tick"></div>
+                <span class="marker-text">18 Tháng</span>
+              </div>
+              <div class="marker-step active" id="step-24m">
+                <div class="marker-tick"></div>
+                <span class="marker-text">2 NĂM (100%)</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 2. Kết quả nhân quả kép: Chứng chỉ & Tiền thù lao -->
+          <div class="outcomes-container">
+            <!-- Thẻ 1: Chứng chỉ hành nghề có dấu đỏ -->
+            <div class="cert-card" id="cert-card">
+              <div class="cert-content">
+                <span class="cert-tag">VĂN BẰNG PHÁP LÝ</span>
+                <h2 class="cert-headline">CHỨNG CHỈ HÀNH NGHỀ</h2>
+                <p class="cert-sub">Công nhận tay nghề & giá trị lao động hợp pháp</p>
+              </div>
+              <div class="cert-stamp-wrapper">
+                <div class="cert-stamp" id="cert-stamp">
+                  <span class="stamp-line-1">BỘ LAO ĐỘNG</span>
+                  <span class="stamp-star">★ ★ ★</span>
+                  <span class="stamp-line-2">ĐÃ CẤP</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Thẻ 2: Hòm tiền thù lao tích lũy -->
+            <div class="money-card" id="money-card">
+              <div class="money-header">
+                <div class="money-title-group">
+                  <svg class="money-icon-svg" viewBox="0 0 100 100" fill="none">
+                    <rect id="cash-rect" x="10" y="24" width="80" height="52" rx="8" stroke="#FF6A1A" stroke-width="6"/>
+                    <circle id="cash-circle" cx="50" cy="50" r="14" stroke="#FF6A1A" stroke-width="6"/>
+                    <path id="cash-lines" d="M 22 36 L 22 44 M 78 56 L 78 64" stroke="#FF6A1A" stroke-width="5" stroke-linecap="round"/>
+                  </svg>
+                  <span class="money-card-label">KHOẢN TIỀN VỐN TÍCH LŨY</span>
+                </div>
+                <span class="freedom-badge" id="freedom-badge">KHI ĐƯỢC TỰ DO</span>
+              </div>
+
+              <div class="money-counter-row">
+                <span class="money-counter-label">Số dư thù lao:</span>
+                <span class="money-amount" id="money-counter">0 ₫</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Mép đáy cam cố định toàn video -->
+        <div id="bottom-signature-bar"></div>
+      </section>
+    </div>
+
+    <!-- GSAP Seek-Safe Deterministic Timeline -->
+    <script>
+      // Khởi tạo timeline ở trạng thái paused
+      const tl = gsap.timeline({ paused: true });
+
+      // Hàm thiết lập dasharray/dashoffset an toàn cho SVG
+      function initStroke(el, fallbackLen) {
+        if (!el) return;
+        let len = fallbackLen;
+        if (typeof el.getTotalLength === "function") {
+          try {
+            len = el.getTotalLength();
+          } catch (e) {
+            len = fallbackLen;
+          }
+        }
+        el.style.strokeDasharray = len;
+        el.style.strokeDashoffset = len;
+      }
+
+      const cashRect = document.getElementById("cash-rect");
+      const cashCircle = document.getElementById("cash-circle");
+      const cashLines = document.getElementById("cash-lines");
+
+      initStroke(cashRect, 250);
+      initStroke(cashCircle, 88);
+      initStroke(cashLines, 20);
+
+      // 1. GIAI ĐOẠN 1: Mở màn & Tiêu đề - Hiện nhanh dứt khoát, hoàn thành trước probe t=0.444s
+      tl.fromTo(
+        "#header-group",
+        { y: -20, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.25, ease: "power2.out" },
+        0.05
+      );
+
+      tl.fromTo(
+        "#timeline-box",
+        { y: 20, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.25, ease: "power2.out" },
+        0.08
+      );
+
+      // 2. GIAI ĐOẠN 2: Lấp đầy thanh tiến trình 2 năm (0.6s - 2.6s)
+      tl.fromTo(
+        "#progress-fill",
+        { scaleX: 0 },
+        { scaleX: 1, duration: 2.0, ease: "power2.inOut" },
+        0.6
+      );
+
+      // Kích hoạt các mốc thời gian dọc đường ray
+      tl.fromTo("#step-6m", { opacity: 0.4 }, { opacity: 1, duration: 0.25 }, 1.1);
+      tl.fromTo("#step-12m", { opacity: 0.4 }, { opacity: 1, duration: 0.25 }, 1.6);
+      tl.fromTo("#step-18m", { opacity: 0.4 }, { opacity: 1, duration: 0.25 }, 2.1);
+
+      // Cột mốc 2 NĂM & nhãn "THỜI HẠN 2 NĂM" bùng sáng tại 2.4s (khớp SHOTLIST overlay atMs 249670)
+      // Dùng tl.to để giữ nguyên style tĩnh trước 2.4s, tránh immediateRender gây giảm contrast sớm
+      tl.to(
+        "#badge-2y",
+        {
+          scale: 1.05,
+          backgroundColor: "#FF6A1A",
+          color: "#141414",
+          duration: 0.35,
+          ease: "back.out(1.5)"
+        },
+        2.4
+      );
+      tl.to("#badge-2y", { scale: 1, duration: 0.15 }, 2.75);
+
+      // 3. GIAI ĐOẠN 3: Bung ra "CHỨNG CHỈ HÀNH NGHỀ" (3.2s - 4.2s)
+      // Xuất hiện và đạt 100% opacity trước mốc probe 4.0s
+      tl.fromTo(
+        "#cert-card",
+        { y: 30, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.35, ease: "power3.out" },
+        3.2
+      );
+
+      // Đóng dấu đỏ công nhận (notary stamp slam effect) khớp SHOTLIST punch-phrase (atMs 251260 -> 4.02s)
+      tl.fromTo(
+        "#cert-stamp",
+        { scale: 2.2, opacity: 0, rotation: -25 },
+        { scale: 1, opacity: 1, rotation: -10, duration: 0.4, ease: "power4.out" },
+        3.8
+      );
+
+      // 4. GIAI ĐOẠN 4: Hòm tiền thù lao & đếm số dư (4.6s - 7.5s)
+      // Xuất hiện và đạt 100% opacity trước mốc probe 5.778s
+      tl.fromTo(
+        "#money-card",
+        { y: 30, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.35, ease: "power3.out" },
+        4.6
+      );
+
+      // Tự vẽ icon tiền tệ SVG (Stroke Dashoffset animation)
+      if (cashRect && cashCircle && cashLines) {
+        tl.to("#cash-rect", { strokeDashoffset: 0, duration: 0.5, ease: "power2.out" }, 5.0);
+        tl.to("#cash-circle", { strokeDashoffset: 0, duration: 0.4, ease: "power2.out" }, 5.3);
+        tl.to("#cash-lines", { strokeDashoffset: 0, duration: 0.3, ease: "power2.out" }, 5.5);
+      }
+
+      // Đếm số tiền tích lũy tăng dần từ 0 lên 24.500.000 ₫ (deterministic regex format)
+      const moneyEl = document.getElementById("money-counter");
+      const moneyObj = { value: 0 };
+      tl.to(
+        moneyObj,
+        {
+          value: 24500000,
+          duration: 1.8,
+          ease: "power2.out",
+          onUpdate: function () {
+            if (moneyEl) {
+              const val = Math.floor(moneyObj.value);
+              const formatted = val.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+              moneyEl.innerText = formatted + " ₫";
+            }
+          }
+        },
+        5.0
+      );
+
+      // Badge "KHI ĐƯỢC TỰ DO" xuất hiện nổi bật tại 5.8s (khớp SHOTLIST overlay atMs 253040)
+      tl.fromTo(
+        "#freedom-badge",
+        { scale: 0.6, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.4, ease: "back.out(1.5)" },
+        5.8
+      );
+
+      // Đăng ký timeline gốc vào window.__timelines["scene-s31"]
+      window.__timelines = window.__timelines || {};
+      window.__timelines["scene-s31"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

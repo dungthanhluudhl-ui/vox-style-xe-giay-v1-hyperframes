@@ -1,0 +1,675 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: #e7e3d9;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: #e7e3d9;
+      }
+
+      /* Quy ước clip HyperFrames: full-frame canvas layer */
+      .clip {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+      }
+
+      /* Viewport chứa ảnh nền */
+      .media-viewport {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+        background: #141414;
+      }
+
+      .bg-img {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        will-change: transform;
+      }
+
+      .shot1-crop {
+        object-position: 50% 25%;
+      }
+
+      .shot2-crop {
+        object-position: 28% 78%;
+      }
+
+      /* Biến thể nền Spotlight theo Vox DNA: vignette tối tạo áp lực nguy cơ */
+      .spotlight-layer {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background: radial-gradient(circle at 50% 40%, rgba(20, 20, 20, 0.08) 30%, rgba(20, 20, 20, 0.52) 78%, rgba(20, 20, 20, 0.78) 100%);
+        mix-blend-mode: multiply;
+        z-index: 2;
+      }
+
+      .spotlight-intense {
+        background: radial-gradient(circle at 40% 65%, rgba(20, 20, 20, 0.12) 20%, rgba(20, 20, 20, 0.62) 75%, rgba(20, 20, 20, 0.88) 100%);
+      }
+
+      /* Kicker trên đầu (Vox Editorial Kicker) */
+      .editorial-kicker {
+        position: absolute;
+        top: 180px;
+        left: 60px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        z-index: 10;
+      }
+
+      .kicker-pill {
+        background: #141414;
+        color: #ff6a1a;
+        font-size: 18px;
+        font-weight: 900;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        padding: 8px 16px;
+        border-radius: 4px;
+        border: 1px solid rgba(255, 106, 26, 0.5);
+      }
+
+      .kicker-sub {
+        color: #f7f4ec;
+        font-size: 18px;
+        font-weight: 700;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        background: rgba(20, 20, 20, 0.85);
+        padding: 8px 14px;
+        border-radius: 4px;
+      }
+
+      /* Shot 1: Label card "KHÔNG NƠI ẨN NẤP" */
+      .vox-label-card {
+        position: absolute;
+        top: 280px;
+        left: 60px;
+        right: 60px;
+        background: rgba(18, 18, 18, 0.94);
+        border-left: 8px solid #ff6a1a;
+        border-radius: 0 10px 10px 0;
+        padding: 24px 30px;
+        box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+        z-index: 10;
+      }
+
+      .label-prefix {
+        color: #ff6a1a;
+        font-size: 18px;
+        font-weight: 900;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        margin-bottom: 8px;
+      }
+
+      .label-main {
+        color: #f7f4ec;
+        font-size: 52px;
+        font-weight: 900;
+        line-height: 1.15;
+        text-transform: uppercase;
+        letter-spacing: -0.5px;
+      }
+
+      /* Shot 1: Icon cấm (Ban icon) */
+      .vox-ban-badge {
+        position: absolute;
+        top: 860px;
+        left: 50%;
+        margin-left: -160px;
+        width: 320px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 16px;
+        background: rgba(16, 16, 16, 0.95);
+        border: 2px solid #ff6a1a;
+        border-radius: 16px;
+        padding: 26px 20px;
+        box-shadow: 0 18px 44px rgba(0, 0, 0, 0.55);
+        z-index: 10;
+      }
+
+      .ban-svg {
+        display: block;
+      }
+
+      .ban-caption {
+        color: #f7f4ec;
+        font-size: 22px;
+        font-weight: 900;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+      }
+
+      /* Shot 2: Punch phrase "MỐI NGUY RÌNH RẬP" */
+      .punch-card {
+        position: absolute;
+        top: 260px;
+        left: 60px;
+        right: 60px;
+        background: rgba(16, 16, 16, 0.95);
+        border-left: 8px solid #ff6a1a;
+        border-radius: 0 12px 12px 0;
+        padding: 24px 32px;
+        box-shadow: 0 18px 46px rgba(0, 0, 0, 0.55);
+        z-index: 10;
+      }
+
+      .punch-tag {
+        color: #ff6a1a;
+        font-size: 18px;
+        font-weight: 900;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        margin-bottom: 8px;
+      }
+
+      .punch-text {
+        color: #f7f4ec;
+        font-size: 58px;
+        font-weight: 900;
+        line-height: 1.15;
+        text-transform: uppercase;
+        letter-spacing: -0.5px;
+        margin-bottom: 8px;
+      }
+
+      .punch-sub {
+        color: #d6d2c4;
+        font-size: 20px;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+      }
+
+      /* Shot 2: Sơ đồ Flow "Chuỗi nhân quả áp lực tiến hoá" */
+      .flow-card {
+        position: absolute;
+        top: 520px;
+        left: 60px;
+        right: 60px;
+        background: rgba(18, 18, 18, 0.93);
+        border-radius: 12px;
+        padding: 24px 28px;
+        box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+        z-index: 10;
+      }
+
+      .flow-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 18px;
+      }
+
+      .flow-indicator {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: #ff6a1a;
+        box-shadow: 0 0 8px #ff6a1a;
+      }
+
+      .flow-title {
+        color: #f7f4ec;
+        font-size: 18px;
+        font-weight: 900;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+      }
+
+      .flow-steps {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .flow-step {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        background: rgba(36, 36, 36, 0.88);
+        border-radius: 8px;
+        padding: 14px 18px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+      }
+
+      .flow-step-highlight {
+        background: rgba(52, 28, 16, 0.95);
+        border: 1.5px solid #ff6a1a;
+      }
+
+      .step-num {
+        font-size: 26px;
+        font-weight: 900;
+        color: #a09c90;
+      }
+
+      .step-num-orange {
+        color: #ff6a1a;
+      }
+
+      .step-body {
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+      }
+
+      .step-title {
+        color: #f7f4ec;
+        font-size: 23px;
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+      }
+
+      .step-desc {
+        color: #d0ccc0;
+        font-size: 16px;
+        font-weight: 700;
+      }
+
+      .step-desc-warn {
+        color: #ffb085;
+      }
+
+      .flow-arrow-wrap {
+        display: flex;
+        justify-content: center;
+        height: 28px;
+        align-items: center;
+      }
+
+      /* Shot 2: Huy hiệu kết luận "HOÀN THIỆN TRONG BỤNG" */
+      .conclusion-badge {
+        position: absolute;
+        top: 960px;
+        left: 60px;
+        right: 60px;
+        background: #ff6a1a;
+        border-radius: 12px;
+        padding: 18px 24px;
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        box-shadow: 0 16px 42px rgba(0, 0, 0, 0.52), 0 0 24px rgba(255, 106, 26, 0.38);
+        z-index: 10;
+      }
+
+      .badge-icon-box {
+        width: 52px;
+        height: 52px;
+        border-radius: 50%;
+        background: rgba(20, 20, 20, 0.16);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+
+      .badge-text-box {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .badge-sub {
+        color: rgba(20, 20, 20, 0.88);
+        font-size: 16px;
+        font-weight: 900;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+      }
+
+      .badge-main {
+        color: #141414;
+        font-size: 34px;
+        font-weight: 900;
+        line-height: 1.15;
+        letter-spacing: -0.3px;
+        text-transform: uppercase;
+      }
+
+      /* Thanh cam thương hiệu cố định mép dưới cùng theo Vox DNA */
+      .brand-bottom-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 10px;
+        background: #ff6a1a;
+        z-index: 100;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s04"
+      data-start="0"
+      data-width="1080"
+      data-height="1920"
+      data-duration="10.56"
+    >
+      <!-- SHOT 1: Toàn cảnh thảo nguyên trống trải, không nơi ẩn nấp (0.0s -> 5.68s) -->
+      <section id="shot-1" class="clip" data-start="0" data-duration="5.68" data-track-index="0">
+        <div class="media-viewport">
+          <img
+            id="shot1-img"
+            class="bg-img shot1-crop"
+            data-layout-allow-overflow="true"
+            src="assets/img-04-stalking-predator-paper-cutout.jpg"
+            alt="Thảo nguyên trống trải"
+          />
+        </div>
+        <div class="spotlight-layer"></div>
+
+        <div id="shot1-kicker" class="editorial-kicker">
+          <span class="kicker-pill">QUY LUẬT SINH TỒN</span>
+          <span class="kicker-sub">BỐI CẢNH THẢO NGUYÊN</span>
+        </div>
+
+        <div id="shot1-label" class="vox-label-card">
+          <div class="label-prefix">ĐỊA HÌNH TRỐNG TRẢI</div>
+          <div class="label-main">KHÔNG NƠI ẨN NẤP</div>
+        </div>
+
+        <div id="shot1-ban" class="vox-ban-badge">
+          <svg class="ban-svg" viewBox="0 0 100 100" width="90" height="90">
+            <circle
+              id="ban-circle"
+              cx="50"
+              cy="50"
+              r="38"
+              fill="none"
+              stroke="#FF6A1A"
+              stroke-width="8"
+              stroke-linecap="round"
+              stroke-dasharray="239"
+              stroke-dashoffset="239"
+            />
+            <line
+              id="ban-slash"
+              x1="23"
+              y1="23"
+              x2="77"
+              y2="77"
+              stroke="#FF6A1A"
+              stroke-width="8"
+              stroke-linecap="round"
+              stroke-dasharray="77"
+              stroke-dashoffset="77"
+            />
+          </svg>
+          <div id="ban-text" class="ban-caption">VÙNG TRÚ ẨN: 0%</div>
+        </div>
+      </section>
+
+      <!-- SHOT 2: Cận cảnh thú săn mồi rình rập, áp lực sinh tử tiến hoá (5.68s -> 10.56s) -->
+      <section id="shot-2" class="clip" data-start="5.68" data-duration="4.88" data-track-index="0">
+        <div class="media-viewport">
+          <img
+            id="shot2-img"
+            class="bg-img shot2-crop"
+            data-layout-allow-overflow="true"
+            src="assets/img-04-stalking-predator-paper-cutout.jpg"
+            alt="Thú săn mồi rình rập"
+          />
+        </div>
+        <div class="spotlight-layer spotlight-intense"></div>
+
+        <div id="shot2-kicker" class="editorial-kicker">
+          <span class="kicker-pill">QUY LUẬT SINH TỒN</span>
+          <span class="kicker-sub">ÁP LỰC CHỌN LỌC</span>
+        </div>
+
+        <div id="shot2-punch" class="punch-card">
+          <div class="punch-tag">CẢNH BÁO SINH TỬ</div>
+          <div class="punch-text">MỐI NGUY RÌNH RẬP</div>
+          <div class="punch-sub">TIỆC BUFFET CHO THÚ DỮ NẾU NẰM YÊN</div>
+        </div>
+
+        <div id="shot2-flow" class="flow-card">
+          <div class="flow-header">
+            <span class="flow-indicator"></span>
+            <span class="flow-title">CHUỖI NHÂN QUẢ TIẾN HOÁ</span>
+          </div>
+          <div class="flow-steps">
+            <div id="flow-step-1" class="flow-step">
+              <div class="step-num">01</div>
+              <div class="step-body">
+                <div class="step-title">THẢO NGUYÊN BẰNG PHẲNG</div>
+                <div class="step-desc">Hoàn toàn không có vật che chắn</div>
+              </div>
+            </div>
+            <div id="flow-arrow-1" class="flow-arrow-wrap">
+              <svg width="24" height="28" viewBox="0 0 24 28">
+                <path
+                  d="M12 2 L12 22 M5 16 L12 24 L19 16"
+                  fill="none"
+                  stroke="#FF6A1A"
+                  stroke-width="3.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </div>
+            <div id="flow-step-2" class="flow-step flow-step-highlight">
+              <div class="step-num step-num-orange">02</div>
+              <div class="step-body">
+                <div class="step-title">KẺ SĂN MỒI RÌNH RẬP</div>
+                <div class="step-desc step-desc-warn">Bất động 15 ngày = Tử vong 100%</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="shot2-label" class="conclusion-badge">
+          <div class="badge-icon-box">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#141414" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+          </div>
+          <div class="badge-text-box">
+            <div class="badge-sub">BUỘC THÍCH NGHI</div>
+            <div class="badge-main">HOÀN THIỆN TRONG BỤNG</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Thanh thương hiệu dải cam cố định mép dưới cùng -->
+      <div class="brand-bottom-bar"></div>
+    </div>
+
+    <script>
+      const tl = gsap.timeline({ paused: true });
+
+      /* ----------------------------------------------------
+         SHOT 1 TIMELINE (0.0s - 5.68s)
+         Camera: Zoom-through vào thảo nguyên, pan-left liên tục
+         ---------------------------------------------------- */
+
+      // 1. Camera Zoom-through & Pan
+      tl.fromTo(
+        "#shot1-img",
+        { scale: 1.35, x: 20, y: -10 },
+        { scale: 1.15, x: -25, y: 0, duration: 1.2, ease: "power3.out" },
+        0
+      );
+      tl.to(
+        "#shot1-img",
+        { x: -90, scale: 1.2, duration: 4.48, ease: "none" },
+        1.2
+      );
+
+      // 2. Editorial Kicker
+      tl.fromTo(
+        "#shot1-kicker",
+        { opacity: 0, y: -20 },
+        { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" },
+        0.2
+      );
+
+      // 3. Label "KHÔNG NƠI ẨN NẤP" (atMs: 21500 -> 0.78s, hold: 2.0s)
+      tl.fromTo(
+        "#shot1-label",
+        { opacity: 0, y: 28, scale: 0.95 },
+        { opacity: 1, y: 0, scale: 1, duration: 0.5, ease: "power3.out" },
+        0.78
+      );
+      tl.to(
+        "#shot1-label",
+        { opacity: 0, y: -16, duration: 0.3, ease: "power2.in" },
+        2.48
+      );
+
+      // 4. Ban Icon Badge (atMs: 24700 -> 3.98s, hold: 1.6s)
+      tl.fromTo(
+        "#shot1-ban",
+        { opacity: 0, scale: 0.8 },
+        { opacity: 1, scale: 1, duration: 0.35, ease: "power3.out" },
+        3.98
+      );
+      // SVG path drawing tự vẽ dần nét tròn và gạch chéo
+      tl.fromTo(
+        "#ban-circle",
+        { strokeDashoffset: 239 },
+        { strokeDashoffset: 0, duration: 0.45, ease: "power2.out" },
+        4.05
+      );
+      tl.fromTo(
+        "#ban-slash",
+        { strokeDashoffset: 77 },
+        { strokeDashoffset: 0, duration: 0.35, ease: "power2.out" },
+        4.35
+      );
+      tl.fromTo(
+        "#ban-text",
+        { opacity: 0, y: 8 },
+        { opacity: 1, y: 0, duration: 0.3, ease: "power2.out" },
+        4.45
+      );
+      tl.to(
+        "#shot1-ban",
+        { opacity: 0, scale: 0.9, duration: 0.3, ease: "power2.in" },
+        5.28
+      );
+
+      /* ----------------------------------------------------
+         SHOT 2 TIMELINE (5.68s - 10.56s)
+         Transition In: Cut dứt khoát vào cận cảnh bóng thú săn mồi
+         Camera: Pan-right chậm, đẩy căng thẳng kịch tính
+         ---------------------------------------------------- */
+
+      // 1. Camera tight crop pan-right
+      tl.fromTo(
+        "#shot2-img",
+        { scale: 1.72, x: -45, y: 25 },
+        { scale: 1.84, x: 35, y: 12, duration: 4.88, ease: "sine.inOut" },
+        5.68
+      );
+
+      // 2. Shot 2 Kicker
+      tl.fromTo(
+        "#shot2-kicker",
+        { opacity: 0, y: -20 },
+        { opacity: 1, y: 0, duration: 0.4, ease: "power2.out" },
+        5.8
+      );
+
+      // 3. Punch phrase "MỐI NGUY RÌNH RẬP" (atMs: 27000 -> 6.28s, hold: 1.8s)
+      tl.fromTo(
+        "#shot2-punch",
+        { opacity: 0, y: 32, scale: 0.96 },
+        { opacity: 1, y: 0, scale: 1, duration: 0.5, ease: "power3.out" },
+        6.28
+      );
+      tl.to(
+        "#shot2-punch",
+        { opacity: 0, y: -20, duration: 0.3, ease: "power2.in" },
+        7.78
+      );
+
+      // 4. Flow visual language (7.9s -> 10.45s)
+      tl.fromTo(
+        "#shot2-flow",
+        { opacity: 0, y: 25 },
+        { opacity: 1, y: 0, duration: 0.4, ease: "power3.out" },
+        7.9
+      );
+      tl.fromTo(
+        "#flow-step-1",
+        { opacity: 0, x: -20 },
+        { opacity: 1, x: 0, duration: 0.35, ease: "power2.out" },
+        8.05
+      );
+      tl.fromTo(
+        "#flow-arrow-1",
+        { opacity: 0, scaleY: 0 },
+        { opacity: 1, scaleY: 1, duration: 0.25, ease: "power2.out" },
+        8.3
+      );
+      tl.fromTo(
+        "#flow-step-2",
+        { opacity: 0, x: 20 },
+        { opacity: 1, x: 0, duration: 0.35, ease: "power2.out" },
+        8.45
+      );
+
+      // 5. Conclusion Badge "HOÀN THIỆN TRONG BỤNG" (atMs: 29500 -> 8.78s, hold: 1.7s)
+      tl.fromTo(
+        "#shot2-label",
+        { opacity: 0, scale: 0.88, y: 26 },
+        { opacity: 1, scale: 1, y: 0, duration: 0.45, ease: "power3.out" },
+        8.78
+      );
+
+      // Soft outro kết thúc scene
+      tl.to(
+        ["#shot2-label", "#shot2-flow", "#shot2-kicker"],
+        { opacity: 0, duration: 0.08, ease: "none" },
+        10.48
+      );
+
+      // Đăng ký timeline duy nhất trên HyperFrames window registry
+      window.__timelines["scene-s04"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

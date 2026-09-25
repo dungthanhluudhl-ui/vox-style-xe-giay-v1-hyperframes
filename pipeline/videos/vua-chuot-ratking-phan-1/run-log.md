@@ -3817,3 +3817,5 @@ hyperframes check FAILED (nội dung):
 
 - **2026-09-23T13:25:19.206Z** — `scripts/07b-integration-check.hf.mjs --video=vua-chuot-ratking-phan-1` — Stage 7b integration check FAIL:
 Cờ layout đặt sai chỗ trên root: compositions/scene-s02.html (data-layout-allow-overflow); compositions/scene-s03.html (data-layout-allow-overflow); compositions/scene-s04.html (data-layout-allow-overflow) — di chuyển xuống đúng phần tử con cụ thể.
+
+- **2026-09-25T14:36:18.646Z** — qa-blank-frame-audit: 4 scene kiểm tra, 0 bị flag (none) — report tại `C:\vox-style-xe-giay-v1-hyperframes\pipeline\videos\vua-chuot-ratking-phan-1\contact-sheet\report.md`

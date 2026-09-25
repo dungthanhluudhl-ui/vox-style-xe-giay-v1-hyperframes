@@ -1,0 +1,406 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+      * { box-sizing: border-box; }
+      body {
+        margin: 0; padding: 0;
+        background: #E7E3D9; color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+      #root { position: relative; width: 100%; height: 100%; overflow: hidden; }
+      .clip { position: absolute; inset: 0; overflow: hidden; }
+
+      #bottom-brand-bar {
+        position: absolute; bottom: 0; left: 0; right: 0;
+        height: 14px; background: #FF6A1A; z-index: 999;
+      }
+
+      /* Nền biến thể CHART: Lưới 84px + 4 thước kẻ ngang có tick cam */
+      .chart-background {
+        position: absolute; inset: 0;
+        background-color: #E7E3D9;
+        background-image:
+          linear-gradient(to right, rgba(20, 20, 20, 0.12) 1.5px, transparent 1.5px),
+          linear-gradient(to bottom, rgba(20, 20, 20, 0.12) 1.5px, transparent 1.5px);
+        background-size: 84px 84px; pointer-events: none; z-index: 1;
+      }
+      .chart-line {
+        position: absolute; left: 0; right: 0; height: 2px;
+        background: rgba(20, 20, 20, 0.32);
+      }
+      .chart-line::before {
+        content: ""; position: absolute; left: 0; top: -3px;
+        width: 28px; height: 8px; background: #FF6A1A;
+      }
+      .line-1 { top: 20%; } .line-2 { top: 40%; }
+      .line-3 { top: 60%; } .line-4 { top: 80%; }
+
+      /* Media elements */
+      .media-video {
+        position: absolute; top: -5%; left: -5%; width: 110%; height: 110%;
+        object-fit: cover; object-position: center; z-index: 10;
+      }
+      .media-image {
+        position: absolute; top: -5%; left: -5%; width: 110%; height: 110%;
+        object-fit: cover; object-position: center;
+      }
+      .kraft-blend {
+        position: absolute; inset: 0;
+        background: rgba(231, 227, 217, 0.22);
+        box-shadow: inset 0 0 140px rgba(20, 20, 20, 0.35);
+        mix-blend-mode: multiply; pointer-events: none; z-index: 15;
+      }
+
+      /* Shot 1 Overlays */
+      #shot-1-ui { z-index: 50; pointer-events: none; }
+      .punch-card {
+        position: absolute; top: 220px; left: 70px; right: 70px;
+        background: #141414; color: #F7F4EC; padding: 24px 32px;
+        border-radius: 6px; box-shadow: 10px 10px 0px #FF6A1A;
+        display: flex; flex-direction: column; align-items: center; text-align: center;
+      }
+      .punch-tag {
+        font-size: 22px; font-weight: 700; color: #FF6A1A;
+        letter-spacing: 5px; text-transform: uppercase; margin-bottom: 8px;
+      }
+      .punch-title {
+        font-size: 64px; font-weight: 900; line-height: 1.25;
+        letter-spacing: 1.5px; margin: 0; text-transform: uppercase;
+      }
+
+      .pin-badge {
+        position: absolute; top: 760px; left: 80px;
+        background: #141414; border: 2px solid #FF6A1A;
+        padding: 14px 22px; border-radius: 8px;
+        box-shadow: 6px 6px 0px rgba(20, 20, 20, 0.85);
+        display: flex; align-items: center; gap: 16px;
+      }
+      .pin-svg { width: 44px; height: 44px; flex-shrink: 0; }
+      .pin-text {
+        font-size: 28px; font-weight: 900; color: #F7F4EC;
+        letter-spacing: 1px; text-transform: uppercase;
+      }
+
+      /* Shot 2 Diagram & Overlays */
+      #shot-2 { z-index: 20; }
+      .diagram-svg { position: absolute; inset: 0; width: 1080px; height: 1920px; pointer-events: none; z-index: 30; }
+
+      .joint-callout {
+        position: absolute; top: 1120px; left: 630px;
+        background: #F5F0E4; color: #141414; border: 2px solid #141414;
+        box-shadow: 4px 4px 0px #FF6A1A; padding: 8px 16px;
+        border-radius: 4px; font-size: 24px; font-weight: 900;
+        z-index: 35; white-space: nowrap;
+      }
+
+      .mech-card {
+        position: absolute; top: 220px; left: 70px; right: 70px;
+        background: #141414; border-left: 10px solid #FF6A1A;
+        border-radius: 6px; padding: 22px 30px;
+        box-shadow: 8px 8px 0px rgba(20, 20, 20, 0.9);
+        display: flex; flex-direction: column; z-index: 40;
+      }
+      .mech-tag {
+        font-size: 20px; font-weight: 700; color: #FF6A1A;
+        letter-spacing: 4px; text-transform: uppercase; margin-bottom: 6px;
+      }
+      .mech-title {
+        font-size: 58px; font-weight: 900; line-height: 1.25;
+        color: #F7F4EC; margin: 0; text-transform: uppercase;
+      }
+
+      .status-badge {
+        position: absolute; top: 1380px; left: 80px; right: 80px;
+        background: #141414; border: 2px solid #FF6A1A;
+        border-radius: 10px; padding: 16px 26px;
+        box-shadow: 8px 8px 0px rgba(20, 20, 20, 0.9);
+        display: flex; align-items: center; gap: 20px; z-index: 40;
+      }
+      .check-svg { width: 52px; height: 52px; flex-shrink: 0; }
+      .status-content { display: flex; flex-direction: column; }
+      .status-tag {
+        font-size: 18px; font-weight: 700; color: #FF6A1A;
+        letter-spacing: 3px; text-transform: uppercase;
+      }
+      .status-title {
+        font-size: 38px; font-weight: 900; color: #F7F4EC;
+        margin: 0; text-transform: uppercase;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s03"
+      data-width="1080"
+      data-height="1920"
+      data-duration="8.2"
+    >
+      <!-- Background Chart Grid & Lines -->
+      <div class="chart-background">
+        <div class="chart-line line-1"></div>
+        <div class="chart-line line-2"></div>
+        <div class="chart-line line-3"></div>
+        <div class="chart-line line-4"></div>
+      </div>
+
+      <!-- Shot 1: Video clip (0.00s -> 4.28s) -->
+      <video
+        id="vid-05-elem"
+        class="media-video"
+        data-start="0"
+        data-duration="4.28"
+        data-media-start="1.2"
+        muted
+        playsinline
+        src="assets/vid-05-paper-cutout-wildebeest-calf.mp4"
+      ></video>
+      <div class="clip kraft-blend" data-start="0" data-duration="4.28"></div>
+
+      <!-- Shot 1: Overlays UI (0.00s -> 4.28s) -->
+      <div id="shot-1-ui" class="clip" data-start="0" data-duration="4.28">
+        <div id="punch-card-s03-1" class="punch-card">
+          <span class="punch-tag">QUY LUẬT SINH TỒN</span>
+          <h1 class="punch-title">ÁP LỰC ĐỊA HÌNH</h1>
+        </div>
+
+        <div id="pin-badge-s03-1" class="pin-badge">
+          <svg class="pin-svg" viewBox="0 0 100 100" fill="none">
+            <path
+              id="pin-path-head"
+              class="draw-stroke"
+              d="M50 15 C33 15 20 28 20 45 C20 68 50 90 50 90 C50 90 80 68 80 45 C80 28 67 15 50 15 Z"
+              stroke="#FF6A1A"
+              stroke-width="7"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+            <circle id="pin-circle" cx="50" cy="42" r="11" fill="#FF6A1A" />
+          </svg>
+          <span class="pin-text">ĐỒNG CỎ HOANG DÃ</span>
+        </div>
+      </div>
+
+      <!-- Shot 2: Image, Diagram & Overlays (4.28s -> 8.20s) -->
+      <div id="shot-2" class="clip" data-start="4.28" data-duration="3.92">
+        <img
+          id="img-06-elem"
+          class="media-image"
+          src="assets/img-06-paper-cutout-young-wildebeest.jpg"
+          alt="Linh dương móng guốc con đứng vững"
+        />
+        <div class="kraft-blend"></div>
+
+        <svg class="diagram-svg" viewBox="0 0 1080 1920" fill="none">
+          <path
+            id="diagram-axis"
+            class="draw-stroke"
+            d="M 520 980 L 555 1160 L 530 1350 L 515 1520"
+            stroke="#FF6A1A"
+            stroke-width="5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+          <path
+            id="diagram-arc"
+            class="draw-stroke"
+            d="M 585 1120 A 45 45 0 0 1 565 1205"
+            stroke="#FF6A1A"
+            stroke-width="4"
+            stroke-dasharray="6 4"
+            stroke-linecap="round"
+          />
+          <path
+            id="diagram-ground-line"
+            class="draw-stroke"
+            d="M 440 1520 L 620 1520"
+            stroke="#141414"
+            stroke-width="4"
+            stroke-linecap="round"
+          />
+          <circle class="joint-node" cx="520" cy="980" r="10" fill="#141414" stroke="#FF6A1A" stroke-width="4" />
+          <circle class="joint-node" cx="555" cy="1160" r="13" fill="#FF6A1A" stroke="#141414" stroke-width="4" />
+          <circle class="joint-node" cx="530" cy="1350" r="9" fill="#141414" stroke="#FF6A1A" stroke-width="4" />
+          <circle class="joint-node" cx="515" cy="1520" r="10" fill="#FF6A1A" stroke="#141414" stroke-width="3" />
+        </svg>
+
+        <div id="joint-callout" class="joint-callout">∠ 180° KHÓA CỨNG</div>
+
+        <div id="mech-card-s03-2" class="mech-card">
+          <span class="mech-tag">CƠ CHẾ THÍCH NGHI</span>
+          <h2 class="mech-title">KHOÁ KHỚP VẬN ĐỘNG</h2>
+        </div>
+
+        <div id="status-badge-s03-2" class="status-badge">
+          <svg class="check-svg" viewBox="0 0 100 100" fill="none">
+            <circle id="status-circle" class="draw-stroke" cx="50" cy="50" r="42" stroke="#FF6A1A" stroke-width="7" />
+            <path id="status-check" class="draw-stroke" d="M 28 52 L 44 68 L 74 34" stroke="#FF6A1A" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+          <div class="status-content">
+            <span class="status-tag">KẾT QUẢ QUAN SÁT</span>
+            <h3 class="status-title">ĐI ĐỨNG TỨC THÌ</h3>
+          </div>
+        </div>
+      </div>
+
+      <!-- Dải cam đáy thương hiệu Vox -->
+      <div id="bottom-brand-bar"></div>
+    </div>
+
+    <script>
+      // Thiết lập đo đạc SVG stroke cho hiệu ứng tự vẽ tay
+      document.querySelectorAll(".draw-stroke").forEach((path) => {
+        const len = path.getTotalLength();
+        path.style.strokeDasharray = len;
+        path.style.strokeDashoffset = len;
+      });
+
+      // Tạo timeline chính PAUSED theo quy tắc HyperFrames
+      const tl = gsap.timeline({ paused: true });
+
+      /* =========================================================
+         SHOT S03-1: Video vid-05 (0.00s -> 4.28s)
+         ========================================================= */
+      // Camera motion: pan-right trên video
+      tl.fromTo(
+        "#vid-05-elem",
+        { x: -35 },
+        { x: 25, duration: 4.28, ease: "none" },
+        0
+      );
+
+      // Entrance transitionIn: rise vọt nhẹ trên UI shot 1
+      tl.fromTo(
+        "#shot-1-ui",
+        { y: 50, opacity: 0.8 },
+        { y: 0, opacity: 1, duration: 0.65, ease: "power3.out" },
+        0
+      );
+
+      // Punch Phrase "ÁP LỰC ĐỊA HÌNH" xuất hiện tại t=0.68s
+      tl.fromTo(
+        "#punch-card-s03-1",
+        { y: 40, opacity: 0, scale: 0.94 },
+        { y: 0, opacity: 1, scale: 1, duration: 0.5, ease: "power3.out" },
+        0.68
+      );
+      // Punch Phrase exit tại 2.68s
+      tl.to(
+        "#punch-card-s03-1",
+        { y: -20, opacity: 0, duration: 0.35, ease: "power2.in" },
+        2.68
+      );
+
+      // Pin Badge & Icon xuất hiện tại t=2.58s
+      tl.fromTo(
+        "#pin-badge-s03-1",
+        { scale: 0.8, opacity: 0, x: -30 },
+        { scale: 1, opacity: 1, x: 0, duration: 0.45, ease: "power3.out" },
+        2.58
+      );
+      tl.to(
+        "#pin-path-head",
+        { strokeDashoffset: 0, duration: 0.5, ease: "power2.out" },
+        2.65
+      );
+      tl.fromTo(
+        "#pin-circle",
+        { scale: 0, transformOrigin: "50% 50%" },
+        { scale: 1, duration: 0.3, ease: "power3.out" },
+        2.95
+      );
+      tl.to(
+        "#pin-badge-s03-1",
+        { opacity: 0, duration: 0.25, ease: "power1.in" },
+        4.15
+      );
+
+      /* =========================================================
+         SHOT S03-2: Ảnh img-06 + Diagram (4.28s -> 8.20s)
+         ========================================================= */
+      // Camera motion: Ken Burns slow zoom-in trên ảnh
+      tl.fromTo(
+        "#img-06-elem",
+        { scale: 1.0 },
+        { scale: 1.06, duration: 3.92, ease: "none" },
+        4.28
+      );
+
+      // Biomechanical diagram paths
+      tl.to(
+        "#diagram-axis",
+        { strokeDashoffset: 0, duration: 0.65, ease: "power2.out" },
+        4.45
+      );
+      tl.to(
+        "#diagram-arc",
+        { strokeDashoffset: 0, duration: 0.45, ease: "power2.out" },
+        4.75
+      );
+      tl.to(
+        "#diagram-ground-line",
+        { strokeDashoffset: 0, duration: 0.35, ease: "power2.out" },
+        4.65
+      );
+
+      // Điểm chốt khớp xương nảy pop-in
+      tl.fromTo(
+        ".joint-node",
+        { scale: 0, transformOrigin: "center" },
+        { scale: 1, duration: 0.4, stagger: 0.08, ease: "power3.out" },
+        4.55
+      );
+
+      // Callout đo góc khớp gối
+      tl.fromTo(
+        "#joint-callout",
+        { scale: 0.7, opacity: 0, x: -20 },
+        { scale: 1, opacity: 1, x: 0, duration: 0.4, ease: "power3.out" },
+        4.85
+      );
+
+      // Nhãn Diagram "KHOÁ KHỚP VẬN ĐỘNG" xuất hiện tại t=4.68s
+      tl.fromTo(
+        "#mech-card-s03-2",
+        { y: 35, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.45, ease: "power3.out" },
+        4.68
+      );
+      tl.to(
+        "#mech-card-s03-2",
+        { y: -15, opacity: 0, duration: 0.35, ease: "power2.in" },
+        6.48
+      );
+
+      // Status Check Badge "ĐI ĐỨNG TỨC THÌ" xuất hiện tại t=6.98s
+      tl.fromTo(
+        "#status-badge-s03-2",
+        { y: 40, opacity: 0, scale: 0.95 },
+        { y: 0, opacity: 1, scale: 1, duration: 0.45, ease: "power3.out" },
+        6.98
+      );
+      tl.to(
+        "#status-circle",
+        { strokeDashoffset: 0, duration: 0.5, ease: "power2.out" },
+        7.05
+      );
+      tl.to(
+        "#status-check",
+        { strokeDashoffset: 0, duration: 0.4, ease: "power2.out" },
+        7.35
+      );
+
+      // Đăng ký timeline cho HyperFrames engine
+      window.__timelines["scene-s03"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

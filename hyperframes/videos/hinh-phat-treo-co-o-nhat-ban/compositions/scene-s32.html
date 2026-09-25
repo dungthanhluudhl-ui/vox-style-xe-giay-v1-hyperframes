@@ -1,0 +1,511 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap"
+    />
+      <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #e7e3d9;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+
+      /* Editorial newspaper grid background */
+      .bg-grid {
+        position: absolute;
+        inset: 0;
+        background-color: #e7e3d9;
+        background-image:
+          linear-gradient(rgba(20, 20, 20, 0.22) 1.5px, transparent 1.5px),
+          linear-gradient(90deg, rgba(20, 20, 20, 0.22) 1.5px, transparent 1.5px);
+        background-size: 84px 84px;
+        z-index: 1;
+      }
+
+      /* Scene container */
+      .scene-container {
+        position: absolute;
+        inset: 0;
+        z-index: 2;
+      }
+
+      /* Content container for scene-entrance motion */
+      .scene-content {
+        position: absolute;
+        inset: 0;
+        will-change: transform, opacity;
+      }
+
+      /* Safe-zone context header (Y: 170px - 215px) */
+      .context-header {
+        position: absolute;
+        top: 170px;
+        left: 80px;
+        width: 920px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        z-index: 5;
+      }
+
+      .header-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        background-color: #141414;
+        color: #f7f4ec;
+        padding: 8px 18px;
+        border-radius: 4px;
+        font-weight: 900;
+        font-size: 20px;
+        letter-spacing: 0.5px;
+      }
+
+      .badge-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background-color: #ff6a1a;
+      }
+
+      .header-source {
+        font-size: 18px;
+        font-weight: 700;
+        color: #141414;
+        letter-spacing: 0.8px;
+        text-transform: uppercase;
+      }
+
+      /* Archival video card: ends at Y = 1320px, well clear of caption band */
+      .video-card {
+        position: absolute;
+        top: 240px;
+        left: 80px;
+        width: 920px;
+        height: 1080px;
+        background-color: #f5f0e4;
+        border: 3px solid #141414;
+        box-shadow: 14px 14px 0px rgba(20, 20, 20, 0.18);
+        border-radius: 8px;
+        overflow: hidden;
+        z-index: 3;
+      }
+
+      /* Viewport with camera motion inside */
+      .video-viewport {
+        position: relative;
+        width: 100%;
+        height: 984px;
+        overflow: hidden;
+        background-color: #141414;
+      }
+
+      #training-video {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 1000px;
+        height: 100%;
+        object-fit: cover;
+        will-change: transform;
+      }
+
+      .video-vignette {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        box-shadow: inset 0 0 80px rgba(10, 10, 10, 0.45);
+      }
+
+      /* Card footer metadata bar (Y: 1224px - 1320px) */
+      .card-footer {
+        height: 96px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0 28px;
+        border-top: 2px solid #141414;
+        background-color: #f5f0e4;
+      }
+
+      .card-footer-item {
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+      }
+
+      .meta-tag {
+        font-size: 14px;
+        font-weight: 700;
+        color: #444038;
+        letter-spacing: 0.6px;
+      }
+
+      .meta-val {
+        font-size: 20px;
+        font-weight: 900;
+        color: #141414;
+        letter-spacing: 0.5px;
+      }
+
+      /* Overlays & annotations */
+      .overlay-box {
+        position: absolute;
+        z-index: 10;
+        pointer-events: none;
+        opacity: 0;
+      }
+
+      /* Overlay 1: "LỚP NGHỀ LÀM TÓC" (Y: 290px - 390px) */
+      .overlay-1 {
+        top: 290px;
+        left: 120px;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+      }
+
+      .overlay-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        background-color: #141414;
+        padding: 12px 22px;
+        border-radius: 6px;
+        border-left: 6px solid #ff6a1a;
+      }
+
+      .pill-index {
+        background-color: #ff6a1a;
+        color: #141414;
+        font-size: 16px;
+        font-weight: 900;
+        padding: 3px 8px;
+        border-radius: 3px;
+        line-height: 1;
+      }
+
+      .pill-title {
+        font-size: 30px;
+        font-weight: 900;
+        color: #f7f4ec;
+        letter-spacing: 0.5px;
+        line-height: 1.2;
+      }
+
+      .overlay-sub {
+        background-color: #f5f0e4;
+        color: #141414;
+        font-size: 18px;
+        font-weight: 700;
+        padding: 6px 14px;
+        border: 2px solid #141414;
+        border-radius: 4px;
+        box-shadow: 4px 4px 0px #141414;
+      }
+
+      /* Overlay 2: "12 ĐẦU MANOCANH" (Y: 780px - 950px) */
+      .overlay-2 {
+        top: 780px;
+        left: 120px;
+        width: 800px;
+        height: 180px;
+      }
+
+      .diagram-svg {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 420px;
+        height: 160px;
+        overflow: visible;
+      }
+
+      .diagram-content {
+        position: absolute;
+        top: 10px;
+        left: 350px;
+        width: 440px;
+        background-color: #141414;
+        border: 2px solid #ff6a1a;
+        border-radius: 6px;
+        padding: 16px 20px;
+        box-shadow: 8px 8px 0px rgba(20, 20, 20, 0.35);
+      }
+
+      .diagram-tag-row {
+        display: flex;
+        align-items: center;
+        margin-bottom: 4px;
+      }
+
+      .diagram-badge {
+        color: #141414;
+        background-color: #ff6a1a;
+        font-size: 14px;
+        font-weight: 900;
+        letter-spacing: 0.8px;
+        padding: 2px 8px;
+        border-radius: 3px;
+      }
+
+      .diagram-title {
+        color: #f7f4ec;
+        font-size: 32px;
+        font-weight: 900;
+        line-height: 1.25;
+        margin-top: 4px;
+      }
+
+      .diagram-desc {
+        color: #e7e3d9;
+        font-size: 18px;
+        font-weight: 700;
+        margin-top: 4px;
+        opacity: 0.9;
+      }
+
+      /* Signature persistent bottom bar (Style DNA) */
+      .bottom-brand-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 12px;
+        background-color: #ff6a1a;
+        z-index: 50;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s32"
+      data-start="0"
+      data-width="1080"
+      data-height="1920"
+      data-duration="9"
+    >
+      <!-- Technical Grid Background -->
+      <div class="bg-grid"></div>
+
+      <!-- Main Scene Container -->
+      <div id="scene-s32" class="scene-container">
+        <div id="scene-content" class="scene-content">
+          <!-- Context Classification Header -->
+          <div class="context-header">
+            <div class="header-badge">
+              <span class="badge-dot"></span>
+              <span>CHẾ ĐỘ CẢI TẠO PHẠM NHÂN</span>
+            </div>
+            <div class="header-source">TƯ LIỆU ĐÀO TẠO NGHỀ</div>
+          </div>
+
+          <!-- Archival Video Card (Cleanly elevated above caption zone) -->
+          <div class="video-card">
+            <div class="video-viewport" data-layout-allow-overflow="true">
+              <video
+                id="training-video"
+                data-start="0"
+                data-duration="9"
+                data-media-start="0"
+                data-track-index="0"
+                src="assets/vid-08-inmates-vocational-training-workshop.mp4"
+                muted
+                playsinline
+                preload="auto"
+                data-layout-allow-overflow="true"
+              ></video>
+              <div class="video-vignette"></div>
+            </div>
+
+            <!-- Card Bottom Metadata: Integrated Mannequin Info at Y: 1224px - 1320px -->
+            <div class="card-footer">
+              <div class="card-footer-item">
+                <span class="meta-tag">PHÂN KHU LAO ĐỘNG</span>
+                <span class="meta-val">XƯỞNG LÀM TÓC</span>
+              </div>
+              <div class="card-footer-item" style="text-align: right">
+                <span class="meta-tag">THỰC HÀNH MANOCANH</span>
+                <span class="meta-val">12 HỌC VIÊN ĐỒNG BỘ</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Overlay 1: Label "LỚP NGHỀ LÀM TÓC" (atMs: 2.94s, hold: 2.2s) -->
+          <div id="overlay-label" class="overlay-box overlay-1">
+            <div class="overlay-pill">
+              <span class="pill-index">01</span>
+              <span class="pill-title">LỚP NGHỀ LÀM TÓC</span>
+            </div>
+            <div class="overlay-sub">Khởi động đồng bộ trước thực hành</div>
+          </div>
+
+          <!-- Overlay 2: Diagram "12 ĐẦU MANOCANH" (atMs: 6.52s, hold: 2.3s) -->
+          <div id="overlay-diagram" class="overlay-box overlay-2">
+            <svg
+              class="diagram-svg"
+              viewBox="0 0 420 160"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <!-- Reticle Target Pointing into Video -->
+              <circle
+                id="diag-circle"
+                cx="35"
+                cy="110"
+                r="16"
+                stroke="#FF6A1A"
+                stroke-width="3"
+                fill="none"
+              />
+              <circle id="diag-dot" cx="35" cy="110" r="4" fill="#FF6A1A" />
+              <!-- Technical Leader Line -->
+              <path
+                id="diag-line"
+                d="M 52 110 L 150 110 L 210 50 L 350 50"
+                stroke="#FF6A1A"
+                stroke-width="3"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                fill="none"
+              />
+            </svg>
+            <div class="diagram-content">
+              <div class="diagram-tag-row">
+                <span class="diagram-badge">QUY CHUẨN ĐỒNG BỘ</span>
+              </div>
+              <div class="diagram-title">12 ĐẦU MANOCANH</div>
+              <div class="diagram-desc">Vị trí thực hành song song</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Signature Persistent Bottom Bar -->
+      <div class="bottom-brand-bar"></div>
+    </div>
+
+    <script>
+      // Single paused master timeline for HyperFrames
+      const tl = gsap.timeline({ paused: true });
+
+      // Measure SVG path geometry deterministically
+      const circleEl = document.getElementById("diag-circle");
+      const lineEl = document.getElementById("diag-line");
+      const circleLen = circleEl ? Math.ceil(circleEl.getTotalLength()) : 101;
+      const lineLen = lineEl ? Math.ceil(lineEl.getTotalLength()) : 330;
+
+      if (circleEl) {
+        circleEl.style.strokeDasharray = circleLen;
+        circleEl.style.strokeDashoffset = circleLen;
+      }
+      if (lineEl) {
+        lineEl.style.strokeDasharray = lineLen;
+        lineEl.style.strokeDashoffset = lineLen;
+      }
+
+      // Phase 1: Entrance "rise" (0.0s - 0.65s)
+      tl.fromTo(
+        "#scene-content",
+        { y: 60, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.65, ease: "power3.out" },
+        0
+      );
+
+      // Phase 2: Video Camera Pan-Left (0.0s - 8.0s)
+      tl.fromTo(
+        "#training-video",
+        { x: 0 },
+        { x: -80, duration: 8.0, ease: "none" },
+        0
+      );
+
+      // Phase 3: Overlay 1 ("LỚP NGHỀ LÀM TÓC")
+      // Start at 2.94s, hold ~2.2s -> exit at 5.14s
+      tl.fromTo(
+        "#overlay-label",
+        { opacity: 0, scale: 0.88, y: 16 },
+        { opacity: 1, scale: 1, y: 0, duration: 0.45, ease: "power3.out" },
+        2.94
+      );
+
+      tl.to(
+        "#overlay-label",
+        { opacity: 0, y: -14, duration: 0.28, ease: "power2.in" },
+        5.14
+      );
+
+      // Phase 4: Overlay 2 ("12 ĐẦU MANOCANH")
+      // Start at 6.52s, hold ~2.3s -> exit at 8.82s
+      tl.fromTo(
+        "#overlay-diagram",
+        { opacity: 0 },
+        { opacity: 1, duration: 0.15, ease: "power2.out" },
+        6.52
+      );
+
+      tl.fromTo(
+        "#diag-circle",
+        { strokeDashoffset: circleLen },
+        { strokeDashoffset: 0, duration: 0.32, ease: "power2.out" },
+        6.52
+      );
+
+      tl.fromTo(
+        "#diag-dot",
+        { opacity: 0, scale: 0, transformOrigin: "35px 110px" },
+        { opacity: 1, scale: 1, duration: 0.18, ease: "back.out(1.5)" },
+        6.62
+      );
+
+      tl.fromTo(
+        "#diag-line",
+        { strokeDashoffset: lineLen },
+        { strokeDashoffset: 0, duration: 0.42, ease: "power2.out" },
+        6.68
+      );
+
+      tl.fromTo(
+        ".diagram-content",
+        { opacity: 0, scale: 0.92, x: 20 },
+        { opacity: 1, scale: 1, x: 0, duration: 0.4, ease: "power3.out" },
+        6.82
+      );
+
+      tl.to(
+        "#overlay-diagram",
+        { opacity: 0, duration: 0.25, ease: "power2.in" },
+        8.82
+      );
+
+      // Register timeline to the HyperFrames runtime
+      window.__timelines["scene-s32"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

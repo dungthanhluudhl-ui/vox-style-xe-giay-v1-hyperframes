@@ -1,0 +1,542 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap"
+    />
+      <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #e7e3d9;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+
+      /* Nền lưới ô vuông 84px đặc trưng Vox DNA */
+      .bg-grid {
+        position: absolute;
+        inset: 0;
+        background-color: #e7e3d9;
+        background-image:
+          linear-gradient(rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px),
+          linear-gradient(90deg, rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px);
+        background-size: 84px 84px;
+        background-position: -1px -1px;
+        z-index: 1;
+      }
+
+      /* Thanh cam nhận diện thương hiệu cố định mép đáy */
+      .bottom-orange-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 14px;
+        background-color: #ff6a1a;
+        z-index: 100;
+      }
+
+      /* Zone 1: Dossier Header Zone (y = 160px -> 205px) */
+      .header-dossier {
+        position: absolute;
+        top: 160px;
+        left: 50px;
+        width: 980px;
+        height: 42px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        z-index: 20;
+      }
+      .dossier-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        background-color: #141414;
+        color: #f7f4ec;
+        padding: 8px 18px;
+        border-radius: 4px;
+        font-size: 22px;
+        font-weight: 900;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+      }
+      .dossier-tag-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background-color: #ff6a1a;
+      }
+      .dossier-code {
+        font-size: 22px;
+        font-weight: 900;
+        color: #141414;
+        letter-spacing: 2px;
+      }
+
+      /* Zone 2: Sân khấu Hero Media + Khung tài liệu Vox Collage (y = 215px -> 1045px) */
+      #hero-stage {
+        position: absolute;
+        top: 215px;
+        left: 50px;
+        width: 980px;
+        height: 830px;
+        z-index: 10;
+        transform-origin: 50% 50%;
+      }
+      .hero-frame {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        background-color: #141414;
+        border: 3.5px solid #141414;
+        box-shadow: 14px 14px 0px #141414;
+        overflow: hidden;
+      }
+
+      /* Camera rig phục vụ hiệu ứng pan-right */
+      #camera-rig {
+        position: absolute;
+        inset: -20px -60px;
+        width: calc(100% + 120px);
+        height: calc(100% + 40px);
+      }
+
+      /* Định vị video trực tiếp */
+      .video-slice {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+
+      /* Tem nhãn tài liệu dán trên video */
+      .archive-stamp {
+        position: absolute;
+        top: 22px;
+        left: 22px;
+        background-color: rgba(20, 20, 20, 0.92);
+        border-left: 5px solid #ff6a1a;
+        color: #f7f4ec;
+        padding: 6px 14px;
+        font-size: 18px;
+        font-weight: 900;
+        letter-spacing: 1.5px;
+        z-index: 30;
+      }
+
+      /* Diagram Layer 1: Thước đo góc tay 45 độ (Arm Protractor) */
+      #arm-protractor {
+        position: absolute;
+        top: 22px;
+        right: 22px;
+        background-color: rgba(20, 20, 20, 0.92);
+        border: 2px solid rgba(255, 106, 26, 0.85);
+        border-radius: 6px;
+        padding: 8px 16px;
+        z-index: 30;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 2px;
+      }
+      .protractor-label {
+        font-size: 16px;
+        font-weight: 700;
+        color: #f7f4ec;
+        letter-spacing: 1px;
+      }
+      .protractor-value {
+        font-size: 30px;
+        font-weight: 900;
+        color: #ff6a1a;
+        line-height: 1;
+      }
+
+      /* Diagram Layer 2: Thước đo nhịp bước diễu hành (Metronome Cadence Axis) */
+      #cadence-axis {
+        position: absolute;
+        bottom: 22px;
+        left: 22px;
+        right: 22px;
+        background-color: rgba(20, 20, 20, 0.92);
+        border: 2px solid rgba(255, 106, 26, 0.65);
+        border-radius: 6px;
+        padding: 14px 18px;
+        z-index: 30;
+      }
+      .axis-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+      }
+      .axis-title {
+        font-size: 19px;
+        font-weight: 900;
+        color: #f7f4ec;
+        letter-spacing: 1px;
+      }
+      .axis-bpm-badge {
+        background-color: #ff6a1a;
+        color: #141414;
+        font-size: 17px;
+        font-weight: 900;
+        padding: 3px 9px;
+        border-radius: 4px;
+        letter-spacing: 0.5px;
+      }
+      .axis-ruler-svg {
+        width: 100%;
+        height: 44px;
+        display: block;
+      }
+
+      /* Zone 3: Schedule Editorial Badge (y = 1068px -> 1114px, đặt độc lập trên cao an toàn) */
+      #schedule-badge-bar {
+        position: absolute;
+        top: 1068px;
+        left: 50px;
+        width: 980px;
+        height: 46px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        z-index: 25;
+      }
+      .schedule-badge-pill {
+        background-color: #ff6a1a;
+        color: #141414;
+        font-size: 19px;
+        font-weight: 900;
+        letter-spacing: 1px;
+        padding: 6px 14px;
+        border-radius: 4px;
+        text-transform: uppercase;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        box-shadow: 4px 4px 0px #141414;
+      }
+      .schedule-badge-sub {
+        font-size: 20px;
+        font-weight: 900;
+        color: #141414;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+      }
+
+      /* Zone 4: Editorial Overlays (y = 1135px -> 1315px, toàn bộ chữ kết thúc trước y = 1320px, cách xa caption zone y >= 1529px) */
+      #overlay-zone {
+        position: absolute;
+        top: 1135px;
+        left: 50px;
+        width: 980px;
+        height: 180px;
+        z-index: 40;
+      }
+
+      /* Label: BƯỚC ĐỀU NỐI HÀNG (từ 6.35s đến 8.45s) */
+      #label-card {
+        position: absolute;
+        inset: 0;
+        background-color: #f5f0e4;
+        border: 3.5px solid #141414;
+        border-left: 14px solid #ff6a1a;
+        box-shadow: 10px 10px 0px #141414;
+        padding: 22px 30px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        opacity: 0;
+        pointer-events: none;
+      }
+      .label-sub {
+        font-size: 19px;
+        font-weight: 700;
+        color: #141414;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        margin-bottom: 6px;
+      }
+      .label-main {
+        font-size: 52px;
+        font-weight: 900;
+        color: #141414;
+        line-height: 1.15;
+        letter-spacing: -0.5px;
+        margin: 0;
+      }
+
+      /* Punch-phrase: NHỊP ĐIỆU TUYỆT ĐỐI (từ 8.52s đến 10.00s) */
+      #punch-card {
+        position: absolute;
+        inset: 0;
+        background-color: #141414;
+        border: 3.5px solid #ff6a1a;
+        box-shadow: 12px 12px 0px #ff6a1a;
+        padding: 22px 30px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        opacity: 0;
+        pointer-events: none;
+      }
+      .punch-sub {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 19px;
+        font-weight: 900;
+        color: #ff6a1a;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        margin-bottom: 6px;
+      }
+      .punch-main {
+        font-size: 60px;
+        font-weight: 900;
+        color: #f7f4ec;
+        line-height: 1.15;
+        letter-spacing: -0.5px;
+        margin: 0;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s29"
+      data-width="1080"
+      data-height="1920"
+      data-duration="10"
+    >
+      <!-- Lớp nền ô vuông Vox đặc trưng -->
+      <div class="bg-grid"></div>
+
+      <!-- Zone 1: Header ngữ cảnh điều tra -->
+      <div class="header-dossier">
+        <div class="dossier-tag">
+          <span class="dossier-tag-dot"></span>
+          KỶ LUẬT THI HÀNH ÁN
+        </div>
+        <div class="dossier-code">PROTOCOL // 120-BPM</div>
+      </div>
+
+      <!-- Zone 2: Sân khấu Hero Media chứa video vid-08 -->
+      <div id="hero-stage">
+        <div class="hero-frame">
+          <div id="camera-rig" data-layout-allow-overflow="true">
+            <!-- Video phần 1: 8 giây đầu tiên từ source media -->
+            <video
+              id="vid-inmates-part1"
+              class="video-slice"
+              muted
+              playsinline
+              data-start="0"
+              data-duration="8"
+              data-media-start="0"
+              src="assets/vid-08-inmates-vocational-training-workshop.mp4"
+            ></video>
+
+            <!-- Video phần 2: 2 giây cuối lặp loop tạo nhịp metronome dồn dập (từ 8s đến 10s) -->
+            <video
+              id="vid-inmates-part2"
+              class="video-slice"
+              muted
+              playsinline
+              data-start="8"
+              data-duration="2"
+              data-media-start="6"
+              src="assets/vid-08-inmates-vocational-training-workshop.mp4"
+            ></video>
+          </div>
+
+          <!-- Tem tài liệu lưu trữ -->
+          <div class="archive-stamp">HỒ SƠ TƯ LIỆU // VID-08</div>
+
+          <!-- Diagram Overlay 1: Thước đo góc tay 45 độ -->
+          <div id="arm-protractor" data-layout-allow-overflow="true">
+            <span class="protractor-label">GÓC VUNG TAY</span>
+            <span class="protractor-value">45° CHUẨN</span>
+          </div>
+
+          <!-- Diagram Overlay 2: Thước đo nhịp bước diễu hành (Metronome Cadence) -->
+          <div id="cadence-axis" data-layout-allow-overflow="true">
+            <div class="axis-header">
+              <span class="axis-title">KHOẢNG CÁCH BƯỚC ĐỀU: 75 CM</span>
+              <span class="axis-bpm-badge">NHỊP 120 BPM</span>
+            </div>
+            <!-- SVG hiển thị trục bước chân và các vạch đo kỹ thuật -->
+            <svg class="axis-ruler-svg" viewBox="0 0 880 44" fill="none">
+              <!-- Trục cơ sở nét liền -->
+              <line
+                id="ruler-base-line"
+                x1="20"
+                y1="22"
+                x2="860"
+                y2="22"
+                stroke="#FF6A1A"
+                stroke-width="3"
+                stroke-linecap="round"
+              />
+              <!-- Vạch mốc bước chân (4 nhịp bước chuẩn) -->
+              <g stroke="#F7F4EC" stroke-width="2.5" stroke-linecap="round">
+                <line x1="80" y1="8" x2="80" y2="36" />
+                <line x1="280" y1="8" x2="280" y2="36" />
+                <line x1="480" y1="8" x2="480" y2="36" />
+                <line x1="680" y1="8" x2="680" y2="36" />
+              </g>
+              <!-- Các vạch phụ milimet -->
+              <g stroke="rgba(247, 244, 236, 0.45)" stroke-width="1.5">
+                <line x1="130" y1="16" x2="130" y2="28" />
+                <line x1="180" y1="14" x2="180" y2="30" />
+                <line x1="230" y1="16" x2="230" y2="28" />
+                <line x1="330" y1="16" x2="330" y2="28" />
+                <line x1="380" y1="14" x2="380" y2="30" />
+                <line x1="430" y1="16" x2="430" y2="28" />
+                <line x1="530" y1="16" x2="530" y2="28" />
+                <line x1="580" y1="14" x2="580" y2="30" />
+                <line x1="630" y1="16" x2="630" y2="28" />
+                <line x1="730" y1="16" x2="730" y2="28" />
+                <line x1="780" y1="14" x2="780" y2="30" />
+                <line x1="830" y1="16" x2="830" y2="28" />
+              </g>
+              <!-- Con trỏ xung nhịp di chuyển theo bước chân (Cadence Pulse Cursor) -->
+              <circle id="pulse-cursor" cx="80" cy="22" r="7" fill="#FF6A1A" />
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- Zone 3: Editorial Schedule Badge (y = 1068px -> 1114px, an toàn tuyệt đối trên cao) -->
+      <div id="schedule-badge-bar">
+        <div class="schedule-badge-pill">
+          <span>●</span>
+          LỊCH TRÌNH CỐ ĐỊNH
+        </div>
+        <div class="schedule-badge-sub">LAO ĐỘNG &amp; HUẤN LUYỆN ĐỒNG BỘ</div>
+      </div>
+
+      <!-- Zone 4: Editorial Overlays Zone (y = 1135px -> 1315px, hoàn toàn kết thúc trước y = 1320px) -->
+      <div id="overlay-zone">
+        <!-- Overlay 1 (Label): BƯỚC ĐỀU NỐI HÀNG (từ 6.35s đến 8.45s) -->
+        <div id="label-card">
+          <div class="label-sub">QUY CHUẨN DIỄU HÀNH TẠI TRẠI GIAM</div>
+          <h2 class="label-main">BƯỚC ĐỀU NỐI HÀNG</h2>
+        </div>
+
+        <!-- Overlay 2 (Punch-phrase): NHỊP ĐIỆU TUYỆT ĐỐI (từ 8.52s đến 10.00s) -->
+        <div id="punch-card">
+          <div class="punch-sub">
+            <span>●</span>
+            KỶ LUẬT THIẾT QUÂN LUẬT
+          </div>
+          <h1 class="punch-main">NHỊP ĐIỆU TUYỆT ĐỐI</h1>
+        </div>
+      </div>
+
+      <!-- Thanh cam cố định mép đáy nhận diện thương hiệu -->
+      <div class="bottom-orange-bar"></div>
+    </div>
+
+    <!-- Script điều khiển hoạt họa GSAP chính xác theo frame -->
+    <script>
+      const tl = gsap.timeline({ paused: true });
+
+      // 1. Chuyển cảnh vào (Transition In: Strike) - Cú nện gót giáng mạnh dứt khoát
+      tl.fromTo(
+        "#hero-stage",
+        { y: -120, opacity: 0, scale: 1.04 },
+        { y: 0, opacity: 1, scale: 1, duration: 0.44, ease: "power4.out" },
+        0
+      );
+      // Hiệu ứng chấn động phản lực (Impact bounce dứt khoát của cú dậm gót)
+      tl.to("#hero-stage", { y: 6, duration: 0.06, ease: "power2.in" }, 0.44);
+      tl.to("#hero-stage", { y: -2, duration: 0.06, ease: "power2.out" }, 0.5);
+      tl.to("#hero-stage", { y: 0, duration: 0.08, ease: "power2.out" }, 0.56);
+
+      // 2. Camera Motion: Pan nhẹ sang phải theo bước tiến của hàng tù nhân (pan-right)
+      tl.fromTo(
+        "#camera-rig",
+        { x: -30 },
+        { x: 30, duration: 9.4, ease: "none" },
+        0.6
+      );
+
+      // 3. Diagram HUD Reveal (Vẽ các đường phân tích kỹ thuật)
+      tl.fromTo(
+        "#cadence-axis",
+        { y: 15, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.5, ease: "power3.out" },
+        0.8
+      );
+      tl.fromTo(
+        "#arm-protractor",
+        { scale: 0.8, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.45, ease: "power3.out" },
+        1.1
+      );
+
+      // 4. Schedule Badge xuất hiện nhẹ nhàng ở tầng trên
+      tl.fromTo(
+        "#schedule-badge-bar",
+        { opacity: 0, y: 15 },
+        { opacity: 1, y: 0, duration: 0.45, ease: "power3.out" },
+        0.5
+      );
+
+      // 5. Nhịp Metronome Pulse Cursor nhảy đều qua các mốc bước chân (cadence pacing)
+      tl.to("#pulse-cursor", { attr: { cx: 280 }, duration: 0.35, ease: "power2.out" }, 1.8);
+      tl.to("#pulse-cursor", { attr: { cx: 480 }, duration: 0.35, ease: "power2.out" }, 3.2);
+      tl.to("#pulse-cursor", { attr: { cx: 680 }, duration: 0.35, ease: "power2.out" }, 4.6);
+      tl.to("#pulse-cursor", { attr: { cx: 280 }, duration: 0.35, ease: "power2.out" }, 6.0);
+      tl.to("#pulse-cursor", { attr: { cx: 480 }, duration: 0.35, ease: "power2.out" }, 7.4);
+      tl.to("#pulse-cursor", { attr: { cx: 680 }, duration: 0.35, ease: "power2.out" }, 8.8);
+
+      // 6. Label Card: "BƯỚC ĐỀU NỐI HÀNG" (atMs: 234590 -> 6.35s, hold 2.1s -> 8.45s)
+      tl.fromTo(
+        "#label-card",
+        { y: 20, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.35, ease: "power3.out" },
+        6.35
+      );
+      tl.to(
+        "#label-card",
+        { y: -10, opacity: 0, duration: 0.2, ease: "power2.in" },
+        8.25
+      );
+
+      // 7. Punch-phrase Card: "NHỊP ĐIỆU TUYỆT ĐỐI" (atMs: 236760 -> 8.52s, hold đến 10.00s)
+      tl.fromTo(
+        "#punch-card",
+        { scale: 0.92, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.35, ease: "power4.out" },
+        8.52
+      );
+
+      // Đăng ký timeline chính thức vào HyperFrames runtime
+      window.__timelines["scene-s29"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

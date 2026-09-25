@@ -1,0 +1,752 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap">
+      <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: #E7E3D9;
+      color: #141414;
+      font-family: 'Be Vietnam Pro', sans-serif;
+      width: 1080px;
+      height: 1920px;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    #root {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    .clip {
+      position: absolute;
+      inset: 0;
+    }
+
+    /* NỀN CHART BIẾN THỂ VOX-STYLE: Lưới ô vuông 84px + 4 đường kẻ ngang đậm ở 20/40/60/80% chiều cao */
+    .chart-background {
+      position: absolute;
+      inset: 0;
+      background-color: #E7E3D9;
+      background-image:
+        linear-gradient(to right, rgba(20, 20, 20, 0.05) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(20, 20, 20, 0.05) 1px, transparent 1px);
+      background-size: 84px 84px;
+      pointer-events: none;
+    }
+
+    .chart-line-row {
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 4px;
+      display: flex;
+      align-items: center;
+    }
+
+    .chart-line-row.row-20 { top: 384px; }
+    .chart-line-row.row-40 { top: 768px; }
+    .chart-line-row.row-60 { top: 1152px; }
+    .chart-line-row.row-80 { top: 1536px; }
+
+    .chart-tick {
+      width: 28px;
+      height: 4px;
+      background-color: #FF6A1A;
+      transform-origin: left center;
+    }
+
+    .chart-h-line {
+      flex: 1;
+      height: 2px;
+      background-color: rgba(20, 20, 20, 0.22);
+      transform-origin: left center;
+    }
+
+    /* VÙNG NỘI DUNG CHÍNH (GROW ENTRANCE CONTAINER) */
+    #scene-content {
+      position: absolute;
+      inset: 0;
+      transform-origin: center center;
+    }
+
+    /* HEADER ARCHIVE (Safe zone top: 160px) */
+    .archive-header {
+      position: absolute;
+      top: 170px;
+      left: 60px;
+      right: 60px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 12px;
+      border-bottom: 2px solid #141414;
+      z-index: 10;
+    }
+
+    .archive-tag {
+      font-size: 16px;
+      font-weight: 900;
+      letter-spacing: 2px;
+      color: #141414;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .archive-tag-dot {
+      width: 10px;
+      height: 10px;
+      background-color: #FF6A1A;
+      display: inline-block;
+    }
+
+    .archive-meta {
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      color: #141414;
+    }
+
+    /* ẢNH TƯ LIỆU CỔ ĐIỂN 50% OPACITY (Y: 236px -> 680px) */
+    .vintage-photo-card {
+      position: absolute;
+      top: 236px;
+      left: 60px;
+      width: 960px;
+      height: 430px;
+      border-radius: 12px;
+      border: 2px solid #141414;
+      overflow: hidden;
+      background-color: #F5F0E4;
+      z-index: 5;
+    }
+
+    #bg-photo-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      opacity: 0.50;
+      filter: grayscale(100%) contrast(110%);
+      transform-origin: center center;
+    }
+
+    .photo-caption-tag {
+      position: absolute;
+      bottom: 16px;
+      right: 16px;
+      background: #141414;
+      color: #F7F4EC;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      padding: 6px 14px;
+      border-radius: 4px;
+      border-left: 4px solid #FF6A1A;
+    }
+
+    /* KHU VỰC DIAGRAM & DỮ LIỆU TĂNG TRƯỞNG (Y: 690px -> 1120px) */
+    .diagram-panel {
+      position: absolute;
+      top: 690px;
+      left: 60px;
+      width: 960px;
+      height: 430px;
+      z-index: 15;
+    }
+
+    /* 1. SƠ ĐỒ PHÂN GIẢI PHÂN TỬ DINH DƯỠNG (Top 0 -> 100px) */
+    .extract-schema {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .schema-node {
+      background: #F5F0E4;
+      border: 2px solid #141414;
+      border-radius: 8px;
+      padding: 10px 18px;
+      box-shadow: 4px 4px 0px #141414;
+    }
+
+    .schema-node.accent {
+      background: #141414;
+      color: #F7F4EC;
+      border-color: #FF6A1A;
+      box-shadow: 4px 4px 0px #FF6A1A;
+    }
+
+    .schema-node-badge {
+      display: inline-block;
+      background: #141414;
+      color: #FF6A1A;
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      padding: 2px 6px;
+      border-radius: 3px;
+      margin-bottom: 4px;
+    }
+
+    .schema-node.accent .schema-node-badge {
+      background: rgba(255, 106, 26, 0.2);
+      color: #FF6A1A;
+    }
+
+    .schema-node-title {
+      font-size: 19px;
+      font-weight: 900;
+      letter-spacing: -0.5px;
+      color: #141414;
+    }
+
+    .schema-node.accent .schema-node-title {
+      color: #F7F4EC;
+    }
+
+    .schema-arrow-svg {
+      width: 70px;
+      height: 32px;
+    }
+
+    /* 2. BIỂU ĐỒ CỘT THỂ LỰC & ĐƯỜNG CONG TĂNG TRƯỞNG (Top 110px -> 430px) */
+    .chart-curve-container {
+      position: absolute;
+      top: 110px;
+      left: 0;
+      width: 960px;
+      height: 310px;
+    }
+
+    .growth-pillars {
+      position: absolute;
+      bottom: 20px;
+      left: 50px;
+      right: 50px;
+      display: flex;
+      justify-content: space-around;
+      align-items: flex-end;
+      height: 240px;
+    }
+
+    .pillar-col {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 170px;
+    }
+
+    .pillar-val {
+      font-size: 16px;
+      font-weight: 900;
+      margin-bottom: 6px;
+      color: #141414;
+    }
+
+    .pillar-bar {
+      width: 100%;
+      background: rgba(20, 20, 20, 0.08);
+      border: 2px solid #141414;
+      border-bottom: none;
+      position: relative;
+      transform-origin: bottom center;
+    }
+
+    .pillar-bar.p1 { height: 60px; }
+    .pillar-bar.p2 { height: 130px; background: rgba(255, 106, 26, 0.16); border-color: #FF6A1A; }
+    .pillar-bar.p3 { height: 200px; background: #141414; border-color: #141414; }
+
+    .pillar-bar.p3 .pillar-val {
+      color: #FF6A1A;
+      position: absolute;
+      top: 10px;
+      left: 0;
+      right: 0;
+      text-align: center;
+    }
+
+    .pillar-title {
+      font-size: 13px;
+      font-weight: 900;
+      color: #141414;
+      margin-top: 8px;
+      letter-spacing: 0.5px;
+      text-align: center;
+    }
+
+    .growth-svg-layer {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    /* OVERLAYS SHOTLIST */
+
+    /* OVERLAY 1 (atMs: 32990 -> 2.15s) - "Ý TƯỞNG CHIẾT XUẤT" */
+    #overlay-1 {
+      position: absolute;
+      top: 260px;
+      left: 90px;
+      background: #141414;
+      color: #F7F4EC;
+      padding: 16px 28px;
+      border-radius: 8px;
+      border-left: 8px solid #FF6A1A;
+      box-shadow: 0 16px 36px rgba(0,0,0,0.35);
+      z-index: 20;
+    }
+
+    .overlay-tag {
+      font-size: 13px;
+      font-weight: 700;
+      color: #FF6A1A;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    .overlay-title {
+      font-size: 32px;
+      font-weight: 900;
+      line-height: 1.2;
+      letter-spacing: -0.5px;
+      color: #F7F4EC;
+    }
+
+    /* OVERLAY 2 (atMs: 37020 -> 6.18s) - "CẢI THIỆN THỂ TRẠNG" */
+    #overlay-2 {
+      position: absolute;
+      top: 560px;
+      left: 90px;
+      background: #141414;
+      color: #F7F4EC;
+      padding: 16px 28px;
+      border-radius: 8px;
+      border-left: 8px solid #FF6A1A;
+      box-shadow: 0 16px 36px rgba(0,0,0,0.35);
+      z-index: 20;
+    }
+
+    /* OVERLAY 4 (atMs: 40790 -> 9.95s) - ICON "rise" + "PHÁT TRIỂN THỂ LỰC" */
+    #overlay-4 {
+      position: absolute;
+      top: 1140px;
+      left: 60px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background: #F5F0E4;
+      border: 3px solid #141414;
+      padding: 12px 24px;
+      border-radius: 12px;
+      box-shadow: 5px 5px 0px #FF6A1A;
+      z-index: 25;
+    }
+
+    .rise-icon-svg {
+      width: 40px;
+      height: 40px;
+    }
+
+    .rise-text {
+      font-size: 22px;
+      font-weight: 900;
+      color: #141414;
+      letter-spacing: -0.5px;
+      text-transform: uppercase;
+    }
+
+    /* OVERLAY 3 (atMs: 39690 -> 8.85s) - PUNCH PHRASE "TẦM VÓC QUỐC GIA" (Y: 1230px -> 1410px, hoàn toàn trên safe zone bottom 1529px) */
+    #overlay-3 {
+      position: absolute;
+      top: 1230px;
+      left: 60px;
+      right: 60px;
+      background: #141414;
+      color: #F7F4EC;
+      padding: 28px 36px;
+      border-radius: 16px;
+      border: 3px solid #FF6A1A;
+      box-shadow: 8px 8px 0px #FF6A1A;
+      z-index: 30;
+    }
+
+    .punch-tagline {
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      color: #FF6A1A;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    .punch-title {
+      font-size: 64px;
+      font-weight: 900;
+      line-height: 1.12;
+      letter-spacing: -1.5px;
+      color: #F7F4EC;
+      text-transform: uppercase;
+    }
+
+    /* THANH CAM ĐÁY KHUNG HÌNH (VOX BRAND SIGNATURE CỐ ĐỊNH Ở MÉP DƯỚI) */
+    #bottom-signature-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 14px;
+      background-color: #FF6A1A;
+      z-index: 100;
+    }
+  </style>
+
+  <div id="root" data-composition-id="scene-s04" data-width="1080" data-height="1920" data-duration="11.46">
+    <div id="scene-s04" class="clip" data-start="0" data-duration="11.46">
+      
+      <!-- NỀN CHART KẺ NGANG BIẾN THỂ VOX-STYLE (4 ĐƯỜNG KẺ 20/40/60/80% CHIỀU CAO VỚI TICK CAM) -->
+      <div class="chart-background">
+        <div class="chart-line-row row-20">
+          <div class="chart-tick"></div>
+          <div class="chart-h-line"></div>
+        </div>
+        <div class="chart-line-row row-40">
+          <div class="chart-tick"></div>
+          <div class="chart-h-line"></div>
+        </div>
+        <div class="chart-line-row row-60">
+          <div class="chart-tick"></div>
+          <div class="chart-h-line"></div>
+        </div>
+        <div class="chart-line-row row-80">
+          <div class="chart-tick"></div>
+          <div class="chart-h-line"></div>
+        </div>
+      </div>
+
+      <!-- VÙNG NỘI DUNG ENTRANCE GROW -->
+      <div id="scene-content">
+
+        <!-- HEADER ARCHIVE -->
+        <div class="archive-header" id="archive-header">
+          <div class="archive-tag">
+            <span class="archive-tag-dot"></span>
+            HỒ SƠ CƠ CHẾ KHOA HỌC // 1908
+          </div>
+          <div class="archive-meta">GS. KIKUNAE IKEDA</div>
+        </div>
+
+        <!-- ẢNH NỀN CỔ ĐIỂN 50% OPACITY (HÌNH ẢNH THẬT BỮA ĂN NHẬT) -->
+        <div class="vintage-photo-card" id="vintage-photo-card">
+          <img id="bg-photo-img" data-layout-allow-overflow="true" src="assets/img-07-vintage-japanese-served-soup-cutout.jpg" alt="Bữa ăn Nhật Bản cổ điển">
+          <div class="photo-caption-tag">TƯ LIỆU: BÁT SÚP TẢO BẸ KOMBU</div>
+        </div>
+
+        <!-- SƠ ĐỒ DIAGRAM: TẢO BẸ → CHIẾT XUẤT → TẦM VÓC -->
+        <div class="diagram-panel" id="diagram-panel">
+          
+          <div class="extract-schema">
+            <!-- Node 1: Nguồn tảo bẹ -->
+            <div class="schema-node" id="node-kombu">
+              <div class="schema-node-badge">NGUYÊN LIỆU GỐC</div>
+              <div class="schema-node-title">TẢO BẸ KOMBU</div>
+            </div>
+
+            <!-- Mũi tên phân giải -->
+            <svg class="schema-arrow-svg" id="arrow-1" viewBox="0 0 70 32" fill="none">
+              <line x1="4" y1="16" x2="58" y2="16" stroke="#141414" stroke-width="4" stroke-linecap="round" stroke-dasharray="6 4"/>
+              <polygon points="56,9 66,16 56,23" fill="#141414"/>
+            </svg>
+
+            <!-- Node 2: Phân giải tinh chất Umami -->
+            <div class="schema-node accent" id="node-acid">
+              <div class="schema-node-badge">HOẠT CHẤT CỐT LÕI</div>
+              <div class="schema-node-title">AXIT GLUTAMIC</div>
+            </div>
+
+            <!-- Mũi tên chuyển hóa -->
+            <svg class="schema-arrow-svg" id="arrow-2" viewBox="0 0 70 32" fill="none">
+              <line x1="4" y1="16" x2="58" y2="16" stroke="#FF6A1A" stroke-width="4" stroke-linecap="round"/>
+              <polygon points="56,9 66,16 56,23" fill="#FF6A1A"/>
+            </svg>
+
+            <!-- Node 3: Kết quả khẩu phần -->
+            <div class="schema-node" id="node-food">
+              <div class="schema-node-badge">CHUYỂN HÓA</div>
+              <div class="schema-node-title">MÓN ĂN ĐỦ CHẤT</div>
+            </div>
+          </div>
+
+          <!-- BIỂU ĐỒ TĂNG TRƯỞNG THỂ LỰC & ĐƯỜNG CONG TẦM VÓC -->
+          <div class="chart-curve-container">
+            <div class="growth-pillars">
+              <div class="pillar-col">
+                <div class="pillar-val">CƠ BẢN</div>
+                <div class="pillar-bar p1" id="pillar-1"></div>
+                <div class="pillar-title">TRƯỚC 1908</div>
+              </div>
+              <div class="pillar-col">
+                <div class="pillar-val">+45%</div>
+                <div class="pillar-bar p2" id="pillar-2"></div>
+                <div class="pillar-title">BỔ SUNG</div>
+              </div>
+              <div class="pillar-col">
+                <div class="pillar-bar p3" id="pillar-3">
+                  <div class="pillar-val">TỐI ƯU</div>
+                </div>
+                <div class="pillar-title">TOÀN DIỆN</div>
+              </div>
+            </div>
+
+            <!-- SVG ĐƯỜNG CONG TĂNG TRƯỞNG -->
+            <svg class="growth-svg-layer" viewBox="0 0 960 310" fill="none">
+              <path id="growth-curve"
+                    d="M 120 240 C 260 220, 420 150, 540 110 S 760 50, 840 25"
+                    stroke="#FF6A1A"
+                    stroke-width="7"
+                    stroke-linecap="round"
+                    stroke-dasharray="1000"
+                    stroke-dashoffset="1000"/>
+              <circle class="curve-node" id="c-node-1" cx="120" cy="240" r="9" fill="#141414" stroke="#E7E3D9" stroke-width="3"/>
+              <circle class="curve-node" id="c-node-2" cx="540" cy="110" r="11" fill="#FF6A1A" stroke="#141414" stroke-width="3"/>
+              <circle class="curve-node" id="c-node-3" cx="840" cy="25" r="14" fill="#FF6A1A" stroke="#141414" stroke-width="4"/>
+            </svg>
+          </div>
+
+        </div>
+
+        <!-- OVERLAYS SHOTLIST -->
+
+        <!-- 1. Label: Ý TƯỞNG CHIẾT XUẤT (atMs: 32990 -> 2.15s, hold: 2s -> 4.15s) -->
+        <div id="overlay-1">
+          <div class="overlay-tag">BƯỚC ĐỘT PHÁ 01</div>
+          <div class="overlay-title">Ý TƯỞNG CHIẾT XUẤT</div>
+        </div>
+
+        <!-- 2. Label: CẢI THIỆN THỂ TRẠNG (atMs: 37020 -> 6.18s, hold: 2.2s -> 8.38s) -->
+        <div id="overlay-2">
+          <div class="overlay-tag">MỤC TIÊU CỐT LÕI</div>
+          <div class="overlay-title">CẢI THIỆN THỂ TRẠNG</div>
+        </div>
+
+        <!-- 4. Icon: rise + PHÁT TRIỂN THỂ LỰC (atMs: 40790 -> 9.95s, hold: 1.5s -> 11.45s) -->
+        <div id="overlay-4">
+          <svg class="rise-icon-svg" viewBox="0 0 50 50" fill="none">
+            <polyline id="icon-rise-path"
+                      points="6,44 20,30 30,36 44,12"
+                      stroke="#FF6A1A"
+                      stroke-width="5"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-dasharray="140"
+                      stroke-dashoffset="140"/>
+            <polyline id="icon-rise-head"
+                      points="30,12 44,12 44,26"
+                      stroke="#FF6A1A"
+                      stroke-width="5"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-dasharray="70"
+                      stroke-dashoffset="70"/>
+          </svg>
+          <div class="rise-text">PHÁT TRIỂN THỂ LỰC</div>
+        </div>
+
+        <!-- 3. Punch-phrase: TẦM VÓC QUỐC GIA (atMs: 39690 -> 8.85s, hold: 2.4s -> 11.25s) -->
+        <div id="overlay-3">
+          <div class="punch-tagline">KHÁT VỌNG DÂN TỘC NHẬT BẢN</div>
+          <h1 class="punch-title">TẦM VÓC QUỐC GIA</h1>
+        </div>
+
+      </div>
+
+      <!-- THANH CAM ĐÁY KHUNG HÌNH BẮT BUỘC THEO STYLE DNA -->
+      <div id="bottom-signature-bar"></div>
+
+    </div>
+  </div>
+
+  <script>
+    // BẮT BUỘC: Đăng ký timeline gốc paused duy nhất cho composition
+    const tl = gsap.timeline({ paused: true });
+
+    // 1. ENTRANCE: "grow" theo Scene Plan (t = 0s -> 0.75s)
+    tl.fromTo("#scene-content",
+      { scale: 0.92, opacity: 0 },
+      { scale: 1, opacity: 1, duration: 0.75, ease: "power3.out" },
+      0
+    );
+
+    // 2. CAMERA MOTION: "zoom-in" chậm trên ảnh nền vintage trong suốt 11.46s
+    tl.fromTo("#bg-photo-img",
+      { scale: 1.0 },
+      { scale: 1.10, duration: 11.46, ease: "none" },
+      0
+    );
+
+    // 3. VẼ CÁC ĐƯỜNG KẺ BIỂU ĐỒ NGANG (CHART LINES & TICKS) (t = 0.2s -> 0.8s)
+    tl.fromTo(".chart-h-line",
+      { scaleX: 0 },
+      { scaleX: 1, duration: 0.6, stagger: 0.08, ease: "power2.out" },
+      0.2
+    );
+    tl.fromTo(".chart-tick",
+      { scaleX: 0 },
+      { scaleX: 1, duration: 0.4, stagger: 0.08, ease: "power2.out" },
+      0.35
+    );
+
+    // 4. HEADER ARCHIVE & THẺ ẢNH CỔ ĐIỂN
+    tl.fromTo("#archive-header",
+      { opacity: 0, y: -20 },
+      { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" },
+      0.4
+    );
+    tl.fromTo("#vintage-photo-card",
+      { opacity: 0, y: 25 },
+      { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" },
+      0.5
+    );
+
+    // 5. CƠ CHẾ SƠ ĐỒ CHIẾT XUẤT (t = 1.0s -> 2.0s)
+    tl.fromTo("#node-kombu",
+      { scale: 0.85, opacity: 0 },
+      { scale: 1, opacity: 1, duration: 0.4, ease: "power3.out" },
+      1.0
+    );
+    tl.fromTo("#arrow-1",
+      { opacity: 0, scale: 0.5 },
+      { opacity: 1, scale: 1, duration: 0.35, ease: "power2.out" },
+      1.3
+    );
+    tl.fromTo("#node-acid",
+      { scale: 0.85, opacity: 0 },
+      { scale: 1, opacity: 1, duration: 0.4, ease: "power3.out" },
+      1.5
+    );
+    tl.fromTo("#arrow-2",
+      { opacity: 0, scale: 0.5 },
+      { opacity: 1, scale: 1, duration: 0.35, ease: "power2.out" },
+      1.75
+    );
+    tl.fromTo("#node-food",
+      { scale: 0.85, opacity: 0 },
+      { scale: 1, opacity: 1, duration: 0.4, ease: "power3.out" },
+      1.95
+    );
+
+    // 6. OVERLAY 1: "Ý TƯỞNG CHIẾT XUẤT" (atMs: 32990 -> 2.15s, holdMs: 2000 -> 4.15s)
+    tl.fromTo("#overlay-1",
+      { x: -50, opacity: 0 },
+      { x: 0, opacity: 1, duration: 0.5, ease: "power3.out" },
+      2.15
+    );
+    // Hết thời gian hold: FADE OUT HOÀN TOÀN VỀ 0 (tránh giảm opacity làm hỏng contrast)
+    tl.to("#overlay-1",
+      { opacity: 0, x: -30, duration: 0.45, ease: "power2.in" },
+      4.15
+    );
+
+    // 7. CỘT BIỂU ĐỒ DINH DƯỠNG DÂNG LÊN (t = 4.8s -> 5.8s)
+    tl.fromTo("#pillar-1",
+      { scaleY: 0 },
+      { scaleY: 1, duration: 0.5, ease: "power3.out" },
+      4.8
+    );
+    tl.fromTo("#pillar-2",
+      { scaleY: 0 },
+      { scaleY: 1, duration: 0.6, ease: "power3.out" },
+      5.1
+    );
+    tl.fromTo("#pillar-3",
+      { scaleY: 0 },
+      { scaleY: 1, duration: 0.7, ease: "power3.out" },
+      5.4
+    );
+
+    // 8. OVERLAY 2: "CẢI THIỆN THỂ TRẠNG" (atMs: 37020 -> 6.18s, holdMs: 2200 -> 8.38s)
+    tl.fromTo("#overlay-2",
+      { x: -50, opacity: 0 },
+      { x: 0, opacity: 1, duration: 0.5, ease: "power3.out" },
+      6.18
+    );
+    // Hết thời gian hold: FADE OUT HOÀN TOÀN VỀ 0
+    tl.to("#overlay-2",
+      { opacity: 0, x: -30, duration: 0.45, ease: "power2.in" },
+      8.38
+    );
+
+    // 9. ĐƯỜNG CONG TĂNG TRƯỞNG TẦM VÓC TỰ VẼ LÊN (t = 6.8s -> 8.5s)
+    tl.fromTo("#growth-curve",
+      { strokeDashoffset: 1000 },
+      { strokeDashoffset: 0, duration: 1.5, ease: "power2.out" },
+      6.8
+    );
+    tl.fromTo("#c-node-1",
+      { scale: 0, opacity: 0 },
+      { scale: 1, opacity: 1, duration: 0.3, ease: "power3.out" },
+      7.0
+    );
+    tl.fromTo("#c-node-2",
+      { scale: 0, opacity: 0 },
+      { scale: 1, opacity: 1, duration: 0.3, ease: "power3.out" },
+      7.6
+    );
+    tl.fromTo("#c-node-3",
+      { scale: 0, opacity: 0 },
+      { scale: 1, opacity: 1, duration: 0.4, ease: "power3.out" },
+      8.2
+    );
+
+    // 10. OVERLAY 3: PUNCH PHRASE "TẦM VÓC QUỐC GIA" (atMs: 39690 -> 8.85s, holdMs: 2400)
+    tl.fromTo("#overlay-3",
+      { scale: 0.9, opacity: 0, y: 30 },
+      { scale: 1, opacity: 1, y: 0, duration: 0.6, ease: "power3.out" },
+      8.85
+    );
+
+    // 11. OVERLAY 4: ICON "rise" + "PHÁT TRIỂN THỂ LỰC" (atMs: 40790 -> 9.95s, holdMs: 1500)
+    tl.fromTo("#overlay-4",
+      { scale: 0.85, opacity: 0, x: -30 },
+      { scale: 1, opacity: 1, x: 0, duration: 0.45, ease: "power3.out" },
+      9.95
+    );
+    tl.fromTo("#icon-rise-path",
+      { strokeDashoffset: 140 },
+      { strokeDashoffset: 0, duration: 0.45, ease: "power2.out" },
+      10.05
+    );
+    tl.fromTo("#icon-rise-head",
+      { strokeDashoffset: 70 },
+      { strokeDashoffset: 0, duration: 0.3, ease: "power2.out" },
+      10.35
+    );
+
+    // BẮT BUỘC: Đăng ký timeline vào window.__timelines["scene-s04"]
+    window.__timelines["scene-s04"] = tl;
+  </script>
+
+    </template>
+  </body>
+</html>

@@ -1,0 +1,563 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #e7e3d9;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: #e7e3d9;
+      }
+
+      /* Grid nền 84px chuẩn Vox-style DNA */
+      .bg-grid {
+        position: absolute;
+        inset: 0;
+        background-size: 84px 84px;
+        background-image:
+          linear-gradient(to right, rgba(20, 20, 20, 0.22) 1.5px, transparent 1.5px),
+          linear-gradient(to bottom, rgba(20, 20, 20, 0.22) 1.5px, transparent 1.5px);
+        pointer-events: none;
+        z-index: 1;
+      }
+
+      /* Quy ước clip HyperFrames: full-frame container với inset: 0 */
+      .clip {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+      }
+
+      /* Camera rig bao trùm video & spotlight vignette */
+      .camera-rig {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        transform-origin: 55% 50%;
+        will-change: transform;
+      }
+
+      .bg-video {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      /* Spotlight variant: vignette tối cạnh tạo không khí cảnh báo/hệ quả */
+      .spotlight-vignette {
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(
+          circle at 50% 48%,
+          rgba(20, 20, 20, 0.05) 30%,
+          rgba(20, 20, 20, 0.35) 75%,
+          rgba(20, 20, 20, 0.68) 100%
+        );
+        mix-blend-mode: multiply;
+        pointer-events: none;
+      }
+
+      /* Thanh cam thương hiệu cố định mép đáy */
+      .vox-brand-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 10px;
+        background-color: #ff6a1a;
+        z-index: 100;
+        pointer-events: none;
+      }
+
+      /* Lớp khung kỹ thuật viền ngoài chuẩn documentary */
+      .technical-frame {
+        position: absolute;
+        inset: 24px;
+        border: 1.5px solid rgba(20, 20, 20, 0.28);
+        pointer-events: none;
+        z-index: 90;
+      }
+
+      .tech-marker-tl {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        font-size: 14px;
+        font-weight: 700;
+        letter-spacing: 2px;
+        color: #141414;
+        background-color: #e7e3d9;
+        padding: 4px 10px;
+        border: 1px solid rgba(20, 20, 20, 0.3);
+      }
+
+      .tech-marker-tr {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        font-size: 14px;
+        font-weight: 900;
+        color: #ff6a1a;
+        background-color: #141414;
+        padding: 4px 12px;
+        letter-spacing: 1.5px;
+      }
+
+      /* ====================================================
+         OVERLAY 1: HIỆU ỨNG BỆ PHÓNG
+         ==================================================== */
+      .launchpad-card {
+        position: absolute;
+        top: 220px;
+        left: 60px;
+        width: 720px;
+        height: auto;
+        background-color: #141414;
+        padding: 32px 40px;
+        border-radius: 4px;
+        box-shadow: 10px 10px 0px rgba(255, 106, 26, 0.35);
+        will-change: transform, opacity;
+      }
+
+      .card-stripe {
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 8px;
+        background-color: #ff6a1a;
+        transform-origin: 0% 50%;
+      }
+
+      .badge-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 14px;
+      }
+
+      .badge-primary {
+        background-color: #ff6a1a;
+        color: #141414;
+        font-weight: 900;
+        font-size: 20px;
+        letter-spacing: 1.5px;
+        padding: 4px 14px;
+        border-radius: 2px;
+      }
+
+      .badge-kicker {
+        color: #f7f4ec;
+        font-size: 18px;
+        font-weight: 700;
+        letter-spacing: 2px;
+        opacity: 0.85;
+      }
+
+      .punch-phrase {
+        margin: 0 0 14px 0;
+        color: #f7f4ec;
+        font-size: 58px;
+        font-weight: 900;
+        line-height: 1.15;
+        letter-spacing: -0.5px;
+      }
+
+      .card-caption {
+        margin: 0;
+        color: #e7e3d9;
+        font-size: 24px;
+        font-weight: 700;
+        line-height: 1.35;
+        opacity: 0.95;
+      }
+
+      /* ====================================================
+         OVERLAY 2: SƠ ĐỒ VÉC-TƠ GIA TỐC DÒNG NƯỚC
+         ==================================================== */
+      .diagram-box {
+        position: absolute;
+        top: 680px;
+        left: 60px;
+        right: 60px;
+        height: auto;
+        background-color: rgba(20, 20, 20, 0.95);
+        border: 2px solid rgba(255, 106, 26, 0.7);
+        border-radius: 6px;
+        padding: 30px 36px 36px 36px;
+        box-shadow: 12px 12px 0px rgba(20, 20, 20, 0.45);
+        will-change: transform, opacity;
+      }
+
+      .diagram-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1.5px solid rgba(231, 227, 217, 0.2);
+        padding-bottom: 16px;
+        margin-bottom: 22px;
+      }
+
+      .diagram-title {
+        color: #f7f4ec;
+        font-size: 38px;
+        font-weight: 900;
+        letter-spacing: 0.5px;
+      }
+
+      .diagram-tag {
+        background-color: #ff6a1a;
+        color: #141414;
+        font-size: 18px;
+        font-weight: 900;
+        padding: 4px 12px;
+        border-radius: 2px;
+        letter-spacing: 1.5px;
+      }
+
+      .vector-canvas {
+        width: 100%;
+        height: 190px;
+        display: block;
+      }
+
+      .vector-hud {
+        display: grid;
+        grid-template-columns: 1fr auto 1fr auto 1.25fr;
+        align-items: center;
+        gap: 12px;
+        margin-top: 18px;
+      }
+
+      .vector-step {
+        background-color: rgba(231, 227, 217, 0.08);
+        border: 1.5px solid rgba(231, 227, 217, 0.25);
+        border-radius: 4px;
+        padding: 12px 14px;
+        text-align: center;
+        will-change: transform, opacity;
+      }
+
+      .step-crest {
+        background-color: rgba(255, 106, 26, 0.18);
+        border: 2px solid #ff6a1a;
+      }
+
+      .step-metric {
+        display: block;
+        color: #ff6a1a;
+        font-size: 28px;
+        font-weight: 900;
+        letter-spacing: -0.5px;
+      }
+
+      .step-crest .step-metric {
+        color: #ff6a1a;
+        font-size: 32px;
+      }
+
+      .step-label {
+        display: block;
+        color: #f7f4ec;
+        font-size: 16px;
+        font-weight: 700;
+        letter-spacing: 1px;
+        margin-top: 4px;
+      }
+
+      .hud-arrow {
+        color: #ff6a1a;
+        font-size: 28px;
+        font-weight: 900;
+      }
+
+      /* ====================================================
+         OVERLAY 3: THẢM HỌA KHU DÂN CƯ
+         ==================================================== */
+      .disaster-card {
+        position: absolute;
+        top: 240px;
+        left: 60px;
+        width: 760px;
+        height: auto;
+        background-color: #141414;
+        padding: 34px 42px;
+        border-radius: 4px;
+        border-top: 6px solid #ff6a1a;
+        box-shadow: 10px 10px 0px rgba(255, 106, 26, 0.35);
+        will-change: transform, opacity;
+      }
+
+      .disaster-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background-color: #ff6a1a;
+        color: #141414;
+        font-weight: 900;
+        font-size: 20px;
+        letter-spacing: 1.5px;
+        padding: 4px 14px;
+        border-radius: 2px;
+        margin-bottom: 14px;
+      }
+
+      .punch-phrase-disaster {
+        margin: 0 0 14px 0;
+        color: #f7f4ec;
+        font-size: 56px;
+        font-weight: 900;
+        line-height: 1.15;
+        letter-spacing: -0.5px;
+      }
+
+      .disaster-desc {
+        margin: 0;
+        color: #e7e3d9;
+        font-size: 24px;
+        font-weight: 700;
+        line-height: 1.35;
+        opacity: 0.95;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s05"
+      data-width="1080"
+      data-height="1920"
+      data-duration="9.57"
+    >
+      <!-- Nền lưới 84px chuẩn Vox -->
+      <div class="bg-grid"></div>
+
+      <!-- Khung đồ họa kỹ thuật cố định -->
+      <div class="technical-frame">
+        <div class="tech-marker-tl">MÔ PHỎNG VẬT LÝ</div>
+        <div class="tech-marker-tr">GIA TỐC THỦY TRIỀU</div>
+      </div>
+
+      <!-- Shot 1: Video mô phỏng dòng nước dâng trên dốc đê (0s -> 9.57s) -->
+      <div id="camera-rig" class="camera-rig">
+        <video
+          id="vid-seawall"
+          class="bg-video"
+          src="assets/vid-01-seawall-failure-cutout-diagram.mp4"
+          data-start="0"
+          data-duration="9.57"
+          data-media-start="0"
+          muted
+          playsinline
+        ></video>
+        <div class="spotlight-vignette"></div>
+      </div>
+
+      <!-- Overlay 1: HIỆU ỨNG BỆ PHÓNG (từ 1.51s đến 3.61s) -->
+      <div id="clip-launchpad" class="clip" data-start="1.51" data-duration="2.10">
+        <div class="launchpad-card">
+          <div class="card-stripe"></div>
+          <div class="badge-row">
+            <span class="badge-primary">NGUY CƠ</span>
+            <span class="badge-kicker">CƠ CHẾ ĐOẠN DỐC</span>
+          </div>
+          <h2 class="punch-phrase">HIỆU ỨNG BỆ PHÓNG</h2>
+          <p class="card-caption">Độ nghiêng đóng vai trò đường trượt, biến dòng sóng thành dòng phóng tốc độ cao</p>
+        </div>
+      </div>
+
+      <!-- Overlay 2: VÉC-TƠ GIA TỐC DÒNG NƯỚC (từ 2.88s đến 4.78s) -->
+      <div id="clip-diagram" class="clip" data-start="2.88" data-duration="1.90">
+        <div class="diagram-box">
+          <div class="diagram-header">
+            <div class="diagram-title">GIA TỐC DÒNG NƯỚC</div>
+            <div class="diagram-tag">VÉC-TƠ VẬN TỐC</div>
+          </div>
+
+          <!-- Sơ đồ đường phóng gia tốc vọt qua đê -->
+          <svg class="vector-canvas" viewBox="0 0 880 190" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <marker id="arrow-orange" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+                <path d="M 0 0 L 8 4 L 0 8 Z" fill="#FF6A1A" />
+              </marker>
+            </defs>
+
+            <!-- Đường mặt đê dốc phác họa -->
+            <path
+              d="M 40 160 L 320 150 L 600 70 L 670 70 L 730 160 L 840 160"
+              fill="none"
+              stroke="rgba(231, 227, 217, 0.3)"
+              stroke-width="3"
+              stroke-dasharray="6 6"
+            />
+            <text x="610" y="55" fill="#E7E3D9" font-size="14" font-weight="700">ĐỈNH ĐÊ CHẮN</text>
+
+            <!-- Quỹ đạo nước phóng qua tường -->
+            <path
+              class="trajectory-line"
+              d="M 50 145 Q 380 135 590 60 T 820 120"
+              fill="none"
+              stroke="#FF6A1A"
+              stroke-width="7"
+              stroke-linecap="round"
+              marker-end="url(#arrow-orange)"
+            />
+
+            <!-- Các điểm mốc gia tốc -->
+            <circle cx="160" cy="142" r="7" fill="#FF6A1A" />
+            <circle cx="460" cy="104" r="8" fill="#FF6A1A" />
+            <circle cx="640" cy="58" r="10" fill="#FF6A1A" />
+          </svg>
+
+          <!-- Chỉ số đo gia tốc -->
+          <div class="vector-hud">
+            <div class="vector-step">
+              <span class="step-metric">v₁</span>
+              <span class="step-label">CHÂN DỐC</span>
+            </div>
+            <div class="hud-arrow">→</div>
+            <div class="vector-step">
+              <span class="step-metric">v₂ ↑</span>
+              <span class="step-label">TĂNG TỐC</span>
+            </div>
+            <div class="hud-arrow">→</div>
+            <div class="vector-step step-crest">
+              <span class="step-metric">v_max</span>
+              <span class="step-label">PHÓNG QUA ĐỈNH</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Overlay 3: THẢM HỌA KHU DÂN CƯ (từ 6.54s đến 9.04s) -->
+      <div id="clip-disaster" class="clip" data-start="6.54" data-duration="2.50">
+        <div class="disaster-card">
+          <div class="disaster-badge">⚠ HẬU QUẢ VƯỢT ĐÊ</div>
+          <h2 class="punch-phrase-disaster">THẢM HỌA KHU DÂN CƯ</h2>
+          <p class="disaster-desc">Nước tràn tự do vào vùng nội địa, gây ngập lụt nghiêm trọng hơn cả khi chưa có đê</p>
+        </div>
+      </div>
+
+      <!-- Thanh cam đáy cố định nhận diện thương hiệu Vox -->
+      <div class="vox-brand-bar"></div>
+    </div>
+
+    <script>
+      // 1. Chuẩn bị độ dài nét vẽ véc-tơ
+      let pathLen = 850;
+      const trajectory = document.querySelector("#clip-diagram .trajectory-line");
+      if (trajectory && typeof trajectory.getTotalLength === "function") {
+        const measured = trajectory.getTotalLength();
+        if (measured > 0) {
+          pathLen = Math.ceil(measured);
+        }
+      }
+      if (trajectory) {
+        trajectory.style.strokeDasharray = String(pathLen);
+        trajectory.style.strokeDashoffset = String(pathLen);
+      }
+
+      // 2. Khởi tạo timeline paused duy nhất bắt buộc của HyperFrames
+      const tl = gsap.timeline({ paused: true });
+
+      // Camera motion: zoom-through đột phá lúc vào cảnh, sau đó duy trì zoom-in từ từ tới 1.08x
+      tl.fromTo(
+        "#camera-rig",
+        { scale: 1.25, opacity: 0.15 },
+        { scale: 1.0, opacity: 1, duration: 0.7, ease: "power3.out" },
+        0
+      );
+      tl.to(
+        "#camera-rig",
+        { scale: 1.08, duration: 8.87, ease: "sine.inOut" },
+        0.7
+      );
+
+      // --- OVERLAY 1: HIỆU ỨNG BỆ PHÓNG (t = 1.51s -> 3.61s) ---
+      tl.fromTo(
+        "#clip-launchpad .launchpad-card",
+        { scale: 0.88, opacity: 0, y: 30 },
+        { scale: 1.0, opacity: 1, y: 0, duration: 0.45, ease: "power3.out" },
+        1.51
+      );
+      tl.fromTo(
+        "#clip-launchpad .card-stripe",
+        { scaleX: 0 },
+        { scaleX: 1, duration: 0.35, ease: "power2.out" },
+        1.65
+      );
+      tl.to(
+        "#clip-launchpad .launchpad-card",
+        { opacity: 0, y: -20, duration: 0.25, ease: "power2.in" },
+        3.33
+      );
+
+      // --- OVERLAY 2: SƠ ĐỒ VÉC-TƠ GIA TỐC (t = 2.88s -> 4.78s) ---
+      tl.fromTo(
+        "#clip-diagram .diagram-box",
+        { scale: 0.92, opacity: 0, y: 25 },
+        { scale: 1.0, opacity: 1, y: 0, duration: 0.4, ease: "power3.out" },
+        2.88
+      );
+      tl.fromTo(
+        "#clip-diagram .trajectory-line",
+        { strokeDashoffset: pathLen },
+        { strokeDashoffset: 0, duration: 0.85, ease: "power2.out" },
+        3.08
+      );
+      tl.fromTo(
+        "#clip-diagram .vector-step",
+        { scale: 0.7, opacity: 0, y: 15 },
+        { scale: 1.0, opacity: 1, y: 0, duration: 0.3, stagger: 0.12, ease: "power3.out" },
+        3.25
+      );
+      tl.to(
+        "#clip-diagram .diagram-box",
+        { opacity: 0, y: -20, duration: 0.25, ease: "power2.in" },
+        4.50
+      );
+
+      // --- OVERLAY 3: THẢM HỌA KHU DÂN CƯ (t = 6.54s -> 9.04s) ---
+      tl.fromTo(
+        "#clip-disaster .disaster-card",
+        { scale: 0.88, opacity: 0, y: 30 },
+        { scale: 1.0, opacity: 1, y: 0, duration: 0.45, ease: "power3.out" },
+        6.54
+      );
+      tl.to(
+        "#clip-disaster .disaster-card",
+        { opacity: 0, y: -20, duration: 0.3, ease: "power2.in" },
+        8.70
+      );
+
+      // 3. Đăng ký timeline duy nhất vào HyperFrames runtime (không khởi tạo lại registry)
+      window.__timelines["scene-s05"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

@@ -77,3 +77,5 @@ Project standalone tạm còn giữ tại: C:\vox-style-xe-giay-v1-hyperframes\h
 
 - **2026-09-23T13:24:48.358Z** — `scripts/07b-integration-check.hf.mjs --video=su-kien-thien-an-mon` — Stage 7b integration check FAIL:
 Cờ layout đặt sai chỗ trên root: compositions/scene-s02.html (data-layout-allow-overflow); compositions/scene-s03.html (data-layout-allow-overflow); compositions/scene-s08.html (data-layout-allow-overflow); compositions/scene-s09.html (data-layout-allow-overflow); compositions/scene-s10.html (data-layout-allow-overflow); compositions/scene-s11.html (data-layout-allow-overflow); compositions/scene-s14.html (data-layout-allow-overflow) — di chuyển xuống đúng phần tử con cụ thể.
+
+- **2026-09-25T14:36:08.568Z** — qa-blank-frame-audit: 14 scene kiểm tra, 0 bị flag (none) — report tại `C:\vox-style-xe-giay-v1-hyperframes\pipeline\videos\su-kien-thien-an-mon\contact-sheet\report.md`

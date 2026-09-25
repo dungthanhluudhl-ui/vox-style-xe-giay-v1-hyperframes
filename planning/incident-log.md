@@ -8,6 +8,111 @@ grep tên video/mã lỗi/từ khoá liên quan, không đọc trọn file).
 
 ---
 
+### ĐÃ SỬA TẬN GỐC — bug "trống hình" + "thẻ bị kéo dài" do CSS `.clip` của root rò rỉ vào scene (2026-09-26)
+
+**Tóm tắt:** cả 2 lỗi (trống hình S23/S47 `cach-hoat-dong-cua-kinh-te-meo` + S01/S03/S16/S18
+`hinh-phat-treo-co-o-nhat-ban`; thẻ bị kéo giãn S10 `su-kien-thien-an-mon`, xem mục 2026-09-22 bên
+dưới) có CHUNG 1 nguyên nhân gốc tất định trong template ráp của repo, KHÔNG phải lỗi ngẫu
+nhiên/GPU/timing, KHÔNG phải lỗi của HyperFrames, KHÔNG phải do đợt tách Stage 7b/9.
+
+**Nguyên nhân gốc:** `syncRootHf()` (`scripts/lib/sync-root-hf-lib.mjs`) sinh CSS host
+`.clip { position: absolute; inset: 0; isolation: isolate; }` cho slot `data-composition-src`.
+CSS của root + mọi sub-composition nằm chung 1 trang → selector `.clip` áp luôn lên các phần tử
+`class="clip"` BÊN TRONG scene (quy ước HyperFrames cho mọi timed element, gần như mọi scene đều dùng
+cho `<section>` shot):
+- `isolation: isolate` biến mỗi shot thành stacking context ở tầng z-index 0 → toàn bộ nội dung shot
+  (dù khai z-index 2/10/20) bị vẽ DƯỚI lớp nền của scene có z-index dương (`.spotlight-bg`,
+  `.bg-grid`, `.bg-paper`… z-index:1). Nền đặc → trống hình; nền trong suốt → lưới/vạch đè lên nội
+  dung (S19 `hinh-phat-treo-co-o-nhat-ban`, lệch nhẹ nên audit trống hình không bắt được).
+- `inset: 0` kéo giãn thẻ chỉ neo 1 cạnh (lỗi S10).
+- Chiều ngược: rule `.clip` do scene tự khai cũng áp lên MỌI slot của video (vd
+  `ban-an-35-phan-1/scene-s23.html` khai `.clip { padding: 170px 48px 200px 48px; display: flex }`).
+  Chưa quan sát được lỗi nhìn thấy từ chiều này (test oracle: không lệch đáng kể), coi là rủi ro
+  tiềm ẩn.
+Rule `isolation` có từ commit `8bc6e30` (21/09, video HyperFrames đầu tiên, vá lỗi caption bị che) —
+tồn tại ở MỌI video HyperFrames. Lỗi chỉ lộ ra khi code AI sinh tình cờ có pattern "shot `.clip`
+không z-index + lớp nền z-index dương" → trông như ngẫu nhiên giữa các video.
+
+**Đã sửa:** root chỉ còn `.hf-slot { position: absolute; inset: 0; isolation: isolate; }`, slot div
+mang `class="hf-slot"` (không còn `clip`). Root không style `.clip` nữa → scene khi ráp render giống
+hệt lúc Stage 7 check/review ở dạng standalone; `isolation` trên slot vẫn chặn lỗi caption cũ.
+
+**Bằng chứng (thực nghiệm có kiểm soát, harness tái lập đúng template production, render thật +
+SSIM tất định + vision QA qua 9router — Claude không tự xem ảnh):**
+- A/B cô lập biến trên S01: chỉ lỗi khi có CẢ root `.clip{isolation}` VÀ `class="clip"` bên trong
+  scene; bỏ 1 trong 2 → hết lỗi.
+- Oracle "ráp vào slot phải = standalone" (min SSIM, bản cũ → fix): hinh-phat S01 0.9249 → 1.0000;
+  S16 0.8221 → 0.9975; kinh-te-meo S23 bản GỐC (git `f8b0733`) 0.5444 → 1.0000; S47 gốc 0.6124 →
+  0.9988; su-kien S10 tại đúng cue thẻ hiện 0.5313 → 0.9863 (`hyperframes check` KHÔNG bắt được lỗi
+  kéo giãn: ok=true ở cả 2 bản).
+- Hồi quy lỗi caption gốc (ban-an-473-phan-1 S01 + caption-track): không isolation → caption bị che
+  (tái lập đúng lỗi 21/09); bản fix → caption hiện đủ, 0 `text_occluded`.
+- End-to-end video thật 54 scene (bản fix trung gian chỉ chuyển isolation): 49 scene không đổi
+  (SSIM trung vị 0.9987), đúng S01/S03/S16/S18 hết trống (so sánh MÙ), S19 khớp standalone (0.9971
+  vs 0.9387), 0 hồi quy.
+- Code thật sau sửa (`syncRootHf()` chạy trên bản sao tối thiểu): output chỉ khác production đúng
+  rule + class slot; check dày 55 sample: `text_occluded` ở S01/S03/S16/S18 biến mất (28 → 0).
+- Harness nhỏ không mount caption-track nên KHÔNG tái hiện 1 tương tác: caption-track khai
+  `#root { position: absolute; inset: 0 }` và mọi composition dùng chung `id="root"` → rule này áp
+  lên root mọi scene.
+- **Kiểm chứng end-to-end bằng pipeline THẬT với bản fix cuối (video `nvidia-phu-song-viet-nam`,
+  81.5s, 10 scene/19 shot — người dùng phát hiện mất hình mà audit 1 frame/scene bỏ sót):** chạy lại
+  `08-sync-root.hf.mjs` → `09-render.hf.mjs` (tự chạy 7b). index.html chỉ đổi đúng rule + 11 slot,
+  caption-track sinh lại giống hệt. Trước fix: S03-2 trống cả 3 frame, S03-1 mất toàn bộ chữ/thẻ (chỉ
+  còn video chân dung ngoài `.clip` → audit 1 frame/scene kết luận nhầm "ok"). Sau fix: check dày 57
+  mốc 17 lỗi `text_occluded` ở S03 → 0, **0 finding mới**, 3 warning cũ (S06-1/S07-2/S10-1) và 1 info
+  caption S09-1 giữ nguyên; soát vision 3 frame/shot 0/57 ô lỗi; so mù cũ/mới: 6/6 ô S03 bản mới
+  đầy đủ hơn. 2 ô vision nghi "bản cũ tốt hơn" (S01-1, S07-1, đều có `<video>`) đã đối chiếu
+  standalone: cũ và mới cách chuẩn như nhau (vd 0.9617 vs 0.9618) → nhiễu nén, không phải lỗi mới.
+  Bản render cũ sao lưu ngoài repo (scratchpad phiên audit).
+
+**Vì sao không gate nào bắt được (3 lỗ hổng, đều đã đo thật):**
+1. Stage 7 verify check scene ở dạng standalone (không có CSS root) → check PASS sạch trên chính code
+   lỗi (tái tạo đúng format standalone của S01: 0 lỗi; cùng code nhúng vào slot: `text_occluded`).
+2. Stage 7b chỉ 9–10 sample cố định cho cả video (437s → ~43s/sample) → không sample nào rơi vào
+   4 scene lỗi.
+3. Kể cả sample trúng: trên project ĐÃ RÁP, `hyperframes check` báo `text_occluded` của
+   sub-composition ở severity `info` (coveredFraction 1 vẫn là info) → `ok=true`. Chỉ tăng
+   `--samples`/`--at` KHÔNG đủ để Stage 7b fail. Và check chỉ bắt được CHỮ bị che, không bắt được
+   hình minh hoạ bị che.
+
+**Đính chính các kết luận sai trước đó:** (a) mục "Bug render TRỐNG HÌNH" ngày 2026-09-24 kết luận
+"nguyên nhân chưa xác định, có thể ngẫu nhiên" — sai, đây là lỗi tất định tái lập 100%; (b) giả
+thuyết perspective/preserve-3d và tween `ease:"none"` (commit `2a31aab`) — không phải nguyên nhân;
+việc regenerate S23/S47 chỉ tình cờ sinh code không rơi vào pattern nên lỗi quay lại ở video sau;
+(c) "cô lập vĩnh viễn" trong ghi chú fix 21/09 — rule đó chính là nguồn gây lỗi; (d) S38
+kinh-te-meo từng bị ghi nhầm "confirmed trống" (đã đính chính 24/09) — audit contact sheet 26/09 xác
+nhận S38 bình thường, trên video đó chỉ S23/S47 trống; (e) trong phiên audit
+này Claude từng báo sai tương quan "chỉ video dài mới lỗi" và từng kết luận sai chiều cơ chế — cả 2
+đã được thực nghiệm có kiểm soát bác bỏ trước khi sửa code.
+
+**Công cụ audit mới:** `scripts/qa-blank-frame-audit.mjs --video=<slug>` — contact sheet 1 frame
+giữa mỗi scene từ `out/<slug>-full.mp4` + 9router[vision_qa], ghi
+`pipeline/videos/<slug>/contact-sheet/report.md` (đã validate: bắt đúng S23/S47 trên MP4 cũ, 0 báo
+nhầm/51 scene). Giới hạn: 1 frame/scene → không bắt lỗi chỉ xảy ra ở 1 shot hoặc thoáng qua (S19,
+S10); flag đơn lẻ nên xác minh lại bằng nhiều frame (20/50/80%) — đã gặp 1 báo nhầm do nội dung
+xuất hiện muộn (S06 `giai-phap-ngan-song-than`).
+
+**Còn tồn đọng — CHƯA làm (người dùng chưa duyệt, ghi lại để quyết định sau):**
+- Gate Stage 7b cho lỗi layout sau khi ráp: cần sample theo từng scene VÀ tự coi `text_occluded`
+  coveredFraction cao là FAIL bất kể severity (đo thật: +~90–100s cho video 54 scene).
+- Vision audit sau render (`qa-blank-frame-audit.mjs`) làm bước mặc định — trái quy tắc hiện tại
+  "vision QA không mặc định".
+- `scripts/09-render.hf.mjs` gọi `npx hyperframes render` KHÔNG pin version, trong khi check pin
+  `hyperframes@0.8.56`.
+- Mọi composition dùng chung `id="root"` → rule `#root` của 1 composition áp lên mọi composition
+  khác (va chạm tên cùng họ, hiện chưa thấy gây lỗi).
+- S30 `hinh-phat-treo-co-o-nhat-ban`: 1 `text_occluded` 33% tại 0.05s sau khi scene bắt đầu (có ở cả
+  bản cũ lẫn bản fix — không liên quan bug này).
+- `poc/hyperframes/assemble-poc.mjs` (công cụ POC, không thuộc pipeline sản xuất) vẫn sinh
+  `.clip { position: absolute; inset: 0; }` + slot `class="clip"` → dính rò rỉ `inset` (kéo giãn),
+  không có isolation. Chưa sửa để giữ khả năng so sánh với điểm POC cũ — nếu dùng lại cho lần audit
+  model sau, sửa theo đúng mẫu `.hf-slot` trước.
+- `index.html` của các video demo đã dựng vẫn mang rule cũ (người dùng chọn không ráp/render lại) —
+  sẽ tự đúng ở lần `syncRootHf()` kế tiếp của video đó.
+
+---
+
 ### Bug thật — Stage 2b chấp nhận nhầm 1 file lẻ thay vì zip project (2026-09-25)
 
 **Phát hiện khi:** Kilo Code dựng video `hinh-phat-treo-co-o-nhat-ban` (30 ảnh đã tạo thành công
@@ -50,6 +155,10 @@ riêng, ngoài phạm vi sửa lỗi script này).
 
 **Trạng thái:** đã audit và xác nhận nguyên nhân; **chưa sửa code**. Đây là backlog cải tiến cho
 session sau, không được hiểu là pipeline hiện tại đã xử lý lỗi.
+
+**Cập nhật 2026-09-26: ĐÃ SỬA** (hướng cải tiến #1–#2 bên dưới) — root chỉ style `.hf-slot`, slot
+không còn `class="clip"`. Test hồi quy S10 theo oracle standalone: SSIM tại cue thẻ hiện 0.5313 →
+0.9863. Xem mục "ĐÃ SỬA TẬN GỐC… (2026-09-26)" ở đầu file. Các hướng #3–#7 vẫn CHƯA làm.
 
 Ở bản render cuối, hai overlay của S10 (`#tape-box` và `#scale-card`) bị kéo giãn thành các mảng
 đen gần đầy chiều cao canvas tại khoảng 92–94 giây. Đây không phải overflow thông thường mà là
@@ -455,7 +564,9 @@ chỉ test bằng slug giả ở bước precheck).
   49.3s), cả 3 đều cho dải Y-luminance rộng (13-236), KHÔNG phải frame trống/phẳng màu — thêm 1 bằng
   chứng thật củng cố kết luận đã ghi: `preserve-3d` một mình KHÔNG phải chỉ báo tin cậy cho lỗi render
   trống. Không kết luận thêm gì mới về nguyên nhân gốc, giữ nguyên quyết định "theo dõi thủ công" đã
-  chốt.
+  chốt. *(Cập nhật 2026-09-26: nguyên nhân gốc đã tìm ra và sửa — CSS `.clip` của root rò rỉ vào
+  scene, không liên quan `preserve-3d`; mục "Bug render TRỐNG HÌNH" ở responsibility-matrix đã thay
+  bằng quy tắc mới. Xem mục 2026-09-26 đầu file này.)*
 
 ### Kết luận ngắn cho người dùng
 Pipeline hiện tại VẬN HÀNH ĐƯỢC end-to-end thật, không crash/treo ở tầng hạ tầng. Vấn đề thật đáng

@@ -1,0 +1,692 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap"
+    />
+      <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #e7e3d9;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+      .clip {
+        position: absolute;
+        inset: 0;
+      }
+
+      /* 1. CHART BACKGROUND (Style DNA: 4 Ruled lines at 20/40/60/80% + Orange Ticks) */
+      .chart-bg {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+      }
+      .chart-line {
+        position: absolute;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background-color: rgba(20, 20, 20, 0.26);
+      }
+      .chart-line-1 {
+        top: 20%;
+      }
+      .chart-line-2 {
+        top: 40%;
+      }
+      .chart-line-3 {
+        top: 60%;
+      }
+      .chart-line-4 {
+        top: 80%;
+      }
+
+      .chart-tick {
+        position: absolute;
+        left: 0;
+        width: 16px;
+        height: 4px;
+        background-color: #ff6a1a;
+      }
+      .chart-tick-1 {
+        top: calc(20% - 1px);
+      }
+      .chart-tick-2 {
+        top: calc(40% - 1px);
+      }
+      .chart-tick-3 {
+        top: calc(60% - 1px);
+      }
+      .chart-tick-4 {
+        top: calc(80% - 1px);
+      }
+
+      /* 2. DIRECT TIMED VIDEO ELEMENT */
+      #vid-defense {
+        position: absolute;
+        top: 295px;
+        left: 50px;
+        right: auto;
+        bottom: auto;
+        width: 980px;
+        height: 560px;
+        object-fit: cover;
+        border-radius: 12px;
+        border: 3px solid #141414;
+        background-color: #141414;
+        box-shadow: 0 16px 36px rgba(20, 20, 20, 0.18);
+        z-index: 2;
+        display: block;
+      }
+
+      /* 3. SIBLING FULL-FRAME TIMED OVERLAY CLIP */
+      #overlay-frame {
+        z-index: 5;
+        pointer-events: none;
+      }
+      #peel-content {
+        position: absolute;
+        inset: 0;
+        transform-origin: 0% 0%;
+        will-change: transform, opacity;
+      }
+
+      /* TOP HEADER / PUNCH PHRASE (Safe zone top: 160px) */
+      .header-zone {
+        position: absolute;
+        top: 160px;
+        left: 50px;
+        right: 50px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .category-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        background-color: #141414;
+        color: #f7f4ec;
+        padding: 6px 16px;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 900;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        width: fit-content;
+      }
+      .category-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background-color: #ff6a1a;
+      }
+      .punch-phrase {
+        margin: 0;
+        font-size: 54px;
+        font-weight: 900;
+        line-height: 1.15;
+        letter-spacing: -0.02em;
+        color: #141414;
+        text-transform: uppercase;
+      }
+      .header-rule {
+        width: 100%;
+        height: 4px;
+        background-color: #141414;
+        transform-origin: left center;
+      }
+
+      /* HUD FRAME OVERLAY AROUND VIDEO */
+      .monitor-hud-overlay {
+        position: absolute;
+        top: 295px;
+        left: 50px;
+        width: 980px;
+        height: 560px;
+        border-radius: 12px;
+        pointer-events: none;
+        overflow: hidden;
+      }
+      .hud-header-bar {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 38px;
+        background-color: rgba(20, 20, 20, 0.94);
+        border-bottom: 2px solid rgba(255, 106, 26, 0.6);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 16px;
+        font-size: 13px;
+        font-weight: 700;
+        color: #f7f4ec;
+        letter-spacing: 0.08em;
+      }
+      .hud-title {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .rec-badge {
+        color: #ff6a1a;
+      }
+      .hud-corners {
+        position: absolute;
+        inset: 12px;
+        pointer-events: none;
+      }
+      .corner-mark {
+        position: absolute;
+        width: 20px;
+        height: 20px;
+        border: 2px solid #ff6a1a;
+      }
+      .corner-tl {
+        top: 36px;
+        left: 0;
+        border-right: none;
+        border-bottom: none;
+      }
+      .corner-tr {
+        top: 36px;
+        right: 0;
+        border-left: none;
+        border-bottom: none;
+      }
+      .corner-bl {
+        bottom: 0;
+        left: 0;
+        border-right: none;
+        border-top: none;
+      }
+      .corner-br {
+        bottom: 0;
+        right: 0;
+        border-left: none;
+        border-top: none;
+      }
+
+      /* TELEMETRY READOUTS (y: 885px -> 965px << 1220px) */
+      .telemetry-strip {
+        position: absolute;
+        top: 885px;
+        left: 50px;
+        right: 50px;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+      }
+      .telemetry-item {
+        background-color: #f5f0e4;
+        border: 2px solid #141414;
+        border-radius: 6px;
+        padding: 12px 14px;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+      .telem-tag {
+        font-size: 12px;
+        font-weight: 700;
+        color: #141414;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+      .telem-val {
+        font-size: 18px;
+        font-weight: 900;
+        color: #141414;
+      }
+
+      /* SECONDARY METRIC CARD (y: 995px -> 1070px << 1220px) */
+      .metric-card {
+        position: absolute;
+        top: 995px;
+        left: 50px;
+        right: 50px;
+        background-color: #141414;
+        border-radius: 8px;
+        padding: 14px 20px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
+      .metric-icon {
+        color: #ff6a1a;
+        font-size: 20px;
+        font-weight: 900;
+      }
+      .metric-text-group {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+      .metric-label {
+        font-size: 13px;
+        font-weight: 900;
+        color: #ff6a1a;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+      }
+      .metric-desc {
+        font-size: 15px;
+        font-weight: 700;
+        color: #f7f4ec;
+      }
+
+      /* 4. PLANNED OVERLAY CLIPS (Explicit framework timing & stable IDs) */
+      .overlay-clip-container {
+        z-index: 10;
+        pointer-events: none;
+      }
+      .overlay-inner {
+        position: absolute;
+        will-change: transform, opacity;
+      }
+
+      /* OVERLAY 1: Label Đá Tiêu Năng Lượng (atMs 60000 -> 1.14s, duration 2.0s) */
+      #overlay-1-inner {
+        top: 350px;
+        left: 80px;
+        width: 420px;
+        background-color: rgba(20, 20, 20, 0.96);
+        border: 2px solid #ff6a1a;
+        border-left: 6px solid #ff6a1a;
+        padding: 14px 20px;
+        border-radius: 6px;
+        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.4);
+      }
+      .overlay-sub {
+        font-size: 13px;
+        font-weight: 900;
+        color: #ff6a1a;
+        letter-spacing: 0.12em;
+        margin-bottom: 3px;
+        text-transform: uppercase;
+      }
+      .overlay-title {
+        font-size: 24px;
+        font-weight: 900;
+        color: #f7f4ec;
+        margin: 0;
+        letter-spacing: 0.02em;
+      }
+
+      /* OVERLAY 2: Diagram-Vector Khe Rỗng Hấp Thụ (atMs 62580 -> 3.72s, duration 2.4s) */
+      #overlay-2-inner {
+        top: 470px;
+        left: 80px;
+        width: 520px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .diagram-card {
+        width: 320px;
+        background-color: rgba(20, 20, 20, 0.96);
+        border: 2px solid #ff6a1a;
+        border-left: 6px solid #ff6a1a;
+        padding: 14px 20px;
+        border-radius: 6px;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.4);
+      }
+      .diagram-card .overlay-title {
+        font-size: 22px;
+      }
+      .diagram-svg {
+        width: 180px;
+        height: 70px;
+        pointer-events: none;
+      }
+
+      /* OVERLAY 3: Label Triệt Tiêu Áp Lực (atMs 66020 -> 7.16s, duration 2.02s) */
+      #overlay-3-inner {
+        top: 685px;
+        left: 70px;
+        width: 940px;
+        background-color: rgba(20, 20, 20, 0.96);
+        border: 2px solid #ff6a1a;
+        padding: 16px 22px;
+        border-radius: 8px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
+      }
+      .overlay-3-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+      }
+      .efficiency-badge {
+        font-size: 15px;
+        font-weight: 900;
+        color: #141414;
+        background-color: #ff6a1a;
+        padding: 4px 12px;
+        border-radius: 4px;
+        letter-spacing: 0.05em;
+      }
+      .pressure-meter {
+        width: 100%;
+        height: 12px;
+        background-color: rgba(247, 244, 236, 0.25);
+        border-radius: 6px;
+        overflow: hidden;
+      }
+      .pressure-meter-fill {
+        height: 100%;
+        width: 78%;
+        background-color: #ff6a1a;
+        border-radius: 6px;
+        transform-origin: left center;
+        display: block;
+      }
+
+      /* 5. SIGNATURE BOTTOM ORANGE BAR (Style DNA: fixed at frame bottom) */
+      .vox-brand-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 1080px;
+        height: 10px;
+        background-color: #ff6a1a;
+        z-index: 100;
+      }
+    </style>
+
+    <!-- Root composition is untimed (compile-time duration only, no data-start) -->
+    <div
+      id="root"
+      data-composition-id="scene-s07"
+      data-width="1080"
+      data-height="1920"
+      data-duration="9.18"
+    >
+      <!-- 1. Background Chart Lines & Ticks (Style DNA: chart variant) -->
+      <div class="chart-bg">
+        <div class="chart-line chart-line-1"></div>
+        <div class="chart-tick chart-tick-1"></div>
+
+        <div class="chart-line chart-line-2"></div>
+        <div class="chart-tick chart-tick-2"></div>
+
+        <div class="chart-line chart-line-3"></div>
+        <div class="chart-tick chart-tick-3"></div>
+
+        <div class="chart-line chart-line-4"></div>
+        <div class="chart-tick chart-tick-4"></div>
+      </div>
+
+      <!-- 2. Direct Timed Video Child of Root (un-nested, framework-owned) -->
+      <video
+        id="vid-defense"
+        class="clip"
+        data-start="0"
+        data-duration="9.18"
+        data-media-start="0"
+        src="assets/vid-02-seawall-defense-mechanism-diagram.mp4"
+        muted
+        playsinline
+      ></video>
+
+      <!-- 3. Sibling Full-Frame Timed Clip for Base Layout -->
+      <section
+        id="overlay-frame"
+        class="clip"
+        data-start="0"
+        data-duration="9.18"
+      >
+        <div id="peel-content">
+          <!-- Top Header Section (y: 160px -> 280px) -->
+          <div class="header-zone" id="header-group">
+            <div class="category-pill">
+              <span class="category-dot"></span>
+              GIAI ĐOẠN 03 // BẢO VỆ CHÂN KÈ
+            </div>
+            <h1 class="punch-phrase">LỚP ĐÁ TIÊU XUNG</h1>
+            <div class="header-rule" id="header-rule"></div>
+          </div>
+
+          <!-- Technical HUD Frame Overlay (y: 295px -> 855px) -->
+          <div class="monitor-hud-overlay">
+            <div class="hud-header-bar">
+              <div class="hud-title">
+                <span class="rec-badge">●</span>
+                <span>HUD // MÔ PHỎNG ĐỘNG LỰC HỌC SÓNG</span>
+              </div>
+              <div>ISO-3D // DEFENSE 02</div>
+            </div>
+            <div class="hud-corners">
+              <div class="corner-mark corner-tl"></div>
+              <div class="corner-mark corner-tr"></div>
+              <div class="corner-mark corner-bl"></div>
+              <div class="corner-mark corner-br"></div>
+            </div>
+          </div>
+
+          <!-- Bottom Telemetry Readouts (y: 885px -> 965px << 1220px) -->
+          <div class="telemetry-strip" id="telemetry-group">
+            <div class="telemetry-item">
+              <span class="telem-tag">VẬT LIỆU</span>
+              <span class="telem-val">ĐÁ KHỐI LỚN</span>
+            </div>
+            <div class="telemetry-item">
+              <span class="telem-tag">CƠ CHẾ CHÍNH</span>
+              <span class="telem-val">TẠO DÒNG XOÁY</span>
+            </div>
+            <div class="telemetry-item">
+              <span class="telem-tag">BẢO VỆ</span>
+              <span class="telem-val">CHÂN THÂN ĐÊ</span>
+            </div>
+          </div>
+
+          <!-- Secondary Metric Card (y: 995px -> 1070px << 1220px) -->
+          <div class="metric-card" id="metric-group">
+            <div class="metric-icon">▲</div>
+            <div class="metric-text-group">
+              <div class="metric-label">GIẢM XUNG LỰC SÓNG</div>
+              <div class="metric-desc">BẢO VỆ CHÂN THÂN ĐÊ</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 4. Planned Labels/Vectors: Explicit Framework Timing & Stable IDs -->
+      <!-- OVERLAY 1: Đá Tiêu Năng Lượng (atMs 60000 -> 1.14s, duration 2.0s) -->
+      <div
+        id="clip-overlay-1"
+        class="clip overlay-clip-container"
+        data-start="1.14"
+        data-duration="2.0"
+      >
+        <div id="overlay-1-inner" class="overlay-inner">
+          <div class="overlay-sub">CẤU TRÚC GIA CỐ</div>
+          <h2 class="overlay-title">ĐÁ TIÊU NĂNG LƯỢNG</h2>
+        </div>
+      </div>
+
+      <!-- OVERLAY 2: Diagram-Vector Khe Rỗng Hấp Thụ (atMs 62580 -> 3.72s, duration 2.4s) -->
+      <div
+        id="clip-overlay-2"
+        class="clip overlay-clip-container"
+        data-start="3.72"
+        data-duration="2.4"
+      >
+        <div id="overlay-2-inner" class="overlay-inner">
+          <div class="diagram-card">
+            <div class="overlay-sub">CƠ CHẾ PHÂN RÃ</div>
+            <h2 class="overlay-title">KHE RỖNG HẤP THỤ</h2>
+          </div>
+          <svg class="diagram-svg" viewBox="0 0 180 70">
+            <path
+              id="vector-pointer"
+              d="M 10 35 L 100 35 L 160 55"
+              pathLength="100"
+              stroke-dasharray="100"
+              stroke-dashoffset="100"
+              fill="none"
+              stroke="#FF6A1A"
+              stroke-width="3"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+            <circle
+              id="vector-target"
+              cx="160"
+              cy="55"
+              r="6"
+              fill="#FF6A1A"
+              stroke="#141414"
+              stroke-width="2"
+            />
+          </svg>
+        </div>
+      </div>
+
+      <!-- OVERLAY 3: Label Triệt Tiêu Áp Lực (atMs 66020 -> 7.16s, duration 2.02s) -->
+      <div
+        id="clip-overlay-3"
+        class="clip overlay-clip-container"
+        data-start="7.16"
+        data-duration="2.02"
+      >
+        <div id="overlay-3-inner" class="overlay-inner">
+          <div class="overlay-3-header">
+            <div>
+              <div class="overlay-sub">HIỆU QUẢ GIẢM TẢI</div>
+              <h2 class="overlay-title">TRIỆT TIÊU ÁP LỰC</h2>
+            </div>
+            <div class="efficiency-badge">&gt;75% GIẢM LỰC</div>
+          </div>
+          <div class="pressure-meter">
+            <div class="pressure-meter-fill" id="pressure-fill"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 5. Fixed Signature Orange Bar at Bottom -->
+      <div class="vox-brand-bar"></div>
+    </div>
+
+    <!-- GSAP Seekable Timeline Script -->
+    <script>
+      const tl = gsap.timeline({ paused: true });
+
+      // 1. TRANSITION IN: PEEL ENTRANCE ON UNTIMED INNER WRAPPER (0.05s -> 0.8s)
+      tl.fromTo(
+        "#peel-content",
+        {
+          opacity: 0,
+          scale: 0.95,
+          y: 35,
+          rotation: -1.5,
+        },
+        {
+          opacity: 1,
+          scale: 1,
+          y: 0,
+          rotation: 0,
+          duration: 0.75,
+          ease: "power3.out",
+        },
+        0.05
+      );
+
+      // Header rule expand
+      tl.fromTo(
+        "#header-rule",
+        { scaleX: 0 },
+        { scaleX: 1, duration: 0.5, ease: "power2.out" },
+        0.3
+      );
+
+      // Telemetry readouts entrance
+      tl.fromTo(
+        "#telemetry-group",
+        { opacity: 0, y: 16 },
+        { opacity: 1, y: 0, duration: 0.45, ease: "power3.out" },
+        0.42
+      );
+
+      // Metric card entrance
+      tl.fromTo(
+        "#metric-group",
+        { opacity: 0, y: 14 },
+        { opacity: 1, y: 0, duration: 0.45, ease: "power3.out" },
+        0.52
+      );
+
+      // 2. OVERLAY 1: "ĐÁ TIÊU NĂNG LƯỢNG" (Active: 1.14s -> 3.14s)
+      tl.fromTo(
+        "#overlay-1-inner",
+        { opacity: 0, scale: 0.88, x: -24 },
+        { opacity: 1, scale: 1, x: 0, duration: 0.42, ease: "power3.out" },
+        1.14
+      );
+
+      // 3. OVERLAY 2: "KHE RỖNG HẤP THỤ" + DIAGRAM VECTOR (Active: 3.72s -> 6.12s)
+      tl.fromTo(
+        "#overlay-2-inner",
+        { opacity: 0, y: 20 },
+        { opacity: 1, y: 0, duration: 0.42, ease: "power3.out" },
+        3.72
+      );
+      tl.fromTo(
+        "#vector-pointer",
+        { strokeDashoffset: 100 },
+        { strokeDashoffset: 0, duration: 0.52, ease: "power2.out" },
+        3.85
+      );
+      tl.fromTo(
+        "#vector-target",
+        { scale: 0, opacity: 0, transformOrigin: "center center" },
+        { scale: 1, opacity: 1, duration: 0.32, ease: "power3.out" },
+        4.15
+      );
+
+      // 4. OVERLAY 3: "TRIỆT TIÊU ÁP LỰC" + EFFICIENCY METER (Active: 7.16s -> 9.18s)
+      tl.fromTo(
+        "#overlay-3-inner",
+        { opacity: 0, scale: 0.92, y: 18 },
+        { opacity: 1, scale: 1, y: 0, duration: 0.42, ease: "power3.out" },
+        7.16
+      );
+      tl.fromTo(
+        "#pressure-fill",
+        { scaleX: 0 },
+        { scaleX: 1, duration: 0.75, ease: "power2.out" },
+        7.4
+      );
+
+      // Register timeline deterministically without overwriting runtime registry
+      window.__timelines["scene-s07"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

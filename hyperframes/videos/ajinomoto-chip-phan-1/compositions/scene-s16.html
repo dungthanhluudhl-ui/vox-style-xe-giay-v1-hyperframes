@@ -1,0 +1,671 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap"
+    />
+      <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background: #e7e3d9;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: #e7e3d9;
+      }
+      .clip {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+      }
+
+      /* === BACKGROUND CHART VARIANT (LINES + TICKS) === */
+      .chart-background {
+        position: absolute;
+        inset: 0;
+        z-index: 1;
+      }
+      .chart-grid-pattern {
+        position: absolute;
+        inset: 0;
+        background-size: 84px 84px;
+        background-image: linear-gradient(to right, rgba(20, 20, 20, 0.05) 1.5px, transparent 1.5px),
+          linear-gradient(to bottom, rgba(20, 20, 20, 0.05) 1.5px, transparent 1.5px);
+      }
+      .chart-line {
+        position: absolute;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: rgba(20, 20, 20, 0.32);
+        transform-origin: left center;
+      }
+      .chart-line-20 { top: 20%; }
+      .chart-line-40 { top: 40%; }
+      .chart-line-60 { top: 60%; }
+      .chart-line-80 { top: 80%; }
+
+      .chart-tick {
+        position: absolute;
+        left: 0;
+        top: -2px;
+        width: 24px;
+        height: 6px;
+        background: #ff6a1a;
+      }
+
+      /* === HEADER SPECIFICATION === */
+      .header-container {
+        position: absolute;
+        top: 170px;
+        left: 60px;
+        right: 60px;
+        z-index: 10;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .header-pill {
+        align-self: flex-start;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        background: #141414;
+        color: #f7f4ec;
+        padding: 8px 18px;
+        border-radius: 6px;
+        font-size: 16px;
+        font-weight: 900;
+        letter-spacing: 2px;
+      }
+      .pill-dot {
+        width: 10px;
+        height: 10px;
+        background: #ff6a1a;
+        border-radius: 2px;
+      }
+      .header-title {
+        font-size: 34px;
+        font-weight: 900;
+        color: #141414;
+        letter-spacing: -0.5px;
+        margin: 0;
+        text-transform: uppercase;
+      }
+
+      /* === HERO COLLAGE CARD (UNFOLD ENTRANCE) === */
+      .hero-viewport {
+        position: absolute;
+        top: 295px;
+        left: 60px;
+        width: 960px;
+        height: 960px;
+        perspective: 1200px;
+        z-index: 5;
+      }
+      .hero-card {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        background: #f5f0e4;
+        border: 4px solid #141414;
+        border-radius: 16px;
+        box-shadow: 16px 16px 0 rgba(20, 20, 20, 0.22);
+        overflow: hidden;
+        transform-origin: top center;
+      }
+      .hero-image-wrap {
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+      .hero-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center 30%;
+        display: block;
+        transform-origin: center center;
+      }
+
+      /* Washi-Tape Accents */
+      .washi-tape-tl {
+        position: absolute;
+        top: 14px;
+        left: 24px;
+        width: 120px;
+        height: 30px;
+        background: rgba(245, 240, 228, 0.94);
+        border: 1.5px dashed rgba(20, 20, 20, 0.4);
+        z-index: 12;
+      }
+      .washi-tape-tr {
+        position: absolute;
+        top: 14px;
+        right: 24px;
+        width: 110px;
+        height: 30px;
+        background: rgba(245, 240, 228, 0.94);
+        border: 1.5px dashed rgba(20, 20, 20, 0.4);
+        z-index: 12;
+      }
+      .die-watermark {
+        position: absolute;
+        bottom: 18px;
+        right: 20px;
+        background: #141414;
+        color: #f7f4ec;
+        padding: 6px 14px;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 900;
+        letter-spacing: 1.5px;
+        z-index: 10;
+      }
+
+      /* === DIAGRAM OVERLAYS CONTAINER === */
+      .diagram-overlay-wrapper {
+        position: absolute;
+        top: 295px;
+        left: 60px;
+        width: 960px;
+        height: 960px;
+        z-index: 8;
+        pointer-events: none;
+      }
+      .svg-canvas {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+      }
+      .measure-path {
+        fill: none;
+        stroke: #ff6a1a;
+        stroke-width: 4;
+        stroke-linecap: square;
+      }
+      .measure-sub-path {
+        fill: none;
+        stroke: #141414;
+        stroke-width: 3;
+        stroke-dasharray: 6 6;
+      }
+      .bracket-tag-box {
+        fill: #141414;
+      }
+      .bracket-tag-text {
+        fill: #f7f4ec;
+        font-family: "Be Vietnam Pro", sans-serif;
+        font-size: 16px;
+        font-weight: 900;
+        letter-spacing: 1px;
+      }
+
+      /* Target Reticle (Phase 2 Nail Size) */
+      .reticle-container {
+        position: absolute;
+        top: 490px;
+        left: 405px;
+        width: 150px;
+        height: 150px;
+        transform-origin: center center;
+        pointer-events: none;
+      }
+      .reticle-box {
+        position: absolute;
+        inset: 0;
+        border: 3px solid #ff6a1a;
+        background: rgba(255, 106, 26, 0.14);
+        box-shadow: 0 0 24px rgba(255, 106, 26, 0.4);
+      }
+      .reticle-crosshair-h {
+        position: absolute;
+        top: 74px;
+        left: -20px;
+        right: -20px;
+        height: 2px;
+        background: #ff6a1a;
+      }
+      .reticle-crosshair-v {
+        position: absolute;
+        left: 74px;
+        top: -20px;
+        bottom: -20px;
+        width: 2px;
+        background: #ff6a1a;
+      }
+
+      /* Pulse Grid (Phase 3 Transistors) */
+      .matrix-glow-container {
+        position: absolute;
+        top: 475px;
+        left: 390px;
+        width: 180px;
+        height: 180px;
+        border: 4px solid #ff6a1a;
+        background: radial-gradient(circle, rgba(255, 106, 26, 0.35) 0%, rgba(20, 20, 20, 0.6) 80%);
+        box-shadow: 0 0 45px rgba(255, 106, 26, 0.6);
+        pointer-events: none;
+        overflow: hidden;
+        transform-origin: center center;
+      }
+      .matrix-lines {
+        position: absolute;
+        inset: 0;
+        background-size: 14px 14px;
+        background-image: linear-gradient(to right, rgba(255, 255, 255, 0.3) 1px, transparent 1px),
+          linear-gradient(to bottom, rgba(255, 255, 255, 0.3) 1px, transparent 1px);
+      }
+
+      /* === INFORMATION BADGES === */
+      .info-card-slot {
+        position: absolute;
+        top: 1290px;
+        left: 60px;
+        width: 960px;
+        height: 200px;
+        z-index: 20;
+      }
+
+      /* Badge Style 1 & 2 (Technical Card) */
+      .info-badge-panel {
+        width: 100%;
+        height: 100%;
+        background: #141414;
+        border-radius: 16px;
+        border-left: 10px solid #ff6a1a;
+        padding: 24px 36px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        box-shadow: 14px 14px 0 rgba(20, 20, 20, 0.18);
+        transform-origin: center bottom;
+      }
+      .badge-category {
+        color: #ff6a1a;
+        font-size: 20px;
+        font-weight: 700;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        margin-bottom: 6px;
+      }
+      .badge-headline {
+        color: #f7f4ec;
+        font-size: 52px;
+        font-weight: 900;
+        line-height: 1.15;
+        letter-spacing: -0.5px;
+        margin: 0;
+        text-transform: uppercase;
+      }
+      .badge-detail {
+        color: #e7e3d9;
+        font-size: 22px;
+        font-weight: 700;
+        margin-top: 6px;
+        letter-spacing: 0.5px;
+      }
+
+      /* Badge Style 3 (Punch Phrase + Tabular Counter) */
+      .punch-badge-panel {
+        width: 100%;
+        height: 100%;
+        background: #141414;
+        border-radius: 16px;
+        border: 4px solid #ff6a1a;
+        padding: 22px 34px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+        transform-origin: center bottom;
+      }
+      .punch-title-text {
+        color: #ff6a1a;
+        font-size: 46px;
+        font-weight: 900;
+        line-height: 1.1;
+        letter-spacing: -0.5px;
+        margin: 0 0 6px 0;
+        text-transform: uppercase;
+      }
+      .punch-counter-row {
+        display: flex;
+        align-items: baseline;
+        gap: 14px;
+      }
+      .punch-counter-number {
+        color: #f7f4ec;
+        font-size: 46px;
+        font-weight: 900;
+        font-variant-numeric: tabular-nums;
+        letter-spacing: 0.5px;
+      }
+      .punch-counter-unit {
+        color: #ff6a1a;
+        font-size: 24px;
+        font-weight: 900;
+        letter-spacing: 1px;
+      }
+      .punch-sub-spec {
+        color: #e7e3d9;
+        font-size: 20px;
+        font-weight: 700;
+        margin-top: 4px;
+        letter-spacing: 0.5px;
+      }
+
+      /* === PERSISTENT BOTTOM ORANGE BAR === */
+      .brand-bottom-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 12px;
+        background: #ff6a1a;
+        z-index: 100;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s16"
+      data-start="0"
+      data-width="1080"
+      data-height="1920"
+      data-duration="8.37"
+    >
+      <!-- PERSISTENT BACKGROUND & HERO SECTION -->
+      <section id="clip-base" class="clip" data-start="0" data-duration="8.37">
+        <div class="chart-background">
+          <div class="chart-grid-pattern"></div>
+          <div class="chart-line chart-line-20">
+            <div class="chart-tick"></div>
+          </div>
+          <div class="chart-line chart-line-40">
+            <div class="chart-tick"></div>
+          </div>
+          <div class="chart-line chart-line-60">
+            <div class="chart-tick"></div>
+          </div>
+          <div class="chart-line chart-line-80">
+            <div class="chart-tick"></div>
+          </div>
+        </div>
+
+        <!-- HEADER BLOCK -->
+        <div class="header-container" id="header-block">
+          <div class="header-pill">
+            <div class="pill-dot"></div>
+            BÁO CÁO VI MẠCH // ĐO LƯỜNG TỶ LỆ
+          </div>
+          <h1 class="header-title">QUY MÔ VẬT LÝ VÀ MẬT ĐỘ</h1>
+        </div>
+
+        <!-- HERO COLLAGE CARD -->
+        <div class="hero-viewport">
+          <div class="hero-card" id="hero-card">
+            <div class="washi-tape-tl"></div>
+            <div class="washi-tape-tr"></div>
+            <div class="hero-image-wrap">
+              <img
+                src="assets/img-04-tech-crime-computer-microchip.jpg"
+                alt="Vi mạch máy tính và bàn tay"
+                class="hero-image"
+                id="hero-img"
+              />
+            </div>
+            <div class="die-watermark">FIG. 16 // PHYSICAL SCALE</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SHOT 1 OVERLAY: NỬA BÀN TAY (1.41s - 4.25s) -->
+      <section
+        id="clip-phase-1"
+        class="clip"
+        data-start="1.41"
+        data-duration="2.84"
+      >
+        <div class="diagram-overlay-wrapper" id="p1-graphics">
+          <svg class="svg-canvas" viewBox="0 0 960 960">
+            <!-- Caliper Upper Tick -->
+            <line class="measure-path caliper-1" x1="140" y1="270" x2="240" y2="270" />
+            <!-- Caliper Lower Tick -->
+            <line class="measure-path caliper-1" x1="140" y1="750" x2="240" y2="750" />
+            <!-- Caliper Vertical Measuring Line -->
+            <line class="measure-path caliper-1" x1="180" y1="270" x2="180" y2="750" />
+            <!-- Cross guide to hand -->
+            <line class="measure-sub-path caliper-sub" x1="240" y1="510" x2="380" y2="510" />
+            <!-- Dimension Tag Box -->
+            <g class="caliper-sub">
+              <rect class="bracket-tag-box" x="90" y="485" width="90" height="50" rx="6" />
+              <text class="bracket-tag-text" x="135" y="517" text-anchor="middle">50 mm</text>
+            </g>
+          </svg>
+        </div>
+
+        <div class="info-card-slot">
+          <div class="info-badge-panel" id="badge-1">
+            <div class="badge-category">QUY MÔ 01 · CHIP MÁY TÍNH</div>
+            <h2 class="badge-headline">NỬA BÀN TAY</h2>
+            <div class="badge-detail">KÍCH THƯỚC VẬT LÝ KHOẢNG 45 × 45 MM</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SHOT 2 OVERLAY: CỠ MÓNG TAY (4.50s - 6.35s) -->
+      <section
+        id="clip-phase-2"
+        class="clip"
+        data-start="4.50"
+        data-duration="1.85"
+      >
+        <div class="diagram-overlay-wrapper" id="p2-graphics">
+          <!-- Reticle Target around microchip on fingertip -->
+          <div class="reticle-container" id="reticle-box-el">
+            <div class="reticle-box"></div>
+            <div class="reticle-crosshair-h"></div>
+            <div class="reticle-crosshair-v"></div>
+          </div>
+          <svg class="svg-canvas" viewBox="0 0 960 960">
+            <!-- Caliper line pointing to nail size -->
+            <line class="measure-sub-path" x1="555" y1="565" x2="690" y2="565" />
+            <line class="measure-path" x1="690" y1="510" x2="690" y2="620" />
+            <g>
+              <rect class="bracket-tag-box" x="705" y="540" width="90" height="50" rx="6" />
+              <text class="bracket-tag-text" x="750" y="572" text-anchor="middle">12 mm</text>
+            </g>
+          </svg>
+        </div>
+
+        <div class="info-card-slot">
+          <div class="info-badge-panel" id="badge-2">
+            <div class="badge-category">QUY MÔ 02 · CHIP ĐIỆN THOẠI</div>
+            <h2 class="badge-headline">CỠ MÓNG TAY</h2>
+            <div class="badge-detail">DIỆN TÍCH THU NHỎ GẤP 15 LẦN (~12 × 12 MM)</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SHOT 3 OVERLAY: HÀNG TỶ BÁN DẪN (6.49s - 8.37s) -->
+      <section
+        id="clip-phase-3"
+        class="clip"
+        data-start="6.49"
+        data-duration="1.88"
+      >
+        <div class="diagram-overlay-wrapper" id="p3-graphics">
+          <div class="matrix-glow-container" id="matrix-glow-el">
+            <div class="matrix-lines"></div>
+          </div>
+        </div>
+
+        <div class="info-card-slot">
+          <div class="punch-badge-panel" id="badge-3">
+            <h2 class="punch-title-text">HÀNG TỶ BÁN DẪN</h2>
+            <div class="punch-counter-row">
+              <span class="punch-counter-number" id="transistor-count">1.0</span>
+              <span class="punch-counter-unit">TỶ BÁN DẪN</span>
+            </div>
+            <div class="punch-sub-spec">
+              MẬT ĐỘ CỰC HẠN TRÊN DIỆN TÍCH VI MÔ 3-5 NANOMET
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- PERSISTENT VOX SIGNATURE BOTTOM BAR -->
+      <div class="brand-bottom-bar"></div>
+    </div>
+
+    <script>
+      const tl = gsap.timeline({ paused: true });
+
+      // === 0.0s - 1.0s: ENTRANCE UNFOLD & CHART REVEAL ===
+      tl.fromTo(
+        ".chart-line",
+        { scaleX: 0 },
+        { scaleX: 1, duration: 0.7, ease: "power2.out", stagger: 0.08 },
+        0.05
+      );
+
+      tl.fromTo(
+        "#header-block",
+        { y: -30, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.6, ease: "power3.out" },
+        0.15
+      );
+
+      // Unfold entrance for the collage paper card
+      tl.fromTo(
+        "#hero-card",
+        { rotateX: -70, scaleY: 0.4, opacity: 0 },
+        { rotateX: 0, scaleY: 1, opacity: 1, duration: 0.85, ease: "power3.out" },
+        0.1
+      );
+
+      // Continuous subtle camera zoom-in across the whole scene
+      tl.fromTo(
+        "#hero-img",
+        { scale: 1 },
+        { scale: 1.07, duration: 8.35, ease: "none" },
+        0.0
+      );
+
+      // === PHASE 1 (1.41s - 4.25s): NỬA BÀN TAY ===
+      const caliperLines = document.querySelectorAll(".caliper-1");
+      caliperLines.forEach((line) => {
+        const len = line.getTotalLength ? line.getTotalLength() : 480;
+        line.style.strokeDasharray = len;
+        line.style.strokeDashoffset = len;
+      });
+
+      tl.to(
+        ".caliper-1",
+        { strokeDashoffset: 0, duration: 0.55, ease: "power2.out" },
+        1.42
+      );
+
+      tl.fromTo(
+        ".caliper-sub",
+        { opacity: 0 },
+        { opacity: 1, duration: 0.4, ease: "power2.out" },
+        1.65
+      );
+
+      tl.fromTo(
+        "#badge-1",
+        { y: 35, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.5, ease: "power3.out" },
+        1.45
+      );
+
+      // Fade-out phase 1 elements smoothly before clip end
+      tl.to(
+        ["#badge-1", "#p1-graphics"],
+        { opacity: 0, duration: 0.35, ease: "power2.in" },
+        3.85
+      );
+
+      // === PHASE 2 (4.50s - 6.35s): CỠ MÓNG TAY ===
+      tl.fromTo(
+        "#reticle-box-el",
+        { scale: 2.2, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.45, ease: "power3.out" },
+        4.52
+      );
+
+      tl.fromTo(
+        "#badge-2",
+        { y: 35, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.5, ease: "power3.out" },
+        4.55
+      );
+
+      tl.fromTo(
+        "#p2-graphics svg",
+        { opacity: 0 },
+        { opacity: 1, duration: 0.4, ease: "power2.out" },
+        4.75
+      );
+
+      // Fade-out phase 2 before clip end
+      tl.to(
+        ["#badge-2", "#p2-graphics"],
+        { opacity: 0, duration: 0.3, ease: "power2.in" },
+        6.0
+      );
+
+      // === PHASE 3 (6.49s - 8.37s): HÀNG TỶ BÁN DẪN ===
+      tl.fromTo(
+        "#matrix-glow-el",
+        { scale: 0.4, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.45, ease: "power3.out" },
+        6.5
+      );
+
+      tl.fromTo(
+        "#badge-3",
+        { y: 40, scale: 0.95, opacity: 0 },
+        { y: 0, scale: 1, opacity: 1, duration: 0.55, ease: "power3.out" },
+        6.52
+      );
+
+      // Deterministic innerText counter: snaps to 0.1 increments from 1.0 to 15.8 (seek-safe, no locale mutation)
+      tl.fromTo(
+        "#transistor-count",
+        { innerText: 1.0 },
+        {
+          innerText: 15.8,
+          snap: { innerText: 0.1 },
+          duration: 1.35,
+          ease: "power2.out",
+        },
+        6.58
+      );
+
+      // Register the single paused GSAP timeline
+      window.__timelines["scene-s16"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

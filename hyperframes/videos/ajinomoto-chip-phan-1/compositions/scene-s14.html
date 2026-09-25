@@ -1,0 +1,603 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #E7E3D9;
+        font-family: "Be Vietnam Pro", sans-serif;
+        color: #141414;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        /* Nền giấy ngà + lưới ô vuông 84px chuẩn Vox DNA */
+        background-color: #E7E3D9;
+        background-image:
+          linear-gradient(to right, rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px),
+          linear-gradient(to bottom, rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px);
+        background-size: 84px 84px;
+      }
+      .clip {
+        position: absolute;
+        inset: 0;
+      }
+
+      /* Thanh cam nhận diện thương hiệu cố định mép đáy */
+      .brand-bottom-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 14px;
+        background-color: #FF6A1A;
+        z-index: 100;
+      }
+
+      /* ==================== 1. TIMELINE MODULE (Y: 168px -> 292px) ==================== */
+      .timeline-module {
+        position: absolute;
+        top: 168px;
+        left: 60px;
+        right: 60px;
+        height: 124px;
+        background: #141414;
+        border: 3px solid #141414;
+        box-shadow: 6px 6px 0px rgba(20, 20, 20, 0.25);
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        padding: 12px 20px 10px 20px;
+        z-index: 20;
+        will-change: transform, opacity;
+      }
+      .timeline-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .timeline-title {
+        font-size: 18px;
+        font-weight: 900;
+        letter-spacing: 2px;
+        color: #FF6A1A;
+        text-transform: uppercase;
+      }
+      .timeline-counter-badge {
+        background: #242424;
+        padding: 4px 14px;
+        border-radius: 4px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .badge-label {
+        color: #D0CCC0;
+        font-size: 17px;
+        font-weight: 700;
+      }
+      .badge-val {
+        color: #FF6A1A;
+        font-size: 22px;
+        font-weight: 900;
+        letter-spacing: 1px;
+      }
+      .timeline-axis-wrapper {
+        position: relative;
+        height: 52px;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+      }
+      .timeline-rail {
+        position: absolute;
+        top: 8px;
+        left: 30px;
+        right: 30px;
+        height: 3px;
+        background: #333333;
+        z-index: 1;
+      }
+      /* Con trỏ quét ngược thời gian (chỉ nằm ở phần rail trên, không đè lên text) */
+      .timeline-scanner {
+        position: absolute;
+        top: 0px;
+        left: 0px;
+        width: 24px;
+        height: 18px;
+        display: flex;
+        justify-content: center;
+        z-index: 4;
+        pointer-events: none;
+        will-change: transform;
+      }
+      .scanner-pointer {
+        width: 0;
+        height: 0;
+        border-left: 6px solid transparent;
+        border-right: 6px solid transparent;
+        border-top: 10px solid #FF6A1A;
+        filter: drop-shadow(0 0 6px rgba(255, 106, 26, 0.9));
+      }
+      .timeline-milestones {
+        position: relative;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        width: 100%;
+        z-index: 2;
+      }
+      .milestone-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+        width: 70px;
+        transform-origin: center bottom;
+      }
+      .milestone-tick {
+        width: 3px;
+        height: 14px;
+        background: #555555;
+      }
+      .milestone-tick.target-tick {
+        width: 4px;
+        height: 18px;
+        background: #FF6A1A;
+      }
+      .milestone-year {
+        font-size: 18px;
+        font-weight: 900;
+        color: #D0CCC0;
+        line-height: 1;
+      }
+      .milestone-year.target-year {
+        font-size: 22px;
+        color: #FF6A1A;
+      }
+
+      /* ==================== 2. HERO COLLAGE CARD (Y: 312px -> 1052px) ==================== */
+      .hero-card {
+        position: absolute;
+        top: 312px;
+        left: 60px;
+        right: 60px;
+        height: 740px;
+        background-color: #F5F0E4;
+        border: 4px solid #141414;
+        box-shadow: 10px 10px 0px #141414;
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        z-index: 10;
+        will-change: transform, opacity;
+      }
+      .tape-corner-top-left {
+        position: absolute;
+        top: -14px;
+        left: -14px;
+        width: 90px;
+        height: 32px;
+        background: rgba(220, 205, 180, 0.85);
+        border: 1px solid rgba(20, 20, 20, 0.2);
+        transform: rotate(-22deg);
+        z-index: 12;
+      }
+      .tape-corner-bottom-right {
+        position: absolute;
+        bottom: -12px;
+        right: -12px;
+        width: 90px;
+        height: 32px;
+        background: rgba(220, 205, 180, 0.85);
+        border: 1px solid rgba(20, 20, 20, 0.2);
+        transform: rotate(-18deg);
+        z-index: 12;
+      }
+      .hero-meta-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-bottom: 12px;
+        border-bottom: 2px dashed rgba(20, 20, 20, 0.25);
+      }
+      .hero-tag {
+        font-size: 19px;
+        font-weight: 900;
+        color: #141414;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+      }
+      .hero-status-pill {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: #141414;
+        color: #F7F4EC;
+        font-size: 16px;
+        font-weight: 900;
+        padding: 4px 10px;
+      }
+      .hero-status-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: #FF6A1A;
+      }
+      .hero-image-frame {
+        position: relative;
+        flex: 1;
+        margin-top: 12px;
+        overflow: hidden;
+        border: 2px solid #141414;
+        background: #000000;
+      }
+      .hero-image {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center;
+        will-change: transform;
+      }
+
+      /* ==================== 3. PUNCH-PHRASE (Y: 1076px -> 1212px) ==================== */
+      .punch-phrase-wrapper {
+        position: absolute;
+        top: 1076px;
+        left: 60px;
+        right: 60px;
+        height: 136px;
+        background: #141414;
+        border: 3px solid #141414;
+        box-shadow: 8px 8px 0px #FF6A1A;
+        padding: 14px 28px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        z-index: 30;
+        will-change: transform, opacity;
+      }
+      .punch-sub-tag {
+        font-size: 18px;
+        font-weight: 900;
+        color: #FF6A1A;
+        letter-spacing: 3px;
+        text-transform: uppercase;
+        margin-bottom: 2px;
+      }
+      .punch-main-text {
+        font-size: 64px;
+        font-weight: 900;
+        line-height: 1.15;
+        color: #F7F4EC;
+        letter-spacing: -0.5px;
+        margin: 0;
+        text-transform: uppercase;
+      }
+
+      /* ==================== 4. LABEL: BÙNG NỔ MÁY TÍNH PC (Y: 1228px -> 1346px) ==================== */
+      .label-module {
+        position: absolute;
+        top: 1228px;
+        left: 60px;
+        right: 60px;
+        height: 118px;
+        background: #FF6A1A;
+        border: 3px solid #141414;
+        box-shadow: 8px 8px 0px #141414;
+        padding: 14px 24px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        z-index: 31;
+        will-change: transform, opacity;
+      }
+      .label-left {
+        display: flex;
+        flex-direction: column;
+      }
+      .label-title {
+        font-size: 38px;
+        font-weight: 900;
+        line-height: 1.1;
+        color: #141414;
+        text-transform: uppercase;
+        letter-spacing: -0.5px;
+        margin: 0;
+      }
+      .label-sub {
+        font-size: 18px;
+        font-weight: 900;
+        color: #141414;
+        letter-spacing: 1px;
+        margin-top: 4px;
+      }
+      .label-metric-box {
+        background: #141414;
+        border: 2px solid #141414;
+        padding: 8px 16px;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+      }
+      .label-metric-val {
+        color: #FF6A1A;
+        font-size: 26px;
+        font-weight: 900;
+        line-height: 1;
+      }
+      .label-metric-lbl {
+        color: #F7F4EC;
+        font-size: 14px;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        margin-top: 3px;
+      }
+
+      /* ==================== 5. WARNING: NGHẼN KỸ THUẬT (Y: 1362px -> 1466px) ==================== */
+      .warning-module {
+        position: absolute;
+        top: 1362px;
+        left: 60px;
+        right: 60px;
+        height: 104px;
+        background: #141414;
+        border: 3px solid #FF6A1A;
+        box-shadow: 8px 8px 0px rgba(255, 106, 26, 0.4);
+        padding: 12px 24px;
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        z-index: 32;
+        will-change: transform, opacity;
+      }
+      .warning-icon-wrapper {
+        width: 56px;
+        height: 56px;
+        display: grid;
+        place-items: center;
+        flex-shrink: 0;
+      }
+      .warning-text-group {
+        display: flex;
+        flex-direction: column;
+      }
+      .warning-label {
+        font-size: 16px;
+        font-weight: 900;
+        color: #FF6A1A;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+      }
+      .warning-headline {
+        font-size: 36px;
+        font-weight: 900;
+        color: #F7F4EC;
+        line-height: 1.15;
+        letter-spacing: 0.5px;
+        margin: 0;
+        text-transform: uppercase;
+      }
+    </style>
+
+    <!-- Root composition HyperFrames: 1080x1920, 8.82s (119040ms -> 127860ms) -->
+    <div
+      id="root"
+      data-composition-id="scene-s14"
+      data-width="1080"
+      data-height="1920"
+      data-duration="8.82"
+    >
+      <!-- Clip Scene S14 -->
+      <div id="scene-s14" class="clip" data-start="0" data-duration="8.82">
+        <!-- 1. Thanh Timeline ngược thời gian -->
+        <div class="timeline-module" id="timeline-module">
+          <div class="timeline-header">
+            <span class="timeline-title">TRỤC THỜI GIAN LỊCH SỬ</span>
+            <div class="timeline-counter-badge">
+              <span class="badge-label">NĂM: </span><span id="timeline-year-val" class="badge-val">1990</span>
+            </div>
+          </div>
+          <div class="timeline-axis-wrapper">
+            <div class="timeline-rail"></div>
+            <!-- Con trỏ quét trượt từ mốc 2024 về 1990 -->
+            <div class="timeline-scanner" id="timeline-scanner">
+              <div class="scanner-pointer"></div>
+            </div>
+            <!-- Các mốc thời gian cân đối 100% trong khung -->
+            <div class="timeline-milestones">
+              <div class="milestone-item" id="m-1980">
+                <div class="milestone-tick"></div>
+                <span class="milestone-year">1980</span>
+              </div>
+              <div class="milestone-item" id="m-1990">
+                <div class="milestone-tick target-tick"></div>
+                <span class="milestone-year target-year">1990</span>
+              </div>
+              <div class="milestone-item" id="m-2000">
+                <div class="milestone-tick"></div>
+                <span class="milestone-year">2000</span>
+              </div>
+              <div class="milestone-item" id="m-2010">
+                <div class="milestone-tick"></div>
+                <span class="milestone-year">2010</span>
+              </div>
+              <div class="milestone-item" id="m-2024">
+                <div class="milestone-tick"></div>
+                <span class="milestone-year">2024</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. Hero Collage Card (img-04) -->
+        <div class="hero-card" id="hero-card">
+          <div class="tape-corner-top-left" data-layout-allow-overflow="true"></div>
+          <div class="tape-corner-bottom-right" data-layout-allow-overflow="true"></div>
+          <div class="hero-meta-bar">
+            <div class="hero-tag">TƯ LIỆU // BÙNG NỔ MÁY TÍNH CÁ NHÂN</div>
+            <div class="hero-status-pill">
+              <span class="hero-status-dot"></span>
+              <span>LỊCH SỬ</span>
+            </div>
+          </div>
+          <div class="hero-image-frame">
+            <img
+              src="assets/img-04-tech-crime-computer-microchip.jpg"
+              alt="Máy tính cá nhân thập niên 1990"
+              class="hero-image"
+              id="hero-img"
+              data-layout-allow-overflow="true"
+            />
+          </div>
+        </div>
+
+        <!-- 3. Punch Phrase: THẬP NIÊN 1990 (xuất hiện lúc t=1.68s, tương ứng 120720ms) -->
+        <div class="punch-phrase-wrapper" id="punch-phrase-box">
+          <span class="punch-sub-tag">MỐC LỊCH SỬ BẮT ĐẦU</span>
+          <h1 class="punch-main-text">THẬP NIÊN 1990</h1>
+        </div>
+
+        <!-- 4. Label: BÙNG NỔ MÁY TÍNH PC (xuất hiện lúc t=4.18s, tương ứng 123220ms) -->
+        <div class="label-module" id="label-module-box">
+          <div class="label-left">
+            <h2 class="label-title">BÙNG NỔ MÁY TÍNH PC</h2>
+            <span class="label-sub">TỐC ĐỘ XỬ LÝ TĂNG PHI MÃ</span>
+          </div>
+          <div class="label-metric-box">
+            <span class="label-metric-val">+300%</span>
+            <span class="label-metric-lbl">XUNG NHỊP / NĂM</span>
+          </div>
+        </div>
+
+        <!-- 5. Warning: NGHẼN KỸ THUẬT (xuất hiện lúc t=7.21s, tương ứng 126250ms) -->
+        <div class="warning-module" id="warning-module-box">
+          <div class="warning-icon-wrapper">
+            <!-- Icon warning dạng SVG chuẩn hình học phẳng Vox -->
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#FF6A1A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+              <line x1="12" y1="9" x2="12" y2="13"></line>
+              <circle cx="12" cy="17" r="0.8" fill="#FF6A1A"></circle>
+            </svg>
+          </div>
+          <div class="warning-text-group">
+            <span class="warning-label">CẢNH BÁO GIỚI HẠN</span>
+            <h3 class="warning-headline">NGHẼN KỸ THUẬT</h3>
+          </div>
+        </div>
+
+        <!-- Thanh cam signature Vox cố định đáy -->
+        <div class="brand-bottom-bar"></div>
+      </div>
+    </div>
+
+    <!-- GSAP Choreography Timeline -->
+    <script>
+      const tl = gsap.timeline({ paused: true });
+
+      // Trạng thái ban đầu tất định (không dùng biến template literal)
+      gsap.set("#timeline-module", { y: -40, opacity: 0 });
+      gsap.set("#hero-card", { y: 70, opacity: 0 });
+      gsap.set("#punch-phrase-box", { y: 35, opacity: 0, scale: 0.96 });
+      gsap.set("#label-module-box", { y: 30, opacity: 0 });
+      gsap.set("#warning-module-box", { y: 30, opacity: 0, scale: 0.95 });
+      // Scanner xuất phát từ vị trí cột 2024 (x = 873px)
+      gsap.set("#timeline-scanner", { x: 873 });
+
+      // 1. BEAT MỞ ĐẦU (0.0s -> 1.5s): Transition-in "rise"
+      tl.to("#timeline-module", {
+        y: 0,
+        opacity: 1,
+        duration: 0.65,
+        ease: "power3.out"
+      }, 0.1);
+
+      tl.to("#hero-card", {
+        y: 0,
+        opacity: 1,
+        duration: 0.75,
+        ease: "power3.out"
+      }, 0.15);
+
+      // Camera pan-right mượt mà xuyên suốt cảnh trên ảnh tư liệu
+      tl.fromTo("#hero-img", 
+        { scale: 1.05, x: -16 },
+        { scale: 1.10, x: 16, duration: 8.82, ease: "none" },
+        0
+      );
+
+      // Con trỏ scanner quét ngược từ mốc 2024 về cột mốc 1990 (x = 235px)
+      tl.to("#timeline-scanner", {
+        x: 235,
+        duration: 1.8,
+        ease: "power2.inOut"
+      }, 0.2);
+
+      // Bộ đếm năm tua ngược 2024 -> 1990 đồng bộ với con trỏ
+      const yearProxy = { val: 2024 };
+      const yearEl = document.getElementById("timeline-year-val");
+      tl.to(yearProxy, {
+        val: 1990,
+        duration: 1.8,
+        ease: "power2.inOut",
+        onUpdate: () => {
+          yearEl.innerText = Math.round(yearProxy.val);
+        }
+      }, 0.2);
+
+      // Khi quét đến nơi, mốc 1990 nhấn nhẹ để chốt điểm dừng
+      tl.fromTo("#m-1990", 
+        { scale: 1 },
+        { scale: 1.15, duration: 0.35, ease: "back.out(1.5)" },
+        1.85
+      );
+
+      // 2. BEAT 2 (1.68s = 120720ms - 119040ms): Punch-phrase "THẬP NIÊN 1990"
+      tl.to("#punch-phrase-box", {
+        y: 0,
+        opacity: 1,
+        scale: 1,
+        duration: 0.55,
+        ease: "power3.out"
+      }, 1.68);
+
+      // 3. BEAT 3 (4.18s = 123220ms - 119040ms): Label "BÙNG NỔ MÁY TÍNH PC"
+      tl.to("#label-module-box", {
+        y: 0,
+        opacity: 1,
+        duration: 0.5,
+        ease: "power3.out"
+      }, 4.18);
+
+      // 4. BEAT 4 (7.21s = 126250ms - 119040ms): Warning "NGHẼN KỸ THUẬT"
+      tl.to("#warning-module-box", {
+        y: 0,
+        opacity: 1,
+        scale: 1,
+        duration: 0.45,
+        ease: "power3.out"
+      }, 7.21);
+
+      // Đăng ký timeline paused vào registry của HyperFrames seek
+      window.__timelines["scene-s14"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

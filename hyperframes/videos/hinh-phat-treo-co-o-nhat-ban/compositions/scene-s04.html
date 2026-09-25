@@ -1,0 +1,523 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #E7E3D9;
+      font-family: "Be Vietnam Pro", sans-serif;
+      color: #141414;
+      -webkit-font-smoothing: antialiased;
+    }
+    #root {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #E7E3D9;
+    }
+    .clip {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+    }
+    .scene-grow-wrapper {
+      position: absolute;
+      inset: 0;
+      transform-origin: 50% 50%;
+      will-change: transform, opacity;
+    }
+    .bg-grid {
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(to right, rgba(20, 20, 20, 0.12) 1.5px, transparent 1.5px),
+        linear-gradient(to bottom, rgba(20, 20, 20, 0.12) 1.5px, transparent 1.5px);
+      background-size: 84px 84px;
+      pointer-events: none;
+    }
+    .spotlight-vignette {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at 50% 65%, transparent 35%, rgba(20, 20, 20, 0.16) 72%, rgba(20, 20, 20, 0.28) 100%);
+      pointer-events: none;
+    }
+    .vox-bottom-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 12px;
+      background-color: #FF6A1A;
+      z-index: 200;
+    }
+    #camera-rig {
+      position: absolute;
+      inset: 0;
+      transform-origin: 50% 60%;
+      will-change: transform;
+    }
+    /* Editorial Classified Header Panel - High-contrast #141414 dark card */
+    .header-panel {
+      position: absolute;
+      top: 176px;
+      left: 60px;
+      right: 60px;
+      background: #141414;
+      border-left: 8px solid #FF6A1A;
+      border-radius: 6px;
+      padding: 22px 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+      z-index: 50;
+      will-change: transform, opacity;
+    }
+    .meta-tag-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .doc-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: #242220;
+      color: #F7F4EC;
+      padding: 6px 14px;
+      border-radius: 4px;
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+    }
+    .doc-badge-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background-color: #FF6A1A;
+    }
+    .audio-monitor {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(247, 244, 236, 0.1);
+      border: 1px solid rgba(255, 106, 26, 0.5);
+      padding: 6px 14px;
+      border-radius: 4px;
+      color: #F7F4EC;
+      font-size: 17px;
+      font-weight: 700;
+      letter-spacing: 1px;
+    }
+    .audio-meter-bar {
+      width: 64px;
+      height: 8px;
+      background: rgba(247, 244, 236, 0.2);
+      border-radius: 2px;
+      overflow: hidden;
+      position: relative;
+    }
+    .audio-meter-fill {
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 25%;
+      background: #FF6A1A;
+    }
+    .punch-phrase {
+      font-size: 54px;
+      font-weight: 900;
+      line-height: 1.25;
+      color: #F7F4EC;
+      text-transform: uppercase;
+      letter-spacing: -0.5px;
+    }
+    .punch-highlight {
+      background-color: #FF6A1A;
+      color: #141414;
+      padding: 2px 14px;
+      border-radius: 4px;
+      display: inline-block;
+      font-weight: 900;
+    }
+    /* Corridor architecture & cell gate - zero CSS transform centering */
+    .corridor-cell-structure {
+      position: absolute;
+      top: 430px;
+      left: 60px;
+      width: 960px;
+      height: 1050px;
+      pointer-events: none;
+    }
+    .corridor-gate {
+      position: absolute;
+      top: 0;
+      left: 260px;
+      width: 440px;
+      height: 230px;
+      border: 5px solid #141414;
+      background: rgba(20, 20, 20, 0.95);
+      border-radius: 8px;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
+      overflow: hidden;
+    }
+    .gate-transom {
+      position: absolute;
+      inset: 12px;
+      display: flex;
+      justify-content: space-evenly;
+      background: #242220;
+    }
+    .transom-bar {
+      width: 10px;
+      height: 100%;
+      background: #141414;
+      box-shadow: 2px 0 6px rgba(0,0,0,0.5);
+    }
+    .hallway-glow {
+      position: absolute;
+      top: 230px;
+      left: 180px;
+      width: 600px;
+      height: 260px;
+      background: radial-gradient(ellipse at 50% 0%, rgba(255, 106, 26, 0.35) 0%, rgba(231, 227, 217, 0) 70%);
+      pointer-events: none;
+    }
+    /* SVG Footstep Shockwaves */
+    .sound-waves-svg {
+      position: absolute;
+      top: 130px;
+      left: 0;
+      width: 960px;
+      height: 900px;
+      pointer-events: none;
+      overflow: visible;
+    }
+    .wave-pulse {
+      fill: none;
+      stroke: #FF6A1A;
+      stroke-linecap: round;
+      opacity: 0;
+      transform-origin: 480px 100px;
+      will-change: transform, opacity;
+    }
+    /* Prisoner Silhouette (Strict Vox Cutout: Ink Black + 14px solid #ff7a1a shadow) */
+    .prisoner-silhouette-container {
+      position: absolute;
+      top: 860px;
+      left: 310px;
+      width: 460px;
+      height: 480px;
+      z-index: 30;
+      will-change: transform, opacity;
+    }
+    .prisoner-svg {
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+    }
+    .cell-floor-line {
+      position: absolute;
+      top: 1330px;
+      left: 60px;
+      right: 60px;
+      height: 3px;
+      background: #141414;
+      z-index: 20;
+    }
+    .floor-hash-container {
+      position: absolute;
+      top: 1333px;
+      left: 60px;
+      right: 60px;
+      height: 30px;
+      display: flex;
+      justify-content: space-between;
+      opacity: 0.35;
+      z-index: 20;
+    }
+    .floor-hash {
+      width: 2px;
+      height: 16px;
+      background: #141414;
+      transform: skewX(-35deg);
+    }
+    /* Distinct Overlays positioned intentionally at non-overlapping vertical tiers */
+    #overlay-label {
+      position: absolute;
+      top: 520px;
+      left: 60px;
+      right: 60px;
+      background: #141414;
+      border-left: 10px solid #FF6A1A;
+      border-radius: 6px;
+      padding: 22px 28px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+      z-index: 70;
+      opacity: 0;
+      will-change: transform, opacity;
+    }
+    .label-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+    .label-tag {
+      font-size: 19px;
+      font-weight: 700;
+      color: #FF6A1A;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+    .label-sub {
+      font-size: 17px;
+      font-weight: 700;
+      color: #E7E3D9;
+    }
+    .label-title {
+      font-size: 44px;
+      font-weight: 900;
+      color: #F7F4EC;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      line-height: 1.15;
+    }
+    #overlay-icon {
+      position: absolute;
+      top: 670px;
+      left: 60px;
+      right: 60px;
+      background: #141414;
+      border-left: 10px solid #FF6A1A;
+      border-radius: 6px;
+      padding: 22px 28px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+      z-index: 80;
+      opacity: 0;
+      will-change: transform, opacity;
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+    .guard-icon-box {
+      width: 80px;
+      height: 80px;
+      background: rgba(255, 106, 26, 0.15);
+      border: 2px solid #FF6A1A;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      flex-shrink: 0;
+    }
+    .guard-info {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .guard-status {
+      font-size: 18px;
+      font-weight: 700;
+      color: #FF6A1A;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+    .guard-title {
+      font-size: 42px;
+      font-weight: 900;
+      color: #F7F4EC;
+      text-transform: uppercase;
+      line-height: 1.15;
+    }
+    .guard-desc {
+      font-size: 20px;
+      font-weight: 700;
+      color: #E7E3D9;
+      margin-top: 2px;
+    }
+  </style>
+
+  <div id="root" data-composition-id="scene-s04" data-width="1080" data-height="1920" data-duration="8" data-start="0">
+    <div id="scene-clip" class="clip" data-start="0" data-duration="8">
+      <div id="scene-grow-wrapper" class="scene-grow-wrapper">
+        <div class="bg-grid"></div>
+        <div class="spotlight-vignette"></div>
+
+        <div id="camera-rig">
+          <header id="header-panel" class="header-panel">
+            <div class="meta-tag-row">
+              <div class="doc-badge"><span class="doc-badge-dot"></span> KHÔNG GIAN XÀ LIM • BIỆT GIAM</div>
+              <div class="audio-monitor">
+                <span>ĐỘ NHẠY:</span>
+                <div class="audio-meter-bar"><div id="audio-fill" class="audio-meter-fill"></div></div>
+                <div><span id="audio-db">18</span> dB</div>
+              </div>
+            </div>
+            <h1 class="punch-phrase">LẮNG NGHE TỪNG <span class="punch-highlight">BƯỚC CHÂN</span></h1>
+          </header>
+
+          <div class="corridor-cell-structure">
+            <div class="corridor-gate">
+              <div class="gate-transom">
+                <div class="transom-bar"></div><div class="transom-bar"></div><div class="transom-bar"></div>
+                <div class="transom-bar"></div><div class="transom-bar"></div><div class="transom-bar"></div><div class="transom-bar"></div>
+              </div>
+            </div>
+            <div class="hallway-glow"></div>
+            <svg class="sound-waves-svg" viewBox="0 0 960 900">
+              <ellipse id="wave-1a" class="wave-pulse" cx="480" cy="100" rx="140" ry="70" stroke-width="6" />
+              <ellipse id="wave-1b" class="wave-pulse" cx="480" cy="100" rx="200" ry="100" stroke-width="4" stroke-dasharray="14 10" />
+              <ellipse id="wave-2a" class="wave-pulse" cx="480" cy="100" rx="160" ry="80" stroke-width="8" />
+              <ellipse id="wave-2b" class="wave-pulse" cx="480" cy="100" rx="230" ry="115" stroke-width="5" stroke-dasharray="16 12" />
+              <ellipse id="wave-3a" class="wave-pulse" cx="480" cy="100" rx="180" ry="90" stroke-width="10" />
+              <ellipse id="wave-3b" class="wave-pulse" cx="480" cy="100" rx="260" ry="130" stroke-width="6" stroke-dasharray="18 12" />
+              <ellipse id="wave-4a" class="wave-pulse" cx="480" cy="100" rx="210" ry="105" stroke-width="12" />
+              <ellipse id="wave-4b" class="wave-pulse" cx="480" cy="100" rx="300" ry="150" stroke-width="7" stroke-dasharray="20 12" />
+            </svg>
+          </div>
+
+          <div id="prisoner-wrap" class="prisoner-silhouette-container">
+            <div id="prisoner-jitter" style="width: 100%; height: 100%; will-change: transform;">
+              <svg class="prisoner-svg" viewBox="0 0 460 480">
+                <!-- Sharp Solid Orange Shadow (+14px offset) -->
+                <g transform="translate(14, 14)" fill="#ff7a1a">
+                  <path d="M 120 460 C 90 460 70 440 85 410 L 115 280 C 125 230 155 200 200 205 L 190 190 C 170 170 175 125 210 110 C 245 95 280 110 290 145 C 295 160 290 175 280 190 C 340 210 380 260 385 330 C 390 400 360 450 315 460 Z" />
+                  <ellipse cx="140" cy="455" rx="55" ry="18" />
+                </g>
+                <!-- Ink Black Prisoner Silhouette -->
+                <g fill="#141414">
+                  <path d="M 120 460 C 90 460 70 440 85 410 L 115 280 C 125 230 155 200 200 205 L 190 190 C 170 170 175 125 210 110 C 245 95 280 110 290 145 C 295 160 290 175 280 190 C 340 210 380 260 385 330 C 390 400 360 450 315 460 Z" />
+                  <ellipse cx="140" cy="455" rx="55" ry="18" />
+                  <path d="M 180 280 C 190 230 240 230 250 280 C 240 330 190 330 180 280 Z" fill="#E7E3D9" opacity="0.15" />
+                  <path d="M 215 340 L 260 340 L 250 420 L 205 420 Z" fill="#E7E3D9" opacity="0.1" />
+                </g>
+                <path id="tension-spine" d="M 280 190 C 340 210 380 260 385 330" fill="none" stroke="#FF6A1A" stroke-width="8" stroke-linecap="round" opacity="0" />
+              </svg>
+            </div>
+          </div>
+
+          <div class="cell-floor-line"></div>
+          <div class="floor-hash-container">
+            <div class="floor-hash"></div><div class="floor-hash"></div><div class="floor-hash"></div>
+            <div class="floor-hash"></div><div class="floor-hash"></div><div class="floor-hash"></div>
+            <div class="floor-hash"></div><div class="floor-hash"></div><div class="floor-hash"></div>
+          </div>
+
+          <div id="overlay-label">
+            <div class="label-header">
+              <span class="label-tag">CHẤN ĐỘNG ÂM THANH • 0.8 HZ</span>
+              <span class="label-sub">[ HÀNH LANG A-1 ]</span>
+            </div>
+            <div class="label-title">TIẾNG GIÀY HÀNH LANG</div>
+          </div>
+
+          <div id="overlay-icon">
+            <div class="guard-icon-box">
+              <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+                <path id="guard-path" d="M 24 6 C 27.3 6 30 8.7 30 12 C 30 15.3 27.3 18 24 18 C 20.7 18 18 15.3 18 12 C 18 8.7 20.7 6 24 6 Z M 14 38 L 14 28 C 14 23.6 18.5 21 24 21 C 29.5 21 34 23.6 34 28 L 34 38 M 20 38 L 20 44 M 28 38 L 28 44" stroke="#FF6A1A" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+            </div>
+            <div class="guard-info">
+              <span class="guard-status">DẤU HIỆU ÁP SÁT • BƯỚC TUẦN TRA</span>
+              <div class="guard-title">LÍNH CANH ĐANG ĐẾN</div>
+              <div class="guard-desc">BẤT KỲ DẤU HIỆU NÀO ĐỂ ĐƯA HỌ ĐI</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="vox-bottom-bar"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const tl = gsap.timeline({ paused: true });
+
+    const guardPath = document.getElementById("guard-path");
+    if (guardPath) {
+      const len = Math.ceil(guardPath.getTotalLength() || 240);
+      guardPath.style.strokeDasharray = len + "px";
+      guardPath.style.strokeDashoffset = len + "px";
+    }
+
+    // 1. Scene Entrance (Grow animation from scale 0.6x applied on inner wrapper, NOT on .clip)
+    tl.fromTo("#scene-grow-wrapper", { scale: 0.6, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.8, ease: "power3.out" }, 0);
+
+    // 2. Slow Camera Push-In over 8.0 seconds
+    tl.to("#camera-rig", { scale: 1.07, y: -25, duration: 8.0, ease: "none" }, 0);
+
+    // 3. Header & Figure Entrance
+    tl.fromTo("#header-panel", { y: -30, opacity: 0 }, { y: 0, opacity: 1, duration: 0.7, ease: "power3.out" }, 0.3);
+    tl.fromTo("#prisoner-wrap", { scale: 0.9, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.8, ease: "power3.out" }, 0.4);
+
+    // 4. Footstep Step 1 (~1.0s)
+    tl.fromTo("#wave-1a", { scale: 0.2, opacity: 0.9 }, { scale: 2.8, opacity: 0, duration: 1.5, ease: "power2.out" }, 1.0);
+    tl.fromTo("#wave-1b", { scale: 0.2, opacity: 0.75 }, { scale: 2.4, opacity: 0, duration: 1.5, ease: "power2.out" }, 1.15);
+    tl.to("#audio-fill", { width: "42%", duration: 0.15, ease: "power1.out" }, 1.05);
+    tl.to("#audio-db", { innerText: 28, snap: { innerText: 1 }, duration: 0.15 }, 1.05);
+    tl.to("#audio-fill", { width: "25%", duration: 0.6, ease: "power2.out" }, 1.4);
+    tl.to("#audio-db", { innerText: 18, snap: { innerText: 1 }, duration: 0.6 }, 1.4);
+    tl.to("#prisoner-jitter", { y: 6, duration: 0.1, ease: "power1.in" }, 1.2);
+    tl.to("#prisoner-jitter", { y: 0, duration: 0.35, ease: "power2.out" }, 1.3);
+
+    // 5. Footstep Step 2 (~2.3s)
+    tl.fromTo("#wave-2a", { scale: 0.2, opacity: 0.95 }, { scale: 3.1, opacity: 0, duration: 1.5, ease: "power2.out" }, 2.3);
+    tl.fromTo("#wave-2b", { scale: 0.2, opacity: 0.8 }, { scale: 2.6, opacity: 0, duration: 1.5, ease: "power2.out" }, 2.45);
+    tl.to("#audio-fill", { width: "58%", duration: 0.15, ease: "power1.out" }, 2.35);
+    tl.to("#audio-db", { innerText: 36, snap: { innerText: 1 }, duration: 0.15 }, 2.35);
+    tl.to("#audio-fill", { width: "30%", duration: 0.6, ease: "power2.out" }, 2.7);
+    tl.to("#audio-db", { innerText: 20, snap: { innerText: 1 }, duration: 0.6 }, 2.7);
+    tl.to("#prisoner-jitter", { y: 8, scale: 0.98, duration: 0.1, ease: "power1.in" }, 2.5);
+    tl.to("#prisoner-jitter", { y: 0, scale: 1, duration: 0.4, ease: "power2.out" }, 2.6);
+
+    // 6. Overlay 1: TIẾNG GIÀY HÀNH LANG (atMs: 25430 -> 3.19s, hold: 1.8s -> ends at 4.99s)
+    tl.fromTo("#overlay-label", { y: 20, scale: 0.94, opacity: 0 }, { y: 0, scale: 1, opacity: 1, duration: 0.45, ease: "power3.out" }, 3.19);
+    tl.to("#overlay-label", { y: -15, opacity: 0, duration: 0.35, ease: "power2.in" }, 4.99);
+
+    // 7. Footstep Step 3 (~3.9s)
+    tl.fromTo("#wave-3a", { scale: 0.2, opacity: 1 }, { scale: 3.3, opacity: 0, duration: 1.6, ease: "power2.out" }, 3.9);
+    tl.fromTo("#wave-3b", { scale: 0.2, opacity: 0.85 }, { scale: 2.8, opacity: 0, duration: 1.6, ease: "power2.out" }, 4.05);
+    tl.fromTo("#tension-spine", { opacity: 0 }, { opacity: 1, duration: 0.2, ease: "power1.out" }, 4.1);
+    tl.to("#tension-spine", { opacity: 0, duration: 0.5, ease: "power2.out" }, 4.4);
+    tl.to("#audio-fill", { width: "74%", duration: 0.15, ease: "power1.out" }, 3.95);
+    tl.to("#audio-db", { innerText: 45, snap: { innerText: 1 }, duration: 0.15 }, 3.95);
+    tl.to("#audio-fill", { width: "35%", duration: 0.6, ease: "power2.out" }, 4.3);
+    tl.to("#audio-db", { innerText: 22, snap: { innerText: 1 }, duration: 0.6 }, 4.3);
+
+    // 8. Footstep Step 4 (~5.3s - Heavy looming arrival)
+    tl.fromTo("#wave-4a", { scale: 0.2, opacity: 1 }, { scale: 3.6, opacity: 0, duration: 1.7, ease: "power2.out" }, 5.3);
+    tl.fromTo("#wave-4b", { scale: 0.2, opacity: 0.9 }, { scale: 3.0, opacity: 0, duration: 1.7, ease: "power2.out" }, 5.45);
+    tl.to("#audio-fill", { width: "95%", duration: 0.15, ease: "power1.out" }, 5.35);
+    tl.to("#audio-db", { innerText: 58, snap: { innerText: 1 }, duration: 0.15 }, 5.35);
+    tl.to("#prisoner-jitter", { y: 10, scale: 0.97, duration: 0.12, ease: "power1.in" }, 5.45);
+    tl.to("#prisoner-jitter", { y: 2, scale: 0.99, duration: 0.6, ease: "power2.out" }, 5.57);
+
+    // 9. Overlay 2: Guard Approaching Alert (atMs: 28310 -> 6.07s, hold: 1.6s -> ends at 7.67s)
+    tl.fromTo("#overlay-icon", { y: 20, scale: 0.94, opacity: 0 }, { y: 0, scale: 1, opacity: 1, duration: 0.4, ease: "power3.out" }, 6.07);
+    if (guardPath) {
+      const len = Math.ceil(guardPath.getTotalLength() || 240);
+      tl.fromTo(guardPath, { strokeDashoffset: len }, { strokeDashoffset: 0, duration: 0.65, ease: "power2.out" }, 6.15);
+    }
+    tl.to("#overlay-icon", { y: -15, opacity: 0, duration: 0.35, ease: "power2.in" }, 7.67);
+
+    window.__timelines["scene-s04"] = tl;
+  </script>
+
+    </template>
+  </body>
+</html>

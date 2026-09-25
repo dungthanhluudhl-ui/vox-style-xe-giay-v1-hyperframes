@@ -1,0 +1,560 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+      *, *::before, *::after {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #E7E3D9;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+      .clip {
+        position: absolute;
+        inset: 0;
+      }
+
+      /* Camera Framing Rig */
+      #camera-rig {
+        position: absolute;
+        inset: 0;
+        transform-origin: 50% 50%;
+      }
+
+      /* Background: Spotlight + 84px Grid + Texture */
+      .bg-grid {
+        position: absolute;
+        inset: 0;
+        background-image:
+          linear-gradient(to right, rgba(20, 20, 20, 0.16) 1.5px, transparent 1.5px),
+          linear-gradient(to bottom, rgba(20, 20, 20, 0.16) 1.5px, transparent 1.5px);
+        background-size: 84px 84px;
+      }
+      .bg-spotlight {
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(circle at 50% 50%, rgba(231, 227, 217, 0.05) 20%, rgba(20, 20, 20, 0.45) 100%);
+        pointer-events: none;
+      }
+      .bg-texture-asset {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        opacity: 0.14;
+        mix-blend-mode: multiply;
+        filter: grayscale(100%) contrast(140%);
+        pointer-events: none;
+      }
+
+      /* Top Quote Banner */
+      #quote-card {
+        position: absolute;
+        top: 175px;
+        left: 48px;
+        right: 48px;
+        height: 145px;
+        background: #141414;
+        border-radius: 16px;
+        border: 2px solid rgba(255, 106, 26, 0.5);
+        box-shadow: 0 14px 28px rgba(0, 0, 0, 0.32);
+        padding: 18px 26px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        z-index: 20;
+      }
+      .quote-tag {
+        font-size: 14px;
+        font-weight: 900;
+        letter-spacing: 1.5px;
+        color: #FF6A1A;
+        text-transform: uppercase;
+        margin-bottom: 6px;
+      }
+      .quote-body {
+        font-size: 25px;
+        font-weight: 900;
+        line-height: 1.35;
+        color: #F7F4EC;
+      }
+
+      /* Split Arena: Side-by-side comparison */
+      #split-arena {
+        position: absolute;
+        top: 345px;
+        left: 48px;
+        right: 48px;
+        height: 1140px;
+        display: flex;
+        gap: 24px;
+        perspective: 1200px;
+        z-index: 10;
+      }
+      .split-card {
+        flex: 1;
+        position: relative;
+        background: #F5F0E4;
+        border-radius: 20px;
+        border: 2px solid #141414;
+        box-shadow: 8px 8px 0px #141414;
+        padding: 28px 24px;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+
+      /* Header Pill Inside Cards */
+      .card-pill {
+        align-self: flex-start;
+        padding: 6px 14px;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+      .card-pill-dark {
+        background: #141414;
+        color: #F7F4EC;
+      }
+      .card-pill-orange {
+        background: #FF6A1A;
+        color: #141414;
+      }
+
+      .card-title {
+        margin-top: 14px;
+        font-size: 32px;
+        font-weight: 900;
+        line-height: 1.25;
+        color: #141414;
+      }
+      .card-subtitle {
+        margin-top: 6px;
+        font-size: 17px;
+        font-weight: 700;
+        color: #333333;
+      }
+
+      /* Graphic Visual Area */
+      .graphic-container {
+        height: 580px;
+        position: relative;
+        display: grid;
+        place-items: center;
+        margin: 12px 0;
+      }
+
+      /* Silicon Graphic */
+      #silicon-visual {
+        position: relative;
+        width: 320px;
+        height: 320px;
+        display: grid;
+        place-items: center;
+      }
+      .silicon-disc {
+        width: 300px;
+        height: 300px;
+        border-radius: 50%;
+        background: radial-gradient(circle, #D8D2C4 30%, #BAB3A2 85%, #8C8675 100%);
+        border: 4px solid #141414;
+        box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.25);
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        grid-template-rows: repeat(4, 1fr);
+        gap: 6px;
+        padding: 24px;
+      }
+      .silicon-die {
+        background: rgba(20, 20, 20, 0.65);
+        border-radius: 4px;
+        border: 1px solid rgba(255, 255, 255, 0.4);
+      }
+
+      /* Ban Overlay Stamp (Left Card) */
+      #silicon-ban-stamp {
+        position: absolute;
+        top: 230px;
+        left: 8px;
+        right: 8px;
+        background: #141414;
+        border: 3.5px solid #FF6A1A;
+        box-shadow: 0 16px 36px rgba(0, 0, 0, 0.45);
+        border-radius: 14px;
+        padding: 16px 14px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        z-index: 25;
+        opacity: 0;
+      }
+      .ban-icon-svg {
+        width: 52px;
+        height: 52px;
+        flex-shrink: 0;
+      }
+      .ban-text-wrap {
+        display: flex;
+        flex-direction: column;
+      }
+      .ban-label {
+        font-size: 13px;
+        font-weight: 900;
+        color: #FF6A1A;
+        letter-spacing: 1px;
+      }
+      .ban-punch {
+        font-size: 22px;
+        font-weight: 900;
+        color: #F7F4EC;
+        line-height: 1.25;
+      }
+
+      /* ABF Visual Graphic (Microcircuit vector art with NO internal text nodes) */
+      #abf-visual {
+        position: relative;
+        width: 320px;
+        height: 320px;
+        display: grid;
+        place-items: center;
+      }
+      .abf-circuit-svg {
+        width: 310px;
+        height: 310px;
+      }
+
+      /* ABF Punch Banner (Right Card - Emerges at 5.10s) */
+      #abf-punch-card {
+        position: absolute;
+        top: 215px;
+        left: 6px;
+        right: 6px;
+        background: #141414;
+        border: 3.5px solid #FF6A1A;
+        box-shadow: 0 18px 40px rgba(255, 106, 26, 0.42);
+        border-radius: 14px;
+        padding: 18px 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        z-index: 25;
+        opacity: 0;
+      }
+      .abf-punch-tag {
+        font-size: 13px;
+        font-weight: 900;
+        color: #FF6A1A;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+      }
+      .abf-punch-headline {
+        font-size: 26px;
+        font-weight: 900;
+        color: #F7F4EC;
+        line-height: 1.25;
+      }
+      .abf-sub-highlight {
+        font-size: 14px;
+        font-weight: 700;
+        color: #FF6A1A;
+      }
+
+      /* Card Footnotes */
+      .card-status {
+        height: 75px;
+        padding: 14px 18px;
+        background: rgba(20, 20, 20, 0.08);
+        border-radius: 10px;
+        font-size: 16px;
+        font-weight: 700;
+        color: #141414;
+        display: flex;
+        align-items: center;
+      }
+
+      /* VS Pill Badge */
+      #vs-badge {
+        position: absolute;
+        top: 540px;
+        left: 50%;
+        margin-left: -36px;
+        width: 72px;
+        height: 48px;
+        background: #141414;
+        color: #FF6A1A;
+        font-size: 18px;
+        font-weight: 900;
+        display: grid;
+        place-items: center;
+        border-radius: 24px;
+        border: 2px solid #FF6A1A;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+        z-index: 30;
+      }
+
+      /* Signature Bottom Orange Bar */
+      #bottom-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 14px;
+        background: #FF6A1A;
+        z-index: 100;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s11"
+      data-width="1080"
+      data-height="1920"
+      data-duration="7.57"
+    >
+      <div id="scene-s11" class="clip" data-start="0" data-duration="7.57">
+        <div id="camera-rig">
+          <!-- Background layers -->
+          <div class="bg-grid"></div>
+          <img
+            class="bg-texture-asset"
+            src="assets/img-05-paper-cutout-supply-crisis.jpg"
+            alt="Supply Crisis Backdrop"
+          />
+          <div class="bg-spotlight"></div>
+
+          <!-- Top Statement Card -->
+          <div id="quote-card">
+            <div class="quote-tag">NGHỊCH LÝ CHUỖI CUNG ỨNG BÁN DẪN</div>
+            <div class="quote-body">"Thiếu chip không bắt nguồn từ nơi cả thế giới vẫn nghĩ..."</div>
+          </div>
+
+          <!-- Split Comparison Arena -->
+          <div id="split-arena">
+            <!-- Left Card: Silicon Wafer -->
+            <div id="card-silicon" class="split-card">
+              <div class="card-pill card-pill-dark">GIẢ THUYẾT 01</div>
+              <div class="card-title">TẤM NỀN SILICON</div>
+              <div class="card-subtitle">Silicon Wafer truyền thống</div>
+
+              <div class="graphic-container">
+                <div id="silicon-visual">
+                  <div class="silicon-disc">
+                    <div class="silicon-die"></div><div class="silicon-die"></div><div class="silicon-die"></div><div class="silicon-die"></div>
+                    <div class="silicon-die"></div><div class="silicon-die"></div><div class="silicon-die"></div><div class="silicon-die"></div>
+                    <div class="silicon-die"></div><div class="silicon-die"></div><div class="silicon-die"></div><div class="silicon-die"></div>
+                    <div class="silicon-die"></div><div class="silicon-die"></div><div class="silicon-die"></div><div class="silicon-die"></div>
+                  </div>
+                </div>
+
+                <!-- Ban Stamp Overlay (Triggers at 1.96s) -->
+                <div id="silicon-ban-stamp">
+                  <svg class="ban-icon-svg" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="30" cy="30" r="26" stroke="#FF6A1A" stroke-width="6" />
+                    <line id="ban-slash" x1="12" y1="12" x2="48" y2="48" stroke="#FF6A1A" stroke-width="6" stroke-linecap="round" />
+                  </svg>
+                  <div class="ban-text-wrap">
+                    <div class="ban-label">PHỦ ĐỊNH NGUYÊN NHÂN</div>
+                    <div class="ban-punch">KHÔNG THIẾU SILICON</div>
+                  </div>
+                </div>
+              </div>
+
+              <div id="silicon-status" class="card-status">Nguồn cung tấm silicon: ỔN ĐỊNH</div>
+            </div>
+
+            <!-- VS Badge -->
+            <div id="vs-badge">VS</div>
+
+            <!-- Right Card: ABF Substrate Film -->
+            <div id="card-abf" class="split-card">
+              <div class="card-pill card-pill-orange">THỰC TẾ CỐT LÕI</div>
+              <div class="card-title">MÀNG PHIM ABF</div>
+              <div class="card-subtitle">Ajinomoto Build-up Film</div>
+
+              <div class="graphic-container">
+                <!-- Pure vector graphics without nested text prevents layout overlap/occlusion -->
+                <div id="abf-visual">
+                  <svg class="abf-circuit-svg" viewBox="0 0 320 320" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                      <pattern id="abf-mesh" width="20" height="20" patternUnits="userSpaceOnUse">
+                        <path d="M 20 0 L 0 20 M 0 0 L 20 20" fill="none" stroke="rgba(255, 106, 26, 0.2)" stroke-width="1.2" />
+                      </pattern>
+                    </defs>
+                    <!-- Substrate base -->
+                    <rect x="8" y="8" width="304" height="304" rx="16" fill="#141414" stroke="#FF6A1A" stroke-width="3" />
+                    <rect x="20" y="20" width="280" height="280" rx="10" fill="url(#abf-mesh)" />
+
+                    <!-- Copper traces -->
+                    <path d="M 20 60 L 85 60 L 115 105" fill="none" stroke="#FF6A1A" stroke-width="2.5" stroke-linecap="round" />
+                    <path d="M 20 100 L 75 100 L 115 125" fill="none" stroke="#FF6A1A" stroke-width="2.5" stroke-linecap="round" />
+                    <path d="M 20 220 L 75 220 L 115 195" fill="none" stroke="#FF6A1A" stroke-width="2.5" stroke-linecap="round" />
+                    <path d="M 20 260 L 85 260 L 115 215" fill="none" stroke="#FF6A1A" stroke-width="2.5" stroke-linecap="round" />
+
+                    <path d="M 300 60 L 235 60 L 205 105" fill="none" stroke="#FF6A1A" stroke-width="2.5" stroke-linecap="round" />
+                    <path d="M 300 100 L 245 100 L 205 125" fill="none" stroke="#FF6A1A" stroke-width="2.5" stroke-linecap="round" />
+                    <path d="M 300 220 L 245 220 L 205 195" fill="none" stroke="#FF6A1A" stroke-width="2.5" stroke-linecap="round" />
+                    <path d="M 300 260 L 235 260 L 205 215" fill="none" stroke="#FF6A1A" stroke-width="2.5" stroke-linecap="round" />
+
+                    <path d="M 160 20 L 160 105" fill="none" stroke="#FF6A1A" stroke-width="3" stroke-linecap="round" />
+                    <path d="M 160 300 L 160 215" fill="none" stroke="#FF6A1A" stroke-width="3" stroke-linecap="round" />
+
+                    <!-- Micro-via contact pins -->
+                    <circle cx="20" cy="60" r="4" fill="#FF6A1A" />
+                    <circle cx="20" cy="100" r="4" fill="#FF6A1A" />
+                    <circle cx="20" cy="220" r="4" fill="#FF6A1A" />
+                    <circle cx="20" cy="260" r="4" fill="#FF6A1A" />
+                    <circle cx="300" cy="60" r="4" fill="#FF6A1A" />
+                    <circle cx="300" cy="100" r="4" fill="#FF6A1A" />
+                    <circle cx="300" cy="220" r="4" fill="#FF6A1A" />
+                    <circle cx="300" cy="260" r="4" fill="#FF6A1A" />
+
+                    <!-- Central Processor Die -->
+                    <rect x="110" y="105" width="100" height="110" rx="8" fill="#1C1C1C" stroke="#FF6A1A" stroke-width="2.5" />
+                    <rect x="122" y="117" width="76" height="86" rx="4" fill="#2B2B2B" stroke="rgba(255, 106, 26, 0.6)" stroke-width="1.5" />
+                    <circle cx="160" cy="160" r="14" fill="none" stroke="#FF6A1A" stroke-width="2" />
+                    <path d="M 160 148 L 160 172 M 148 160 L 172 160" stroke="#FF6A1A" stroke-width="2" stroke-linecap="round" />
+                  </svg>
+                </div>
+
+                <!-- Punch Phrase Overlay (Triggers at 5.10s) -->
+                <div id="abf-punch-card">
+                  <div class="abf-punch-tag">ĐIỂM NGHẼN BỊ BỎ QUÊN</div>
+                  <div class="abf-punch-headline">THIẾU CHẤT NỀN ABF</div>
+                  <div class="abf-sub-highlight">Độc quyền bởi Tập đoàn Ajinomoto</div>
+                </div>
+              </div>
+
+              <div id="abf-status" class="card-status">Nút thắt cổ chai: ĐỘC QUYỀN 100%</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Signature Brand Bar -->
+        <div id="bottom-bar"></div>
+      </div>
+    </div>
+
+    <script>
+      const tl = gsap.timeline({ paused: true });
+
+      // 1. Camera Subtle Push-In across scene duration (7.57s)
+      tl.fromTo(
+        "#camera-rig",
+        { scale: 1 },
+        { scale: 1.04, ease: "none", duration: 7.57 },
+        0
+      );
+
+      // 2. Entrance Flip & Staggered Reveal
+      tl.fromTo(
+        "#quote-card",
+        { y: -30, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.65, ease: "power3.out" },
+        0.15
+      );
+
+      tl.fromTo(
+        "#card-silicon",
+        { x: -45, opacity: 0, rotationY: -10 },
+        { x: 0, opacity: 1, rotationY: 0, duration: 0.7, ease: "power3.out" },
+        0.3
+      );
+
+      tl.fromTo(
+        "#card-abf",
+        { x: 45, opacity: 0, rotationY: 10 },
+        { x: 0, opacity: 1, rotationY: 0, duration: 0.7, ease: "power3.out" },
+        0.45
+      );
+
+      tl.fromTo(
+        "#vs-badge",
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.45, ease: "power3.out" },
+        0.65
+      );
+
+      // 3. Beat 1 (atMs: 100550 -> 1.96s scene time): Ban Stamp "KHÔNG THIẾU SILICON"
+      const banSlash = document.getElementById("ban-slash");
+      if (banSlash) {
+        banSlash.style.strokeDasharray = "60";
+        banSlash.style.strokeDashoffset = "60";
+      }
+
+      tl.fromTo(
+        "#silicon-ban-stamp",
+        { scale: 1.5, opacity: 0, rotation: -12 },
+        { scale: 1, opacity: 1, rotation: -5, duration: 0.35, ease: "power4.out" },
+        1.96
+      );
+
+      tl.to(
+        "#ban-slash",
+        { strokeDashoffset: 0, duration: 0.25, ease: "power2.out" },
+        1.96
+      );
+
+      tl.to(
+        "#silicon-visual",
+        { opacity: 0.35, duration: 0.4, ease: "power2.out" },
+        2.05
+      );
+
+      tl.to(
+        "#silicon-status",
+        { opacity: 0.75, backgroundColor: "rgba(20, 20, 20, 0.04)", duration: 0.4, ease: "power2.out" },
+        2.05
+      );
+
+      // 4. Beat 2 (atMs: 103690 -> 5.10s scene time): Punch Phrase "THIẾU CHẤT NỀN ABF"
+      tl.to(
+        "#card-abf",
+        {
+          borderColor: "#FF6A1A",
+          boxShadow: "0 0 32px rgba(255, 106, 26, 0.45)",
+          duration: 0.4,
+          ease: "power2.out"
+        },
+        5.10
+      );
+
+      tl.fromTo(
+        "#abf-punch-card",
+        { scale: 0.88, opacity: 0, y: 16 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.48, ease: "power3.out" },
+        5.10
+      );
+
+      tl.fromTo(
+        "#abf-visual",
+        { scale: 0.98 },
+        { scale: 1.05, duration: 0.45, ease: "power3.out" },
+        5.10
+      );
+
+      // Single paused master timeline registration
+      window.__timelines["scene-s11"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

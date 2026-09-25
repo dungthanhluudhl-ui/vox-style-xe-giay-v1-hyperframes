@@ -1,0 +1,641 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap"
+    />
+      <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+        background-color: #e7e3d9;
+        font-family: "Be Vietnam Pro", sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+      .clip {
+        position: absolute;
+        inset: 0;
+      }
+
+      /* Nền lưới 84px chuẩn Vox DNA */
+      .bg-grid {
+        position: absolute;
+        inset: 0;
+        background-color: #e7e3d9;
+        background-image:
+          linear-gradient(to right, rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px),
+          linear-gradient(to bottom, rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px);
+        background-size: 84px 84px;
+        z-index: 1;
+      }
+
+      /* Thanh cam nhận diện thương hiệu cố định mép đáy */
+      .brand-bottom-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 10px;
+        background-color: #ff6a1a;
+        z-index: 100;
+      }
+
+      /* Khung chứa toàn bộ nội dung scene */
+      #scene-container {
+        position: absolute;
+        inset: 0;
+        z-index: 2;
+      }
+
+      /* Header trên safe zone (top >= 160px) */
+      .header-tracker {
+        position: absolute;
+        top: 176px;
+        left: 80px;
+        display: inline-flex;
+        align-items: center;
+        gap: 14px;
+        background-color: #141414;
+        padding: 10px 22px;
+        border-radius: 6px;
+        box-shadow: 4px 4px 0px #ff6a1a;
+      }
+      .tracker-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background-color: #ff6a1a;
+      }
+      .tracker-text {
+        font-size: 20px;
+        font-weight: 700;
+        letter-spacing: 2px;
+        color: #f7f4ec;
+        text-transform: uppercase;
+      }
+
+      /* Overlay 1: Label ÁN TÙ CÓ THỜI HẠN */
+      #label-timed-sentence {
+        position: absolute;
+        top: 270px;
+        left: 80px;
+        display: inline-flex;
+        align-items: center;
+        background-color: #f5f0e4;
+        border: 3.5px solid #141414;
+        box-shadow: 6px 6px 0px #ff6a1a;
+        padding: 16px 28px;
+        z-index: 20;
+      }
+      .label-accent-bar {
+        width: 8px;
+        height: 36px;
+        background-color: #ff6a1a;
+        margin-right: 18px;
+        display: inline-block;
+      }
+      .label-text {
+        font-size: 38px;
+        font-weight: 900;
+        color: #141414;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+      }
+
+      /* Không gian chứa Diagram chịu ảnh hưởng của Camera Pan-Right */
+      #world {
+        position: absolute;
+        top: 420px;
+        left: 0;
+        width: 1240px;
+        height: 740px;
+        z-index: 10;
+      }
+
+      /* Song sắt trại giam tối giản bên trái (Khởi đầu bản án) */
+      #jail-bars-group {
+        position: absolute;
+        top: 40px;
+        left: 70px;
+        width: 190px;
+        height: 480px;
+        background-color: #f5f0e4;
+        border: 3px solid #141414;
+        box-shadow: 6px 6px 0px rgba(20, 20, 20, 0.25);
+        padding: 20px 18px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+      .jail-title-tag {
+        background-color: #141414;
+        color: #f7f4ec;
+        font-size: 15px;
+        font-weight: 700;
+        text-align: center;
+        padding: 6px 4px;
+        letter-spacing: 1px;
+      }
+      .bars-cage {
+        position: relative;
+        width: 100%;
+        height: 360px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .bar-line {
+        width: 12px;
+        height: 100%;
+        background-color: #141414;
+        border-radius: 3px;
+        position: relative;
+      }
+      .bar-bolt-top,
+      .bar-bolt-bottom {
+        position: absolute;
+        width: 10px;
+        height: 6px;
+        background-color: #ff6a1a;
+        left: 1px;
+      }
+      .bar-bolt-top {
+        top: 24px;
+      }
+      .bar-bolt-bottom {
+        bottom: 24px;
+      }
+
+      /* Trục thời gian ngang (Timeline Rail) */
+      .timeline-rail-bg {
+        position: absolute;
+        top: 260px;
+        left: 260px;
+        width: 680px;
+        height: 8px;
+        background-color: rgba(20, 20, 20, 0.22);
+      }
+      #timeline-rail-fill {
+        position: absolute;
+        top: 260px;
+        left: 260px;
+        width: 680px;
+        height: 8px;
+        background-color: #ff6a1a;
+        transform-origin: left center;
+      }
+
+      /* Các mốc thời gian (Timeline Nodes) */
+      .timeline-node {
+        position: absolute;
+        top: 140px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 130px;
+      }
+      .node-5 {
+        left: 290px;
+      }
+      .node-10 {
+        left: 480px;
+      }
+      .node-20 {
+        left: 670px;
+      }
+      .node-30 {
+        left: 840px;
+      }
+
+      .node-card {
+        background-color: #141414;
+        border: 2px solid #141414;
+        padding: 10px 14px;
+        border-radius: 6px;
+        box-shadow: 4px 4px 0px #ff6a1a;
+        text-align: center;
+        width: 100%;
+      }
+      .node-num {
+        font-size: 32px;
+        font-weight: 900;
+        color: #f7f4ec;
+        line-height: 1.1;
+      }
+      .node-unit {
+        font-size: 14px;
+        font-weight: 700;
+        color: #ff6a1a;
+        letter-spacing: 1.5px;
+      }
+      .node-stem {
+        width: 3px;
+        height: 54px;
+        background-color: #141414;
+        margin: 6px 0;
+      }
+      .node-pin {
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background-color: #ff6a1a;
+        border: 3px solid #141414;
+      }
+      .node-desc {
+        margin-top: 16px;
+        font-size: 16px;
+        font-weight: 700;
+        color: #141414;
+        background-color: #f5f0e4;
+        padding: 4px 8px;
+        border: 1.5px solid #141414;
+        white-space: nowrap;
+      }
+
+      /* Cánh cổng mở hé & Ánh sáng tự do ở cuối trục */
+      #freedom-gate-group {
+        position: absolute;
+        top: 20px;
+        left: 990px;
+        width: 210px;
+        height: 520px;
+      }
+      .light-beam {
+        position: absolute;
+        top: 60px;
+        left: 10px;
+        width: 180px;
+        height: 380px;
+        background: linear-gradient(90deg, rgba(255, 106, 26, 0.45) 0%, rgba(255, 248, 231, 0.05) 100%);
+        clip-path: polygon(0% 15%, 100% 0%, 100% 100%, 0% 85%);
+      }
+      .gate-frame {
+        position: absolute;
+        top: 40px;
+        left: 0;
+        width: 140px;
+        height: 420px;
+        border: 6px solid #141414;
+        border-bottom: 12px solid #141414;
+        background-color: #f5f0e4;
+      }
+      .gate-door-ajar {
+        position: absolute;
+        top: 8px;
+        left: 8px;
+        width: 100px;
+        height: 392px;
+        background-color: #e7e3d9;
+        border: 4px solid #141414;
+        transform-origin: left center;
+        box-shadow: 4px 0px 10px rgba(20, 20, 20, 0.3);
+      }
+      .gate-badge {
+        position: absolute;
+        top: 0;
+        left: 10px;
+        background-color: #ff6a1a;
+        color: #141414;
+        font-size: 22px;
+        font-weight: 900;
+        padding: 8px 18px;
+        border: 3px solid #141414;
+        box-shadow: 4px 4px 0px #141414;
+        letter-spacing: 1px;
+      }
+
+      /* Overlay 2 & 3: Punch-phrase CƠ HỘI HOÀN LƯƠNG & Icon Check */
+      #punch-phrase-container {
+        position: absolute;
+        top: 1220px;
+        left: 80px;
+        width: 920px;
+        background-color: #141414;
+        border: 4px solid #ff6a1a;
+        box-shadow: 8px 8px 0px rgba(20, 20, 20, 0.35);
+        padding: 34px 40px;
+        z-index: 30;
+      }
+      .punch-tagline {
+        font-size: 20px;
+        font-weight: 700;
+        color: #ff6a1a;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        margin-bottom: 8px;
+      }
+      .punch-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .punch-text {
+        font-size: 60px;
+        font-weight: 900;
+        color: #f7f4ec;
+        line-height: 1.15;
+        letter-spacing: 0.5px;
+      }
+
+      /* Icon check badge */
+      #icon-check-badge {
+        width: 76px;
+        height: 76px;
+        border-radius: 50%;
+        background-color: #ff6a1a;
+        border: 4px solid #141414;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        box-shadow: 3px 3px 0px #f7f4ec;
+      }
+      .check-svg {
+        width: 48px;
+        height: 48px;
+      }
+      #check-path {
+        fill: none;
+        stroke: #141414;
+        stroke-width: 6;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s20"
+      data-start="0"
+      data-width="1080"
+      data-height="1920"
+      data-duration="7.69"
+    >
+      <section id="scene-s20" class="clip" data-start="0" data-duration="7.69">
+        <div class="bg-grid"></div>
+        <div class="brand-bottom-bar"></div>
+
+        <div id="scene-container">
+          <!-- Top Safe Zone Header -->
+          <div class="header-tracker">
+            <span class="tracker-dot"></span>
+            <span class="tracker-text">HỒ SƠ TƯ PHÁP // KHUNG HÌNH PHẠT</span>
+          </div>
+
+          <!-- Overlay 1: Label ÁN TÙ CÓ THỜI HẠN (atMs: 158470 -> 1.92s) -->
+          <div id="label-timed-sentence">
+            <span class="label-accent-bar"></span>
+            <span class="label-text">ÁN TÙ CÓ THỜI HẠN</span>
+          </div>
+
+          <!-- Diagram World: Song sắt + Trục thời gian + Cánh cổng tự do -->
+          <div id="world">
+            <!-- Cụm song sắt bên trái -->
+            <div id="jail-bars-group">
+              <div class="jail-title-tag">BẮT ĐẦU THI HÀNH</div>
+              <div class="bars-cage">
+                <div class="bar-line">
+                  <div class="bar-bolt-top"></div>
+                  <div class="bar-bolt-bottom"></div>
+                </div>
+                <div class="bar-line">
+                  <div class="bar-bolt-top"></div>
+                  <div class="bar-bolt-bottom"></div>
+                </div>
+                <div class="bar-line">
+                  <div class="bar-bolt-top"></div>
+                  <div class="bar-bolt-bottom"></div>
+                </div>
+                <div class="bar-line">
+                  <div class="bar-bolt-top"></div>
+                  <div class="bar-bolt-bottom"></div>
+                </div>
+                <div class="bar-line">
+                  <div class="bar-bolt-top"></div>
+                  <div class="bar-bolt-bottom"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Đường ray trục thời gian -->
+            <div class="timeline-rail-bg"></div>
+            <div id="timeline-rail-fill"></div>
+
+            <!-- Mốc 1: 05 NĂM -->
+            <div id="node-1" class="timeline-node node-5">
+              <div class="node-card">
+                <div class="node-num">05</div>
+                <div class="node-unit">NĂM</div>
+              </div>
+              <div class="node-stem"></div>
+              <div class="node-pin"></div>
+              <div class="node-desc">VÀI NĂM</div>
+            </div>
+
+            <!-- Mốc 2: 10 NĂM -->
+            <div id="node-2" class="timeline-node node-10">
+              <div class="node-card">
+                <div class="node-num">10</div>
+                <div class="node-unit">NĂM</div>
+              </div>
+              <div class="node-stem"></div>
+              <div class="node-pin"></div>
+              <div class="node-desc">TRUNG HẠN</div>
+            </div>
+
+            <!-- Mốc 3: 20 NĂM -->
+            <div id="node-3" class="timeline-node node-20">
+              <div class="node-card">
+                <div class="node-num">20</div>
+                <div class="node-unit">NĂM</div>
+              </div>
+              <div class="node-stem"></div>
+              <div class="node-pin"></div>
+              <div class="node-desc">HAI THẬP KỶ</div>
+            </div>
+
+            <!-- Mốc 4: 30 NĂM -->
+            <div id="node-4" class="timeline-node node-30">
+              <div class="node-card">
+                <div class="node-num">30</div>
+                <div class="node-unit">NĂM</div>
+              </div>
+              <div class="node-stem"></div>
+              <div class="node-pin"></div>
+              <div class="node-desc">HỮU HẠN TỐI ĐA</div>
+            </div>
+
+            <!-- Cánh cổng tự do mở hé và ánh sáng -->
+            <div id="freedom-gate-group">
+              <div id="light-beam-glow" class="light-beam"></div>
+              <div class="gate-frame"></div>
+              <div id="gate-door" class="gate-door-ajar"></div>
+              <div id="gate-badge-label" class="gate-badge">TỰ DO</div>
+            </div>
+          </div>
+
+          <!-- Overlay 2: Punch-phrase CƠ HỘI HOÀN LƯƠNG (atMs: 161260 -> 4.71s) -->
+          <div id="punch-phrase-container">
+            <div class="punch-tagline">KẾT QUẢ CẢI TẠO TỐT</div>
+            <div class="punch-row">
+              <div class="punch-text">CƠ HỘI HOÀN LƯƠNG</div>
+              <!-- Overlay 3: Icon Check (atMs: 163450 -> 6.90s) -->
+              <div id="icon-check-badge">
+                <svg class="check-svg" viewBox="0 0 48 48">
+                  <path id="check-path" d="M12 24 L20 32 L36 16" />
+                </svg>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <script>
+      const checkPath = document.getElementById("check-path");
+      if (checkPath) {
+        const len = checkPath.getTotalLength();
+        checkPath.style.strokeDasharray = `${len}`;
+        checkPath.style.strokeDashoffset = `${len}`;
+      }
+
+      const tl = gsap.timeline({ paused: true });
+
+      // 1. Entrance Grow Animation (Transition In)
+      tl.fromTo(
+        "#scene-container",
+        { scale: 0.94, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.8, ease: "power3.out" },
+        0.05
+      );
+
+      // 2. Song sắt trại giam vươn lên
+      tl.fromTo(
+        "#jail-bars-group",
+        { scaleY: 0, opacity: 0 },
+        { scaleY: 1, opacity: 1, duration: 0.65, ease: "power3.out" },
+        0.35
+      );
+
+      // 3. Trục thời gian cam vươn dài từ trái sang phải
+      tl.fromTo(
+        "#timeline-rail-fill",
+        { scaleX: 0 },
+        { scaleX: 1, duration: 3.3, ease: "power2.inOut" },
+        0.65
+      );
+
+      // 4. Các mốc thời gian lần lượt xuất hiện
+      tl.fromTo(
+        "#node-1",
+        { scale: 0, opacity: 0, y: 20 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.5, ease: "power3.out" },
+        0.95
+      );
+
+      tl.fromTo(
+        "#node-2",
+        { scale: 0, opacity: 0, y: 20 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.5, ease: "power3.out" },
+        1.55
+      );
+
+      // 5. Overlay 1: Label ÁN TÙ CÓ THỜI HẠN (atMs: 158470 -> 1.92s)
+      tl.fromTo(
+        "#label-timed-sentence",
+        { y: -30, opacity: 0, scale: 0.92 },
+        { y: 0, opacity: 1, scale: 1, duration: 0.55, ease: "power3.out" },
+        1.92
+      );
+
+      tl.fromTo(
+        "#node-3",
+        { scale: 0, opacity: 0, y: 20 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.5, ease: "power3.out" },
+        2.35
+      );
+
+      // 6. Camera Motion: Pan nhẹ sang phải hướng về cánh cổng tự do
+      tl.to(
+        "#world",
+        { x: -140, duration: 4.8, ease: "sine.inOut" },
+        2.0
+      );
+
+      tl.fromTo(
+        "#node-4",
+        { scale: 0, opacity: 0, y: 20 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.5, ease: "power3.out" },
+        3.15
+      );
+
+      // 7. Cánh cổng tự do mở hé và tỏa sáng ở cuối trục
+      tl.fromTo(
+        "#freedom-gate-group",
+        { opacity: 0, scale: 0.88 },
+        { opacity: 1, scale: 1, duration: 0.7, ease: "power3.out" },
+        3.55
+      );
+      tl.fromTo(
+        "#gate-door",
+        { scaleX: 1 },
+        { scaleX: 0.55, duration: 0.8, ease: "power2.out" },
+        3.8
+      );
+      tl.fromTo(
+        "#light-beam-glow",
+        { opacity: 0, scaleX: 0.3 },
+        { opacity: 1, scaleX: 1, duration: 0.9, ease: "power2.out" },
+        3.9
+      );
+      tl.fromTo(
+        "#gate-badge-label",
+        { y: -16, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.45, ease: "power3.out" },
+        4.15
+      );
+
+      // 8. Overlay 2: Punch Phrase CƠ HỘI HOÀN LƯƠNG (atMs: 161260 -> 4.71s)
+      tl.fromTo(
+        "#punch-phrase-container",
+        { y: 40, opacity: 0, scale: 0.92 },
+        { y: 0, opacity: 1, scale: 1, duration: 0.65, ease: "power3.out" },
+        4.71
+      );
+
+      // 9. Overlay 3: Icon Check (atMs: 163450 -> 6.90s)
+      tl.fromTo(
+        "#icon-check-badge",
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.35, ease: "power3.out" },
+        6.90
+      );
+      tl.to(
+        "#check-path",
+        { strokeDashoffset: 0, duration: 0.4, ease: "power2.out" },
+        7.05
+      );
+
+      window.__timelines["scene-s20"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

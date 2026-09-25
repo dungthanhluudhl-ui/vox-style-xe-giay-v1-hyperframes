@@ -1,0 +1,383 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+      * { box-sizing: border-box; }
+      body {
+        margin: 0; padding: 0;
+        background-color: #e7e3d9; color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden; -webkit-font-smoothing: antialiased;
+      }
+      #root {
+        position: relative; width: 100%; height: 100%;
+        overflow: hidden; background-color: #e7e3d9;
+      }
+      .clip { position: absolute; inset: 0; }
+      .bg-grid {
+        position: absolute; inset: 0;
+        background-image:
+          linear-gradient(to right, rgba(20,20,20,0.25) 1.5px, transparent 1.5px),
+          linear-gradient(to bottom, rgba(20,20,20,0.25) 1.5px, transparent 1.5px);
+        background-size: 84px 84px; background-position: -1px -1px; pointer-events: none;
+      }
+      #camera-rig {
+        position: absolute; inset: 0;
+        transform-origin: 540px 960px; will-change: transform;
+      }
+      #bottom-accent-bar {
+        position: absolute; left: 0; right: 0; bottom: 0;
+        height: 14px; background-color: #ff6a1a; z-index: 100;
+      }
+      .technical-header {
+        position: absolute; top: 60px; left: 60px; right: 60px;
+        display: flex; justify-content: space-between; align-items: center;
+        border-bottom: 2px solid #141414; padding-bottom: 12px;
+      }
+      .tech-title { font-size: 20px; font-weight: 900; letter-spacing: 2px; text-transform: uppercase; color: #141414; }
+      .tech-tag { font-size: 15px; font-weight: 900; background-color: #141414; color: #f7f4ec; padding: 4px 12px; border-radius: 4px; letter-spacing: 1px; }
+
+      /* TẦNG 1: QUẢN GIÁO */
+      #warden-station {
+        position: absolute; top: 140px; left: 240px; width: 600px; height: 190px;
+        background-color: #f5f0e4; border: 3px solid #141414; box-shadow: 8px 8px 0px #141414;
+        display: flex; align-items: center; padding: 18px 26px; gap: 22px;
+      }
+      .warden-avatar {
+        width: 110px; height: 110px; background-color: #e7e3d9;
+        border: 2px solid #141414; display: grid; place-items: center; flex-shrink: 0;
+      }
+      .warden-info { display: flex; flex-direction: column; gap: 6px; }
+      .warden-badge {
+        font-size: 13px; font-weight: 900; background-color: #141414; color: #ff6a1a;
+        padding: 3px 10px; border-radius: 4px; letter-spacing: 1.5px; width: fit-content;
+      }
+      .warden-name { font-size: 29px; font-weight: 900; line-height: 1.2; color: #141414; }
+      .warden-action { font-size: 16px; font-weight: 700; color: #141414; }
+      #warden-signal-arm { transform-origin: 30px 90px; }
+
+      /* MẠCH DÂY KẾT NỐI */
+      #circuit-svg { position: absolute; inset: 0; pointer-events: none; z-index: 5; opacity: 0; }
+
+      /* TẦNG 2: 3 CAI NGỤC */
+      .guards-container {
+        position: absolute; top: 510px; left: 60px; right: 60px;
+        display: flex; justify-content: space-between;
+      }
+      .guard-unit { width: 290px; display: flex; flex-direction: column; align-items: center; position: relative; }
+      .guard-hand-wrapper { width: 140px; height: 125px; margin-bottom: 8px; transform-origin: 50% 100%; will-change: transform; }
+      .guard-card {
+        width: 100%; background-color: #f5f0e4; border: 3px solid #141414;
+        box-shadow: 6px 6px 0px #141414; padding: 14px 12px; text-align: center;
+      }
+      .guard-title { font-size: 20px; font-weight: 900; letter-spacing: 1px; color: #141414; margin-bottom: 5px; }
+      .guard-role {
+        font-size: 13px; font-weight: 900; background-color: #141414; color: #ff6a1a;
+        padding: 3px 10px; border-radius: 4px; display: inline-block; letter-spacing: 1px;
+      }
+
+      .button-assembly { margin-top: 16px; width: 170px; height: 110px; position: relative; display: flex; flex-direction: column; align-items: center; }
+      .button-housing {
+        position: absolute; bottom: 0; width: 160px; height: 50px; background-color: #141414;
+        border: 2px solid #141414; border-radius: 6px; display: grid; place-items: center;
+      }
+      .button-housing-label { color: #f7f4ec; font-size: 13px; font-weight: 900; letter-spacing: 1px; }
+      .button-stem { position: absolute; bottom: 40px; width: 76px; height: 26px; background-color: #8c897f; border: 2px solid #141414; }
+      .button-plunger {
+        position: absolute; bottom: 58px; width: 122px; height: 42px; background-color: #141414;
+        border: 3px solid #ff6a1a; border-radius: 12px 12px 4px 4px; box-shadow: 0 5px 0 #141414;
+        display: grid; place-items: center; will-change: transform;
+      }
+      .button-plunger-text { font-size: 16px; font-weight: 900; color: #f7f4ec; letter-spacing: 1px; }
+      .shockwave {
+        position: absolute; bottom: 60px; width: 140px; height: 56px;
+        border: 4px solid #ff6a1a; border-radius: 20px; opacity: 0; pointer-events: none;
+      }
+
+      /* TẦNG 3: BỤC SẬP */
+      #trapdoor-station {
+        position: absolute; top: 1040px; left: 140px; right: 140px;
+        background-color: #f5f0e4; border: 3px solid #141414; box-shadow: 8px 8px 0px #141414;
+        padding: 22px 30px; display: flex; flex-direction: column; align-items: center; gap: 10px;
+      }
+      .trapdoor-header { display: flex; align-items: center; gap: 16px; width: 100%; border-bottom: 2px solid #141414; padding-bottom: 10px; }
+      .trapdoor-icon-box { width: 44px; height: 44px; background-color: #ff6a1a; border: 2px solid #141414; display: grid; place-items: center; }
+      .trapdoor-title { font-size: 24px; font-weight: 900; color: #141414; letter-spacing: 1px; }
+      .trapdoor-subtitle { font-size: 14px; font-weight: 700; color: #141414; display: flex; align-items: center; gap: 8px; }
+      .trapdoor-subbadge { background-color: #141414; color: #ff6a1a; font-weight: 900; font-size: 12px; padding: 2px 8px; border-radius: 3px; }
+      .circuit-legend { width: 100%; display: flex; justify-content: space-around; margin-top: 4px; }
+      .legend-pill { display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 700; color: #141414; }
+      .legend-dot { width: 14px; height: 14px; border: 2px solid #141414; border-radius: 50%; }
+      .legend-dot.active { background-color: #ff6a1a; }
+      .legend-dot.dummy { background-color: #8c897f; }
+
+      /* OVERLAYS SHOTLIST */
+      #overlay-diffusion-label {
+        position: absolute; top: 370px; left: 0; right: 0; margin-inline: auto;
+        width: max-content; background-color: #141414; color: #f7f4ec;
+        border: 2px solid #ff6a1a; padding: 14px 34px; border-radius: 8px;
+        box-shadow: 6px 6px 0px rgba(255, 106, 26, 0.85); z-index: 50;
+        display: flex; align-items: center; gap: 12px; opacity: 0;
+      }
+      .diffusion-text { font-size: 28px; font-weight: 900; letter-spacing: 2px; }
+
+      #overlay-person-badge {
+        position: absolute; top: 440px; left: 0; right: 0; margin-inline: auto;
+        width: max-content; background-color: #141414; border: 2px solid #ff6a1a;
+        box-shadow: 6px 6px 0px #141414; padding: 10px 24px; border-radius: 30px;
+        display: flex; align-items: center; gap: 12px; z-index: 55; opacity: 0;
+      }
+      .person-badge-text { font-size: 19px; font-weight: 900; color: #f7f4ec; letter-spacing: 1px; }
+
+      /* PUNCH BANNER - ĐẶT AN TOÀN TRÊN VÙNG CAPTION (bottom banner ở y=1470px, cách đáy 450px > 391px) */
+      #punch-banner {
+        position: absolute; top: 1290px; left: 80px; right: 80px; height: auto;
+        background-color: #141414; border: 4px solid #ff6a1a; padding: 26px 24px;
+        border-radius: 8px; box-shadow: 10px 10px 0px #141414; text-align: center;
+        z-index: 60; opacity: 0; transform-origin: 50% 50%;
+      }
+      .punch-text { font-size: 56px; font-weight: 900; color: #f7f4ec; line-height: 1.15; letter-spacing: 1px; text-transform: uppercase; }
+      .punch-subtext { margin-top: 10px; font-size: 21px; font-weight: 900; color: #ff6a1a; letter-spacing: 1.5px; }
+    </style>
+
+    <div id="root" data-composition-id="scene-s09" data-width="1080" data-height="1920" data-duration="9" data-start="0">
+      <section id="scene-s09" class="clip" data-start="0" data-duration="9">
+        <div class="bg-grid"></div>
+
+        <div id="camera-rig" data-layout-allow-overflow="true">
+          <div class="technical-header">
+            <div class="tech-title">SƠ ĐỒ PHÒNG HÀNH QUYẾT // S09</div>
+            <div class="tech-tag">CƠ CHẾ KÍCH HOẠT KÉP</div>
+          </div>
+
+          <!-- TẦNG 1: QUẢN GIÁO -->
+          <div id="warden-station">
+            <div class="warden-avatar">
+              <svg width="76" height="76" viewBox="0 0 100 100" fill="none">
+                <path d="M20 40 L50 25 L80 40 L70 50 L30 50 Z" fill="#141414" stroke="#141414" stroke-width="2" />
+                <circle cx="50" cy="58" r="16" fill="#141414" />
+                <path d="M25 90 C25 72 36 68 50 68 C64 68 75 72 75 90" fill="#141414" />
+                <polygon points="50,30 54,38 46,38" fill="#FF6A1A" />
+              </svg>
+            </div>
+            <div class="warden-info">
+              <div class="warden-badge">CHỈ HUY TRỰC TIẾP</div>
+              <div class="warden-name">NGƯỜI QUẢN GIÁO</div>
+              <div class="warden-action">PHÁT HIỆU LỆNH TAY</div>
+            </div>
+            <div style="margin-left: auto; width: 70px; height: 95px; display: grid; place-items: center;">
+              <svg id="warden-signal-arm" width="70" height="95" viewBox="0 0 70 100" fill="none">
+                <path d="M20 90 L30 45 L52 20" stroke="#141414" stroke-width="10" stroke-linecap="round" />
+                <circle cx="55" cy="18" r="8" fill="#FF6A1A" />
+                <path class="signal-spark" d="M58 8 L65 3" stroke="#FF6A1A" stroke-width="3" stroke-linecap="round" />
+                <path class="signal-spark" d="M66 18 L74 18" stroke="#FF6A1A" stroke-width="3" stroke-linecap="round" />
+                <path class="signal-spark" d="M60 28 L68 34" stroke="#FF6A1A" stroke-width="3" stroke-linecap="round" />
+              </svg>
+            </div>
+          </div>
+
+          <!-- MẠCH DÂY KẾT NỐI (Chỉ hiển thị sau khi các trạm vào sân) -->
+          <svg id="circuit-svg" viewBox="0 0 1080 1920" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path id="signal-wire-1" d="M 540 330 L 540 400 L 205 400 L 205 510" stroke="#141414" stroke-width="4" stroke-dasharray="8 6" />
+            <path id="signal-wire-2" d="M 540 330 L 540 510" stroke="#141414" stroke-width="4" stroke-dasharray="8 6" />
+            <path id="signal-wire-3" d="M 540 330 L 540 400 L 875 400 L 875 510" stroke="#141414" stroke-width="4" stroke-dasharray="8 6" />
+            <circle cx="540" cy="400" r="7" fill="#FF6A1A" />
+            <circle cx="205" cy="400" r="5" fill="#141414" />
+            <circle cx="875" cy="400" r="5" fill="#141414" />
+
+            <path id="power-wire-1" d="M 205 880 L 205 970 L 400 970 L 400 1040" stroke="#141414" stroke-width="6" stroke-linecap="round" />
+            <path id="power-wire-2" d="M 540 880 L 540 1040" stroke="#141414" stroke-width="6" stroke-linecap="round" />
+            <path id="power-wire-3" d="M 875 880 L 875 970 L 680 970 L 680 1040" stroke="#141414" stroke-width="6" stroke-linecap="round" />
+
+            <path id="pulse-line-1" d="M 205 880 L 205 970 L 400 970 L 400 1040" stroke="#FF6A1A" stroke-width="8" stroke-linecap="round" stroke-dasharray="600" stroke-dashoffset="600" />
+            <path id="pulse-line-2" d="M 540 880 L 540 1040" stroke="#FF6A1A" stroke-width="8" stroke-linecap="round" stroke-dasharray="600" stroke-dashoffset="600" />
+            <path id="pulse-line-3" d="M 875 880 L 875 970 L 680 970 L 680 1040" stroke="#FF6A1A" stroke-width="8" stroke-linecap="round" stroke-dasharray="600" stroke-dashoffset="600" />
+          </svg>
+
+          <!-- TẦNG 2: 3 CAI NGỤC -->
+          <div class="guards-container">
+            <div id="guard-station-1" class="guard-unit">
+              <div class="guard-hand-wrapper">
+                <svg width="140" height="125" viewBox="0 0 140 140" fill="none">
+                  <rect x="50" y="10" width="40" height="60" rx="6" fill="#141414" />
+                  <path d="M40 70 C40 50 100 50 100 70 L95 110 C95 120 45 120 45 110 Z" fill="#141414" />
+                  <rect x="48" y="105" width="44" height="16" rx="4" fill="#FF6A1A" />
+                  <line x1="35" y1="30" x2="35" y2="60" stroke="#FF6A1A" stroke-width="3" stroke-linecap="round" />
+                  <line x1="105" y1="30" x2="105" y2="60" stroke="#FF6A1A" stroke-width="3" stroke-linecap="round" />
+                </svg>
+              </div>
+              <div class="guard-card">
+                <div class="guard-title">CAI NGỤC 01</div>
+                <div class="guard-role">VỊ TRÍ A</div>
+              </div>
+              <div class="button-assembly">
+                <div id="shock-1" class="shockwave"></div>
+                <div id="plunger-1" class="button-plunger button-cap"><span class="button-plunger-text" data-layout-allow-occlusion="true">NÚT A</span></div>
+                <div class="button-stem"></div>
+                <div class="button-housing"><span class="button-housing-label">BỘ KÍCH TỬ 01</span></div>
+              </div>
+            </div>
+
+            <div id="guard-station-2" class="guard-unit">
+              <div class="guard-hand-wrapper">
+                <svg width="140" height="125" viewBox="0 0 140 140" fill="none">
+                  <rect x="50" y="10" width="40" height="60" rx="6" fill="#141414" />
+                  <path d="M40 70 C40 50 100 50 100 70 L95 110 C95 120 45 120 45 110 Z" fill="#141414" />
+                  <rect x="48" y="105" width="44" height="16" rx="4" fill="#FF6A1A" />
+                  <line x1="35" y1="30" x2="35" y2="60" stroke="#FF6A1A" stroke-width="3" stroke-linecap="round" />
+                  <line x1="105" y1="30" x2="105" y2="60" stroke="#FF6A1A" stroke-width="3" stroke-linecap="round" />
+                </svg>
+              </div>
+              <div class="guard-card">
+                <div class="guard-title">CAI NGỤC 02</div>
+                <div class="guard-role">VỊ TRÍ B</div>
+              </div>
+              <div class="button-assembly">
+                <div id="shock-2" class="shockwave"></div>
+                <div id="plunger-2" class="button-plunger button-cap"><span class="button-plunger-text" data-layout-allow-occlusion="true">NÚT B</span></div>
+                <div class="button-stem"></div>
+                <div class="button-housing"><span class="button-housing-label">BỘ KÍCH TỬ 02</span></div>
+              </div>
+            </div>
+
+            <div id="guard-station-3" class="guard-unit">
+              <div class="guard-hand-wrapper">
+                <svg width="140" height="125" viewBox="0 0 140 140" fill="none">
+                  <rect x="50" y="10" width="40" height="60" rx="6" fill="#141414" />
+                  <path d="M40 70 C40 50 100 50 100 70 L95 110 C95 120 45 120 45 110 Z" fill="#141414" />
+                  <rect x="48" y="105" width="44" height="16" rx="4" fill="#FF6A1A" />
+                  <line x1="35" y1="30" x2="35" y2="60" stroke="#FF6A1A" stroke-width="3" stroke-linecap="round" />
+                  <line x1="105" y1="30" x2="105" y2="60" stroke="#FF6A1A" stroke-width="3" stroke-linecap="round" />
+                </svg>
+              </div>
+              <div class="guard-card">
+                <div class="guard-title">CAI NGỤC 03</div>
+                <div class="guard-role">VỊ TRÍ C</div>
+              </div>
+              <div class="button-assembly">
+                <div id="shock-3" class="shockwave"></div>
+                <div id="plunger-3" class="button-plunger button-cap"><span class="button-plunger-text" data-layout-allow-occlusion="true">NÚT C</span></div>
+                <div class="button-stem"></div>
+                <div class="button-housing"><span class="button-housing-label">BỘ KÍCH TỬ 03</span></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- TẦNG 3: BỤC SẬP -->
+          <div id="trapdoor-station">
+            <div class="trapdoor-header">
+              <div class="trapdoor-icon-box">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
+                  <path d="M13 2L3 14H12L11 22L21 10H12L13 2Z" fill="#141414" stroke="#141414" stroke-width="2" stroke-linejoin="round" />
+                </svg>
+              </div>
+              <div>
+                <div class="trapdoor-title">CƠ CẤU KÍCH HOẠT BỤC SẬP</div>
+                <div class="trapdoor-subtitle"><span class="trapdoor-subbadge">ẨN DANH 100%</span> MẠCH BẢO VỆ DANH TÍNH</div>
+              </div>
+            </div>
+            <div class="circuit-legend">
+              <div class="legend-pill"><div class="legend-dot active"></div><span>1 NÚT THẬT (KÍCH HOẠT)</span></div>
+              <div class="legend-pill"><div class="legend-dot dummy"></div><span>2 NÚT GIẢ (VÔ HIỆU)</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- OVERLAYS SHOTLIST -->
+        <div id="overlay-diffusion-label">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="#FF6A1A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+            <path d="M2 17L12 22L22 17" stroke="#FF6A1A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+            <path d="M2 12L12 17L22 12" stroke="#FF6A1A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+          <span class="diffusion-text">PHÂN TÁN TỘI LỖI</span>
+        </div>
+
+        <div id="overlay-person-badge">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <path d="M20 21V19C20 17.9391 19.5786 16.9217 18.8284 16.1716C18.0783 15.4214 17.0609 15 16 15H8C6.93913 15 5.92172 15.4214 5.17157 16.1716C4.42143 16.9217 4 17.9391 4 19V21" stroke="#F7F4EC" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+            <circle cx="12" cy="7" r="4" stroke="#FF6A1A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+          <span class="person-badge-text">3 NGƯỜI THI HÀNH</span>
+        </div>
+
+        <div id="punch-banner">
+          <div class="punch-text">ĐỒNG LOẠT NHẤN NÚT</div>
+          <div class="punch-subtext">TRIỆT TIÊU MẶC CẢM TỘI LỖI CÁ NHÂN</div>
+        </div>
+
+        <div id="bottom-accent-bar"></div>
+      </section>
+    </div>
+
+    <script>
+      const tl = gsap.timeline({ paused: true });
+
+      // Camera: zoom-in documentary 9s
+      tl.fromTo("#camera-rig", { scale: 1 }, { scale: 1.05, duration: 9.0, ease: "none" }, 0);
+
+      // Strike entrance: thiết lập tầng quản giáo
+      tl.fromTo("#warden-station", { y: -80, opacity: 0 }, { y: 0, opacity: 1, duration: 0.6, ease: "power3.out" }, 0.1);
+      tl.fromTo(".technical-header", { opacity: 0, y: -20 }, { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" }, 0.2);
+
+      // Overlay 1: "PHÂN TÁN TỘI LỖI" (atMs: 69290 -> 1.05s, hold: 1.8s đến 2.85s)
+      tl.fromTo("#overlay-diffusion-label", { scale: 0.8, opacity: 0, y: 0 }, { scale: 1, opacity: 1, y: 0, duration: 0.4, ease: "power3.out" }, 1.05);
+      tl.to("#overlay-diffusion-label", { opacity: 0, y: -16, duration: 0.3, ease: "power2.in" }, 2.85);
+
+      // 3 trạm cai ngục & bục sập xuất hiện
+      tl.fromTo(".guard-unit", { y: 60, opacity: 0 }, { y: 0, opacity: 1, duration: 0.6, stagger: 0.12, ease: "power3.out" }, 2.0);
+      tl.set(".guard-hand-wrapper", { y: -25 }, 2.0);
+      tl.fromTo("#trapdoor-station", { y: 40, opacity: 0 }, { y: 0, opacity: 1, duration: 0.6, ease: "power3.out" }, 2.4);
+
+      // Khi tất cả trạm đã xuất hiện, bật sơ đồ dây kết nối (tránh lỗi connector_orphan)
+      tl.to("#circuit-svg", { opacity: 1, duration: 0.4, ease: "power2.out" }, 2.7);
+
+      // Hiệu lệnh tay của quản giáo (3.6s - 4.4s)
+      tl.to("#warden-signal-arm", { rotation: -24, duration: 0.35, ease: "power2.out" }, 3.6);
+      tl.to("#warden-signal-arm", { rotation: 16, duration: 0.25, ease: "power3.in" }, 3.95);
+      tl.to("#warden-signal-arm", { rotation: 0, duration: 0.3, ease: "power2.out" }, 4.2);
+
+      tl.fromTo(".signal-spark", { opacity: 0, scale: 0.5 }, { opacity: 1, scale: 1.2, duration: 0.25, ease: "power2.out" }, 3.95);
+      tl.to(".signal-spark", { opacity: 0, duration: 0.3 }, 4.3);
+
+      // Tín hiệu truyền tỏa xuống 3 trạm
+      tl.fromTo("#signal-wire-1, #signal-wire-2, #signal-wire-3", { stroke: "#141414", strokeWidth: 4 }, { stroke: "#FF6A1A", strokeWidth: 6, duration: 0.4, stagger: 0.1, ease: "power2.out" }, 4.2);
+      tl.to("#signal-wire-1, #signal-wire-2, #signal-wire-3", { stroke: "#141414", strokeWidth: 4, duration: 0.5 }, 5.0);
+
+      // Bàn tay 3 cai ngục áp sát chuẩn bị dập
+      tl.to(".guard-hand-wrapper", { y: -6, duration: 0.5, stagger: 0.08, ease: "power3.out" }, 5.4);
+
+      // Overlay 2: "person" icon badge (atMs: 74430 -> 6.19s, hold: 1.4s đến 7.59s)
+      tl.fromTo("#overlay-person-badge", { scale: 0.7, opacity: 0, y: 0 }, { scale: 1, opacity: 1, y: 0, duration: 0.35, ease: "power3.out" }, 6.19);
+      tl.to("#overlay-person-badge", { opacity: 0, scale: 0.85, y: -10, duration: 0.25, ease: "power2.in" }, 7.59);
+
+      // Cú dập đồng loạt dứt khoát (7.0s - 7.3s)
+      tl.to(".guard-hand-wrapper", { y: 24, duration: 0.12, ease: "power4.in" }, 7.0);
+      tl.to(".button-cap", { y: 14, scaleY: 0.8, duration: 0.1, ease: "power4.in" }, 7.1);
+
+      // Rung chấn camera
+      tl.to("#camera-rig", { y: -8, duration: 0.04, ease: "none" }, 7.12);
+      tl.to("#camera-rig", { y: 8, duration: 0.05, ease: "none" }, 7.16);
+      tl.to("#camera-rig", { y: -4, duration: 0.05, ease: "none" }, 7.21);
+      tl.to("#camera-rig", { y: 4, duration: 0.05, ease: "none" }, 7.26);
+      tl.to("#camera-rig", { y: 0, duration: 0.06, ease: "power2.out" }, 7.31);
+
+      // Sóng xung kích & phóng tia điện về bục sập
+      tl.fromTo(".shockwave", { scale: 0.7, opacity: 1 }, { scale: 1.6, opacity: 0, duration: 0.35, ease: "power2.out" }, 7.12);
+      tl.to("#pulse-line-1, #pulse-line-2, #pulse-line-3", { strokeDashoffset: 0, duration: 0.3, ease: "power3.out" }, 7.15);
+      tl.fromTo(".trapdoor-icon-box", { backgroundColor: "#FF6A1A" }, { backgroundColor: "#141414", duration: 0.2, yoyo: true, repeat: 2 }, 7.25);
+
+      // Overlay 3: Punch-phrase "ĐỒNG LOẠT NHẤN NÚT" (atMs: 75580 -> 7.34s, hold đến 9.0s)
+      tl.fromTo("#punch-banner", { scale: 1.25, opacity: 0, y: -20 }, { scale: 1, opacity: 1, y: 0, duration: 0.38, ease: "power4.out" }, 7.34);
+
+      window.__timelines["scene-s09"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

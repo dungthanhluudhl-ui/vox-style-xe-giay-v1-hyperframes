@@ -1,0 +1,456 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap">
+      <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      background-color: #E7E3D9;
+      font-family: "Be Vietnam Pro", sans-serif;
+      overflow: hidden;
+    }
+
+    #root {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #141414;
+    }
+
+    /* Container cho hiệu ứng transitionIn: strike */
+    .strike-container {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      transform-origin: 50% 50%;
+    }
+
+    /* Lớp chứa ảnh nền img-14 */
+    .bg-layer {
+      position: absolute;
+      inset: -5%;
+      width: 110%;
+      height: 110%;
+      overflow: hidden;
+    }
+
+    .bg-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center;
+      display: block;
+      transform-origin: 50% 50%;
+    }
+
+    /* Spotlight background variant: vignette tối cảnh báo/hệ quả */
+    .vignette-spotlight {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 50% 48%, rgba(20, 20, 20, 0.25) 20%, rgba(20, 20, 20, 0.85) 100%);
+      pointer-events: none;
+    }
+
+    /* Lưới ô vuông 84px đặc trưng Vox DNA */
+    .bg-grid {
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(to right, rgba(231, 227, 217, 0.08) 1.5px, transparent 1.5px),
+        linear-gradient(to bottom, rgba(231, 227, 217, 0.08) 1.5px, transparent 1.5px);
+      background-size: 84px 84px;
+      pointer-events: none;
+    }
+
+    /* Chớp sáng tác động khi strike va đập */
+    .strike-flash {
+      position: absolute;
+      inset: 0;
+      background-color: #FFFFFF;
+      opacity: 0;
+      pointer-events: none;
+      z-index: 20;
+    }
+
+    /* Clip toàn cảnh chuẩn HyperFrames: inset 0, không set width/height cứng */
+    .clip {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 10;
+      overflow: hidden;
+    }
+
+    /* Khung định vị cho nhãn chú thích trên cao */
+    .slot-top {
+      position: absolute;
+      top: 380px;
+      left: 0;
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      pointer-events: none;
+    }
+
+    /* Các khung định vị trung tâm độc lập — mỗi overlay nằm trong 1 slot riêng */
+    .slot-center-icon {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      pointer-events: none;
+    }
+
+    .slot-center-punch {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      pointer-events: none;
+    }
+
+    /* Overlay 1: Nhãn chú thích "BÓNG MA ĐEO BÁM" */
+    .annotation-label {
+      opacity: 0;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background-color: #141414;
+      border: 3px solid #FF6A1A;
+      border-radius: 12px;
+      padding: 18px 36px;
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.7);
+    }
+
+    .label-dot {
+      width: 18px;
+      height: 18px;
+      background-color: #FF6A1A;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .label-text {
+      color: #F7F4EC;
+      font-size: 34px;
+      font-weight: 900;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      line-height: 1;
+    }
+
+    /* Overlay 2: Biểu tượng cán cân công lý (scale icon) */
+    .scale-badge {
+      opacity: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background-color: rgba(20, 20, 20, 0.94);
+      border: 4px solid #FF6A1A;
+      border-radius: 28px;
+      padding: 36px 48px 32px 48px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8), 0 0 30px rgba(255, 106, 26, 0.25);
+    }
+
+    .scale-svg {
+      width: 220px;
+      height: 200px;
+    }
+
+    .scale-caption {
+      color: #F7F4EC;
+      font-size: 26px;
+      font-weight: 900;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      margin-top: 18px;
+    }
+
+    /* Overlay 3: Huy hiệu "THƯỢNG TÔN PHÁP LUẬT" */
+    .punch-wrapper {
+      position: relative;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .punch-glow {
+      position: absolute;
+      width: 820px;
+      height: 420px;
+      background: radial-gradient(ellipse at center, rgba(255, 106, 26, 0.5) 0%, rgba(255, 106, 26, 0) 70%);
+      border-radius: 50%;
+      pointer-events: none;
+      opacity: 0;
+    }
+
+    .punch-badge {
+      opacity: 0;
+      width: 780px;
+      max-width: 780px;
+      background-color: #141414;
+      border: 5px solid #FF6A1A;
+      border-radius: 24px;
+      padding: 46px 36px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.9), 0 0 40px rgba(255, 106, 26, 0.4);
+    }
+
+    .punch-subhead {
+      color: #FF6A1A;
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+
+    .punch-title {
+      color: #F7F4EC;
+      font-size: 58px;
+      font-weight: 900;
+      line-height: 1.25;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      margin: 0;
+    }
+
+    /* Không dùng thẻ br: tách các từ trên dòng riêng bằng display block */
+    .punch-line {
+      display: block;
+    }
+
+    .punch-divider {
+      width: 120px;
+      height: 6px;
+      background-color: #FF6A1A;
+      border-radius: 3px;
+      margin-top: 24px;
+    }
+
+    /* Thanh cam đáy cố định nhận diện thương hiệu Vox DNA */
+    .bottom-orange-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 12px;
+      background-color: #FF6A1A;
+      z-index: 100;
+      pointer-events: none;
+    }
+  </style>
+
+  <div
+    id="root"
+    data-composition-id="scene-s53"
+    data-start="0"
+    data-width="1080"
+    data-height="1920"
+    data-duration="10"
+  >
+    <!-- Khung chính có transitionIn: strike -->
+    <div id="strike-container" class="strike-container">
+      <!-- Ảnh nền img-14: bóng chấn song nhà tù ngả dài trên mặt phố -->
+      <div class="bg-layer">
+        <img
+          id="bg-img"
+          class="bg-img"
+          src="assets/img-14-prison-shadow-city-crosswalk.jpg"
+          alt="Bóng chấn song sắt nhà tù trên mặt phố"
+        >
+      </div>
+
+      <!-- Spotlight vignette + Lưới Vox -->
+      <div class="vignette-spotlight"></div>
+      <div class="bg-grid"></div>
+    </div>
+
+    <!-- Hiệu ứng flash khi cú strike dập xuống -->
+    <div id="strike-flash" class="strike-flash"></div>
+
+    <!-- Clip nội dung chứa các overlay theo shotlist -->
+    <section id="scene-clip" class="clip" data-start="0" data-duration="10">
+      <!-- 1. Overlay Label: BÓNG MA ĐEO BÁM (xuất hiện tại ~2.31s, giữ 2.2s) -->
+      <div class="slot-top">
+        <div id="label-ghost" class="annotation-label">
+          <div class="label-dot"></div>
+          <span class="label-text">BÓNG MA ĐEO BÁM</span>
+        </div>
+      </div>
+
+      <!-- 2. Overlay Icon: Cán cân công lý (scale, xuất hiện tại ~5.56s, giữ 2.2s) -->
+      <div class="slot-center-icon">
+        <div id="scale-badge" class="scale-badge">
+          <svg class="scale-svg" viewBox="0 0 120 110" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <!-- Trụ đứng & Đỉnh chóp -->
+            <line x1="60" y1="20" x2="60" y2="88" stroke="#F7F4EC" stroke-width="4.5" stroke-linecap="round"/>
+            <circle cx="60" cy="18" r="6" fill="#FF6A1A"/>
+            <!-- Đòn cân ngang -->
+            <line x1="20" y1="32" x2="100" y2="32" stroke="#FF6A1A" stroke-width="4.5" stroke-linecap="round"/>
+            <!-- Dây treo & Đĩa cân bên trái -->
+            <line x1="22" y1="34" x2="12" y2="60" stroke="#F7F4EC" stroke-width="2.5"/>
+            <line x1="22" y1="34" x2="32" y2="60" stroke="#F7F4EC" stroke-width="2.5"/>
+            <path d="M8 60 Q22 70 36 60 Z" fill="#FF6A1A" stroke="#FF6A1A" stroke-width="2"/>
+            <!-- Dây treo & Đĩa cân bên phải -->
+            <line x1="98" y1="34" x2="88" y2="60" stroke="#F7F4EC" stroke-width="2.5"/>
+            <line x1="98" y1="34" x2="108" y2="60" stroke="#F7F4EC" stroke-width="2.5"/>
+            <path d="M84 60 Q98 70 112 60 Z" fill="#FF6A1A" stroke="#FF6A1A" stroke-width="2"/>
+            <!-- Đế chân cân -->
+            <line x1="40" y1="92" x2="80" y2="92" stroke="#F7F4EC" stroke-width="6" stroke-linecap="round"/>
+          </svg>
+          <div class="scale-caption">CÔNG LÝ &amp; PHÁP LUẬT</div>
+        </div>
+      </div>
+
+      <!-- 3. Punch phrase: THƯỢNG TÔN PHÁP LUẬT (xuất hiện tại ~8.85s, giữ đến hết cảnh) -->
+      <div class="slot-center-punch">
+        <div class="punch-wrapper">
+          <div id="punch-glow" class="punch-glow"></div>
+          <div id="punch-badge" class="punch-badge">
+            <span class="punch-subhead">NGUYÊN TẮC BẢO VỆ XÃ HỘI</span>
+            <h1 class="punch-title">
+              <span class="punch-line">THƯỢNG TÔN</span>
+              <span class="punch-line">PHÁP LUẬT</span>
+            </h1>
+            <div class="punch-divider"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Thanh cam đáy cố định nhận diện thương hiệu -->
+    <div class="bottom-orange-bar"></div>
+  </div>
+
+  <script>
+    // Đăng ký timeline GSAP duy nhất, seekable và deterministic
+    const tl = gsap.timeline({ paused: true });
+
+    // ==========================================
+    // 1. TransitionIn: STRIKE (0.0s -> 0.52s)
+    // Cú dập mạnh mẽ với độ giật va đập và flash chớp sáng
+    // Các mốc thời gian tuần tự không chồng chéo, endpoint tường minh
+    // ==========================================
+    tl.fromTo(
+      "#strike-container",
+      { scale: 1.16, y: -45, opacity: 0 },
+      { scale: 1.0, y: 0, opacity: 1, duration: 0.32, ease: "power4.in" },
+      0.0
+    );
+
+    // Chớp sáng va đập
+    tl.fromTo(
+      "#strike-flash",
+      { opacity: 0.75 },
+      { opacity: 0, duration: 0.30, ease: "power3.out" },
+      0.32
+    );
+
+    // Độ nảy rung chấn sau cú strike (các khoảng thời gian 0.32->0.40 và 0.40->0.52 tuần tự)
+    tl.fromTo(
+      "#strike-container",
+      { y: 0 },
+      { y: 8, duration: 0.08, ease: "power2.out" },
+      0.32
+    );
+    tl.to(
+      "#strike-container",
+      { y: 0, duration: 0.12, ease: "power2.inOut" },
+      0.40
+    );
+
+    // ==========================================
+    // 2. CameraMotion: ZOOM-OUT (0.0s -> 10.0s)
+    // Ảnh nền img-14 thu nhỏ dần đều, mở rộng góc nhìn phố thị
+    // ==========================================
+    tl.fromTo(
+      "#bg-img",
+      { scale: 1.18 },
+      { scale: 1.0, duration: 10.0, ease: "sine.out" },
+      0.0
+    );
+
+    // ==========================================
+    // 3. Overlay 1: BÓNG MA ĐEO BÁM
+    // atMs: 415550 (2.31s), holdMs: 2200 (kéo dài đến 4.51s)
+    // ==========================================
+    tl.fromTo(
+      "#label-ghost",
+      { opacity: 0, y: 30, scale: 0.92 },
+      { opacity: 1, y: 0, scale: 1.0, duration: 0.48, ease: "power3.out" },
+      2.31
+    );
+
+    tl.to(
+      "#label-ghost",
+      { opacity: 0, y: -20, duration: 0.38, ease: "power2.in" },
+      4.51
+    );
+
+    // ==========================================
+    // 4. Overlay 2: ICON SCALE (Cán cân công lý)
+    // atMs: 418800 (5.56s), holdMs: 2200 (kéo dài đến 7.76s)
+    // ==========================================
+    tl.fromTo(
+      "#scale-badge",
+      { opacity: 0, scale: 0.75, y: 20 },
+      { opacity: 1, scale: 1.0, y: 0, duration: 0.52, ease: "power3.out" },
+      5.56
+    );
+
+    tl.to(
+      "#scale-badge",
+      { opacity: 0, scale: 0.85, duration: 0.38, ease: "power2.in" },
+      7.76
+    );
+
+    // ==========================================
+    // 5. Overlay 3: PUNCH-PHRASE "THƯỢNG TÔN PHÁP LUẬT"
+    // atMs: 422090 (8.85s), holdMs: 2800 (giữ đến hết cảnh 10.0s)
+    // Huy hiệu màu cam bừng sáng ở tâm
+    // ==========================================
+    tl.fromTo(
+      "#punch-badge",
+      { opacity: 0, scale: 1.45 },
+      { opacity: 1, scale: 1.0, duration: 0.48, ease: "power4.out" },
+      8.85
+    );
+
+    // Vòng hào quang tỏa sáng bừng lên ở tâm
+    tl.fromTo(
+      "#punch-glow",
+      { opacity: 0.9, scale: 0.8 },
+      { opacity: 0, scale: 1.35, duration: 0.85, ease: "power2.out" },
+      8.90
+    );
+
+    // Gắn timeline vào registry chuẩn HyperFrames
+    window.__timelines["scene-s53"] = tl;
+  </script>
+
+    </template>
+  </body>
+</html>

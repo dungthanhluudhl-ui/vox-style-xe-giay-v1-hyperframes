@@ -1,0 +1,488 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap"
+    />
+      <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #e7e3d9;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      /* Root composition */
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: #e7e3d9;
+        /* Lưới ô vuông 84px đặc trưng Vox DNA */
+        background-image:
+          linear-gradient(to right, rgba(20, 20, 20, 0.18) 1.5px, transparent 1.5px),
+          linear-gradient(to bottom, rgba(20, 20, 20, 0.18) 1.5px, transparent 1.5px);
+        background-size: 84px 84px;
+      }
+
+      /* Scene content wrapper để animate transition-in */
+      #scene-content {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+      }
+
+      /* Zone 1: Header hồ sơ lưu trữ (y = 56px đến 112px) */
+      .dossier-header {
+        position: absolute;
+        top: 56px;
+        left: 60px;
+        right: 60px;
+        height: 56px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        z-index: 10;
+      }
+      .dossier-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        background-color: #141414;
+        color: #f7f4ec;
+        font-size: 19px;
+        font-weight: 900;
+        letter-spacing: 2px;
+        padding: 8px 18px;
+        border-radius: 6px;
+      }
+      .dossier-tag-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background-color: #ff6a1a;
+      }
+      /* ĐIỀU 18 • QUY CHẾ: giấy trên mực đen để đạt chuẩn tương phản WCAG AA cao nhất */
+      .dossier-meta {
+        display: inline-flex;
+        align-items: center;
+        background-color: #141414;
+        color: #f7f4ec;
+        font-size: 18px;
+        font-weight: 900;
+        letter-spacing: 1.5px;
+        padding: 8px 18px;
+        border-radius: 6px;
+      }
+
+      /* Zone 2: Card tài liệu chứa video (y = 132px đến 1112px, cao 980px) */
+      #document-card {
+        position: absolute;
+        left: 60px;
+        top: 132px;
+        width: 960px;
+        height: 980px;
+        background-color: #f5f0e4;
+        border: 3.5px solid #141414;
+        box-shadow: 14px 18px 0px rgba(20, 20, 20, 0.22);
+        display: flex;
+        flex-direction: column;
+        z-index: 5;
+      }
+
+      /* Header thanh tài liệu */
+      .card-header {
+        height: 64px;
+        padding: 0 22px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 2.5px solid #141414;
+        background-color: #ebe5d5;
+      }
+      .card-title {
+        font-size: 20px;
+        font-weight: 900;
+        letter-spacing: 1px;
+        color: #141414;
+      }
+      /* ĐÃ PHÊ DUYỆT NGUYỆN VỌNG: nền mực #141414, chữ giấy #F7F4EC, viền cam #FF6A1A */
+      .card-status {
+        font-size: 16px;
+        font-weight: 900;
+        color: #f7f4ec;
+        background-color: #141414;
+        border: 1.5px solid #ff6a1a;
+        padding: 6px 14px;
+        border-radius: 4px;
+        letter-spacing: 1px;
+      }
+
+      /* Khung chiếu video bên trong hồ sơ */
+      .video-viewport {
+        position: relative;
+        flex: 1;
+        margin: 14px 18px;
+        border: 2.5px solid #141414;
+        overflow: hidden;
+        background-color: #0b0f14;
+      }
+      #video-wrapper {
+        position: absolute;
+        inset: 0;
+        transform-origin: 50% 50%;
+      }
+      #video-wrapper video {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+
+      /* Footer thông tin lưu trữ của đơn */
+      .card-footer {
+        height: 72px;
+        padding: 0 22px;
+        border-top: 2.5px solid #141414;
+        background-color: #ebe5d5;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .footer-sub {
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+      }
+      .footer-row {
+        font-size: 16px;
+        font-weight: 700;
+        color: #141414;
+        line-height: 1.2;
+      }
+      .barcode-strip {
+        font-family: monospace;
+        font-size: 18px;
+        font-weight: 900;
+        letter-spacing: 3px;
+        color: #141414;
+      }
+
+      /* Zone 3: Thẻ suy ngẫm kết cảnh (y = 1140px đến 1265px) - cách xa caption zone > 300px */
+      #closing-card {
+        position: absolute;
+        left: 60px;
+        top: 1140px;
+        width: 960px;
+        height: 125px;
+        background-color: #f5f0e4;
+        border: 3px solid #141414;
+        border-left: 10px solid #ff6a1a;
+        box-shadow: 10px 12px 0px rgba(20, 20, 20, 0.2);
+        padding: 16px 24px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        z-index: 10;
+        opacity: 0;
+      }
+      .closing-label {
+        align-self: flex-start;
+        background-color: #141414;
+        color: #f7f4ec;
+        font-size: 13px;
+        font-weight: 900;
+        letter-spacing: 1.5px;
+        padding: 3px 10px;
+        border-radius: 4px;
+        margin-bottom: 8px;
+      }
+      .closing-text {
+        font-size: 22px;
+        font-weight: 700;
+        color: #141414;
+        line-height: 1.35;
+      }
+
+      /* Zone 4: Overlays (Hiệu ứng có thời gian cụ thể) */
+      /* Overlay 1: Biểu tượng Doc SVG + Nhãn thỉnh nguyện (xuất hiện 1.26s, kết thúc 3.06s) */
+      #doc-badge {
+        position: absolute;
+        top: 200px;
+        right: 84px;
+        background-color: #141414;
+        border: 3px solid #ff6a1a;
+        border-radius: 8px;
+        padding: 14px 22px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        box-shadow: 0 12px 28px rgba(0, 0, 0, 0.45);
+        z-index: 20;
+        opacity: 0;
+      }
+      #doc-svg {
+        display: block;
+        width: 42px;
+        height: 42px;
+        flex-shrink: 0;
+      }
+      #doc-svg path {
+        fill: none;
+        stroke: #ff6a1a;
+        stroke-width: 3.5;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+      .doc-badge-texts {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+      .doc-badge-title {
+        font-size: 22px;
+        font-weight: 900;
+        color: #f7f4ec;
+        letter-spacing: 1px;
+        line-height: 1.2;
+      }
+      .doc-badge-sub {
+        font-size: 15px;
+        font-weight: 700;
+        color: #f7f4ec;
+        opacity: 0.9;
+        letter-spacing: 1px;
+        line-height: 1.2;
+      }
+
+      /* Overlay 2: Con dấu phê duyệt "ÂN HUỆ CUỐI" (Punch Phrase) (xuất hiện 4.52s) */
+      #stamp-badge {
+        position: absolute;
+        top: 540px;
+        right: 84px;
+        z-index: 30;
+        opacity: 0;
+        transform-origin: 50% 50%;
+      }
+      .stamp-box {
+        background-color: #141414;
+        border: 5px solid #ff6a1a;
+        border-radius: 8px;
+        padding: 20px 32px;
+        box-shadow: 0 20px 48px rgba(0, 0, 0, 0.7);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+      .stamp-line {
+        height: 3px;
+        background-color: #ff6a1a;
+        width: 100%;
+      }
+      .stamp-text {
+        font-size: 56px;
+        font-weight: 900;
+        line-height: 1.15;
+        color: #f7f4ec;
+        letter-spacing: 3px;
+        margin: 12px 0;
+        text-align: center;
+        white-space: nowrap;
+      }
+
+      /* Thanh cam nhận diện thương hiệu cố định mép đáy */
+      #brand-bottom-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 12px;
+        background-color: #ff6a1a;
+        z-index: 100;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s15"
+      data-width="1080"
+      data-height="1920"
+      data-duration="7"
+    >
+      <div id="scene-content">
+        <!-- Zone 1: Header hồ sơ pháp lý -->
+        <div class="dossier-header">
+          <div class="dossier-tag">
+            <span class="dossier-tag-dot"></span>
+            <span>TẬP HỒ SƠ TỬ TÙ</span>
+          </div>
+          <div class="dossier-meta">ĐIỀU 18 • QUY CHẾ</div>
+        </div>
+
+        <!-- Zone 2: Document card bao bọc cảnh quay -->
+        <div id="document-card">
+          <div class="card-header">
+            <div class="card-title">MẪU 12-B: ĐƠN THỈNH NGUYỆN TRƯỚC THI HÀNH</div>
+            <div class="card-status">ĐÃ PHÊ DUYỆT NGUYỆN VỌNG</div>
+          </div>
+
+          <div class="video-viewport">
+            <div id="video-wrapper">
+              <!-- Video vid-11: người đàn ông run rẩy quỳ viết thư, trim từ 0.5s đến 7.5s (duration 7s) -->
+              <video
+                id="vid-11"
+                src="assets/vid-11-trembling-man-writing-confession.mp4"
+                muted
+                playsinline
+                data-start="0"
+                data-duration="7"
+                data-media-start="0.5"
+                data-track-index="0"
+              ></video>
+            </div>
+          </div>
+
+          <div class="card-footer">
+            <div class="footer-sub">
+              <div class="footer-row">TÌNH TRẠNG: TỰ TỔNG KẾT &amp; DI THƯ</div>
+              <div class="footer-row">ĐỐI TƯỢNG: PHẠM NHÂN ÁN TỬ</div>
+            </div>
+            <div class="barcode-strip">||| | ||||| || |||</div>
+          </div>
+        </div>
+
+        <!-- Zone 3: Thẻ suy ngẫm kết cảnh (vị trí y=1140-1265px, hoàn toàn trên vùng caption y >= 1574px) -->
+        <div id="closing-card">
+          <div class="closing-label">QUAN SÁT TƯ PHÁP</div>
+          <div class="closing-text">
+            Ranh giới giữa kỷ luật nhà tù và lòng trắc ẩn tối thiểu của con người.
+          </div>
+        </div>
+
+        <!-- Zone 4 - Overlay 1: Biểu tượng Doc + Nhãn đơn thỉnh cầu (xuất hiện 1.26s, ẩn đi 3.06s) -->
+        <div id="doc-badge">
+          <svg id="doc-svg" viewBox="0 0 48 48">
+            <path class="doc-path" d="M12 6 h16 l10 10 v26 H12 Z"></path>
+            <path class="doc-path" d="M28 6 v10 h10"></path>
+            <path class="doc-path" d="M18 24 h14"></path>
+            <path class="doc-path" d="M18 31 h14"></path>
+            <path class="doc-path" d="M18 38 h8"></path>
+          </svg>
+          <div class="doc-badge-texts">
+            <div class="doc-badge-title">ĐƠN NGUYỆN VỌNG</div>
+            <div class="doc-badge-sub">DI THƯ &amp; YÊU CẦU</div>
+          </div>
+        </div>
+
+        <!-- Zone 4 - Overlay 2: Con dấu phê duyệt "ÂN HUỆ CUỐI" (Punch Phrase) (xuất hiện 4.52s) -->
+        <div id="stamp-badge">
+          <div class="stamp-box">
+            <div class="stamp-line"></div>
+            <div class="stamp-text">ÂN HUỆ CUỐI</div>
+            <div class="stamp-line"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Thanh cam đặc trưng thương hiệu ở đáy khung hình -->
+      <div id="brand-bottom-bar"></div>
+    </div>
+
+    <script>
+      // Thiết lập stroke-dasharray cho SVG path để vẽ nét tự động
+      document.querySelectorAll(".doc-path").forEach((p) => {
+        const len = p.getTotalLength ? p.getTotalLength() : 100;
+        p.style.strokeDasharray = len;
+        p.style.strokeDashoffset = len;
+      });
+
+      // Tạo timeline GSAP tất định, paused: true theo HyperFrames contract
+      const tl = gsap.timeline({ paused: true });
+
+      // 1. Transition-in (rise): Toàn bộ nội dung trượt lên từ t=0
+      tl.fromTo(
+        "#scene-content",
+        { y: 60, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.75, ease: "power3.out" },
+        0,
+      );
+
+      // 2. Camera motion (zoom-in): Video zoom nhẹ trong suốt 7s
+      tl.fromTo(
+        "#video-wrapper",
+        { scale: 1.0 },
+        { scale: 1.06, duration: 7.0, ease: "none" },
+        0,
+      );
+
+      // 3. Overlay 1 (icon doc + nhãn đơn thỉnh cầu):
+      // Xuất hiện lúc 1.26s (118500ms - 117240ms), giữ 1.8s
+      tl.fromTo(
+        "#doc-badge",
+        { scale: 0.85, opacity: 0, x: 24 },
+        { scale: 1, opacity: 1, x: 0, duration: 0.45, ease: "power3.out" },
+        1.26,
+      );
+      // Nét vẽ icon doc
+      tl.to(
+        ".doc-path",
+        { strokeDashoffset: 0, duration: 0.5, ease: "power2.out", stagger: 0.08 },
+        1.36,
+      );
+      // Rút lui trước khi các yếu tố tiếp theo xuất hiện
+      tl.to(
+        "#doc-badge",
+        { opacity: 0, y: -14, duration: 0.35, ease: "power2.in" },
+        3.06,
+      );
+
+      // 4. Zone 3: Thẻ suy ngẫm kết cảnh xuất hiện lúc 3.2s
+      tl.fromTo(
+        "#closing-card",
+        { y: 20, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.55, ease: "power3.out" },
+        3.2,
+      );
+
+      // 5. Overlay 2 (Con dấu phê duyệt 'ÂN HUỆ CUỐI' - Punch Phrase):
+      // Đóng dấu lúc 4.52s (121760ms - 117240ms), giữ 2.2s
+      tl.fromTo(
+        "#stamp-badge",
+        { scale: 1.7, opacity: 0, rotation: 5 },
+        { scale: 1.0, opacity: 1, rotation: -2, duration: 0.3, ease: "power4.out" },
+        4.52,
+      );
+      // Phản lực rung nhẹ của thẻ tài liệu khi con dấu đóng cộp xuống
+      tl.fromTo(
+        "#document-card",
+        { y: -4 },
+        { y: 0, duration: 0.16, ease: "power2.out" },
+        4.54,
+      );
+      // Fade mượt con dấu ở cuối phân cảnh (sau 2.2s giữ)
+      tl.to(
+        "#stamp-badge",
+        { opacity: 0, duration: 0.26, ease: "power2.in" },
+        6.72,
+      );
+
+      // Đăng ký timeline chính thức vào runtime HyperFrames
+      window.__timelines = window.__timelines || {};
+      window.__timelines["scene-s15"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

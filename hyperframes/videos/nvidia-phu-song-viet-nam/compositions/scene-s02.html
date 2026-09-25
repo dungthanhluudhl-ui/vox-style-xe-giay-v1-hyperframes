@@ -1,0 +1,615 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+      *, *::before, *::after {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #E7E3D9;
+        font-family: "Be Vietnam Pro", sans-serif;
+        color: #141414;
+        -webkit-font-smoothing: antialiased;
+        overflow: hidden;
+      }
+
+      /* Khung hình 1080x1920 với lưới ô vuông 84px chuẩn Vox DNA */
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: #E7E3D9;
+        background-image:
+          linear-gradient(to right, rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px),
+          linear-gradient(to bottom, rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px);
+        background-size: 84px 84px;
+      }
+
+      /* Quy ước clip HyperFrames chuẩn inset: 0 */
+      .clip {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+      }
+
+      /* Lớp overlay layer chứa badge độc lập */
+      .overlay-layer {
+        pointer-events: none;
+        z-index: 30;
+      }
+
+      /* Dải cam chữ ký thương hiệu cố định mép đáy */
+      #bottom-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 12px;
+        background-color: #FF6A1A;
+        z-index: 100;
+        pointer-events: none;
+      }
+
+      /* Header danh mục cố định trong safe zone trên (Y >= 160px) */
+      #persistent-header {
+        position: absolute;
+        top: 175px;
+        left: 70px;
+        right: 70px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 3.5px solid #141414;
+        padding-bottom: 12px;
+        z-index: 50;
+      }
+
+      .header-tag-left {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .header-dot {
+        width: 14px;
+        height: 14px;
+        background-color: #FF6A1A;
+        border: 2.5px solid #141414;
+        border-radius: 50%;
+      }
+
+      .header-title {
+        font-weight: 900;
+        font-size: 26px;
+        letter-spacing: 2px;
+        color: #141414;
+        text-transform: uppercase;
+      }
+
+      .header-date {
+        font-weight: 700;
+        font-size: 22px;
+        color: #141414;
+        letter-spacing: 1px;
+      }
+
+      /* Khung thẻ ảnh Collage phong cách báo chí Vox */
+      .photo-card {
+        position: absolute;
+        left: 70px;
+        top: 240px;
+        width: 940px;
+        height: 1000px;
+        background-color: #F5F0E4;
+        border: 4px solid #141414;
+        border-radius: 8px;
+        padding: 14px;
+        box-shadow: 14px 16px 0 rgba(20, 20, 20, 0.22);
+        z-index: 10;
+        transform-origin: 50% 50%;
+      }
+
+      .card-inner {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        border: 2px solid #141414;
+        border-radius: 4px;
+        background-color: #141414;
+      }
+
+      .card-inner img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center 30%;
+        will-change: transform;
+      }
+
+      /* Băng dán ghi chú phong cách thủ công */
+      .card-tape {
+        position: absolute;
+        bottom: -20px;
+        right: 40px;
+        background-color: #141414;
+        color: #F7F4EC;
+        font-weight: 900;
+        font-size: 24px;
+        letter-spacing: 2px;
+        padding: 8px 22px;
+        border: 3px solid #141414;
+        box-shadow: 4px 4px 0 rgba(20, 20, 20, 0.2);
+        z-index: 20;
+      }
+
+      .card-tape.tape-orange {
+        background-color: #FF6A1A;
+        color: #141414;
+      }
+
+      /* Overlay 1: Nhãn HÀ NỘI 12/2024 */
+      #badge-hanoi-box {
+        position: absolute;
+        top: 280px;
+        left: 95px;
+        background-color: #141414;
+        color: #F7F4EC;
+        padding: 14px 26px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        box-shadow: 8px 8px 0 rgba(20, 20, 20, 0.25);
+        pointer-events: auto;
+      }
+
+      .badge-dot {
+        width: 14px;
+        height: 14px;
+        background-color: #FF6A1A;
+        border-radius: 50%;
+      }
+
+      .badge-text {
+        font-weight: 900;
+        font-size: 32px;
+        letter-spacing: 2px;
+        color: #F7F4EC;
+      }
+
+      /* Overlay 2: Biểu tượng Pin bản đồ + địa điểm (nền #141414 tương phản cao) */
+      #pin-overlay-box {
+        position: absolute;
+        top: 380px;
+        left: 95px;
+        background-color: #141414;
+        border: 3.5px solid #FF6A1A;
+        border-radius: 8px;
+        padding: 12px 24px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        box-shadow: 8px 8px 0 rgba(20, 20, 20, 0.3);
+        pointer-events: auto;
+      }
+
+      .pin-info {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .pin-label {
+        font-weight: 900;
+        font-size: 18px;
+        color: #FF6A1A;
+        letter-spacing: 2px;
+      }
+
+      .pin-sub {
+        font-weight: 900;
+        font-size: 26px;
+        color: #F7F4EC;
+        letter-spacing: 1px;
+      }
+
+      /* Overlay 3: Nhãn phủ định KHÔNG PHÒNG LẠNH */
+      #khongphonglanh-box {
+        position: absolute;
+        top: 1290px;
+        left: 70px;
+        right: 70px;
+        background-color: #141414;
+        border: 4px solid #FF6A1A;
+        border-radius: 12px;
+        padding: 22px 30px;
+        box-shadow: 12px 14px 0 rgba(20, 20, 20, 0.35);
+        pointer-events: auto;
+      }
+
+      .stamp-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 6px;
+      }
+
+      .stamp-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 26px;
+        height: 26px;
+        background-color: #FF6A1A;
+        color: #141414;
+        font-weight: 900;
+        font-size: 16px;
+        border-radius: 4px;
+      }
+
+      .stamp-tag {
+        font-weight: 900;
+        font-size: 20px;
+        color: #FF6A1A;
+        letter-spacing: 2px;
+      }
+
+      .stamp-main {
+        position: relative;
+        display: inline-block;
+      }
+
+      .stamp-title {
+        font-weight: 900;
+        font-size: 48px;
+        line-height: 1.15;
+        color: #F7F4EC;
+        letter-spacing: 2px;
+      }
+
+      .strike-line {
+        position: absolute;
+        left: -6px;
+        right: -6px;
+        top: 52%;
+        height: 6px;
+        background-color: #FF6A1A;
+        transform-origin: left center;
+      }
+
+      .stamp-desc {
+        margin-top: 8px;
+        font-weight: 700;
+        font-size: 20px;
+        color: #FF6A1A;
+        letter-spacing: 1px;
+      }
+
+      /* Overlay 4: VỈA HÈ BÌNH DÂN (Shot 2) */
+      #badge-viahe-box {
+        position: absolute;
+        top: 280px;
+        left: 95px;
+        background-color: #FF6A1A;
+        border: 3.5px solid #141414;
+        border-radius: 8px;
+        padding: 16px 28px;
+        box-shadow: 8px 8px 0 #141414;
+        pointer-events: auto;
+      }
+
+      .viahe-main {
+        font-weight: 900;
+        font-size: 42px;
+        color: #141414;
+        letter-spacing: 2px;
+      }
+
+      .viahe-sub {
+        font-weight: 700;
+        font-size: 20px;
+        color: #141414;
+        margin-top: 4px;
+        letter-spacing: 1px;
+      }
+
+      /* Overlay 5: Biểu tượng CROWD + CÙNG NGƯỜI DÂN (Shot 2) */
+      #crowd-box {
+        position: absolute;
+        top: 1290px;
+        left: 70px;
+        right: 70px;
+        background-color: #141414;
+        border: 3.5px solid #FF6A1A;
+        border-radius: 12px;
+        padding: 20px 28px;
+        display: flex;
+        align-items: center;
+        gap: 24px;
+        box-shadow: 12px 14px 0 rgba(20, 20, 20, 0.3);
+        pointer-events: auto;
+      }
+
+      .crowd-text-col {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .crowd-title {
+        font-weight: 900;
+        font-size: 44px;
+        color: #F7F4EC;
+        letter-spacing: 2px;
+      }
+
+      .crowd-sub {
+        font-weight: 700;
+        font-size: 20px;
+        color: #FF6A1A;
+        letter-spacing: 1px;
+        margin-top: 4px;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s02"
+      data-width="1080"
+      data-height="1920"
+      data-duration="10.92"
+    >
+      <!-- Header thông tin cố định xuyên suốt cảnh -->
+      <header id="persistent-header">
+        <div class="header-tag-left">
+          <span class="header-dot"></span>
+          <span class="header-title">HỒ SƠ // ĐỜI THƯỜNG</span>
+        </div>
+        <span class="header-date">HÀ NỘI 12/2024</span>
+      </header>
+
+      <!-- SHOT 1 (0.00s - 6.95s): Trung cảnh peel-in, camera pan-left -->
+      <section id="shot-1" class="clip" data-start="0" data-duration="6.95" data-track-index="0">
+        <div id="card-1" class="photo-card">
+          <div class="card-inner">
+            <img id="img-1" src="assets/img-05-jensen-huang-hanoi-beer.jpg" alt="Jensen Huang uống bia hơi Hà Nội" />
+          </div>
+          <div class="card-tape">BIA HƠI HÀ NỘI</div>
+        </div>
+      </section>
+
+      <!-- OVERLAY 1 (0.34s - 2.54s, hold 2.20s): HÀ NỘI 12/2024 -->
+      <div id="clip-hanoi" class="clip overlay-layer" data-start="0.34" data-duration="2.20" data-track-index="1">
+        <div id="badge-hanoi-box">
+          <span class="badge-dot"></span>
+          <span class="badge-text">HÀ NỘI 12/2024</span>
+        </div>
+      </div>
+
+      <!-- OVERLAY 2 (2.86s - 4.66s, hold 1.80s): Icon Pin địa điểm -->
+      <div id="clip-pin" class="clip overlay-layer" data-start="2.86" data-duration="1.80" data-track-index="1">
+        <div id="pin-overlay-box">
+          <svg viewBox="0 0 48 48" width="46" height="46" fill="none">
+            <path id="pin-path" d="M24 6 C17 6 11 12 11 19 C11 28 24 42 24 42 C24 42 37 28 37 19 C37 12 31 6 24 6 Z" fill="none" stroke="#FF6A1A" stroke-width="3.5" stroke-linejoin="round"/>
+            <circle cx="24" cy="19" r="4.5" fill="#FF6A1A" stroke="#141414" stroke-width="2"/>
+          </svg>
+          <div class="pin-info">
+            <div class="pin-label">ĐỊA ĐIỂM</div>
+            <div class="pin-sub">PHỐ CỔ HÀ NỘI</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- OVERLAY 3 (4.85s - 6.85s, hold 2.00s): Nhãn phủ định KHÔNG PHÒNG LẠNH -->
+      <div id="clip-khongphonglanh" class="clip overlay-layer" data-start="4.85" data-duration="2.00" data-track-index="1">
+        <div id="khongphonglanh-box">
+          <div class="stamp-header">
+            <span class="stamp-icon">✕</span>
+            <span class="stamp-tag">PHỦ ĐỊNH HÌNH THỨC</span>
+          </div>
+          <div class="stamp-main">
+            <span class="stamp-title">KHÔNG PHÒNG LẠNH</span>
+            <div id="strike-line" class="strike-line"></div>
+          </div>
+          <div class="stamp-desc">KHÔNG HỌP KÍN • KHÔNG MÁY LẠNH</div>
+        </div>
+      </div>
+
+      <!-- SHOT 2 (6.95s - 10.92s): Hard cut cận cảnh, zoom-in cụng ly -->
+      <section id="shot-2" class="clip" data-start="6.95" data-duration="3.97" data-track-index="0">
+        <div id="card-2" class="photo-card">
+          <div class="card-inner">
+            <img id="img-2" src="assets/img-05-jensen-huang-hanoi-beer.jpg" alt="Cận cảnh Jensen Huang cụng ly bia" />
+          </div>
+          <div class="card-tape tape-orange">GHẾ NHỰA VỈA HÈ</div>
+        </div>
+      </section>
+
+      <!-- OVERLAY 4 (7.58s - 9.38s, hold 1.80s): VỈA HÈ BÌNH DÂN -->
+      <div id="clip-viahe" class="clip overlay-layer" data-start="7.58" data-duration="1.80" data-track-index="1">
+        <div id="badge-viahe-box">
+          <div class="viahe-main">VỈA HÈ BÌNH DÂN</div>
+          <div class="viahe-sub">CỤNG LY BIA HƠI // ĐỜI THƯỜNG</div>
+        </div>
+      </div>
+
+      <!-- OVERLAY 5 (9.41s - 10.92s, hold 1.51s): Icon CROWD + CÙNG NGƯỜI DÂN -->
+      <div id="clip-crowd" class="clip overlay-layer" data-start="9.41" data-duration="1.51" data-track-index="1">
+        <div id="crowd-box">
+          <svg id="crowd-svg" viewBox="0 0 64 48" width="64" height="48" fill="none">
+            <!-- Center person -->
+            <circle cx="32" cy="14" r="7" fill="#FF6A1A" stroke="#141414" stroke-width="2.5"/>
+            <path class="crowd-stroke" d="M19 40 C19 29 45 29 45 40" stroke="#FF6A1A" stroke-width="4.5" stroke-linecap="round"/>
+            <!-- Left person -->
+            <circle cx="16" cy="18" r="5.5" fill="#F7F4EC" stroke="#141414" stroke-width="2"/>
+            <path class="crowd-stroke" d="M7 40 C7 32 23 32 25 40" stroke="#F7F4EC" stroke-width="3.5" stroke-linecap="round"/>
+            <!-- Right person -->
+            <circle cx="48" cy="18" r="5.5" fill="#F7F4EC" stroke="#141414" stroke-width="2"/>
+            <path class="crowd-stroke" d="M39 40 C41 32 57 32 57 40" stroke="#F7F4EC" stroke-width="3.5" stroke-linecap="round"/>
+          </svg>
+          <div class="crowd-text-col">
+            <div class="crowd-title">CÙNG NGƯỜI DÂN</div>
+            <div class="crowd-sub">CHỤP ẢNH • CHIA SẺ KHOẢNH KHẮC</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Dải cam cố định mép đáy -->
+      <div id="bottom-bar"></div>
+    </div>
+
+    <!-- GSAP seekable timeline script -->
+    <script>
+      const tl = gsap.timeline({ paused: true });
+
+      // === SETUP SVG STROKE PATH DRAW ===
+      const pinPath = document.getElementById("pin-path");
+      let pinLen = 120;
+      if (pinPath) {
+        pinLen = Math.ceil(pinPath.getTotalLength ? pinPath.getTotalLength() : 120);
+        pinPath.style.strokeDasharray = String(pinLen);
+        pinPath.style.strokeDashoffset = String(pinLen);
+      }
+
+      const crowdStrokes = document.querySelectorAll(".crowd-stroke");
+      const crowdLengths = [];
+      crowdStrokes.forEach((stroke, i) => {
+        const len = Math.ceil(stroke.getTotalLength ? stroke.getTotalLength() : 80);
+        crowdLengths[i] = len;
+        stroke.style.strokeDasharray = String(len);
+        stroke.style.strokeDashoffset = String(len);
+      });
+
+      // === SHOT 1 (0.00s -> 6.95s) ===
+      // Peel entrance: như dán miếng sticker ảnh xuống phố
+      tl.fromTo(
+        "#card-1",
+        { rotation: -5, scale: 0.9, y: -60, opacity: 0 },
+        { rotation: 0, scale: 1, y: 0, opacity: 1, duration: 0.7, ease: "power3.out" },
+        0.0
+      );
+
+      // Camera pan-left nhẹ qua hình ảnh trong Shot 1
+      tl.fromTo(
+        "#img-1",
+        { x: 30, scale: 1.05 },
+        { x: -30, scale: 1.05, duration: 6.95, ease: "none" },
+        0.0
+      );
+
+      // Overlay 1: HÀ NỘI 12/2024 (at 0.34s, hold 2.20s -> 2.54s)
+      tl.fromTo(
+        "#badge-hanoi-box",
+        { scale: 0.8, opacity: 0, y: -20 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.45, ease: "power3.out" },
+        0.34
+      );
+      tl.to(
+        "#badge-hanoi-box",
+        { opacity: 0, y: -15, duration: 0.25, ease: "power2.in" },
+        2.25
+      );
+
+      // Overlay 2: Icon pin vẽ nét (at 2.86s, hold 1.80s -> 4.66s)
+      tl.fromTo(
+        "#pin-overlay-box",
+        { scale: 0.8, opacity: 0, y: -20 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.45, ease: "power3.out" },
+        2.86
+      );
+      if (pinPath) {
+        tl.fromTo(
+          pinPath,
+          { strokeDashoffset: pinLen },
+          { strokeDashoffset: 0, duration: 0.5, ease: "power2.out" },
+          2.90
+        );
+      }
+      tl.to(
+        "#pin-overlay-box",
+        { opacity: 0, scale: 0.9, duration: 0.25, ease: "power2.in" },
+        4.35
+      );
+
+      // Overlay 3: KHÔNG PHÒNG LẠNH (at 4.85s, hold 2.00s -> 6.85s)
+      tl.fromTo(
+        "#khongphonglanh-box",
+        { scale: 0.88, opacity: 0, y: 30 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.45, ease: "power4.out" },
+        4.85
+      );
+      tl.fromTo(
+        "#strike-line",
+        { scaleX: 0 },
+        { scaleX: 1, duration: 0.35, ease: "power3.out" },
+        5.15
+      );
+      tl.to(
+        "#khongphonglanh-box",
+        { opacity: 0, y: 20, duration: 0.25, ease: "power2.in" },
+        6.55
+      );
+
+      // === SHOT 2 (6.95s -> 10.92s) ===
+      // Cut cận cảnh punch-in
+      tl.fromTo(
+        "#card-2",
+        { scale: 0.96, opacity: 0.8 },
+        { scale: 1, opacity: 1, duration: 0.2, ease: "power2.out" },
+        6.95
+      );
+
+      // Camera zoom-in cận cảnh ly bia và nụ cười
+      tl.fromTo(
+        "#img-2",
+        { scale: 1.5, y: 35 },
+        { scale: 1.65, y: 15, duration: 3.97, ease: "none" },
+        6.95
+      );
+
+      // Overlay 4: VỈA HÈ BÌNH DÂN (at 7.58s, hold 1.80s -> 9.38s)
+      tl.fromTo(
+        "#badge-viahe-box",
+        { scale: 0.85, opacity: 0, x: -35 },
+        { scale: 1, opacity: 1, x: 0, duration: 0.45, ease: "power3.out" },
+        7.58
+      );
+      tl.to(
+        "#badge-viahe-box",
+        { opacity: 0, x: -20, duration: 0.25, ease: "power2.in" },
+        9.10
+      );
+
+      // Overlay 5: Icon CROWD + CÙNG NGƯỜI DÂN (at 9.41s, hold 1.51s -> 10.92s)
+      tl.fromTo(
+        "#crowd-box",
+        { scale: 0.88, opacity: 0, y: 30 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.5, ease: "power3.out" },
+        9.41
+      );
+      crowdStrokes.forEach((stroke, i) => {
+        const len = crowdLengths[i] || 80;
+        tl.fromTo(
+          stroke,
+          { strokeDashoffset: len },
+          { strokeDashoffset: 0, duration: 0.45, ease: "power2.out" },
+          9.45 + i * 0.08
+        );
+      });
+
+      // Đăng ký đúng duy nhất 1 timeline gốc paused theo HyperFrames contract
+      window.__timelines["scene-s02"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

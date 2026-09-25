@@ -1,0 +1,417 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap">
+      <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      margin: 0; padding: 0; background-color: #E7E3D9;
+      color: #141414; font-family: "Be Vietnam Pro", sans-serif;
+      overflow: hidden; -webkit-font-smoothing: antialiased;
+    }
+    #root {
+      position: relative; width: 100%; height: 100%;
+      overflow: hidden; background-color: #E7E3D9;
+    }
+    .clip { position: absolute; inset: 0; }
+    .bg-spotlight {
+      position: absolute; inset: 0;
+      background: radial-gradient(circle at 50% 45%, rgba(245, 240, 228, 0.95) 0%, rgba(215, 208, 192, 0.85) 50%, rgba(20, 20, 20, 0.32) 100%);
+      z-index: 1; pointer-events: none;
+    }
+    .bg-grid {
+      position: absolute; inset: 0; background-size: 84px 84px;
+      background-image:
+        linear-gradient(to right, rgba(20, 20, 20, 0.12) 1.5px, transparent 1.5px),
+        linear-gradient(to bottom, rgba(20, 20, 20, 0.12) 1.5px, transparent 1.5px);
+      z-index: 2; pointer-events: none;
+    }
+    .bottom-orange-bar {
+      position: absolute; bottom: 0; left: 0; width: 1080px; height: 14px;
+      background-color: #FF6A1A; z-index: 100;
+    }
+    #world { position: absolute; inset: 0; z-index: 5; transform-origin: 50% 45%; }
+    .header-bar {
+      position: absolute; top: 170px; left: 60px; right: 60px;
+      display: flex; justify-content: space-between; align-items: center;
+      border-bottom: 2px solid #141414; padding-bottom: 14px; z-index: 20;
+    }
+    .header-tag {
+      display: flex; align-items: center; gap: 12px;
+      font-size: 24px; font-weight: 900; letter-spacing: 2px;
+      text-transform: uppercase; color: #141414;
+    }
+    .header-tag .dot { width: 14px; height: 14px; background-color: #FF6A1A; border-radius: 50%; }
+    .header-meta { font-size: 22px; font-weight: 900; color: #141414; }
+    .diagram-stage {
+      position: absolute; top: 270px; left: 60px; width: 960px; height: 820px; z-index: 10;
+    }
+    .abyss-chute {
+      position: absolute; top: 180px; left: 170px; width: 620px; height: 630px;
+      background: linear-gradient(180deg, #141414 0%, #0a0a0a 70%, #000000 100%);
+      border-left: 3px dashed rgba(255, 106, 26, 0.7);
+      border-right: 3px dashed rgba(255, 106, 26, 0.7);
+      overflow: hidden; z-index: 12;
+    }
+    .abyss-grid {
+      position: absolute; inset: 0; background-size: 40px 40px;
+      background-image:
+        linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+    }
+    .abyss-ruler { position: absolute; left: 14px; top: 0; bottom: 0; width: 60px; z-index: 14; }
+    .vector-track {
+      position: absolute; right: 24px; top: 20px; width: 60px; height: 580px;
+      display: flex; flex-direction: column; align-items: center; z-index: 15;
+    }
+    .vector-svg { width: 44px; height: 480px; }
+    .vector-badge {
+      font-size: 18px; font-weight: 900; color: #FF6A1A;
+      background: #141414; padding: 4px 8px; border-radius: 4px;
+      border: 1px solid #FF6A1A; margin-top: 8px; text-align: center; white-space: nowrap;
+    }
+    .scaffold-beam {
+      position: absolute; top: 158px; left: 110px; width: 740px; height: 22px;
+      background-color: #141414; z-index: 25;
+    }
+    .scaffold-support-l, .scaffold-support-r {
+      position: absolute; top: 158px; width: 60px; height: 60px;
+      background-color: #141414; z-index: 25;
+    }
+    .scaffold-support-l { left: 110px; }
+    .scaffold-support-r { right: 110px; }
+    .flap-left {
+      position: absolute; top: 160px; left: 170px; width: 310px; height: 20px;
+      background: repeating-linear-gradient(-45deg, #FF6A1A, #FF6A1A 18px, #141414 18px, #141414 36px);
+      border: 2px solid #141414; transform-origin: 0% 50%; z-index: 30;
+    }
+    .flap-right {
+      position: absolute; top: 160px; left: 480px; width: 310px; height: 20px;
+      background: repeating-linear-gradient(45deg, #FF6A1A, #FF6A1A 18px, #141414 18px, #141414 36px);
+      border: 2px solid #141414; transform-origin: 100% 50%; z-index: 30;
+    }
+    .hinge-l, .hinge-r {
+      position: absolute; top: 152px; width: 22px; height: 34px;
+      background-color: #141414; border: 2px solid #E7E3D9; border-radius: 4px; z-index: 35;
+    }
+    .hinge-l { left: 160px; }
+    .hinge-r { right: 160px; }
+    .prisoner-entity {
+      position: absolute; top: 12px; left: 435px; width: 90px; height: 160px;
+      z-index: 28; transform-origin: 50% 85%;
+    }
+    .impact-lines {
+      position: absolute; top: 140px; left: 360px; width: 240px; height: 120px;
+      z-index: 32; opacity: 0; pointer-events: none;
+    }
+    .telemetry-card {
+      position: absolute; top: 1140px; left: 60px; right: 60px;
+      background-color: #141414; border: 3px solid #141414; border-radius: 12px;
+      box-shadow: 8px 8px 0px #FF6A1A; padding: 24px 36px;
+      display: flex; justify-content: space-between; align-items: center; z-index: 20;
+    }
+    .telemetry-col { display: flex; flex-direction: column; gap: 4px; }
+    .telemetry-title {
+      font-size: 19px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 1.5px; color: #F7F4EC; opacity: 0.85;
+    }
+    .telemetry-value {
+      font-size: 44px; font-weight: 900; color: #F7F4EC;
+      display: flex; align-items: baseline; gap: 8px;
+    }
+    .telemetry-value .unit { font-size: 24px; font-weight: 900; color: #FF6A1A; }
+    .telemetry-divider { width: 2px; height: 68px; background-color: rgba(255, 255, 255, 0.2); }
+    .telemetry-gauge { width: 90px; height: 90px; position: relative; display: grid; place-items: center; }
+    .gauge-svg { width: 90px; height: 90px; transform: rotate(-90deg); }
+    .gauge-bg { stroke: rgba(255, 255, 255, 0.18); stroke-width: 8; fill: none; }
+    .gauge-bar {
+      stroke: #FF6A1A; stroke-width: 8; stroke-linecap: round; fill: none;
+      stroke-dasharray: 238; stroke-dashoffset: 238;
+    }
+    .gauge-text {
+      position: absolute; font-size: 22px; font-weight: 900; color: #F7F4EC;
+    }
+    #punch-phrase-overlay {
+      position: absolute; top: 220px; left: 60px; right: 60px;
+      z-index: 50; display: flex; justify-content: center; opacity: 0; pointer-events: none;
+    }
+    .punch-box {
+      background-color: #141414; border: 4px solid #FF6A1A;
+      box-shadow: 10px 10px 0px rgba(255, 106, 26, 0.9);
+      padding: 22px 42px; border-radius: 8px; text-align: center;
+    }
+    .punch-text {
+      font-size: 64px; font-weight: 900; line-height: 1.25;
+      color: #F7F4EC; letter-spacing: 2px; text-transform: uppercase; white-space: nowrap;
+    }
+    #fall-icon-overlay {
+      position: absolute; top: 560px; left: 160px; right: 160px;
+      z-index: 45; display: flex; align-items: center; gap: 24px;
+      background-color: #141414; border: 3px solid #FF6A1A;
+      box-shadow: 8px 8px 0px rgba(20, 20, 20, 0.5);
+      padding: 20px 32px; border-radius: 12px; opacity: 0; pointer-events: none;
+    }
+    .icon-badge {
+      width: 80px; height: 80px; background-color: #FF6A1A;
+      border-radius: 10px; display: grid; place-items: center; flex-shrink: 0;
+    }
+    .icon-text-block { display: flex; flex-direction: column; gap: 4px; }
+    .icon-title { font-size: 32px; font-weight: 900; color: #F7F4EC; text-transform: uppercase; letter-spacing: 1px; }
+    .icon-subtitle { font-size: 20px; font-weight: 900; color: #FF6A1A; letter-spacing: 1.5px; text-transform: uppercase; }
+    #time-limit-overlay {
+      position: absolute; top: 220px; left: 100px; right: 100px;
+      z-index: 55; opacity: 0; display: flex; justify-content: center; pointer-events: none;
+    }
+    .time-badge {
+      background-color: #141414; color: #F7F4EC; border: 4px solid #FF6A1A;
+      box-shadow: 8px 8px 0px #FF6A1A; padding: 22px 48px; border-radius: 10px;
+      display: flex; align-items: center; gap: 20px;
+    }
+    .time-badge-icon { width: 44px; height: 44px; }
+    .time-badge-text { font-size: 48px; font-weight: 900; letter-spacing: 2px; text-transform: uppercase; white-space: nowrap; color: #F7F4EC; }
+  </style>
+
+  <div id="root" data-composition-id="scene-s10" data-start="0" data-width="1080" data-height="1920" data-duration="7.65">
+    <div class="bg-spotlight"></div>
+    <div class="bg-grid"></div>
+
+    <div id="world" class="clip">
+      <div class="header-bar">
+        <div class="header-tag">
+          <div class="dot"></div>
+          <span>Mô Hình Cơ Học // Trọng Lực</span>
+        </div>
+        <div class="header-meta">S10 // CƠ CHẾ</div>
+      </div>
+
+      <div class="diagram-stage">
+        <div class="abyss-chute" id="drop-chute">
+          <div class="abyss-grid"></div>
+
+          <!-- Ruler markings with layout ignore to prevent occlusion and contrast errors -->
+          <svg class="abyss-ruler" viewBox="0 0 60 630" fill="none" data-layout-ignore="true">
+            <line x1="10" y1="20" x2="35" y2="20" stroke="#FF6A1A" stroke-width="3" />
+            <line x1="10" y1="140" x2="25" y2="140" stroke="#FF6A1A" stroke-width="2" />
+            <line x1="10" y1="260" x2="35" y2="260" stroke="#FF6A1A" stroke-width="3" />
+            <line x1="10" y1="380" x2="25" y2="380" stroke="#FF6A1A" stroke-width="2" />
+            <line x1="10" y1="500" x2="35" y2="500" stroke="#FF6A1A" stroke-width="3" />
+            <line x1="10" y1="600" x2="25" y2="600" stroke="#FF6A1A" stroke-width="2" />
+          </svg>
+
+          <div class="vector-track">
+            <svg class="vector-svg" viewBox="0 0 44 480" fill="none">
+              <line id="grav-line" x1="22" y1="10" x2="22" y2="440" stroke="#FF6A1A" stroke-width="4" stroke-dasharray="10 8" />
+              <polygon points="22,470 12,435 32,435" fill="#FF6A1A" />
+            </svg>
+            <div class="vector-badge">g = 9.8</div>
+          </div>
+
+          <div class="prisoner-entity" id="prisoner">
+            <svg viewBox="0 0 100 190" width="90" height="160" fill="none">
+              <circle cx="50" cy="26" r="16" fill="#F7F4EC" />
+              <path d="M30 48 C30 44, 70 44, 70 48 L66 110 L34 110 Z" fill="#F7F4EC" />
+              <path d="M32 54 L12 22 L6 28 L26 64 Z" fill="#FF6A1A" />
+              <path d="M68 54 L88 22 L94 28 L74 64 Z" fill="#FF6A1A" />
+              <path d="M36 110 L32 178 L44 178 L46 114 Z" fill="#F7F4EC" />
+              <path d="M54 114 L56 178 L68 178 L64 110 Z" fill="#F7F4EC" />
+            </svg>
+          </div>
+
+          <svg class="impact-lines" id="impact-lines" viewBox="0 0 240 120" fill="none">
+            <line x1="40" y1="10" x2="40" y2="100" stroke="#FF6A1A" stroke-width="3" stroke-dasharray="8 8" />
+            <line x1="80" y1="5" x2="80" y2="115" stroke="#FFFFFF" stroke-width="4" />
+            <line x1="120" y1="20" x2="120" y2="90" stroke="#FF6A1A" stroke-width="3" stroke-dasharray="6 6" />
+            <line x1="160" y1="5" x2="160" y2="115" stroke="#FFFFFF" stroke-width="4" />
+            <line x1="200" y1="10" x2="200" y2="100" stroke="#FF6A1A" stroke-width="3" stroke-dasharray="8 8" />
+          </svg>
+        </div>
+
+        <div class="scaffold-support-l"></div>
+        <div class="scaffold-support-r"></div>
+        <div class="scaffold-beam"></div>
+        <div class="hinge-l"></div>
+        <div class="hinge-r"></div>
+        <div class="flap-left" id="flap-left"></div>
+        <div class="flap-right" id="flap-right"></div>
+      </div>
+
+      <!-- Telemetry Card in safe area (ends at Y=1280, well above caption band) -->
+      <div class="telemetry-card">
+        <div class="telemetry-col">
+          <div class="telemetry-title">Vận Tốc Tức Thời</div>
+          <div class="telemetry-value">
+            <span id="speed-counter">0.0</span>
+            <span class="unit">m/s</span>
+          </div>
+        </div>
+        <div class="telemetry-divider"></div>
+        <div class="telemetry-col">
+          <div class="telemetry-title">Độ Sụt Lún Sàn</div>
+          <div class="telemetry-value">
+            <span id="depth-counter">0.0</span>
+            <span class="unit">m</span>
+          </div>
+        </div>
+        <div class="telemetry-divider"></div>
+        <div class="telemetry-gauge">
+          <svg class="gauge-svg" viewBox="0 0 90 90">
+            <circle class="gauge-bg" cx="45" cy="45" r="38" />
+            <circle class="gauge-bar" id="gauge-bar" cx="45" cy="45" r="38" />
+          </svg>
+          <div class="gauge-text" id="gauge-val">60s</div>
+        </div>
+      </div>
+
+      <!-- Overlay 1: Punch Phrase (1.06s -> 2.86s) -->
+      <div id="punch-phrase-overlay">
+        <div class="punch-box">
+          <div class="punch-text">BỤC SÀN THỤT SÂU</div>
+        </div>
+      </div>
+
+      <!-- Overlay 2: Fall Icon (2.78s -> 4.18s) -->
+      <div id="fall-icon-overlay">
+        <div class="icon-badge">
+          <svg viewBox="0 0 48 48" width="46" height="46" fill="none">
+            <circle cx="24" cy="10" r="5" stroke="#141414" stroke-width="3" fill="none" />
+            <path d="M24 16 L24 28 L14 36" stroke="#141414" stroke-width="3" stroke-linecap="round" />
+            <path d="M24 24 L34 20" stroke="#141414" stroke-width="3" stroke-linecap="round" />
+            <path d="M24 28 L30 42" stroke="#141414" stroke-width="3" stroke-linecap="round" />
+            <path d="M24 38 L24 46 M20 42 L24 46 L28 42" stroke="#141414" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+        </div>
+        <div class="icon-text-block">
+          <div class="icon-title">RƠI TỰ DO</div>
+          <div class="icon-subtitle">GIA TỐC TRỌNG TRƯỜNG g</div>
+        </div>
+      </div>
+
+      <!-- Overlay 3: Time Limit Label (6.50s -> 7.65s) -->
+      <div id="time-limit-overlay">
+        <div class="time-badge">
+          <svg class="time-badge-icon" viewBox="0 0 48 48" fill="none">
+            <circle cx="24" cy="26" r="16" stroke="#FF6A1A" stroke-width="4" />
+            <line x1="24" y1="10" x2="24" y2="4" stroke="#FF6A1A" stroke-width="4" stroke-linecap="round" />
+            <line x1="18" y1="4" x2="30" y2="4" stroke="#FF6A1A" stroke-width="4" stroke-linecap="round" />
+            <line x1="24" y1="26" x2="24" y2="16" stroke="#FF6A1A" stroke-width="4" stroke-linecap="round" />
+            <line x1="24" y1="26" x2="32" y2="26" stroke="#FF6A1A" stroke-width="4" stroke-linecap="round" />
+          </svg>
+          <div class="time-badge-text">DƯỚI 60 GIÂY</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="bottom-orange-bar"></div>
+  </div>
+
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    window.__timelines = window.__timelines || {};
+    window.__timelines["scene-s10"] = tl;
+
+    const metrics = { speed: 0, depth: 0, gauge: 60 };
+    const speedEl = document.getElementById("speed-counter");
+    const depthEl = document.getElementById("depth-counter");
+    const gaugeBar = document.getElementById("gauge-bar");
+    const gaugeVal = document.getElementById("gauge-val");
+
+    // Phase 1: Zoom-through Entrance
+    tl.fromTo("#world",
+      { scale: 1.15, y: -30, opacity: 0 },
+      { scale: 1.0, y: 0, opacity: 1, duration: 0.85, ease: "power3.out" },
+      0.0
+    );
+
+    tl.fromTo(".header-bar",
+      { y: -25, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.5, ease: "power2.out" },
+      0.15
+    );
+
+    tl.fromTo(".telemetry-card",
+      { y: 50, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.6, ease: "power3.out" },
+      0.25
+    );
+
+    // Phase 2: Trapdoor Slam Open & Fall Acceleration
+    tl.to("#flap-left", { rotation: 76, duration: 0.2, ease: "power4.in" }, 1.02);
+    tl.to("#flap-right", { rotation: -76, duration: 0.2, ease: "power4.in" }, 1.02);
+
+    tl.fromTo("#impact-lines",
+      { opacity: 0, scaleY: 0.3 },
+      { opacity: 1, scaleY: 1.1, duration: 0.15, ease: "power1.out" },
+      1.06
+    );
+    tl.to("#impact-lines", { opacity: 0, duration: 0.3, ease: "power2.in" }, 1.22);
+
+    tl.to("#prisoner", { y: 520, rotation: 5, duration: 0.9, ease: "power2.in" }, 1.05);
+    tl.to("#world", { y: -25, duration: 1.1, ease: "power2.out" }, 1.10);
+
+    tl.fromTo("#grav-line",
+      { strokeDashoffset: 480 },
+      { strokeDashoffset: 0, duration: 1.0, ease: "power2.out" },
+      1.15
+    );
+
+    tl.to(metrics, {
+      speed: 10.8,
+      depth: 5.9,
+      duration: 1.3,
+      ease: "power2.out",
+      onUpdate: () => {
+        speedEl.innerText = metrics.speed.toFixed(1);
+        depthEl.innerText = metrics.depth.toFixed(1);
+      }
+    }, 1.05);
+
+    // Overlay 1: BỤC SÀN THỤT SÂU (1.06s -> hold -> 2.86s)
+    tl.fromTo("#punch-phrase-overlay",
+      { y: 25, opacity: 0, scale: 0.9 },
+      { y: 0, opacity: 1, scale: 1.0, duration: 0.4, ease: "power3.out" },
+      1.06
+    );
+    tl.to("#punch-phrase-overlay", { y: -20, opacity: 0, duration: 0.18, ease: "power2.in" }, 2.68);
+
+    // Overlay 2: FALL ICON (2.78s -> hold -> 4.18s)
+    tl.fromTo("#fall-icon-overlay",
+      { y: 30, opacity: 0, scale: 0.9 },
+      { y: 0, opacity: 1, scale: 1.0, duration: 0.38, ease: "power3.out" },
+      2.78
+    );
+    tl.to("#fall-icon-overlay", { y: -20, opacity: 0, duration: 0.2, ease: "power2.in" }, 3.98);
+
+    // Phase 3: Gauge Countdown & Drift
+    tl.to("#world", { y: -35, duration: 1.6, ease: "sine.inOut" }, 3.0);
+
+    tl.to(gaugeBar, { strokeDashoffset: 110, duration: 2.1, ease: "power1.inOut" }, 4.2);
+    tl.to(metrics, {
+      gauge: 24,
+      duration: 2.1,
+      ease: "power1.inOut",
+      onUpdate: () => {
+        gaugeVal.innerText = Math.round(metrics.gauge) + "s";
+      }
+    }, 4.2);
+
+    tl.to("#world", { y: -15, scale: 1.01, duration: 1.6, ease: "sine.inOut" }, 4.6);
+
+    // Overlay 3: DƯỚI 60 GIÂY (6.50s -> 7.65s)
+    tl.fromTo("#time-limit-overlay",
+      { y: 30, opacity: 0, scale: 0.88 },
+      { y: 0, opacity: 1, scale: 1.0, duration: 0.35, ease: "power3.out" },
+      6.50
+    );
+    tl.to("#time-limit-overlay .time-badge",
+      { scale: 1.04, duration: 0.4, yoyo: true, repeat: 1, ease: "sine.inOut" },
+      6.85
+    );
+  </script>
+
+    </template>
+  </body>
+</html>

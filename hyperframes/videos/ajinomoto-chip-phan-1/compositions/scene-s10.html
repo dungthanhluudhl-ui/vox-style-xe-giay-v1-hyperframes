@@ -1,0 +1,579 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap"
+    />
+      <style>
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #e7e3d9;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+
+      .clip {
+        position: absolute;
+        inset: 0;
+      }
+
+      /* Nền dạng chart chuẩn Vox: giấy ngà #E7E3D9 + lưới 84px + 4 đường kẻ ngang đậm */
+      .chart-background {
+        position: absolute;
+        inset: 0;
+        background-color: #e7e3d9;
+        background-image:
+          linear-gradient(to right, rgba(20, 20, 20, 0.08) 1.5px, transparent 1.5px),
+          linear-gradient(to bottom, rgba(20, 20, 20, 0.08) 1.5px, transparent 1.5px);
+        background-size: 84px 84px;
+        pointer-events: none;
+      }
+
+      .chart-line {
+        position: absolute;
+        left: 0;
+        right: 0;
+        height: 8px;
+        display: flex;
+        align-items: center;
+        pointer-events: none;
+      }
+
+      .chart-tick {
+        width: 32px;
+        height: 6px;
+        background-color: #ff6a1a;
+        flex-shrink: 0;
+      }
+
+      .chart-subtick {
+        width: 12px;
+        height: 2px;
+        background-color: rgba(20, 20, 20, 0.45);
+        margin-left: 8px;
+        margin-right: 12px;
+        flex-shrink: 0;
+      }
+
+      .chart-rule {
+        flex-grow: 1;
+        height: 2px;
+        background-color: rgba(20, 20, 20, 0.32);
+      }
+
+      /* Camera & Shake stage */
+      #camera-stage,
+      #shake-rig {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+      }
+
+      /* Dossier Header */
+      #dossier-header {
+        inset: auto;
+        top: 88px;
+        left: 60px;
+        right: 60px;
+        height: 48px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 2px solid rgba(20, 20, 20, 0.3);
+        padding-bottom: 12px;
+        z-index: 8;
+      }
+
+      .dossier-badge {
+        font-size: 19px;
+        font-weight: 900;
+        color: #141414;
+        letter-spacing: 2px;
+      }
+
+      .dossier-meta-badge {
+        background-color: #ff6a1a;
+        color: #141414;
+        font-size: 15px;
+        font-weight: 900;
+        letter-spacing: 1.5px;
+        padding: 4px 10px;
+        border-radius: 3px;
+      }
+
+      /* Overlay 1: Punch phrase "KHỦNG HOẢNG 2021" (trên video) */
+      #punch-card {
+        inset: auto;
+        top: 156px;
+        left: 60px;
+        right: 60px;
+        background-color: #141414;
+        border-left: 12px solid #ff6a1a;
+        padding: 16px 26px;
+        border-radius: 4px;
+        box-shadow: 8px 12px 0px rgba(20, 20, 20, 0.35);
+        z-index: 20;
+        opacity: 0;
+      }
+
+      .tag-pill {
+        display: inline-block;
+        background-color: #ff6a1a;
+        color: #141414;
+        font-size: 16px;
+        font-weight: 900;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        padding: 3px 10px;
+        border-radius: 3px;
+        margin-bottom: 6px;
+      }
+
+      .punch-title {
+        font-size: 58px;
+        font-weight: 900;
+        color: #f7f4ec;
+        line-height: 1.15;
+        letter-spacing: -1px;
+      }
+
+      /* Video chính: Cắt dán giấy khủng hoảng chuỗi cung ứng */
+      #vid-crisis {
+        inset: auto;
+        left: 60px;
+        top: 298px;
+        width: 960px;
+        height: 840px;
+        object-fit: cover;
+        border-radius: 8px;
+        border: 4px solid #141414;
+        box-shadow: 12px 16px 0px rgba(20, 20, 20, 0.3);
+        background-color: #141414;
+        z-index: 5;
+      }
+
+      /* Lớp hiệu ứng vỡ vụn (shatter) bao phủ khớp với video card */
+      #shatter-overlay {
+        inset: auto;
+        left: 60px;
+        top: 298px;
+        width: 960px;
+        height: 840px;
+        border-radius: 8px;
+        overflow: hidden;
+        pointer-events: none;
+        z-index: 10;
+      }
+
+      .shatter-shard {
+        position: absolute;
+        inset: 0;
+      }
+
+      .shard-1 {
+        clip-path: polygon(0 0, 56% 0, 46% 52%, 0 46%);
+        background: #2b2824;
+        border-right: 3px solid #ff6a1a;
+      }
+
+      .shard-2 {
+        clip-path: polygon(56% 0, 100% 0, 100% 54%, 46% 52%);
+        background: #141414;
+        border-bottom: 3px solid #ff6a1a;
+      }
+
+      .shard-3 {
+        clip-path: polygon(0 46%, 46% 52%, 52% 100%, 0 100%);
+        background: #141414;
+        border-top: 3px solid #ff6a1a;
+      }
+
+      .shard-4 {
+        clip-path: polygon(46% 52%, 100% 54%, 100% 100%, 52% 100%);
+        background: #38332c;
+        border-left: 3px solid #ff6a1a;
+      }
+
+      .shatter-cracks {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+      }
+
+      /* Overlay 2: Warning stamp "ĐỨT GÃY TOÀN CẦU" (đặt bên dưới video) */
+      #warning-stamp {
+        inset: auto;
+        left: 60px;
+        right: 60px;
+        top: 1170px;
+        background-color: #141414;
+        border: 4px solid #ff6a1a;
+        border-radius: 8px;
+        padding: 22px 28px;
+        display: flex;
+        align-items: center;
+        gap: 24px;
+        box-shadow: 10px 14px 0px rgba(20, 20, 20, 0.4);
+        z-index: 20;
+        opacity: 0;
+      }
+
+      .warning-icon-box {
+        width: 68px;
+        height: 68px;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .warning-content {
+        flex-grow: 1;
+      }
+
+      .warning-title {
+        font-size: 46px;
+        font-weight: 900;
+        color: #f7f4ec;
+        line-height: 1.15;
+        letter-spacing: -0.5px;
+      }
+
+      /* Overlay 3: Label "TUYÊN BỐ TỪ INTEL" (đặt bên dưới video sau khi warning exit) */
+      #intel-label {
+        inset: auto;
+        left: 60px;
+        right: 60px;
+        top: 1170px;
+        background-color: #141414;
+        border-left: 10px solid #ff6a1a;
+        border-radius: 6px;
+        padding: 22px 28px;
+        display: flex;
+        align-items: center;
+        gap: 24px;
+        box-shadow: 8px 12px 0px rgba(20, 20, 20, 0.35);
+        z-index: 20;
+        opacity: 0;
+      }
+
+      .intel-tag-icon {
+        flex-shrink: 0;
+        width: 48px;
+        height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .intel-tag-title {
+        font-size: 44px;
+        font-weight: 900;
+        color: #f7f4ec;
+        line-height: 1.2;
+      }
+
+      /* Chữ ký thị giác: Thanh cam cố định mép đáy */
+      #bottom-orange-bar {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 8px;
+        background-color: #ff6a1a;
+        z-index: 9999;
+      }
+    </style>
+
+    <!-- Root Composition -->
+    <div
+      id="root"
+      data-composition-id="scene-s10"
+      data-width="1080"
+      data-height="1920"
+      data-duration="7.01"
+    >
+      <!-- Nền Chart chuẩn Vox (untimed static background) -->
+      <div class="chart-background">
+        <div class="chart-line" style="top: 384px">
+          <div class="chart-tick"></div>
+          <div class="chart-subtick"></div>
+          <div class="chart-rule"></div>
+        </div>
+        <div class="chart-line" style="top: 768px">
+          <div class="chart-tick"></div>
+          <div class="chart-subtick"></div>
+          <div class="chart-rule"></div>
+        </div>
+        <div class="chart-line" style="top: 1152px">
+          <div class="chart-tick"></div>
+          <div class="chart-subtick"></div>
+          <div class="chart-rule"></div>
+        </div>
+        <div class="chart-line" style="top: 1536px">
+          <div class="chart-tick"></div>
+          <div class="chart-subtick"></div>
+          <div class="chart-rule"></div>
+        </div>
+      </div>
+
+      <!-- Camera Stage (plain layout rig, untimed) -->
+      <div id="camera-stage">
+        <div id="shake-rig">
+          <!-- 1. Dossier header -->
+          <div
+            id="dossier-header"
+            class="clip"
+            data-start="0"
+            data-duration="7.01"
+          >
+            <div class="dossier-badge">VOX DOSSIER // PHÂN TÍCH</div>
+            <div class="dossier-meta-badge">SERIES: BÁN DẪN #01</div>
+          </div>
+
+          <!-- 2. Overlay 1: Punch phrase "KHỦNG HOẢNG 2021" -->
+          <div
+            id="punch-card"
+            class="clip"
+            data-start="0.42"
+            data-duration="2.38"
+          >
+            <div><span class="tag-pill">BỐI CẢNH NGUYÊN NHÂN</span></div>
+            <div class="punch-title">KHỦNG HOẢNG 2021</div>
+          </div>
+
+          <!-- 3. Timed Video Clip -->
+          <video
+            id="vid-crisis"
+            class="clip"
+            src="assets/vid-03-paper-cutout-crisis-breakdown.mp4"
+            data-start="0"
+            data-duration="7.01"
+            data-media-start="0.5"
+            muted
+            playsinline
+            preload="auto"
+          ></video>
+
+          <!-- 4. Lớp hiệu ứng vỡ vụn (shatter) -->
+          <div
+            id="shatter-overlay"
+            class="clip"
+            data-start="0"
+            data-duration="0.55"
+          >
+            <div class="shatter-shard shard-1"></div>
+            <div class="shatter-shard shard-2"></div>
+            <div class="shatter-shard shard-3"></div>
+            <div class="shatter-shard shard-4"></div>
+            <svg
+              class="shatter-cracks"
+              viewBox="0 0 960 840"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M 440 440 L 0 210 M 440 440 L 530 0 M 440 440 L 960 460 M 440 440 L 500 840 M 440 440 L 0 530"
+                stroke="#FF6A1A"
+                stroke-width="5"
+                stroke-linecap="round"
+              />
+              <circle cx="440" cy="440" r="14" fill="#FF6A1A" />
+            </svg>
+          </div>
+
+          <!-- 5. Overlay 2: Warning stamp "ĐỨT GÃY TOÀN CẦU" -->
+          <div
+            id="warning-stamp"
+            class="clip"
+            data-start="3.24"
+            data-duration="2.58"
+          >
+            <div class="warning-icon-box">
+              <svg viewBox="0 0 64 64" width="62" height="62" fill="none">
+                <path
+                  d="M 32 6 L 60 56 L 4 56 Z"
+                  fill="rgba(255, 106, 26, 0.2)"
+                  stroke="#FF6A1A"
+                  stroke-width="5"
+                  stroke-linejoin="round"
+                />
+                <path
+                  d="M 32 22 L 32 38 M 32 46 L 32 49"
+                  stroke="#FF6A1A"
+                  stroke-width="5.5"
+                  stroke-linecap="round"
+                />
+              </svg>
+            </div>
+            <div class="warning-content">
+              <div><span class="tag-pill">CHUỖI CUNG ỨNG BÁN DẪN</span></div>
+              <div class="warning-title">ĐỨT GÃY TOÀN CẦU</div>
+            </div>
+          </div>
+
+          <!-- 6. Overlay 3: Label "TUYÊN BỐ TỪ INTEL" -->
+          <div
+            id="intel-label"
+            class="clip"
+            data-start="5.91"
+            data-duration="1.10"
+          >
+            <div class="intel-tag-icon">
+              <svg viewBox="0 0 32 32" width="40" height="40" fill="none">
+                <path
+                  d="M 6 6 L 20 6 L 26 12 L 26 26 L 6 26 Z"
+                  stroke="#FF6A1A"
+                  stroke-width="3"
+                  stroke-linejoin="round"
+                />
+                <path
+                  d="M 20 6 L 20 12 L 26 12"
+                  stroke="#FF6A1A"
+                  stroke-width="3"
+                  stroke-linejoin="round"
+                />
+                <path
+                  d="M 10 16 L 22 16 M 10 21 L 18 21"
+                  stroke="#FF6A1A"
+                  stroke-width="2.5"
+                  stroke-linecap="round"
+                />
+              </svg>
+            </div>
+            <div>
+              <div><span class="tag-pill">GÓC NHÌN ĐẦU NGÀNH</span></div>
+              <div class="intel-tag-title">TUYÊN BỐ TỪ INTEL</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Thanh cam cố định mép đáy nhận diện thương hiệu Vox -->
+      <div id="bottom-orange-bar"></div>
+    </div>
+
+    <!-- GSAP Seekable Timeline Script -->
+    <script>
+      const tl = gsap.timeline({ paused: true });
+
+      // 1. Camera pan toàn cảnh sang trái mượt mà từ 0s đến 7.01s
+      tl.to("#camera-stage", { x: -36, duration: 7.01, ease: "none" }, 0);
+
+      // 2. Chấn động rung vỡ vụn lúc vào cảnh
+      tl.to(
+        "#shake-rig",
+        {
+          keyframes: [
+            { x: -12, y: 7, duration: 0.05 },
+            { x: 10, y: -6, duration: 0.05 },
+            { x: -7, y: 4, duration: 0.05 },
+            { x: 4, y: -2, duration: 0.05 },
+            { x: 0, y: 0, duration: 0.08 }
+          ],
+          ease: "none"
+        },
+        0.02
+      );
+
+      // 3. Hiệu ứng vỡ vụn (shatter) bung các mảnh găm ra ngoài
+      tl.fromTo(
+        ".shard-1",
+        { x: 0, y: 0, rotation: 0, opacity: 1 },
+        { x: -180, y: -140, rotation: -16, opacity: 0, duration: 0.46, ease: "power3.in" },
+        0.02
+      );
+      tl.fromTo(
+        ".shard-2",
+        { x: 0, y: 0, rotation: 0, opacity: 1 },
+        { x: 200, y: -160, rotation: 14, opacity: 0, duration: 0.46, ease: "power3.in" },
+        0.02
+      );
+      tl.fromTo(
+        ".shard-3",
+        { x: 0, y: 0, rotation: 0, opacity: 1 },
+        { x: -160, y: 180, rotation: -12, opacity: 0, duration: 0.46, ease: "power3.in" },
+        0.02
+      );
+      tl.fromTo(
+        ".shard-4",
+        { x: 0, y: 0, rotation: 0, opacity: 1 },
+        { x: 210, y: 170, rotation: 18, opacity: 0, duration: 0.46, ease: "power3.in" },
+        0.02
+      );
+      tl.fromTo(
+        ".shatter-cracks",
+        { opacity: 1 },
+        { opacity: 0, duration: 0.35, ease: "power2.out" },
+        0.08
+      );
+
+      // 4. Video scale bung nhẹ theo lực chấn động (chỉ 1 tween duy nhất trên video)
+      tl.fromTo(
+        "#vid-crisis",
+        { scale: 1.04 },
+        { scale: 1.0, duration: 0.45, ease: "power3.out" },
+        0
+      );
+
+      // 5. Overlay 1: Punch phrase "KHỦNG HOẢNG 2021" (fromTo vào, to ra)
+      tl.fromTo(
+        "#punch-card",
+        { y: -25, opacity: 0, scale: 0.96 },
+        { y: 0, opacity: 1, scale: 1, duration: 0.45, ease: "power4.out" },
+        0.42
+      );
+      tl.to(
+        "#punch-card",
+        { y: -20, opacity: 0, scale: 0.96, duration: 0.35, ease: "power2.in" },
+        2.45
+      );
+
+      // 6. Overlay 2: Warning stamp "ĐỨT GÃY TOÀN CẦU" (fromTo vào, to ra)
+      tl.fromTo(
+        "#warning-stamp",
+        { y: 30, opacity: 0, scale: 0.95 },
+        { y: 0, opacity: 1, scale: 1, duration: 0.45, ease: "power4.out" },
+        3.24
+      );
+      tl.to(
+        "#warning-stamp",
+        { y: 20, opacity: 0, scale: 0.95, duration: 0.35, ease: "power2.in" },
+        5.45
+      );
+
+      // 7. Overlay 3: Label "TUYÊN BỐ TỪ INTEL" (fromTo vào lúc 5.91s, giữ đến hết 7.01s)
+      tl.fromTo(
+        "#intel-label",
+        { x: -40, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.45, ease: "power3.out" },
+        5.91
+      );
+
+      // Đăng ký timeline gốc vào HyperFrames runtime
+      window.__timelines["scene-s10"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

@@ -1,0 +1,594 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #E7E3D9;
+        font-family: "Be Vietnam Pro", sans-serif;
+        color: #141414;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+      /* Quy ước bắt buộc: .clip dùng inset: 0 */
+      .clip {
+        position: absolute;
+        inset: 0;
+      }
+
+      /* Nền spotlight: giấy ngà + lưới 84px + vignette tối cảnh báo */
+      .bg-spotlight {
+        position: absolute;
+        inset: 0;
+        background-color: #E7E3D9;
+        background-image:
+          radial-gradient(ellipse at 50% 45%, rgba(231, 227, 217, 0) 30%, rgba(20, 20, 20, 0.28) 100%),
+          linear-gradient(rgba(20, 20, 20, 0.16) 1.5px, transparent 1.5px),
+          linear-gradient(90deg, rgba(20, 20, 20, 0.16) 1.5px, transparent 1.5px);
+        background-size: 100% 100%, 84px 84px, 84px 84px;
+        z-index: 1;
+      }
+
+      /* Thanh cam nhận diện thương hiệu cố định mép đáy */
+      .bottom-brand-bar {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 12px;
+        background-color: #FF6A1A;
+        z-index: 100;
+      }
+
+      /* Container camera cho từng shot */
+      .camera-rig {
+        position: absolute;
+        inset: 0;
+        z-index: 2;
+      }
+
+      /* Header kỹ thuật định dạng hồ sơ Vox */
+      .editorial-header {
+        position: absolute;
+        top: 180px;
+        left: 60px;
+        right: 60px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 2px solid #141414;
+        padding-bottom: 12px;
+      }
+      .editorial-header .tag {
+        font-size: 22px;
+        font-weight: 900;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        color: #141414;
+      }
+      .editorial-header .status {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 20px;
+        font-weight: 700;
+        color: #141414;
+      }
+      .editorial-header .status-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background-color: #FF6A1A;
+      }
+
+      /* SHOT 1: Card điện tâm đồ & Nhịp tim phẳng lì */
+      .ecg-card {
+        position: absolute;
+        top: 450px;
+        left: 60px;
+        width: 960px;
+        background-color: #F5F0E4;
+        border: 3px solid #141414;
+        box-shadow: 8px 8px 0px #141414;
+        padding: 32px 36px;
+      }
+      .ecg-top-info {
+        display: flex;
+        justify-content: space-between;
+        font-size: 22px;
+        font-weight: 700;
+        color: #141414;
+        margin-bottom: 24px;
+        text-transform: uppercase;
+      }
+      .ecg-screen {
+        position: relative;
+        width: 100%;
+        height: 320px;
+        background-color: #EAE5D8;
+        border: 2px solid #141414;
+        overflow: hidden;
+      }
+      .ecg-grid {
+        position: absolute;
+        inset: 0;
+        background-image:
+          linear-gradient(rgba(20, 20, 20, 0.08) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(20, 20, 20, 0.08) 1px, transparent 1px);
+        background-size: 32px 32px;
+      }
+      .ecg-svg {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+      }
+      .ecg-hud-metric {
+        position: absolute;
+        bottom: 16px;
+        right: 20px;
+        font-size: 20px;
+        font-weight: 900;
+        color: #FF6A1A;
+        background: #141414;
+        padding: 6px 14px;
+        border-radius: 4px;
+      }
+
+      /* Overlays Shot 1 */
+      .label-badge {
+        position: absolute;
+        top: 360px;
+        left: 60px;
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        background-color: #141414;
+        color: #F7F4EC;
+        padding: 12px 24px;
+        border-left: 8px solid #FF6A1A;
+        font-size: 26px;
+        font-weight: 900;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        box-shadow: 4px 4px 0px rgba(20, 20, 20, 0.3);
+      }
+      .punch-block {
+        position: absolute;
+        top: 1030px;
+        left: 60px;
+        right: 60px;
+      }
+      .punch-title {
+        font-size: 72px;
+        font-weight: 900;
+        line-height: 1.15;
+        color: #141414;
+        text-transform: uppercase;
+        letter-spacing: -1.5px;
+        margin: 0 0 16px 0;
+      }
+      .punch-sub {
+        font-size: 24px;
+        font-weight: 700;
+        color: #141414;
+        background-color: rgba(255, 106, 26, 0.18);
+        border-left: 6px solid #FF6A1A;
+        padding: 10px 18px;
+        display: inline-block;
+      }
+
+      /* SHOT 2: Sơ đồ hành trình thẳng tắp */
+      .flow-container {
+        position: absolute;
+        top: 320px;
+        left: 60px;
+        right: 60px;
+      }
+      .flow-track-svg {
+        position: absolute;
+        top: 40px;
+        left: 38px;
+        width: 12px;
+        height: 720px;
+      }
+      .flow-step {
+        position: absolute;
+        left: 100px;
+        width: 820px;
+      }
+      .flow-step-1 { top: 0px; }
+      .flow-step-2 { top: 240px; }
+      .flow-step-3 { top: 480px; }
+
+      .flow-card {
+        background-color: #F5F0E4;
+        border: 3px solid #141414;
+        box-shadow: 6px 6px 0px #141414;
+        padding: 24px 28px;
+        position: relative;
+      }
+      .flow-dot {
+        position: absolute;
+        left: -68px;
+        top: 30px;
+        width: 24px;
+        height: 24px;
+        background-color: #E7E3D9;
+        border: 5px solid #FF6A1A;
+        border-radius: 50%;
+        z-index: 4;
+      }
+      /* Badge đen chữ kem #F7F4EC viền cam đạt chuẩn tương phản > 17:1 */
+      .step-phase {
+        display: inline-block;
+        font-size: 18px;
+        font-weight: 900;
+        color: #F7F4EC;
+        background-color: #141414;
+        border-left: 4px solid #FF6A1A;
+        padding: 4px 10px;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        margin-bottom: 10px;
+      }
+      .step-title {
+        font-size: 32px;
+        font-weight: 900;
+        color: #141414;
+        text-transform: uppercase;
+        margin-bottom: 8px;
+      }
+      .step-desc {
+        font-size: 22px;
+        font-weight: 700;
+        color: #141414;
+      }
+
+      /* Icon fall vocabulary */
+      .icon-fall-badge {
+        position: absolute;
+        right: 28px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 104px;
+        height: 104px;
+        background-color: #141414;
+        border: 2px solid #FF6A1A;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 4px 4px 0px #FF6A1A;
+      }
+
+      /* Label chốt Shot 2 */
+      .death-badge {
+        position: absolute;
+        top: 1160px;
+        left: 60px;
+        right: 60px;
+        background-color: #141414;
+        border: 3px solid #141414;
+        border-left: 14px solid #FF6A1A;
+        box-shadow: 8px 8px 0px rgba(20, 20, 20, 0.35);
+        padding: 26px 36px;
+      }
+      .death-title {
+        font-size: 42px;
+        font-weight: 900;
+        color: #F7F4EC;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 6px;
+      }
+      .death-sub {
+        font-size: 22px;
+        font-weight: 700;
+        color: #FF6A1A;
+        text-transform: uppercase;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s18"
+      data-start="0"
+      data-width="1080"
+      data-height="1920"
+      data-duration="9"
+    >
+      <!-- Nền spotlight toàn cảnh -->
+      <div class="bg-spotlight"></div>
+
+      <!-- Thanh cam đáy cố định nhận diện thương hiệu -->
+      <div class="bottom-brand-bar"></div>
+
+      <!-- ========================================== -->
+      <!-- SHOT 1: Đường sóng tim điện tâm đồ phẳng lì -->
+      <!-- ========================================== -->
+      <section
+        id="shot-1"
+        class="clip"
+        data-start="0"
+        data-duration="4"
+        data-track-index="0"
+      >
+        <div id="shot-1-rig" class="camera-rig">
+          <div class="editorial-header">
+            <span class="tag">HỒ SƠ TÂM LÝ // ĐIỆN TÂM ĐỒ (ECG)</span>
+            <div class="status">
+              <span class="status-dot"></span>
+              <span>BẤT BIẾN</span>
+            </div>
+          </div>
+
+          <!-- Label: SỐ ÍT ĐẶC BIỆT -->
+          <div id="label-so-it" class="label-badge">
+            <span>SỐ ÍT ĐẶC BIỆT</span>
+          </div>
+
+          <!-- Bảng giám sát điện tâm đồ -->
+          <div id="card-ecg" class="ecg-card">
+            <div class="ecg-top-info">
+              <span>ĐIỆN TÂM ĐỒ THỜI GIAN THỰC</span>
+              <span>BIẾN ĐỘNG: 0.00%</span>
+            </div>
+            <div class="ecg-screen">
+              <div class="ecg-grid"></div>
+              <svg class="ecg-svg" viewBox="0 0 888 320" preserveAspectRatio="none">
+                <!-- Đường sóng tim phẳng lì trải dài: 2 nhịp ban đầu rồi thẳng tắp hoàn toàn -->
+                <path
+                  id="ecg-path"
+                  d="M 0 160 L 120 160 L 135 120 L 150 200 L 165 160 L 220 160 L 235 125 L 250 195 L 265 160 L 860 160"
+                  fill="none"
+                  stroke="#FF6A1A"
+                  stroke-width="7"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+                <!-- Điểm quét đầu sóng nằm an toàn trong khung -->
+                <circle id="ecg-pointer" cx="8" cy="160" r="7" fill="#FF6A1A" />
+              </svg>
+              <div class="ecg-hud-metric">54 BPM // FLATLINE</div>
+            </div>
+          </div>
+
+          <!-- Punch phrase: IM LẶNG TUYỆT ĐỐI -->
+          <div id="punch-shot-1" class="punch-block">
+            <h1 class="punch-title">IM LẶNG TUYỆT ĐỐI</h1>
+            <div class="punch-sub">KHÔNG HOẢNG LOẠN • KHÔNG BIỂU HIỆN SỢ HÃI</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================================== -->
+      <!-- SHOT 2: Sơ đồ hành trình thẳng tắp         -->
+      <!-- ========================================== -->
+      <section
+        id="shot-2"
+        class="clip"
+        data-start="4"
+        data-duration="5"
+        data-track-index="0"
+      >
+        <div id="shot-2-rig" class="camera-rig">
+          <div class="editorial-header">
+            <span class="tag">QUY TRÌNH HÀNH QUYẾT // 3 BƯỚC</span>
+            <div class="status">
+              <span class="status-dot"></span>
+              <span>KHÔNG NGẬP NGỪNG</span>
+            </div>
+          </div>
+
+          <div class="flow-container">
+            <!-- Trục dọc thẳng tắp nối 3 điểm -->
+            <svg class="flow-track-svg" viewBox="0 0 12 720">
+              <line
+                id="flow-rail"
+                x1="6"
+                y1="30"
+                x2="6"
+                y2="540"
+                stroke="#FF6A1A"
+                stroke-width="8"
+                stroke-linecap="round"
+              />
+            </svg>
+
+            <!-- Giai đoạn 1: Bước ra khỏi phòng giam -->
+            <div id="step-1" class="flow-step flow-step-1">
+              <div class="flow-dot"></div>
+              <div class="flow-card">
+                <div class="step-phase">GIAI ĐOẠN 01</div>
+                <div class="step-title">BƯỚC KHỎI PHÒNG GIAM</div>
+                <div class="step-desc">Tự chủ cất bước, không một giây chần chừ hay níu kéo</div>
+              </div>
+            </div>
+
+            <!-- Giai đoạn 2: Bị trói -->
+            <div id="step-2" class="flow-step flow-step-2">
+              <div class="flow-dot"></div>
+              <div class="flow-card">
+                <div class="step-phase">GIAI ĐOẠN 02</div>
+                <div class="step-title">KHI BỊ TRÓI CHẶT</div>
+                <div class="step-desc">Cơ thể thả lỏng, nhịp thở tĩnh lặng hoàn toàn</div>
+              </div>
+            </div>
+
+            <!-- Giai đoạn 3: Rơi tự do -->
+            <div id="step-3" class="flow-step flow-step-3">
+              <div class="flow-dot"></div>
+              <div class="flow-card">
+                <div class="step-phase">GIAI ĐOẠN 03</div>
+                <div class="step-title">RƠI TỰ DO</div>
+                <div class="step-desc">Dây thừng tròng quanh cổ • Đối diện đáy hố tử thần</div>
+
+                <!-- Icon "fall" theo từ vựng Vox -->
+                <div id="icon-fall" class="icon-fall-badge">
+                  <svg width="68" height="68" viewBox="0 0 100 100" fill="none">
+                    <!-- Bệ xuất phát -->
+                    <path d="M 15 28 L 42 28" stroke="#F7F4EC" stroke-width="6" stroke-linecap="round" />
+                    <!-- Hình nhân rơi tự do -->
+                    <circle cx="64" cy="40" r="9" fill="#FF6A1A" />
+                    <path d="M 62 50 L 52 75 L 70 88" stroke="#FF6A1A" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" />
+                    <path d="M 58 56 L 40 46" stroke="#FF6A1A" stroke-width="5" stroke-linecap="round" />
+                    <!-- Tia trọng lực rơi thẳng -->
+                    <path d="M 82 46 L 82 82 M 82 82 L 76 72 M 82 82 L 88 72" stroke="#F7F4EC" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Label chốt: BƯỚC VÀO CÕI CHẾT -->
+          <div id="label-death" class="death-badge">
+            <div class="death-title">BƯỚC VÀO CÕI CHẾT</div>
+            <div class="death-sub">TÂM LÝ LẠNH LÙNG ĐẾN GIÂY PHÚT CUỐI CÙNG</div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- Animation Runtime GSAP -->
+    <script>
+      const tl = gsap.timeline({ paused: true });
+
+      // Đăng ký timeline gốc vào window.__timelines["scene-s18"]
+      window.__timelines = window.__timelines || {};
+      window.__timelines["scene-s18"] = tl;
+
+      // ==========================================
+      // SETUP SHOT 1 (0.0s - 4.0s)
+      // ==========================================
+      const ecgPath = document.getElementById("ecg-path");
+      const ecgLength = ecgPath ? ecgPath.getTotalLength() : 950;
+      if (ecgPath) {
+        ecgPath.style.strokeDasharray = ecgLength;
+        ecgPath.style.strokeDashoffset = ecgLength;
+      }
+
+      // Camera pan-right & transitionIn rise cho Shot 1
+      tl.fromTo(
+        "#shot-1-rig",
+        { y: 60, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.7, ease: "power3.out" },
+        0
+      );
+      tl.to(
+        "#shot-1-rig",
+        { x: -36, duration: 4.0, ease: "none" },
+        0
+      );
+
+      // Đường sóng tim chạy vẽ phẳng lì từ trái qua phải
+      tl.to(
+        "#ecg-path",
+        { strokeDashoffset: 0, duration: 2.8, ease: "none" },
+        0.3
+      );
+      tl.fromTo(
+        "#ecg-pointer",
+        { cx: 8 },
+        { cx: 860, duration: 2.8, ease: "none" },
+        0.3
+      );
+
+      // Overlay 1: Label "SỐ ÍT ĐẶC BIỆT" (atMs: 138280 -> 1.04s)
+      tl.fromTo(
+        "#label-so-it",
+        { y: 24, opacity: 0, scale: 0.95 },
+        { y: 0, opacity: 1, scale: 1, duration: 0.5, ease: "power3.out" },
+        1.04
+      );
+
+      // Overlay 2: Punch phrase "IM LẶNG TUYỆT ĐỐI" (atMs: 139580 -> 2.34s)
+      tl.fromTo(
+        "#punch-shot-1",
+        { y: 32, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.6, ease: "power3.out" },
+        2.34
+      );
+
+      // ==========================================
+      // SETUP SHOT 2 (4.0s - 9.0s)
+      // ==========================================
+      const flowRail = document.getElementById("flow-rail");
+      const railLength = 510;
+      if (flowRail) {
+        flowRail.style.strokeDasharray = railLength;
+        flowRail.style.strokeDashoffset = railLength;
+      }
+
+      // Camera pan-down cho Shot 2
+      tl.fromTo(
+        "#shot-2-rig",
+        { y: 30 },
+        { y: -90, duration: 5.0, ease: "none" },
+        4.0
+      );
+
+      // Trục thẳng tắp nối 3 điểm hạ dần xuống
+      tl.to(
+        "#flow-rail",
+        { strokeDashoffset: 0, duration: 2.6, ease: "power1.inOut" },
+        4.1
+      );
+
+      // 3 bước hành trình xuất hiện tuần tự không ngập ngừng
+      tl.fromTo(
+        "#step-1",
+        { x: -30, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.45, ease: "power3.out" },
+        4.2
+      );
+
+      tl.fromTo(
+        "#step-2",
+        { x: -30, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.45, ease: "power3.out" },
+        5.2
+      );
+
+      tl.fromTo(
+        "#step-3",
+        { x: -30, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.45, ease: "power3.out" },
+        6.2
+      );
+
+      // Icon "fall" (atMs: 144070 -> 6.83s)
+      tl.fromTo(
+        "#icon-fall",
+        { y: -36, opacity: 0, scale: 0.8 },
+        { y: 0, opacity: 1, scale: 1, duration: 0.5, ease: "back.out(1.4)" },
+        6.83
+      );
+
+      // Label chốt: "BƯỚC VÀO CÕI CHẾT" (atMs: 145000 -> 7.76s)
+      tl.fromTo(
+        "#label-death",
+        { y: 30, opacity: 0, scale: 0.96 },
+        { y: 0, opacity: 1, scale: 1, duration: 0.45, ease: "power3.out" },
+        7.76
+      );
+    </script>
+  
+    </template>
+  </body>
+</html>

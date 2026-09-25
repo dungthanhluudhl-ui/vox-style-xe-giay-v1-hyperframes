@@ -229,3 +229,5 @@ Project standalone tạm còn giữ tại: C:\vox-style-xe-giay-v1-hyperframes\h
 - **2026-09-24T14:12:06.526Z** — `scripts/07b-integration-check.hf.mjs --video=ngan-hang-tao-tien-phan-1` — Stage 7b integration check PASS — 16/16 scene, có audio, có caption-track, hyperframes check ok=true.
 
 - **2026-09-24T14:19:25.401Z** — `scripts/09-render.hf.mjs` — Render bản đầy đủ: out\ngan-hang-tao-tien-phan-1-full.mp4, 241250842 bytes (230.1MB), 438.3s render time, quality=looks. Xác minh ffprobe: duration=129.200s (khớp audio thật 129.659s), 1080x1920 h264. Capture mode: screenshot (tắt fast-capture do: mix-blend-mode). GPU mode: hardware (WebGL renderer vendor="Google Inc. (NVIDIA)" renderer="ANGLE (NVIDIA, NVIDIA GeForce GTX 1660 SUPER (0x000021C4) Direct3D11 vs_5_0 ps_5_0, D3D11)"). Stage timing: compile=8.9s, browser_probe=1.1s, video_extract=6.4s, audio_process=6.2s, file_server=0.4s, capture_calibration=5.1s, capture_disk=298.6s, encode=93.5s, assemble=7.4s.
+
+- **2026-09-25T14:38:06.111Z** — qa-blank-frame-audit: 16 scene kiểm tra, 0 bị flag (none) — report tại `C:\vox-style-xe-giay-v1-hyperframes\pipeline\videos\ngan-hang-tao-tien-phan-1\contact-sheet\report.md`

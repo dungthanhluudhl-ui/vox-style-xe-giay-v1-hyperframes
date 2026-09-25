@@ -1,0 +1,361 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background: #e7e3d9;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: #e7e3d9;
+      }
+
+      /* Nền spotlight với lưới tọa độ kỹ thuật 84px đặc trưng Vox */
+      #bg-spotlight {
+        position: absolute;
+        inset: 0;
+        background-color: #e7e3d9;
+        background-image:
+          linear-gradient(to right, rgba(20, 20, 20, 0.12) 1.5px, transparent 1.5px),
+          linear-gradient(to bottom, rgba(20, 20, 20, 0.12) 1.5px, transparent 1.5px);
+        background-size: 84px 84px;
+        z-index: 0;
+      }
+
+      /* Video với camera motion trực tiếp trên element */
+      #video-s01 {
+        position: absolute;
+        inset: 0;
+        width: 1080px;
+        height: 1920px;
+        object-fit: cover;
+        transform-origin: 50% 50%;
+        will-change: transform;
+        z-index: 1;
+      }
+
+      /* Vignette tối viền ngoài tăng tính kịch tính cho hook */
+      #spotlight-vignette {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background: radial-gradient(
+          circle at 50% 50%,
+          rgba(20, 20, 20, 0) 30%,
+          rgba(20, 20, 20, 0.42) 75%,
+          rgba(20, 20, 20, 0.8) 100%
+        );
+        z-index: 10;
+      }
+
+      /* Thanh cam nhận diện thương hiệu cố định mép đáy */
+      #bottom-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 14px;
+        background: #ff6a1a;
+        z-index: 100;
+      }
+
+      /* Lớp Overlays */
+      .overlay-container {
+        position: absolute;
+        pointer-events: none;
+        z-index: 20;
+      }
+
+      /* 1. Punch phrase: BÍ ẨN AJINOMOTO */
+      #overlay-punch {
+        top: 360px;
+        left: 60px;
+        right: 60px;
+        display: flex;
+        justify-content: center;
+        opacity: 0;
+      }
+
+      .punch-card {
+        background: #141414;
+        border: 2px solid rgba(255, 106, 26, 0.6);
+        border-radius: 18px;
+        padding: 26px 44px;
+        box-shadow: 0 24px 50px rgba(0, 0, 0, 0.7);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+      }
+
+      .punch-tag {
+        color: #ff6a1a;
+        font-size: 24px;
+        font-weight: 900;
+        letter-spacing: 4px;
+        text-transform: uppercase;
+        margin-bottom: 10px;
+      }
+
+      .punch-title {
+        margin: 0;
+        color: #f7f4ec;
+        font-size: 70px;
+        font-weight: 900;
+        line-height: 1.25;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+      }
+
+      .punch-line {
+        width: 100px;
+        height: 6px;
+        background: #ff6a1a;
+        border-radius: 3px;
+        margin-top: 16px;
+      }
+
+      /* 2. Nhãn kỹ thuật: KỶ NGUYÊN BÁN DẪN */
+      #overlay-label {
+        top: 1220px;
+        left: 60px;
+        opacity: 0;
+      }
+
+      .label-card {
+        background: #141414;
+        border-left: 10px solid #ff6a1a;
+        border-radius: 0 14px 14px 0;
+        padding: 18px 36px 18px 24px;
+        box-shadow: 0 16px 40px rgba(0, 0, 0, 0.65);
+        display: inline-flex;
+        align-items: center;
+        gap: 16px;
+      }
+
+      .label-dot {
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: #ff6a1a;
+        box-shadow: 0 0 12px #ff6a1a;
+      }
+
+      .label-text {
+        color: #f7f4ec;
+        font-size: 46px;
+        font-weight: 900;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+      }
+
+      /* 3. Icon & Callout: NHÂN VẬT BÍ ẨN */
+      #overlay-character {
+        bottom: 430px;
+        left: 60px;
+        right: 60px;
+        display: flex;
+        justify-content: center;
+        opacity: 0;
+      }
+
+      .character-card {
+        background: #141414;
+        border: 3px solid #ff6a1a;
+        border-radius: 100px;
+        padding: 16px 42px 16px 28px;
+        box-shadow: 0 20px 48px rgba(0, 0, 0, 0.7), 0 0 30px rgba(255, 106, 26, 0.25);
+        display: inline-flex;
+        align-items: center;
+        gap: 20px;
+      }
+
+      .person-svg {
+        width: 58px;
+        height: 58px;
+        display: block;
+      }
+
+      .person-path {
+        fill: none;
+        stroke: #ff6a1a;
+        stroke-width: 5;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
+      .character-text {
+        color: #f7f4ec;
+        font-size: 40px;
+        font-weight: 900;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+      }
+
+      .character-arrow {
+        color: #ff6a1a;
+        font-size: 40px;
+        font-weight: 900;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s01"
+      data-start="0"
+      data-width="1080"
+      data-height="1920"
+      data-duration="9.42"
+    >
+      <!-- Lớp nền đồ họa kỹ thuật -->
+      <div id="bg-spotlight"></div>
+
+      <!-- Video bóc trần chip bán dẫn với camera zoom motion -->
+      <video
+        id="video-s01"
+        data-start="0"
+        data-duration="9.42"
+        muted
+        playsinline
+        src="assets/vid-07-ajinomoto-semiconductor-chip-reveal.mp4"
+      ></video>
+
+      <!-- Vignette tối viền ngoài tăng kịch tính cho spotlight -->
+      <div id="spotlight-vignette"></div>
+
+      <!-- 1. Punch phrase: BÍ ẨN AJINOMOTO (2.88s -> 5.08s) -->
+      <div id="overlay-punch" class="overlay-container">
+        <div class="punch-card">
+          <span class="punch-tag">HỒ SƠ CÔNG NGHỆ</span>
+          <h1 class="punch-title">BÍ ẨN AJINOMOTO</h1>
+          <div class="punch-line"></div>
+        </div>
+      </div>
+
+      <!-- 2. Nhãn sự kiện: KỶ NGUYÊN BÁN DẪN (6.13s -> 8.03s) -->
+      <div id="overlay-label" class="overlay-container">
+        <div class="label-card">
+          <span class="label-dot"></span>
+          <span class="label-text">KỶ NGUYÊN BÁN DẪN</span>
+        </div>
+      </div>
+
+      <!-- 3. Icon & Callout: NHÂN VẬT BÍ ẨN (8.22s -> 9.42s) -->
+      <div id="overlay-character" class="overlay-container">
+        <div class="character-card">
+          <svg class="person-svg" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+            <circle class="person-path" id="icon-head" cx="32" cy="20" r="11" />
+            <path class="person-path" id="icon-body" d="M 14 52 C 16 38, 48 38, 50 52" />
+          </svg>
+          <span class="character-text">NHÂN VẬT BÍ ẨN</span>
+          <span class="character-arrow">→</span>
+        </div>
+      </div>
+
+      <!-- Dải cam cố định mép đáy -->
+      <div id="bottom-bar"></div>
+    </div>
+
+    <script>
+      // Khởi tạo đo đạc tự vẽ cho SVG icon người theo chuẩn svg-path-draw
+      document.querySelectorAll(".person-path").forEach(function (path) {
+        var length = path.getTotalLength();
+        path.style.strokeDasharray = length;
+        path.style.strokeDashoffset = length;
+      });
+
+      // Tạo timeline GSAP paused phục vụ seek-driven render
+      var tl = gsap.timeline({ paused: true });
+
+      // --- 1. Camera Motion & Video Freeze-frame push ---
+      // Entrance "punch": lao nhanh từ 1.14x về 1.0x trong 0.6s
+      tl.fromTo(
+        "#video-s01",
+        { scale: 1.14 },
+        { scale: 1.0, duration: 0.6, ease: "power3.out" },
+        0
+      );
+
+      // Chuyển động drift camera tinh tế từ 0.6s đến 8.0s
+      tl.to(
+        "#video-s01",
+        { scale: 1.02, duration: 7.4, ease: "none" },
+        0.6
+      );
+
+      // Đẩy nhẹ zoom-in 1.07x trên freeze-frame cuối từ 8.0s đến 9.42s
+      tl.to(
+        "#video-s01",
+        { scale: 1.07, duration: 1.42, ease: "power2.out" },
+        8.0
+      );
+
+      // --- 2. Overlay 1: BÍ ẨN AJINOMOTO (atMs: 2880, holdMs: 2200) ---
+      tl.fromTo(
+        "#overlay-punch",
+        { opacity: 0, scale: 0.86, y: 30 },
+        { opacity: 1, scale: 1.0, y: 0, duration: 0.45, ease: "power3.out" },
+        2.88
+      );
+      tl.to(
+        "#overlay-punch",
+        { opacity: 0, scale: 0.94, y: -20, duration: 0.35, ease: "power2.in" },
+        5.08
+      );
+
+      // --- 3. Overlay 2: KỶ NGUYÊN BÁN DẪN (atMs: 6130, holdMs: 1900) ---
+      tl.fromTo(
+        "#overlay-label",
+        { opacity: 0, x: -50 },
+        { opacity: 1, x: 0, duration: 0.45, ease: "power3.out" },
+        6.13
+      );
+      tl.to(
+        "#overlay-label",
+        { opacity: 0, x: 40, duration: 0.35, ease: "power2.in" },
+        8.03
+      );
+
+      // --- 4. Overlay 3: NHÂN VẬT BÍ ẨN & Icon Draw (atMs: 8220, holdMs: 1200) ---
+      tl.fromTo(
+        "#overlay-character",
+        { opacity: 0, scale: 0.88, y: 25 },
+        { opacity: 1, scale: 1.0, y: 0, duration: 0.4, ease: "power3.out" },
+        8.22
+      );
+
+      // Tự vẽ icon nét người theo nhịp
+      tl.to(
+        "#icon-head",
+        { strokeDashoffset: 0, duration: 0.35, ease: "power2.out" },
+        8.3
+      );
+      tl.to(
+        "#icon-body",
+        { strokeDashoffset: 0, duration: 0.38, ease: "power2.out" },
+        8.42
+      );
+
+      // Đăng ký timeline chính
+      window.__timelines["scene-s01"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

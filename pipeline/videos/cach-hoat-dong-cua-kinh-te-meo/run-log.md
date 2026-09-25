@@ -12260,3 +12260,5 @@ hyperframes check FAILED (nội dung):
 - **2026-09-24T10:30:57.628Z** — `scripts/07-codegen.hf.router.mjs --video=cach-hoat-dong-cua-kinh-te-meo --scenes=S47` — Codegen HyperFrames scene [S47] PASS sau 1 lần thử bằng ag/gemini-3.8-flash-high (review: ag/claude-sonnet-4-6) — đã chuyển đổi thành compositions/scene-s47.html.
 
 - **2026-09-24T10:32:40.310Z** — `scripts/07b-integration-check.hf.mjs --video=cach-hoat-dong-cua-kinh-te-meo` — Stage 7b integration check PASS — 51/51 scene, có audio, có caption-track, hyperframes check ok=true.
+
+- **2026-09-25T14:32:11.051Z** — qa-blank-frame-audit: 51 scene kiểm tra, 2 bị flag (S23, S47) — report tại `C:\vox-style-xe-giay-v1-hyperframes\pipeline\videos\cach-hoat-dong-cua-kinh-te-meo\contact-sheet\report.md`

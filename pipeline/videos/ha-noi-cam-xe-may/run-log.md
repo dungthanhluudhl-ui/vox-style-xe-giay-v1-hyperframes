@@ -15118,3 +15118,5 @@ hyperframes check FAILED (nội dung):
 - **2026-09-24T18:26:35.163Z** — `scripts/07b-integration-check.hf.mjs --video=ha-noi-cam-xe-may` — Stage 7b integration check PASS — 12/12 scene, có audio, có caption-track, hyperframes check ok=true.
 
 - **2026-09-24T18:31:05.740Z** — `scripts/09-render.hf.mjs` — Render bản đầy đủ: out\ha-noi-cam-xe-may-full.mp4, 101935982 bytes (97.2MB), 270.0s render time, quality=looks. Xác minh ffprobe: duration=85.733s (khớp audio thật 85.760s), 1080x1920 h264. Capture mode: screenshot (tắt fast-capture do: a CSS 3D rendering context (perspective / preserve-3d / backface-visibility)). GPU mode: hardware (WebGL renderer vendor="Google Inc. (NVIDIA)" renderer="ANGLE (NVIDIA, NVIDIA GeForce GTX 1660 SUPER (0x000021C4) Direct3D11 vs_5_0 ps_5_0, D3D11)"). Stage timing: compile=3.3s, browser_probe=0.8s, video_extract=7.5s, audio_process=4.8s, file_server=0.4s, capture_calibration=4.1s, capture_disk=172.0s, encode=55.2s, assemble=10.3s.
+
+- **2026-09-25T14:38:34.007Z** — qa-blank-frame-audit: 12 scene kiểm tra, 0 bị flag (none) — report tại `C:\vox-style-xe-giay-v1-hyperframes\pipeline\videos\ha-noi-cam-xe-may\contact-sheet\report.md`

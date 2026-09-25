@@ -130,7 +130,7 @@ export function syncRootHf(slug, root = process.cwd()) {
     .map(
       (s) => `      <div
         id="slot-${s.compId}"
-        class="clip"
+        class="hf-slot"
         data-composition-id="${s.compId}"
         data-composition-src="compositions/${s.compId}.html"
         data-start="${s.startSec.toFixed(6)}"
@@ -145,7 +145,7 @@ export function syncRootHf(slug, root = process.cwd()) {
   const captionSlot = hasCaptionTrack
     ? `      <div
         id="slot-caption-track"
-        class="clip"
+        class="hf-slot"
         data-composition-id="caption-track"
         data-composition-src="compositions/caption-track.html"
         data-start="0.000000"
@@ -175,16 +175,14 @@ export function syncRootHf(slug, root = process.cwd()) {
       * { margin: 0; padding: 0; box-sizing: border-box; }
       html, body { margin: 0; width: 1080px; height: 1920px; overflow: hidden; background: #0a0a0a; }
       #root { width: 100%; height: 100%; position: relative; }
-      /* isolation: isolate bắt buộc — mỗi slot .clip (scene hoặc caption-track) PHẢI tự tạo
-         stacking context riêng. Thiếu dòng này, z-index dùng NỘI BỘ trong 1 sub-composition
-         (rất phổ biến, vd overlay/dissolve/punch-card) sẽ "thoát" ra ngoài và cạnh tranh trực
-         tiếp ở stacking context gốc của trang, có thể đè lên slot khác (kể cả caption-track dù
-         nó luôn nằm SAU trong DOM) — lỗi thật đã gặp: caption-track hoàn toàn bị che khuất suốt
-         đúng thời lượng 1 scene (S01) dùng z-index nội bộ tới 20, dù data-track-index của
-         caption-track (1) cao hơn scene (0) — track-index KHÔNG quyết định layering (xem
-         hyperframes-core/references/tracks-and-clips.md), chỉ CSS z-index/stacking context mới
-         quyết định, nên phải chặn rò rỉ ngay ở tầng ráp tất định này. */
-      .clip { position: absolute; inset: 0; isolation: isolate; }
+      /* Slot dùng class RIÊNG .hf-slot, KHÔNG dùng .clip: CSS của root và mọi sub-composition
+         nằm chung 1 trang, nên selector .clip ở đây sẽ áp cả lên các phần tử class="clip" BÊN
+         TRONG scene (quy ước HyperFrames cho mọi timed element) — isolation làm nội dung shot
+         bị vẽ dưới lớp nền z-index>0 của scene (trống hình), inset:0 kéo giãn thẻ chỉ neo 1
+         cạnh; ngược lại rule .clip do scene tự khai cũng áp lên slot. isolation vẫn bắt buộc
+         trên slot để z-index nội bộ 1 scene không đè lên slot khác/caption-track (track-index
+         không quyết định layering). Chi tiết + bằng chứng: planning/incident-log.md. */
+      .hf-slot { position: absolute; inset: 0; isolation: isolate; }
     </style>
   </head>
   <body>

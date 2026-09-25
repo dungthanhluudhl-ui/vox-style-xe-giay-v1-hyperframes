@@ -299,40 +299,22 @@ không bao giờ bớt (đo thật 2026-09-25: 384 dòng/844KB cho ~13 video, ~5
 không `Read`/`cat` trọn file khi nó đã lớn, luôn truy vấn CÓ LỌC (`node -e` parse từng dòng JSON lọc
 theo `video`/`scene`, hoặc `jq`) để không tốn token oan đọc dữ liệu của video khác không liên quan.
 
-**Bug thật đã sửa ở tầng ráp (`sync-root-hf-lib.mjs`), áp dụng cho MỌI video:** CSS `.clip` (style mọi slot `data-composition-src` trong `index.html`) phải có `isolation: isolate` — thiếu dòng này, z-index dùng NỘI BỘ trong 1 scene có thể thoát stacking context và đè lên slot khác (kể cả `caption-track` dù luôn nằm sau trong DOM). Xem memory `feedback_incremental_buildout` bài học #5 để biết đầy đủ cách phát hiện + tại sao track-index không liên quan.
+**Quy tắc cứng ở tầng ráp (`sync-root-hf-lib.mjs`), áp dụng cho MỌI video (sửa 2026-09-26):** CSS
+host của root CHỈ được nhắm vào class riêng của slot — `.hf-slot { position: absolute; inset: 0;
+isolation: isolate; }`, slot div mang `class="hf-slot"`. TUYỆT ĐỐI không style lại `.clip` (hay
+selector phổ biến khác mà scene cũng dùng) ở root: CSS root + mọi sub-composition nằm chung 1 trang,
+selector `.clip` ở root sẽ áp lên phần tử `class="clip"` BÊN TRONG scene — đây chính là nguyên nhân
+gốc của bug **trống hình** (S23/S47 kinh-te-meo, S01/S03/S16/S18 hinh-phat) và bug **thẻ bị kéo dài**
+(S10 su-kien). `isolation` trên slot vẫn bắt buộc để z-index nội bộ 1 scene không đè lên slot khác/
+`caption-track` (track-index không quyết định layering). Bằng chứng + các kết luận cũ đã bị bác bỏ
+(giả thuyết "ngẫu nhiên/GPU", perspective/`ease:"none"`): `planning/incident-log.md` mục
+2026-09-26.
 
-**Bug render TRỐNG HÌNH (S23/S47, video `cach-hoat-dong-cua-kinh-te-meo`) — CONFIRMED thật nhưng
-nguyên nhân gốc CHƯA xác định được, KHÔNG có chặn tự động (điều tra 2026-09-24):**
-- **Đã confirmed thật** (qua vision QA/điều tra trực tiếp, không phải suy đoán): CHỈ S23 và S47
-  render trống dù `hyperframes check` PASS hoàn toàn — đã sửa bằng regenerate Stage 7 (commit
-  `2a31aab`).
-- **Đính chính 1 lỗi tài liệu đã tự lan truyền:** bản ghi trước đó của mục này từng nói S38 cũng
-  "CONFIRMED trống qua vision QA" — SAI, đã kiểm tra lại và không có căn cứ. Theo
-  `planning/README.md:180` (nhật ký build gốc), S38 thực ra là 1 trong 3 báo động giả của reviewer
-  (cùng S25/S27) — `hyperframes check` thực tế hoàn toàn sạch, không hề có bằng chứng trống hình.
-  Không có file nào trong repo ghi nhận từng chạy vision QA trên S38. Claim sai này tự nó bắt nguồn
-  từ 1 tài liệu kế hoạch trước đó mà Claude tin theo mà không kiểm chứng lại bằng dữ liệu thật
-  trong repo — bài học: luôn tra lại nguồn gốc (`run-log.md`/`planning/README.md`/`codegen-issues.jsonl`)
-  trước khi ghi 1 claim "đã confirmed" vào tài liệu dự án, không chép lại nguyên văn từ kế hoạch cũ.
-- **Giả thuyết ban đầu (rút ra từ bisection HẸP, chỉ trong phạm vi S23/S47) đã bị bác bỏ khi kiểm
-  chứng rộng hơn trên cả 51 scene bằng regex tất định:**
-  - Pattern "1 tween GSAP full-duration + `ease:\"none\"` trên hero": khớp 30/51 scene (59%), gồm
-    cả S24/S31 — 2 scene đã xác nhận render TỐT trước đó. Đây là kỹ thuật Ken Burns pan/zoom
-    chuẩn dùng khắp video, KHÔNG phải chỉ báo lỗi.
-  - Pattern CSS `perspective`/`transform-style: preserve-3d`: khớp 3/51 scene (S13, S32, S38).
-    Sau khi đính chính S38 ở trên, KHÔNG còn scene nào trong 3 ca này có bằng chứng thật là trống
-    hình — S13/S32 người dùng tự xem video xác nhận bình thường, S38 là báo động giả reviewer.
-    Pattern này KHÔNG phải chỉ báo đáng tin.
-- **Kết luận:** nguyên nhân gốc thật của lỗi render trống ở S23/S47 chưa xác định được ở mức
-  pattern cấu trúc tất định — có thể là lỗi hiếm/ngẫu nhiên (timing, headless Chrome/GPU capture),
-  không phải quy tắc code cụ thể có thể chặn bằng regex. Đã thử viết code chặn tĩnh cho
-  `scripts/lib/hf-check.mjs`/`07-codegen.hf.router.mjs`/`07b-integration-check.hf.mjs` rồi
-  **revert lại hoàn toàn** vì false-positive quá cao (sẽ chặn nhầm phần lớn scene hợp lệ tương
-  lai).
-- **Quyết định (người dùng, 2026-09-24):** KHÔNG đầu tư thêm công cụ/điều tra lúc này — chỉ ghi
-  chú lại để theo dõi thủ công. Nếu lỗi render-trống tái diễn ở video khác hoặc tần suất tăng lên,
-  audit lại từ đầu (không dựa trên 2 giả thuyết đã bác bỏ này). Không mở lại việc sửa/điều tra
-  S13/S32/S38.
+**Giới hạn phát hiện đã đo thật — lỗi layout chỉ lộ SAU KHI RÁP vẫn chưa có gate tự động:**
+Stage 7 verify chỉ check scene standalone; Stage 7b chỉ lấy ~10 sample cho cả video, và trên project
+đã ráp `hyperframes check` báo `text_occluded` của sub-composition ở severity `info` (không làm
+`ok=false`). Muốn soát thủ công khi nghi ngờ: `node scripts/qa-blank-frame-audit.mjs --video=<slug>`
+(xem mục 8).
 
 > **Sự cố cụ thể (2026-09-22) — đã chuyển sang `planning/incident-log.md`** (mục "Sự cố integration CSS sau Stage 7 — video su-kien-thien-an-mon").
 
@@ -429,6 +411,7 @@ Preview/QA riêng ở giữa** (xem ghi chú mục 7).
 | Render video cuối (chỉ khi được yêu cầu rõ) | Local | `node scripts/09-render.hf.mjs --video=<slug>` — wrapper tất định (2026-09-23), preflight assertion từ chối lệch `--quality`/output convention trừ khi có `--force-non-default`. KHÔNG gõ tay `npx hyperframes render` thô (xem sự cố mục "Nhật ký audit" bên dưới). |
 | Kiểm tra file render (duration, resolution, không lỗi) | Local | ffprobe — đã tích hợp tự động vào `scripts/09-render.hf.mjs`, không cần chạy tay |
 | Xác nhận nội dung hiển thị đúng (vd phụ đề, hiệu ứng xuyên suốt) — CHỈ khi có lý do nghi ngờ cụ thể (không mặc định mọi video) | 9router[vision_qa] | trích frame bằng ffmpeg tại nhiều mốc + gửi vision agent — bài học thật (video 5): `hyperframes check` PASS không đảm bảo mọi lớp nội dung THỰC SỰ hiển thị (vd bug stacking-context ở mục 6). Đây là ghi chú cho 1 trường hợp cụ thể đã xảy ra, KHÔNG phải quy tắc bắt buộc tự động cho mọi video. |
+| Soát scene trống hình trên MP4 đã render — CHỈ khi nghi ngờ (không mặc định) | 9router[vision_qa] | `node scripts/qa-blank-frame-audit.mjs --video=<slug>` (2026-09-26): contact sheet 1 frame giữa mỗi scene từ `out/<slug>-full.mp4` → `pipeline/videos/<slug>/contact-sheet/report.md` (gitignored) + 1 dòng `run-log.md`. Khoảng 1 lời gọi 9router / 8 scene. Giới hạn: 1 frame/scene nên không bắt lỗi chỉ ở 1 shot hoặc thoáng qua; scene bị flag phải xác minh lại bằng nhiều frame (20/50/80%) trước khi kết luận. |
 
 **Bài học thật (video "ban-an-473-phan-2", 2026-09-22):** sau khi Stage 6 xong và `hyperframes
 check` đã ok=true, Claude tự ý mở `hyperframes preview --background` (không ai yêu cầu xem) và
@@ -576,6 +559,7 @@ Từ khi repo đã có git backup (2026-09-20), **không** tạo thêm file ki�
 - `scripts/07-codegen-hf-parallel.mjs` (local, không gọi AI trực tiếp — orchestrator worker-pool, mặc định cho ≥2 scene, xem mục 6)
 - `scripts/08-sync-root.hf.mjs` (local, không gọi AI — CLI ráp `index.html` thủ công, thường không cần gọi riêng vì `07-codegen-hf-parallel.mjs` đã tự gọi khi xong)
 - `scripts/lib/generate-caption-track-hf.mjs` (local, không gọi AI — sinh `caption-track.html` tất định, gọi tự động bởi `syncRootHf()`)
+- `scripts/qa-blank-frame-audit.mjs` (9router[vision_qa] — công cụ soát thủ công, KHÔNG thuộc chuỗi stage mặc định nên không đánh số, xem mục 8)
 - Hậu tố `.hf.`/`-hf-` phân biệt nhánh HyperFrames.
 
 Archive (Remotion, 4 video đầu — không dùng cho video mới, đã di chuyển vật lý khỏi `scripts/`

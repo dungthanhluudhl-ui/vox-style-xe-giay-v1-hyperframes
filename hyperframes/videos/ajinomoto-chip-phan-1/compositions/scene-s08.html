@@ -1,0 +1,671 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap">
+      <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      width: 100%;
+      height: 100%;
+      background-color: #E7E3D9;
+      color: #141414;
+      font-family: "Be Vietnam Pro", sans-serif;
+      overflow: hidden;
+    }
+
+    #root {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #E7E3D9;
+    }
+
+    /* Quy ước bắt buộc HyperFrames .clip */
+    .clip {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+    }
+
+    /* ===================================================
+       1. NỀN CHART (CHUẨN STYLE TOKENS & STYLE DNA)
+       4 đường kẻ ngang tài chính tại 20%, 40%, 60%, 80% + tick cam mép trái
+       =================================================== */
+    .chart-background {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .chart-grid-pattern {
+      position: absolute;
+      inset: 0;
+      background-image: 
+        radial-gradient(circle, rgba(20, 20, 20, 0.16) 1.5px, transparent 1.5px);
+      background-size: 84px 84px;
+      opacity: 0.55;
+    }
+
+    .chart-axis-line {
+      position: absolute;
+      left: 60px;
+      right: 60px;
+      height: 2px;
+      background: rgba(20, 20, 20, 0.28);
+      transform-origin: left center;
+    }
+
+    .chart-tick {
+      position: absolute;
+      left: -16px;
+      top: -6px;
+      width: 16px;
+      height: 14px;
+      background: #FF6A1A;
+    }
+
+    /* ===================================================
+       2. CAMERA RIG (PHÂN TÁCH PAN & ENTRANCE TRÁNH OVERWRITE)
+       =================================================== */
+    #camera-pan {
+      position: absolute;
+      inset: 0;
+      z-index: 2;
+    }
+
+    #camera-entrance {
+      position: absolute;
+      inset: 0;
+      transform-origin: 540px 960px;
+    }
+
+    /* Khung ảnh collage giấy kẹp (Hero Asset img-02) */
+    .hero-collage-card {
+      position: absolute;
+      top: 350px;
+      left: 80px;
+      width: 920px;
+      height: 1080px;
+      background: #F5F0E4;
+      border: 4px solid #141414;
+      box-shadow: 16px 16px 0px rgba(20, 20, 20, 0.85);
+      overflow: hidden;
+      z-index: 3;
+    }
+
+    .hero-image {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    /* Băng dính kraft dán góc đặc trưng Vox papercraft */
+    .kraft-tape-top {
+      position: absolute;
+      top: 334px;
+      right: 140px;
+      width: 150px;
+      height: 36px;
+      background: #D8D2C2;
+      border: 2px dashed rgba(20, 20, 20, 0.4);
+      transform: rotate(5deg);
+      box-shadow: 3px 4px 6px rgba(0, 0, 0, 0.12);
+      z-index: 10;
+    }
+
+    .kraft-tape-bottom {
+      position: absolute;
+      top: 1400px;
+      left: 130px;
+      width: 140px;
+      height: 34px;
+      background: #D8D2C2;
+      border: 2px dashed rgba(20, 20, 20, 0.4);
+      transform: rotate(-6deg);
+      box-shadow: 3px 4px 6px rgba(0, 0, 0, 0.12);
+      z-index: 10;
+    }
+
+    /* Vector Diagram nối biểu đồ với các nhãn chiến lược */
+    .diagram-svg-layer {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 15;
+    }
+
+    /* ===================================================
+       3. OVERLAYS & PUNCH PHRASES (THEO SHOTLIST)
+       Đảm bảo tương phản WCAG AA (>4.5:1) và an toàn safe zone
+       =================================================== */
+
+    /* Overlay 1: Punch Phrase "MỐC NĂM 1949" (0.18s) */
+    .punch-header-container {
+      position: absolute;
+      top: 180px;
+      left: 80px;
+      right: 80px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 12px;
+      z-index: 30;
+    }
+
+    .kicker-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: #141414;
+      color: #F7F4EC; /* Tương phản 16.5:1 */
+      padding: 8px 18px;
+      border-radius: 4px;
+      font-size: 22px;
+      font-weight: 900;
+      letter-spacing: 1.5px;
+      border-left: 6px solid #FF6A1A;
+    }
+
+    .kicker-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #FF6A1A;
+    }
+
+    .punch-title-card {
+      background: #141414;
+      color: #F7F4EC;
+      padding: 14px 28px;
+      border-left: 10px solid #FF6A1A;
+      border-radius: 4px;
+      box-shadow: 8px 8px 0px rgba(20, 20, 20, 0.4);
+    }
+
+    .punch-title-text {
+      font-size: 64px;
+      font-weight: 900;
+      line-height: 1.15;
+      letter-spacing: -0.5px;
+      text-transform: uppercase;
+    }
+
+    .punch-title-accent {
+      color: #FF6A1A; /* Tương phản 6.4:1 trên #141414 */
+    }
+
+    /* Overlay 2: Icon Money + "NIÊM YẾT SÀN ĐẦU TƯ" (3.07s) */
+    .callout-listing {
+      position: absolute;
+      top: 560px;
+      left: 80px;
+      width: 490px;
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      background: #141414;
+      border: 3.5px solid #FF6A1A;
+      border-radius: 6px;
+      box-shadow: 10px 10px 0px rgba(20, 20, 20, 0.7);
+      padding: 18px 24px;
+      z-index: 32;
+      transform-origin: left center;
+    }
+
+    .icon-box-money {
+      width: 64px;
+      height: 64px;
+      background: #FF6A1A;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transform-origin: center center;
+    }
+
+    .callout-text-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .callout-subtext {
+      font-size: 18px;
+      font-weight: 900;
+      color: #FF6A1A; /* Tương phản 6.4:1 trên #141414 */
+      letter-spacing: 1px;
+    }
+
+    .callout-maintext {
+      font-size: 30px;
+      font-weight: 900;
+      color: #F7F4EC; /* Tương phản 16.5:1 trên #141414 */
+      letter-spacing: -0.5px;
+      line-height: 1.2;
+    }
+
+    /* Overlay 3: Label "CHIẾN LƯỢC ĐỘT PHÁ" (6.85s) */
+    .callout-strategy {
+      position: absolute;
+      top: 860px;
+      right: 80px;
+      width: 480px;
+      background: #141414;
+      border: 3.5px solid #FF6A1A;
+      border-radius: 6px;
+      box-shadow: 10px 10px 0px rgba(20, 20, 20, 0.7);
+      padding: 20px 26px;
+      z-index: 34;
+      transform-origin: right center;
+      text-align: right;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+    }
+
+    .strategy-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 18px;
+      font-weight: 900;
+      color: #141414; /* Tương phản 6.4:1 trên #FF6A1A */
+      background: #FF6A1A;
+      padding: 4px 12px;
+      border-radius: 4px;
+      margin-bottom: 8px;
+    }
+
+    .strategy-title {
+      font-size: 34px;
+      font-weight: 900;
+      color: #F7F4EC; /* Tương phản 16.5:1 trên #141414 */
+      letter-spacing: 0.5px;
+      line-height: 1.2;
+    }
+
+    /* Overlay 4: Label "ĐẾ CHẾ HOÁ SINH" (9.80s) */
+    .callout-empire {
+      position: absolute;
+      top: 1180px;
+      left: 80px;
+      right: 80px;
+      background: #141414;
+      border: 4px solid #FF6A1A;
+      border-radius: 8px;
+      box-shadow: 12px 12px 0px rgba(20, 20, 20, 0.75);
+      padding: 24px 30px;
+      display: flex;
+      align-items: center;
+      gap: 22px;
+      z-index: 36;
+      transform-origin: center bottom;
+    }
+
+    .icon-box-molecule {
+      width: 76px;
+      height: 76px;
+      background: #FF6A1A;
+      border: 3px solid #141414;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transform-origin: center center;
+    }
+
+    .empire-content {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .empire-tag {
+      font-size: 19px;
+      font-weight: 900;
+      color: #FF6A1A; /* Tương phản 6.4:1 trên #141414 */
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    .empire-title {
+      font-size: 48px;
+      font-weight: 900;
+      color: #F7F4EC; /* Tương phản 16.5:1 trên #141414 */
+      line-height: 1.1;
+      letter-spacing: -0.5px;
+    }
+
+    .empire-subtitle {
+      font-size: 20px;
+      font-weight: 700;
+      color: #E7E3D9; /* Tương phản 14.2:1 trên #141414 */
+      opacity: 1;
+    }
+
+    /* ===================================================
+       4. THANH CAM ĐÁY CỐ ĐỊNH (SIGNATURE BRAND BAR)
+       =================================================== */
+    .bottom-orange-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 16px;
+      background: #FF6A1A;
+      z-index: 999;
+    }
+  </style>
+
+  <!-- Standalone Root Composition (1080x1920, 12.63s duration: 82030 - 69400 = 12630ms) -->
+  <div
+    id="root"
+    data-composition-id="scene-s08"
+    data-start="0"
+    data-width="1080"
+    data-height="1920"
+    data-duration="12.63"
+  >
+    <!-- Scene Clip S08 -->
+    <section id="scene-s08" class="clip" data-start="0" data-duration="12.63">
+      
+      <!-- Nền biến thể 'chart' tài chính chuẩn Style Tokens (4 vạch kẻ + tick cam mép trái) -->
+      <div id="chart-bg" class="chart-background">
+        <div class="chart-grid-pattern"></div>
+        
+        <!-- Đường đo 20% (384px) -->
+        <div class="chart-axis-line" style="top: 384px;">
+          <div class="chart-tick"></div>
+        </div>
+        <!-- Đường đo 40% (768px) -->
+        <div class="chart-axis-line" style="top: 768px;">
+          <div class="chart-tick"></div>
+        </div>
+        <!-- Đường đo 60% (1152px) -->
+        <div class="chart-axis-line" style="top: 1152px;">
+          <div class="chart-tick"></div>
+        </div>
+        <!-- Đường đo 80% (1536px) -->
+        <div class="chart-axis-line" style="top: 1536px;">
+          <div class="chart-tick"></div>
+        </div>
+      </div>
+
+      <!-- Camera Rig: Phân tách Pan (x) và Entrance (scale, rotation, opacity) -->
+      <div id="camera-pan">
+        <div id="camera-entrance">
+          
+          <!-- Băng dính kraft dán góc collage -->
+          <div class="kraft-tape-top"></div>
+          <div class="kraft-tape-bottom"></div>
+
+          <!-- Khung Hero Asset img-02 -->
+          <div class="hero-collage-card">
+            <img
+              id="hero-image-s08"
+              class="hero-image"
+              src="assets/img-02-papercraft-tech-empire-diagram.jpg"
+              alt="Ajinomoto papercraft tech empire diagram"
+            />
+          </div>
+
+          <!-- Vector Diagram nối biểu đồ tới các nhãn quyết định -->
+          <svg class="diagram-svg-layer" viewBox="0 0 1080 1920" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <!-- Đường nối 1: Từ đồ thị dẫn vào Callout Niêm Yết -->
+            <path
+              id="diag-path-listing"
+              d="M 220 500 L 220 560"
+              stroke="#FF6A1A"
+              stroke-width="5"
+              stroke-linecap="round"
+            />
+            <!-- Đường nối 2: Rẽ nhánh sang Chiến lược đột phá -->
+            <path
+              id="diag-path-strategy"
+              d="M 450 670 L 640 760 L 640 860"
+              stroke="#141414"
+              stroke-width="5"
+              stroke-linecap="round"
+              stroke-dasharray="8 8"
+            />
+            <!-- Đường nối 3: Dẫn lối vào Đế Chế Hoá Sinh -->
+            <path
+              id="diag-path-empire"
+              d="M 640 980 L 640 1080 L 540 1180"
+              stroke="#FF6A1A"
+              stroke-width="5"
+              stroke-linecap="round"
+            />
+          </svg>
+
+        </div>
+      </div>
+
+      <!-- OVERLAY 1: Punch Phrase (0.18s) -->
+      <div class="punch-header-container" id="punch-header">
+        <div class="kicker-tag" id="punch-kicker">
+          <span class="kicker-dot"></span>
+          <span>DẤU MỐC LỊCH SỬ</span>
+        </div>
+        <div class="punch-title-card" id="punch-title-card">
+          <h1 class="punch-title-text"><span class="punch-title-accent">MỐC NĂM</span> 1949</h1>
+        </div>
+      </div>
+
+      <!-- OVERLAY 2: Icon Money + "NIÊM YẾT SÀN ĐẦU TƯ" (3.07s) -->
+      <div class="callout-listing" id="callout-listing">
+        <div class="icon-box-money" id="icon-money-box">
+          <!-- Icon Money chuẩn vocabulary -->
+          <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="4" y="9" width="32" height="22" rx="3" stroke="#141414" stroke-width="3.5" fill="none"/>
+            <circle cx="20" cy="20" r="5" stroke="#141414" stroke-width="3" fill="none"/>
+            <path d="M 9 15 L 9 25 M 31 15 L 31 25" stroke="#141414" stroke-width="3" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="callout-text-wrap">
+          <span class="callout-subtext">SÀN CHỨNG KHOÁN TOKYO</span>
+          <span class="callout-maintext">NIÊM YẾT SÀN ĐẦU TƯ</span>
+        </div>
+      </div>
+
+      <!-- OVERLAY 3: Label "CHIẾN LƯỢC ĐỘT PHÁ" (6.85s) -->
+      <div class="callout-strategy" id="callout-strategy">
+        <div class="strategy-badge">
+          <span>HƯỚNG ĐI RIÊNG</span>
+          <span>➔</span>
+        </div>
+        <div class="strategy-title">CHIẾN LƯỢC ĐỘT PHÁ</div>
+      </div>
+
+      <!-- OVERLAY 4: Label "ĐẾ CHẾ HOÁ SINH" (9.80s) -->
+      <div class="callout-empire" id="callout-empire">
+        <div class="icon-box-molecule" id="icon-molecule-box">
+          <!-- Biểu tượng phân tử hóa sinh Amino Acid Molecule -->
+          <svg width="46" height="46" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <polygon points="24,6 40,15 40,33 24,42 8,33 8,15" stroke="#141414" stroke-width="3.5" fill="none"/>
+            <circle cx="24" cy="6" r="3.5" fill="#141414"/>
+            <circle cx="40" cy="15" r="3.5" fill="#141414"/>
+            <circle cx="40" cy="33" r="3.5" fill="#141414"/>
+            <circle cx="24" cy="42" r="3.5" fill="#141414"/>
+            <circle cx="8" cy="33" r="3.5" fill="#141414"/>
+            <circle cx="8" cy="15" r="3.5" fill="#141414"/>
+            <circle cx="24" cy="24" r="5" fill="#141414"/>
+          </svg>
+        </div>
+        <div class="empire-content">
+          <span class="empire-tag">KHOA HỌC AMINO ACID</span>
+          <h2 class="empire-title">ĐẾ CHẾ HOÁ SINH</h2>
+          <span class="empire-subtitle">TẦM NHÌN KHOA HỌC TOÀN CẦU</span>
+        </div>
+      </div>
+
+      <!-- Chữ ký thương hiệu: Thanh cam cố định mép dưới cùng -->
+      <div id="bottom-bar" class="bottom-orange-bar"></div>
+
+    </section>
+  </div>
+
+  <!-- SCRIPT ANIMATION ENGINE (Seekable, Deterministic, Single Paused GSAP Timeline) -->
+  <script>
+    // 1. Khởi tạo timeline paused bắt buộc theo hợp đồng HyperFrames
+    const tl = gsap.timeline({
+      paused: true,
+      defaults: { ease: "power3.out" }
+    });
+
+    // 2. Đo và chuẩn bị các nét vẽ vector SVG bằng fromTo tường minh
+    const pathListing = document.querySelector("#diag-path-listing");
+    const lenListing = pathListing ? pathListing.getTotalLength() : 200;
+    if (pathListing) {
+      pathListing.style.strokeDasharray = lenListing;
+      pathListing.style.strokeDashoffset = lenListing;
+    }
+
+    const pathStrategy = document.querySelector("#diag-path-strategy");
+    const lenStrategy = pathStrategy ? pathStrategy.getTotalLength() : 350;
+    if (pathStrategy) {
+      pathStrategy.style.strokeDasharray = lenStrategy;
+      pathStrategy.style.strokeDashoffset = lenStrategy;
+    }
+
+    const pathEmpire = document.querySelector("#diag-path-empire");
+    const lenEmpire = pathEmpire ? pathEmpire.getTotalLength() : 280;
+    if (pathEmpire) {
+      pathEmpire.style.strokeDasharray = lenEmpire;
+      pathEmpire.style.strokeDashoffset = lenEmpire;
+    }
+
+    // ========================================================
+    // CHOREOGRAPHY BÁM SÁT SHOTLIST & STYLE DNA (Smooth beats bouncy)
+    // Tổng duration: 12.63s
+    // ========================================================
+
+    // BEAT 1: ENTRANCE "SPIRAL" (0.0s -> 1.3s) trên #camera-entrance
+    // Xoay nhẹ kết hợp phóng to dồn lực vào 1/3 đầu khung hình
+    tl.fromTo("#camera-entrance", 
+      {
+        scale: 1.15,
+        rotation: -4,
+        opacity: 0
+      },
+      {
+        scale: 1.0,
+        rotation: 0,
+        opacity: 1,
+        duration: 1.3,
+        ease: "power3.out"
+      },
+      0.0
+    );
+
+    // Kẻ các vạch trục chart tài chính xuất hiện từ trái sang phải
+    tl.fromTo(".chart-axis-line",
+      { scaleX: 0 },
+      { scaleX: 1, duration: 0.65, stagger: 0.08, ease: "power2.out" },
+      0.15
+    );
+
+    // BEAT 2: PUNCH PHRASE "MỐC NĂM 1949" (atMs: 69580 -> 0.18s)
+    tl.fromTo("#punch-kicker",
+      { y: 25, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.45, ease: "power3.out" },
+      0.18
+    );
+    tl.fromTo("#punch-title-card",
+      { scale: 0.9, y: 35, opacity: 0, rotation: -2.5 },
+      { scale: 1.0, y: 0, opacity: 1, rotation: -1.0, duration: 0.55, ease: "power3.out" },
+      0.28
+    );
+
+    // CAMERA MOTION: PAN-RIGHT (1.3s -> 12.63s) trên riêng #camera-pan
+    tl.fromTo("#camera-pan", 
+      { x: 0, y: 0 },
+      {
+        x: -40,
+        y: -10,
+        duration: 11.33,
+        ease: "none"
+      },
+      1.3
+    );
+
+    // BEAT 3: ICON MONEY + "NIÊM YẾT SÀN ĐẦU TƯ" (atMs: 72470 -> 3.07s)
+    // Đường nét nối dẫn từ biểu đồ chứng khoán
+    tl.fromTo("#diag-path-listing",
+      { strokeDashoffset: lenListing },
+      { strokeDashoffset: 0, duration: 0.55, ease: "power2.out" },
+      2.95
+    );
+
+    // Callout niêm yết xuất hiện
+    tl.fromTo("#callout-listing",
+      { scale: 0.85, opacity: 0, y: 20 },
+      { scale: 1.0, opacity: 1, y: 0, duration: 0.5, ease: "power3.out" },
+      3.07
+    );
+
+    // Biểu tượng tiền: smooth settle theo chuẩn Style DNA (không dùng back.out)
+    tl.fromTo("#icon-money-box",
+      { rotation: -12, scale: 0.85 },
+      { rotation: 0, scale: 1.0, duration: 0.45, ease: "power3.out" },
+      3.15
+    );
+
+    // BEAT 4: LABEL "CHIẾN LƯỢC ĐỘT PHÁ" (atMs: 76250 -> 6.85s)
+    // Đường nét đứt rẽ nhánh xuất hiện
+    tl.fromTo("#diag-path-strategy",
+      { strokeDashoffset: lenStrategy },
+      { strokeDashoffset: 0, duration: 0.65, ease: "power2.out" },
+      6.65
+    );
+
+    // Callout chiến lược đột phá trượt vào từ mép phải
+    tl.fromTo("#callout-strategy",
+      { x: 45, opacity: 0, scale: 0.92 },
+      { x: 0, opacity: 1, scale: 1.0, duration: 0.5, ease: "power3.out" },
+      6.85
+    );
+
+    // BEAT 5: LABEL "ĐẾ CHẾ HOÁ SINH" (atMs: 79200 -> 9.80s)
+    // Đường dẫn kết nối chạm tới điểm kết
+    tl.fromTo("#diag-path-empire",
+      { strokeDashoffset: lenEmpire },
+      { strokeDashoffset: 0, duration: 0.6, ease: "power2.out" },
+      9.55
+    );
+
+    // Card anh hùng cuối "Đế chế hóa sinh" nâng lên từ dưới
+    tl.fromTo("#callout-empire",
+      { y: 40, scale: 0.92, opacity: 0 },
+      { y: 0, scale: 1.0, opacity: 1, duration: 0.6, ease: "power3.out" },
+      9.80
+    );
+
+    // Biểu tượng phân tử: smooth settle theo chuẩn Style DNA (không dùng back.out)
+    tl.fromTo("#icon-molecule-box",
+      { rotation: -20, scale: 0.8 },
+      { rotation: 0, scale: 1.0, duration: 0.5, ease: "power3.out" },
+      9.90
+    );
+
+    // 3. ĐĂNG KÝ BẮT BUỘC TIMELINE LÊN GLOBAL OBJECT THEO COMPOSITION ID
+    window.__timelines["scene-s08"] = tl;
+  </script>
+
+    </template>
+  </body>
+</html>
