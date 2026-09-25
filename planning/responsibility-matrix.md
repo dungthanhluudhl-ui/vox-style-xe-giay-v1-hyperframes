@@ -310,11 +310,12 @@ gốc của bug **trống hình** (S23/S47 kinh-te-meo, S01/S03/S16/S18 hinh-pha
 (giả thuyết "ngẫu nhiên/GPU", perspective/`ease:"none"`): `planning/incident-log.md` mục
 2026-09-26.
 
-**Giới hạn phát hiện đã đo thật — lỗi layout chỉ lộ SAU KHI RÁP vẫn chưa có gate tự động:**
-Stage 7 verify chỉ check scene standalone; Stage 7b chỉ lấy ~10 sample cho cả video, và trên project
-đã ráp `hyperframes check` báo `text_occluded` của sub-composition ở severity `info` (không làm
-`ok=false`). Muốn soát thủ công khi nghi ngờ: `node scripts/qa-blank-frame-audit.mjs --video=<slug>`
-(xem mục 8).
+**Giới hạn phát hiện đã đo thật — lỗi layout chỉ lộ SAU KHI RÁP chưa có gate đủ dày:**
+Stage 7 verify chỉ check scene standalone; Stage 7b chỉ lấy ~9–10 sample cho cả video, mà
+`hyperframes check` chỉ báo `error` khi 1 lỗi xuất hiện ở ≥2 sample (1 sample → `info`, không làm
+`ok=false`) — nên lỗi nằm gọn trong 1 scene thường lọt. Check chỉ bắt CHỮ bị che, không bắt hình
+minh hoạ bị che. Muốn soát thủ công khi nghi ngờ: `node scripts/qa-blank-frame-audit.mjs
+--video=<slug>` (xem mục 8).
 
 > **Sự cố cụ thể (2026-09-22) — đã chuyển sang `planning/incident-log.md`** (mục "Sự cố integration CSS sau Stage 7 — video su-kien-thien-an-mon").
 
@@ -408,10 +409,10 @@ Preview/QA riêng ở giữa** (xem ghi chú mục 7).
 
 | Task | Ai/gì đảm nhiệm | Công cụ |
 |---|---|---|
-| Render video cuối (chỉ khi được yêu cầu rõ) | Local | `node scripts/09-render.hf.mjs --video=<slug>` — wrapper tất định (2026-09-23), preflight assertion từ chối lệch `--quality`/output convention trừ khi có `--force-non-default`. KHÔNG gõ tay `npx hyperframes render` thô (xem sự cố mục "Nhật ký audit" bên dưới). |
+| Render video cuối (chỉ khi được yêu cầu rõ) | Local | `node scripts/09-render.hf.mjs --video=<slug>` — wrapper tất định (2026-09-23), preflight assertion từ chối lệch `--quality`/output convention trừ khi có `--force-non-default`. KHÔNG gõ tay `npx hyperframes render` thô (xem sự cố mục "Nhật ký audit" bên dưới). Render pin CÙNG `HF_VERSION` với check (`scripts/lib/hf-check.mjs`, 2026-09-26) — trước đó không pin nên tự trôi theo bản mới nhất. |
 | Kiểm tra file render (duration, resolution, không lỗi) | Local | ffprobe — đã tích hợp tự động vào `scripts/09-render.hf.mjs`, không cần chạy tay |
 | Xác nhận nội dung hiển thị đúng (vd phụ đề, hiệu ứng xuyên suốt) — CHỈ khi có lý do nghi ngờ cụ thể (không mặc định mọi video) | 9router[vision_qa] | trích frame bằng ffmpeg tại nhiều mốc + gửi vision agent — bài học thật (video 5): `hyperframes check` PASS không đảm bảo mọi lớp nội dung THỰC SỰ hiển thị (vd bug stacking-context ở mục 6). Đây là ghi chú cho 1 trường hợp cụ thể đã xảy ra, KHÔNG phải quy tắc bắt buộc tự động cho mọi video. |
-| Soát scene trống hình trên MP4 đã render — CHỈ khi nghi ngờ (không mặc định) | 9router[vision_qa] | `node scripts/qa-blank-frame-audit.mjs --video=<slug>` (2026-09-26): contact sheet 1 frame giữa mỗi scene từ `out/<slug>-full.mp4` → `pipeline/videos/<slug>/contact-sheet/report.md` (gitignored) + 1 dòng `run-log.md`. Khoảng 1 lời gọi 9router / 8 scene. Giới hạn: 1 frame/scene nên không bắt lỗi chỉ ở 1 shot hoặc thoáng qua; scene bị flag phải xác minh lại bằng nhiều frame (20/50/80%) trước khi kết luận. |
+| Soát scene/shot trống hình trên MP4 đã render — CHỈ khi nghi ngờ (không mặc định) | 9router[vision_qa] | `node scripts/qa-blank-frame-audit.mjs --video=<slug> [--input=<mp4>]` (2026-09-26): 3 frame/shot (20/50/80%) từ `out/<slug>-full.mp4` (hoặc `--input`) → `pipeline/videos/<slug>/contact-sheet/report.md` (gitignored) + 1 dòng `run-log.md`; trạng thái ok/blank/partial. Khoảng 1 lời gọi 9router / 3 shot. Flag có thể là báo nhầm (nội dung xuất hiện muộn, nhiễu nén video) — xác minh trước khi sửa. |
 
 **Bài học thật (video "ban-an-473-phan-2", 2026-09-22):** sau khi Stage 6 xong và `hyperframes
 check` đã ok=true, Claude tự ý mở `hyperframes preview --background` (không ai yêu cầu xem) và

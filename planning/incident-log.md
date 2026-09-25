@@ -71,10 +71,13 @@ SSIM tất định + vision QA qua 9router — Claude không tự xem ảnh):**
    lỗi (tái tạo đúng format standalone của S01: 0 lỗi; cùng code nhúng vào slot: `text_occluded`).
 2. Stage 7b chỉ 9–10 sample cố định cho cả video (437s → ~43s/sample) → không sample nào rơi vào
    4 scene lỗi.
-3. Kể cả sample trúng: trên project ĐÃ RÁP, `hyperframes check` báo `text_occluded` của
-   sub-composition ở severity `info` (coveredFraction 1 vẫn là info) → `ok=true`. Chỉ tăng
-   `--samples`/`--at` KHÔNG đủ để Stage 7b fail. Và check chỉ bắt được CHỮ bị che, không bắt được
-   hình minh hoạ bị che.
+3. `hyperframes check` hạ finding xuống `info` khi nó chỉ xuất hiện ở ĐÚNG 1 sample
+   (`occurrences=1`, lọc lỗi thoáng qua lúc chuyển cảnh), và báo `error` khi ≥2 sample — **không**
+   phụ thuộc project đã ráp hay chưa (ĐÍNH CHÍNH 2026-09-26: bản ghi trước đó của mục này nói
+   "sub-composition trên project đã ráp luôn là info" — sai, đã đo lại). Bằng chứng: check 1
+   mốc/scene trên hinh-phat → 28 `text_occluded` đều `info occ=1`; check 3 mốc/shot trên nvidia bản cũ
+   → 17 `error` (occ 2–3) ở S03, `ok=false`. Tức là sample đủ dày (≥2 mốc trong cửa sổ lỗi) sẽ làm
+   7b FAIL đúng. Giới hạn còn lại: check chỉ bắt CHỮ bị che, không bắt hình minh hoạ bị che.
 
 **Đính chính các kết luận sai trước đó:** (a) mục "Bug render TRỐNG HÌNH" ngày 2026-09-24 kết luận
 "nguyên nhân chưa xác định, có thể ngẫu nhiên" — sai, đây là lỗi tất định tái lập 100%; (b) giả
@@ -86,28 +89,34 @@ nhận S38 bình thường, trên video đó chỉ S23/S47 trống; (e) trong ph
 này Claude từng báo sai tương quan "chỉ video dài mới lỗi" và từng kết luận sai chiều cơ chế — cả 2
 đã được thực nghiệm có kiểm soát bác bỏ trước khi sửa code.
 
-**Công cụ audit mới:** `scripts/qa-blank-frame-audit.mjs --video=<slug>` — contact sheet 1 frame
-giữa mỗi scene từ `out/<slug>-full.mp4` + 9router[vision_qa], ghi
-`pipeline/videos/<slug>/contact-sheet/report.md` (đã validate: bắt đúng S23/S47 trên MP4 cũ, 0 báo
-nhầm/51 scene). Giới hạn: 1 frame/scene → không bắt lỗi chỉ xảy ra ở 1 shot hoặc thoáng qua (S19,
-S10); flag đơn lẻ nên xác minh lại bằng nhiều frame (20/50/80%) — đã gặp 1 báo nhầm do nội dung
-xuất hiện muộn (S06 `giai-phap-ngan-song-than`).
+**Công cụ audit mới:** `scripts/qa-blank-frame-audit.mjs --video=<slug> [--input=<mp4>]`. Bản
+đầu (1 frame giữa mỗi scene) bắt đúng S23/S47 kinh-te-meo nhưng BỎ SÓT nvidia S03 (frame giữa scene
+rơi đúng lúc video chân dung ngoài `.clip` đang hiện). Đã nâng cấp (2026-09-26, người dùng duyệt)
+sang 3 frame/shot (20/50/80%), trạng thái ok/blank/partial, bỏ signalstats (vô dụng: frame trống vẫn
+YMIN=0/YMAX=255 do nền gradient/lưới). Validate: nvidia bản cũ → đúng S03-2 blank; bản mới → 0/19
+shot. Chi phí ~1 lời gọi 9router / 3 shot. Flag vẫn có thể là báo nhầm (nội dung xuất hiện muộn, nhiễu
+nén video) — xác minh trước khi sửa.
 
 **Còn tồn đọng — CHƯA làm (người dùng chưa duyệt, ghi lại để quyết định sau):**
-- Gate Stage 7b cho lỗi layout sau khi ráp: cần sample theo từng scene VÀ tự coi `text_occluded`
-  coveredFraction cao là FAIL bất kể severity (đo thật: +~90–100s cho video 54 scene).
+- Gate Stage 7b cho lỗi layout sau khi ráp: đang audit riêng theo yêu cầu người dùng (xem đính
+  chính mục 3 ở trên: sample ≥2 mốc/shot là đủ để lỗi kéo dài thành `error`; đo thật trên nvidia:
+  check mặc định 42s, 57 mốc 51s).
 - Vision audit sau render (`qa-blank-frame-audit.mjs`) làm bước mặc định — trái quy tắc hiện tại
   "vision QA không mặc định".
-- `scripts/09-render.hf.mjs` gọi `npx hyperframes render` KHÔNG pin version, trong khi check pin
-  `hyperframes@0.8.56`.
+- ĐÃ SỬA (2026-09-26): `scripts/09-render.hf.mjs` trước đó gọi `npx hyperframes render` KHÔNG pin →
+  thực tế trôi 0.8.60 (22/09) → 0.8.75 (25/09) → 0.8.77 (26/09, đúng lúc render lại nvidia), trong khi
+  check pin 0.8.56. Nay render dùng chung `HF_VERSION` (0.8.56) với check. Đo trên nvidia: 0.8.56 vs
+  0.8.77 SSIM ≥0.966 mọi ô, khác biệt chỉ là khử răng cưa font/lệch chữ 1–2px (vision: không nhận ra,
+  không bản nào lỗi). Nâng version sau này: đổi `HF_VERSION` trong `scripts/lib/hf-check.mjs` + POC.
 - Mọi composition dùng chung `id="root"` → rule `#root` của 1 composition áp lên mọi composition
   khác (va chạm tên cùng họ, hiện chưa thấy gây lỗi).
 - S30 `hinh-phat-treo-co-o-nhat-ban`: 1 `text_occluded` 33% tại 0.05s sau khi scene bắt đầu (có ở cả
   bản cũ lẫn bản fix — không liên quan bug này).
 - `poc/hyperframes/assemble-poc.mjs` (công cụ POC, không thuộc pipeline sản xuất) vẫn sinh
   `.clip { position: absolute; inset: 0; }` + slot `class="clip"` → dính rò rỉ `inset` (kéo giãn),
-  không có isolation. Chưa sửa để giữ khả năng so sánh với điểm POC cũ — nếu dùng lại cho lần audit
-  model sau, sửa theo đúng mẫu `.hf-slot` trước.
+  không có isolation. **Quyết định người dùng (2026-09-26): giữ nguyên POC, không cập nhật theo
+  script mới** — khi dùng lại cho lần audit model sau, nhớ rằng render POC có thể lệch production ở
+  scene có thẻ neo 1 cạnh.
 - `index.html` của các video demo đã dựng vẫn mang rule cũ (người dùng chọn không ráp/render lại) —
   sẽ tự đúng ở lần `syncRootHf()` kế tiếp của video đó.
 

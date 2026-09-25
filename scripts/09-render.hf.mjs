@@ -17,6 +17,7 @@ import { execSync, spawn } from "node:child_process";
 import { getVideoSlug, videoPaths } from "./lib/video-paths.mjs";
 import { appendRunLog } from "./lib/router-client.mjs";
 import { syncRootHf } from "./lib/sync-root-hf-lib.mjs";
+import { HF_VERSION } from "./lib/hf-check.mjs";
 
 const root = process.cwd();
 const slug = getVideoSlug();
@@ -73,7 +74,9 @@ fs.mkdirSync(path.dirname(outputPath), { recursive: true });
 const extraArgs = [];
 if (flags.fps) extraArgs.push(`--fps=${flags.fps}`);
 
-const cmd = `npx hyperframes render --quality ${quality} -o "${outputPath}" ${extraArgs.join(" ")} "${vp.hfProjectDir}"`;
+// Pin CÙNG version với check (Stage 7/7b): bản không pin tự trôi theo bản mới nhất (0.8.60 → 0.8.75 →
+// 0.8.77 chỉ trong 4 ngày) nên code được kiểm tra bằng 1 engine nhưng render bằng engine khác.
+const cmd = `npx --yes hyperframes@${HF_VERSION} render --quality ${quality} -o "${outputPath}" ${extraArgs.join(" ")} "${vp.hfProjectDir}"`;
 console.log(`Đang render: ${cmd}`);
 
 // spawn() (thay vì execSync stdio:"inherit") — vừa in log live ra terminal (process.stdout.write

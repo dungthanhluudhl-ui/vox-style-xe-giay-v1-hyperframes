@@ -1,6 +1,8 @@
-// QA: audit bug "trống hình" bằng contact sheet trích từ video ĐÃ RENDER (out/<slug>-full.mp4)
-// + vision QA qua 9router. Claude không tự xem ảnh — chỉ đọc report.md (text) do script này ghi ra.
-// Usage: node scripts/qa-blank-frame-audit.mjs --video=<slug> [--scenes-per-sheet=8]
+// QA: soát scene trống/mất nội dung trên video ĐÃ RENDER, theo TỪNG SHOT (3 frame/shot tại 20/50/80%)
+// + vision QA qua 9router. Claude không tự xem ảnh — chỉ đọc report.md (text) script này ghi ra.
+// Soát theo shot thay vì 1 frame/scene: lỗi có thể chỉ nằm ở 1 shot, hoặc bị che bởi 1 phần tử khác
+// vẫn hiển thị đúng lúc lấy frame giữa scene (vd nvidia-phu-song-viet-nam S03, 2026-09-26).
+// Usage: node scripts/qa-blank-frame-audit.mjs --video=<slug> [--input=<mp4>] [--shots-per-sheet=3]
 import fs from "node:fs";
 import path from "node:path";
 import { execSync } from "node:child_process";
@@ -16,187 +18,110 @@ import { getVideoSlug, videoPaths } from "./lib/video-paths.mjs";
 
 const slug = getVideoSlug();
 const vp = videoPaths(slug);
-const routing = loadModelRouting();
-const model = routing.vision_qa;
+const model = loadModelRouting().vision_qa;
+const arg = (name) => process.argv.find((a) => a.startsWith(`--${name}=`))?.split("=").slice(1).join("=");
+const videoFile = path.resolve(arg("input") || vp.finalOutput);
+const SHOTS_PER_SHEET = parseInt(arg("shots-per-sheet") || "3", 10);
+const FRACS = [0.2, 0.5, 0.8];
+const THUMB_WIDTH = 300;
 
-const perSheetArg = process.argv.find((a) => a.startsWith("--scenes-per-sheet="));
-const SCENES_PER_SHEET = perSheetArg ? parseInt(perSheetArg.split("=")[1], 10) : 8;
-const THUMB_WIDTH = 320;
-
-const videoFile = vp.finalOutput;
-if (!fs.existsSync(videoFile)) {
-  console.error(`Không tìm thấy video đã render: ${videoFile}`);
-  process.exit(1);
-}
-if (!fs.existsSync(vp.shotlistJson)) {
-  console.error(`Không tìm thấy shotlist: ${vp.shotlistJson}`);
-  process.exit(1);
+for (const f of [videoFile, vp.shotlistJson]) {
+  if (!fs.existsSync(f)) {
+    console.error(`Không tìm thấy: ${f}`);
+    process.exit(1);
+  }
 }
 
-const contactSheetDir = vp.contactSheetDir;
-fs.rmSync(contactSheetDir, { recursive: true, force: true });
-fs.mkdirSync(contactSheetDir, { recursive: true });
+const outDir = vp.contactSheetDir;
+fs.rmSync(outDir, { recursive: true, force: true });
+fs.mkdirSync(outDir, { recursive: true });
+// drawtext cần font ở đường dẫn TƯƠNG ĐỐI: dấu ":" của ổ đĩa Windows phá cú pháp filter ffmpeg.
+const fontSrc = ["C:\\Windows\\Fonts\\arialbd.ttf", "C:\\Windows\\Fonts\\arial.ttf"].find((c) => fs.existsSync(c));
 
-function ensureFont(dir) {
-  const dest = path.join(dir, "font.ttf");
-  const candidates = ["C:\\Windows\\Fonts\\arialbd.ttf", "C:\\Windows\\Fonts\\arial.ttf"];
-  const src = candidates.find((c) => fs.existsSync(c));
-  if (src) fs.copyFileSync(src, dest);
-  return fs.existsSync(dest);
-}
-const hasFont = ensureFont(contactSheetDir);
+const shots = JSON.parse(fs.readFileSync(vp.shotlistJson, "utf8"));
 
-function loadScenes(shotlistPath) {
-  const shots = JSON.parse(fs.readFileSync(shotlistPath, "utf8"));
-  const bySceneId = new Map();
-  for (const shot of shots) {
-    const id = shot.sceneId;
-    if (!id) continue;
-    if (!bySceneId.has(id)) {
-      bySceneId.set(id, { sceneId: id, startMs: shot.startMs, endMs: shot.endMs });
-    } else {
-      const cur = bySceneId.get(id);
-      cur.startMs = Math.min(cur.startMs, shot.startMs);
-      cur.endMs = Math.max(cur.endMs, shot.endMs);
+function buildSheet(sheetShots, dir) {
+  fs.mkdirSync(dir, { recursive: true });
+  if (fontSrc) fs.copyFileSync(fontSrc, path.join(dir, "font.ttf"));
+  let i = 0;
+  for (const s of sheetShots) {
+    for (const f of FRACS) {
+      i++;
+      const t = (s.startMs + (s.endMs - s.startMs) * f) / 1000;
+      const cell = `${String(i).padStart(2, "0")}.jpg`;
+      execSync(`ffmpeg -y -v error -ss ${t.toFixed(3)} -i "${videoFile}" -frames:v 1 -vf "scale=${THUMB_WIDTH}:-2" "raw.jpg"`, { cwd: dir });
+      // Nhãn không dùng "%" — drawtext hiểu "%" là cú pháp mở rộng và lỗi.
+      const label = `${s.id} ${Math.round(f * 100)}`;
+      const vf = fontSrc
+        ? `drawtext=fontfile=font.ttf:text='${label}':x=6:y=6:fontsize=20:fontcolor=white:box=1:boxcolor=black@0.7:boxborderw=5`
+        : "null";
+      execSync(`ffmpeg -y -v error -i raw.jpg -vf "${vf}" "${cell}"`, { cwd: dir });
     }
   }
-  return [...bySceneId.values()];
+  fs.rmSync(path.join(dir, "raw.jpg"), { force: true });
+  // Lưới 3 cột (20/50/80%) x N hàng (shot): cols*rows luôn khớp đúng số ô, kể cả sheet cuối ít shot.
+  execSync(`ffmpeg -y -v error -framerate 1 -i "%02d.jpg" -vf "tile=${FRACS.length}x${sheetShots.length}" -frames:v 1 sheet.jpg`, { cwd: dir });
+  return path.join(dir, "sheet.jpg");
 }
 
-function extractFrame(midSec, outFile) {
-  execSync(
-    `ffmpeg -y -v error -ss ${midSec.toFixed(3)} -i "${videoFile}" -frames:v 1 -vf "scale=${THUMB_WIDTH}:-2" "${outFile}"`,
-  );
-}
-
-// Số liệu tất định phụ trợ (không dùng để loại scene khỏi vision QA — chỉ ghi kèm report để đối
-// chiếu). Bài học từ planning/incident-log.md: signalstats một mình chưa được kiểm chứng là filter
-// đáng tin cậy cho mọi biến thể lỗi trống hình.
-function signalStats(frameFile) {
-  let text = "";
-  try {
-    text = execSync(`ffmpeg -v info -i "${frameFile}" -vf signalstats,metadata=print -f null - 2>&1`).toString();
-  } catch (e) {
-    text = `${e.stdout || ""}${e.stderr || ""}`;
-  }
-  const ymin = text.match(/lavfi\.signalstats\.YMIN=([\d.]+)/);
-  const ymax = text.match(/lavfi\.signalstats\.YMAX=([\d.]+)/);
-  const yavg = text.match(/lavfi\.signalstats\.YAVG=([\d.]+)/);
-  return {
-    ymin: ymin ? parseFloat(ymin[1]) : null,
-    ymax: ymax ? parseFloat(ymax[1]) : null,
-    yavg: yavg ? parseFloat(yavg[1]) : null,
-  };
-}
-
-function labelFrame(inBasename, outBasename, label, dir) {
-  if (!hasFont) {
-    fs.copyFileSync(path.join(dir, inBasename), path.join(dir, outBasename));
-    return;
-  }
-  const filter = `drawtext=fontfile=font.ttf:text='${label}':x=8:y=8:fontsize=22:fontcolor=white:box=1:boxcolor=black@0.6:boxborderw=6`;
-  execSync(`ffmpeg -y -v error -i "${inBasename}" -vf "${filter}" "${outBasename}"`, { cwd: dir });
-}
-
-function buildContactSheet(n, dir, outFile) {
-  // Layout 1 hàng (cols=n, rows=1) — tránh phải factorize n thành lưới vuông khớp chính xác
-  // cols*rows (batch cuối thường có ít scene hơn SCENES_PER_SHEET).
-  execSync(
-    `ffmpeg -y -v error -framerate 1 -i "%02d.jpg" -vf "tile=${n}x1" -frames:v 1 "${outFile}"`,
-    { cwd: dir },
-  );
-}
-
-async function visionCheck(sheetFile, sceneIds) {
-  const systemPrompt = `Bạn là vision QA cho video HyperFrames. Ảnh gửi lên là 1 "contact sheet" — dải ${sceneIds.length} ô ảnh xếp ngang, mỗi ô là 1 frame đại diện trích từ 1 scene của video đã render, có nhãn scene ID góc trên-trái mỗi ô (đúng theo thứ tự: ${sceneIds.join(", ")}).
-Nhiệm vụ: xem TỪNG ô, xác định ô nào bị lỗi "trống hình" — nghĩa là nền trống/phẳng màu đơn sắc (đen/trắng/xám/màu nền thuần), KHÔNG có nội dung hình ảnh/nhân vật/chữ nào hiển thị, dù theo kịch bản scene đó phải có nội dung. Không tính là lỗi nếu ô chỉ đơn giản là 1 khung hình có nền màu chủ đích (card nền cam/xám của style DNA) NHƯNG vẫn có chữ/icon/hình minh hoạ hiển thị bình thường.
-Trả về JSON đúng format, không giải thích gì thêm ngoài JSON:
-{"findings": [{"sceneId": "S01", "status": "ok" | "suspect_blank" | "other_issue", "note": "mô tả ngắn những gì thấy trong ô, bằng tiếng Việt"}]}
-Liệt kê đủ tất cả ${sceneIds.length} sceneId theo đúng thứ tự đã cho, không bỏ sót.`;
-
+async function visionCheck(sheetFile, shotIds) {
+  const systemPrompt = `Ảnh là lưới frame trích từ video đã render: mỗi HÀNG là 1 shot, 3 cột là 20%, 50%, 80% thời lượng shot; nhãn góc trên-trái mỗi ô ghi "<shotId> <phần trăm>". Thứ tự hàng: ${shotIds.join(", ")}.
+Với TỪNG ô: nội dung chính của cảnh (hình minh hoạ, nhân vật, video, biểu đồ, thẻ chữ lớn) có hiển thị không, hay chỉ còn nền (nền phẳng/gradient/giấy kẻ ô) + phụ đề dưới đáy? Phụ đề và thanh cam dưới đáy KHÔNG tính là nội dung chính. Trả JSON đủ ${shotIds.length * FRACS.length} ô, không giải thích ngoài JSON:
+{"cells":[{"shot":"S01-1","pct":20,"status":"ok"|"blank"|"partial","note":"mô tả ngắn bằng tiếng Việt"}]}
+"blank" = chỉ còn nền; "partial" = thiếu rõ 1 phần nội dung lớn, hoặc lớp nền/lưới đè lên nội dung.`;
   const response = await callModel({
     model,
     messages: [
       { role: "system", content: systemPrompt },
-      {
-        role: "user",
-        content: [
-          { type: "text", text: "Đây là contact sheet cần kiểm tra." },
-          imageContentFromFile(sheetFile, "image/jpeg"),
-        ],
-      },
+      { role: "user", content: [{ type: "text", text: "Kiểm tra lưới frame." }, imageContentFromFile(sheetFile, "image/jpeg")] },
     ],
     temperature: 0.1,
-    maxTokens: 2000,
+    maxTokens: 2500,
     responseFormat: { type: "json_object" },
+    timeoutMs: 240000,
   });
-  return extractJson(extractText(response));
+  return extractJson(extractText(response)).cells || [];
 }
 
 async function main() {
-  const scenes = loadScenes(vp.shotlistJson);
-  console.log(`[qa-audit] ${slug}: ${scenes.length} scene, video=${videoFile}`);
-
-  const perScene = [];
-  for (const scene of scenes) {
-    const midSec = (scene.startMs + scene.endMs) / 2 / 1000;
-    perScene.push({ ...scene, midSec });
+  console.log(`[qa-audit] ${slug}: ${shots.length} shot, video=${videoFile}`);
+  const cells = [];
+  for (let g = 0; g * SHOTS_PER_SHEET < shots.length; g++) {
+    const sheetShots = shots.slice(g * SHOTS_PER_SHEET, (g + 1) * SHOTS_PER_SHEET);
+    const name = `sheet-${String(g + 1).padStart(2, "0")}`;
+    const ids = sheetShots.map((s) => s.id);
+    console.log(`[qa-audit] ${name}: ${ids.join(", ")}`);
+    const sheet = buildSheet(sheetShots, path.join(outDir, name));
+    fs.copyFileSync(sheet, path.join(outDir, `${name}.jpg`));
+    for (const c of await visionCheck(sheet, ids)) cells.push({ ...c, sheet: `${name}.jpg` });
   }
 
-  const batches = [];
-  for (let i = 0; i < perScene.length; i += SCENES_PER_SHEET) {
-    batches.push(perScene.slice(i, i + SCENES_PER_SHEET));
+  // Gom theo shot: shot "blank" nếu cả 3 frame blank; "partial" nếu có frame không ok.
+  const byShot = shots.map((s) => {
+    const cs = cells.filter((c) => c.shot === s.id);
+    const bad = cs.filter((c) => c.status !== "ok");
+    const status = cs.length && bad.length === cs.length && bad.every((c) => c.status === "blank") ? "blank" : bad.length ? "partial" : "ok";
+    return { shot: s.id, sceneId: s.sceneId, status, cells: cs };
+  });
+
+  const lines = [`# QA blank-frame audit — ${slug}`, "", `Video: \`${videoFile}\``, `Model: \`${model}\``, `Soát: ${shots.length} shot × ${FRACS.length} frame (20/50/80%)`, ""];
+  lines.push("| shot | 20% | 50% | 80% | ghi chú (ô không ok) |", "|---|---|---|---|---|");
+  for (const s of byShot) {
+    const st = (p) => s.cells.find((c) => Number(c.pct) === p)?.status ?? "?";
+    const notes = s.cells.filter((c) => c.status !== "ok").map((c) => `${c.pct}%: ${String(c.note || "").replace(/\|/g, "/")}`).join("; ");
+    lines.push(`| ${s.shot} | ${st(20)} | ${st(50)} | ${st(80)} | ${notes} |`);
   }
+  const flagged = byShot.filter((s) => s.status !== "ok");
+  lines.push("", `## Tổng kết: ${flagged.length}/${byShot.length} shot bị flag`, "");
+  for (const s of flagged) lines.push(`- **${s.shot}** (${s.status})`);
+  lines.push("", "Flag từ vision có thể là báo nhầm (vd nội dung xuất hiện muộn, nhiễu nén video) — xác minh lại trước khi sửa.");
 
-  const allFindings = [];
-  for (let b = 0; b < batches.length; b++) {
-    const batch = batches[b];
-    const batchDir = path.join(contactSheetDir, `batch-${String(b + 1).padStart(2, "0")}`);
-    fs.mkdirSync(batchDir, { recursive: true });
-    if (hasFont) fs.copyFileSync(path.join(contactSheetDir, "font.ttf"), path.join(batchDir, "font.ttf"));
-
-    console.log(`[qa-audit] batch ${b + 1}/${batches.length}: ${batch.map((s) => s.sceneId).join(", ")}`);
-    const statsMap = {};
-    batch.forEach((scene, idx) => {
-      const raw = path.join(batchDir, `raw-${idx}.jpg`);
-      extractFrame(scene.midSec, raw);
-      statsMap[scene.sceneId] = signalStats(raw);
-      const numbered = `${String(idx + 1).padStart(2, "0")}.jpg`;
-      labelFrame(path.basename(raw), numbered, scene.sceneId, batchDir);
-      fs.unlinkSync(raw);
-    });
-
-    const sheetFile = `sheet-${String(b + 1).padStart(2, "0")}.jpg`;
-    buildContactSheet(batch.length, batchDir, sheetFile);
-    const sheetPath = path.join(batchDir, sheetFile);
-    // Copy contact sheet lên thư mục gốc contact-sheet/ để dễ tra cứu (report chỉ trỏ path text).
-    fs.copyFileSync(sheetPath, path.join(contactSheetDir, sheetFile));
-
-    const sceneIds = batch.map((s) => s.sceneId);
-    const result = await visionCheck(sheetPath, sceneIds);
-    for (const f of result.findings || []) {
-      allFindings.push({ ...f, ...statsMap[f.sceneId], sheet: sheetFile });
-    }
-  }
-
-  const lines = [`# QA blank-frame audit — ${slug}`, "", `Video: \`${videoFile}\``, `Model: \`${model}\``, ""];
-  lines.push("| sceneId | status | YMIN | YMAX | YAVG | sheet | note |");
-  lines.push("|---|---|---|---|---|---|---|");
-  for (const f of allFindings) {
-    lines.push(
-      `| ${f.sceneId} | ${f.status} | ${f.ymin ?? ""} | ${f.ymax ?? ""} | ${f.yavg ?? ""} | ${f.sheet} | ${(f.note || "").replace(/\|/g, "/")} |`,
-    );
-  }
-  const suspects = allFindings.filter((f) => f.status !== "ok");
-  lines.push("", `## Tổng kết: ${suspects.length}/${allFindings.length} scene bị flag khác "ok"`, "");
-  for (const f of suspects) lines.push(`- **${f.sceneId}** (${f.status}): ${f.note}`);
-
-  const reportPath = path.join(contactSheetDir, "report.md");
+  const reportPath = path.join(outDir, "report.md");
   fs.writeFileSync(reportPath, lines.join("\n"), "utf8");
+  console.log(`[qa-audit] ${flagged.length}/${byShot.length} shot bị flag${flagged.length ? `: ${flagged.map((s) => `${s.shot}(${s.status})`).join(", ")}` : ""}`);
   console.log(`[qa-audit] report: ${reportPath}`);
-
   appendRunLog(
-    `qa-blank-frame-audit: ${allFindings.length} scene kiểm tra, ${suspects.length} bị flag (${suspects.map((s) => s.sceneId).join(", ") || "none"}) — report tại \`${reportPath}\``,
+    `qa-blank-frame-audit (theo shot): ${byShot.length} shot, ${flagged.length} bị flag (${flagged.map((s) => `${s.shot}:${s.status}`).join(", ") || "none"}) — video \`${videoFile}\`, report \`${reportPath}\``,
     vp.runLog,
   );
 }
