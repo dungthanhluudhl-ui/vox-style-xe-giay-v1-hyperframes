@@ -710,3 +710,49 @@ gặp: lớp nền trang trí (`.bg-grid`...) đè chữ hoạt (7/12 lỗi che 
 Người dùng duyệt 26/09: áp v2 vào repo (giữ generator `gemini-3.8-flash-high`), THÊM dự phòng tự động
 cho generator `cx/gpt-5.6-terra` (`reasoning_generator_fallback`, cùng cơ chế reviewer) — kiểm chứng bằng
 proxy giả lập 403: gemini lỗi → terra sinh ngay, code PASS verify. Đã commit.
+
+---
+
+### Kiểm chứng end-to-end: dựng lại `ban-an-425-phan-1` từ Stage 7 bằng pipeline mới (2026-09-26)
+
+Người dùng yêu cầu dựng lại toàn bộ từ Stage 7 để test các sửa đổi ở mục trên và audit kỹ. Dữ liệu cũ
+(12 scene + gen-tmp) sao lưu ra scratchpad trước khi xoá. Máy rảnh, không có build song song.
+
+**Lượt 1 (commit `ece1003`):** 11/18 PASS (PASS lần 1: 2), 7 FAIL. Verify đã sạch (0 lỗi `<video>`, contrast
+2 lần, 0 lỗi hạ tầng) — nút thắt chuyển sang reviewer `cx/gpt-5.6-luna-review`: 27/38 lần review FAIL (71%),
+4 scene fail 3/3 CHỈ vì reviewer. Phân loại 27 FAIL: lệch nội dung/overlay shotlist 17, holdMs 13, **treatment
+ảnh 12**, transition 6, đòi cờ data-layout (check đã PASS) 3.
+
+**Nguyên nhân gốc tìm được (đều tất định, đều đã đo thật):**
+1. **Mâu thuẫn Stage 6 ↔ quy tắc dự án:** Stage 6 chép "người grayscale + bóng cam" của Style DNA thành lệnh
+   xử lý ảnh trong `assetTreatment` (74 shot/mọi video). Mô tả vision Stage 3 xác nhận ảnh KHÔNG có sẵn
+   grayscale → reviewer lật qua lật lại (S09: lần 1 FAIL thiếu grayscale, lần 2 FAIL vì có filter, lần 3 FAIL
+   thiếu grayscale). Người dùng chốt: giữ ảnh nguyên màu.
+2. **Reviewer coi mọi lệch shotlist là FAIL** → cổng BLOCKING/ADVISORY (người dùng duyệt).
+3. **Reviewer đoán "sai asset" từ TÊN FILE** (S08: file `img-04-parents-searching-missing-child.jpg`, nội dung
+   thật khớp scene) → generator đổi tên file → `missing_local_asset`. Sửa: kiểm tra asset tất định.
+4. **Shot video dài hơn video Flow 8s** (49/178 shot video mọi video): generator tự chế freeze bằng canvas/
+   event video (không tất định, reviewer chặn đúng — S10). Đo render thật: HyperFrames TỰ GIỮ frame cuối
+   (SSIM 0.985 với frame cuối file gốc; 0.37 so với khung trống; đối chứng 7.0s↔7.9s = 0.72).
+5. **Gate caption-zone chỉ xét KHUNG CUỐI scene** (CLI mặc định `seek=[1]`): Stage 7b chặn render vì S13 có
+   chữ đè phụ đề thật (content_overlap) mà Stage 7 không thấy. Đo trên S13: cờ cũ ok=true, thêm seek 10 mốc
+   → bắt đúng `caption_zone_collision` t=5.46s, +1.6s/check. Sau sửa, lần thử 1 của S13 tự bắt lỗi này.
+
+**Lượt 2 (sau sửa 1–2) + chạy lại S08/S10 (sửa 3–4) + S13 (sửa 5):** 18/18 PASS. Lượt 2: 16/18 PASS (PASS lần
+1: 7 so với 2), review FAIL 9 (so với 27), autofix contrast chạy thật 2 lần. Stage 7b PASS (60 mốc/20 shot,
+49.2s). Render `out/ban-an-425-phan-1-full.mp4` 149.800s (khớp audio 149.806s), 124.7MB, 404s, capture mode
+screenshot (CSS 3D — Phase 4). `completion-manifest.json` mọi field `*Ok=true`. Audit khung hình 3/shot qua
+vision: 59/60 ok; S06-2 mốc 20% flag "partial" → đối chiếu code: tiêu đề thẻ hiện đúng lúc 5.2s = mốc 20% →
+animation vào theo thiết kế, BÁO NHẦM.
+
+**Chất lượng — chấm mù (vision_qa, đảo thứ tự A/B) 11 scene PASS ở cả 2 lượt:** bản cuối (cổng mới) tốt hơn
+lượt 1 (cổng cũ khắt khe) ở mọi tiêu chí — style 6.10 vs 5.62, clarity 6.19 vs 5.56, creativity 5.71 vs 5.54,
+overall 6.14 vs 5.49; thắng rõ 6 vs 2 (hoà 3). Nới cổng review KHÔNG để lọt scene kém hơn.
+
+**ĐÍNH CHÍNH mục "Audit + POC giảm lỗi lặp lại Stage 7" ở trên:** đợt chấm mù A/B base vs v2 đầu tiên dùng
+khung chụp từ bản standalone dựng ngược THIẾU thẻ GSAP (sub-composition không tự nạp GSAP — `syncRootHf` nạp ở
+`index.html` gốc) → khung là trạng thái CHƯA animate (4 khung shot 2 giống hệt từng byte). Chấm lại với khung
+đúng: creativity base 5.45 / v2 5.90, overall 5.90 / 5.80, thắng rõ base 3 / v2 1 / hoà 1 — N=5, không có bằng
+chứng chất lượng giảm nhưng KHÔNG đủ để khẳng định "bằng nhau" như đã ghi. Bài học: khi dựng lại standalone từ
+sub-composition để chụp/check, phải thêm script GSAP (và mọi script root hoist); xác minh khung có chuyển động
+(so kích thước/SSIM giữa các mốc) trước khi đưa vision chấm.

@@ -33,10 +33,11 @@ import { execSync } from "node:child_process";
 import { callModel, extractText, loadModelRouting, appendRunLog, callWithModelFallback } from "./lib/router-client.mjs";
 import { getVideoSlug, videoPaths } from "./lib/video-paths.mjs";
 import { syncRootHf, standaloneToSubComposition } from "./lib/sync-root-hf-lib.mjs";
-import { getCaptionZoneArg } from "./lib/caption-zone.mjs";
+import { getCaptionZoneArg, SCENE_CAPTION_SEEK } from "./lib/caption-zone.mjs";
 import { HF_VERSION, runHyperframesCheck, findRootLayoutFlags, formatCheckFeedback } from "./lib/hf-check.mjs";
 import { buildTextColorRules, buildSafeColorClasses } from "./lib/palette-contrast.mjs";
 import { autofixVideoTiming, autofixContrast, injectIntoFirstStyle } from "./lib/hf-autofix.mjs";
+import { annotateShotsForCodegen, REVIEW_FORMAT, REVIEW_POLICY, parseReviewVerdict, checkAssetUsage } from "./lib/review-gate.mjs";
 
 const root = process.cwd();
 const routing = loadModelRouting();
@@ -78,6 +79,9 @@ const scenes = allScenes.filter((s) => sceneIds.includes(s.id));
 const shots = allShots.filter((s) => sceneIds.includes(s.sceneId));
 const mediaManifest = JSON.parse(fs.readFileSync(vp.manifestJson, "utf8"));
 const mediaById = Object.fromEntries(mediaManifest.map((m) => [m.id, m]));
+// Shotlist đưa vào prompt generator + reviewer: gắn ghi chú ưu tiên cho shot ẢNH có lệnh xử lý màu (mâu
+// thuẫn Stage 6 vs quy tắc dự án — xem review-gate.mjs). `shots` gốc giữ nguyên cho logic tất định khác.
+const shotsForPrompt = annotateShotsForCodegen(shots, mediaById);
 const usedMedia = [...new Set(shots.map((s) => s.assetId).filter(Boolean))].map((id) => mediaById[id]);
 const noRootSync = process.argv.includes("--no-root-sync");
 
@@ -292,7 +296,7 @@ Không viết gì khác ngoài khối ### FILE ... ### END này. Chỉ output đ
 ${JSON.stringify(scenes, null, 2)}
 
 SHOTLIST (chi tiết từng shot):
-${JSON.stringify(shots, null, 2)}
+${JSON.stringify(shotsForPrompt, null, 2)}
 
 MEDIA MANIFEST (asset dùng trong các shot trên):
 ${JSON.stringify(usedMedia, null, 2)}
@@ -406,29 +410,30 @@ function verify(files) {
       raw: `Phát hiện cờ layout đặt SAI CHỖ trên #root: ${rootFlags.join(", ")}. Các cờ này dùng closest() nên tắt TOÀN BỘ layout audit của cả scene khi đặt ở root — di chuyển xuống ĐÚNG phần tử con cụ thể cần opt-out (không phải root).`,
     };
   }
-  return runHyperframesCheck(tempProjectDir, { extraArgs: [getCaptionZoneArg()] });
+  // seek dày: caption-zone mặc định CLI chỉ xét khung cuối scene — xem SCENE_CAPTION_SEEK.
+  return runHyperframesCheck(tempProjectDir, { extraArgs: [getCaptionZoneArg(root, { seek: SCENE_CAPTION_SEEK })] });
 }
 
 async function review(files) {
-  const systemPrompt = `Bạn review code HyperFrames (HTML + GSAP) vừa sinh ra, đối chiếu với shotlist và style DNA. Trả lời NGẮN GỌN theo format:
-VERDICT: PASS hoặc FAIL
-ISSUES:
-- (liệt kê vấn đề cụ thể nếu FAIL, để trống nếu PASS)
+  // Cổng review có cấu trúc (quyết định người dùng 2026-09-26): reviewer phân loại BLOCKING/ADVISORY,
+  // SCRIPT quyết định PASS/FAIL theo danh sách BLOCKING (parseReviewVerdict) — xem review-gate.mjs.
+  const systemPrompt = `Bạn review code HyperFrames (HTML + GSAP) vừa sinh ra, đối chiếu với shotlist và style DNA. Code này ĐÃ PASS "hyperframes check" (lint + runtime + layout + contrast + caption-zone).
+${REVIEW_FORMAT}
 
-QUAN TRỌNG: đây là HyperFrames (HTML/GSAP), KHÔNG PHẢI Remotion/React — không chấm điểm dựa trên quy ước Remotion. Chỉ chấm sai nếu vi phạm rõ ràng composition contract (thiếu window.__timelines, thiếu data-start/data-duration, dùng Date.now()/Math.random()) hoặc sai lệch rõ so với style DNA (màu/font/caption) hoặc shotlist.
+QUAN TRỌNG: đây là HyperFrames (HTML/GSAP), KHÔNG PHẢI Remotion/React — không chấm điểm dựa trên quy ước Remotion.
+
+${REVIEW_POLICY}
 
 SKILL DOCS:
 ${skillDocs}
 
 ${KNOWN_GOTCHAS_HF}
 
-LƯU Ý VỀ TÊN FILE ASSET: một số file ảnh có chữ "cutout" trong TÊN FILE — đó chỉ là mô tả phong cách minh hoạ do ảnh AI tạo sẵn đã có, KHÔNG phải chỉ định phải áp dụng xử lý cutout trong code. Theo quyết định dự án, ảnh luôn dùng làm nền toàn khung, giữ nguyên màu.
-
-Ưu tiên PASS nếu ý chính của shotlist đã được thể hiện đúng tinh thần — đừng FAIL vì tiểu tiết chuyển động không khớp 100% mô tả, miễn không sai composition contract hoặc sai lệch RÕ RÀNG so với style DNA cốt lõi (màu, không cutout-processing, caption).`;
+LƯU Ý VỀ TÊN FILE ASSET: một số file ảnh có chữ "cutout" trong TÊN FILE — đó chỉ là mô tả phong cách minh hoạ do ảnh AI tạo sẵn đã có, KHÔNG phải chỉ định phải áp dụng xử lý cutout trong code. Theo quyết định dự án, ảnh luôn dùng làm nền toàn khung, giữ nguyên màu.`;
   const filesText = Object.entries(files)
     .map(([p, c]) => `### ${p}\n\`\`\`html\n${c}\n\`\`\``)
     .join("\n\n");
-  const userPrompt = `SHOTLIST liên quan:\n${JSON.stringify(shots, null, 2)}\n\nCODE VỪA SINH:\n${filesText}`;
+  const userPrompt = `SHOTLIST liên quan:\n${JSON.stringify(shotsForPrompt, null, 2)}\n\nCODE VỪA SINH:\n${filesText}`;
   const { response, model } = await callWithModelFallback(
     [REVIEW_MODEL, REVIEW_MODEL_FALLBACK],
     (m) =>
@@ -467,6 +472,7 @@ let previousFiles = seededIssue && fs.existsSync(path.join(tempProjectDir, "inde
   : null;
 let finalFiles = null;
 let finalVerdict = null;
+let finalReviewPass = false; // quyết định theo parseReviewVerdict (lỗi CHẶN), không theo dòng VERDICT
 // Code đã PASS verify gần nhất — giữ lại khi reviewer/generator lỗi hạ tầng hết ngân sách (không vứt).
 let verifyPassedFiles = null;
 let infraFailure = null; // { stage: "generate" | "review", message }
@@ -534,6 +540,16 @@ while (attempt < MAX_ATTEMPTS) {
     console.log("Verify (hyperframes check) PASS.");
     verifyPassedFiles = files;
 
+    // Kiểm tra TẤT ĐỊNH dùng đúng file asset được giao — trước reviewer (không tốn 1 lần gọi reviewer, và
+    // reviewer không thấy ảnh nên không được tự đoán "sai asset" từ tên file). Xem review-gate.mjs.
+    const assetProblems = checkAssetUsage(files["index.html"], shots, mediaById);
+    if (assetProblems.length) {
+      console.log("Asset check FAILED:\n" + assetProblems.join("\n"));
+      appendCodegenIssue([{ stage: "asset-check", detail: assetProblems.join("\n") }]);
+      feedback = "LỖI CHẶN (script kiểm tra tất định):\n" + assetProblems.map((p) => "- " + p).join("\n");
+      continue;
+    }
+
     let reviewText;
     try {
       reviewText = await review(files);
@@ -549,12 +565,18 @@ while (attempt < MAX_ATTEMPTS) {
     console.log("Review result:\n" + reviewText);
     finalFiles = files;
     finalVerdict = reviewText;
-
-    if (/VERDICT:\s*[*_#\s]*PASS/i.test(reviewText)) {
+    // SCRIPT quyết định theo danh sách lỗi CHẶN (review-gate.mjs), không theo dòng VERDICT tự do.
+    const rv = parseReviewVerdict(reviewText);
+    finalReviewPass = rv.pass;
+    if (rv.advisory.length) appendCodegenIssue([{ stage: "review-advisory", detail: rv.advisory.join("\n").slice(0, 2000) }]);
+    if (rv.pass) {
+      if (!rv.verdictPass) console.log(`(reviewer ghi VERDICT FAIL nhưng không có lỗi CHẶN → PASS; ${rv.advisory.length} góp ý đã ghi log)`);
       break;
     }
-    appendCodegenIssue([{ stage: "review", detail: reviewText.slice(0, 2000) }]);
-    feedback = "Reviewer FAIL:\n" + reviewText;
+    appendCodegenIssue([{ stage: "review", detail: (rv.structured ? rv.blocking.map((b) => "- " + b).join("\n") : reviewText).slice(0, 2000) }]);
+    feedback = rv.structured
+      ? "Reviewer FAIL — LỖI CHẶN cần sửa (chỉ sửa đúng các lỗi này, giữ nguyên phần còn lại):\n" + rv.blocking.map((b) => "- " + b).join("\n")
+      : "Reviewer FAIL:\n" + reviewText;
   } catch (e) {
     // Lỗi KHÔNG phải hạ tầng (vd không parse được output generator) — giữ hành vi cũ: tính 1 lần thử.
     console.log(`Lỗi khi gọi 9router (sẽ thử lại): ${e.message || e}`);
@@ -562,7 +584,7 @@ while (attempt < MAX_ATTEMPTS) {
   }
 }
 
-const passed = !!(finalVerdict && /VERDICT:\s*[*_#\s]*PASS/i.test(finalVerdict));
+const passed = finalReviewPass === true; // theo lỗi CHẶN (parseReviewVerdict), không theo dòng VERDICT
 
 if (passed) {
   // --- Chuyển đổi TẤT ĐỊNH standalone -> sub-composition (KHÔNG AI) — tổng quát hoá đúng logic

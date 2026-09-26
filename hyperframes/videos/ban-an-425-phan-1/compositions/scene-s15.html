@@ -1,0 +1,445 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+/* hf-safe-colors (tất định từ style-tokens.json) */
+.hf-text-ink { color: #141414; }
+.hf-text-light { color: #F7F4EC; }
+.hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+.hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+.hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+.hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #e7e3d9;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: #e7e3d9;
+      }
+
+      /* Quy ước khung clip toàn màn hình */
+      .clip {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+      }
+
+      /* Lớp nền Chart Variant đặc trưng phong cách Vox */
+      #chart-background {
+        position: absolute;
+        inset: 0;
+        z-index: 1;
+        pointer-events: none;
+      }
+      .chart-line {
+        position: absolute;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background-color: rgba(20, 20, 20, 0.28);
+      }
+      .chart-tick {
+        position: absolute;
+        left: 0;
+        width: 20px;
+        height: 6px;
+        background-color: #ff6a1a;
+      }
+
+      /* Video wrapper cho Ken Burns & zoom punch */
+      #video-wrapper {
+        position: absolute;
+        inset: 0;
+        z-index: 5;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      #main-video {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+
+      /* Lớp phủ lưới viền nhẹ giữ vững nhận diện Vox */
+      #grid-overlay {
+        position: absolute;
+        inset: 0;
+        z-index: 6;
+        pointer-events: none;
+        background-image: 
+          linear-gradient(to right, rgba(20, 20, 20, 0.08) 1.5px, transparent 1.5px),
+          linear-gradient(to bottom, rgba(20, 20, 20, 0.08) 1.5px, transparent 1.5px);
+        background-size: 84px 84px;
+      }
+
+      /* Header hồ sơ vụ án ở dải an toàn trên cùng (Y: 175px) */
+      #dossier-tag {
+        position: absolute;
+        top: 175px;
+        left: 48px;
+        z-index: 20;
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        background-color: #141414;
+        padding: 8px 18px;
+        border-left: 6px solid #ff6a1a;
+        box-shadow: 4px 4px 0px rgba(20, 20, 20, 0.3);
+      }
+      #dossier-tag span {
+        color: #f7f4ec;
+        font-size: 24px;
+        font-weight: 900;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+      }
+
+      /* Overlay 1: Label chuẩn xác NGÀY 15/09/2022 (Y: 260px) */
+      #date-clip {
+        z-index: 25;
+      }
+      #date-badge-box {
+        position: absolute;
+        top: 260px;
+        left: 48px;
+        background-color: #141414;
+        padding: 18px 30px;
+        display: inline-flex;
+        align-items: center;
+        border-left: 8px solid #ff6a1a;
+        border-top: 2px solid #141414;
+        border-right: 2px solid #141414;
+        border-bottom: 2px solid #141414;
+        box-shadow: 8px 8px 0px #ff6a1a;
+      }
+      .date-badge-text {
+        font-size: 52px;
+        font-weight: 900;
+        color: #f7f4ec;
+        line-height: 1.1;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        margin: 0;
+      }
+
+      /* Overlay 2 & 3: Thẻ Giao dịch Chuyển khoản & Punch-phrase (Y: 1080px) */
+      #transaction-clip {
+        z-index: 30;
+      }
+      #transaction-card {
+        position: absolute;
+        top: 1080px;
+        left: 48px;
+        right: 48px;
+        background-color: #141414;
+        padding: 36px 40px;
+        border: 3px solid #ff6a1a;
+        box-shadow: 12px 12px 0px rgba(20, 20, 20, 0.65);
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+      .trans-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-bottom: 2px dashed rgba(247, 244, 236, 0.25);
+        padding-bottom: 16px;
+      }
+      .trans-account-info {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
+      .trans-icon-wrap {
+        width: 58px;
+        height: 58px;
+        background-color: #ff6a1a;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+      .phone-icon-svg {
+        width: 36px;
+        height: 36px;
+      }
+      .phone-path {
+        fill: none;
+        stroke: #141414;
+        stroke-width: 3.5;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+      .trans-account-names {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+      .trans-route {
+        font-size: 26px;
+        font-weight: 900;
+        color: #f7f4ec;
+        letter-spacing: 0.5px;
+      }
+      .trans-type-tag {
+        font-size: 20px;
+        font-weight: 700;
+        color: #ff6a1a;
+        letter-spacing: 1px;
+      }
+
+      /* Punch Phrase: Con số biến động -100.000.000 VNĐ */
+      .punch-amount-wrap {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .punch-label {
+        font-size: 22px;
+        font-weight: 900;
+        color: #f7f4ec;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        display: inline-block;
+      }
+      .punch-amount-text {
+        font-size: 68px;
+        font-weight: 900;
+        color: #ff6a1a;
+        line-height: 1.1;
+        letter-spacing: -0.5px;
+        white-space: nowrap;
+        margin: 0;
+      }
+      .trans-footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: 4px;
+      }
+      .stamp-badge {
+        background-color: #ff6a1a;
+        color: #141414;
+        font-size: 22px;
+        font-weight: 900;
+        padding: 6px 14px;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+      }
+      .status-text {
+        font-size: 20px;
+        font-weight: 700;
+        color: #f7f4ec;
+        opacity: 0.85;
+      }
+
+      /* Thanh cam chữ ký Vox cố định đáy khung hình */
+      #signature-bottom-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 12px;
+        background-color: #ff6a1a;
+        z-index: 100;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s15"
+      data-width="1080"
+      data-height="1920"
+      data-duration="8.18"
+    >
+      <!-- 1. Chart Variant Background Lines (20%, 40%, 60%, 80%) -->
+      <div id="chart-background">
+        <div class="chart-line" style="top: 384px;"></div>
+        <div class="chart-tick" style="top: 382px;"></div>
+
+        <div class="chart-line" style="top: 768px;"></div>
+        <div class="chart-tick" style="top: 766px;"></div>
+
+        <div class="chart-line" style="top: 1152px;"></div>
+        <div class="chart-tick" style="top: 1150px;"></div>
+
+        <div class="chart-line" style="top: 1536px;"></div>
+        <div class="chart-tick" style="top: 1534px;"></div>
+      </div>
+
+      <!-- 2. Video Giao dịch Smartphone (vid-02) -->
+      <!-- Wrapper KHÔNG mang data-start để GSAP Ken Burns tự do -->
+      <div id="video-wrapper">
+        <video
+          id="main-video"
+          src="assets/vid-02-phone-money-transfer-scam.mp4"
+          muted
+          playsinline
+          data-start="0"
+          data-duration="8.18"
+          data-media-start="0"
+        ></video>
+      </div>
+
+      <!-- Lớp lưới ô vuông 84px mờ giữ chất collage Vox -->
+      <div id="grid-overlay"></div>
+
+      <!-- Nhãn hồ sơ phía trên cùng -->
+      <div id="dossier-tag">
+        <span>Bút lục // Cơ chế dòng tiền</span>
+      </div>
+
+      <!-- 3. Overlay 1: Label chuẩn NGÀY 15/09/2022 (startMs: 115000 -> 1.18s, hold 2.5s) -->
+      <section id="date-clip" class="clip" data-start="1.18" data-duration="2.5">
+        <div id="date-badge-box">
+          <div class="date-badge-text">NGÀY 15/09/2022</div>
+        </div>
+      </section>
+
+      <!-- 4. Overlay 2 & 3: Thẻ giao dịch, Icon Phone tự vẽ & Punch Phrase -100.000.000 VNĐ -->
+      <!-- Xuất hiện lúc 4.57s đến hết scene 8.18s (duration: 3.61s) -->
+      <section id="transaction-clip" class="clip" data-start="4.57" data-duration="3.61">
+        <div id="transaction-card">
+          <div class="trans-header">
+            <div class="trans-account-info">
+              <div class="trans-icon-wrap" id="icon-wrap">
+                <!-- SVG Phone icon chuẩn bị tự vẽ nét -->
+                <svg class="phone-icon-svg" viewBox="0 0 40 40">
+                  <rect class="phone-path draw-stroke" x="9" y="4" width="22" height="32" rx="4" />
+                  <line class="phone-path draw-stroke" x1="16" y1="9" x2="24" y2="9" />
+                  <circle class="phone-path" cx="20" cy="30" r="1.5" stroke="#141414" fill="#141414" />
+                </svg>
+              </div>
+              <div class="trans-account-names">
+                <div class="trans-route">ÔNG H. ➔ CHÁNH THANH TRA</div>
+                <div class="trans-type-tag">TIỀN TÚI CHUYỂN KHOẢN</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="punch-amount-wrap">
+            <span class="punch-label">Biến động số dư tài khoản:</span>
+            <div id="punch-amount" class="punch-amount-text">-100.000.000 VNĐ</div>
+          </div>
+
+          <div class="trans-footer">
+            <div id="status-stamp" class="stamp-badge">Giao dịch tức thì</div>
+            <div class="status-text">Đã ghi nhận bút lục điều tra</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 5. Chữ ký thương hiệu: Thanh cam đáy khung hình cố định -->
+      <div id="signature-bottom-bar"></div>
+    </div>
+
+    <script>
+      // 1. Chuẩn bị hiệu ứng tự vẽ nét cho SVG Path của Icon Phone
+      const strokeElements = document.querySelectorAll(".draw-stroke");
+      strokeElements.forEach((el) => {
+        const len = el.getTotalLength ? el.getTotalLength() : 80;
+        el.style.strokeDasharray = len;
+        el.style.strokeDashoffset = len;
+      });
+
+      // 2. Khởi tạo duy nhất 1 GSAP timeline PAUSED
+      const tl = gsap.timeline({ paused: true });
+
+      // Cú punch mở cảnh vào video (0.0s): scale từ 1.07 về 1.0 dứt khoát
+      tl.fromTo(
+        "#video-wrapper",
+        { scale: 1.07, opacity: 0.7 },
+        { scale: 1.0, opacity: 1.0, duration: 0.45, ease: "power4.out" },
+        0
+      );
+
+      // Ken Burns zoom-in chậm dần trong suốt thời lượng shot
+      tl.to(
+        "#video-wrapper",
+        { scale: 1.06, duration: 7.6, ease: "sine.inOut" },
+        0.45
+      );
+
+      // Dossier tag slide vào lúc mở đầu (0.15s)
+      tl.fromTo(
+        "#dossier-tag",
+        { x: -50, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.4, ease: "power3.out" },
+        0.15
+      );
+
+      // Overlay 1: Badge NGÀY 15/09/2022 (data-start 1.18s)
+      tl.fromTo(
+        "#date-badge-box",
+        { y: -30, opacity: 0, scale: 0.95 },
+        { y: 0, opacity: 1, scale: 1.0, duration: 0.4, ease: "power3.out" },
+        1.18
+      );
+      // Kết thúc hiển thị của Badge ngày trước khi clip ẩn
+      tl.to(
+        "#date-badge-box",
+        { y: -15, opacity: 0, duration: 0.25, ease: "power2.in" },
+        3.4
+      );
+
+      // Overlay 2 & 3: Thẻ Giao dịch Chuyển khoản xuất hiện lúc 4.57s
+      tl.fromTo(
+        "#transaction-card",
+        { y: 40, opacity: 0, scale: 0.96 },
+        { y: 0, opacity: 1, scale: 1.0, duration: 0.4, ease: "power3.out" },
+        4.57
+      );
+
+      // Nét vẽ icon điện thoại xuất hiện ngay lúc 4.57s
+      tl.to(
+        strokeElements,
+        { strokeDashoffset: 0, duration: 0.5, stagger: 0.1, ease: "power2.out" },
+        4.65
+      );
+
+      // Punch Phrase "-100.000.000 VNĐ" punch cực mạnh vào lúc 5.24s (startMs tương ứng 119060)
+      tl.fromTo(
+        "#punch-amount",
+        { scale: 0.65, opacity: 0 },
+        { scale: 1.0, opacity: 1.0, duration: 0.35, ease: "power4.out" },
+        5.24
+      );
+
+      // Stamp "Giao dịch tức thì" đóng dấu nẩy nhẹ lúc 5.45s
+      tl.fromTo(
+        "#status-stamp",
+        { scale: 1.35, opacity: 0 },
+        { scale: 1.0, opacity: 1.0, duration: 0.25, ease: "power3.out" },
+        5.45
+      );
+
+      // Đăng ký timeline chính lên window.__timelines
+      window.__timelines = window.__timelines || {};
+      window.__timelines["scene-s15"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

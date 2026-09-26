@@ -196,6 +196,16 @@ Từ bước 5 trở đi cần **cả 2 nhánh đã xong** (Stage 5 đọc cả 
 - [x] **Gotcha mới: `completion-manifest.json` có `ffprobeOk: false`** (video 453.700s vs audio gốc 460.523s, lệch 6.823s) — đã điều tra bằng `ffmpeg silencedetect` xác nhận đây là 7.16s khoảng lặng THẬT ở cuối audio gốc (sau câu thoại cuối), không phải nội dung bị mất. Người dùng đã xem cảnh báo và xác nhận chấp nhận. **Bài học tổng quát**: `ffprobeOk` so sánh naive với độ dài file audio gốc, không tính trường hợp audio có đuôi lặng dài — không tự động coi `ffprobeOk: false` là lỗi thật, luôn dùng `ffmpeg silencedetect` kiểm tra trước khi kết luận (xem chi tiết `pipeline/videos/cach-hoat-dong-cua-kinh-te-meo/run-log.md`).
 - [x] **Người dùng đã xem cảnh báo duration và xác nhận chấp nhận bản render hiện tại (2026-09-24).**
 
+### Video "ban-an-425-phan-1" (bản án chạy biên chế giáo viên, 149.8s, 18 scene/20 shot — video KIỂM CHỨNG end-to-end pipeline tối ưu 2026-09-26)
+- [x] Stage 1-6 xong trước đó. Stage 7 lần đầu (pipeline cũ) fail hàng loạt — nguyên nhân chính là lỗi hạ tầng
+  (reviewer Sonnet hết hạn mức: 97/186 lần thử mất), người dùng dừng build.
+- [x] Dựng lại toàn bộ từ Stage 7 bằng pipeline mới (commit `ece1003` + cổng review BLOCKING/ADVISORY,
+  ghi chú treatment ảnh/giữ frame video, kiểm tra asset, caption-zone seek 10 mốc): 18/18 PASS, Stage 7b PASS
+  (60 mốc/20 shot), render `out/ban-an-425-phan-1-full.mp4` 149.800s khớp audio, `completion-manifest.json`
+  đủ `*Ok=true`. Audit khung hình 3/shot: 59/60 ok, 1 flag là báo nhầm (animation vào đúng mốc chụp).
+  Chấm mù 11 scene: bản cuối tốt hơn bản cổng review cũ (overall 6.14 vs 5.49). Chi tiết + 5 nguyên nhân gốc
+  đã sửa: `planning/incident-log.md` mục "Kiểm chứng end-to-end…".
+
 ## Archive: pipeline Remotion cũ (4 video đầu, `archive/remotion-legacy/`)
 
 Giữ lại đúng nguyên trạng để tham khảo/sửa lỗi cho 4 video archive — KHÔNG áp dụng cho video mới.

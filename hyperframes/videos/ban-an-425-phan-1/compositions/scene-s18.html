@@ -1,0 +1,746 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap">
+      <style>
+    /* hf-safe-colors (tất định từ style-tokens.json) */
+    .hf-text-ink { color: #141414; }
+    .hf-text-light { color: #F7F4EC; }
+    .hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+    .hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+    .hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+    .hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background: #E7E3D9;
+      color: #141414;
+      font-family: "Be Vietnam Pro", sans-serif;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    #root {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #E7E3D9;
+    }
+
+    .clip {
+      position: absolute;
+      inset: 0;
+    }
+
+    /* Scene background: Spotlight variant with 84px grid */
+    .bg-spotlight {
+      position: absolute;
+      inset: 0;
+      background-color: #E7E3D9;
+      background-image: 
+        radial-gradient(circle at 50% 48%, rgba(255, 255, 255, 0.45) 0%, rgba(20, 20, 20, 0.28) 85%),
+        linear-gradient(rgba(20, 20, 20, 0.16) 1.5px, transparent 1.5px),
+        linear-gradient(90deg, rgba(20, 20, 20, 0.16) 1.5px, transparent 1.5px);
+      background-size: 100% 100%, 84px 84px, 84px 84px;
+      background-position: 0 0, -1px -1px, -1px -1px;
+      z-index: 0;
+    }
+
+    /* Bottom brand signature orange bar */
+    .bottom-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 16px;
+      background-color: #FF6A1A;
+      z-index: 100;
+    }
+
+    /* Camera motion container */
+    #scene-container {
+      position: absolute;
+      inset: 0;
+      transform-origin: 540px 750px;
+      z-index: 2;
+    }
+
+    /* Top category header */
+    .header-block {
+      position: absolute;
+      top: 170px;
+      left: 60px;
+      right: 60px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      z-index: 10;
+    }
+
+    .category-badge {
+      align-self: flex-start;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background-color: #141414;
+      color: #FF6A1A;
+      font-size: 20px;
+      font-weight: 900;
+      letter-spacing: 1.5px;
+      padding: 8px 18px;
+      border-radius: 6px;
+      text-transform: uppercase;
+    }
+
+    .category-badge-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background-color: #FF6A1A;
+    }
+
+    .header-title {
+      font-size: 32px;
+      font-weight: 900;
+      color: #141414;
+      letter-spacing: -0.5px;
+    }
+
+    /* Source Hero Card: 100.000.000 VND */
+    .source-card {
+      position: absolute;
+      top: 280px;
+      left: 60px;
+      right: 60px;
+      height: 230px;
+      background-color: #F5F0E4;
+      border: 4px solid #141414;
+      border-radius: 12px;
+      box-shadow: 10px 10px 0px #141414;
+      padding: 22px 30px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      z-index: 12;
+      transform-origin: center center;
+    }
+
+    .source-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .source-label {
+      font-size: 20px;
+      font-weight: 900;
+      color: #141414;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .source-tag {
+      background-color: #141414;
+      color: #F7F4EC;
+      font-size: 16px;
+      font-weight: 700;
+      padding: 4px 14px;
+      border-radius: 4px;
+    }
+
+    .source-amount-row {
+      display: flex;
+      align-items: baseline;
+      gap: 18px;
+    }
+
+    .source-number {
+      font-size: 80px;
+      font-weight: 900;
+      color: #141414;
+      line-height: 1;
+      letter-spacing: -2px;
+    }
+
+    .currency-pill {
+      background-color: #FF6A1A;
+      color: #141414;
+      font-size: 26px;
+      font-weight: 900;
+      padding: 6px 16px;
+      border-radius: 8px;
+      border: 2px solid #141414;
+    }
+
+    .source-subtext {
+      font-size: 20px;
+      font-weight: 700;
+      color: #141414;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .subtext-accent {
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      background-color: #FF6A1A;
+      border-radius: 2px;
+    }
+
+    /* SVG Flow Connectors Layer */
+    .flow-svg-layer {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 8;
+    }
+
+    /* Intermediary Zone: Stamp & Fall Icon (Y: 546px - 622px) */
+    #stamp-no-action {
+      position: absolute;
+      top: 546px;
+      left: 60px;
+      width: 450px;
+      height: 76px;
+      background-color: #141414;
+      border: 4px solid #FF6A1A;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 6px 6px 0px rgba(20, 20, 20, 0.4);
+      z-index: 20;
+      transform-origin: center center;
+    }
+
+    .stamp-text {
+      font-size: 26px;
+      font-weight: 900;
+      color: #FF6A1A;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    /* Icon "fall" Callout Badge (at 4.15s) */
+    #icon-fall-badge {
+      position: absolute;
+      top: 546px;
+      left: 540px;
+      width: 170px;
+      height: 76px;
+      background-color: #141414;
+      border: 3px solid #FF6A1A;
+      border-radius: 8px;
+      box-shadow: 6px 6px 0px rgba(20, 20, 20, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 0 12px;
+      z-index: 22;
+      transform-origin: center center;
+    }
+
+    .icon-fall-label {
+      font-size: 15px;
+      font-weight: 900;
+      color: #FF6A1A;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      line-height: 1.2;
+    }
+
+    /* Left Target Box: Chạy việc (Hứa hẹn ban đầu) */
+    .node-left {
+      position: absolute;
+      top: 660px;
+      left: 60px;
+      width: 450px;
+      height: 250px;
+      background-color: #F5F0E4;
+      border: 4px dashed #141414;
+      border-radius: 12px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      z-index: 10;
+      transform-origin: center center;
+    }
+
+    .node-header-tag {
+      font-size: 18px;
+      font-weight: 700;
+      color: #141414;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .node-title-main {
+      font-size: 30px;
+      font-weight: 900;
+      color: #141414;
+      line-height: 1.25;
+    }
+
+    .node-result-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 10px;
+      border-top: 2px dashed rgba(20, 20, 20, 0.25);
+    }
+
+    .node-amount-zero {
+      font-size: 32px;
+      font-weight: 900;
+      color: #141414;
+      text-decoration: line-through;
+    }
+
+    .node-status-fail {
+      font-size: 18px;
+      font-weight: 900;
+      color: #141414;
+      background: rgba(20, 20, 20, 0.12);
+      padding: 5px 12px;
+      border-radius: 4px;
+    }
+
+    /* Right Target Box: Trả nợ riêng */
+    .node-right {
+      position: absolute;
+      top: 660px;
+      right: 60px;
+      width: 450px;
+      height: 250px;
+      background-color: #141414;
+      border: 4px solid #FF6A1A;
+      border-radius: 12px;
+      box-shadow: 10px 10px 0px #FF6A1A;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      z-index: 10;
+      transform-origin: center center;
+    }
+
+    .node-right-tag {
+      font-size: 18px;
+      font-weight: 900;
+      color: #FF6A1A;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .node-right-title {
+      font-size: 34px;
+      font-weight: 900;
+      color: #F7F4EC;
+      line-height: 1.2;
+    }
+
+    .node-right-result {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 10px;
+      border-top: 2px solid rgba(255, 106, 26, 0.3);
+    }
+
+    .node-right-amount {
+      font-size: 28px;
+      font-weight: 900;
+      color: #FF6A1A;
+    }
+
+    .node-right-percent {
+      font-size: 18px;
+      font-weight: 900;
+      background-color: #FF6A1A;
+      color: #141414;
+      padding: 4px 10px;
+      border-radius: 4px;
+    }
+
+    /* Punch-Phrase Main Banner (at 4.81s) */
+    .punch-card {
+      position: absolute;
+      top: 950px;
+      left: 60px;
+      right: 60px;
+      padding: 32px 28px;
+      background-color: #141414;
+      border: 5px solid #FF6A1A;
+      border-radius: 14px;
+      box-shadow: 12px 12px 0px rgba(20, 20, 20, 0.4);
+      text-align: center;
+      z-index: 26;
+      transform-origin: center center;
+    }
+
+    .punch-eyebrow {
+      display: inline-block;
+      background-color: #FF6A1A;
+      color: #141414;
+      font-size: 19px;
+      font-weight: 900;
+      letter-spacing: 2px;
+      padding: 6px 18px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+
+    .punch-headline {
+      font-size: 72px;
+      font-weight: 900;
+      line-height: 1.15;
+      color: #FF6A1A;
+      letter-spacing: -1px;
+      margin-bottom: 12px;
+    }
+
+    .punch-description {
+      font-size: 22px;
+      font-weight: 700;
+      color: #F7F4EC;
+      line-height: 1.35;
+    }
+
+    /* Bottom Summary / Takeaway Bar */
+    .takeaway-bar {
+      position: absolute;
+      top: 1250px;
+      left: 60px;
+      right: 60px;
+      height: 86px;
+      background-color: #F5F0E4;
+      border: 3px solid #141414;
+      border-radius: 10px;
+      box-shadow: 6px 6px 0px #141414;
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      padding: 0 24px;
+      z-index: 20;
+      transform-origin: center center;
+    }
+
+    .takeaway-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .takeaway-name {
+      font-size: 20px;
+      font-weight: 900;
+      color: #141414;
+      text-transform: uppercase;
+    }
+
+    .takeaway-pill-zero {
+      font-size: 20px;
+      font-weight: 900;
+      color: #141414;
+      background: rgba(20, 20, 20, 0.12);
+      padding: 6px 14px;
+      border-radius: 6px;
+      text-decoration: line-through;
+    }
+
+    .takeaway-pill-full {
+      font-size: 20px;
+      font-weight: 900;
+      background-color: #FF6A1A;
+      color: #141414;
+      padding: 6px 14px;
+      border-radius: 6px;
+      border: 2px solid #141414;
+    }
+
+    .takeaway-sep {
+      width: 2px;
+      height: 48px;
+      background-color: rgba(20, 20, 20, 0.25);
+    }
+  </style>
+
+  <div id="root" data-composition-id="scene-s18" data-width="1080" data-height="1920" data-duration="7.8">
+    <div id="scene-s18" class="clip" data-start="0" data-duration="7.8">
+      
+      <!-- Spotlight and grid background -->
+      <div class="bg-spotlight"></div>
+
+      <!-- Main animated motion container -->
+      <div id="scene-container">
+
+        <!-- Top category header -->
+        <div id="top-header" class="header-block">
+          <div class="category-badge">
+            <span class="category-badge-dot"></span>
+            <span>HỒ SƠ GIAO DỊCH // KẾT QUẢ ĐIỀU TRA</span>
+          </div>
+          <div class="header-title">HƯỚNG ĐI THỰC TẾ CỦA 100 TRIỆU ĐỒNG</div>
+        </div>
+
+        <!-- Center Hero Card: Nguồn tiền 100.000.000 VNĐ -->
+        <div id="source-card" class="source-card">
+          <div class="source-meta">
+            <div class="source-label">TIỀN MẶT CẦM TRỌN TRONG TAY</div>
+            <div class="source-tag">BỊ HẠI GIAO ĐỦ 100%</div>
+          </div>
+          <div class="source-amount-row">
+            <div id="source-amount-val" class="source-number">100.000.000</div>
+            <div class="currency-pill">VNĐ</div>
+          </div>
+          <div class="source-subtext">
+            <span class="subtext-accent"></span>
+            <span>Khoản tiền thỏa thuận lo lót xin việc ban đầu</span>
+          </div>
+        </div>
+
+        <!-- SVG Flow Lines -->
+        <svg class="flow-svg-layer" viewBox="0 0 1080 1920" xmlns="http://www.w3.org/2000/svg">
+          <!-- Nhánh trái: Hứa hẹn ban đầu (Nét đứt đen dẫn xuống Stamp & Node Left) -->
+          <path id="path-flow-left" d="M 285 510 L 285 546 M 285 622 L 285 660" fill="none" stroke="#141414" stroke-width="4" stroke-dasharray="8 6" />
+          <polygon id="arrow-flow-left" points="275,650 295,650 285,662" fill="#141414" />
+
+          <!-- Nhánh phải: Rẽ ngoặt thực tế (Nét cam đậm tự vẽ chạy sang Node Right) -->
+          <path id="path-flow-right" d="M 540 510 L 540 546 L 795 546 L 795 660" fill="none" stroke="#FF6A1A" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" />
+          <polygon id="arrow-flow-right" points="781,646 809,646 795,662" fill="#FF6A1A" />
+        </svg>
+
+        <!-- STAMP "KHÔNG HỀ LO LÓT" (xuất hiện tại t=2.54s) -->
+        <div id="stamp-no-action">
+          <div class="stamp-text">KHÔNG HỀ LO LÓT</div>
+        </div>
+
+        <!-- Icon "fall" Callout Badge (xuất hiện tại t=4.15s) -->
+        <div id="icon-fall-badge">
+          <svg viewBox="0 0 48 36" width="38" height="28" xmlns="http://www.w3.org/2000/svg">
+            <path id="icon-fall-path" d="M 4 6 L 18 6 L 42 30 M 28 30 L 42 30 L 42 16" fill="none" stroke="#FF6A1A" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+          <div class="icon-fall-label">RẼ NGOẶT<br>DÒNG TIỀN</div>
+        </div>
+
+        <!-- Left Target Box: Hứa hẹn ban đầu (Chạy việc) -->
+        <div id="node-left" class="node-left">
+          <div class="node-header-tag">MỤC TIÊU HỨA HẸN</div>
+          <div class="node-title-main">CHẠY SUẤT CÔNG CHỨC</div>
+          <div class="node-result-row">
+            <div class="node-amount-zero">0 VNĐ</div>
+            <div class="node-status-fail">KHÔNG THỰC HIỆN</div>
+          </div>
+        </div>
+
+        <!-- Right Target Box: Thực tế đích đến (Trả nợ riêng) -->
+        <div id="node-right" class="node-right">
+          <div class="node-right-tag">ĐÍCH ĐẾN THỰC TẾ</div>
+          <div class="node-right-title">TRẢ NỢ RIÊNG</div>
+          <div class="node-right-result">
+            <div class="node-right-amount">100.000.000 Đ</div>
+            <div class="node-right-percent">100%</div>
+          </div>
+        </div>
+
+        <!-- Punch-Phrase Main Banner (xuất hiện tại t=4.81s) -->
+        <div id="punch-card" class="punch-card">
+          <div class="punch-eyebrow">HÀNH VI CHIẾM ĐOẠT</div>
+          <div id="punch-text" class="punch-headline">MANG ĐI TRẢ NỢ</div>
+          <div class="punch-description">Toàn bộ số tiền bị chuyển thẳng cho đối tác làm ăn chung</div>
+        </div>
+
+        <!-- Bottom Takeaway Bar (xuất hiện tại t=5.3s) -->
+        <div id="takeaway-bar" class="takeaway-bar">
+          <div class="takeaway-item">
+            <div class="takeaway-name">XIN VIỆC:</div>
+            <div class="takeaway-pill-zero">0 ĐỒNG</div>
+          </div>
+          <div class="takeaway-sep"></div>
+          <div class="takeaway-item">
+            <div class="takeaway-name">TRẢ NỢ:</div>
+            <div class="takeaway-pill-full">TRỌN VẸN 100 TRIỆU</div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Signature persistent orange bottom bar -->
+      <div class="bottom-bar"></div>
+
+    </div>
+  </div>
+
+  <script>
+    // Setup stroke lengths for deterministic drawing
+    function setupStroke(id) {
+      const el = document.getElementById(id);
+      if (el && el.getTotalLength) {
+        const len = Math.ceil(el.getTotalLength());
+        el.style.strokeDasharray = len + " " + len;
+        el.style.strokeDashoffset = len;
+        return len;
+      }
+      return 200;
+    }
+
+    setupStroke("path-flow-right");
+    setupStroke("icon-fall-path");
+
+    // Single paused timeline according to HyperFrames contract
+    const tl = gsap.timeline({ paused: true });
+
+    // 0.0s -> 7.8s: Subtle slow camera zoom-in
+    tl.fromTo("#scene-container", 
+      { scale: 1 }, 
+      { scale: 1.045, duration: 7.8, ease: "none" }, 
+      0
+    );
+
+    // Initial state sets for elements that enter later
+    gsap.set("#top-header", { opacity: 0, y: -24 });
+    gsap.set("#source-card", { opacity: 0, scale: 1.25, y: -40 });
+    gsap.set("#path-flow-left", { opacity: 0 });
+    gsap.set("#arrow-flow-left", { opacity: 0 });
+    gsap.set("#node-left", { opacity: 0, y: 30 });
+    gsap.set("#stamp-no-action", { opacity: 0, scale: 1.8 });
+    gsap.set("#icon-fall-badge", { opacity: 0, scale: 0.2 });
+    gsap.set("#node-right", { opacity: 0, scale: 0.85, y: 20 });
+    gsap.set("#arrow-flow-right", { opacity: 0 });
+    gsap.set("#punch-card", { opacity: 0, scale: 1.35, y: -20 });
+    gsap.set("#takeaway-bar", { opacity: 0, y: 24 });
+
+    // PHASE 1: Strike Entrance (0.0s - 1.2s)
+    // Cú giáng mạnh mở đầu cảnh
+    tl.to("#top-header", { 
+      opacity: 1, 
+      y: 0, 
+      duration: 0.4, 
+      ease: "power3.out" 
+    }, 0.1);
+
+    tl.to("#source-card", { 
+      opacity: 1, 
+      scale: 1, 
+      y: 0, 
+      duration: 0.5, 
+      ease: "power4.out" 
+    }, 0.2);
+
+    // Number counting up from 0 to 100.000.000 VNĐ
+    const metricCounter = { count: 0 };
+    tl.to(metricCounter, {
+      count: 100,
+      duration: 0.65,
+      ease: "power2.out",
+      onUpdate: () => {
+        const val = Math.round(metricCounter.count);
+        const el = document.getElementById("source-amount-val");
+        if (el) {
+          el.textContent = val + ".000.000";
+        }
+      }
+    }, 0.25);
+
+    // Hứa hẹn ban đầu (Node trái) xuất hiện
+    tl.to("#node-left", { 
+      opacity: 1, 
+      y: 0, 
+      duration: 0.45, 
+      ease: "power3.out" 
+    }, 0.9);
+
+    tl.to(["#path-flow-left", "#arrow-flow-left"], { 
+      opacity: 1, 
+      duration: 0.35, 
+      ease: "power2.out" 
+    }, 1.05);
+
+    // PHASE 2: Overlay Label "KHÔNG HỀ LO LÓT" at t = 2.54s
+    // Đóng dấu stamp giáng mạnh vào lối rẽ của dòng tiền
+    tl.to("#stamp-no-action", { 
+      opacity: 1, 
+      scale: 1, 
+      duration: 0.35, 
+      ease: "power4.out" 
+    }, 2.54);
+
+    // PHASE 3: Overlay Icon "fall" at t = 4.15s
+    // Dòng tiền bẻ gãy, rẽ ngoặt sang đối tác làm ăn
+    tl.to("#icon-fall-badge", { 
+      opacity: 1, 
+      scale: 1, 
+      duration: 0.35, 
+      ease: "power3.out" 
+    }, 4.15);
+
+    tl.to("#icon-fall-path", { 
+      strokeDashoffset: 0, 
+      duration: 0.35, 
+      ease: "power2.out" 
+    }, 4.2);
+
+    // Đường nét cam rẽ ngoặt chạy nhanh sang Hộp Phải
+    tl.to("#path-flow-right", { 
+      strokeDashoffset: 0, 
+      duration: 0.45, 
+      ease: "power2.out" 
+    }, 4.25);
+
+    tl.to("#arrow-flow-right", { 
+      opacity: 1, 
+      duration: 0.2 
+    }, 4.55);
+
+    // Hộp Phải "TRẢ NỢ RIÊNG" bung sáng mạnh mẽ
+    tl.to("#node-right", { 
+      opacity: 1, 
+      scale: 1, 
+      y: 0, 
+      duration: 0.4, 
+      ease: "power3.out" 
+    }, 4.45);
+
+    // PHASE 4: Overlay Punch-Phrase "MANG ĐI TRẢ NỢ" at t = 4.81s
+    // Cú strike chốt lại toàn bộ sự thật
+    tl.to("#punch-card", { 
+      opacity: 1, 
+      scale: 1, 
+      y: 0, 
+      duration: 0.4, 
+      ease: "power4.out" 
+    }, 4.81);
+
+    // Takeaway bar tổng kết xuất hiện
+    tl.to("#takeaway-bar", { 
+      opacity: 1, 
+      y: 0, 
+      duration: 0.45, 
+      ease: "power3.out" 
+    }, 5.3);
+
+    // Đăng ký timeline chính thức vào registry HyperFrames
+    window.__timelines = window.__timelines || {};
+    window.__timelines["scene-s18"] = tl;
+  </script>
+
+    </template>
+  </body>
+</html>

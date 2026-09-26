@@ -295,6 +295,28 @@ prompt (quy tắc "không chữ cam trên nền be" có từ 21/09 vẫn là l�
   `.hf-plate-ink`…) TÍNH TỪ `style-tokens.json` (palette đổi thì tự đổi) — class tự chèn vào mọi scene.
 - `formatCheckFeedback()` (`hf-check.mjs`): feedback retry chỉ lỗi làm FAIL, gộp theo nguyên nhân, giữ
   fg/bg/suggestedColor/phần tử che (bản cũ `summarizeCheckRaw` bỏ mất các field này).
+- **Cổng review có cấu trúc** (`scripts/lib/review-gate.mjs`, người dùng duyệt 26/09): reviewer trả `BLOCKING`
+  (vi phạm contract, sai/thiếu nội dung chính shotlist, lệch Style DNA rõ, lỗi hiển thị chắc chắn) và
+  `ADVISORY` (holdMs/transition lệch, chi tiết sáng tạo thêm, nghi ngờ layout mà check đã PASS). SCRIPT quyết
+  định: FAIL ⇔ có ≥1 lỗi BLOCKING (`parseReviewVerdict`), không theo dòng VERDICT tự do; retry chỉ nhận lỗi
+  chặn; góp ý ghi `review-advisory` vào `codegen-issues.jsonl`. Lý do: reviewer luna FAIL 71% lần review khi
+  coi mọi lệch shotlist là lỗi → 4/18 scene fail 3/3 dù verify PASS.
+- **Ảnh giữ nguyên màu — gỡ mâu thuẫn Stage 6 ↔ Stage 7:** Stage 6 từng chép "người grayscale + bóng cam" của
+  Style DNA thành lệnh xử lý ảnh trong `assetTreatment` (74 shot/mọi video), trái quyết định dự án → reviewer
+  lật qua lật lại (12/27 lần FAIL). Sửa 2 tầng: prompt `06-shotlist.router.mjs` cấm ghi lệnh xử lý màu cho
+  ẢNH; `annotateShotsForCodegen()` tự gắn `assetTreatmentNote` vào shot ảnh cũ còn lệnh này (video không gắn
+  — không có quy tắc cấm xử lý màu video).
+- **Shot video dài hơn đoạn video có sẵn** (28% shot video — Flow sinh 8s): `annotateShotsForCodegen()` gắn
+  `videoHoldNote` (số giây tính sẵn). Đã đo: render HyperFrames TỰ GIỮ frame cuối khi `data-duration` dài hơn
+  media (SSIM 0.985 với frame cuối file gốc) → chỉ cần đặt video dài trọn shot; cấm tự chế freeze bằng
+  canvas/event video (không tất định — ban-an-425 S10).
+- **Kiểm tra asset TẤT ĐỊNH** (`checkAssetUsage()`, chạy sau verify, trước reviewer): file của `assetId` mỗi
+  shot phải có trong code. Reviewer KHÔNG nhìn thấy ảnh → cấm đoán "sai asset" từ tên file (báo nhầm thật ở
+  S08 khiến generator đổi tên file → `missing_local_asset`).
+- **Caption-zone ở verify Stage 7 lấy mẫu 10 mốc** (`SCENE_CAPTION_SEEK` trong `caption-zone.mjs`): mặc định
+  CLI chỉ xét KHUNG CUỐI composition (`seek=[1]`) → chữ hiện giữa scene đè vùng phụ đề lọt qua, chỉ 7b bắt
+  sau khi ráp (S13). Đã đo: cờ cũ ok=true, cờ mới bắt đúng lỗi, +1.6s/check. 7b giữ mặc định (đã có sample
+  theo shot + va chạm với phụ đề thật).
 - Prompt: khối "hợp đồng riêng của repo" đặt CUỐI system prompt; quy tắc `<video>` chỉ mô tả THUỘC TÍNH.
   **KHÔNG** dựng khung scene sẵn, **KHÔNG** kèm scene mẫu vào prompt (người dùng quyết 26/09 — rủi ro video na
   ná nhau, mất sáng tạo; chấm mù A/B xác nhận creativity không đổi khi không dùng 2 thứ này).

@@ -1,0 +1,634 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+      /* hf-safe-colors (tất định từ style-tokens.json) */
+      .hf-text-ink { color: #141414; }
+      .hf-text-light { color: #F7F4EC; }
+      .hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+      .hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+      .hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+      .hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+      *, *::before, *::after {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #E7E3D9;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+      #root {
+        position: relative;
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+        background-color: #E7E3D9;
+      }
+
+      /* Background layers: Grid + Spotlight Vignette */
+      .bg-grid {
+        position: absolute;
+        inset: 0;
+        background-image:
+          linear-gradient(to right, rgba(20, 20, 20, 0.12) 1.5px, transparent 1.5px),
+          linear-gradient(to bottom, rgba(20, 20, 20, 0.12) 1.5px, transparent 1.5px);
+        background-size: 84px 84px;
+        pointer-events: none;
+        z-index: 1;
+      }
+      .bg-spotlight {
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(circle at 50% 46%, rgba(231, 227, 217, 0) 32%, rgba(20, 20, 20, 0.32) 100%);
+        pointer-events: none;
+        z-index: 2;
+      }
+
+      /* Vox Visual Signature - Orange bottom bar */
+      .bottom-signature-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 14px;
+        background-color: #FF6A1A;
+        z-index: 100;
+      }
+
+      /* Core Clip convention: inset:0, absolute */
+      .clip {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+      }
+
+      /* Dossier Top Badge */
+      .scene-badge {
+        position: absolute;
+        top: 176px;
+        left: 80px;
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        background-color: #141414;
+        color: #F7F4EC;
+        padding: 10px 22px;
+        border-radius: 4px;
+        font-size: 22px;
+        font-weight: 900;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        box-shadow: 4px 4px 0px #FF6A1A;
+        z-index: 10;
+      }
+      .badge-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background-color: #FF6A1A;
+      }
+
+      /* Media Frames */
+      .photo-frame {
+        position: absolute;
+        left: 80px;
+        width: 920px;
+        border: 4px solid #141414;
+        background-color: #141414;
+        box-shadow: 12px 12px 0px #141414;
+        overflow: hidden;
+      }
+      .photo-img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transform-origin: center center;
+      }
+
+      /* Shot 1 Frame */
+      #s1-photo-frame {
+        top: 254px;
+        height: 840px;
+        z-index: 10;
+      }
+      #s1-img {
+        object-position: center 20%;
+      }
+
+      /* Shatter Overlay Fragments */
+      .shatter-layer {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        z-index: 20;
+      }
+      .shatter-piece {
+        position: absolute;
+        inset: 0;
+        background-color: #E7E3D9;
+        border: 2px solid #141414;
+      }
+      .shard-1 { clip-path: polygon(0 0, 100% 0, 48% 52%); }
+      .shard-2 { clip-path: polygon(100% 0, 100% 100%, 48% 52%); }
+      .shard-3 { clip-path: polygon(100% 100%, 0 100%, 48% 52%); }
+      .shard-4 { clip-path: polygon(0 100%, 0 0, 48% 52%); }
+
+      /* Warning Overlay Badge (Shot 1) */
+      .warning-card {
+        position: absolute;
+        bottom: 24px;
+        left: 24px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        background-color: #141414;
+        border: 3px solid #FF6A1A;
+        border-radius: 6px;
+        padding: 14px 24px;
+        box-shadow: 6px 6px 0px rgba(20, 20, 20, 0.6);
+        z-index: 25;
+      }
+      .warning-card-text {
+        color: #F7F4EC;
+        font-size: 26px;
+        font-weight: 900;
+        letter-spacing: 0.5px;
+      }
+      .icon-svg {
+        display: block;
+        flex-shrink: 0;
+      }
+
+      /* Punch Phrase 1 (Shot 1) */
+      .punch-card-s1 {
+        position: absolute;
+        top: 1140px;
+        left: 80px;
+        width: 920px;
+        background-color: #141414;
+        border: 4px solid #141414;
+        border-radius: 8px;
+        padding: 32px 36px;
+        box-shadow: 10px 10px 0px #FF6A1A;
+        text-align: center;
+        z-index: 30;
+      }
+      .punch-title-s1 {
+        margin: 0;
+        font-size: 64px;
+        font-weight: 900;
+        line-height: 1.2;
+        color: #FF6A1A;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+      .punch-sub-s1 {
+        display: inline-block;
+        margin-top: 14px;
+        background-color: #FF6A1A;
+        color: #141414;
+        font-size: 24px;
+        font-weight: 900;
+        padding: 6px 18px;
+        border-radius: 4px;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+      }
+
+      /* Shot 2 Frame */
+      #s2-photo-frame {
+        top: 254px;
+        height: 660px;
+        z-index: 10;
+      }
+      #s2-img {
+        object-position: center 88%;
+      }
+
+      /* Dossier Fact Card (Shot 2) */
+      .dossier-card {
+        position: absolute;
+        top: 946px;
+        left: 80px;
+        width: 920px;
+        background-color: #F5F0E4;
+        border: 4px solid #141414;
+        border-radius: 8px;
+        padding: 28px 36px;
+        box-shadow: 10px 10px 0px #141414;
+        z-index: 20;
+      }
+      .dossier-row {
+        position: relative;
+        padding-bottom: 18px;
+      }
+      .dossier-row:not(:last-child) {
+        border-bottom: 2px dashed rgba(20, 20, 20, 0.25);
+        margin-bottom: 18px;
+      }
+      /* WCAG compliant label: orange badge with ink text (6.4:1 contrast) */
+      .dossier-label {
+        display: inline-block;
+        font-size: 20px;
+        font-weight: 900;
+        background-color: #FF6A1A;
+        color: #141414;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        padding: 4px 12px;
+        border-radius: 4px;
+        margin-bottom: 8px;
+      }
+      .dossier-val-wrap {
+        position: relative;
+        display: inline-block;
+      }
+      .dossier-value {
+        font-size: 32px;
+        font-weight: 900;
+        color: #141414;
+        line-height: 1.3;
+      }
+      .strikethrough-line {
+        position: absolute;
+        top: 50%;
+        left: -8px;
+        right: -8px;
+        height: 6px;
+        background-color: #FF6A1A;
+        border-radius: 3px;
+        transform-origin: left center;
+        z-index: 2;
+        pointer-events: none;
+      }
+      .dossier-subtext {
+        margin-top: 6px;
+        font-size: 22px;
+        font-weight: 700;
+        color: #141414;
+      }
+
+      /* Punch Phrase 2 (Shot 2) */
+      .punch-card-s2 {
+        position: absolute;
+        top: 1308px;
+        left: 80px;
+        width: 920px;
+        background-color: #FF6A1A;
+        border: 4px solid #141414;
+        border-radius: 8px;
+        padding: 24px 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 24px;
+        box-shadow: 10px 10px 0px #141414;
+        z-index: 30;
+      }
+      .punch-title-s2 {
+        margin: 0;
+        font-size: 60px;
+        font-weight: 900;
+        line-height: 1.15;
+        color: #141414;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s17"
+      data-width="1080"
+      data-height="1920"
+      data-duration="13.79"
+      data-start="0"
+    >
+      <!-- Persistent Backgrounds -->
+      <div class="bg-grid"></div>
+      <div class="bg-spotlight"></div>
+      <div class="bottom-signature-bar"></div>
+
+      <!-- ==================== SHOT 1 (0.00s -> 4.79s) ==================== -->
+      <section id="shot-1" class="clip" data-start="0" data-duration="4.79">
+        <div class="scene-badge" id="s1-badge">
+          <span class="badge-dot"></span>
+          <span>BÓC TRẦN DANH XƯNG</span>
+        </div>
+
+        <!-- Courtroom Image Frame with Shatter Effect -->
+        <div class="photo-frame" id="s1-photo-frame">
+          <img
+            id="s1-img"
+            class="photo-img"
+            src="assets/img-01-teacher-recruitment-bribery-verdict.jpg"
+            alt="Toà án và cán cân công lý"
+          />
+
+          <!-- Shatter Pieces that fly apart at t=0 -->
+          <div class="shatter-layer" id="s1-shatter-layer">
+            <div class="shatter-piece shard-1" id="shard-1"></div>
+            <div class="shatter-piece shard-2" id="shard-2"></div>
+            <div class="shatter-piece shard-3" id="shard-3"></div>
+            <div class="shatter-piece shard-4" id="shard-4"></div>
+          </div>
+
+          <!-- Warning overlay: Drawn Icon + Tag -->
+          <div class="warning-card" id="s1-warning-card">
+            <svg id="warning-svg" class="icon-svg" width="52" height="52" viewBox="0 0 100 100">
+              <path
+                id="warning-triangle"
+                d="M 50 14 L 90 84 L 10 84 Z"
+                fill="none"
+                stroke="#FF6A1A"
+                stroke-width="8"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <path
+                id="warning-bar"
+                d="M 50 38 L 50 60"
+                fill="none"
+                stroke="#FF6A1A"
+                stroke-width="8"
+                stroke-linecap="round"
+              />
+              <circle id="warning-dot" cx="50" cy="74" r="5" fill="#FF6A1A" />
+            </svg>
+            <div class="warning-card-text">THÔNG TIN BỊA ĐẶT</div>
+          </div>
+        </div>
+
+        <!-- Punch Phrase 1 -->
+        <div class="punch-card-s1" id="s1-punch-card">
+          <h2 class="punch-title-s1">CHÉM GIÓ THÀNH THẦN</h2>
+          <div class="punch-sub-s1">TỰ NHẬN NỘI VỤ CHẠY BIÊN CHẾ</div>
+        </div>
+      </section>
+
+      <!-- ==================== SHOT 2 (4.79s -> 13.79s) ==================== -->
+      <section id="shot-2" class="clip" data-start="4.79" data-duration="9.0">
+        <div class="scene-badge" id="s2-badge">
+          <span class="badge-dot"></span>
+          <span>HỒ SƠ CÔNG CHỨC THỰC TẾ</span>
+        </div>
+
+        <!-- Exam Paper & Stamped Fail Frame -->
+        <div class="photo-frame" id="s2-photo-frame">
+          <img
+            id="s2-img"
+            class="photo-img"
+            src="assets/img-01-teacher-recruitment-bribery-verdict.jpg"
+            alt="Đề thi đóng dấu trượt"
+          />
+        </div>
+
+        <!-- Dossier Document Breakdown -->
+        <div class="dossier-card" id="s2-dossier-card">
+          <div class="dossier-row" id="s2-row-claim" data-layout-allow-occlusion="true">
+            <div class="dossier-label">VỊ TRÍ TỰ NHẬN:</div>
+            <div class="dossier-val-wrap" data-layout-allow-occlusion="true">
+              <div class="dossier-value" data-layout-allow-occlusion="true">Cán bộ Sở Nội vụ • Thi tuyển giáo viên</div>
+              <div class="strikethrough-line" id="s2-strikethrough" data-layout-allow-occlusion="true"></div>
+            </div>
+          </div>
+
+          <div class="dossier-row" id="s2-row-real">
+            <div class="dossier-label">VỊ TRÍ THỰC TẾ:</div>
+            <div class="dossier-value">Chính quyền địa phương &amp; Công tác thanh niên</div>
+            <div class="dossier-subtext">Hoàn toàn không thuộc hội đồng tuyển dụng</div>
+          </div>
+        </div>
+
+        <!-- Punch Phrase 2 with Self-Drawing Ban Icon -->
+        <div class="punch-card-s2" id="s2-punch-card">
+          <svg id="ban-svg" class="icon-svg" width="70" height="70" viewBox="0 0 100 100">
+            <circle
+              id="ban-circle"
+              cx="50"
+              cy="50"
+              r="38"
+              fill="none"
+              stroke="#141414"
+              stroke-width="9"
+            />
+            <path
+              id="ban-slash"
+              d="M 23 23 L 77 77"
+              fill="none"
+              stroke="#141414"
+              stroke-width="9"
+              stroke-linecap="round"
+            />
+          </svg>
+          <h2 class="punch-title-s2">KHÔNG CÓ THẨM QUYỀN</h2>
+        </div>
+      </section>
+    </div>
+
+    <!-- Animation Master Timeline Script -->
+    <script>
+      // 1. Prepare SVG stroke paths
+      const warningTriangle = document.getElementById("warning-triangle");
+      const warningBar = document.getElementById("warning-bar");
+      const banCircle = document.getElementById("ban-circle");
+      const banSlash = document.getElementById("ban-slash");
+
+      [warningTriangle, warningBar, banCircle, banSlash].forEach((p) => {
+        if (p) {
+          const len = p.getTotalLength();
+          p.style.strokeDasharray = len;
+          p.style.strokeDashoffset = len;
+        }
+      });
+
+      // 2. Initialize Paused GSAP Timeline
+      const tl = gsap.timeline({ paused: true });
+
+      // ========================================================
+      // SHOT 1 ANIMATION (Global: 0.00s -> 4.79s)
+      // ========================================================
+
+      // Top Badge Entrance
+      tl.fromTo(
+        "#s1-badge",
+        { y: -30, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.45, ease: "power3.out" },
+        0.1
+      );
+
+      // Photo Frame Ken Burns Entrance
+      tl.fromTo(
+        "#s1-photo-frame",
+        { scale: 0.94, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.5, ease: "power3.out" },
+        0.05
+      );
+
+      // Continuous Slow Zoom on Image
+      tl.fromTo(
+        "#s1-img",
+        { scale: 1.0 },
+        { scale: 1.15, duration: 4.74, ease: "sine.out" },
+        0.05
+      );
+
+      // Shatter Pieces Explosion (0.0s -> 0.75s)
+      tl.fromTo(
+        "#shard-1",
+        { x: 0, y: 0, rotation: 0, opacity: 1 },
+        { x: -160, y: -220, rotation: -20, opacity: 0, duration: 0.65, ease: "power3.out" },
+        0.1
+      );
+      tl.fromTo(
+        "#shard-2",
+        { x: 0, y: 0, rotation: 0, opacity: 1 },
+        { x: 200, y: -160, rotation: 25, opacity: 0, duration: 0.65, ease: "power3.out" },
+        0.1
+      );
+      tl.fromTo(
+        "#shard-3",
+        { x: 0, y: 0, rotation: 0, opacity: 1 },
+        { x: 180, y: 220, rotation: -18, opacity: 0, duration: 0.65, ease: "power3.out" },
+        0.1
+      );
+      tl.fromTo(
+        "#shard-4",
+        { x: 0, y: 0, rotation: 0, opacity: 1 },
+        { x: -220, y: 180, rotation: 22, opacity: 0, duration: 0.65, ease: "power3.out" },
+        0.1
+      );
+
+      // Overlay Warning Card Entrance (at 1.44s)
+      tl.fromTo(
+        "#s1-warning-card",
+        { scale: 0, opacity: 0, y: 20 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.45, ease: "power3.out" },
+        1.44
+      );
+
+      // Draw SVG Warning Icon (starts at 1.50s)
+      tl.to(
+        "#warning-triangle",
+        { strokeDashoffset: 0, duration: 0.5, ease: "power2.out" },
+        1.50
+      );
+      tl.to(
+        "#warning-bar",
+        { strokeDashoffset: 0, duration: 0.25, ease: "power2.out" },
+        1.75
+      );
+      tl.fromTo(
+        "#warning-dot",
+        { scale: 0, transformOrigin: "50% 50%" },
+        { scale: 1, duration: 0.2, ease: "power3.out" },
+        1.90
+      );
+
+      // Punch Phrase 1 Pop (at 3.18s)
+      tl.fromTo(
+        "#s1-punch-card",
+        { scale: 0.82, opacity: 0, y: 40 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.5, ease: "power3.out" },
+        3.18
+      );
+
+      // ========================================================
+      // SHOT 2 ANIMATION (Global: 4.79s -> 13.79s)
+      // ========================================================
+
+      // Shot 2 Badge Entrance
+      tl.fromTo(
+        "#s2-badge",
+        { y: -30, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.45, ease: "power3.out" },
+        4.85
+      );
+
+      // Exam Paper Frame Grow Entrance (at 4.79s)
+      tl.fromTo(
+        "#s2-photo-frame",
+        { scale: 0.88, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.55, ease: "power3.out" },
+        4.79
+      );
+
+      // Continuous Slow Pan-Down & Zoom on Exam Image
+      tl.fromTo(
+        "#s2-img",
+        { scale: 1.05, y: 0 },
+        { scale: 1.20, y: 24, duration: 8.9, ease: "sine.out" },
+        4.79
+      );
+
+      // Dossier Card Arrival (at 5.20s)
+      tl.fromTo(
+        "#s2-dossier-card",
+        { y: 50, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.55, ease: "power3.out" },
+        5.20
+      );
+
+      // Dossier Row 1 Initial Appearance
+      tl.fromTo(
+        "#s2-row-claim",
+        { opacity: 0, x: -20 },
+        { opacity: 1, x: 0, duration: 0.45, ease: "power3.out" },
+        5.50
+      );
+
+      // Strikethrough Slash Across Fake Claim (at 6.90s)
+      tl.fromTo(
+        "#s2-strikethrough",
+        { scaleX: 0 },
+        { scaleX: 1, duration: 0.4, ease: "power2.inOut" },
+        6.90
+      );
+
+      // Dossier Row 2 Real Position Reveal (at 7.60s)
+      tl.fromTo(
+        "#s2-row-real",
+        { opacity: 0, y: 20 },
+        { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" },
+        7.60
+      );
+
+      // Punch Phrase 2 Pop (at 10.33s)
+      tl.fromTo(
+        "#s2-punch-card",
+        { scale: 0.75, opacity: 0, y: 35 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.5, ease: "power3.out" },
+        10.33
+      );
+
+      // Self-Drawing Ban Icon on Punch Card (at 10.45s)
+      tl.to(
+        "#ban-circle",
+        { strokeDashoffset: 0, duration: 0.5, ease: "power2.out" },
+        10.45
+      );
+      tl.to(
+        "#ban-slash",
+        { strokeDashoffset: 0, duration: 0.35, ease: "power2.out" },
+        10.75
+      );
+
+      // 3. Register Timeline to HyperFrames
+      window.__timelines = window.__timelines || {};
+      window.__timelines["scene-s17"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

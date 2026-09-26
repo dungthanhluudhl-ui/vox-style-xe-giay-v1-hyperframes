@@ -1,0 +1,47 @@
+# Scene Plan — ban-an-425-phan-1
+
+> Sinh bởi `scripts/05-scene-plan.router.mjs` qua ag/gemini-3.8-flash-high. Nguồn dữ liệu: `planning/videos/ban-an-425-phan-1/scene-plan.json`. Sửa tay thì sửa cả 2 file cho khớp.
+
+Tổng thời lượng: 149.800s · 18 scene
+
+| # | Thời gian | Lời thoại | Chức năng | Quan hệ hình ảnh | Ngôn ngữ thị giác | Nền | Asset | Vào cảnh |
+|---|---|---|---|---|---|---|---|---|
+| S01 | 0.000s–7.000s | Hôm trước lướt tin tức, tôi đọc được một vụ án mà nói thật là nó bi hài đến mức không biết nên cười hay nên mếu các bạn ạ. | hook | Biểu tượng cán cân công lý và búa toà án giáng mạnh xuống xé nát cọc tiền 100 triệu, song song với dấu mộc TRƯỢT đỏ chót đè bẹp hồ sơ thi tuyển. | cutout + annotated | spotlight | vid-06 | strike |
+| S02 | 7.000s–13.000s | Bình thường người ta đi đưa hối lộ là vì quyền lợi sát sườn của mình, hoặc muốn kiếm chác những món hời béo bở. | definition | Khối tài sản và vali tiền mặt phình to đại diện cho động cơ vụ lợi thông thường của hành vi đưa hối lộ nhằm trục lợi sát sườn. | background-photo + diagram | chart | img-05 | peel |
+| S03 | 13.000s–20.000s | Đằng này, có một vị quan chức nhiệt tình đến mức tự bỏ tiền túi ra để chạy việc cho cháu gái của bạn học cũ. | paradox | Nghịch lý dòng tiền chạy ngược: người trung gian tự rút ví tiền cá nhân thế chỗ cho người nhờ vả để chạy biên chế giáo viên. | cutout + quote | grid | img-02 | grow |
+| S04 | 20.000s–26.080s | Kết quả là cháu thì trượt vỏ chuối, bản thân ông ấy thì dính án tù, lại còn bị cấp dưới lừa cho một vố đau điếng. | causal-chain | Hai nhánh hệ quả sụp đổ cùng lúc: hồ sơ giáo viên rơi tự do vào thùng rác đối xứng với chiếc còng số 8 và khung sắt nhà tù giam giữ vị quan chức. | split + annotated | spotlight | img-03 | shatter |
+| S05 | 26.080s–33.000s | Chuyện tưởng như đùa này lại là một bản án có thật vừa được Tòa án nhân dân tối cao tại Thành phố Hồ Chí Minh đưa ra xét xử phúc thẩm. | evidence | Hồ sơ bản án hình sự phúc thẩm của Toà án nhân dân cấp cao tại TP.HCM từ từ mở ra, đóng mộc đỏ khẳng định tính xác thực của câu chuyện. | document + timeline | card | vid-03 | unfold |
+| S06 | 33.000s–43.000s | Tôi là Lóng, và lưu ý là những thông tin dưới đây được chúng tôi tổng hợp và góp nhặt từ nhiều nguồn, nên nếu có gì sai hoặc cần đính chính, các bạn hãy vui lòng comment bên dưới. | definition | Thẻ định danh người dẫn Lóng cùng bảng kiểm duyệt nguồn tin tổng hợp xuất hiện, mời gọi người xem tương tác góp ý bên dưới. | text-only | card | — | rise |
+| S07 | 43.000s–54.540s | Nguồn cơn bắt đầu vào khoảng tháng tám năm hai nghìn không trăm hai mươi hai. Ông Nguyễn Kim H, Trưởng phòng thuộc Sở Giao thông Vận tải tỉnh Bà Rịa Vũng Tàu, tình cờ gặp lại một bà bạn học cũ thời cấp ba. | cause | Mốc thời gian tháng 8 năm 2022 neo vào bờ biển Vũng Tàu, hai hình bóng bạn học cũ thời cấp ba hội ngộ sau nhiều năm xa cách. | background-photo + timeline | grid | vid-05 | zoom-through |
+| S08 | 54.540s–64.060s | Ngồi nói chuyện một hồi thì bà bạn tâm sự có đứa cháu gái đang dạy hợp đồng ở trường cấp hai tại thành phố Vũng Tàu, chuẩn bị thi sát hạch viên chức giáo viên. | list | Sơ đồ bóc tách vị trí việc làm: bản hợp đồng giáo viên cấp hai bấp bênh đối chiếu với cánh cửa biên chế chính thức cần vượt qua kỳ sát hạch. | annotated + diagram | grid | img-04 | flip |
+| S09 | 64.060s–73.000s | Thế là bà bạn mở lời nhờ ông H xem có quen biết ai thì giúp đỡ cho cháu vào biên chế. Nể tình bạn học, ông H nhận lời ngay. Mà ông này nhiệt tình đến mức khó tin các bạn ạ. | causal-chain | Mũi tên nhờ vả chuyển giao lời thỉnh cầu từ người bạn học sang vị Trưởng phòng Giao thông, lập tức biến thành lời cam kết hỗ trợ nhiệt tình. | cutout + flow | card | img-06 | wobble-drop |
+| S10 | 73.000s–82.000s | Phía bà bạn chưa hề bàn chuyện tiền nong, cũng chưa đưa đồng nào, thì ông H đã tự nguyện rút tiền túi ứng trước hẳn một trăm triệu đồng để đi lo việc. | paradox | Hộp tiền tiết kiệm cá nhân bật mở, một cọc tiền 100.000.000 VNĐ tự động tách khỏi túi ông H để trở thành chi phí ứng trước chạy việc. | data + background-photo | chart | vid-01 | punch |
+| S11 | 82.000s–89.080s | Đúng là tình bạn diệu kỳ, bạn chưa kịp xòe tiền thì mình đã tự móc hầu bao, giúp bạn hết mình nhưng cái kết sau đó thì lại hết hồn. | reversal | Bố cục chia đôi vạch trần nghịch lý: một bên người nhờ vả chưa hề mở ví, bên kia người giúp đã vội vã dốc cạn hầu bao vì bạn. | split + diagram | spotlight | — | peel |
+| S12 | 89.080s–98.000s | Làm bên giao thông thì không thể can thiệp sang giáo dục, nên ông H liên hệ với ông Trần Phú V, thời điểm đó đang là Chánh Thanh tra thành phố Vũng Tàu. | mechanism | Ranh giới ngăn cách giữa hai cơ quan công quyền: Trưởng phòng Giao thông bắc cầu nối sang Chánh Thanh tra thành phố Vũng Tàu vì không đúng thẩm quyền. | cutout + annotated | grid | img-07 | rise |
+| S13 | 98.000s–105.800s | Ông V nghe bạn nhờ vả thì cũng cả nể nhận lời, rồi đi kết nối với ông Nguyễn Tấn H một, Chuyên viên Phòng Nội vụ Ủy ban nhân dân thành phố. | causal-chain | Chuỗi liên lạc công vụ mở rộng: từ Chánh Thanh tra chuyển tiếp yêu cầu sang bàn làm việc của Chuyên viên Phòng Nội vụ UBND thành phố. | flow + document | grid | vid-04 | spiral |
+| S14 | 105.800s–113.820s | Đến đây thì đúng là một pha kết nối đi vào lòng đất. Ông chuyên viên nội vụ nghe xong nhận lời ngon ơ, bảo là cứ yên tâm để đấy ông lo. | paradox | Lời hứa 'cứ để đấy tôi lo' hiện lên dưới dạng bóng thoại vững chắc nhưng mũi tên điều hướng cắm thẳng xuống đất tạo điểm tắc nghẽn. | quote + split | spotlight | — | wobble-drop |
+| S15 | 113.820s–122.000s | Thấy có cửa sáng, ngày mười lăm tháng chín năm hai nghìn không trăm hai mươi hai, ông H chuyển khoản một trăm triệu đồng tiền túi sang cho ông Chánh Thanh tra. | mechanism | Màn hình điện thoại hiển thị giao dịch ngân hàng điện tử, số dư 100.000.000 VNĐ chuyển dịch tức thì từ ông H sang tài khoản Chánh Thanh tra. | mockup + data | chart | vid-02 | punch |
+| S16 | 122.000s–128.210s | Ông Chánh Thanh tra vừa nhận tiền xong cũng lập tức bắn thẳng sang tài khoản của ông chuyên viên nội vụ. | causal-chain | Dòng tiền không dừng lại mà tiếp tục phóng thẳng từ tài khoản Chánh Thanh tra sang tài khoản cá nhân của Chuyên viên Nội vụ. | flow + annotated | chart | img-08 | grow |
+| S17 | 128.210s–142.000s | Cứ ngỡ tiền trao cháo múc, ai ngờ ông chuyên viên này lại là tay chém gió thành thần. Vị trí thực tế của ông này chỉ là quản lý chính quyền địa phương và công tác thanh niên, hoàn toàn không có thẩm quyền gì trong kỳ thi tuyển giáo viên cả. | reversal | Hồ sơ công chức của vị chuyên viên bị bóc trần: danh xưng nội vụ bị gạch chéo đỏ để lộ chức danh thanh niên không hề có thẩm quyền thi tuyển giáo viên. | document + diagram | spotlight | img-01 | shatter |
+| S18 | 142.000s–149.800s | Cầm trọn một trăm triệu trong tay, ông này chẳng lo lót gì hết mà đem luôn toàn bộ số tiền đi trả nợ cho một đối tác làm ăn chung. | conclusion | Số tiền 100 triệu bị bẻ gãy khỏi mục tiêu chạy việc ban đầu, rẽ ngoặt vào túi chủ nợ kinh doanh chung để lại chiếc bẫy lừa hoàn hảo. | data + flow | spotlight | — | strike |
+
+## Ghi chú từng scene
+
+- **S01**: Tận dụng video vid-06 có nhịp búa gõ và tiền rách làm hook kịch tính mở đầu vụ án; overlay nhãn chữ 'VỤ ÁN BI HÀI'.
+- **S02**: Dùng img-05 làm nền thể hiện tâm lý vụ lợi thông thường; overlay sơ đồ vector mũi tên chỉ hướng 'HỐI LỘ VÌ BẢN THÂN'.
+- **S03**: Dùng img-02 làm nền minh họa hành vi đưa tiền lo lót hồ sơ; thêm nhãn punch-phrase 'TỰ BỎ TIỀN TÚI' đóng khung cam.
+- **S04**: Dùng img-03 thể hiện phán quyết tù giam; chia đôi màn hình đối lập hậu quả 'CHÁU TRƯỢT' và 'BẢN THÂN ĐI TÙ'.
+- **S05**: Dùng vid-03 hoạt cảnh phiên tòa kết hợp overlay khuôn dấu docket 'BẢN ÁN CÓ THẬT' tăng tính pháp lý.
+- **S06**: Scene giới thiệu host và disclaimer pháp lý; dựng code card phẳng với icon doc và warning, giữ nhịp nghỉ trước khi vào tình tiết vụ án.
+- **S07**: Dùng vid-05 hoạt cảnh cà phê bờ biển Vũng Tàu làm bối cảnh gặp gỡ; overlay mốc dòng thời gian 'THÁNG 8/2022'.
+- **S08**: Dùng img-04 bối cảnh trao đổi thông tin tại Vũng Tàu; overlay diagram nhãn 'GIÁO VIÊN HỢP ĐỒNG' chỉ vào nhân vật người cháu.
+- **S09**: Dùng img-06 minh họa thái độ tự tin nhận lời trước hồ sơ công việc; vẽ đường nối flow biểu thị sự cả nể nhận lời.
+- **S10**: Dùng vid-01 hoạt cảnh phong bì tiền 100 triệu và giấy nợ; overlay bộ đếm số tiền '100.000.000 ĐỒNG' tăng nhanh.
+- **S11**: Scene bình luận châm biếm dựng code split screen; vạch phân cách đứt nét cam chia 2 trạng thái 'CHƯA XÒE TIỀN' vs 'TỰ MÓC HẦU BAO'.
+- **S12**: Dùng img-07 cảnh bắt tay công sở giữa hai vị cán bộ; overlay nhãn chức danh 'SỞ GIAO THÔNG' gạch chéo sang 'NGÀNH GIÁO DỤC'.
+- **S13**: Dùng vid-04 hoạt họa cán bộ bắt tay móc ngoặc; vẽ mũi tên liên kết 3 cấp: Giao thông -> Thanh tra -> Nội vụ.
+- **S14**: Scene trào phúng dựng code thuần; bóng thoại quote chữ to 'CỨ ĐỂ ĐẤY TÔI LO' kèm mũi tên cắm dốc xuống đất.
+- **S15**: Dùng vid-02 mockup chuyển khoản điện thoại di động; overlay con số biến động số dư '-100.000.000 VNĐ' ngày 15/9/2022.
+- **S16**: Dùng img-08 đồ họa dòng tiền trung gian qua nhiều tài khoản; đường line phát sáng màu cam thể hiện tốc độ bắn tiền.
+- **S17**: Dùng img-01 hình ảnh cân công lý và đề thi đóng dấu TRƯỢT; gộp câu 8 & 9 thành scene dài 13.79s có nhịp bóc mẽ thẩm quyền.
+- **S18**: Scene kết thúc phần 1; dựng code flow rẽ nhánh dòng tiền 100 triệu vào mục đích 'TRẢ NỢ RIÊNG', đóng dấu vỡ mộng vụ chạy việc.

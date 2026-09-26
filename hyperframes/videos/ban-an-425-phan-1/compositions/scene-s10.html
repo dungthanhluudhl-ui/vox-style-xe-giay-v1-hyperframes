@@ -1,0 +1,509 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap"
+    />
+      <style>
+      /* hf-safe-colors (tất định từ style-tokens.json) */
+      .hf-text-ink {
+        color: #141414;
+      }
+      .hf-text-light {
+        color: #f7f4ec;
+      }
+      .hf-hl-orange {
+        color: #141414;
+        background-color: #ff6a1a;
+      }
+      .hf-plate-ink {
+        color: #f7f4ec;
+        background-color: #141414;
+      }
+      .hf-plate-ink-orange {
+        color: #ff6a1a;
+        background-color: #141414;
+      }
+      .hf-plate-paper {
+        color: #141414;
+        background-color: #e7e3d9;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #e7e3d9;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: #e7e3d9;
+      }
+
+      /* Quy ước clip contract */
+      .clip {
+        position: absolute;
+        inset: 0;
+      }
+
+      /* Video layer wrapper (KHÔNG mang data-start, z-index 1) */
+      #video-wrapper {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+        z-index: 1;
+        transform-origin: 50% 50%;
+        will-change: transform;
+      }
+      #main-video {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      /* Background variant: chart (4 đường ngang + tick cam mép trái, z-index 2) */
+      #chart-overlay {
+        position: absolute;
+        inset: 0;
+        z-index: 2;
+        pointer-events: none;
+      }
+      .chart-line {
+        position: absolute;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background-color: rgba(20, 20, 20, 0.32);
+      }
+      .chart-tick {
+        position: absolute;
+        left: 0;
+        width: 32px;
+        height: 6px;
+        background-color: #ff6a1a;
+        transform: translateY(-2px);
+      }
+
+      /* Thanh cam nhận diện thương hiệu đáy màn hình (z-index 30) */
+      #bottom-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 16px;
+        background-color: #ff6a1a;
+        z-index: 30;
+      }
+
+      /* Shot overlay clip: Nằm trên toàn bộ video và chart line (z-index 10) */
+      #shot-overlay {
+        z-index: 10;
+        pointer-events: none;
+      }
+
+      /* Top Header: Bối cảnh hồ sơ vụ án & nghịch lý (Y: 180px - 330px) */
+      #tag-context {
+        position: absolute;
+        top: 180px;
+        left: 60px;
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 22px;
+        background-color: #141414;
+        border: 3px solid #141414;
+        box-shadow: 6px 6px 0px #ff6a1a;
+        will-change: transform, opacity;
+      }
+      .context-bullet {
+        width: 12px;
+        height: 12px;
+        background-color: #ff6a1a;
+      }
+      .context-text {
+        font-size: 24px;
+        font-weight: 900;
+        letter-spacing: 2px;
+        color: #f7f4ec;
+        text-transform: uppercase;
+      }
+
+      #tag-paradox {
+        position: absolute;
+        top: 254px;
+        left: 60px;
+        padding: 12px 24px;
+        background-color: #e7e3d9;
+        border: 3px solid #141414;
+        box-shadow: 6px 6px 0px #141414;
+        will-change: transform, opacity;
+      }
+      .paradox-text {
+        font-size: 26px;
+        font-weight: 900;
+        color: #141414;
+        letter-spacing: 1px;
+      }
+
+      /* Overlay 1: Label "TỰ NGUYỆN ỨNG TIỀN" (atMs: 77750 -> 4.75s) */
+      #badge-volunteer {
+        position: absolute;
+        top: 940px;
+        left: 60px;
+        display: inline-flex;
+        align-items: center;
+        padding: 16px 36px;
+        background-color: #ff6a1a;
+        border: 4px solid #141414;
+        box-shadow: 8px 8px 0px #141414;
+        transform-origin: 0% 50%;
+        will-change: transform, opacity;
+      }
+      .volunteer-text {
+        font-size: 40px;
+        font-weight: 900;
+        color: #141414;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+      }
+
+      /* Overlay 2: Icon "money" & Nguồn tiền túi (atMs: 78940 -> 5.94s) */
+      #pill-source {
+        position: absolute;
+        top: 1045px;
+        left: 60px;
+        display: inline-flex;
+        align-items: center;
+        gap: 14px;
+        padding: 10px 24px;
+        background-color: #f5f0e4;
+        border: 3px solid #141414;
+        box-shadow: 6px 6px 0px #141414;
+        will-change: transform, opacity;
+      }
+      .money-icon-box {
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .source-label {
+        font-size: 24px;
+        font-weight: 900;
+        color: #141414;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+      }
+
+      /* Overlay 3: Punch-phrase & Data Counter "100.000.000 ĐỒNG" (atMs: 79780 -> 6.78s) */
+      #hero-data-card {
+        position: absolute;
+        top: 1145px;
+        left: 60px;
+        right: 60px;
+        height: 215px;
+        padding: 24px 36px;
+        background-color: #141414;
+        border: 4px solid #ff6a1a;
+        box-shadow: 10px 10px 0px #ff6a1a;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        transform-origin: 50% 50%;
+        will-change: transform, opacity;
+      }
+      .data-header-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+      }
+      .data-subtitle {
+        font-size: 22px;
+        font-weight: 900;
+        color: #ff6a1a;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+      }
+      .data-code {
+        font-size: 18px;
+        font-weight: 700;
+        color: #e7e3d9;
+        letter-spacing: 1px;
+      }
+      .data-value-row {
+        display: flex;
+        align-items: baseline;
+        gap: 16px;
+      }
+      .data-digits {
+        font-size: 64px;
+        font-weight: 900;
+        color: #f7f4ec;
+        letter-spacing: 2px;
+        line-height: 1.1;
+      }
+      .data-currency {
+        font-size: 38px;
+        font-weight: 900;
+        color: #ff6a1a;
+        letter-spacing: 1px;
+      }
+
+      /* Dấu mộc thẩm định Vox Stamp */
+      #stamp-mark {
+        position: absolute;
+        right: 28px;
+        bottom: 18px;
+        padding: 8px 18px;
+        border: 3px solid #ff6a1a;
+        background-color: #141414;
+        transform: rotate(-7deg);
+        transform-origin: 50% 50%;
+        will-change: transform, opacity;
+      }
+      .stamp-text {
+        font-size: 20px;
+        font-weight: 900;
+        color: #ff6a1a;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+      }
+    </style>
+
+    <!-- Root composition: 1080x1920 @ 9.0s (S10: 73000ms - 82000ms) -->
+    <div
+      id="root"
+      data-composition-id="scene-s10"
+      data-width="1080"
+      data-height="1920"
+      data-duration="9"
+    >
+      <!-- Video Wrapper (KHÔNG mang data-start) -->
+      <div id="video-wrapper">
+        <video
+          id="main-video"
+          src="assets/vid-01-recruitment-fraud-bribe-money.mp4"
+          muted
+          playsinline
+          data-start="0"
+          data-duration="9"
+          data-media-start="0"
+        ></video>
+      </div>
+
+      <!-- Background variant "chart": 4 đường ngang + tick cam mép trái (thuần decorative, không chứa text để tránh che khuất overlay) -->
+      <div id="chart-overlay">
+        <!-- 384px (20%) -->
+        <div class="chart-line" style="top: 384px">
+          <div class="chart-tick"></div>
+        </div>
+        <!-- 768px (40%) -->
+        <div class="chart-line" style="top: 768px">
+          <div class="chart-tick"></div>
+        </div>
+        <!-- 1152px (60%) -->
+        <div class="chart-line" style="top: 1152px">
+          <div class="chart-tick"></div>
+        </div>
+        <!-- 1480px (< 1529px, trên vùng caption an toàn) -->
+        <div class="chart-line" style="top: 1480px">
+          <div class="chart-tick"></div>
+        </div>
+      </div>
+
+      <!-- Shot overlay clip (z-index 10): Đảm bảo toàn bộ chữ nổi trên video -->
+      <div id="shot-overlay" class="clip" data-start="0" data-duration="9">
+        <!-- Bối cảnh: Nghịch lý vụ án -->
+        <div id="tag-context">
+          <div class="context-bullet"></div>
+          <div class="context-text">TÌNH TIẾT BẤT THƯỜNG</div>
+        </div>
+
+        <div id="tag-paradox">
+          <div class="paradox-text">CHƯA BÀN TIỀN • CHƯA NHẬN MỘT ĐỒNG</div>
+        </div>
+
+        <!-- Overlay 1: Tự nguyện ứng tiền (4.75s) -->
+        <div id="badge-volunteer">
+          <div class="volunteer-text">TỰ NGUYỆN ỨNG TIỀN</div>
+        </div>
+
+        <!-- Overlay 2: Icon Money & Nguồn tiền (5.94s) -->
+        <div id="pill-source">
+          <div class="money-icon-box">
+            <!-- Icon money SVG theo chuẩn Vocabulary của Vox -->
+            <svg
+              width="32"
+              height="32"
+              viewBox="0 0 32 32"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <rect
+                x="2"
+                y="6"
+                width="28"
+                height="20"
+                rx="2"
+                fill="#FF6A1A"
+                stroke="#141414"
+                stroke-width="3"
+              />
+              <circle
+                cx="16"
+                cy="16"
+                r="4.5"
+                fill="#F5F0E4"
+                stroke="#141414"
+                stroke-width="2.5"
+              />
+              <path
+                d="M6 10L10 10"
+                stroke="#141414"
+                stroke-width="2.5"
+                stroke-linecap="round"
+              />
+              <path
+                d="M22 22L26 22"
+                stroke="#141414"
+                stroke-width="2.5"
+                stroke-linecap="round"
+              />
+            </svg>
+          </div>
+          <div class="source-label">RÚT TIỀN TÚI CÁ NHÂN</div>
+        </div>
+
+        <!-- Overlay 3: Punch-phrase & Data Counter 100 Triệu (6.78s) -->
+        <div id="hero-data-card">
+          <div class="data-header-row">
+            <div class="data-subtitle">KHOẢN TIỀN TỰ NGUYỆN XUẤT QUỸ</div>
+            <div class="data-code">#VB-425</div>
+          </div>
+          <div class="data-value-row">
+            <div id="counter-digits" class="data-digits">0</div>
+            <div class="data-currency">ĐỒNG</div>
+          </div>
+          <!-- Con dấu Stamp chốt hạ -->
+          <div id="stamp-mark">
+            <div class="stamp-text">XÁC NHẬN 100TR</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Thanh cam đặc trưng thương hiệu luôn cố định ở mép dưới -->
+      <div id="bottom-bar"></div>
+    </div>
+
+    <!-- Animation Master Timeline -->
+    <script>
+      const tl = gsap.timeline({ paused: true });
+
+      // 1. Camera Punch In và Zoom chậm toàn cảnh
+      tl.fromTo(
+        "#video-wrapper",
+        { scale: 1.06 },
+        { scale: 1.0, duration: 0.45, ease: "power4.out" },
+        0
+      );
+      tl.fromTo(
+        "#video-wrapper",
+        { scale: 1.0 },
+        { scale: 1.08, duration: 8.55, ease: "none" },
+        0.45
+      );
+
+      // 2. Mở đầu: Bối cảnh hồ sơ vụ án & nghịch lý (0.2s - 0.7s) dùng fromTo tất định
+      tl.fromTo(
+        "#tag-context",
+        { opacity: 0, x: -30 },
+        { opacity: 1, x: 0, duration: 0.4, ease: "power3.out" },
+        0.2
+      );
+      tl.fromTo(
+        "#tag-paradox",
+        { opacity: 0, x: -30 },
+        { opacity: 1, x: 0, duration: 0.4, ease: "power3.out" },
+        0.65
+      );
+
+      // 3. Overlay 1: "TỰ NGUYỆN ỨNG TIỀN" (atMs: 77750 -> 4.75s)
+      tl.fromTo(
+        "#badge-volunteer",
+        { opacity: 0, scale: 0.4 },
+        { opacity: 1, scale: 1, duration: 0.42, ease: "power4.out" },
+        4.75
+      );
+
+      // 4. Overlay 2: Icon money + "RÚT TIỀN TÚI CÁ NHÂN" (atMs: 78940 -> 5.94s)
+      tl.fromTo(
+        "#pill-source",
+        { opacity: 0, y: 15 },
+        { opacity: 1, y: 0, duration: 0.38, ease: "power3.out" },
+        5.94
+      );
+
+      // 5. Overlay 3: Punch-phrase "100.000.000 ĐỒNG" (atMs: 79780 -> 6.78s)
+      tl.fromTo(
+        "#hero-data-card",
+        { opacity: 0, scale: 0.85, y: 25 },
+        { opacity: 1, scale: 1, y: 0, duration: 0.4, ease: "power4.out" },
+        6.78
+      );
+
+      // Hiệu ứng Data Counter đếm nhảy từ 0 -> 100.000.000
+      const counterTarget = { count: 0 };
+      const digitsEl = document.getElementById("counter-digits");
+
+      tl.to(
+        counterTarget,
+        {
+          count: 100,
+          duration: 0.65,
+          ease: "power2.out",
+          onUpdate: function () {
+            const val = Math.round(counterTarget.count);
+            if (val === 0) {
+              digitsEl.textContent = "0";
+            } else if (val < 100) {
+              digitsEl.textContent = val + ".000.000";
+            } else {
+              digitsEl.textContent = "100.000.000";
+            }
+          },
+        },
+        6.85
+      );
+
+      // 6. Đóng dấu STAMP xác nhận dứt khoát tại 7.55s
+      tl.fromTo(
+        "#stamp-mark",
+        { opacity: 0, scale: 2.2 },
+        { opacity: 1, scale: 1, duration: 0.26, ease: "power4.in" },
+        7.55
+      );
+
+      // Đăng ký timeline gốc vào HyperFrames
+      window.__timelines = window.__timelines || {};
+      window.__timelines["scene-s10"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

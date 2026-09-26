@@ -1,0 +1,573 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+/* hf-safe-colors (tất định từ style-tokens.json) */
+.hf-text-ink { color: #141414; }
+.hf-text-light { color: #F7F4EC; }
+.hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+.hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+.hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+.hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #F5F0E4; /* variant: card tone */
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: #F5F0E4;
+      }
+
+      /* Quy ước clip bắt buộc: inset 0, không đặt width/height cố định bằng px */
+      .clip {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+      }
+
+      /* Safe classes theo bảng màu chuẩn WCAG */
+      .hf-text-ink { color: #141414; }
+      .hf-text-light { color: #F7F4EC; }
+      .hf-hl-orange { background-color: #FF6A1A; color: #141414; }
+      .hf-plate-ink { background-color: #141414; color: #F7F4EC; }
+      .hf-plate-paper { background-color: #F5F0E4; color: #141414; }
+
+      /* Lớp nền hồ sơ & họa tiết dossier */
+      #bg-layer {
+        position: absolute;
+        inset: 0;
+        background-color: #F5F0E4;
+        z-index: 1;
+      }
+
+      /* Họa tiết watermark tài liệu pháp lý chìm */
+      .watermark-pattern {
+        position: absolute;
+        inset: 0;
+        background-image: radial-gradient(rgba(20, 20, 20, 0.04) 1.5px, transparent 1.5px);
+        background-size: 42px 42px;
+        opacity: 0.8;
+      }
+
+      /* Khung bìa hồ sơ pháp lý (Dossier Frame) */
+      #dossier-frame {
+        position: absolute;
+        top: 140px;
+        left: 48px;
+        right: 48px;
+        bottom: 220px;
+        border: 2px solid rgba(20, 20, 20, 0.2);
+        background: #F8F5EC;
+        box-shadow: 0 16px 48px rgba(20, 20, 20, 0.08);
+        display: flex;
+        flex-direction: column;
+        z-index: 2;
+        transform-origin: 50% 10%;
+      }
+
+      /* Kẹp ghim hồ sơ trang trí phong cách collage */
+      .binder-clip {
+        position: absolute;
+        top: -16px;
+        left: 80px;
+        width: 140px;
+        height: 32px;
+        background-color: #141414;
+        border: 2px solid #FF6A1A;
+        border-radius: 4px;
+        z-index: 10;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+      }
+
+      /* Header tòa án & văn bản tố tụng */
+      .dossier-header {
+        padding: 34px 40px 18px 40px;
+        border-bottom: 2px solid rgba(20, 20, 20, 0.85);
+        background: #F5F0E4;
+      }
+
+      .court-title-sub {
+        font-size: 21px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        color: #141414;
+        margin-bottom: 6px;
+      }
+
+      .court-title-main {
+        font-size: 34px;
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #141414;
+        line-height: 1.25;
+        margin-bottom: 12px;
+      }
+
+      .docket-meta-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-top: 1.5px dashed rgba(20, 20, 20, 0.35);
+        padding-top: 10px;
+      }
+
+      .docket-number {
+        font-size: 20px;
+        font-weight: 900;
+        color: #141414;
+        letter-spacing: 1px;
+      }
+
+      .docket-badge-type {
+        background-color: #141414;
+        color: #F7F4EC;
+        font-size: 16px;
+        font-weight: 900;
+        padding: 4px 12px;
+        border-radius: 4px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+
+      /* KHUNG CHỨA VIDEO (KHÔNG CÓ data-start ĐỂ TRÁNH LỖI LINT CỦA HYPERFRAMES) */
+      #video-wrapper {
+        position: absolute;
+        top: 360px;
+        left: 68px;
+        right: 68px;
+        height: 980px;
+        z-index: 5;
+        background-color: #141414;
+        border: 4px solid #141414;
+        box-shadow: 0 12px 36px rgba(20, 20, 20, 0.2);
+        overflow: hidden;
+      }
+
+      /* Lớp viền giấy rách giả lập bao quanh video phong cách collage */
+      .torn-paper-edge {
+        position: absolute;
+        inset: -2px;
+        border: 3px solid #E7E3D9;
+        pointer-events: none;
+        z-index: 6;
+      }
+
+      #video-inner {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+      }
+
+      /* Thẻ video chính: KHÔNG có class clip, KHÔNG có crossorigin */
+      #court-video {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+
+      /* Băng giấy ghi chú chân video */
+      .video-footnote-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 48px;
+        background: #141414;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 20px;
+        z-index: 7;
+      }
+
+      .footnote-text {
+        font-size: 17px;
+        font-weight: 700;
+        color: #F7F4EC;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+      }
+
+      .footnote-indicator {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .rec-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background-color: #FF6A1A;
+      }
+
+      /* OVERLAY 1: Khuôn dấu docket 'BẢN ÁN CÓ THẬT' */
+      #stamp-layer {
+        z-index: 20;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+
+      #stamp-container {
+        position: absolute;
+        top: 760px;
+        width: 720px;
+        height: 190px;
+        background-color: #FF6A1A;
+        border: 5px solid #141414;
+        box-shadow: 0 16px 36px rgba(0, 0, 0, 0.45);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        padding: 16px 24px;
+        transform-origin: 50% 50%;
+        border-radius: 6px;
+      }
+
+      /* Viền kép kiểu con dấu pháp đình */
+      .stamp-inner-border {
+        position: absolute;
+        inset: 6px;
+        border: 2px dashed #141414;
+        pointer-events: none;
+      }
+
+      .stamp-sub-text {
+        font-size: 19px;
+        font-weight: 900;
+        color: #141414;
+        letter-spacing: 4px;
+        text-transform: uppercase;
+        margin-bottom: 4px;
+      }
+
+      .stamp-main-text {
+        font-size: 58px;
+        font-weight: 900;
+        color: #141414;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        line-height: 1.1;
+      }
+
+      /* OVERLAY 2: Icon Doc - Hồ sơ tố tụng vẽ nét */
+      #icon-layer {
+        z-index: 25;
+      }
+
+      #doc-card {
+        position: absolute;
+        top: 1380px;
+        left: 68px;
+        background-color: #141414;
+        border: 2px solid rgba(255, 106, 26, 0.8);
+        border-radius: 12px;
+        padding: 14px 22px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        box-shadow: 0 10px 24px rgba(20, 20, 20, 0.25);
+        transform-origin: 0% 50%;
+      }
+
+      .doc-card-text {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .doc-card-tag {
+        font-size: 14px;
+        font-weight: 700;
+        color: #FF6A1A;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+      }
+
+      .doc-card-title {
+        font-size: 22px;
+        font-weight: 900;
+        color: #F7F4EC;
+        letter-spacing: 0.5px;
+      }
+
+      /* OVERLAY 3: Nhãn 'XÉT XỬ PHÚC THẨM' */
+      #label-layer {
+        z-index: 30;
+      }
+
+      #verdict-badge {
+        position: absolute;
+        top: 1380px;
+        right: 68px;
+        background-color: #141414;
+        border: 2px solid #FF6A1A;
+        border-radius: 12px;
+        padding: 18px 28px;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        box-shadow: 0 10px 24px rgba(20, 20, 20, 0.25);
+        transform-origin: 100% 50%;
+      }
+
+      .verdict-dot {
+        width: 14px;
+        height: 14px;
+        background-color: #FF6A1A;
+        border-radius: 50%;
+      }
+
+      .verdict-badge-text {
+        font-size: 26px;
+        font-weight: 900;
+        color: #F7F4EC;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+      }
+
+      /* Thanh cam đáy khung hình - Signature của Vox Style DNA */
+      #bottom-brand-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 12px;
+        background-color: #FF6A1A;
+        z-index: 100;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s05"
+      data-start="0"
+      data-width="1080"
+      data-height="1920"
+      data-duration="6.92"
+    >
+      <!-- Nền tĩnh không timed -->
+      <div id="bg-layer">
+        <div class="watermark-pattern"></div>
+      </div>
+
+      <!-- Khung tài liệu án lệnh lật mở (Unfold) -->
+      <div id="dossier-frame">
+        <div class="binder-clip"></div>
+        <div class="dossier-header">
+          <div class="court-title-sub dossier-item">Cộng hòa Xã hội Chủ nghĩa Việt Nam</div>
+          <div class="court-title-main dossier-item">Tòa án Nhân dân Cấp cao tại TP. Hồ Chí Minh</div>
+          <div class="docket-meta-row dossier-item">
+            <span class="docket-number">HỒ SƠ ÁN SỐ: 425/2023/HS-PT</span>
+            <span class="docket-badge-type">Án Lệnh Phúc Thẩm</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- KHUNG CHỨA VIDEO (KHÔNG CÓ data-start, đúng hợp đồng video của HyperFrames) -->
+      <div id="video-wrapper">
+        <div class="torn-paper-edge"></div>
+        <div id="video-inner">
+          <video
+            id="court-video"
+            src="assets/vid-03-courtroom-verdict-prison-sentence.mp4"
+            muted
+            playsinline
+            data-start="0"
+            data-duration="6.92"
+            data-media-start="0.5"
+          ></video>
+        </div>
+        <div class="video-footnote-bar">
+          <span class="footnote-text">Hội đồng Xét xử Phúc thẩm • Tòa số 1</span>
+          <div class="footnote-indicator">
+            <div class="rec-dot"></div>
+            <span class="footnote-text" style="color: #FF6A1A; font-size: 15px;">XÁC THỰC</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- OVERLAY 1: PUNCH PHRASE 'BẢN ÁN CÓ THẬT' (Local: 1.6s -> hết cảnh) -->
+      <section id="stamp-layer" class="clip" data-start="1.6" data-duration="5.32" data-track-index="1">
+        <div id="stamp-container">
+          <div class="stamp-inner-border"></div>
+          <span class="stamp-sub-text">Hồ Sơ Tư Pháp Xác Thực</span>
+          <span class="stamp-main-text">BẢN ÁN CÓ THẬT</span>
+        </div>
+      </section>
+
+      <!-- OVERLAY 2: ICON VOCABULARY 'DOC' (Local: 2.79s -> hết cảnh) -->
+      <section id="icon-layer" class="clip" data-start="2.79" data-duration="4.13" data-track-index="2">
+        <div id="doc-card">
+          <svg id="svg-doc-icon" viewBox="0 0 60 70" width="46" height="54" style="display: block;">
+            <!-- Outline đường bao hồ sơ -->
+            <path
+              id="doc-outline"
+              d="M8 6 L40 6 L52 18 L52 64 L8 64 Z"
+              fill="none"
+              stroke="#FF6A1A"
+              stroke-width="4.5"
+              stroke-linejoin="round"
+              stroke-linecap="round"
+            />
+            <!-- Nếp gấp góc văn bản -->
+            <path
+              id="doc-fold"
+              d="M40 6 L40 18 L52 18"
+              fill="none"
+              stroke="#FF6A1A"
+              stroke-width="4"
+              stroke-linejoin="round"
+              stroke-linecap="round"
+            />
+            <!-- Các dòng chữ văn bản mô phỏng -->
+            <line id="doc-line1" x1="18" y1="30" x2="42" y2="30" stroke="#F7F4EC" stroke-width="4" stroke-linecap="round" />
+            <line id="doc-line2" x1="18" y1="42" x2="42" y2="42" stroke="#F7F4EC" stroke-width="4" stroke-linecap="round" />
+            <line id="doc-line3" x1="18" y1="52" x2="30" y2="52" stroke="#FF6A1A" stroke-width="4" stroke-linecap="round" />
+          </svg>
+          <div class="doc-card-text">
+            <span class="doc-card-tag">Tài Liệu Tố Tụng</span>
+            <span class="doc-card-title">Hồ Sơ Số 425</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- OVERLAY 3: LABEL 'XÉT XỬ PHÚC THẨM' (Local: 4.92s -> hết cảnh) -->
+      <section id="label-layer" class="clip" data-start="4.92" data-duration="2.0" data-track-index="3">
+        <div id="verdict-badge">
+          <div class="verdict-dot"></div>
+          <span class="verdict-badge-text">XÉT XỬ PHÚC THẨM</span>
+        </div>
+      </section>
+
+      <!-- Thanh cam cố định mép dưới -->
+      <div id="bottom-brand-bar"></div>
+    </div>
+
+    <script>
+      // Đăng ký timeline gốc PAUSED trên window.__timelines["scene-s05"]
+      const tl = gsap.timeline({ paused: true });
+
+      // 1. Chuẩn bị hiệu ứng vẽ nét SVG Path Draw cho biểu tượng 'doc'
+      const docOutline = document.getElementById("doc-outline");
+      const docFold = document.getElementById("doc-fold");
+      if (docOutline && docFold) {
+        const lenOutline = docOutline.getTotalLength();
+        docOutline.style.strokeDasharray = lenOutline;
+        docOutline.style.strokeDashoffset = lenOutline;
+
+        const lenFold = docFold.getTotalLength();
+        docFold.style.strokeDasharray = lenFold;
+        docFold.style.strokeDashoffset = lenFold;
+      }
+
+      // 2. Camera Motion: Pan-left mượt mà theo Shotlist
+      tl.fromTo(
+        "#court-video",
+        { x: 35, scale: 1.08 },
+        { x: -35, scale: 1.08, duration: 6.92, ease: "none" },
+        0
+      );
+
+      // 3. Entrance: Unfold - Mở tập hồ sơ TAND Tối Cao / Cấp cao (0s -> 0.85s)
+      tl.fromTo(
+        "#dossier-frame",
+        { scaleY: 0.15, opacity: 0, rotationX: -15 },
+        { scaleY: 1, opacity: 1, rotationX: 0, duration: 0.85, ease: "power3.out" },
+        0.05
+      );
+
+      tl.fromTo(
+        ".dossier-item",
+        { y: -16, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.5, stagger: 0.08, ease: "power2.out" },
+        0.35
+      );
+
+      tl.fromTo(
+        "#video-wrapper",
+        { opacity: 0, scale: 0.94 },
+        { opacity: 1, scale: 1, duration: 0.75, ease: "power3.out" },
+        0.25
+      );
+
+      // 4. Overlay Punch-phrase: Dấu mộc 'BẢN ÁN CÓ THẬT' đập xuống (t = 1.6s)
+      // Dập mộc dứt khoát với scale lớn thu về tỷ lệ chuẩn, nghiêng -4 độ
+      tl.fromTo(
+        "#stamp-container",
+        { scale: 2.6, opacity: 0, rotation: -14 },
+        { scale: 1, opacity: 1, rotation: -4, duration: 0.42, ease: "power4.out" },
+        1.6
+      );
+
+      // Dư chấn rung sau cú dập mộc (settle impact)
+      tl.to(
+        "#stamp-container",
+        { rotation: -3.5, duration: 0.18, ease: "power1.inOut" },
+        2.02
+      );
+
+      // 5. Overlay Icon: Biểu tượng hồ sơ án lệnh vẽ nét (t = 2.79s)
+      tl.fromTo(
+        "#doc-card",
+        { scale: 0, opacity: 0, y: 15 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.45, ease: "power3.out" },
+        2.79
+      );
+
+      tl.to(
+        "#doc-outline",
+        { strokeDashoffset: 0, duration: 0.55, ease: "power2.out" },
+        2.92
+      );
+
+      tl.to(
+        "#doc-fold",
+        { strokeDashoffset: 0, duration: 0.25, ease: "power2.out" },
+        3.25
+      );
+
+      tl.fromTo(
+        ["#doc-line1", "#doc-line2", "#doc-line3"],
+        { scaleX: 0, transformOrigin: "0% 50%" },
+        { scaleX: 1, duration: 0.3, stagger: 0.08, ease: "power2.out" },
+        3.35
+      );
+
+      // 6. Overlay Label: 'XÉT XỬ PHÚC THẨM' trượt vào (t = 4.92s)
+      tl.fromTo(
+        "#verdict-badge",
+        { y: 25, opacity: 0, scale: 0.9 },
+        { y: 0, opacity: 1, scale: 1, duration: 0.5, ease: "power3.out" },
+        4.92
+      );
+
+      // Đăng ký timeline cho HyperFrames seek
+      window.__timelines["scene-s05"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>
