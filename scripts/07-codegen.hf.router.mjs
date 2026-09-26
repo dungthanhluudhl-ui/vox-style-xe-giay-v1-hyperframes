@@ -241,7 +241,7 @@ const KNOWN_GOTCHAS_HF = `QUY TẮC BẮT BUỘC CỦA COMPOSITION CONTRACT (rú
 - Tự định nghĩa .clip với width/height cố định bằng px (vd width:1080px; height:1920px) thay vì đúng quy ước inset:0 (xem hyperframes-core/references/tracks-and-clips.md) có thể gây lỗi tràn khung ẩn: nếu 1 class con chỉ override top mà không override height/bottom, trình duyệt giữ nguyên height kế thừa, khiến khối kéo dài quá xa khung hình (VD lỗi thật đã xảy ra: top:1300px + height:1920px kế thừa = khối cao tới y=3220px, tràn quá đáy khung 1920px tới 1300px). Luôn định nghĩa .clip { position:absolute; inset:0; } (KHÔNG set width/height cứng); nếu 1 overlay/badge muốn cao theo nội dung, phải tự đặt height:auto tường minh để ghi đè.
 - Ảnh/asset dùng đường dẫn tương đối "assets/<file>" (đã copy sẵn vào thư mục assets/ của project).
 - FONT "Be Vietnam Pro" (weight 700/900): KHÔNG dùng @font-face với local(...) hay trỏ tới file .ttf không có sẵn trong assets/ (sẽ gây lỗi 404 runtime — không tất định, "hyperframes check" sẽ bắt lỗi này). BẮT BUỘC nạp qua Google Fonts CDN bằng đúng 1 thẻ trong <head>: <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap">, rồi dùng font-family: "Be Vietnam Pro", sans-serif trực tiếp trong CSS — không cần @font-face thủ công.
-- Một số TÊN FILE ảnh có chữ "cutout" (vd img-08-extortion-money-demand-cutout.jpeg) — đó chỉ là mô tả phong cách minh hoạ đã có sẵn TRONG chính ảnh AI tạo ra, KHÔNG phải chỉ định phải code thêm xử lý cutout. Dùng ảnh này y như file ảnh thường (nền toàn khung, giữ nguyên màu), không thêm filter grayscale/tách nền/đổ bóng trong code.
+- Một số TÊN FILE ảnh có chữ "cutout" (vd img-08-extortion-money-demand-cutout.jpeg) — đó chỉ là mô tả phong cách minh hoạ đã có sẵn TRONG chính ảnh AI tạo ra, KHÔNG phải chỉ định phải code thêm xử lý cutout. Dùng ảnh này y như file ảnh thường (nền toàn khung, giữ nguyên màu), không thêm filter grayscale/tách nền/đổ bóng trong code (nguồn: STYLE_DNA.md §2 "Ngoại lệ chính thức" — ảnh AI Flow là tranh màu).
 - TUYỆT ĐỐI không dùng biến template literal (vd \`\${compId}\`, \`\${sceneId}\`) bên trong querySelector/CSS selector ở thẻ <script> — trình bundler HTML của HyperFrames parse CSS/selector bằng static analysis và CRASH khi gặp biến nội suy. Luôn hardcode chuỗi cố định (vd document.querySelector('[data-composition-id="main"]'), không phải \`[data-composition-id="\${id}"]\`).
 - ${TEXT_COLOR_RULES_HF}
 - CLASS MÀU AN TOÀN ĐÃ CÓ SẴN (script tự chèn vào <style>, KHÔNG cần tự định nghĩa, dùng tuỳ ý cho phần tử chữ — vẫn tự do bố cục/kích thước/animation): ${SAFE_COLORS.doc}.
@@ -429,7 +429,7 @@ ${skillDocs}
 
 ${KNOWN_GOTCHAS_HF}
 
-LƯU Ý VỀ TÊN FILE ASSET: một số file ảnh có chữ "cutout" trong TÊN FILE — đó chỉ là mô tả phong cách minh hoạ do ảnh AI tạo sẵn đã có, KHÔNG phải chỉ định phải áp dụng xử lý cutout trong code. Theo quyết định dự án, ảnh luôn dùng làm nền toàn khung, giữ nguyên màu.`;
+LƯU Ý VỀ TÊN FILE ASSET: một số file ảnh có chữ "cutout" trong TÊN FILE — đó chỉ là mô tả phong cách minh hoạ do ảnh AI tạo sẵn đã có, KHÔNG phải chỉ định phải áp dụng xử lý cutout trong code. Theo quyết định dự án, ảnh luôn dùng làm nền toàn khung, giữ nguyên màu (nguồn: STYLE_DNA.md §2 "Ngoại lệ chính thức").`;
   const filesText = Object.entries(files)
     .map(([p, c]) => `### ${p}\n\`\`\`html\n${c}\n\`\`\``)
     .join("\n\n");

@@ -196,6 +196,24 @@ Từ bước 5 trở đi cần **cả 2 nhánh đã xong** (Stage 5 đọc cả 
 - [x] **Gotcha mới: `completion-manifest.json` có `ffprobeOk: false`** (video 453.700s vs audio gốc 460.523s, lệch 6.823s) — đã điều tra bằng `ffmpeg silencedetect` xác nhận đây là 7.16s khoảng lặng THẬT ở cuối audio gốc (sau câu thoại cuối), không phải nội dung bị mất. Người dùng đã xem cảnh báo và xác nhận chấp nhận. **Bài học tổng quát**: `ffprobeOk` so sánh naive với độ dài file audio gốc, không tính trường hợp audio có đuôi lặng dài — không tự động coi `ffprobeOk: false` là lỗi thật, luôn dùng `ffmpeg silencedetect` kiểm tra trước khi kết luận (xem chi tiết `pipeline/videos/cach-hoat-dong-cua-kinh-te-meo/run-log.md`).
 - [x] **Người dùng đã xem cảnh báo duration và xác nhận chấp nhận bản render hiện tại (2026-09-24).**
 
+### 8 video dựng 24–25/09 (mục tóm tắt bổ sung 2026-09-26 — số liệu lấy tất định từ `completion-manifest.json` + dòng render trong `run-log.md` từng video; chi tiết đầy đủ trong run-log)
+| Video | Scene | Thời lượng | Render | Thời gian render | Kích thước |
+|---|---|---|---|---|---|
+| `tien-viet-nam-phan-1` | 7 | 66.9s | 2026-09-24 | 244.2s | 129.6MB |
+| `ngan-hang-tao-tien-phan-1` | 16 | 129.2s | 2026-09-24 | 438.3s | 230.1MB |
+| `ha-noi-cam-xe-may` | 12 | 85.7s | 2026-09-24 | 270.0s | 97.2MB |
+| `hinh-phat-treo-co-o-nhat-ban` | 54 | 437.3s | 2026-09-25 | 1048.5s | 208.2MB |
+| `ajinomoto-chip-phan-1` | 19 | 162.1s | 2026-09-25 | 517.5s | 174.9MB |
+| `manh-thu-con-non-yeu-ot` | 7 | 59.8s | 2026-09-25 | 184.2s | 72.1MB |
+| `giai-phap-ngan-song-than` | 8 | 74.8s | 2026-09-25 | 222.1s | 94.7MB |
+| `nvidia-phu-song-viet-nam` | 10 | 81.5s | 2026-09-25 (render lại sau bản sửa .hf-slot) | 221.7s | 91.3MB |
+
+Tất cả có `completion-manifest.json` mọi field `*Ok=true`. ⚠ **MỌI video HyperFrames render TRƯỚC bản sửa gốc bug
+trống hình** (`.hf-slot`, commit `8f33140`, 25/09 18:27 UTC) — tức mọi video trừ `nvidia` (render lại) và
+`ban-an-425-phan-1` — dùng bản ráp CŨ: file mp4 đã xuất có thể còn lỗi mất hình/mất chữ ở scene có pattern "shot
+`.clip` không z-index + nền z-index dương" (đã xác nhận: hinh-phat S01/S03/S16/S18, kinh-te-meo S23/S47). Muốn chắc: `node scripts/09-render.hf.mjs --video=<slug>` (tự ráp lại bằng bản sửa + 7b theo shot). Kết quả
+quét từng video: `planning/incident-log.md`.
+
 ### Video "ban-an-425-phan-1" (bản án chạy biên chế giáo viên, 149.8s, 18 scene/20 shot — video KIỂM CHỨNG end-to-end pipeline tối ưu 2026-09-26)
 - [x] Stage 1-6 xong trước đó. Stage 7 lần đầu (pipeline cũ) fail hàng loạt — nguyên nhân chính là lỗi hạ tầng
   (reviewer Sonnet hết hạn mức: 97/186 lần thử mất), người dùng dừng build.

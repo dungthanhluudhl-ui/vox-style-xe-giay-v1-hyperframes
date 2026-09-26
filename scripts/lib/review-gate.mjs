@@ -12,7 +12,7 @@
 const COLOR_PROCESSING_RE = /grayscale|đen trắng|bóng cam|ff7a1a|cutout|tách nền|filter|đổ bóng|drop.?shadow|sepia|desaturat/i;
 
 export const TREATMENT_NOTE =
-  "Phần mô tả màu/grayscale/bóng cam/cutout/filter/đổ bóng trong assetTreatment KHÔNG thực hiện bằng code — quyết định dự án: ảnh giữ nguyên màu như file gốc (không CSS filter, không tách nền, không đổ bóng giả). Chỉ thực hiện phần chuyển động/crop/khung hình/vị trí.";
+  "Phần mô tả màu/grayscale/bóng cam/cutout/filter/đổ bóng trong assetTreatment KHÔNG thực hiện bằng code — quyết định dự án: ảnh giữ nguyên màu như file gốc (không CSS filter, không tách nền, không đổ bóng giả). Chỉ thực hiện phần chuyển động/crop/khung hình/vị trí. (Nguồn: STYLE_DNA.md §2 \"Ngoại lệ chính thức\".)";
 
 /** Độ dài đoạn video có sẵn cho shot (giây): trim nếu có, không thì durationSec của file. */
 function availableVideoSec(shot, media) {

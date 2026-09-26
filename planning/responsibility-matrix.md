@@ -370,6 +370,11 @@ xem đầy đủ dữ liệu + phương pháp tại `poc/hyperframes/codegen-poc
 `poc/hyperframes/score-render.mjs` (rubric chấm điểm 1-10, tái dùng được cho lần audit sau), và
 kết quả thô tại `poc/hyperframes/poc-results/model-compare/`.
 
+**Từ 2026-09-26, POC/A/B chuẩn là `poc/hyperframes/ab-harness/`** (xem README trong đó): chạy ĐÚNG script 07
+production trong mini-root cách ly (`ab.mjs setup|run|analyze`), chấm mù bằng `snap-scene.mjs` (có nạp GSAP) +
+`judge-pair.mjs`, giả lập lỗi hạ tầng bằng `fault-proxy.mjs`. `codegen-poc.mjs` là bản sao prompt đã LỆCH
+production — chỉ giữ tham khảo lịch sử.
+
 **Kết quả (PASS/3 scene, tổng 3 scene):**
 
 | Cặp | PASS | Tổng attempts | Tổng token | Tổng thời gian | Điểm chấm TB |
@@ -420,8 +425,8 @@ session/agent áp dụng đồng nhất):**
   review ("DỰ PHÒNG" nếu dùng dự phòng); mọi lỗi hạ tầng ghi `review-infra-error`/
   `generate-infra-error` vào `pipeline/codegen-issues.jsonl`. Lựa chọn khác đã biết (đổi tay):
   `ag/gpt-oss-120b-medium`, `cx/gpt-5.6-sol`/`-sol-review`.
-- Lỗi hạ tầng (generator lẫn reviewer) KHÔNG tiêu 1 trong 3 lần thử. `retryInfraCall()` (1 model,
-  chờ rồi gọi lại) vẫn có trong `router-client.mjs` cho script khác cần dùng.
+- Lỗi hạ tầng (generator lẫn reviewer) KHÔNG tiêu 1 trong 3 lần thử. Một cơ chế duy nhất:
+  `callWithModelFallback()` (`retryInfraCall()` 1-model đã xoá 2026-09-26 — không còn nơi gọi).
 
 **2 gotcha mới phát hiện qua POC** (đã thêm vào `KNOWN_GOTCHAS_HF`, chưa từng gặp với
 `cx/gpt-5.6-sol`): `gsap_relative_value_second_writer` (giá trị GSAP tương đối `+=N` xung đột

@@ -149,27 +149,6 @@ export async function callWithModelFallback(models, fn, { label = "9router", max
   throw lastErr;
 }
 
-/** Gọi `fn()`; nếu lỗi HẠ TẦNG thì chờ rồi gọi lại (tối đa `maxTries` lần tổng cộng), gọi
- * `onInfraError(e, tryNo)` mỗi lần lỗi để caller ghi log. Lỗi không phải hạ tầng ném ra ngay. Hết
- * ngân sách → ném lỗi cuối, gắn `e.infraExhausted = true` để caller phân biệt. */
-export async function retryInfraCall(fn, { label = "9router", maxTries = 4, onInfraError } = {}) {
-  for (let tryNo = 1; ; tryNo++) {
-    try {
-      return await fn();
-    } catch (e) {
-      if (!isInfraError(e)) throw e;
-      onInfraError?.(e, tryNo);
-      if (tryNo >= maxTries) {
-        e.infraExhausted = true;
-        throw e;
-      }
-      const waitMs = infraRetryDelayMs(e, tryNo - 1);
-      console.log(`  [${label}] lỗi hạ tầng (lần ${tryNo}/${maxTries}), chờ ${waitMs / 1000}s rồi gọi lại: ${String(e.message).slice(0, 160)}`);
-      await new Promise((r) => setTimeout(r, waitMs));
-    }
-  }
-}
-
 export function imageContentFromFile(filePath, mimeType = "image/jpeg") {
   const base64 = fs.readFileSync(filePath).toString("base64");
   return { type: "image_url", image_url: { url: `data:${mimeType};base64,${base64}` } };

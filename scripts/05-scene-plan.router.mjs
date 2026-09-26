@@ -79,7 +79,7 @@ QUY TẮC NGƯỠNG NHỊP ĐỘ — ÁP DỤNG ĐỒNG THỜI VỚI QUY TẮC �
 - Nếu một beat lời thoại quá ngắn để tách thành scene ≥5s riêng: (a) GỘP nhiều asset liên quan vào chung 1 scene (asset này có thể xuất hiện nối tiếp nhau bên trong cùng 1 scene, không cần tách scene mới cho từng cái), hoặc (b) giữ hình ảnh hiển thị LÂU HƠN đúng khoảng lời thoại đã giới thiệu nó — thời lượng trên màn hình không bắt buộc bằng đúng thời lượng câu nói (nguyên tắc comprehensionLoad ở editorial-framework.md).
 - Trước khi chốt danh sách scene cuối cùng, tự kiểm tra: có scene nào < 5 giây không? Nếu có, quay lại gộp/kéo dài thay vì giữ nguyên.
 
-LƯU Ý: theo quyết định dự án hiện tại, ảnh (type="image") chỉ dùng làm ẢNH NỀN (background-photo), KHÔNG áp dụng xử lý cutout (grayscale+bóng cam) — dù mô tả có ghi "cutout style" (đó là style của chính ảnh AI tạo sẵn, không phải chỉ định phải xử lý cutout thêm).
+LƯU Ý: theo quyết định dự án hiện tại, ảnh (type="image") chỉ dùng làm ẢNH NỀN (background-photo), KHÔNG áp dụng xử lý cutout (grayscale+bóng cam) — dù mô tả có ghi "cutout style" (đó là style của chính ảnh AI tạo sẵn, không phải chỉ định phải xử lý cutout thêm). Nguồn: STYLE_DNA.md §2 "Ngoại lệ chính thức".
 ${
   fromSceneId
     ? `\nCHẾ ĐỘ SINH LẠI MỘT PHẦN: các scene sau ĐÃ CHỐT, KHÔNG được sửa/viết lại, KHÔNG đưa vào output — chỉ dùng để biết asset nào đã dùng rồi (không gán lại cho scene mới) và để nối tiếp đúng văn phong/id:\n${JSON.stringify(keptScenes, null, 2)}\nNhiệm vụ của bạn CHỈ là tạo các scene MỚI bắt đầu từ mốc ${regenFromMs}ms cho đến hết audio (${totalDurationMs}ms), đánh số id tiếp theo (nếu scene cuối giữ nguyên là S0${keptScenes.length}, scene mới bắt đầu từ S0${keptScenes.length + 1}). Output CHỈ gồm các scene MỚI này, không lặp lại scene đã chốt ở trên.\n`

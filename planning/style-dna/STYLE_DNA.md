@@ -38,6 +38,15 @@ phong cách trong một lưới ảnh.
 Việc này được xử lý ở bước xử lý ảnh (cắt nền), KHÔNG phải filter CSS lúc dựng — nghĩa là
 file ảnh cuối cùng đã "chín" sẵn màu + bóng trước khi đưa vào cảnh.
 
+**Ngoại lệ chính thức cho dự án này — ảnh AI tạo qua Google Flow (Stage 2b):** các ảnh đó là tranh
+minh hoạ paper-collage CÓ MÀU (phong cách riêng của Stage 2b, quyết định tách khỏi bảng trên từ
+2026-09-20), KHÔNG phải ảnh cutout thật đã xử lý grayscale + bóng cam. Khi dựng, dùng chúng NGUYÊN MÀU
+như file gốc: không CSS filter/grayscale, không tách nền, không đổ bóng giả. Bảng trên chỉ áp cho ảnh cutout
+thật đã được xử lý sẵn. Mọi stage (5 scene plan, 6 shotlist, 7 codegen + reviewer) theo ĐÚNG ngoại lệ này —
+đây là nguồn duy nhất; ghi chú trong từng script chỉ nhắc lại và trỏ về đây. (Thiếu ngoại lệ này ở Stage 6
+từng làm reviewer Stage 7 lật qua lật lại giữa "đòi grayscale" và "cấm filter" — xem
+`planning/incident-log.md` mục 2026-09-26.)
+
 Luôn crop sát nội dung trước khi đặt vào khung — một cutout còn nhiều viền trong suốt sẽ
 luôn trông nhỏ hơn thực tế dù khung chứa nó có to bao nhiêu.
 

@@ -1,3 +1,7 @@
+// ⚠ LỖI THỜI (2026-09-26): prompt/verify ở đây là BẢN SAO đã lệch production (thiếu quy tắc contrast/video/
+// cổng review, check không pin version, không --caption-zone). KHÔNG dùng để quyết định thay đổi mới — dùng
+// poc/hyperframes/ab-harness/ (chạy đúng script 07 production). Giữ file này để tham khảo lịch sử POC 22/09.
+//
 // POC: sinh code HyperFrames (HTML + GSAP) qua 9router, mirror đúng cơ chế
 // generator -> verify (local, `hyperframes check`) -> reviewer -> auto-retry của
 // scripts/07-codegen.hf.router.mjs, dùng để so sánh CẶP MODEL generator/reviewer khác nhau

@@ -54,3 +54,7 @@ references/worked-examples.md trước khi quyết định hình ảnh cho từn
   sẵn trước, chỉ dựng bằng code khi không có asset phù hợp hoặc cần overlay số liệu/vị trí
   chính xác. Nếu tái dùng bộ DNA này cho một dự án KHÁC không có media chuẩn bị sẵn, cân nhắc
   quay lại nguyên tắc gốc (ưu tiên tự dựng theo `visualTransformation`) thay vì bản đã sửa.
+- **Đã điều chỉnh (2026-09-26)**: `STYLE_DNA.md` §2 thêm "ngoại lệ chính thức" — ảnh AI Flow (Stage 2b) là
+  tranh paper-collage có màu, dựng NGUYÊN MÀU (không grayscale/bóng cam/filter bằng code). Trước đó ngoại lệ
+  này chỉ nằm rải rác trong prompt từng script (Stage 5, Stage 7) và THIẾU ở Stage 6 → mâu thuẫn làm reviewer
+  Stage 7 lật qua lật lại. Nay §2 là nguồn duy nhất, các script trỏ về đây.
