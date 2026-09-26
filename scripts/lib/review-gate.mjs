@@ -92,16 +92,45 @@ function section(text, name) {
 
 /** Parse verdict có cấu trúc. SCRIPT quyết định: pass ⇔ BLOCKING rỗng. Nếu model không trả đúng format
  * (không có mục BLOCKING) → rơi về hành vi cũ (pass ⇔ dòng VERDICT là PASS) cho an toàn. */
-export function parseReviewVerdict(rawText) {
+// Hạ cấp TẤT ĐỊNH các mục reviewer xếp nhầm vào BLOCKING nhưng chính sách (REVIEW_POLICY) đã định nghĩa là
+// GÓP Ý. Đo thật 2026-09-26: luna vẫn xếp holdMs/transition/đổi màu trong palette/chữ hoa-thường vào
+// BLOCKING (precision BLOCKING ~2-3/10 ở ban-an-425) → sinh lại oan. Chỉ hạ cấp mục THUẦN thuộc các loại
+// này; mục nào có dấu hiệu lỗi thật (HARD) thì KHÔNG bao giờ hạ cấp.
+const HARD_RE = /sai chữ|sai số|sai ý|sai nội dung|thiếu (hẳn )?(overlay|punch|label|nhãn)|__timelines|paused|Date\.now|Math\.random|fetch\(|không tất định|deterministic|canvas|drawImage|#root|không bao giờ hiện|không hiển thị|ngoài khung|filter|grayscale|tách nền|đổ bóng/i;
+const ADVISORY_RES = [
+  /holdMs|hold \d|giữ (khoảng )?\d+([.,]\d+)?\s*s|thay vì (hold|\d+([.,]\d+)?\s*s)|fade.?out|ẩn (đúng|sau)|thời lượng (hiển thị|giữ)/i,
+  /transition|easing|\bease\b|power\d|overshoot|vọt lố|lò xo|spring|cameraMotion|camera motion|ken burns/i,
+  /data-layout-allow/i,
+  /chữ hoa|chữ thường|viết hoa|in hoa|hoa\/thường|uppercase|lowercase/i,
+];
+
+function paletteSwapOnly(item, paletteHexes) {
+  const hexes = [...String(item).matchAll(/#[0-9a-f]{6}\b/gi)].map((m) => m[0].toLowerCase());
+  return hexes.length >= 2 && hexes.every((h) => paletteHexes.has(h));
+}
+
+export function demoteAdvisoryItems(blocking, { paletteHexes = new Set() } = {}) {
+  const keep = [];
+  const demoted = [];
+  for (const b of blocking) {
+    const advisoryLike = ADVISORY_RES.some((re) => re.test(b)) || paletteSwapOnly(b, paletteHexes);
+    if (advisoryLike && !HARD_RE.test(b)) demoted.push(b);
+    else keep.push(b);
+  }
+  return { keep, demoted };
+}
+
+export function parseReviewVerdict(rawText, { paletteHexes } = {}) {
   // Model hay bọc tiêu đề bằng markdown đậm ("**BLOCKING:**") — bỏ trước khi parse, nếu không dấu "*"
   // còn sót bị đọc thành 1 lỗi chặn giả.
   const text = String(rawText).replace(/\*\*|__/g, "");
   const verdictPass = /VERDICT:\s*[*_#\s]*PASS/i.test(text);
-  const blocking = section(text, "BLOCKING");
+  const rawBlocking = section(text, "BLOCKING");
   const advisory = section(text, "ADVISORY") ?? [];
-  if (blocking === null) {
+  if (rawBlocking === null) {
     const legacy = section(text, "ISSUES") ?? [];
-    return { structured: false, pass: verdictPass, blocking: verdictPass ? [] : legacy, advisory: [], verdictPass };
+    return { structured: false, pass: verdictPass, blocking: verdictPass ? [] : legacy, advisory: [], demoted: [], verdictPass };
   }
-  return { structured: true, pass: blocking.length === 0, blocking, advisory, verdictPass };
+  const { keep: blocking, demoted } = demoteAdvisoryItems(rawBlocking, { paletteHexes });
+  return { structured: true, pass: blocking.length === 0, blocking, advisory: [...advisory, ...demoted.map((d) => `(hạ cấp tự động) ${d}`)], demoted, verdictPass };
 }

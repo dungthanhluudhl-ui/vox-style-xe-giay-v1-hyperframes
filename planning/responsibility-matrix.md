@@ -301,6 +301,15 @@ prompt (quy tắc "không chữ cam trên nền be" có từ 21/09 vẫn là l�
   định: FAIL ⇔ có ≥1 lỗi BLOCKING (`parseReviewVerdict`), không theo dòng VERDICT tự do; retry chỉ nhận lỗi
   chặn; góp ý ghi `review-advisory` vào `codegen-issues.jsonl`. Lý do: reviewer luna FAIL 71% lần review khi
   coi mọi lệch shotlist là lỗi → 4/18 scene fail 3/3 dù verify PASS.
+- **Hạ cấp BLOCKING→ADVISORY bổ sung (áp 26/09 theo quyết định người dùng):** `demoteAdvisoryItems()` +
+  `HARD_RE` trong `review-gate.mjs` — hạ TẤT ĐỊNH các mục BLOCKING thuộc loại holdMs/transition/
+  `data-layout-allow`/hoa-thường/đổi màu nội-palette xuống ADVISORY, TRỪ khi có từ khoá lỗi thật (contract,
+  màu ngoài palette, nội dung sai, không tất định...) — `HARD_RE` chặn không bao giờ hạ cấp các mục đó.
+  Ghi `review-demoted` vào `codegen-issues.jsonl` mỗi lần kích hoạt. **Kiểm chứng: unit-test 11/11 đúng
+  trên câu BLOCKING thật lấy từ log** (`node --check` + chạy tay, không phải test tự động trong CI). **CHƯA
+  được A/B sống xác nhận** (0/32 lần kích hoạt trong đợt A/B 26/09 dùng để so sánh reviewer) — theo dõi
+  qua `codegen-issues.jsonl` stage `review-demoted` ở các video dựng sau; nếu sau vài video vẫn 0 lần kích
+  hoạt hoặc kích hoạt sai, cần xem lại `HARD_RE`/`ADVISORY_RES`.
 - **Ảnh giữ nguyên màu — gỡ mâu thuẫn Stage 6 ↔ Stage 7:** Stage 6 từng chép "người grayscale + bóng cam" của
   Style DNA thành lệnh xử lý ảnh trong `assetTreatment` (74 shot/mọi video), trái quyết định dự án → reviewer
   lật qua lật lại (12/27 lần FAIL). Sửa 2 tầng: prompt `06-shotlist.router.mjs` cấm ghi lệnh xử lý màu cho

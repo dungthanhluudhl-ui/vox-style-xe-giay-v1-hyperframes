@@ -803,9 +803,14 @@ nhánh `demote` = 0 lần kích hoạt trong suốt 16 lần review. Nghĩa là 
 `demote` KHÔNG PHẢI do chính sách hạ cấp gây ra — rất có thể chỉ là nhiễu giữa các lượt sinh (đã biết:
 cùng 1 codebase, `ban-an-425` lượt 1 vs lượt 2 PASS-lần-1 khác nhau rõ dù không đổi gì). Cơ chế
 `demoteAdvisoryItems()`/`HARD_RE` ĐÃ được kiểm chứng đúng 11/11 trên 11 câu BLOCKING thật lấy từ lịch sử
-(không phải A/B sống) — xem `poc/hyperframes/ab-harness` (chưa copy code này vào repo, đang ở
-`scripts/lib/review-gate.mjs` bản scratchpad). Người dùng cần quyết định trước khi áp: coi kiểm chứng
-offline 11/11 là đủ, hay chờ 1 lần A/B thật sự kích hoạt được cơ chế này.
+(không phải A/B sống).
+
+**ĐÃ ÁP VÀO REPO (26/09, quyết định người dùng):** copy nguyên bản scratchpad vào `scripts/lib/
+review-gate.mjs` + `scripts/07-codegen.hf.router.mjs` (diff xác nhận chỉ đúng phần hạ cấp, +7/-1 dòng
+ở file 07). Chạy lại unit-test 11/11 trên chính file trong repo (không phải scratchpad) — vẫn đúng.
+**Nhắc lại cho phiên audit e2e tiếp theo:** cơ chế này CHƯA được quan sát kích hoạt trong build thật nào
+— theo dõi `pipeline/codegen-issues.jsonl` stage `review-demoted` khi dựng video mới; nếu sau nhiều
+video vẫn không kích hoạt hoặc kích hoạt sai (hạ cấp nhầm 1 lỗi thật), đây là chỗ đầu tiên cần xem lại.
 
 **`cx/gpt-5.6-terra` (generator dự phòng) — xác nhận CHẤT LƯỢNG KÉM hơn rõ khi làm generator chính:**
 chấm mù 8 scene cùng PASS ở cả `cur`/`terra` (khung có GSAP, đảo A/B khử thiên vị): gemini thắng rõ 6/8,

@@ -219,6 +219,8 @@ const styleTokensObj = JSON.parse(styleTokens);
 // (cam/giấy 2.24, cam/card 2.52, kem/cam 2.61) — câu cấm chung chung có từ 21/09 không đủ.
 const TEXT_COLOR_RULES_HF = buildTextColorRules(styleTokensObj);
 const SAFE_COLORS = buildSafeColorClasses(styleTokensObj);
+// Màu đặc trong palette — dùng để hạ cấp tất định lỗi "đổi qua lại 2 màu đều trong palette" (review-gate.mjs).
+const PALETTE_HEXES = new Set(Object.values(styleTokensObj.colors ?? {}).filter((v) => /^#[0-9a-f]{6}$/i.test(v)).map((v) => v.toLowerCase()));
 
 // Lỗi lint phổ biến nhất ở lần thử đầu (~45% lần thử 1 fail do lint, chủ yếu media_missing_data_start)
 // — khi lint lỗi, check BỎ QUA toàn bộ kiểm tra trình duyệt nên lỗi contrast/che chữ chỉ lộ ở lần sau.
@@ -566,7 +568,11 @@ while (attempt < MAX_ATTEMPTS) {
     finalFiles = files;
     finalVerdict = reviewText;
     // SCRIPT quyết định theo danh sách lỗi CHẶN (review-gate.mjs), không theo dòng VERDICT tự do.
-    const rv = parseReviewVerdict(reviewText);
+    const rv = parseReviewVerdict(reviewText, { paletteHexes: PALETTE_HEXES });
+    if (rv.demoted?.length) {
+      console.log(`(hạ cấp tự động ${rv.demoted.length} mục BLOCKING thuộc loại GÓP Ý theo chính sách)`);
+      appendCodegenIssue([{ stage: "review-demoted", detail: rv.demoted.join("\n").slice(0, 2000) }]);
+    }
     finalReviewPass = rv.pass;
     if (rv.advisory.length) appendCodegenIssue([{ stage: "review-advisory", detail: rv.advisory.join("\n").slice(0, 2000) }]);
     if (rv.pass) {
