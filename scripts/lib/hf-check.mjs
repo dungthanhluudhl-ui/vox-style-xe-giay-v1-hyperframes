@@ -18,7 +18,7 @@ export const HF_VERSION = "0.8.56"; // pin — khớp version đã kiểm chứn
  * Node set thành `true` khi `execSync` bị kill do vượt `timeout` (đã test trên Node v24.20.0) — dấu
  * hiệu tin cậy thật là `error.code === "ETIMEDOUT"` (và `error.signal` luôn có giá trị, mặc định
  * "SIGTERM"). Dùng đúng 2 field đã kiểm chứng này, không dùng `.killed`. */
-export function runHyperframesCheck(dir, { extraArgs = [] } = {}) {
+export function runHyperframesCheck(dir, { extraArgs = [], timeoutMs = 180000 } = {}) {
   let raw = "";
   let ok = false;
   let execError = null;
@@ -26,7 +26,7 @@ export function runHyperframesCheck(dir, { extraArgs = [] } = {}) {
     raw = execSync(`npx --yes hyperframes@${HF_VERSION} check --json ${extraArgs.join(" ")}`, {
       cwd: dir,
       stdio: "pipe",
-      timeout: 180000,
+      timeout: timeoutMs,
     }).toString();
     ok = true;
   } catch (e) {
@@ -49,6 +49,38 @@ export function runHyperframesCheck(dir, { extraArgs = [] } = {}) {
   // sau (không phải console), cắt ở đây làm mất phần lỗi thật khi lint warning dài đứng trước.
   // Các nơi gọi khác (verify() trong 07-codegen.hf.router.mjs) đã tự cắt riêng cho console/feedback.
   return { passed, raw, infraError };
+}
+
+/** Vị trí sample trong mỗi shot (tỉ lệ của [startMs,endMs]) cho check trên project ĐÃ RÁP. */
+export const SHOT_SAMPLE_FRACTIONS = [0.2, 0.5, 0.8];
+/** `--max-issues` cho check theo shot — mặc định CLI là 80, video dài có nhiều warning/info có thể
+ * vượt; finding `error` luôn được CLI xếp trước khi cắt nên gate không đổi, chỉ để log đầy đủ. */
+export const SHOT_SAMPLE_MAX_ISSUES = 500;
+
+/** Sinh extraArgs `--at=<t1,t2,...> --max-issues=N` từ shotlist.json: N mốc/shot tại
+ * SHOT_SAMPLE_FRACTIONS. Lý do (đo thật 2026-09-26, xem planning/incident-log.md): check hạ finding
+ * xuống `info` khi chỉ thấy ở 1 sample (occurrences=1) — 9 sample mặc định cho cả video (~43s/sample
+ * ở video 437s) khiến lỗi gọn trong 1 scene lọt qua; ≥2 mốc trong cửa sổ lỗi → `error` đúng. Trả
+ * `null` nếu không có shotlist (caller tự fallback về sample mặc định). */
+export function buildShotSampleArgs(shotlistJsonPath, { fractions = SHOT_SAMPLE_FRACTIONS } = {}) {
+  if (!fs.existsSync(shotlistJsonPath)) return null;
+  const shots = JSON.parse(fs.readFileSync(shotlistJsonPath, "utf8"));
+  if (!Array.isArray(shots) || shots.length === 0) return null;
+  const times = new Set();
+  for (const shot of shots) {
+    if (!Number.isFinite(shot.startMs) || !Number.isFinite(shot.endMs) || shot.endMs <= shot.startMs) continue;
+    for (const f of fractions) times.add(((shot.startMs + (shot.endMs - shot.startMs) * f) / 1000).toFixed(3));
+  }
+  const sorted = [...times].sort((a, b) => Number(a) - Number(b));
+  return {
+    args: [`--at ${sorted.join(",")}`, `--max-issues ${SHOT_SAMPLE_MAX_ISSUES}`],
+    sampleCount: sorted.length,
+    shotCount: shots.length,
+    // Đo thật 2026-09-26: 180 mốc (hinh-phat) mất 155s khi máy đang chạy song song 1 build khác —
+    // sát timeout mặc định 180s. Cho timeout tăng theo số mốc (~2s/mốc, sàn 180s) để video dài không
+    // bị báo nhầm là lỗi hạ tầng.
+    timeoutMs: Math.max(180000, 60000 + sorted.length * 2000),
+  };
 }
 
 const ROOT_OVERFLOW_FLAGS = ["data-layout-allow-overflow", "data-layout-allow-overlap", "data-layout-allow-occlusion"];
@@ -119,4 +151,67 @@ export function summarizeCheckRaw(raw, maxChars) {
 
   const combined = header + body;
   return combined.length > maxChars ? combined.slice(0, maxChars) + "\n...[cắt bớt]" : combined;
+}
+
+// formatCheckFeedback() thay summarizeCheckRaw() cho feedback retry + log Stage 7.
+// Khác bản cũ: (1) chỉ liệt kê finding làm FAIL (error), warning/info chỉ đếm; (2) gộp cùng 1 phần tử
+// xuất hiện ở nhiều mốc thời gian thành 1 dòng (bản cũ in lặp 5 lần/phần tử contrast); (3) giữ đủ
+// field cần để sửa: text, fg/bg/ratio/suggestedColor (contrast), phần tử che + % bị che
+// (text_occluded), khối đè (content_overlap), fixHint (lint).
+
+export function formatCheckFeedback(raw, maxChars) {
+  let p;
+  try {
+    p = JSON.parse(raw.slice(Math.max(0, raw.indexOf("{"))));
+  } catch {
+    return raw.slice(0, maxChars);
+  }
+  const present = CHECK_CATEGORIES.filter((c) => p[c] && typeof p[c] === "object");
+  let out = `ok=${p.ok}\n` + present.map((c) => `${c}: ok=${p[c].ok} errors=${p[c].errorCount ?? "?"} warnings=${p[c].warningCount ?? "?"}`).join("\n") + "\n";
+  if (present.includes("lint") && p.lint.ok === false) {
+    out += "LƯU Ý: lint có lỗi nên check ĐÃ BỎ QUA toàn bộ kiểm tra trình duyệt (layout/contrast/runtime) ở lần này — sửa lint xong, các lỗi layout/contrast (nếu có) mới lộ ra. Tự rà luôn contrast/che chữ theo quy tắc trước khi in lại file.\n";
+  }
+  const groups = new Map();
+  let skipped = 0;
+  for (const c of present) {
+    for (const f of p[c].findings ?? []) {
+      if (f.severity !== "error") { skipped++; continue; }
+      // Gộp theo NGUYÊN NHÂN để model sửa 1 chỗ thay vì N dòng: occlusion theo phần tử che, contrast theo
+      // cặp màu chữ/nền (làm tròn nền vì grain/trong suốt làm nền lệch vài đơn vị), còn lại theo selector.
+      const key = f.code === "text_occluded" ? [c, f.code, f.containerSelector].join("|")
+        : f.code === "contrast_aa_failure" ? [c, f.code, f.fg, roundRgb(f.bg), f.requiredRatio].join("|")
+        : [c, f.code, f.selector, f.text ?? "", f.containerSelector ?? ""].join("|");
+      const g = groups.get(key) ?? { c, f, times: [], items: new Map() };
+      g.items.set(f.selector, f.text);
+      if (f.time !== undefined) g.times.push(f.time);
+      if (c === "contrast" && (g.f.ratio ?? 99) > (f.ratio ?? 99)) g.f = f; // giữ mốc tệ nhất
+      groups.set(key, g);
+    }
+  }
+  const lines = [];
+  for (const g of groups.values()) {
+    const { c, f, times } = g;
+    const t = times.length ? ` t=${[...new Set(times)].slice(0, 4).join(",")}${times.length > 4 ? "…" : ""}` : "";
+    const many = g.items.size > 1 ? ` (${g.items.size} phần tử: ${[...g.items].slice(0, 6).map(([sel, tx]) => tx ? `"${String(tx).slice(0, 30)}"` : sel).join(", ")}${g.items.size > 6 ? "…" : ""})` : "";
+    const txt = g.items.size > 1 ? many : f.text ? ` "${String(f.text).slice(0, 60)}"` : "";
+    let d;
+    if (f.code === "contrast_aa_failure") {
+      d = `chữ${txt} màu ${f.fg} trên nền ${f.bg}: ${f.ratio}:1 < ${f.requiredRatio}:1${f.large ? " (chữ lớn)" : ""} → màu chữ gần nhất đạt chuẩn: ${f.suggestedColor}`;
+    } else if (f.code === "text_occluded") {
+      d = `chữ${txt} bị ${f.containerSelector ?? "phần tử khác"} che ${f.coveredFraction != null ? Math.round(f.coveredFraction * 100) + "%" : ""}`;
+    } else if (f.code === "content_overlap") {
+      d = `khối chữ${txt} đè lên ${f.containerSelector ?? "khối chữ khác"}`;
+    } else {
+      d = `${f.message ?? ""}${txt && !String(f.message).includes(String(f.text)) ? txt : ""}`;
+    }
+    const hint = f.fixHint && c === "lint" ? ` | cách sửa: ${f.fixHint}` : "";
+    lines.push(`[${c}] ${f.code} @ ${g.items.size > 1 && f.code === "text_occluded" ? "(nhiều)" : f.selector || "?"}${t}: ${d}${hint}`);
+  }
+  out += `\n--- ${lines.length} lỗi cần sửa (đã gộp các mốc thời gian trùng; ${skipped} warning/info không làm FAIL, bỏ qua) ---\n` + lines.join("\n") + "\n";
+  return out.length > maxChars ? out.slice(0, maxChars) + "\n...[cắt bớt]" : out;
+}
+
+function roundRgb(s) {
+  const m = String(s).match(/\d+/g);
+  return m ? m.slice(0, 3).map((v) => Math.round(v / 16)).join(",") : s;
 }

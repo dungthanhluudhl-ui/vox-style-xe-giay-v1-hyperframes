@@ -3,13 +3,15 @@
 // 1 scene standalone tạm). Vấn đề thật đã xảy ra (video "ban-an-35-phan-1"): 24 scene PASS riêng lẻ,
 // nhưng project ráp chung vẫn có lỗi contrast/va chạm caption-track (S02/S16) — không script nào từng
 // verify lại SAU KHI ráp, chỉ syncRootHf() ghi file, không check gì.
+// Sample theo shot (3 mốc/shot, từ 2026-09-26) — 9 sample mặc định để lọt lỗi gọn trong 1 scene,
+// xem buildShotSampleArgs() + planning/incident-log.md mục 2026-09-26.
 //
 // Usage: node scripts/07b-integration-check.hf.mjs --video=<slug>
 import fs from "node:fs";
 import path from "node:path";
 import { getVideoSlug, videoPaths } from "./lib/video-paths.mjs";
 import { syncRootHf } from "./lib/sync-root-hf-lib.mjs";
-import { runHyperframesCheck, findRootLayoutFlagsInProject } from "./lib/hf-check.mjs";
+import { runHyperframesCheck, findRootLayoutFlagsInProject, buildShotSampleArgs } from "./lib/hf-check.mjs";
 import { getCaptionZoneArg } from "./lib/caption-zone.mjs";
 import { appendRunLog } from "./lib/router-client.mjs";
 
@@ -20,7 +22,17 @@ const vp = videoPaths(slug, root);
 // Ráp lại trước khi check — TẤT ĐỊNH, idempotent — không giả định caller đã ráp đúng bản mới nhất.
 const syncResult = syncRootHf(slug, root);
 
-const check = runHyperframesCheck(vp.hfProjectDir, { extraArgs: [getCaptionZoneArg(root)] });
+// Sample theo shot (3 mốc/shot) thay vì 9 mốc mặc định cho cả video — xem buildShotSampleArgs().
+const shotSamples = buildShotSampleArgs(vp.shotlistJson);
+if (!shotSamples) console.warn(`(video "${slug}") không đọc được ${vp.shotlistJson} — fallback về sample mặc định của hyperframes check.`);
+const sampleNote = shotSamples ? `${shotSamples.sampleCount} mốc/${shotSamples.shotCount} shot` : "sample mặc định (không có shotlist)";
+
+const t0 = Date.now();
+const check = runHyperframesCheck(vp.hfProjectDir, {
+  extraArgs: [getCaptionZoneArg(root), ...(shotSamples?.args ?? [])],
+  ...(shotSamples ? { timeoutMs: shotSamples.timeoutMs } : {}),
+});
+const checkSec = ((Date.now() - t0) / 1000).toFixed(1);
 
 const errors = [];
 if (!check.passed) {
@@ -47,8 +59,8 @@ fs.mkdirSync(path.dirname(vp.integrationCheckLog), { recursive: true });
 fs.writeFileSync(vp.integrationCheckLog, check.raw, "utf8");
 
 const summary = passed
-  ? `Stage 7b integration check PASS — ${syncResult.sceneCount}/${syncResult.totalPlanned} scene, có audio, có caption-track, hyperframes check ok=true.`
-  : `Stage 7b integration check FAIL:\n${errors.join("\n")}`;
+  ? `Stage 7b integration check PASS — ${syncResult.sceneCount}/${syncResult.totalPlanned} scene, có audio, có caption-track, hyperframes check ok=true (${sampleNote}, ${checkSec}s).`
+  : `Stage 7b integration check FAIL (${sampleNote}, ${checkSec}s):\n${errors.join("\n")}`;
 
 console.log(summary);
 appendRunLog(`\`scripts/07b-integration-check.hf.mjs --video=${slug}\` — ${summary}`, vp.runLog);

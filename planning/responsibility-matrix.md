@@ -271,7 +271,7 @@ sub-composition trực tiếp đã bị bác bỏ vì làm giảm điểm khớp
 |---|---|---|
 | 1. Generate: composition standalone cho 1 scene, project tạm riêng | 9router[reasoning_generator] | script tự bundle skill docs HyperFrames + `STYLE_DNA.md`/`style-tokens.json` + shotlist |
 | 2. Verify tự động | Local | `npx hyperframes check --json` chạy TRÊN PROJECT TẠM RIÊNG scene đó (cách ly hoàn toàn, không race khi song song) |
-| 3. Review | 9router[reasoning_reviewer] | `ag/claude-sonnet-4-6` — verdict PASS/FAIL + danh sách lỗi |
+| 3. Review | 9router[reasoning_reviewer] → tự chuyển sang [reasoning_reviewer_fallback] khi lỗi hạ tầng | `cx/gpt-5.6-luna-review` (mặc định từ 2026-09-26) → dự phòng `ag/claude-sonnet-4-6` — verdict PASS/FAIL + danh sách lỗi |
 | 4. Nếu FAIL: gửi lỗi lại generator, lặp bước 1–3 | Local orchestration | tối đa 3 lần trước khi escalate |
 | 5. PASS: chuyển đổi tất định standalone → `compositions/scene-sNN.html`, ráp `index.html` | Local, tất định, KHÔNG AI | `scripts/lib/sync-root-hf-lib.mjs` (`standaloneToSubComposition()` + `syncRootHf()`) — gọi tự động, trừ khi `--no-root-sync` |
 | 6. Ghi file + cập nhật `pipeline/videos/<slug>/run-log.md` | Local | — |
@@ -282,6 +282,22 @@ sub-composition trực tiếp đã bị bác bỏ vì làm giảm điểm khớp
 lần ráp (`scripts/lib/generate-caption-track-hf.mjs`, port đúng `applyFourWordPageBreaks()` +
 `createTikTokStyleCaptions()` của `@remotion/captions`) và mount `<audio>` — không cần thao tác
 tay cho bất kỳ video nào.
+
+**Cơ chế giảm lỗi lặp lại ở Stage 7 (2026-09-26, A/B 48 lượt — chi tiết + số liệu: `planning/incident-log.md`
+mục "Audit + POC giảm lỗi lặp lại Stage 7"):** ưu tiên cơ chế TẤT ĐỊNH trong script, không thêm câu vào
+prompt (quy tắc "không chữ cam trên nền be" có từ 21/09 vẫn là lỗi #1 — prompt ~31k token làm quy tắc bị chìm).
+- `scripts/lib/hf-autofix.mjs`: TRƯỚC check sửa cấu trúc `<video>` khi chắc chắn (ancestor timed bao trọn scene
+  → bỏ timing thừa, gán timing shot từ shotlist); SAU check sửa contrast 1 lượt (chỉ khi mọi lỗi còn lại là
+  contrast VÀ 2 bộ parse độc lập cùng xác định đúng 1 phần tử) bằng class riêng theo scene `hf-cfix-sNN-*`
+  chèn vào khối `<style>` ĐẦU TIÊN (`standaloneToSubComposition()` chỉ giữ khối đầu — khối khác MẤT khi ráp).
+  Cần `linkedom` (dependency).
+- `scripts/lib/palette-contrast.mjs`: bảng cặp màu chữ/nền đạt/cấm + 6 class màu an toàn (`.hf-text-ink`,
+  `.hf-plate-ink`…) TÍNH TỪ `style-tokens.json` (palette đổi thì tự đổi) — class tự chèn vào mọi scene.
+- `formatCheckFeedback()` (`hf-check.mjs`): feedback retry chỉ lỗi làm FAIL, gộp theo nguyên nhân, giữ
+  fg/bg/suggestedColor/phần tử che (bản cũ `summarizeCheckRaw` bỏ mất các field này).
+- Prompt: khối "hợp đồng riêng của repo" đặt CUỐI system prompt; quy tắc `<video>` chỉ mô tả THUỘC TÍNH.
+  **KHÔNG** dựng khung scene sẵn, **KHÔNG** kèm scene mẫu vào prompt (người dùng quyết 26/09 — rủi ro video na
+  ná nhau, mất sáng tạo; chấm mù A/B xác nhận creativity không đổi khi không dùng 2 thứ này).
 
 **Quy tắc bắt buộc (giữ nguyên từ bản Remotion): KHÔNG BAO GIỜ batch nhiều scene trong 1 lần gọi.** Luôn 1 scene/lần: `node scripts/07-codegen.hf.router.mjs --video=<slug> --scenes=SNN [--issue-file=...]`.
 
@@ -310,12 +326,15 @@ gốc của bug **trống hình** (S23/S47 kinh-te-meo, S01/S03/S16/S18 hinh-pha
 (giả thuyết "ngẫu nhiên/GPU", perspective/`ease:"none"`): `planning/incident-log.md` mục
 2026-09-26.
 
-**Giới hạn phát hiện đã đo thật — lỗi layout chỉ lộ SAU KHI RÁP chưa có gate đủ dày:**
-Stage 7 verify chỉ check scene standalone; Stage 7b chỉ lấy ~9–10 sample cho cả video, mà
-`hyperframes check` chỉ báo `error` khi 1 lỗi xuất hiện ở ≥2 sample (1 sample → `info`, không làm
-`ok=false`) — nên lỗi nằm gọn trong 1 scene thường lọt. Check chỉ bắt CHỮ bị che, không bắt hình
-minh hoạ bị che. Muốn soát thủ công khi nghi ngờ: `node scripts/qa-blank-frame-audit.mjs
---video=<slug>` (xem mục 8).
+**Stage 7b sample THEO SHOT (từ 2026-09-26):** `07b-integration-check.hf.mjs` truyền `--at` = 3
+mốc/shot (20/50/80% `[startMs,endMs]` từ `shotlist.json`, `buildShotSampleArgs()` trong
+`scripts/lib/hf-check.mjs`) + `--max-issues 500`, timeout tăng theo số mốc. Lý do: `hyperframes
+check` chỉ báo `error` khi 1 lỗi xuất hiện ở ≥2 sample (1 sample → `info`, không làm `ok=false`) —
+9 sample mặc định cho cả video để lọt lỗi nằm gọn trong 1 scene (Stage 7 verify chỉ check scene
+standalone nên cũng không thấy). Đã kiểm chứng: bắt lại đúng lỗi trống hình cũ của hinh-phat
+(27 error ở S01/S03/S16/S18), 0 báo nhầm trên 4 video tốt. Giới hạn còn lại: check chỉ bắt CHỮ bị
+che, không bắt hình minh hoạ bị che — soát thủ công khi nghi ngờ: `node
+scripts/qa-blank-frame-audit.mjs --video=<slug>` (xem mục 8).
 
 > **Sự cố cụ thể (2026-09-22) — đã chuyển sang `planning/incident-log.md`** (mục "Sự cố integration CSS sau Stage 7 — video su-kien-thien-an-mon").
 
@@ -358,15 +377,29 @@ kết quả thô tại `poc/hyperframes/poc-results/model-compare/`.
 - Người dùng đã tự xem 12 bản render POC (`pipeline/.cache/model-compare-renders/`, không commit
   — tái tạo được bằng cách chạy lại POC) và xác nhận đạt trước khi đổi.
 
-**Xếp hạng fallback (đổi thủ công bằng cách sửa `scripts/model-routing.json`, không có cơ chế tự
-động — xem `feedback_incremental_buildout`):**
-- **Generator**: 1) `ag/gemini-3.8-flash-high` (mặc định) → 2) `cx/gpt-5.6-sol` (=
-  `reasoning_generator_alt` trong `model-routing.json`, chậm hơn nhưng đã kiểm chứng chắc chắn
-  chạy được). KHÔNG dùng `ag/gemini-3.1-pro-low` (đã loại). Chưa có lựa chọn #3 đã kiểm chứng —
-  cần POC riêng nếu muốn thêm (vd `ag/gemini-pro-agent`, chưa test).
-- **Reviewer**: 1) `ag/claude-sonnet-4-6` (mặc định) → 2) `ag/gpt-oss-120b-medium` (rẻ/nhanh nhất,
-  chất lượng tương đương) → 3) `ag/gemini-3.8-flash-high` (tự chấm điểm mình — dùng được nhưng
-  kém hiệu quả nhất) → 4) `cx/gpt-5.6-sol-review` (cũ, dự phòng cuối cùng).
+**Model + dự phòng TỰ ĐỘNG (cơ chế nằm trong script, không phụ thuộc Claude điều phối nhớ — mọi
+session/agent áp dụng đồng nhất):**
+- **Generator — dự phòng tự động từ 2026-09-26 (quyết định người dùng):** mặc định
+  `ag/gemini-3.8-flash-high` (`reasoning_generator`), dự phòng TỰ ĐỘNG `cx/gpt-5.6-terra`
+  (`reasoning_generator_fallback`) qua `callWithModelFallback()` — cùng cơ chế reviewer bên dưới
+  (lỗi hạ tầng → chuyển ngay, cả 2 lỗi mới chờ "reset after"). Run-log ghi "— DỰ PHÒNG" khi code do
+  model dự phòng sinh. Đã kiểm chứng bằng proxy giả lập 403 trước 9router thật: gemini lỗi → terra
+  sinh ngay (0s chờ), code terra PASS verify. Chất lượng code terra CHƯA qua POC riêng (chỉ dùng khi
+  model chính không khả dụng). `reasoning_generator_alt` = `cx/gpt-5.6-sol` giữ làm lựa chọn ĐỔI TAY
+  (A/B 26/09: PASS lần 1 38% vs 25% của gemini cùng bản sửa, fail hẳn 12% vs 31% — người dùng quyết
+  giữ gemini làm mặc định). KHÔNG dùng `ag/gemini-3.1-pro-low` (đã loại).
+- **Reviewer — ĐỔI 2026-09-26 theo quyết định người dùng (Sonnet hết hạn mức, CHƯA qua POC chất
+  lượng — sẽ đo ở Phase 3 audit reviewer):** mặc định `cx/gpt-5.6-luna-review`
+  (`reasoning_reviewer`), dự phòng TỰ ĐỘNG `ag/claude-sonnet-4-6` (`reasoning_reviewer_fallback`).
+  `callWithModelFallback()` (`scripts/lib/router-client.mjs`): model chính lỗi hạ tầng (hết hạn
+  mức 403/429, 5xx, timeout, mạng) → chuyển NGAY sang dự phòng, không chờ; cả 2 cùng lỗi → chờ đúng
+  "reset after …" rồi thử lại cả chuỗi (≤3 vòng); vẫn lỗi → 07 thoát mã 2, giữ code đã PASS verify,
+  `07-codegen-hf-parallel.mjs` tự chạy `--review-only` (không sinh lại). Run-log ghi đúng model đã
+  review ("DỰ PHÒNG" nếu dùng dự phòng); mọi lỗi hạ tầng ghi `review-infra-error`/
+  `generate-infra-error` vào `pipeline/codegen-issues.jsonl`. Lựa chọn khác đã biết (đổi tay):
+  `ag/gpt-oss-120b-medium`, `cx/gpt-5.6-sol`/`-sol-review`.
+- Lỗi hạ tầng (generator lẫn reviewer) KHÔNG tiêu 1 trong 3 lần thử. `retryInfraCall()` (1 model,
+  chờ rồi gọi lại) vẫn có trong `router-client.mjs` cho script khác cần dùng.
 
 **2 gotcha mới phát hiện qua POC** (đã thêm vào `KNOWN_GOTCHAS_HF`, chưa từng gặp với
 `cx/gpt-5.6-sol`): `gsap_relative_value_second_writer` (giá trị GSAP tương đối `+=N` xung đột

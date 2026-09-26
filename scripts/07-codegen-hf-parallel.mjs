@@ -41,10 +41,15 @@ const concurrencyArg = process.argv.find((a) => a.startsWith("--concurrency="));
 // (planning/style-dna-integration.md và memory dự án), theo dõi qua kết quả TỔNG KẾT bên dưới.
 const CONCURRENCY = concurrencyArg ? parseInt(concurrencyArg.split("=")[1], 10) : 10;
 const MAX_AUTO_RELAUNCH = 1;
+// Mã thoát 2 của 07 = verify PASS nhưng reviewer không khả dụng (lỗi hạ tầng đã chờ/thử lại vẫn hỏng) →
+// chạy lại CHỈ review trên code đã PASS (--review-only), không sinh lại cả scene (bài học 2026-09-26:
+// relaunch cả scene từ đầu làm hinh-phat tốn 497 lần thử).
+const EXIT_REVIEW_UNAVAILABLE = 2;
+const MAX_REVIEW_ONLY_RELAUNCH = 1;
 
-function runScene(sceneId) {
+function runScene(sceneId, extraArgs = []) {
   return new Promise((resolve) => {
-    const args = ["scripts/07-codegen.hf.router.mjs", `--video=${slug}`, `--scenes=${sceneId}`, "--no-root-sync"];
+    const args = ["scripts/07-codegen.hf.router.mjs", `--video=${slug}`, `--scenes=${sceneId}`, "--no-root-sync", ...extraArgs];
     const child = spawn("node", args, { stdio: ["ignore", "pipe", "pipe"] });
     let stdout = "";
     child.stdout.on("data", (d) => {
@@ -83,6 +88,8 @@ function excerptFor(kind, stdout) {
 async function run() {
   const queue = [...sceneIds];
   const relaunchCount = {};
+  const reviewOnlyCount = {};
+  const reviewOnlyNext = new Set();
   const results = {};
   let active = 0;
 
@@ -91,14 +98,20 @@ async function run() {
       while (active < CONCURRENCY && queue.length > 0) {
         const sceneId = queue.shift();
         active++;
-        console.log(`[bắt đầu] ${sceneId} (${active} đang chạy, ${queue.length} chờ trong hàng đợi)`);
-        runScene(sceneId).then((result) => {
+        const reviewOnlyRun = reviewOnlyNext.delete(sceneId);
+        console.log(`[bắt đầu] ${sceneId}${reviewOnlyRun ? " (--review-only)" : ""} (${active} đang chạy, ${queue.length} chờ trong hàng đợi)`);
+        runScene(sceneId, reviewOnlyRun ? ["--review-only"] : []).then((result) => {
           active--;
           if (result.code === 0) {
             results[sceneId] = "pass";
             console.log(`[PASS] ${sceneId}`);
+          } else if (result.code === EXIT_REVIEW_UNAVAILABLE && (reviewOnlyCount[sceneId] || 0) < MAX_REVIEW_ONLY_RELAUNCH) {
+            reviewOnlyCount[sceneId] = (reviewOnlyCount[sceneId] || 0) + 1;
+            console.log(`[REVIEWER-KHÔNG-KHẢ-DỤNG] ${sceneId} — verify đã PASS, chạy lại chỉ review (--review-only)...`);
+            reviewOnlyNext.add(sceneId);
+            queue.push(sceneId);
           } else {
-            const kind = classifyFailure(result.stdout);
+            const kind = result.code === EXIT_REVIEW_UNAVAILABLE ? "review-unavailable" : classifyFailure(result.stdout);
             if (kind === "network" && (relaunchCount[sceneId] || 0) < MAX_AUTO_RELAUNCH) {
               relaunchCount[sceneId] = (relaunchCount[sceneId] || 0) + 1;
               console.log(`[FAIL-mạng] ${sceneId} — lỗi kỹ thuật thuần tuý, tự chạy lại (lần ${relaunchCount[sceneId]})...`);

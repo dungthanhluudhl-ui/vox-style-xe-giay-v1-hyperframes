@@ -90,6 +90,86 @@ export async function callModel({
   return res.json();
 }
 
+/** Lỗi HẠ TẦNG khi gọi model (không phải lỗi nội dung): HTTP 403/408/429/5xx, timeout, mất kết nối.
+ * Bài học thật (2026-09-26, audit Stage 7): reviewer hết hạn mức trả 503 bọc "[403] ... (reset after
+ * 48s)"; trước đây lỗi này bị tính là 1 lần thử hỏng → vứt code đã PASS verify, sinh lại từ đầu —
+ * ban-an-425-phan-1 mất 97/186 lần thử, hinh-phat 255/497 vì vậy. */
+export function isInfraError(e) {
+  const msg = String(e?.message ?? e);
+  return (
+    /9router trả lỗi (403|408|429|5\d\d)\b/.test(msg) ||
+    /9router timeout/.test(msg) ||
+    /fetch failed|ECONNRESET|ECONNREFUSED|ETIMEDOUT|socket hang up|network/i.test(msg)
+  );
+}
+
+/** Thời gian chờ trước lần gọi lại: đúng "reset after <thời lượng>" nếu nhà cung cấp báo (+2s), không
+ * thì backoff 15/30/60s. Trần 180s/lần. Đã gặp thật cả 2 dạng: "reset after 48s" và "reset after 2m"
+ * (có thể ghép "1m30s", "1h"). */
+export function infraRetryDelayMs(e, retryIndex) {
+  const m = String(e?.message ?? e).match(/reset after ((?:\d+\s*[hms]\s*)+)/i);
+  let sec = null;
+  if (m) {
+    sec = 0;
+    for (const [, n, u] of m[1].matchAll(/(\d+)\s*([hms])/gi)) sec += Number(n) * { h: 3600, m: 60, s: 1 }[u.toLowerCase()];
+    sec += 2;
+  }
+  return Math.min(sec ?? [15, 30, 60][Math.min(retryIndex, 2)], 180) * 1000;
+}
+
+/** Gọi lần lượt theo chuỗi model (chính → dự phòng): model nào lỗi HẠ TẦNG (hết hạn mức 403/429,
+ * 5xx, timeout, mạng) thì CHUYỂN NGAY sang model kế tiếp, không chờ. Chỉ khi MỌI model trong chuỗi
+ * cùng lỗi mới chờ (thời gian ngắn nhất các model báo) rồi thử lại cả chuỗi, tối đa `maxRounds` vòng.
+ * Lỗi không phải hạ tầng ném ra ngay. Trả `{ response, model }` để caller ghi đúng model đã dùng.
+ * Lý do (quyết định người dùng 2026-09-26): reviewer hết hạn mức hàng loạt từng làm Stage 7 fail diện
+ * rộng — tự chuyển model thay vì thử đi thử lại cùng 1 model đang bị khoá. */
+export async function callWithModelFallback(models, fn, { label = "9router", maxRounds = 3, onInfraError } = {}) {
+  const chain = [...new Set(models.filter(Boolean))];
+  let lastErr;
+  for (let round = 1; round <= maxRounds; round++) {
+    let minWaitMs = Infinity;
+    for (const [i, model] of chain.entries()) {
+      try {
+        return { response: await fn(model), model };
+      } catch (e) {
+        if (!isInfraError(e)) throw e;
+        lastErr = e;
+        onInfraError?.(e, model, round);
+        minWaitMs = Math.min(minWaitMs, infraRetryDelayMs(e, round - 1));
+        const next = chain[i + 1];
+        console.log(`  [${label}] ${model} lỗi hạ tầng${next ? ` → chuyển ngay sang ${next}` : ""}: ${String(e.message).slice(0, 160)}`);
+      }
+    }
+    if (round < maxRounds) {
+      console.log(`  [${label}] mọi model đều lỗi (vòng ${round}/${maxRounds}), chờ ${minWaitMs / 1000}s rồi thử lại cả chuỗi.`);
+      await new Promise((r) => setTimeout(r, minWaitMs));
+    }
+  }
+  lastErr.infraExhausted = true;
+  throw lastErr;
+}
+
+/** Gọi `fn()`; nếu lỗi HẠ TẦNG thì chờ rồi gọi lại (tối đa `maxTries` lần tổng cộng), gọi
+ * `onInfraError(e, tryNo)` mỗi lần lỗi để caller ghi log. Lỗi không phải hạ tầng ném ra ngay. Hết
+ * ngân sách → ném lỗi cuối, gắn `e.infraExhausted = true` để caller phân biệt. */
+export async function retryInfraCall(fn, { label = "9router", maxTries = 4, onInfraError } = {}) {
+  for (let tryNo = 1; ; tryNo++) {
+    try {
+      return await fn();
+    } catch (e) {
+      if (!isInfraError(e)) throw e;
+      onInfraError?.(e, tryNo);
+      if (tryNo >= maxTries) {
+        e.infraExhausted = true;
+        throw e;
+      }
+      const waitMs = infraRetryDelayMs(e, tryNo - 1);
+      console.log(`  [${label}] lỗi hạ tầng (lần ${tryNo}/${maxTries}), chờ ${waitMs / 1000}s rồi gọi lại: ${String(e.message).slice(0, 160)}`);
+      await new Promise((r) => setTimeout(r, waitMs));
+    }
+  }
+}
+
 export function imageContentFromFile(filePath, mimeType = "image/jpeg") {
   const base64 = fs.readFileSync(filePath).toString("base64");
   return { type: "image_url", image_url: { url: `data:${mimeType};base64,${base64}` } };

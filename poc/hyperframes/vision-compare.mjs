@@ -12,7 +12,7 @@ import {
 
 const root = process.cwd();
 const routing = loadModelRouting(root);
-const VISION_MODEL = routing.vision_standard;
+const VISION_MODEL = routing.vision_qa; // key cũ "vision_standard" đã tách thành vision_media_analyze/vision_qa trong model-routing.json
 
 const pairs = process.argv.slice(2).filter((a) => a.includes("="));
 const question = process.argv.slice(2).find((a) => !a.includes("="));

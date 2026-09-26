@@ -619,3 +619,94 @@ tồn tại dù `an-le-64` là 1 trong 4 video Remotion-legacy — xác nhận q
 từ giai đoạn di trú HyperFrames cũ (commit `9e9223b`, trước khi chốt KHÔNG migrate 4 video cũ), có từ
 lâu, không phải rác mới/không phải do Kilo.
 
+
+---
+
+### Audit + POC giảm lỗi lặp lại Stage 7 (2026-09-26)
+
+**Bối cảnh:** người dùng bức xúc vì cùng nhóm lỗi codegen (contrast, `<video>` thiếu `data-start`,
+chữ bị che) lặp lại ở MỌI video, tốn nhiều thời gian/token; yêu cầu khắc phục triệt để, KHÔNG chấp
+nhận dựng khung scene sẵn/kèm scene mẫu (rủi ro giảm sáng tạo — bài học Checkpoint D 6.2→4.3, xem
+`feedback_incremental_buildout`). Kế hoạch đầy đủ:
+`C:/Users/DTL/.claude/plans/1-t-i-kh-ng-ng-graceful-lightning.md`.
+
+**Nguyên nhân gốc đo được (`pipeline/codegen-issues.jsonl`, 591 lượt codegen, 21/09→25/09):**
+1. **Hạ tầng, không phải chất lượng code** — lỗi gọi model (403 hết hạn mức/mạng) bị tính là 1 lần
+   thử hỏng, VỨT code đã PASS verify, sinh lại từ đầu. `ban-an-425-phan-1` mất 97/186 lần thử vì
+   vậy, `hinh-phat-treo-co-o-nhat-ban` mất 255/497 (đây là lời giải cho việc treo cũ "~18 scene fail
+   đồng loạt verdict rỗng, Stage 7 kéo dài ~12 giờ" — không tồn tại nguyên nhân bí ẩn nào khác).
+2. **~45% lần thử 1 fail do lint** (chủ yếu `media_missing_data_start`/`video_nested_in_timed_element`
+   — `<video>` lồng sai chỗ so với phần tử timed cha). Lint fail làm `hyperframes check` BỎ QUA hoàn
+   toàn layout/contrast → lỗi đó chỉ lộ ở lần thử sau.
+3. **Contrast là lỗi verify #1**, đúng các cặp màu palette KHÔNG BAO GIỜ đạt AA (cam `#FF6A1A` trên
+   giấy `#E7E3D9` = 2.24:1, trên card `#F5F0E4` = 2.52:1, chữ kem `#F7F4EC` trên cam = 2.61:1) — quy
+   tắc cấm chung chung có trong prompt từ 21/09 (commit `8bc6e30`) mà KHÔNG đủ hiệu quả: prompt
+   generator ~31k token, quy tắc riêng repo chỉ ~1.7k token bị chìm giữa tài liệu HyperFrames chung.
+   Feedback retry (`summarizeCheckRaw`) cũng bỏ mất fg/bg/suggestedColor/phần tử che, 34% dòng lỗi bị
+   lặp lại theo mốc thời gian thay vì gộp.
+
+**Đã sửa (chi tiết đủ dùng lại, không nhắc lại code — xem diff các file nêu):**
+- `scripts/lib/router-client.mjs`: `retryInfraCall()` (generator) + `callWithModelFallback()`
+  (reviewer, có model dự phòng) — lỗi hạ tầng chờ đúng "reset after Ns/m/h" rồi gọi lại, KHÔNG tiêu
+  lần thử; review lỗi hạ tầng giữ nguyên code đã PASS verify, không sinh lại.
+- `scripts/07-codegen.hf.router.mjs`: mã thoát 2 = verify PASS nhưng reviewer không khả dụng, cờ
+  `--review-only` review lại không gọi generator; `07-codegen-hf-parallel.mjs` tự chạy cờ này thay vì
+  relaunch cả scene. Mọi lỗi hạ tầng ghi `generate-infra-error`/`review-infra-error` vào
+  `codegen-issues.jsonl` (trước đây là lỗ đen, chỉ in console).
+- Reviewer đổi mặc định `cx/gpt-5.6-luna-review` (dự phòng tự động `ag/claude-sonnet-4-6`) — quyết
+  định người dùng (Sonnet hết hạn mức), CHƯA qua POC chất lượng riêng.
+- `scripts/lib/hf-check.mjs`: `formatCheckFeedback()` — chỉ lỗi làm FAIL, gộp theo nguyên nhân (phần
+  tử che chung / cặp màu chung), giữ đủ field fg/bg/suggestedColor.
+- `scripts/lib/palette-contrast.mjs` (MỚI): `buildTextColorRules()` tính bảng cặp màu chữ/nền đạt/
+  cấm WCAG TẤT ĐỊNH từ `style-tokens.json`; `buildSafeColorClasses()` sinh 6 class màu an toàn
+  (`.hf-text-ink`, `.hf-plate-ink`...) — chỉ công cụ tiện dụng, KHÔNG ép bố cục.
+- `scripts/lib/hf-autofix.mjs` (MỚI, cần `linkedom` — đã thêm vào `package.json`): tự sửa TẤT ĐỊNH
+  trước/sau check — cấu trúc `<video>` (bỏ timing thừa trên ancestor bao trọn scene + gán timing từ
+  shotlist), và contrast SAU 1 lượt check (chỉ áp khi mọi lỗi còn lại là contrast VÀ selector xác
+  định chắc chắn đúng 1 phần tử qua 2 bộ parse độc lập khớp nhau).
+- Prompt: thêm `variables-and-media.md` vào skill docs, quy tắc `<video>` mô tả THUỘC TÍNH (không
+  phải scene mẫu — giữ đúng ràng buộc người dùng), dời khối "hợp đồng riêng của repo" xuống CUỐI
+  system prompt (không cắt bớt tài liệu sáng tạo).
+- Sửa 1 bug phụ phát hiện khi audit (không phải mục tiêu ban đầu): race condition scaffold project
+  khi nhiều scene cùng video chạy song song lần đầu (`cpSync` ENOENT khi 2 tiến trình copy cùng
+  file) — đã tồn tại từ Giai đoạn E, hệ quả là ghi chú "Quy ước render riêng" bị nhân bản 4-10 lần
+  trong `CLAUDE.md`/`AGENTS.md` của 18/18 project HyperFrames đã dựng; đã dọn về đúng 1 bản/file sau
+  khi xác nhận mọi bản trùng giống hệt nhau.
+- 2 script POC (`score-render.mjs`, `vision-compare.mjs`) sửa key `vision_standard` (không còn tồn
+  tại) → `vision_qa`.
+
+**Kiểm chứng hạ tầng (proxy giả lập lỗi 403 trước 9router thật, KHÔNG mock nội bộ):** cả 2 reviewer
+cùng lỗi → chuyển model ngay (0s chờ), 2 vòng retry đúng thời gian, thoát mã 2, giữ code, `--review-
+only` chạy lại đúng, không sinh lại.
+
+**Kiểm chứng chất lượng — A/B 3 nhánh × 8 scene thật × 2 lần lặp (48 lượt, harness cách ly hoàn toàn
+mini-root + `.env` không copy) — base (HEAD trước sửa) / v2 (đủ thay đổi trên, generator giữ nguyên
+`gemini-3.8-flash-high`) / v2alt (v2 + generator đổi `cx/gpt-5.6-sol`, CHƯA qua POC riêng, chỉ đo thử
+nghiệm):**
+
+| | base | v2 | v2alt |
+|---|---|---|---|
+| PASS lần 1 | 1/15 (7%) | 4/16 (25%) | 6/16 (38%) |
+| Fail hẳn (3 lần) | 6/15 (40%) | 5/16 (31%) | 2/16 (12%) |
+| Mã lỗi lint/contrast do video+màu | 6 lượt (media_missing×5, video_nested×1) + contrast×5 | **0 lượt video**, contrast×1 | **0 lượt video**, contrast×3 |
+| autofix video/contrast áp dụng | — | 0 / 0 (không scene nào cần) | 0 / 2 (cả 2 check lại PASS ngay) |
+
+v2/v2alt loại HOÀN TOÀN lỗi cấu trúc `<video>` (0/16 lượt, so với 6 lượt ở base) và giảm mạnh contrast
+(1-3 so với 5). Lỗi còn lại chủ yếu `text_occluded`/`content_overlap` (động, phụ thuộc animation —
+không tất định hoá được) và reviewer FAIL nội dung thật (hold duration sai, lệch shotlist — không
+phải do các thay đổi này gây ra, đọc mẫu review FAIL cho thấy lý do hợp lý).
+
+**Kiểm chứng KHÔNG giảm sáng tạo/chất lượng (yêu cầu cứng của người dùng):** chấm mù độc lập qua
+`ag/gemini-3.8-flash-high`[vision_qa] trên 5 cặp scene PASS cùng (base vs v2, generator giữ nguyên,
+đảo thứ tự A/B khử thiên vị vị trí) — điểm creativity trung bình base=5.5, v2=5.5 (bằng nhau); điểm
+overall base=5.8, v2=5.7 (chênh trong nhiễu). Thắng/thua từng cặp: base thắng rõ 2/5, v2 thắng rõ
+1/5, hoà/lẫn 2/5 — không có xu hướng lệch. Kết luận: bỏ khung scene sẵn + scene mẫu (theo yêu cầu
+người dùng) không đổi chất lượng thị giác so với trước, đúng như lo ngại Checkpoint D nếu làm ngược
+lại.
+
+**Việc còn mở:** Phase 3 (audit reviewer `cx/gpt-5.6-luna-review`, chưa POC) và Phase 4 (render
+nhanh) của `planning/optimization-plan-2026-09-26.md` chưa làm. Ứng viên quy tắc tiếp theo nếu còn
+gặp: lớp nền trang trí (`.bg-grid`...) đè chữ hoạt (7/12 lỗi che chữ quan sát được ở dữ liệu fail cũ).
+Người dùng duyệt 26/09: áp v2 vào repo (giữ generator `gemini-3.8-flash-high`), THÊM dự phòng tự động
+cho generator `cx/gpt-5.6-terra` (`reasoning_generator_fallback`, cùng cơ chế reviewer) — kiểm chứng bằng
+proxy giả lập 403: gemini lỗi → terra sinh ngay, code PASS verify. Đã commit.

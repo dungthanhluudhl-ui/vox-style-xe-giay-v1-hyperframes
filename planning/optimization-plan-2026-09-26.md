@@ -15,6 +15,23 @@ TẬN GỐC"); memory `feedback_incremental_buildout` bài #5, #13. Nhắc lại
 kế hoạch) — tranh tài nguyên làm sai số đo thời gian và làm chậm build của người dùng. Kiểm tra
 `git status` + mtime `pipeline/videos/*/run-log.md` trước.
 
+## TIẾN ĐỘ (cập nhật 2026-09-26)
+
+- **Phase 1 — XONG bước 1–2, còn bước 3.** 7b sample 3 mốc/shot (`buildShotSampleArgs()`), timeout tăng
+  theo số mốc. Bắt lại đúng lỗi cũ hinh-phat (27 error S01/S03/S16/S18), 0 báo nhầm trên 4 video tốt.
+  CÒN: đo thời gian 7b cũ vs mới trên hinh-phat khi máy rảnh (đo có tải: 180 mốc = 155s).
+- **Phase 2 — XONG, mở rộng theo yêu cầu người dùng** (audit toàn bộ lỗi lặp lại Stage 7, không chỉ
+  contrast): nguyên nhân #1 là lỗi hạ tầng (vứt code đã PASS khi reviewer 403), rồi lint `<video>` và
+  contrast palette. Đã áp: dự phòng model TỰ ĐỘNG cho generator (`cx/gpt-5.6-terra`) + reviewer
+  (`cx/gpt-5.6-luna-review` → `ag/claude-sonnet-4-6`), `--review-only`, autofix `<video>`/contrast,
+  bảng màu + class an toàn từ style-tokens, feedback đầy đủ. A/B 48 lượt: PASS lần 1 7% → 25%, lỗi
+  `<video>` 6 → 0, creativity chấm mù không đổi. Chi tiết: `planning/incident-log.md` mục "Audit + POC
+  giảm lỗi lặp lại Stage 7". Người dùng TỪ CHỐI khung scene sẵn + scene mẫu trong prompt (giữ sáng tạo).
+- **Phase 3 — CHƯA LÀM.** Reviewer nay là `cx/gpt-5.6-luna-review` (đổi vì Sonnet hết hạn mức, chưa POC).
+  A/B cho thấy reviewer FAIL giờ là nút thắt chính sau khi verify bớt lỗi (v2: 20 review FAIL/31 lần
+  review) — phần lớn lý do hợp lý (hold duration sai, lệch shotlist) nhưng có chi tiết vụn.
+- **Phase 4 — CHƯA LÀM.**
+
 ## Số liệu nền (đo thật 2026-09-26 — dùng làm baseline so sánh)
 
 | Hạng mục | Số liệu |

@@ -29,7 +29,7 @@ import {
 
 const root = process.cwd();
 const routing = loadModelRouting(root);
-const VISION_MODEL = routing.vision_standard;
+const VISION_MODEL = routing.vision_qa; // key cũ "vision_standard" đã tách thành vision_media_analyze/vision_qa trong model-routing.json
 
 function argValue(flag) {
   const a = process.argv.find((x) => x.startsWith(`--${flag}=`));

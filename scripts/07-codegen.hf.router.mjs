@@ -26,26 +26,40 @@
 // Usage: node scripts/07-codegen.hf.router.mjs --video=<slug> --scenes=S01
 //        node scripts/07-codegen.hf.router.mjs --video=<slug> --scenes=S01 --issue-file=path/to/bug.txt
 //        node scripts/07-codegen.hf.router.mjs --video=<slug> --scenes=S06 --no-root-sync
+//        node scripts/07-codegen.hf.router.mjs --video=<slug> --scenes=S06 --review-only   (dùng lại .gen-tmp đã PASS verify, chỉ review — sau mã thoát 2)
 import fs from "node:fs";
 import path from "node:path";
 import { execSync } from "node:child_process";
-import { callModel, extractText, loadModelRouting, appendRunLog } from "./lib/router-client.mjs";
+import { callModel, extractText, loadModelRouting, appendRunLog, callWithModelFallback } from "./lib/router-client.mjs";
 import { getVideoSlug, videoPaths } from "./lib/video-paths.mjs";
 import { syncRootHf, standaloneToSubComposition } from "./lib/sync-root-hf-lib.mjs";
 import { getCaptionZoneArg } from "./lib/caption-zone.mjs";
-import { HF_VERSION, runHyperframesCheck, findRootLayoutFlags, summarizeCheckRaw } from "./lib/hf-check.mjs";
+import { HF_VERSION, runHyperframesCheck, findRootLayoutFlags, formatCheckFeedback } from "./lib/hf-check.mjs";
+import { buildTextColorRules, buildSafeColorClasses } from "./lib/palette-contrast.mjs";
+import { autofixVideoTiming, autofixContrast, injectIntoFirstStyle } from "./lib/hf-autofix.mjs";
 
 const root = process.cwd();
 const routing = loadModelRouting();
 const GEN_MODEL = routing.reasoning_generator;
+// Generator dự phòng (quyết định người dùng 2026-09-26, cùng cơ chế đã áp cho reviewer): hết hạn
+// mức/lỗi mạng → chuyển NGAY sang model này, không tự thử lại model đang bị khoá. Đặt trong script
+// (không phải hướng dẫn cho Claude điều phối) để mọi session/agent áp dụng đồng nhất.
+const GEN_MODEL_FALLBACK = routing.reasoning_generator_fallback;
+let genModelUsed = null; // model THỰC SỰ đã sinh code (chính hoặc dự phòng) — ghi vào run-log
 const REVIEW_MODEL = routing.reasoning_reviewer;
+// Reviewer dự phòng (quyết định người dùng 2026-09-26): model chính lỗi hạ tầng (hết hạn mức/mạng) →
+// chuyển NGAY sang model này thay vì thử đi thử lại model đang bị khoá (callWithModelFallback).
+const REVIEW_MODEL_FALLBACK = routing.reasoning_reviewer_fallback;
+let reviewModelUsed = null; // model THỰC SỰ đã trả verdict (chính hoặc dự phòng) — ghi vào run-log
 const MAX_ATTEMPTS = 3;
-// Ngân sách RIÊNG cho review() khi bị timeout mạng — tách khỏi MAX_ATTEMPTS chính (P1.4(a)): nếu
-// generate()+verify() đã qua tốt và chỉ review() timeout, thử lại NGAY review() với cùng `files`,
-// không gọi lại generate() từ đầu (tốn oan 1 attempt chính). Tối đa 2 LẦN GỌI review() trong ngân
-// sách này (1 lần đầu + 1 lần thử lại) — hết ngân sách vẫn lỗi thì rơi về hành vi cũ (throw ra catch
-// ngoài, tính vào MAX_ATTEMPTS chính) làm lưới an toàn.
-const MAX_REVIEW_RETRIES = 2;
+// Lỗi HẠ TẦNG khi gọi generator/reviewer (403 hết hạn mức, 429, 5xx, timeout) KHÔNG tiêu MAX_ATTEMPTS:
+// callWithModelFallback() (router-client.mjs) chuyển ngay sang model dự phòng, cả 2 cùng lỗi mới chờ
+// đúng "reset after Ns" rồi thử lại cả chuỗi. Bài học thật 2026-09-26: bản cũ retry review NGAY (vẫn
+// dính 403) rồi coi cả lần thử là hỏng → vứt code đã PASS verify, sinh lại từ đầu; ban-an-425-phan-1
+// mất 97/186 lần thử vì vậy. Hết ngân sách hạ tầng mà verify đã PASS →
+// thoát mã 2, giữ .gen-tmp, chạy lại bằng --review-only (không gọi generator).
+const EXIT_REVIEW_UNAVAILABLE = 2;
+const reviewOnly = process.argv.includes("--review-only");
 
 const slug = getVideoSlug();
 const vp = videoPaths(slug);
@@ -182,6 +196,9 @@ const skillFiles = [
   ".agents/skills/hyperframes-core/references/data-attributes.md",
   ".agents/skills/hyperframes-core/references/determinism-rules.md",
   ".agents/skills/hyperframes-core/references/tracks-and-clips.md",
+  // Quy tắc đặt <video> (video_nested_in_timed_element / data-start) — thiếu file này, model hay lồng
+  // video trong section shot có data-start rồi kẹt giữa 2 lỗi lint (xem VIDEO_RULE_HF bên dưới).
+  ".agents/skills/hyperframes-core/references/variables-and-media.md",
   ".agents/skills/hyperframes-animation/SKILL.md",
   ".agents/skills/hyperframes-animation/adapters/gsap.md",
   ".agents/skills/hyperframes-animation/adapters/gsap-timeline-and-labels.md",
@@ -192,6 +209,17 @@ const skillFiles = [
 const skillDocs = skillFiles.map((f) => `### ${f}\n\n${read(f)}`).join("\n\n---\n\n");
 const styleTokens = read("planning/style-dna/style-tokens.json");
 const styleDnaCore = read("planning/style-dna/STYLE_DNA.md");
+const styleTokensObj = JSON.parse(styleTokens);
+// Bảng cặp màu chữ/nền + bộ class màu an toàn — TÍNH TẤT ĐỊNH từ style-tokens.json (palette đổi thì tự
+// đổi theo). Lý do (đo 2026-09-26): contrast là lỗi verify #1, đúng các cặp palette không bao giờ đạt AA
+// (cam/giấy 2.24, cam/card 2.52, kem/cam 2.61) — câu cấm chung chung có từ 21/09 không đủ.
+const TEXT_COLOR_RULES_HF = buildTextColorRules(styleTokensObj);
+const SAFE_COLORS = buildSafeColorClasses(styleTokensObj);
+
+// Lỗi lint phổ biến nhất ở lần thử đầu (~45% lần thử 1 fail do lint, chủ yếu media_missing_data_start)
+// — khi lint lỗi, check BỎ QUA toàn bộ kiểm tra trình duyệt nên lỗi contrast/che chữ chỉ lộ ở lần sau.
+// Chỉ mô tả THUỘC TÍNH bắt buộc của thẻ <video>, không phải bố cục mẫu (người dùng không muốn scene mẫu).
+const VIDEO_RULE_HF = `- VIDEO (<video>) — CẤU TRÚC BẮT BUỘC: thẻ <video> KHÔNG được nằm trong bất kỳ phần tử nào có data-start (kể cả <section>/<div class="clip"> của shot) — lồng vào → lint lỗi video_nested_in_timed_element; ngược lại thiếu data-start trên chính <video> → lint lỗi media_missing_data_start. Đặt <video> là con trực tiếp của #root (hoặc trong wrapper KHÔNG có data-start — dùng wrapper này nếu cần zoom/pan, không animate kích thước chính thẻ video), với đủ thuộc tính: id, src="assets/<file>", muted, playsinline, data-start (giây tính từ đầu scene = (shot.startMs - scene.startMs)/1000), data-duration (độ dài shot, giây), data-media-start (= trimStartSec nếu có). KHÔNG class="clip" trên <video>. Chữ/thẻ overlay của shot đặt trong phần tử RIÊNG có data-start/data-duration của shot, z-index cao hơn video.`;
 
 // KNOWN_GOTCHAS_HF — NGUYÊN VĂN nội dung đã kiểm chứng ở poc/hyperframes/codegen-poc.mjs
 // (composition ĐỘC LẬP, không nhắc gì tới sub-composition/<template> — đó là chuyện của bước
@@ -211,7 +239,9 @@ const KNOWN_GOTCHAS_HF = `QUY TẮC BẮT BUỘC CỦA COMPOSITION CONTRACT (rú
 - FONT "Be Vietnam Pro" (weight 700/900): KHÔNG dùng @font-face với local(...) hay trỏ tới file .ttf không có sẵn trong assets/ (sẽ gây lỗi 404 runtime — không tất định, "hyperframes check" sẽ bắt lỗi này). BẮT BUỘC nạp qua Google Fonts CDN bằng đúng 1 thẻ trong <head>: <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap">, rồi dùng font-family: "Be Vietnam Pro", sans-serif trực tiếp trong CSS — không cần @font-face thủ công.
 - Một số TÊN FILE ảnh có chữ "cutout" (vd img-08-extortion-money-demand-cutout.jpeg) — đó chỉ là mô tả phong cách minh hoạ đã có sẵn TRONG chính ảnh AI tạo ra, KHÔNG phải chỉ định phải code thêm xử lý cutout. Dùng ảnh này y như file ảnh thường (nền toàn khung, giữ nguyên màu), không thêm filter grayscale/tách nền/đổ bóng trong code.
 - TUYỆT ĐỐI không dùng biến template literal (vd \`\${compId}\`, \`\${sceneId}\`) bên trong querySelector/CSS selector ở thẻ <script> — trình bundler HTML của HyperFrames parse CSS/selector bằng static analysis và CRASH khi gặp biến nội suy. Luôn hardcode chuỗi cố định (vd document.querySelector('[data-composition-id="main"]'), không phải \`[data-composition-id="\${id}"]\`).
-- Mọi cặp màu chữ/nền PHẢI đạt tối thiểu WCAG AA (tỉ lệ tương phản ≥3:1, ưu tiên ≥4.5:1 cho chữ thường) — "hyperframes check" chấm điểm contrast thật và FAIL cứng nếu không đạt. Không dùng chữ màu cam/vàng nhạt trên nền be/kem sáng (cặp màu tương phản thấp thường gặp) — nếu STYLE_DNA/style-tokens có sẵn cặp màu đã kiểm chứng đạt tương phản, ưu tiên dùng nguyên cặp đó thay vì tự phối màu mới.
+- ${TEXT_COLOR_RULES_HF}
+- CLASS MÀU AN TOÀN ĐÃ CÓ SẴN (script tự chèn vào <style>, KHÔNG cần tự định nghĩa, dùng tuỳ ý cho phần tử chữ — vẫn tự do bố cục/kích thước/animation): ${SAFE_COLORS.doc}.
+${VIDEO_RULE_HF}
 - TUYỆT ĐỐI không dùng giá trị GSAP tương đối (vd y: "+=6") trên 1 thuộc tính nếu có tween khác cũng ghi cùng thuộc tính đó trên cùng phần tử ở khoảng thời gian gần nhau — "hyperframes check" bắt lỗi \`gsap_relative_value_second_writer\` (giá trị tương đối chốt mốc gốc lúc tween khởi tạo, seek tuần tự vs. worker render lẻ frame sẽ ra 2 kết quả khác nhau). Luôn dùng giá trị tuyệt đối cho y/x/scale/rotation, hoặc fromTo() với endpoint tường minh.
 - Kiểm tra kỹ mọi text/chữ KHÔNG bị phần tử khác đè lên (che khuất) tại bất kỳ mốc thời gian nào trong lúc nó đang hiển thị — "hyperframes check" bắt lỗi \`text_occluded\` (chữ bị ẩn dưới 1 phần tử opaque). Nếu che khuất là CÓ CHỦ ĐÍCH (transition, reveal), dùng data-layout-allow-occlusion trên đúng phần tử; nếu không, đổi z-index/vị trí để chữ luôn đọc được khi đang trong khung thời gian hiển thị của nó.
 - TUYỆT ĐỐI không tạo NHIỀU phần tử timed (data-start khác nhau) cùng chứa/render TRÙNG LẶP cùng 1 nội dung text (vd hiệu ứng "label/punch-phrase xuất hiện" bị vô tình lặp lại thành 2-3 bản sao với data-start lệch nhau vài trăm ms đến ~1.3s thay vì đúng 1 bản duy nhất) — "hyperframes check" bắt lỗi \`content_overlap\` (2 khối text đè lên nhau tại cùng vị trí, chữ bị lem không đọc được). Mỗi label/punch-phrase/overlay chỉ được có ĐÚNG 1 phần tử/1 timeline hiển thị nó; nếu cần hiệu ứng xuất hiện theo từng từ, dùng 1 cấu trúc timeline duy nhất kiểm soát opacity/transform của từng span con, không tạo nhiều bản sao độc lập của cùng khối text.`;
@@ -234,14 +264,15 @@ ${styleDnaCore}
 STYLE TOKENS (số liệu chính xác, độc lập framework):
 ${styleTokens}
 
-${KNOWN_GOTCHAS_HF}
-
 DỰ ÁN HIỆN TẠI:
 - Project HyperFrames đã scaffold sẵn (portrait 1080x1920), file "index.html" hiện là blank template mặc định — bạn sẽ THAY THẾ TOÀN BỘ nội dung index.html bằng composition thật cho scene này.
 - Đây là 1 composition ĐỘC LẬP (không phải sub-composition, không có <template>) — chỉ cần đúng 1 composition-id "main", duration = tổng thời lượng scene (tính bằng giây từ startMs/endMs của SHOTLIST bên dưới, chia 1000).
 - Ảnh/video nguồn đã có sẵn trong thư mục "assets/" của project (xem MEDIA bên dưới để biết đúng tên file) — dùng thẳng đường dẫn tương đối "assets/<file>".
 - Dịch lại đúng tinh thần SHOTLIST bên dưới (từng shot có assetTreatment/cameraMotion/overlays/transitionIn/notes chi tiết) bằng ngôn ngữ GSAP/HTML tự nhiên của HyperFrames — KHÔNG cần dịch máy móc từng animation của bản Remotion đối chứng (bạn không thấy code Remotion đó), chỉ cần đúng Ý ĐỒ biên tập mô tả trong shotlist.
-- Video (assetTreatment có trimStartSec/trimEndSec) dùng thẻ <video muted> với thuộc tính tương ứng.
+- Video (assetTreatment có trimStartSec/trimEndSec) dùng thẻ <video> theo đúng CẤU TRÚC BẮT BUỘC ở mục VIDEO bên dưới.
+
+HỢP ĐỒNG RIÊNG CỦA REPO (đặt CUỐI để không bị chìm giữa ~30k token tài liệu chung — vi phạm các quy tắc này là nguyên nhân verify FAIL phổ biến nhất đã đo được; chúng KHÔNG giới hạn sáng tạo bố cục/animation, chỉ là ràng buộc kỹ thuật):
+${KNOWN_GOTCHAS_HF}
 
 ${
   feedback
@@ -284,15 +315,26 @@ function parseFiles(text) {
 async function generate(feedback, previousFiles) {
   const { systemPrompt, userPrompt } = buildPrompt(feedback, previousFiles);
   console.log(`Gọi ${GEN_MODEL} để sinh composition HyperFrames cho scene: ${sceneId}${feedback ? " (retry)" : ""}...`);
-  const response = await callModel({
-    model: GEN_MODEL,
-    messages: [
-      { role: "system", content: systemPrompt },
-      { role: "user", content: userPrompt },
-    ],
-    temperature: 0.3,
-    maxTokens: 16000,
-  });
+  const { response, model } = await callWithModelFallback(
+    [GEN_MODEL, GEN_MODEL_FALLBACK],
+    (m) =>
+      callModel({
+        model: m,
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt },
+        ],
+        temperature: 0.3,
+        maxTokens: 16000,
+      }),
+    {
+      label: "generator",
+      onInfraError: (e, m, round) =>
+        appendCodegenIssue([{ stage: "generate-infra-error", detail: `${m} vòng ${round}: ${String(e.message ?? e).slice(0, 500)}` }]),
+    },
+  );
+  if (model !== GEN_MODEL) console.log(`  (sinh bằng model DỰ PHÒNG ${model})`);
+  genModelUsed = model;
   const text = extractText(response);
   const files = parseFiles(text);
   if (Object.keys(files).length === 0) {
@@ -311,6 +353,31 @@ function appendCodegenIssue(entries) {
     JSON.stringify({ ts, video: slug, scene: sceneId, attempt, framework: "hyperframes", ...e }),
   );
   fs.appendFileSync(logPath, lines.join("\n") + "\n", "utf8");
+}
+
+// Ghi MỌI lỗi hạ tầng vào codegen-issues.jsonl — trước đây chỉ in console nên audit không thấy (lỗ
+// đen: hàng trăm lần thử mất mà không có dòng verify/review nào được ghi).
+function logInfraError(stage, model) {
+  return (e, tryNo) => appendCodegenIssue([{ stage, detail: `${model} lần ${tryNo}: ${String(e.message ?? e).slice(0, 500)}` }]);
+}
+
+/** Bước tất định TRƯỚC check: (1) chèn bộ class màu an toàn vào khối <style> đầu tiên (idempotent);
+ * (2) sửa cấu trúc <video> khi chắc chắn (hf-autofix.mjs). Trả files mới (đã ghi đĩa nếu có đổi). */
+function applyPreCheckAutofix(files) {
+  let html = files["index.html"];
+  if (!html) return files;
+  if (!html.includes("hf-safe-colors")) html = injectIntoFirstStyle(html, SAFE_COLORS.css) ?? html;
+  const vf = autofixVideoTiming(html, { scene: scenes[0], shots, mediaById });
+  if (vf.changes.length) {
+    console.log(`Autofix <video> (tất định): ${vf.changes.join("; ")}`);
+    appendCodegenIssue([{ stage: "autofix-video", detail: vf.changes.join("\n").slice(0, 2000) }]);
+    html = vf.html;
+  }
+  if (vf.skipped.length) console.log(`(autofix <video> bỏ qua: ${vf.skipped.join("; ")})`);
+  if (html === files["index.html"]) return files;
+  const out = { ...files, "index.html": html };
+  writeFiles(out);
+  return out;
 }
 
 function writeFiles(files) {
@@ -362,15 +429,26 @@ LƯU Ý VỀ TÊN FILE ASSET: một số file ảnh có chữ "cutout" trong TÊ
     .map(([p, c]) => `### ${p}\n\`\`\`html\n${c}\n\`\`\``)
     .join("\n\n");
   const userPrompt = `SHOTLIST liên quan:\n${JSON.stringify(shots, null, 2)}\n\nCODE VỪA SINH:\n${filesText}`;
-  const response = await callModel({
-    model: REVIEW_MODEL,
-    messages: [
-      { role: "system", content: systemPrompt },
-      { role: "user", content: userPrompt },
-    ],
-    temperature: 0.2,
-    maxTokens: 2000,
-  });
+  const { response, model } = await callWithModelFallback(
+    [REVIEW_MODEL, REVIEW_MODEL_FALLBACK],
+    (m) =>
+      callModel({
+        model: m,
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt },
+        ],
+        temperature: 0.2,
+        maxTokens: 2000,
+      }),
+    {
+      label: "reviewer",
+      onInfraError: (e, m, round) =>
+        appendCodegenIssue([{ stage: "review-infra-error", detail: `${m} vòng ${round}: ${String(e.message ?? e).slice(0, 500)}` }]),
+    },
+  );
+  if (model !== REVIEW_MODEL) console.log(`  (review bằng model DỰ PHÒNG ${model})`);
+  reviewModelUsed = model;
   return extractText(response);
 }
 
@@ -389,37 +467,84 @@ let previousFiles = seededIssue && fs.existsSync(path.join(tempProjectDir, "inde
   : null;
 let finalFiles = null;
 let finalVerdict = null;
+// Code đã PASS verify gần nhất — giữ lại khi reviewer/generator lỗi hạ tầng hết ngân sách (không vứt).
+let verifyPassedFiles = null;
+let infraFailure = null; // { stage: "generate" | "review", message }
+
+// --review-only: dùng lại index.html đang có trong .gen-tmp (thường là bản đã PASS verify nhưng
+// reviewer lỗi hạ tầng ở lần chạy trước, mã thoát 2) — verify lại + review, không gọi generator. Nếu
+// verify lại FAIL thì tiếp tục vòng sửa bình thường với feedback.
+const tmpIndexPath = path.join(tempProjectDir, "index.html");
+if (reviewOnly && !fs.existsSync(tmpIndexPath)) {
+  console.error(`--review-only nhưng không có ${tmpIndexPath} — chạy lại không có cờ này.`);
+  process.exit(1);
+}
+let reuseFiles = reviewOnly ? { "index.html": fs.readFileSync(tmpIndexPath, "utf8") } : null;
 
 while (attempt < MAX_ATTEMPTS) {
   attempt++;
   console.log(`\n=== Attempt ${attempt}/${MAX_ATTEMPTS} ===`);
   try {
-    const files = await generate(feedback, previousFiles);
-    writeFiles(files);
+    let files;
+    if (reuseFiles) {
+      files = reuseFiles;
+      reuseFiles = null;
+      console.log("(--review-only) dùng lại index.html trong .gen-tmp, không gọi generator.");
+    } else {
+      try {
+        files = await generate(feedback, previousFiles);
+      } catch (e) {
+        if (e.infraExhausted) {
+          infraFailure = { stage: "generate", message: String(e.message ?? e) };
+          console.log(`Lỗi khi gọi 9router — generator không khả dụng sau khi đã chờ/thử lại: ${e.message || e}`);
+          break;
+        }
+        throw e;
+      }
+      writeFiles(files);
+    }
+    files = applyPreCheckAutofix(files);
     previousFiles = files;
 
-    const v = verify(files);
+    let v = verify(files);
+    if (!v.passed && !v.infraError) {
+      // Tự sửa contrast tất định (1 lượt) — chỉ khi MỌI lỗi còn lại là contrast xác định chắc chắn phần
+      // tử; thay 1 vòng generate LLM bằng 1 lần check lại. Xem hf-autofix.mjs.
+      const cf = autofixContrast(files["index.html"], v.raw, { sceneId, tokens: styleTokensObj });
+      if (cf.applied) {
+        console.log(`Autofix contrast (tất định): ${cf.changes.join("; ")} — check lại...`);
+        appendCodegenIssue([{ stage: "autofix-contrast", detail: cf.changes.join("\n").slice(0, 2000) }]);
+        files = { ...files, "index.html": cf.html };
+        writeFiles(files);
+        previousFiles = files;
+        v = verify(files);
+      } else {
+        console.log(`(autofix contrast không áp dụng: ${cf.reason})`);
+      }
+    }
     if (!v.passed) {
-      console.log("Verify (hyperframes check) FAILED:\n" + summarizeCheckRaw(v.raw, 2000));
-      appendCodegenIssue([{ stage: v.infraError ? "verify-infra-error" : "verify-hf-check", detail: summarizeCheckRaw(v.raw, 2000) }]);
-      feedback = "hyperframes check FAILED:\n" + summarizeCheckRaw(v.raw, 4000);
+      // formatCheckFeedback: chỉ lỗi làm FAIL, gộp theo nguyên nhân (phần tử che / cặp màu), giữ
+      // text/fg/bg/suggestedColor/phần tử che — bản cũ (summarizeCheckRaw) bỏ mất các field này và in
+      // lặp mỗi mốc thời gian, model phải đoán cách sửa (đo 2026-09-26: 34% dòng lỗi là lặp).
+      console.log("Verify (hyperframes check) FAILED:\n" + formatCheckFeedback(v.raw, 3000));
+      appendCodegenIssue([{ stage: v.infraError ? "verify-infra-error" : "verify-hf-check", detail: formatCheckFeedback(v.raw, 3000) }]);
+      feedback = "hyperframes check FAILED:\n" + formatCheckFeedback(v.raw, 5000);
       continue;
     }
     console.log("Verify (hyperframes check) PASS.");
+    verifyPassedFiles = files;
 
-    // review() network-retry RIÊNG — KHÔNG tốn oan generate()+verify() đã qua nếu chỉ review()
-    // timeout mạng. Hết ngân sách riêng (MAX_REVIEW_RETRIES lần gọi) vẫn lỗi -> throw ra catch
-    // ngoài, rơi về đúng hành vi CŨ (tính vào MAX_ATTEMPTS chính) làm lưới an toàn, tránh vòng lặp
-    // không thoát được nếu 9router lỗi liên tục.
     let reviewText;
-    for (let reviewAttempt = 1; ; reviewAttempt++) {
-      try {
-        reviewText = await review(files);
+    try {
+      reviewText = await review(files);
+    } catch (e) {
+      if (e.infraExhausted) {
+        // KHÔNG sinh lại: code đã PASS verify vẫn nằm nguyên trong .gen-tmp để --review-only dùng lại.
+        infraFailure = { stage: "review", message: String(e.message ?? e) };
+        console.log(`Lỗi khi gọi 9router — reviewer không khả dụng sau khi đã chờ/thử lại: ${e.message || e}`);
         break;
-      } catch (e) {
-        console.log(`Lỗi khi gọi reviewer (sẽ thử lại ${reviewAttempt}/${MAX_REVIEW_RETRIES}): ${e.message || e}`);
-        if (reviewAttempt >= MAX_REVIEW_RETRIES) throw e;
       }
+      throw e;
     }
     console.log("Review result:\n" + reviewText);
     finalFiles = files;
@@ -431,7 +556,9 @@ while (attempt < MAX_ATTEMPTS) {
     appendCodegenIssue([{ stage: "review", detail: reviewText.slice(0, 2000) }]);
     feedback = "Reviewer FAIL:\n" + reviewText;
   } catch (e) {
+    // Lỗi KHÔNG phải hạ tầng (vd không parse được output generator) — giữ hành vi cũ: tính 1 lần thử.
     console.log(`Lỗi khi gọi 9router (sẽ thử lại): ${e.message || e}`);
+    appendCodegenIssue([{ stage: "attempt-error", detail: String(e.message ?? e).slice(0, 1000) }]);
   }
 }
 
@@ -452,13 +579,23 @@ if (passed) {
   }
 }
 
+const failReason = infraFailure
+  ? infraFailure.stage === "review" && verifyPassedFiles
+    ? `verify PASS nhưng reviewer ${REVIEW_MODEL} + dự phòng ${REVIEW_MODEL_FALLBACK} đều KHÔNG KHẢ DỤNG (lỗi hạ tầng sau khi đã chờ/thử lại: ${infraFailure.message.slice(0, 300)}) — chạy lại bằng --review-only, không cần sinh lại code.`
+    : `${infraFailure.stage === "generate" ? `generator ${GEN_MODEL} + dự phòng ${GEN_MODEL_FALLBACK}` : `reviewer ${REVIEW_MODEL} + dự phòng ${REVIEW_MODEL_FALLBACK}`} KHÔNG KHẢ DỤNG (lỗi hạ tầng sau khi đã chờ/thử lại: ${infraFailure.message.slice(0, 300)}).`
+  : finalVerdict
+    ? `Verdict cuối:\n${finalVerdict}`
+    : verifyPassedFiles
+      ? "verify đã PASS nhưng chưa có verdict review hợp lệ."
+      : "(chưa qua được verify)";
 const summary = passed
-  ? `Codegen HyperFrames scene [${sceneId}] PASS sau ${attempt} lần thử bằng ${GEN_MODEL} (review: ${REVIEW_MODEL}) — đã chuyển đổi thành compositions/scene-${sceneId.toLowerCase()}.html.`
-  : `Codegen HyperFrames scene [${sceneId}] KHÔNG đạt sau ${attempt} lần thử — cần Claude can thiệp. Verdict cuối:\n${finalVerdict ?? "(chưa qua được verify)"}\nProject standalone tạm còn giữ tại: ${tempProjectDir}`;
+  ? `Codegen HyperFrames scene [${sceneId}] PASS sau ${attempt} lần thử bằng ${genModelUsed ?? GEN_MODEL}${genModelUsed && genModelUsed !== GEN_MODEL ? " — DỰ PHÒNG" : ""} (review: ${reviewModelUsed ?? REVIEW_MODEL}${reviewModelUsed && reviewModelUsed !== REVIEW_MODEL ? " — DỰ PHÒNG" : ""})${reviewOnly ? " [--review-only]" : ""} — đã chuyển đổi thành compositions/scene-${sceneId.toLowerCase()}.html.`
+  : `Codegen HyperFrames scene [${sceneId}] KHÔNG đạt sau ${attempt} lần thử — cần Claude can thiệp. ${failReason}\nProject standalone tạm còn giữ tại: ${tempProjectDir}`;
 
 console.log("\n" + summary);
 appendRunLog(`\`scripts/07-codegen.hf.router.mjs --video=${slug} --scenes=${sceneId}\` — ${summary}`, vp.runLog);
 
 if (!passed) {
-  process.exit(1);
+  // Mã 2 = verify PASS nhưng reviewer không khả dụng → 07-codegen-hf-parallel.mjs tự chạy --review-only.
+  process.exit(infraFailure?.stage === "review" && verifyPassedFiles ? EXIT_REVIEW_UNAVAILABLE : 1);
 }
