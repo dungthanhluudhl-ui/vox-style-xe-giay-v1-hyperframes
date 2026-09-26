@@ -17,9 +17,11 @@ kế hoạch) — tranh tài nguyên làm sai số đo thời gian và làm ch�
 
 ## TIẾN ĐỘ (cập nhật 2026-09-26)
 
-- **Phase 1 — XONG bước 1–2, còn bước 3.** 7b sample 3 mốc/shot (`buildShotSampleArgs()`), timeout tăng
-  theo số mốc. Bắt lại đúng lỗi cũ hinh-phat (27 error S01/S03/S16/S18), 0 báo nhầm trên 4 video tốt.
-  CÒN: đo thời gian 7b cũ vs mới trên hinh-phat khi máy rảnh (đo có tải: 180 mốc = 155s).
+- **Phase 1 — XONG cả 3 bước.** 7b sample 3 mốc/shot (`buildShotSampleArgs()`), timeout tăng theo số
+  mốc. Bắt lại đúng lỗi cũ hinh-phat (27 error S01/S03/S16/S18), 0 báo nhầm trên 4 video tốt. Bước 3
+  (đo thời gian máy rảnh) đã xong: cũ 72,3s (10 mốc, lọt hết lỗi) vs mới 153,8s (181 mốc, bắt đúng 27
+  lỗi) — chi tiết + quét lỗi toàn bộ 17 video đã giao: `planning/incident-log.md` mục "Đo thời gian 7b
+  + quét lỗi mọi video đã giao".
 - **Phase 2 — XONG, mở rộng theo yêu cầu người dùng** (audit toàn bộ lỗi lặp lại Stage 7, không chỉ
   contrast): nguyên nhân #1 là lỗi hạ tầng (vứt code đã PASS khi reviewer 403), rồi lint `<video>` và
   contrast palette. Đã áp: dự phòng model TỰ ĐỘNG cho generator (`cx/gpt-5.6-terra`) + reviewer

@@ -390,7 +390,7 @@ production — chỉ giữ tham khảo lịch sử.
 |---|---|---|---|---|---|
 | `ag/gemini-3.1-pro-low` + `ag/claude-sonnet-4-6` | 0/3 ❌ | 9 | 424K | 1052s | — (loại) |
 | `cx/gpt-5.6-sol` + `cx/gpt-5.6-sol-review` (cũ) | 3/3 | 6 | 205K | 1325s | 6.00 |
-| **`ag/gemini-3.8-flash-high` + `ag/claude-sonnet-4-6` (MỚI, mặc định)** | 3/3 | 6 | 322K | 509s (2.6x nhanh hơn) | **6.33** |
+| **`ag/gemini-3.8-flash-high` + `ag/claude-sonnet-4-6` (MỚI lúc đó, 2026-09-22)** | 3/3 | 6 | 322K | 509s (2.6x nhanh hơn) | **6.33** |
 | `ag/gemini-3.8-flash-high` + `ag/gemini-3.8-flash-high` (tự chấm điểm mình) | 3/3 | 7 | 370K | 581s (2.3x nhanh hơn) | 6.00 |
 | `ag/gemini-3.8-flash-high` + `ag/gpt-oss-120b-medium` | 3/3 | 5 (ít nhất) | 254K | 438s (3x nhanh hơn) | 6.00 |
 
