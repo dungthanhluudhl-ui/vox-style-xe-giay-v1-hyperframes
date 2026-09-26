@@ -27,10 +27,16 @@ kế hoạch) — tranh tài nguyên làm sai số đo thời gian và làm ch�
   bảng màu + class an toàn từ style-tokens, feedback đầy đủ. A/B 48 lượt: PASS lần 1 7% → 25%, lỗi
   `<video>` 6 → 0, creativity chấm mù không đổi. Chi tiết: `planning/incident-log.md` mục "Audit + POC
   giảm lỗi lặp lại Stage 7". Người dùng TỪ CHỐI khung scene sẵn + scene mẫu trong prompt (giữ sáng tạo).
-- **Phase 3 — CHƯA LÀM.** Reviewer nay là `cx/gpt-5.6-luna-review` (đổi vì Sonnet hết hạn mức, chưa POC).
-  A/B cho thấy reviewer FAIL giờ là nút thắt chính sau khi verify bớt lỗi (v2: 20 review FAIL/31 lần
-  review) — phần lớn lý do hợp lý (hold duration sai, lệch shotlist) nhưng có chi tiết vụn.
-- **Phase 4 — CHƯA LÀM.**
+- **Phase 3 — XONG.** Audit: sau khi sửa Stage 6 + cổng BLOCKING/ADVISORY, reviewer `luna` phần lớn BLOCKING
+  còn lại là vi phạm THẬT (rule "không xử lý màu bằng code"), không phải báo nhầm. `terra` xác nhận CHẤT
+  LƯỢNG KÉM khi làm generator chính (thua 6/8 chấm mù) — giữ nguyên vai trò dự phòng hạ tầng, không đổi
+  generator mặc định. Có 1 chính sách hạ cấp BLOCKING bổ sung đã viết + unit-test 11/11 đúng nhưng CHƯA
+  được A/B sống xác nhận (0 lần kích hoạt trong lượt chạy) — người dùng cần quyết định có áp không. Chi
+  tiết: `planning/incident-log.md` mục "Phase 3 (audit reviewer) + Phase 4 (fast capture)".
+- **Phase 4 — XONG (kết luận: không theo hướng này).** Đo thật: fast capture bị chặn bởi nhiều gate độc
+  lập, 1 gate (GSAP `rotationY` 3D-flip) không có cờ ghi đè, và 1 gate khác trúng `drop-shadow` — đặc
+  trưng cốt lõi Style DNA. Cấm CSS 3D/mix-blend trong prompt không đủ và đánh đổi sáng tạo/style thật.
+  Không cần POC thêm. Chi tiết: incident-log mục trên.
 
 ## Số liệu nền (đo thật 2026-09-26 — dùng làm baseline so sánh)
 

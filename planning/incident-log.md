@@ -756,3 +756,85 @@ khung chụp từ bản standalone dựng ngược THIẾU thẻ GSAP (sub-compo
 chứng chất lượng giảm nhưng KHÔNG đủ để khẳng định "bằng nhau" như đã ghi. Bài học: khi dựng lại standalone từ
 sub-composition để chụp/check, phải thêm script GSAP (và mọi script root hoist); xác minh khung có chuyển động
 (so kích thước/SSIM giữa các mốc) trước khi đưa vision chấm.
+
+---
+
+### Đo thời gian 7b + quét lỗi mọi video đã giao (2026-09-26)
+
+**Thời gian 7b (máy rảnh, cùng bản ráp cũ hinh-phat 437s):** tham số CŨ 10 mốc 72.3s → ok=true, 0 lỗi (lọt toàn
+bộ lỗi trống hình); tham số MỚI 181 mốc (3/shot) 153.8s → ok=false, bắt đúng 27 lỗi. Chi phí thêm ~81s cho video
+dài nhất; video 2.5 phút (ban-an-425) ~49s.
+
+**Quét bản ráp ĐÃ RENDER (index.html đang commit) của 17 video bằng tham số 7b mới:** 8 video có lỗi `text_occluded`
+— hinh-phat 27 (S01/S03/S16/S18), ban-an-473-phan-2 18 (S17/S18), ban-an-473-phan-3 8 (S09/S24), kinh-te-meo 5
+(S02/S03/S40), giai-phap 5 (S01/S06), su-kien 3 (S09), ban-an-35 1 (S21), ngan-hang 1 (S16). 9 video sạch
+(ajinomoto, ban-an-473-phan-1, ha-noi, labubu, manh-thu, tien-viet-nam, vua-chuot + nvidia, ban-an-425 đã ráp
+bản mới). **Đối chứng:** ráp lại 8 video lỗi bằng `syncRootHf()` bản sửa `.hf-slot` (mini-root ngoài repo) rồi
+check cùng tham số → CẢ 8 về 0 lỗi. Kết luận: toàn bộ 68 lỗi là bug CSS `.clip` của bản ráp cũ (xem mục
+"ĐÃ SỬA TẬN GỐC" đầu file), KHÔNG phải lỗi scene → các file mp4 đã xuất của 8 video này đang chứa lỗi chữ/hình bị
+che; chỉ cần `node scripts/09-render.hf.mjs --video=<slug>` (tự ráp lại + 7b theo shot) là hết. Giới hạn: check
+chỉ bắt CHỮ bị che — 9 video "sạch" vẫn có thể có hình minh hoạ bị che (kiểm bằng `qa-blank-frame-audit.mjs`).
+
+---
+
+### Phase 3 (audit reviewer) + Phase 4 (fast capture) — 2026-09-26
+
+**Phase 3 — audit `cx/gpt-5.6-luna-review` sau khi sửa Stage 6 + cổng BLOCKING/ADVISORY:**
+A/B 3 nhánh × 8 scene thật × 2 lần lặp (`poc/hyperframes/ab-harness/`, đúng script 07 production) — `cur`
+(codebase hiện tại), `demote` (thêm hạ cấp tất định các BLOCKING thuộc loại holdMs/transition/
+data-layout-allow/hoa-thường/đổi màu nội-palette xuống ADVISORY, có HARD_RE chặn không hạ cấp nếu có từ
+khoá vi phạm contract/màu/nội dung), `terra` (generator đổi hẳn sang `cx/gpt-5.6-terra`).
+
+| | cur | demote | terra |
+|---|---|---|---|
+| PASS lần 1 | 44% | 81% | 7% |
+| Fail hẳn | 0% | 0% | 7% |
+| review FAIL | 7 | 3 | 5 |
+| fallback generator dùng | 1 | 0 | — |
+
+**Đọc 7 BLOCKING của `cur`:** phần lớn là vi phạm THẬT quy tắc "không xử lý màu ảnh/video bằng code" (filter
+grayscale/contrast/brightness, vignette overlay) — đúng nhiệm vụ reviewer, không phải báo nhầm; 1 lỗi nội
+dung thật (punch-phrase sai chữ); 2 lần lệch treatment nền "spotlight tối" (tranh cãi được, nhưng đúng
+hướng — shotlist có phân biệt rõ biến thể nền). Kết luận: sau khi sửa Stage 6 + cổng BLOCKING/ADVISORY,
+reviewer `luna` đã làm ĐÚNG việc của nó ở phần lớn trường hợp còn lại.
+
+**Cảnh báo về `demote` — KHÔNG được xác nhận qua A/B này:** `grep "hạ cấp tự động"` trên toàn bộ log của
+nhánh `demote` = 0 lần kích hoạt trong suốt 16 lần review. Nghĩa là số liệu PASS-lần-1 81% tốt hơn của
+`demote` KHÔNG PHẢI do chính sách hạ cấp gây ra — rất có thể chỉ là nhiễu giữa các lượt sinh (đã biết:
+cùng 1 codebase, `ban-an-425` lượt 1 vs lượt 2 PASS-lần-1 khác nhau rõ dù không đổi gì). Cơ chế
+`demoteAdvisoryItems()`/`HARD_RE` ĐÃ được kiểm chứng đúng 11/11 trên 11 câu BLOCKING thật lấy từ lịch sử
+(không phải A/B sống) — xem `poc/hyperframes/ab-harness` (chưa copy code này vào repo, đang ở
+`scripts/lib/review-gate.mjs` bản scratchpad). Người dùng cần quyết định trước khi áp: coi kiểm chứng
+offline 11/11 là đủ, hay chờ 1 lần A/B thật sự kích hoạt được cơ chế này.
+
+**`cx/gpt-5.6-terra` (generator dự phòng) — xác nhận CHẤT LƯỢNG KÉM hơn rõ khi làm generator chính:**
+chấm mù 8 scene cùng PASS ở cả `cur`/`terra` (khung có GSAP, đảo A/B khử thiên vị): gemini thắng rõ 6/8,
+terra 2/8; điểm trung bình mọi trục thấp hơn (overall 5.30 vs 6.06). Giữ nguyên vai trò: terra CHỈ dùng khi
+gemini lỗi hạ tầng (đã có từ Bước 2), KHÔNG đề xuất làm generator chính hay `reasoning_generator_alt`.
+
+**Phase 4 — POC render nhanh (fast capture) trên `ban-an-425-phan-1`:**
+Đọc source CLI 0.8.56: capture mode "fast" (drawElementImage) bị tắt bởi NHIỀU gate ĐỘC LẬP, một số có cờ
+override (`HF_FAST_CAPTURE_3D`, `_BLEND`, `_CSSFX`, `_ANCESTOR_BG`, `_INTERVAL_SS`), một số KHÔNG (gate
+runtime "3D projection init failed" khi quad 3D chứa phần tử con đang animate — không có cách ghi đè).
+
+Đo thật trên `ban-an-425-phan-1` (18 scene, chỉ 2 scene kích hoạt gate tĩnh: S01 `mix-blend-mode`, S08 CSS
+3D `perspective`+`preserve-3d`):
+1. Bật cả 2 cờ override tĩnh (3D+BLEND) trên bản GỐC → vẫn "screenshot" (dính thêm gate runtime
+   `filter:drop-shadow`, rồi gate "32/4495 khung animate thuộc tính không tương thích compositor").
+2. XOÁ HẲN (không comment — detector là regex thô trên toàn văn bản, khớp cả trong comment, đã kiểm
+   chứng bằng thực nghiệm) 2 thuộc tính tĩnh đó trên bản sao → vẫn "screenshot": lộ ra nguyên nhân THẬT
+   của S08 không phải CSS `perspective`/`preserve-3d` tĩnh, mà GSAP tween `rotationY: -80 → 0` (hiệu ứng
+   lật 3D) — GSAP tự thêm ngữ cảnh 3D lúc chạy, dính đúng gate "3D quad contains GSAP-animated
+   descendants" — **KHÔNG CÓ CỜ GHI ĐÈ, một giới hạn kỹ thuật thật của engine**, ép flatten sẽ làm đứng
+   hình phần tử con đang animate.
+3. `filter: drop-shadow(...)` — đặc trưng "bóng đổ cutout" của chính Style DNA (`box-shadow`/`drop-shadow`
+   dùng ở hầu hết mọi scene mọi video) — cũng độc lập kích hoạt 1 gate runtime khác, cần
+   `HF_FAST_CAPTURE_CSSFX=true` mới bỏ qua được.
+
+**Kết luận (không cần POC thêm):** với style hiện tại của dự án, "cấm CSS 3D/mix-blend trong prompt" KHÔNG
+đủ để đạt fast capture — (a) hiệu ứng lật 3D bằng GSAP `rotationY` là kỹ thuật hoạt hình hợp lệ, cấm nó là
+đánh đổi sáng tạo thật (đúng lo ngại ban đầu của người dùng ở Bước 2), (b) `drop-shadow` — một đặc trưng
+CỐT LÕI của Style DNA — độc lập chặn fast capture ở hầu hết mọi scene, cấm nó = đổi style. Không đo được
+thời gian "fast capture" thật sự cho video này vì không có cách đạt capture mode đó mà không đổi thẩm mỹ.
+Đề xuất: KHÔNG theo hướng cấm thuộc tính trong prompt; nếu muốn tối ưu render tốc độ, cân nhắc hướng khác
+(vd giảm `--workers`/độ phân giải preview khi lặp, hoặc chấp nhận `screenshot` là mặc định cho style này).
