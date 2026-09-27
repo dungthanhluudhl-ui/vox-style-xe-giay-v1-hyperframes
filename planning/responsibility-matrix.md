@@ -335,16 +335,15 @@ prompt (quy tắc "không chữ cam trên nền be" có từ 21/09 vẫn là l�
   `videoHoldNote` (số giây tính sẵn). Đã đo: render HyperFrames TỰ GIỮ frame cuối khi `data-duration` dài hơn
   media (SSIM 0.985 với frame cuối file gốc) → chỉ cần đặt video dài trọn shot; cấm tự chế freeze bằng
   canvas/event video (không tất định — ban-an-425 S10).
-- **Ngược lại: đoạn trim khai báo (`trimStartSec`/`trimEndSec`) DÀI HƠN shot, kèm chỉ dẫn Stage 6 đòi
-  "retime có chủ đích"** (video `doi-dau-xe-tang-checkpoint-charlie` S10, 2026-09-27): HyperFrames KHÔNG có
-  cơ chế đổi tốc độ phát video được kiểm chứng/tài liệu hoá cho generator dùng — runtime THỰC SỰ có đọc
-  `data-playback-rate` (kẹp [0.1, 10], đọc trực tiếp `dist/hyperframe-runtime.js` để xác nhận, không đoán)
-  nhưng thuộc tính này KHÔNG nằm trong skill docs cấp cho reviewer nên dùng vẫn bị bác vì "lạ" — generator cố
-  lách bằng ghép nhiều clip nhỏ hoặc thuộc tính tự chế (`data-playback-rate="0.0001"` ngoài khoảng cho phép),
-  reviewer FAIL liên tục qua 2 vòng x 3 lần thử. Đã thêm `videoRetimeNote` (đối xứng `videoHoldNote`) trong
-  `annotateShotsForCodegen()`: khi đoạn trim dài hơn shot, chỉ dẫn generator TRIM ĐÚNG bằng độ dài shot (phát
-  phần ĐẦU đoạn trim ở tốc độ thường), cấm ghép clip/đổi tốc độ. Kiểm chứng: unit-test 3/3 case (retime/
-  trim-khớp/hold vẫn đúng, không đè lẫn nhau).
+- **Đoạn video nguồn dài hơn shot**: HyperFrames hỗ trợ `data-playback-rate` chính thức (0.1..10;
+  `.agents/skills/hyperframes-core/references/creator-editing-recipes.md`, mục Constant speed).
+  `annotateShotsForCodegen()` chỉ đề nghị tốc độ `độ dài nguồn / độ dài shot` khi shot yêu cầu retime
+  rõ ràng và tốc độ nằm trong giới hạn; nếu không, phát ở tốc độ thường và lấy phần đầu nguồn.
+  Sự cố `doi-dau-xe-tang-checkpoint-charlie` S10 trước đây do chỉ dẫn sai rằng không có tính năng
+  này; bản shotlist S10 đã chỉnh cho video cũ vẫn được giữ nguyên.
+- **Vùng an toàn phụ đề**: `style-tokens.json` giữ vị trí phụ đề ở bottom=374px nhưng dành vùng
+  nội dung scene tới y=1390 (safeZone.bottom=530px), thay cho y=1529. `caption-zone.mjs` tính
+  ngưỡng từ cùng file token; phần chân trang ở y≈1490-1518 của S03 cũ nằm trong vùng cấm mới.
 - **Kiểm tra asset TẤT ĐỊNH** (`checkAssetUsage()`, chạy sau verify, trước reviewer): file của `assetId` mỗi
   shot phải có trong code. Reviewer KHÔNG nhìn thấy ảnh → cấm đoán "sai asset" từ tên file (báo nhầm thật ở
   S08 khiến generator đổi tên file → `missing_local_asset`).

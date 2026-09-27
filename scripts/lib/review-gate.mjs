@@ -27,13 +27,9 @@ function availableVideoSec(shot, media) {
  *   `videoHoldNote`. Đo thật 2026-09-26: render HyperFrames 0.8.56 TỰ GIỮ frame cuối khi data-duration dài
  *   hơn media (SSIM 0.985 với frame cuối file gốc, khác hẳn khung trống 0.37) — generator từng tự chế freeze
  *   bằng canvas/drawImage/event video (không tất định) và bị reviewer chặn đúng (ban-an-425 S10).
- * - NGƯỢC LẠI: shot dùng VIDEO có đoạn trim (`trimStartSec`/`trimEndSec`) DÀI HƠN thời lượng shot →
- *   `videoRetimeNote`. Gặp thật ở scene S10 doi-dau-xe-tang-checkpoint-charlie (2026-09-27, Stage 6 ghi
- *   `trimStartSec:0, trimEndSec:8` cho shot chỉ dài 5.77s, kèm chỉ dẫn "retime có chủ đích") — HyperFrames
- *   KHÔNG có cơ chế đổi tốc độ phát video được tài liệu hoá/kiểm chứng cho generator dùng (runtime có
- *   `data-playback-rate` thật nhưng KHÔNG nằm trong skill docs cấp cho reviewer → dùng vẫn bị bác vì "lạ"),
- *   khiến generator cố lách bằng cách không tất định (ghép nhiều clip nhỏ, thuộc tính tự chế) — FAIL nhiều
- *   lần liền. Annotate để generator KHÔNG thử retime ngay từ đầu, chỉ trim đúng bằng độ dài shot. */
+ * - Shot VIDEO có đoạn nguồn dài hơn shot và yêu cầu retime rõ ràng: hướng dẫn dùng `data-playback-rate`
+ *   chính thức (0.1..10; creator-editing-recipes.md mục Constant speed). Nếu không yêu cầu retime,
+ *   giữ tốc độ thường và chỉ phát phần đầu đủ thời lượng shot. */
 export function annotateShotsForCodegen(shots, mediaById) {
   return shots.map((s) => {
     const media = mediaById[s.assetId];
@@ -46,7 +42,13 @@ export function annotateShotsForCodegen(shots, mediaById) {
         out.videoHoldNote = `Shot dài ${dur.toFixed(2)}s nhưng đoạn video có sẵn chỉ ${avail.toFixed(2)}s. Đặt data-duration của <video> = ${dur.toFixed(2)} (trọn shot): HyperFrames TỰ GIỮ frame cuối trong ${(dur - avail).toFixed(2)}s còn lại khi render (đã kiểm chứng). TUYỆT ĐỐI KHÔNG tự viết cơ chế freeze/giữ frame bằng canvas, drawImage, poster hay event video (loadeddata/seeked/timeupdate) — không tất định khi render. Muốn nhấn phần giữ frame thì chỉ zoom/pan wrapper KHÔNG có data-start.`;
       } else if (avail !== null && avail > dur + 0.05) {
         const trimStart = Number.isFinite(s.trimStartSec) ? s.trimStartSec : 0;
-        out.videoRetimeNote = `Đoạn trim khai báo (trimStartSec=${trimStart.toFixed(2)}, trimEndSec=${(trimStart + avail).toFixed(2)}) dài ${avail.toFixed(2)}s nhưng shot chỉ dài ${dur.toFixed(2)}s — KHÔNG có cơ chế đổi tốc độ phát (retime/playback-rate) nào được kiểm chứng dùng được cho generator. Đặt data-media-start=${trimStart.toFixed(2)}, data-duration=${dur.toFixed(2)} (tức chỉ phát ${dur.toFixed(2)}s ĐẦU của đoạn trim, tốc độ phát BÌNH THƯỜNG) — KHÔNG ghép nhiều thẻ <video>, KHÔNG dùng thuộc tính đổi tốc độ nào. Chấp nhận không thấy hết toàn bộ đoạn trim đã khai báo.`;
+        const treatment = s.assetTreatment ?? "";
+        const requestedRetime = /retime|đổi tốc độ|phát nhanh|tua nhanh|phát chậm|slow.motion|speed.up/i.test(treatment)
+          && !/không (?:cần |được |dùng )?(?:retime|đổi tốc độ|phát nhanh|phát chậm)|tốc độ (?:phát )?bình thường/i.test(treatment);
+        const rate = avail / dur;
+        out.videoRetimeNote = requestedRetime && rate >= 0.1 && rate <= 10
+          ? `Đoạn nguồn ${avail.toFixed(2)}s cần phát trong shot ${dur.toFixed(2)}s: đặt data-media-start=${trimStart.toFixed(2)}, data-duration=${dur.toFixed(2)}, data-playback-rate=${rate.toFixed(4)} trên cùng thẻ <video> (0.1..10, tính năng chính thức trong creator-editing-recipes.md mục Constant speed). Không ghép nhiều thẻ video để giả lập tốc độ.`
+          : `Đoạn nguồn dài ${avail.toFixed(2)}s nhưng shot chỉ dài ${dur.toFixed(2)}s${requestedRetime ? " (tốc độ cần dùng nằm ngoài khoảng 0.1..10)" : " và shot không yêu cầu đổi tốc độ"}: đặt data-media-start=${trimStart.toFixed(2)}, data-duration=${dur.toFixed(2)} ở tốc độ thường; chỉ phát phần đầu của đoạn nguồn. Không tự ghép clip để giả lập tốc độ.`;
       }
     }
     return out;
@@ -89,6 +91,7 @@ ADVISORY (góp ý, KHÔNG chặn):
 KHÔNG yêu cầu xử lý màu/grayscale/bóng cam cho ẢNH dù assetTreatment có mô tả (xem assetTreatmentNote trong shotlist nếu có).
 Bạn KHÔNG nhìn thấy ảnh/video, chỉ thấy tên file — KHÔNG kết luận "dùng sai asset"/"ảnh không đúng nội dung" dựa vào TÊN FILE hay đoán nội dung ảnh. Việc dùng đúng file của assetId được SCRIPT kiểm tra tất định riêng.
 Shot có videoHoldNote: video chỉ cần data-duration trọn shot (HyperFrames tự giữ frame cuối) — KHÔNG đòi cơ chế freeze riêng; nếu code tự viết freeze bằng canvas/drawImage/event video thì đó là lỗi CHẶN (không tất định).
+Shot có videoRetimeNote yêu cầu đổi tốc độ: data-playback-rate trong khoảng 0.1..10 là tính năng HyperFrames chính thức (hyperframes-core/references/creator-editing-recipes.md mục Constant speed); không coi là lỗi hay thuộc tính tự chế.
 VERDICT = FAIL khi và chỉ khi BLOCKING có ít nhất 1 mục.`;
 
 function section(text, name) {

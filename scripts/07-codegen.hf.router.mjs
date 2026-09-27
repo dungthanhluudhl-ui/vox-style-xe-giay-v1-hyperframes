@@ -225,7 +225,7 @@ const PALETTE_HEXES = new Set(Object.values(styleTokensObj.colors ?? {}).filter(
 // Lỗi lint phổ biến nhất ở lần thử đầu (~45% lần thử 1 fail do lint, chủ yếu media_missing_data_start)
 // — khi lint lỗi, check BỎ QUA toàn bộ kiểm tra trình duyệt nên lỗi contrast/che chữ chỉ lộ ở lần sau.
 // Chỉ mô tả THUỘC TÍNH bắt buộc của thẻ <video>, không phải bố cục mẫu (người dùng không muốn scene mẫu).
-const VIDEO_RULE_HF = `- VIDEO (<video>) — CẤU TRÚC BẮT BUỘC: thẻ <video> KHÔNG được nằm trong bất kỳ phần tử nào có data-start (kể cả <section>/<div class="clip"> của shot) — lồng vào → lint lỗi video_nested_in_timed_element; ngược lại thiếu data-start trên chính <video> → lint lỗi media_missing_data_start. Đặt <video> là con trực tiếp của #root (hoặc trong wrapper KHÔNG có data-start — dùng wrapper này nếu cần zoom/pan, không animate kích thước chính thẻ video), với đủ thuộc tính: id, src="assets/<file>", muted, playsinline, data-start (giây tính từ đầu scene = (shot.startMs - scene.startMs)/1000), data-duration (độ dài shot, giây), data-media-start (= trimStartSec nếu có). KHÔNG class="clip" trên <video>. Chữ/thẻ overlay của shot đặt trong phần tử RIÊNG có data-start/data-duration của shot, z-index cao hơn video.`;
+const VIDEO_RULE_HF = `- VIDEO (<video>) — CẤU TRÚC BẮT BUỘC: thẻ <video> KHÔNG được nằm trong bất kỳ phần tử nào có data-start (kể cả <section>/<div class="clip"> của shot) — lồng vào → lint lỗi video_nested_in_timed_element; ngược lại thiếu data-start trên chính <video> → lint lỗi media_missing_data_start. Đặt <video> là con trực tiếp của #root (hoặc trong wrapper KHÔNG có data-start — dùng wrapper này nếu cần zoom/pan, không animate kích thước chính thẻ video), với đủ thuộc tính: id, src="assets/<file>", muted, playsinline, data-start (giây tính từ đầu scene = (shot.startMs - scene.startMs)/1000), data-duration (độ dài shot, giây), data-media-start (= trimStartSec nếu có). Khi shot có videoRetimeNote yêu cầu retime, dùng data-playback-rate (0.1..10) theo đúng ghi chú; đây là thuộc tính HyperFrames chính thức (hyperframes-core/references/creator-editing-recipes.md mục Constant speed), không phải thuộc tính tự chế. KHÔNG class="clip" trên <video>. Chữ/thẻ overlay của shot đặt trong phần tử RIÊNG có data-start/data-duration của shot, z-index cao hơn video.`;
 
 // KNOWN_GOTCHAS_HF — NGUYÊN VĂN nội dung đã kiểm chứng ở poc/hyperframes/codegen-poc.mjs
 // (composition ĐỘC LẬP, không nhắc gì tới sub-composition/<template> — đó là chuyện của bước
@@ -460,8 +460,9 @@ LƯU Ý VỀ TÊN FILE ASSET: một số file ảnh có chữ "cutout" trong TÊ
 }
 
 const issueFileArg = process.argv.find((a) => a.startsWith("--issue-file="));
+const issueFilePath = issueFileArg?.slice("--issue-file=".length);
 const seededIssue = issueFileArg
-  ? fs.readFileSync(issueFileArg.split("=").slice(1).join("="), "utf8")
+  ? fs.readFileSync(issueFilePath, "utf8")
   : null;
 
 let attempt = 0;
@@ -621,7 +622,7 @@ const summary = passed
   : `Codegen HyperFrames scene [${sceneId}] KHÔNG đạt sau ${attempt} lần thử — cần Claude can thiệp. ${failReason}\nProject standalone tạm còn giữ tại: ${tempProjectDir}`;
 
 console.log("\n" + summary);
-appendRunLog(`\`scripts/07-codegen.hf.router.mjs --video=${slug} --scenes=${sceneId}\` — ${summary}`, vp.runLog);
+appendRunLog(`\`scripts/07-codegen.hf.router.mjs --video=${slug} --scenes=${sceneId}${issueFilePath ? ` --issue-file=${issueFilePath}` : ""}${reviewOnly ? " --review-only" : ""}\` — ${summary}`, vp.runLog);
 
 if (!passed) {
   // Mã 2 = verify PASS nhưng reviewer không khả dụng → 07-codegen-hf-parallel.mjs tự chạy --review-only.

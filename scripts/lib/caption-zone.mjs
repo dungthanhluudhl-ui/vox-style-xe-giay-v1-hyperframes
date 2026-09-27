@@ -4,16 +4,13 @@
 // Dùng 2 field KHÁC NHAU có chủ đích (không phải nhầm lẫn/copy sai):
 // - x0/x1: caption.position.left/right (60/60px) — toạ độ THẬT của .caption-page trong
 //   scripts/lib/generate-caption-track-hf.mjs, khung chứa caption thật sự render.
-// - y0: safeZone.bottom (391px, sau khi hạ vị trí caption 15% — xem planning/videos... run-log), KHÔNG
+// - y0: safeZone.bottom (530px), KHÔNG
 //   dùng caption.position.bottom (374px) dù tên field nghe hợp lý hơn. Lý do: caption.position.bottom
 //   chỉ là offset của MÉP DƯỚI khung caption (khung cao theo nội dung, CSS `top: auto`, không có
 //   chiều cao cố định) — không tự nó cho biết vùng cấm cần cao bao nhiêu để chứa caption 2-3 dòng.
-//   `safeZone.bottom` (391) mới là "chiều cao vùng đáy phải chừa trống" đã dùng THẬT ở chỗ khác trong
-//   cùng file: `heroSizing.usableBandY = [160, 1529]`, và 1920 - 1529 = 391 khớp CHÍNH XÁC
-//   `safeZone.bottom` (không khớp caption.position.bottom=374) — xác nhận đây là hợp đồng "content
-//   không đặt dưới y=1529" đã có sẵn trong pipeline, dùng lại đúng số này cho --caption-zone thay vì
-//   bịa số riêng hoặc đoán chiều cao text từ font-size. Cả 2 số cùng tính tự động từ style-tokens.json
-//   — đổi vị trí caption lần sau chỉ cần sửa đúng 1 file đó, không cần sửa file này.
+//   `safeZone.bottom` là chiều cao vùng đáy phải chừa trống: y0 = 1920 - 530 = 1390.
+//   `caption.position.bottom` vẫn là 374px; thay vùng cấm không làm phụ đề dịch vị trí.
+//   Prompt và checker phải đọc cùng style-tokens.json, không hardcode lại ngưỡng y.
 import fs from "node:fs";
 import path from "node:path";
 
