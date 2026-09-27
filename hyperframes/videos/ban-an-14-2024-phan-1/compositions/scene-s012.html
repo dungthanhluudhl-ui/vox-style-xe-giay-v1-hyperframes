@@ -1,0 +1,534 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+      /* hf-safe-colors (tất định từ style-tokens.json) */
+      .hf-text-ink { color: #141414; }
+      .hf-text-light { color: #F7F4EC; }
+      .hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+      .hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+      .hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+      .hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+        background: #E7E3D9;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+
+      /* Quy ước clip full frame chuẩn HyperFrames */
+      .clip {
+        position: absolute;
+        inset: 0;
+      }
+
+      /* Nền Chart: 4 đường kẻ ngang kỹ thuật + vạch cam mép trái */
+      .chart-bg {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+      }
+
+      .chart-line {
+        position: absolute;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: rgba(20, 20, 20, 0.22);
+      }
+
+      .chart-line::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: -4px;
+        width: 16px;
+        height: 10px;
+        background: #FF6A1A;
+      }
+
+      /* Thanh cam nhận diện thương hiệu cố định sát đáy */
+      #bottom-brand-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 12px;
+        background: #FF6A1A;
+        z-index: 100;
+      }
+
+      /* Header khu vực trên (trong safe zone) */
+      .header-zone {
+        position: absolute;
+        top: 210px;
+        left: 60px;
+        right: 60px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+      }
+
+      .category-tag {
+        display: inline-block;
+        background: #FF6A1A;
+        color: #141414;
+        font-size: 22px;
+        font-weight: 900;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        padding: 8px 22px;
+        border: 3px solid #141414;
+        box-shadow: 4px 4px 0px #141414;
+      }
+
+      .main-title {
+        margin-top: 18px;
+        font-size: 64px;
+        font-weight: 900;
+        line-height: 1.25;
+        color: #141414;
+        text-transform: uppercase;
+        letter-spacing: -0.02em;
+      }
+
+      /* Khu vực đồ thị 2 chén rượu */
+      .diagram-stage {
+        position: absolute;
+        top: 450px;
+        left: 60px;
+        right: 60px;
+        height: 720px;
+        background: #F5F0E4;
+        border: 4px solid #141414;
+        box-shadow: 8px 8px 0px #141414;
+        display: flex;
+        justify-content: space-between;
+        padding: 40px 30px;
+      }
+
+      /* Thước đo đo lường bên trái */
+      .gauge-axis {
+        position: absolute;
+        left: 20px;
+        top: 120px;
+        bottom: 75px;
+        width: 86px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        border-right: 2px dashed rgba(20, 20, 20, 0.4);
+      }
+
+      .gauge-row {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        width: 100%;
+        height: 24px;
+      }
+
+      .gauge-tick {
+        display: inline-block;
+        font-size: 15px;
+        font-weight: 900;
+        color: #141414;
+        line-height: 1.2;
+        margin-right: 8px;
+        white-space: nowrap;
+      }
+
+      .tick-mark {
+        display: inline-block;
+        width: 8px;
+        height: 2px;
+        background: #141414;
+        margin-right: -2px;
+      }
+
+      /* Hai cột hiển thị chén rượu */
+      .cup-column {
+        width: 340px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        position: relative;
+        z-index: 2;
+      }
+
+      .cup-column.left {
+        margin-left: 60px;
+      }
+
+      .cup-label {
+        font-size: 26px;
+        font-weight: 900;
+        color: #141414;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 20px;
+      }
+
+      /* Mô hình Chén Rượu Kỹ Thuật */
+      .glass-container {
+        position: relative;
+        width: 200px;
+        height: 310px;
+        display: flex;
+        justify-content: center;
+      }
+
+      .glass-svg {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        overflow: visible;
+      }
+
+      .glass-outline {
+        fill: none;
+        stroke: #141414;
+        stroke-width: 6;
+        stroke-linejoin: round;
+        stroke-linecap: round;
+      }
+
+      .glass-base {
+        fill: #141414;
+      }
+
+      /* Chất lỏng trong chén */
+      .liquid-layer {
+        position: absolute;
+        bottom: 20px;
+        width: 154px;
+        background: #FF6A1A;
+        border-top: 4px solid #141414;
+        transform-origin: bottom center;
+      }
+
+      .liquid-layer.empty {
+        height: 6px;
+        background: #141414;
+        border-top: none;
+      }
+
+      .liquid-layer.remain {
+        height: 75px; /* ~25% thể tích chén */
+      }
+
+      /* Con số phần trăm hiển thị */
+      .percent-callout {
+        margin-top: 16px;
+        font-size: 52px;
+        font-weight: 900;
+        color: #141414;
+        line-height: 1;
+      }
+
+      /* Badge trạng thái shotlist */
+      .status-badge {
+        margin-top: 18px;
+        background: #141414;
+        color: #F7F4EC;
+        font-size: 22px;
+        font-weight: 900;
+        padding: 10px 18px;
+        border-radius: 6px;
+        white-space: nowrap;
+        box-shadow: 4px 4px 0px rgba(20, 20, 20, 0.4);
+        border: 2px solid #141414;
+        text-align: center;
+      }
+
+      .status-badge.remain-badge {
+        background: #141414;
+        color: #FF6A1A;
+      }
+
+      /* Icon scale (cân so sánh ở giữa) */
+      .scale-center-zone {
+        position: absolute;
+        left: calc(50% - 80px);
+        top: 160px;
+        width: 160px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        z-index: 5;
+        transform-origin: center center;
+      }
+
+      .scale-svg {
+        width: 130px;
+        height: 130px;
+        overflow: visible;
+      }
+
+      .scale-beam {
+        transform-origin: 65px 42px;
+      }
+
+      .disparity-tag {
+        margin-top: 8px;
+        background: #141414;
+        color: #FF6A1A;
+        font-size: 16px;
+        font-weight: 900;
+        padding: 4px 10px;
+        border-radius: 4px;
+        letter-spacing: 0.08em;
+      }
+
+      /* Footer Banner: được đặt tại bottom: 580px hoàn toàn né vùng caption band */
+      #footer-banner {
+        position: absolute;
+        bottom: 580px;
+        left: 60px;
+        right: 60px;
+        background: #FF6A1A;
+        border: 4px solid #141414;
+        box-shadow: 6px 6px 0px #141414;
+        padding: 20px 24px;
+        text-align: center;
+        z-index: 20;
+      }
+
+      .footer-text {
+        font-size: 32px;
+        font-weight: 900;
+        line-height: 1.3;
+        color: #141414;
+        text-transform: uppercase;
+        letter-spacing: 0.02em;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s012"
+      data-start="0"
+      data-width="1080"
+      data-height="1920"
+      data-duration="6.1"
+    >
+      <!-- Shot S012-1 (Toàn cảnh đối chiếu thể tích chén rượu) -->
+      <section id="scene-s012" class="clip" data-start="0" data-duration="6.1">
+        <!-- Nền Chart kẻ ngang -->
+        <div class="chart-bg">
+          <div class="chart-line" style="top: 380px;"></div>
+          <div class="chart-line" style="top: 760px;"></div>
+          <div class="chart-line" style="top: 1140px;"></div>
+          <div class="chart-line" style="top: 1480px;"></div>
+        </div>
+
+        <!-- Header -->
+        <div class="header-zone" id="header-group">
+          <span class="category-tag">ĐỐI CHIẾU THỰC TẾ</span>
+          <h1 class="main-title">MỰC RƯỢU HAI CHÉN</h1>
+        </div>
+
+        <!-- Khung Diagram / Biểu đồ đo thể tích -->
+        <div class="diagram-stage" id="diagram-container">
+          <!-- Trục đo độ cao -->
+          <div class="gauge-axis" id="gauge-ruler" data-layout-allow-overflow="true">
+            <div class="gauge-row">
+              <span class="gauge-tick">100%</span>
+              <span class="tick-mark"></span>
+            </div>
+            <div class="gauge-row">
+              <span class="gauge-tick">75%</span>
+              <span class="tick-mark"></span>
+            </div>
+            <div class="gauge-row">
+              <span class="gauge-tick">50%</span>
+              <span class="tick-mark"></span>
+            </div>
+            <div class="gauge-row">
+              <span class="gauge-tick">25%</span>
+              <span class="tick-mark"></span>
+            </div>
+            <div class="gauge-row">
+              <span class="gauge-tick">0%</span>
+              <span class="tick-mark"></span>
+            </div>
+          </div>
+
+          <!-- Cột chén Anh Th 1 (Cạn veo) -->
+          <div class="cup-column left" id="cup-th1">
+            <div class="cup-label">CHÉN ANH TH 1</div>
+            <div class="glass-container">
+              <div class="liquid-layer empty"></div>
+              <svg class="glass-svg" viewBox="0 0 200 310">
+                <ellipse cx="100" cy="30" rx="80" ry="16" class="glass-outline" />
+                <path d="M 20 30 L 45 280 L 155 280 L 180 30" class="glass-outline" />
+                <rect x="40" y="280" width="120" height="18" class="glass-base" rx="4" />
+              </svg>
+            </div>
+            <div class="percent-callout" id="percent-th1">0%</div>
+            <!-- Overlay Label 1: Chén Th 1 cạn veo -->
+            <div class="status-badge" id="badge-th1">CHÉN TH 1: CẠN VEO</div>
+          </div>
+
+          <!-- Icon scale (Cân so sánh thể tích chênh lệch ở giữa) -->
+          <div class="scale-center-zone" id="scale-zone">
+            <svg class="scale-svg" viewBox="0 0 130 130">
+              <!-- Đế và trụ đứng của cân -->
+              <rect x="62" y="38" width="6" height="74" fill="#141414" />
+              <rect x="42" y="112" width="46" height="8" fill="#141414" rx="2" />
+              <!-- Cần cân nghiêng và đĩa cân -->
+              <g id="scale-beam-group" class="scale-beam">
+                <line x1="16" y1="42" x2="114" y2="42" stroke="#141414" stroke-width="5" stroke-linecap="round" />
+                <!-- Đĩa trái (Th 1 nhẹ nâng lên) -->
+                <line x1="24" y1="42" x2="16" y2="72" stroke="#141414" stroke-width="2.5" />
+                <line x1="24" y1="42" x2="32" y2="72" stroke="#141414" stroke-width="2.5" />
+                <path d="M 12 72 Q 24 82 36 72 Z" fill="#FF6A1A" stroke="#141414" stroke-width="2.5" />
+                <!-- Đĩa phải (H còn rượu chìm xuống) -->
+                <line x1="106" y1="42" x2="98" y2="72" stroke="#141414" stroke-width="2.5" />
+                <line x1="106" y1="42" x2="114" y2="72" stroke="#141414" stroke-width="2.5" />
+                <path d="M 94 72 Q 106 82 118 72 Z" fill="#141414" stroke="#141414" stroke-width="2.5" />
+              </g>
+            </svg>
+            <div class="disparity-tag" id="disparity-label">LỆCH NHAU</div>
+          </div>
+
+          <!-- Cột chén Ông H (Còn thừa) -->
+          <div class="cup-column right" id="cup-h">
+            <div class="cup-label">CHÉN ÔNG H</div>
+            <div class="glass-container">
+              <div class="liquid-layer remain" id="liquid-h"></div>
+              <svg class="glass-svg" viewBox="0 0 200 310">
+                <ellipse cx="100" cy="30" rx="80" ry="16" class="glass-outline" />
+                <path d="M 20 30 L 45 280 L 155 280 L 180 30" class="glass-outline" />
+                <rect x="40" y="280" width="120" height="18" class="glass-base" rx="4" />
+              </svg>
+            </div>
+            <div class="percent-callout" id="percent-h">~25%</div>
+            <!-- Overlay Label 2: Chén H còn thừa -->
+            <div class="status-badge remain-badge" id="badge-h">CHÉN H: CÒN THỪA</div>
+          </div>
+        </div>
+
+        <!-- Banner kết luận nghịch lý: Đặt tại bottom: 580px hoàn toàn né vùng caption band -->
+        <div id="footer-banner">
+          <div class="footer-text">BẤT BÌNH KHỞI NGUỒN TRANH CÃI</div>
+        </div>
+
+        <!-- Thanh cam đáy cố định -->
+        <div id="bottom-brand-bar"></div>
+      </section>
+    </div>
+
+    <script>
+      // Khởi tạo GSAP Timeline chính xác theo hợp đồng HyperFrames
+      const tl = gsap.timeline({ paused: true });
+
+      // 1. Giai đoạn 0.0s - 0.6s: Punch entrance dứt khoát toàn bộ bố cục cảnh
+      tl.fromTo(
+        "#header-group",
+        { y: -30, opacity: 0, scale: 0.95 },
+        { y: 0, opacity: 1, scale: 1, duration: 0.5, ease: "power4.out" },
+        0.1
+      );
+
+      tl.fromTo(
+        "#diagram-container",
+        { scale: 0.94, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.55, ease: "power3.out" },
+        0.25
+      );
+
+      // 2. Giai đoạn 0.5s - 1.2s: Dựng đường nét và mực chất lỏng của 2 ly
+      tl.fromTo(
+        "#cup-th1",
+        { opacity: 0, y: 20 },
+        { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" },
+        0.5
+      );
+
+      tl.fromTo(
+        "#cup-h",
+        { opacity: 0, y: 20 },
+        { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" },
+        0.6
+      );
+
+      tl.fromTo(
+        "#liquid-h",
+        { scaleY: 0 },
+        { scaleY: 1, duration: 0.6, ease: "power3.out" },
+        0.8
+      );
+
+      // 3. Giai đoạn 1.45s: Overlay Label 1 - "CHÉN TH 1: CẠN VEO" (tương ứng 75110ms)
+      tl.fromTo(
+        "#badge-th1",
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.4, ease: "power3.out" },
+        1.45
+      );
+
+      // 4. Giai đoạn 3.2s: Overlay Icon scale - Cân so sánh nghiêng bất bình (tương ứng 76860ms)
+      tl.fromTo(
+        "#scale-zone",
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.4, ease: "power3.out" },
+        3.2
+      );
+
+      tl.fromTo(
+        "#scale-beam-group",
+        { rotation: 0 },
+        { rotation: 12, duration: 0.5, ease: "power2.out" },
+        3.4
+      );
+
+      // 5. Giai đoạn 4.1s: Overlay Label 2 - "CHÉN H: CÒN THỪA" (tương ứng 77760ms)
+      tl.fromTo(
+        "#badge-h",
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.4, ease: "power3.out" },
+        4.1
+      );
+
+      // 6. Giai đoạn 4.7s: Banner kết luận bất bình xuất hiện dứt khoát tại bottom: 580px
+      tl.fromTo(
+        "#footer-banner",
+        { y: 35, opacity: 0, scale: 0.96 },
+        { y: 0, opacity: 1, scale: 1, duration: 0.45, ease: "power4.out" },
+        4.7
+      );
+
+      // Đăng ký timeline duy nhất cho HyperFrames seek
+      window.__timelines["scene-s012"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

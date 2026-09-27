@@ -1,0 +1,589 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+/* hf-safe-colors (tất định từ style-tokens.json) */
+.hf-text-ink { color: #141414; }
+.hf-text-light { color: #F7F4EC; }
+.hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+.hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+.hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+.hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      margin: 0;
+      background: #0B0F14;
+      color: #141414;
+      font-family: "Be Vietnam Pro", sans-serif;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    #root {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #E7E3D9;
+    }
+
+    /* Core clip layout contract */
+    .clip {
+      position: absolute;
+      inset: 0;
+    }
+
+    /* Background: Grid 84px + Spotlight vignette */
+    .bg-grid {
+      position: absolute;
+      inset: 0;
+      background-image: 
+        linear-gradient(rgba(20, 20, 20, 0.22) 1.5px, transparent 1.5px),
+        linear-gradient(90deg, rgba(20, 20, 20, 0.22) 1.5px, transparent 1.5px);
+      background-size: 84px 84px;
+      opacity: 0.85;
+      pointer-events: none;
+    }
+
+    .bg-spotlight {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 50% 52%, rgba(231, 227, 217, 0.1) 20%, rgba(20, 20, 20, 0.42) 100%);
+      pointer-events: none;
+    }
+
+    /* Scene content wrapper for animations without tweening .clip directly */
+    #scene-content {
+      position: absolute;
+      inset: 0;
+      will-change: transform;
+    }
+
+    /* Top Badge - Safe Zone Y: 180px */
+    .header-badge {
+      position: absolute;
+      top: 180px;
+      left: 80px;
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 24px;
+      background-color: #141414;
+      border: 2px solid #FF6A1A;
+      box-shadow: 4px 4px 0px #FF6A1A;
+      border-radius: 6px;
+    }
+
+    .header-badge-dot {
+      width: 12px;
+      height: 12px;
+      background-color: #FF6A1A;
+      border-radius: 50%;
+    }
+
+    .header-badge-text {
+      color: #F7F4EC;
+      font-size: 24px;
+      font-weight: 900;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    /* Card 1: Nguồn kích động (Anh Th1) - Y: 270px */
+    .card-source {
+      position: absolute;
+      top: 270px;
+      left: 80px;
+      width: 920px;
+      background-color: #F5F0E4;
+      border: 4px solid #141414;
+      box-shadow: 8px 8px 0px #141414;
+      border-radius: 14px;
+      padding: 32px 36px;
+      will-change: transform, opacity;
+    }
+
+    .card-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .tag-author {
+      font-size: 26px;
+      font-weight: 900;
+      color: #141414;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .tag-action {
+      background-color: #141414;
+      color: #FF6A1A;
+      padding: 6px 16px;
+      font-size: 20px;
+      font-weight: 700;
+      border-radius: 4px;
+      letter-spacing: 0.5px;
+    }
+
+    /* Overlay 1: Label BẮT PHẢI RÓT RƯỢU */
+    .label-pour-wine {
+      display: inline-block;
+      background-color: #FF6A1A;
+      color: #141414;
+      border: 3px solid #141414;
+      box-shadow: 5px 5px 0px #141414;
+      padding: 16px 28px;
+      font-size: 38px;
+      font-weight: 900;
+      border-radius: 8px;
+      margin-bottom: 18px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      will-change: transform, opacity;
+      transform-origin: 0% 50%;
+    }
+
+    .quote-detail {
+      font-size: 28px;
+      font-weight: 700;
+      color: #141414;
+      line-height: 1.35;
+      font-style: italic;
+    }
+
+    /* Flow connector SVG - Y: 570px to 840px */
+    .flow-connector-layer {
+      position: absolute;
+      top: 550px;
+      left: 80px;
+      width: 920px;
+      height: 290px;
+      pointer-events: none;
+    }
+
+    /* Card 2: Khối nhận & va chạm tâm lý (Ông H) - Y: 840px */
+    .card-target {
+      position: absolute;
+      top: 840px;
+      left: 80px;
+      width: 920px;
+      background-color: #141414;
+      border: 4px solid #FF6A1A;
+      box-shadow: 8px 8px 0px #FF6A1A;
+      border-radius: 14px;
+      padding: 32px 36px;
+      will-change: transform, opacity;
+    }
+
+    .card-target-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .tag-target-name {
+      font-size: 26px;
+      font-weight: 900;
+      color: #F7F4EC;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .tag-state {
+      background-color: #FF6A1A;
+      color: #141414;
+      padding: 6px 16px;
+      font-size: 20px;
+      font-weight: 900;
+      border-radius: 4px;
+    }
+
+    .target-content {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+    }
+
+    .target-info {
+      flex: 1;
+    }
+
+    .target-headline {
+      font-size: 40px;
+      font-weight: 900;
+      color: #F7F4EC;
+      line-height: 1.25;
+      margin-bottom: 12px;
+    }
+
+    .target-subtext {
+      font-size: 26px;
+      font-weight: 700;
+      color: #FF6A1A;
+      letter-spacing: 0.5px;
+    }
+
+    /* Overlay 2: Icon Warning Container */
+    .icon-warning-wrapper {
+      width: 120px;
+      height: 120px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: #FF6A1A;
+      border: 3px solid #141414;
+      border-radius: 12px;
+      box-shadow: 4px 4px 0px #141414;
+      will-change: transform, opacity;
+    }
+
+    /* Overlay 3: Punch Phrase Container - Y: 1190px */
+    .punch-wrapper {
+      position: absolute;
+      top: 1190px;
+      left: 80px;
+      width: 920px;
+      will-change: transform, opacity;
+      transform-origin: 50% 50%;
+    }
+
+    .punch-card {
+      background-color: #FF6A1A;
+      border: 5px solid #141414;
+      box-shadow: 10px 10px 0px #141414;
+      border-radius: 16px;
+      padding: 34px 28px;
+      text-align: center;
+      position: relative;
+    }
+
+    .punch-title {
+      font-size: 72px;
+      font-weight: 900;
+      line-height: 1.15;
+      color: #141414;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 12px;
+    }
+
+    .punch-sub {
+      display: inline-block;
+      background-color: #141414;
+      color: #F7F4EC;
+      padding: 10px 24px;
+      font-size: 26px;
+      font-weight: 900;
+      border-radius: 6px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+    }
+
+    /* Decorative Burst Sparks (Safe within elements) */
+    .burst-rays {
+      position: absolute;
+      inset: -40px;
+      pointer-events: none;
+    }
+
+    /* Signature bottom orange bar */
+    .bottom-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 16px;
+      background-color: #FF6A1A;
+      z-index: 100;
+    }
+  </style>
+
+  <div
+    id="root"
+    data-composition-id="scene-s013"
+    data-start="0"
+    data-width="1080"
+    data-height="1920"
+    data-duration="8.96"
+  >
+    <!-- Background textures -->
+    <div class="bg-grid"></div>
+    <div class="bg-spotlight"></div>
+
+    <!-- Main Visual Scene Clip (duration = 8.96s) -->
+    <section id="scene-s013" class="clip" data-start="0" data-duration="8.96">
+      <div id="scene-content">
+        <!-- Top Header Badge -->
+        <div id="header-badge" class="header-badge">
+          <div class="header-badge-dot"></div>
+          <div class="header-badge-text">SƠ ĐỒ VA CHẠM TÂM LÝ</div>
+        </div>
+
+        <!-- Card 1: Nguồn phát động (Anh Th1) -->
+        <div id="card-source" class="card-source">
+          <div class="card-meta">
+            <span class="tag-author">ANH TH-1 (ĐỒI BẠN)</span>
+            <span class="tag-action">TÁC NHÂN KÍCH ĐỘNG</span>
+          </div>
+
+          <!-- Overlay 1: Label "BẮT PHẢI RÓT RƯỢU" -->
+          <div id="label-pour-wine" class="label-pour-wine">
+            BẮT PHẢI RÓT RƯỢU
+          </div>
+
+          <div class="quote-detail">
+            "Không uống hết chén thì ông phải rót rượu cho tôi!"
+          </div>
+        </div>
+
+        <!-- Flow Connector SVG: Mũi tên áp lực đâm xuống -->
+        <svg class="flow-connector-layer" viewBox="0 0 920 290" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <!-- Trục đo áp lực biên trái -->
+          <line x1="80" y1="20" x2="80" y2="260" stroke="#141414" stroke-width="3" stroke-dasharray="8 8" />
+          <text x="100" y="145" fill="#141414" font-family="Be Vietnam Pro" font-size="20" font-weight="900" letter-spacing="1">ÁP LỰC ÉP BUỘC CỰC ĐẠI</text>
+
+          <!-- Tia áp lực chính giữa đâm thẳng xuống -->
+          <path
+            id="pressure-beam"
+            d="M 460 10 L 460 210"
+            stroke="#FF6A1A"
+            stroke-width="16"
+            stroke-linecap="round"
+          />
+          <polygon
+            id="pressure-arrow-head"
+            points="420,200 500,200 460,260"
+            fill="#FF6A1A"
+            stroke="#141414"
+            stroke-width="4"
+          />
+
+          <!-- Vạch va chạm bên phải -->
+          <line x1="840" y1="20" x2="840" y2="260" stroke="#141414" stroke-width="3" stroke-dasharray="8 8" />
+          <text x="740" y="145" fill="#141414" font-family="Be Vietnam Pro" font-size="20" font-weight="900" text-anchor="end" letter-spacing="1">CHẠM NỌC TỰ ÁI</text>
+        </svg>
+
+        <!-- Card 2: Đối tượng nhận áp lực (Ông H) -->
+        <div id="card-target" class="card-target">
+          <div class="card-target-meta">
+            <span class="tag-target-name">ÔNG H (NGƯỜI BỊ ÉP)</span>
+            <span class="tag-state">NGÀ NGÀ SAY</span>
+          </div>
+
+          <div class="target-content">
+            <div class="target-info">
+              <div class="target-headline">SĨ DIỆN BỊ TỔN THƯƠNG</div>
+              <div class="target-subtext">HÀNH VI MẤT KIỂM SOÁT DO MEN RƯỢU</div>
+            </div>
+
+            <!-- Overlay 2: Icon Warning -->
+            <div id="icon-warning-wrapper" class="icon-warning-wrapper">
+              <svg width="80" height="80" viewBox="0 0 100 100" fill="none">
+                <path
+                  id="warning-path"
+                  d="M 50 14 L 88 82 L 12 82 Z"
+                  stroke="#141414"
+                  stroke-width="8"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  fill="none"
+                />
+                <line
+                  id="warning-line"
+                  x1="50"
+                  y1="40"
+                  x2="50"
+                  y2="58"
+                  stroke="#141414"
+                  stroke-width="8"
+                  stroke-linecap="round"
+                />
+                <circle
+                  id="warning-dot"
+                  cx="50"
+                  cy="70"
+                  r="5"
+                  fill="#141414"
+                />
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <!-- Overlay 3: Punch Phrase Card "TỰ ÁI BÙNG NỔ" -->
+        <div id="punch-wrapper" class="punch-wrapper">
+          <!-- Tia xung kích nổ xung quanh -->
+          <svg class="burst-rays" viewBox="0 0 1000 360" fill="none" data-layout-allow-overflow="true">
+            <line class="shock-ray" x1="500" y1="180" x2="320" y2="40" stroke="#FF6A1A" stroke-width="6" stroke-linecap="round" />
+            <line class="shock-ray" x1="500" y1="180" x2="680" y2="40" stroke="#FF6A1A" stroke-width="6" stroke-linecap="round" />
+            <line class="shock-ray" x1="500" y1="180" x2="240" y2="180" stroke="#141414" stroke-width="6" stroke-linecap="round" />
+            <line class="shock-ray" x1="500" y1="180" x2="760" y2="180" stroke="#141414" stroke-width="6" stroke-linecap="round" />
+            <line class="shock-ray" x1="500" y1="180" x2="340" y2="310" stroke="#FF6A1A" stroke-width="6" stroke-linecap="round" />
+            <line class="shock-ray" x1="500" y1="180" x2="660" y2="310" stroke="#FF6A1A" stroke-width="6" stroke-linecap="round" />
+          </svg>
+
+          <div class="punch-card">
+            <h1 class="punch-title">TỰ ÁI BÙNG NỔ</h1>
+            <div class="punch-sub">CƠN THỊNH NỘ ĐÙNG ĐÙNG</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Bottom brand signature bar -->
+    <div class="bottom-bar"></div>
+  </div>
+
+  <script>
+    // 1. Chuẩn bị hiệu ứng stroke cho SVG paths
+    const pressureBeam = document.querySelector("#pressure-beam");
+    const beamLength = pressureBeam.getTotalLength();
+    pressureBeam.style.strokeDasharray = beamLength;
+    pressureBeam.style.strokeDashoffset = beamLength;
+
+    const warningPath = document.querySelector("#warning-path");
+    const warningLen = warningPath.getTotalLength();
+    warningPath.style.strokeDasharray = warningLen;
+    warningPath.style.strokeDashoffset = warningLen;
+
+    // 2. Xây dựng paused timeline duy nhất cho composition
+    const tl = gsap.timeline({ paused: true });
+
+    // --- PHASE 1: STRIKE ENTRANCE (t = 0.0s -> 1.5s) ---
+    // Hiệu ứng "strike" giáng mạnh vào màn hình
+    tl.fromTo(
+      "#scene-content",
+      { scale: 1.15, y: -50, opacity: 0 },
+      { scale: 1, y: 0, opacity: 1, duration: 0.45, ease: "power4.out" },
+      0.0
+    );
+
+    // Header badge xuất hiện
+    tl.fromTo(
+      "#header-badge",
+      { y: -30, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.35, ease: "power2.out" },
+      0.15
+    );
+
+    // Card 1 (Nguồn kích động) đáp xuống
+    tl.fromTo(
+      "#card-source",
+      { y: 40, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.4, ease: "power3.out" },
+      0.25
+    );
+
+    // --- PHASE 2: OVERLAY 1 - LABEL "BẮT PHẢI RÓT RƯỢU" & PRESSURE ARROW (t = 1.6s -> 5.5s) ---
+    // Overlay 1 tại đúng atMs = 81360ms (rel: 1.6s)
+    tl.fromTo(
+      "#label-pour-wine",
+      { scale: 0, opacity: 0 },
+      { scale: 1, opacity: 1, duration: 0.4, ease: "power3.out" },
+      1.6
+    );
+
+    // Mũi tên áp lực đâm xuống
+    tl.to(
+      "#pressure-beam",
+      { strokeDashoffset: 0, duration: 0.6, ease: "power2.inOut" },
+      1.85
+    );
+    tl.fromTo(
+      "#pressure-arrow-head",
+      { scale: 0, opacity: 0, transformOrigin: "50% 0%" },
+      { scale: 1, opacity: 1, duration: 0.3, ease: "back.out(1.5)" },
+      2.35
+    );
+
+    // Card 2 (Khối tự ái của người say) đón nhận va chạm
+    tl.fromTo(
+      "#card-target",
+      { y: 50, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.45, ease: "power3.out" },
+      2.5
+    );
+
+    // Rung nhẹ phản ứng khi mũi tên cắm vào Card 2 (dao động nhỏ ±6px, không làm lệch khỏi layout)
+    tl.to(
+      "#card-target",
+      { y: 6, duration: 0.05, yoyo: true, repeat: 3, ease: "power1.inOut" },
+      2.7
+    );
+
+    // --- PHASE 3: OVERLAY 2 - ICON WARNING (t = 5.71s -> 7.2s) ---
+    // Overlay 2 tại đúng atMs = 85470ms (rel: 5.71s)
+    tl.fromTo(
+      "#icon-warning-wrapper",
+      { scale: 0, opacity: 0, rotation: -15, transformOrigin: "50% 50%" },
+      { scale: 1, opacity: 1, rotation: 0, duration: 0.4, ease: "power3.out" },
+      5.71
+    );
+
+    // Tự vẽ nét tam giác cảnh báo
+    tl.to(
+      "#warning-path",
+      { strokeDashoffset: 0, duration: 0.4, ease: "power2.out" },
+      5.85
+    );
+    tl.fromTo(
+      ["#warning-line", "#warning-dot"],
+      { opacity: 0, scale: 0, transformOrigin: "50% 50%" },
+      { opacity: 1, scale: 1, duration: 0.25, stagger: 0.08, ease: "power2.out" },
+      6.15
+    );
+
+    // Cảnh báo nhấp nháy / rung hồi hộp trước khi bùng nổ
+    tl.to(
+      "#icon-warning-wrapper",
+      { scale: 1.08, duration: 0.12, yoyo: true, repeat: 5, ease: "sine.inOut" },
+      6.4
+    );
+
+    // --- PHASE 4: OVERLAY 3 - PUNCH PHRASE "TỰ ÁI BÙNG NỔ" (t = 7.22s -> 8.96s) ---
+    // Overlay 3 tại đúng atMs = 86980ms (rel: 7.22s)
+    tl.fromTo(
+      "#punch-wrapper",
+      { scale: 1.35, y: -40, opacity: 0 },
+      { scale: 1, y: 0, opacity: 1, duration: 0.38, ease: "power4.out" },
+      7.22
+    );
+
+    // Các tia xung kích (shock rays) bung ra
+    tl.fromTo(
+      ".shock-ray",
+      { strokeDasharray: "20 40", strokeDashoffset: 60, opacity: 0 },
+      { strokeDashoffset: 0, opacity: 1, duration: 0.35, stagger: 0.04, ease: "power2.out" },
+      7.3
+    );
+
+    // Camera thud chấn động toàn cảnh khi tự ái nổ tung
+    tl.to(
+      "#scene-content",
+      { y: 8, duration: 0.06, yoyo: true, repeat: 3, ease: "power1.inOut" },
+      7.26
+    );
+
+    // 3. Đăng ký timeline cho HyperFrames runtime
+    window.__timelines["scene-s013"] = tl;
+  </script>
+
+    </template>
+  </body>
+</html>

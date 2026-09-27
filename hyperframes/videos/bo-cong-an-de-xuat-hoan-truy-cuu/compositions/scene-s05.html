@@ -1,0 +1,530 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap"
+    />
+      <style>
+      /* hf-safe-colors (tất định từ style-tokens.json) */
+      .hf-text-ink {
+        color: #141414;
+      }
+      .hf-text-light {
+        color: #f7f4ec;
+      }
+      .hf-hl-orange {
+        color: #141414;
+        background-color: #ff6a1a;
+      }
+      .hf-plate-ink {
+        color: #f7f4ec;
+        background-color: #141414;
+      }
+      .hf-plate-ink-orange {
+        color: #ff6a1a;
+        background-color: #141414;
+      }
+      .hf-plate-paper {
+        color: #141414;
+        background-color: #f5f0e4;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #e7e3d9;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+      #root {
+        position: relative;
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+        background-color: #e7e3d9;
+      }
+
+      /* Vox Grid Background */
+      .vox-grid-bg {
+        position: absolute;
+        inset: 0;
+        background-color: #e7e3d9;
+        background-image:
+          linear-gradient(rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px),
+          linear-gradient(90deg, rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px);
+        background-size: 84px 84px;
+        background-position: -1.5px -1.5px;
+        z-index: 1;
+      }
+
+      /* Video Stage & Camera Pan Wrapper (NO data-start) */
+      #video-wrapper {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+        z-index: 2;
+      }
+      #video-stage {
+        position: absolute;
+        width: 1080px;
+        height: 1920px;
+        left: 0;
+        top: 0;
+        transform-origin: 50% 50%;
+        will-change: transform;
+      }
+      #s05-video {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      /* Overlays & Clips */
+      .clip {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+      }
+      #shot-overlays {
+        z-index: 10;
+      }
+
+      /* Punch Phrase Card (Top, Safe Zone Y: 220px) */
+      #punch-card {
+        position: absolute;
+        top: 220px;
+        left: 60px;
+        width: 960px;
+        background-color: #141414;
+        border-radius: 14px;
+        border-left: 12px solid #ff6a1a;
+        padding: 30px 36px;
+        box-shadow: 0 16px 36px rgba(0, 0, 0, 0.45);
+        transform-origin: 50% 0%;
+        will-change: transform, opacity;
+      }
+      #punch-tag {
+        display: inline-block;
+        padding: 6px 14px;
+        font-size: 20px;
+        font-weight: 900;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        border-radius: 4px;
+      }
+      #punch-title {
+        font-size: 58px;
+        font-weight: 900;
+        line-height: 1.22;
+        margin: 14px 0 6px 0;
+        color: #f7f4ec;
+        letter-spacing: -0.5px;
+      }
+      #punch-sub {
+        font-size: 24px;
+        font-weight: 700;
+        color: #e7e3d9;
+        margin: 0;
+      }
+
+      /* Flow Diagram Component (Safe Zone Y: 1120px to 1480px, well above 1529px) */
+      #flow-card {
+        position: absolute;
+        top: 1120px;
+        left: 60px;
+        width: 960px;
+        height: 360px;
+        background-color: #141414;
+        border-radius: 16px;
+        border: 4px solid #ff6a1a;
+        padding: 24px 28px;
+        box-shadow: 0 20px 48px rgba(0, 0, 0, 0.5);
+        will-change: transform, opacity;
+      }
+      .flow-header {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        margin-bottom: 20px;
+      }
+      .flow-pill {
+        display: inline-block;
+        padding: 5px 12px;
+        font-size: 18px;
+        font-weight: 900;
+        border-radius: 4px;
+        letter-spacing: 1px;
+      }
+      .flow-title {
+        font-size: 24px;
+        font-weight: 900;
+        color: #f7f4ec;
+        text-transform: uppercase;
+      }
+      .flow-body {
+        position: relative;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        height: 220px;
+      }
+
+      /* Diagram Nodes */
+      .flow-node {
+        width: 320px;
+        height: 200px;
+        background-color: #f5f0e4;
+        border-radius: 10px;
+        padding: 16px 16px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        box-shadow: 0 8px 18px rgba(0, 0, 0, 0.25);
+        will-change: transform, opacity;
+      }
+      .node-header-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-bottom: 2px solid #141414;
+        padding-bottom: 4px;
+        min-height: 48px;
+      }
+      .node-role {
+        font-size: 17px;
+        font-weight: 900;
+        color: #141414;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+      }
+      .node-name {
+        font-size: 24px;
+        font-weight: 900;
+        color: #141414;
+        line-height: 1.25;
+        margin: 6px 0;
+      }
+      .node-badge {
+        display: inline-block;
+        align-self: flex-start;
+        font-size: 17px;
+        font-weight: 900;
+        padding: 6px 12px;
+        border-radius: 4px;
+        text-align: center;
+      }
+
+      /* Flow Connector & Label Area */
+      .flow-connector {
+        position: relative;
+        width: 250px;
+        height: 200px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+      }
+      #flow-arrow-svg {
+        width: 240px;
+        height: 48px;
+      }
+      #label-badge {
+        position: absolute;
+        top: 24px;
+        padding: 8px 14px;
+        font-size: 18px;
+        font-weight: 900;
+        border-radius: 6px;
+        white-space: nowrap;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        transform-origin: 50% 50%;
+        will-change: transform, opacity;
+      }
+
+      /* Self-Drawing Ban Icon Container (Integrated cleanly in Node Header to avoid any text occlusion) */
+      #ban-icon-wrap {
+        width: 44px;
+        height: 44px;
+        background-color: #141414;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        will-change: transform, opacity;
+      }
+      #ban-svg {
+        width: 34px;
+        height: 34px;
+      }
+
+      /* Signature Brand Orange Bottom Bar */
+      #brand-bottom-bar {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 12px;
+        background-color: #ff6a1a;
+        z-index: 100;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s05"
+      data-width="1080"
+      data-height="1920"
+      data-duration="6.2"
+    >
+      <!-- Base Grid -->
+      <div class="vox-grid-bg"></div>
+
+      <!-- Video Presentation Layer (Scaled & Panned smoothly via Camera Stage) -->
+      <div id="video-wrapper">
+        <div id="video-stage" data-layout-allow-overflow>
+          <video
+            id="s05-video"
+            src="assets/vid-01-secretive-office-fraud-whisper.mp4"
+            muted
+            playsinline
+            data-start="0"
+            data-duration="6.2"
+            data-media-start="0.8"
+          ></video>
+        </div>
+      </div>
+
+      <!-- Overlays & Journalistic Badges -->
+      <section id="shot-overlays" class="clip" data-start="0" data-duration="6.2">
+        <!-- Overlay 1: Punch Phrase (0.45s) -->
+        <div id="punch-card">
+          <div id="punch-tag" class="hf-hl-orange">MÓC NGOẶC TÀI CHÍNH</div>
+          <h1 id="punch-title">THÔNG ĐỒNG BÁO CÁO</h1>
+          <p id="punch-sub">Chỉ đạo làm sai lệch chứng từ & bảng cân đối</p>
+        </div>
+
+        <!-- Visual Language: Flow / Causal Chain Diagram -->
+        <div id="flow-card">
+          <div class="flow-header">
+            <span class="flow-pill hf-hl-orange">QUY TRÌNH</span>
+            <span class="flow-title">ĐÁNH LỪA HỆ THỐNG THẨM ĐỊNH</span>
+          </div>
+
+          <div class="flow-body">
+            <!-- Node 1: Kế toán -->
+            <div id="node-source" class="flow-node">
+              <div class="node-header-row">
+                <span class="node-role">BÊN LẬP BÁO CÁO</span>
+              </div>
+              <span class="node-name">Kế Toán Nội Bộ</span>
+              <span class="node-badge hf-plate-ink">SỐ LIỆU THỰC: ÂM</span>
+            </div>
+
+            <!-- Connector Arrow & Overlay 2: Label (2.04s) -->
+            <div class="flow-connector">
+              <div id="label-badge" class="hf-hl-orange">SỐ LIỆU 'LÀM ĐẸP'</div>
+              <svg
+                id="flow-arrow-svg"
+                viewBox="0 0 240 48"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  id="flow-arrow-path"
+                  d="M 16 24 L 204 24"
+                  stroke="#FF6A1A"
+                  stroke-width="6"
+                  stroke-linecap="round"
+                />
+                <polygon
+                  id="flow-arrow-head"
+                  points="198,12 226,24 198,36"
+                  fill="#FF6A1A"
+                />
+              </svg>
+            </div>
+
+            <!-- Node 2: Ngân hàng & Overlay 3: Ban Icon (2.80s) -->
+            <div id="node-target" class="flow-node">
+              <div class="node-header-row">
+                <span class="node-role">BÊN THẨM ĐỊNH</span>
+                <!-- Cleanly integrated self-drawing ban icon in dedicated slot -->
+                <div id="ban-icon-wrap">
+                  <svg
+                    id="ban-svg"
+                    viewBox="0 0 60 60"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <circle
+                      id="ban-circle"
+                      cx="30"
+                      cy="30"
+                      r="22"
+                      stroke="#FF6A1A"
+                      stroke-width="5"
+                    />
+                    <line
+                      id="ban-slash"
+                      x1="14"
+                      y1="14"
+                      x2="46"
+                      y2="46"
+                      stroke="#FF6A1A"
+                      stroke-width="5"
+                      stroke-linecap="round"
+                    />
+                  </svg>
+                </div>
+              </div>
+              <span class="node-name">Ngân Hàng Cho Vay</span>
+              <span id="target-status" class="node-badge hf-plate-ink">
+                <span id="target-status-text">HỒ SƠ: 'RẤT ỔN'</span>
+              </span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Signature Orange Bottom Bar -->
+      <div id="brand-bottom-bar"></div>
+    </div>
+
+    <script>
+      // 1. Measured SVG Geometry for Self-Drawing Paths
+      const arrowPath = document.getElementById("flow-arrow-path");
+      const arrowLen = arrowPath.getTotalLength();
+      arrowPath.style.strokeDasharray = arrowLen;
+      arrowPath.style.strokeDashoffset = arrowLen;
+
+      const banCircle = document.getElementById("ban-circle");
+      const circleLen = banCircle.getTotalLength();
+      banCircle.style.strokeDasharray = circleLen;
+      banCircle.style.strokeDashoffset = circleLen;
+
+      const banSlash = document.getElementById("ban-slash");
+      const slashLen = banSlash.getTotalLength ? banSlash.getTotalLength() : 46;
+      banSlash.style.strokeDasharray = slashLen;
+      banSlash.style.strokeDashoffset = slashLen;
+
+      // 2. Main Timeline Construction
+      const tl = gsap.timeline({ paused: true });
+
+      // Camera motion: slow cinematic pan-right across video
+      tl.fromTo(
+        "#video-stage",
+        { x: 90, scale: 1.48 },
+        { x: -90, scale: 1.48, duration: 6.2, ease: "none" },
+        0
+      );
+
+      // Shot Transition-In: card flip entrance feel on the video presentation
+      tl.fromTo(
+        "#video-wrapper",
+        { opacity: 0.2, scale: 0.94 },
+        { opacity: 1, scale: 1, duration: 0.65, ease: "power3.out" },
+        0
+      );
+
+      // Overlay 1: Punch Phrase (34250ms -> local 0.45s)
+      tl.fromTo(
+        "#punch-card",
+        { rotationX: -90, opacity: 0 },
+        { rotationX: 0, opacity: 1, duration: 0.6, ease: "power3.out" },
+        0.45
+      );
+
+      // Flow Diagram Frame Entrance (1.50s)
+      tl.fromTo(
+        "#flow-card",
+        { y: 60, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.55, ease: "power3.out" },
+        1.5
+      );
+
+      tl.fromTo(
+        "#node-source",
+        { scale: 0.8, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.4, ease: "power3.out" },
+        1.75
+      );
+
+      tl.fromTo(
+        "#node-target",
+        { scale: 0.8, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.4, ease: "power3.out" },
+        1.9
+      );
+
+      // Overlay 2: Label "SỐ LIỆU 'LÀM ĐẸP'" & Flow Arrow (35840ms -> local 2.04s)
+      tl.to(
+        "#flow-arrow-path",
+        { strokeDashoffset: 0, duration: 0.45, ease: "power2.out" },
+        2.04
+      );
+
+      tl.fromTo(
+        "#flow-arrow-head",
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.25, ease: "power3.out" },
+        2.4
+      );
+
+      tl.fromTo(
+        "#label-badge",
+        { scale: 0, opacity: 0, y: -12 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.45, ease: "power3.out" },
+        2.04
+      );
+
+      // Overlay 3: Icon "ban" Self-Drawing Path (36600ms -> local 2.80s)
+      tl.fromTo(
+        "#ban-icon-wrap",
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.25, ease: "power3.out" },
+        2.8
+      );
+
+      tl.to(
+        "#ban-circle",
+        { strokeDashoffset: 0, duration: 0.35, ease: "power2.out" },
+        2.8
+      );
+
+      tl.to(
+        "#ban-slash",
+        { strokeDashoffset: 0, duration: 0.25, ease: "power2.out" },
+        3.05
+      );
+
+      // Emphasize deceptive outcome without any layout collision
+      tl.to(
+        "#target-status",
+        { backgroundColor: "#ff6a1a", color: "#141414", duration: 0.3 },
+        3.35
+      );
+      tl.to(
+        "#target-status-text",
+        { color: "#141414", duration: 0.3 },
+        3.35
+      );
+
+      // 3. Register Timeline synchronously for HyperFrames runtime seek
+      window.__timelines["scene-s05"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

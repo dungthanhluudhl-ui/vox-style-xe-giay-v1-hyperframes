@@ -310,6 +310,22 @@ prompt (quy tắc "không chữ cam trên nền be" có từ 21/09 vẫn là l�
   được A/B sống xác nhận** (0/32 lần kích hoạt trong đợt A/B 26/09 dùng để so sánh reviewer) — theo dõi
   qua `codegen-issues.jsonl` stage `review-demoted` ở các video dựng sau; nếu sau vài video vẫn 0 lần kích
   hoạt hoặc kích hoạt sai, cần xem lại `HARD_RE`/`ADVISORY_RES`.
+- **2 lỗi thật trong `parseReviewVerdict()` (video `doi-dau-xe-tang-checkpoint-charlie`, 2026-09-27)** — cả 2
+  do reviewer viết dài dòng kiểu chain-of-thought thay vì đúng `REVIEW_FORMAT` (đúng 1 khối VERDICT/BLOCKING/
+  ADVISORY, "không thêm gì khác"):
+  1. Model tự liệt kê rồi tự phản biện, đổi ý ở cuối ("Kết luận cuối: VERDICT: PASS") nhưng hàm cũ bắt khối
+     `VERDICT`/`BLOCKING` ĐẦU TIÊN (bản nháp) — scene PASS thật (S03) bị báo FAIL. Sửa: luôn parse từ
+     occurrence `VERDICT:` CUỐI CÙNG trong text trở đi.
+  2. Model liệt kê MỖI bước kiểm tra hợp đồng làm 1 dòng trong BLOCKING, kể cả khi tự kết luận ngay trong
+     dòng đó là "không phải lỗi chặn"/"không có lỗi ở đây" — script coi MỌI dòng là lỗi chặn thật (S10 FAIL
+     3/3 dù reviewer đã kết luận sạch). `HARD_RE` gốc quá RỘNG để tái dùng (chỉ so khớp TÊN quy tắc như
+     `#root`/`__timelines`/`paused`/`không tất định`, không phân biệt "vi phạm X" với "xác nhận KHÔNG vi phạm
+     X"). Sửa: thêm gate riêng `SELF_RESOLVED_RE` + `SELF_RESOLVED_HARD_RE` (hẹp hơn, chỉ chặn khi có động từ
+     vi phạm rõ ràng: "vi phạm", "sai chữ/số/ý/nội dung", "thiếu overlay"...).
+  Cả 2 đã qua unit-test cô lập (6 case, gồm case cố ý trộn lỗi thật với câu tự-phủ-nhận để đảm bảo không hạ
+  cấp nhầm) trước khi tin là đúng — **bài học vận hành**: khi 1 scene FAIL nhiều lần dù đọc code không thấy
+  lỗi thật, nghi ngờ NGAY parser trước khi nghi code, đọc RAW text reviewer trả về (không tin số liệu tổng
+  hợp), và test bằng ĐÚNG text lỗi thật lấy từ log (không phải suy diễn/rút gọn).
 - **Ảnh giữ nguyên màu — gỡ mâu thuẫn Stage 6 ↔ Stage 7:** Stage 6 từng chép "người grayscale + bóng cam" của
   Style DNA thành lệnh xử lý ảnh trong `assetTreatment` (74 shot/mọi video), trái quyết định dự án → reviewer
   lật qua lật lại (12/27 lần FAIL). Sửa 2 tầng: prompt `06-shotlist.router.mjs` cấm ghi lệnh xử lý màu cho
@@ -319,6 +335,16 @@ prompt (quy tắc "không chữ cam trên nền be" có từ 21/09 vẫn là l�
   `videoHoldNote` (số giây tính sẵn). Đã đo: render HyperFrames TỰ GIỮ frame cuối khi `data-duration` dài hơn
   media (SSIM 0.985 với frame cuối file gốc) → chỉ cần đặt video dài trọn shot; cấm tự chế freeze bằng
   canvas/event video (không tất định — ban-an-425 S10).
+- **Ngược lại: đoạn trim khai báo (`trimStartSec`/`trimEndSec`) DÀI HƠN shot, kèm chỉ dẫn Stage 6 đòi
+  "retime có chủ đích"** (video `doi-dau-xe-tang-checkpoint-charlie` S10, 2026-09-27): HyperFrames KHÔNG có
+  cơ chế đổi tốc độ phát video được kiểm chứng/tài liệu hoá cho generator dùng — runtime THỰC SỰ có đọc
+  `data-playback-rate` (kẹp [0.1, 10], đọc trực tiếp `dist/hyperframe-runtime.js` để xác nhận, không đoán)
+  nhưng thuộc tính này KHÔNG nằm trong skill docs cấp cho reviewer nên dùng vẫn bị bác vì "lạ" — generator cố
+  lách bằng ghép nhiều clip nhỏ hoặc thuộc tính tự chế (`data-playback-rate="0.0001"` ngoài khoảng cho phép),
+  reviewer FAIL liên tục qua 2 vòng x 3 lần thử. Đã thêm `videoRetimeNote` (đối xứng `videoHoldNote`) trong
+  `annotateShotsForCodegen()`: khi đoạn trim dài hơn shot, chỉ dẫn generator TRIM ĐÚNG bằng độ dài shot (phát
+  phần ĐẦU đoạn trim ở tốc độ thường), cấm ghép clip/đổi tốc độ. Kiểm chứng: unit-test 3/3 case (retime/
+  trim-khớp/hold vẫn đúng, không đè lẫn nhau).
 - **Kiểm tra asset TẤT ĐỊNH** (`checkAssetUsage()`, chạy sau verify, trước reviewer): file của `assetId` mỗi
   shot phải có trong code. Reviewer KHÔNG nhìn thấy ảnh → cấm đoán "sai asset" từ tên file (báo nhầm thật ở
   S08 khiến generator đổi tên file → `missing_local_asset`).

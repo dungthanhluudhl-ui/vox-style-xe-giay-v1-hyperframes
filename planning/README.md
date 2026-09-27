@@ -224,6 +224,21 @@ quét từng video: `planning/incident-log.md`.
   Chấm mù 11 scene: bản cuối tốt hơn bản cổng review cũ (overall 6.14 vs 5.49). Chi tiết + 5 nguyên nhân gốc
   đã sửa: `planning/incident-log.md` mục "Kiểm chứng end-to-end…".
 
+### Video "doi-dau-xe-tang-checkpoint-charlie" (đối đầu xe tăng Mỹ-Liên Xô tại Checkpoint Charlie 1961, 85.65s, 11 scene/15 shot)
+- [x] Nhận script + audio (2026-09-27) từ `Vox style 3.1_test/.../@theodongsukien123` — không có media nguồn sẵn.
+- [x] Transcribe (whisper.cpp) + align với script gốc qua 9router (2026-09-27) — 404/404 caption khớp audio thật (85.653s).
+- [x] Tạo media qua Google Flow (Stage 2b, 2026-09-27) — account `flow-02` bị lỗi hệ thống chung chung "Đã xảy ra lỗi. Hãy thử lại" ngay ở bước tạo ảnh (không phải thông báo hết credit/quota cụ thể — không đủ bằng chứng kết luận nguyên nhân), người dùng tự tạo thủ công 5 ảnh + 4 video trong project Flow đó, tải lại bằng `--resume-project=<url>` (giữ nguyên `--flow-account=flow-02`). 5 ảnh (768×1376) + 4 video (720×1280, 8.0s/clip) — xác nhận đúng khổ dọc bằng ffprobe.
+- [x] Phân tích + chuẩn hoá tên media qua 9router[vision] (2026-09-27) — 9/9 asset.
+- [x] Scene Plan (2026-09-27) — 11 scene, dùng đủ 9/9 asset.
+- [x] Shotlist (2026-09-27) — 15 shot/11 scene.
+- [x] Dựng composition qua nhánh HyperFrames (2026-09-27) — 8/11 scene PASS ngay lần đầu (song song). 3 scene cần can thiệp, phát hiện + sửa **2 lỗi thật tổng quát trong `scripts/lib/review-gate.mjs`** (áp dụng mọi video sau):
+  1. **S03** — `parseReviewVerdict()` bắt khối `VERDICT`/`BLOCKING` ĐẦU TIÊN trong text thay vì khối CUỐI CÙNG, khi reviewer viết dài dòng tự phản biện rồi đổi ý ở cuối ("Kết luận cuối: VERDICT: PASS") — scene PASS thật bị báo FAIL. Sửa: luôn parse từ occurrence `VERDICT:` cuối cùng trở đi.
+  2. **S10** — reviewer liệt kê MỖI bước kiểm tra hợp đồng làm 1 dòng trong `BLOCKING` (kể cả khi tự kết luận ngay trong dòng đó là "không phải lỗi chặn"/"không có lỗi ở đây"), script coi MỌI dòng là lỗi chặn thật kể cả dòng tự phủ nhận chính nó — FAIL 3/3 dù reviewer đã kết luận không có lỗi. Sửa: thêm gate `SELF_RESOLVED_RE`/`SELF_RESOLVED_HARD_RE` riêng (hẹp hơn `HARD_RE` gốc, không bị nhầm khi dòng chỉ NÊU TÊN quy tắc contract để xác nhận tuân thủ, không phải vi phạm). Cả 2 vá đã qua test hồi quy (không ảnh hưởng các category demotion cũ, không hạ nhầm lỗi thật trộn chung câu với câu tự-phủ-nhận).
+  - **S10 còn 1 lỗi thiết kế thật** (không phải lỗi code): shotlist gốc yêu cầu "phát 8 giây video nguồn trong 5.77 giây bằng retime" — HyperFrames không có cơ chế đổi tốc độ phát video được tài liệu hoá/kiểm chứng (có tồn tại `data-playback-rate` trong runtime nhưng KHÔNG có trong skill docs reviewer dùng để chấm — rủi ro bị bác vì "lạ"). Sửa tận gốc: đổi `shotlist.json`/`.md` cho S10-1 dùng lại ảnh tĩnh có sẵn (img-05) thay vì ép video "đứng yên", S10-2 chỉ trim 5.77 giây ĐẦU video ở tốc độ thường (giống S06/S09-2 đã làm) — không cần kỹ thuật mới. Đã thêm cơ chế NGĂN NGỪA TÁI DIỄN tất định (`videoRetimeNote` trong `annotateShotsForCodegen()`, đối xứng `videoHoldNote`) — xem `planning/responsibility-matrix.md` mục 6.
+  - **S03 lộ thêm 1 lỗi caption-zone chỉ thấy khi ráp chung** (Stage 7b, không lộ ở test standalone riêng scene): `.footer` trang trí (không thuộc yêu cầu shotlist) đặt ở y≈1490-1518px, đúng vùng caption 2 dòng có thể chiếm (~1400-1546px) → `content_overlap` thật với chữ phụ đề. Sửa: xoá hẳn `.footer` (không thay thế).
+- [x] Stage 7b integration check PASS (2026-09-27) — 11/11 scene, audio, caption-track, `hyperframes check` ok=true.
+- [x] Render bản đầy đủ (2026-09-27) — `out/doi-dau-xe-tang-checkpoint-charlie-full.mp4`, **85.533s** (khớp audio thật 85.653s), 1080×1920 h264/aac, 87.5MB. `completion-manifest.json` xác nhận mọi field `*Ok=true`. **Chưa được người dùng xem/xác nhận.**
+
 ## Archive: pipeline Remotion cũ (4 video đầu, `archive/remotion-legacy/`)
 
 Giữ lại đúng nguyên trạng để tham khảo/sửa lỗi cho 4 video archive — KHÔNG áp dụng cho video mới.

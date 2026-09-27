@@ -1,0 +1,558 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+/* hf-safe-colors (tất định từ style-tokens.json) */
+.hf-text-ink { color: #141414; }
+.hf-text-light { color: #F7F4EC; }
+.hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+.hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+.hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+.hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+        background-color: #E7E3D9;
+        font-family: "Be Vietnam Pro", sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+      #root {
+        position: relative;
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+        background-color: #E7E3D9;
+      }
+      .clip {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+      }
+      .overlay-clip {
+        z-index: 20;
+      }
+
+      /* Vox visual signature: Orange baseline bar */
+      .vox-brand-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 1080px;
+        height: 10px;
+        background-color: #FF6A1A;
+        z-index: 100;
+      }
+
+      /* Background grid pattern */
+      .bg-grid {
+        position: absolute;
+        inset: 0;
+        background-image:
+          linear-gradient(to right, rgba(20, 20, 20, 0.22) 1.5px, transparent 1.5px),
+          linear-gradient(to bottom, rgba(20, 20, 20, 0.22) 1.5px, transparent 1.5px);
+        background-size: 84px 84px;
+        opacity: 0.7;
+        z-index: 0;
+      }
+
+      /* Photo container and visuals (z-index: 1, below all overlays) */
+      #shot-visual {
+        z-index: 1;
+      }
+      #strike-wrap {
+        position: absolute;
+        inset: 0;
+      }
+      #kenburns-wrap {
+        position: absolute;
+        inset: 0;
+        transform-origin: 55% 45%;
+      }
+      .hero-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+
+      /* Spotlight vignette - strictly scoped inside shot-visual over photo only */
+      .spotlight-vignette {
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(circle at 52% 48%, rgba(20, 20, 20, 0) 30%, rgba(20, 20, 20, 0.45) 75%, rgba(20, 20, 20, 0.8) 100%);
+        pointer-events: none;
+        z-index: 2;
+      }
+
+      /* Strike impact flash - strictly scoped inside shot-visual */
+      #strike-impact {
+        position: absolute;
+        inset: 0;
+        background-color: #141414;
+        opacity: 0;
+        pointer-events: none;
+        z-index: 3;
+      }
+
+      /* Overlay Badges and Cards */
+      .badge-tag {
+        display: inline-flex;
+        align-items: center;
+        background-color: #FF6A1A;
+        color: #141414;
+        font-size: 18px;
+        font-weight: 900;
+        padding: 5px 14px;
+        border-radius: 4px;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+      }
+
+      /* 1. Warning Card */
+      #warning-card {
+        position: absolute;
+        top: 200px;
+        left: 60px;
+        width: 580px;
+        background-color: #141414;
+        border: 2px solid #FF6A1A;
+        border-radius: 8px;
+        padding: 20px 24px;
+        box-shadow: 0 16px 40px rgba(0, 0, 0, 0.65);
+        display: flex;
+        align-items: center;
+        gap: 20px;
+      }
+      .warning-texts {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+      .warning-title {
+        color: #FF6A1A;
+        font-size: 24px;
+        font-weight: 900;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+      }
+      .warning-desc {
+        color: #F7F4EC;
+        font-size: 20px;
+        font-weight: 700;
+      }
+
+      /* 2. Danger Card */
+      #danger-card {
+        position: absolute;
+        top: 360px;
+        left: 60px;
+        max-width: 640px;
+        background-color: #141414;
+        border-left: 8px solid #FF6A1A;
+        border-radius: 0 8px 8px 0;
+        padding: 22px 30px;
+        box-shadow: 0 18px 44px rgba(0, 0, 0, 0.7);
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .danger-headline {
+        color: #F7F4EC;
+        font-size: 44px;
+        font-weight: 900;
+        line-height: 1.25;
+        letter-spacing: 0.5px;
+      }
+
+      /* 3. Dimension Card & Caliper HUD */
+      #dimension-card {
+        position: absolute;
+        top: 800px;
+        left: 60px;
+        width: 550px;
+        background-color: #141414;
+        border: 2px solid #FF6A1A;
+        border-radius: 8px;
+        padding: 22px 28px;
+        box-shadow: 0 20px 48px rgba(0, 0, 0, 0.75);
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .dimension-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .dimension-meta {
+        color: #FF6A1A;
+        font-size: 16px;
+        font-weight: 700;
+        letter-spacing: 1px;
+      }
+      .dimension-headline {
+        color: #F7F4EC;
+        font-size: 40px;
+        font-weight: 900;
+        line-height: 1.25;
+      }
+      .dimension-sub {
+        color: #FF6A1A;
+        font-size: 22px;
+        font-weight: 700;
+      }
+
+      /* Caliper HUD Panel with solid dark background */
+      #ruler-wrap {
+        position: absolute;
+        top: 680px;
+        left: 640px;
+        width: 380px;
+        height: 500px;
+        background-color: #141414;
+        border: 2px solid #FF6A1A;
+        border-radius: 8px;
+        padding: 16px 20px;
+        box-shadow: 0 20px 48px rgba(0, 0, 0, 0.75);
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+      .ruler-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-bottom: 1.5px solid rgba(255, 106, 26, 0.4);
+        padding-bottom: 8px;
+      }
+      .ruler-title {
+        color: #FF6A1A;
+        font-size: 16px;
+        font-weight: 900;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+      }
+      .ruler-unit {
+        color: #F7F4EC;
+        font-size: 14px;
+        font-weight: 700;
+      }
+      .ruler-svg-box {
+        width: 100%;
+        height: 420px;
+      }
+
+      /* 4. Punch Card */
+      #punch-card {
+        position: absolute;
+        bottom: 430px;
+        left: 60px;
+        right: 60px;
+        background-color: #141414;
+        border-top: 6px solid #FF6A1A;
+        border-radius: 12px;
+        padding: 28px 36px;
+        box-shadow: 0 24px 60px rgba(0, 0, 0, 0.85);
+        display: flex;
+        flex-direction: column;
+      }
+      .punch-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 14px;
+      }
+      .punch-sub {
+        color: #FF6A1A;
+        font-size: 20px;
+        font-weight: 700;
+        letter-spacing: 1px;
+      }
+      .punch-headline {
+        color: #F7F4EC;
+        font-size: 70px;
+        font-weight: 900;
+        line-height: 1.25;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+      }
+      .punch-accent-bar {
+        width: 100%;
+        height: 6px;
+        background-color: #FF6A1A;
+        margin-top: 18px;
+        transform-origin: left center;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s017"
+      data-width="1080"
+      data-height="1920"
+      data-duration="8.25"
+    >
+      <!-- Base grid layer -->
+      <div class="bg-grid"></div>
+
+      <!-- Main Shot Layer: Visual photo + scoped spotlight vignette and strike flash -->
+      <section id="shot-visual" class="clip" data-start="0" data-duration="8.25">
+        <div id="strike-wrap">
+          <div id="kenburns-wrap">
+            <img
+              class="hero-img"
+              src="assets/img-01-angry-man-holding-knife.jpg"
+              alt="Người đàn ông cầm dao trong buồng ngủ"
+            />
+          </div>
+        </div>
+        <div class="spotlight-vignette"></div>
+        <div id="strike-impact"></div>
+      </section>
+
+      <!-- Overlay 1: Warning Icon & Badge (t = 1.41s to 3.61s) -->
+      <section id="clip-warning" class="clip overlay-clip" data-start="1.41" data-duration="2.20">
+        <div id="warning-card">
+          <svg viewBox="0 0 56 56" width="56" height="56" style="flex-shrink: 0;">
+            <path
+              id="warn-path"
+              d="M 28 8 L 50 46 L 6 46 Z"
+              fill="none"
+              stroke="#FF6A1A"
+              stroke-width="4.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-dasharray="140"
+              stroke-dashoffset="140"
+            />
+            <line
+              id="warn-line"
+              x1="28"
+              y1="22"
+              x2="28"
+              y2="32"
+              stroke="#FF6A1A"
+              stroke-width="4.5"
+              stroke-linecap="round"
+            />
+            <circle id="warn-dot" cx="28" cy="40" r="3" fill="#FF6A1A" />
+          </svg>
+          <div class="warning-texts">
+            <div>
+              <span class="badge-tag">CẢNH BÁO</span>
+            </div>
+            <div class="warning-title">HỒ SƠ HUNG KHÍ</div>
+            <div class="warning-desc">XUẤT HIỆN VẬT CHỨNG NGUY HIỂM</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Overlay 2: Label "HUNG KHÍ NGUY HIỂM" (t = 3.27s to 5.47s) -->
+      <section id="clip-danger" class="clip overlay-clip" data-start="3.27" data-duration="2.20">
+        <div id="danger-card">
+          <div>
+            <span class="badge-tag">TÌNH TIẾT VỤ ÁN</span>
+          </div>
+          <div class="danger-headline">HUNG KHÍ NGUY HIỂM</div>
+        </div>
+      </section>
+
+      <!-- Overlay 3: Technical Dimension & Ruler (t = 3.95s to 6.35s) -->
+      <section id="clip-dimension" class="clip overlay-clip" data-start="3.95" data-duration="2.40">
+        <!-- Caliper HUD Panel with solid dark background -->
+        <div id="ruler-wrap">
+          <div class="ruler-header">
+            <span class="ruler-title">THƯỚC ĐO KỸ THUẬT</span>
+            <span class="ruler-unit">ĐƠN VỊ: CM</span>
+          </div>
+          <div class="ruler-svg-box">
+            <svg viewBox="0 0 340 420" width="340" height="420">
+              <!-- Extension reference bars from blade -->
+              <line class="ruler-lead" x1="20" y1="30" x2="100" y2="30" stroke="#FF6A1A" stroke-width="2.5" stroke-dasharray="6,4" />
+              <line class="ruler-lead" x1="20" y1="390" x2="100" y2="390" stroke="#FF6A1A" stroke-width="2.5" stroke-dasharray="6,4" />
+              <!-- Main vertical dimension rail with arrows -->
+              <path
+                id="ruler-rail"
+                d="M 100 30 L 100 390"
+                fill="none"
+                stroke="#FF6A1A"
+                stroke-width="3.5"
+                stroke-dasharray="360"
+                stroke-dashoffset="360"
+              />
+              <polygon id="ruler-arrow-top" points="100,22 94,36 106,36" fill="#FF6A1A" />
+              <polygon id="ruler-arrow-bottom" points="100,398 94,384 106,384" fill="#FF6A1A" />
+              <!-- Metric Tick marks and labels -->
+              <line class="ruler-tick" x1="100" y1="102" x2="118" y2="102" stroke="#FF6A1A" stroke-width="2.5" />
+              <text class="ruler-tick" x="128" y="108" fill="#F7F4EC" font-size="16" font-weight="700">10cm</text>
+              <line class="ruler-tick" x1="100" y1="174" x2="118" y2="174" stroke="#FF6A1A" stroke-width="2.5" />
+              <text class="ruler-tick" x="128" y="180" fill="#F7F4EC" font-size="16" font-weight="700">20cm</text>
+              <line class="ruler-tick" x1="100" y1="246" x2="118" y2="246" stroke="#FF6A1A" stroke-width="2.5" />
+              <text class="ruler-tick" x="128" y="252" fill="#F7F4EC" font-size="16" font-weight="700">30cm</text>
+              <line class="ruler-tick" x1="100" y1="318" x2="118" y2="318" stroke="#FF6A1A" stroke-width="2.5" />
+              <text class="ruler-tick" x="128" y="324" fill="#F7F4EC" font-size="16" font-weight="700">40cm</text>
+              <text class="ruler-tick" x="128" y="396" fill="#FF6A1A" font-size="20" font-weight="900">≈ 48cm</text>
+            </svg>
+          </div>
+        </div>
+
+        <div id="dimension-card">
+          <div class="dimension-header">
+            <span class="badge-tag">ĐO ĐẠC HIỆN TRƯỜNG</span>
+            <span class="dimension-meta">KÍCH THƯỚC VẬT CHỨNG</span>
+          </div>
+          <div class="dimension-headline">DAO DÀI GẦN 0.5M</div>
+          <div class="dimension-sub">ƯỚC TÍNH ~ 48 CM • MŨI BẰNG</div>
+        </div>
+      </section>
+
+      <!-- Overlay 4: Punch-Phrase "LƯỠI RẤT SẮC" (t = 5.67s to 8.25s) -->
+      <section id="clip-punch" class="clip overlay-clip" data-start="5.67" data-duration="2.58">
+        <div id="punch-card">
+          <div class="punch-header">
+            <span class="badge-tag">ĐẶC ĐIỂM SÁT THƯƠNG</span>
+            <span class="punch-sub">TÍNH CHẤT NGUY HIỂM</span>
+          </div>
+          <div class="punch-headline">LƯỠI RẤT SẮC</div>
+          <div id="punch-bar" class="punch-accent-bar"></div>
+        </div>
+      </section>
+
+      <!-- Signature persistent bottom orange bar -->
+      <div class="vox-brand-bar"></div>
+    </div>
+
+    <script>
+      const tl = gsap.timeline({ paused: true });
+
+      // 1. Initial Strike Entrance (t = 0s)
+      tl.fromTo(
+        "#strike-wrap",
+        { y: -80, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.45, ease: "power4.out" },
+        0
+      );
+      tl.fromTo(
+        "#strike-impact",
+        { opacity: 0.65 },
+        { opacity: 0, duration: 0.28, ease: "power2.out" },
+        0.05
+      );
+
+      // Continuous Slow Ken Burns Zoom (t = 0s to 8.25s)
+      tl.fromTo(
+        "#kenburns-wrap",
+        { scale: 1.0 },
+        { scale: 1.08, duration: 8.25, ease: "none" },
+        0
+      );
+
+      // 2. Warning Icon Overlay (t = 1.41s)
+      tl.fromTo(
+        "#warning-card",
+        { y: -30, opacity: 0, scale: 0.9 },
+        { y: 0, opacity: 1, scale: 1, duration: 0.35, ease: "power3.out" },
+        1.41
+      );
+      tl.fromTo(
+        "#warn-path",
+        { strokeDashoffset: 140 },
+        { strokeDashoffset: 0, duration: 0.4, ease: "power2.out" },
+        1.45
+      );
+      tl.fromTo(
+        ["#warn-line", "#warn-dot"],
+        { opacity: 0, scale: 0.5, transformOrigin: "center center" },
+        { opacity: 1, scale: 1, duration: 0.25, ease: "power2.out" },
+        1.65
+      );
+      tl.to(
+        "#warning-card",
+        { y: -20, opacity: 0, duration: 0.23, ease: "power2.in" },
+        3.35
+      );
+
+      // 3. Danger Label (t = 3.27s)
+      tl.fromTo(
+        "#danger-card",
+        { x: -50, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.38, ease: "power3.out" },
+        3.27
+      );
+      tl.to(
+        "#danger-card",
+        { x: -30, opacity: 0, duration: 0.24, ease: "power2.in" },
+        5.20
+      );
+
+      // 4. Dimension Card & SVG Caliper (t = 3.95s)
+      tl.fromTo(
+        "#dimension-card",
+        { y: 30, opacity: 0, scale: 0.92 },
+        { y: 0, opacity: 1, scale: 1, duration: 0.38, ease: "power3.out" },
+        3.95
+      );
+      tl.fromTo(
+        "#ruler-wrap",
+        { x: 40, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.38, ease: "power3.out" },
+        4.02
+      );
+      tl.fromTo(
+        "#ruler-rail",
+        { strokeDashoffset: 360 },
+        { strokeDashoffset: 0, duration: 0.45, ease: "power2.out" },
+        4.12
+      );
+      tl.fromTo(
+        [".ruler-lead", "#ruler-arrow-top", "#ruler-arrow-bottom"],
+        { opacity: 0 },
+        { opacity: 1, duration: 0.25, ease: "power1.out" },
+        4.35
+      );
+      tl.fromTo(
+        ".ruler-tick",
+        { opacity: 0, x: -8 },
+        { opacity: 1, x: 0, duration: 0.22, stagger: 0.05, ease: "power2.out" },
+        4.42
+      );
+      tl.to(
+        ["#dimension-card", "#ruler-wrap"],
+        { opacity: 0, y: 15, duration: 0.25, ease: "power2.in" },
+        6.05
+      );
+
+      // 5. Punch Phrase "LƯỠI RẤT SẮC" (t = 5.67s to 8.25s)
+      tl.fromTo(
+        "#punch-card",
+        { y: 40, opacity: 0, scale: 0.9 },
+        { y: 0, opacity: 1, scale: 1, duration: 0.42, ease: "power3.out" },
+        5.67
+      );
+      tl.fromTo(
+        "#punch-bar",
+        { scaleX: 0 },
+        { scaleX: 1, duration: 0.38, ease: "power2.out" },
+        5.95
+      );
+
+      window.__timelines["scene-s017"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

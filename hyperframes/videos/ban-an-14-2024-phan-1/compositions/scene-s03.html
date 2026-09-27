@@ -1,0 +1,595 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap"
+    />
+      <style>
+      /* hf-safe-colors (tất định từ style-tokens.json) */
+      .hf-text-ink { color: #141414; }
+      .hf-text-light { color: #F7F4EC; }
+      .hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+      .hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+      .hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+      .hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #e7e3d9;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      #root {
+        position: relative;
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+        background-color: #e7e3d9;
+        background-image:
+          linear-gradient(to right, rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px),
+          linear-gradient(to bottom, rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px);
+        background-size: 84px 84px;
+      }
+
+      /* Base layout for timed clips */
+      .clip {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+      }
+
+      /* Brand bottom signature line */
+      .bottom-brand-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 1080px;
+        height: 10px;
+        background-color: #ff6a1a;
+        z-index: 999;
+      }
+
+      /* Header timeline section (Investigation Dossier) */
+      #investigation-header {
+        position: absolute;
+        top: 170px;
+        left: 60px;
+        width: 960px;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        z-index: 20;
+      }
+
+      .header-meta-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+      }
+
+      .case-tag {
+        display: inline-block;
+        padding: 6px 14px;
+        font-size: 20px;
+        font-weight: 900;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        border-radius: 4px;
+      }
+
+      .phase-text {
+        font-size: 22px;
+        font-weight: 700;
+        letter-spacing: 1px;
+        color: #141414;
+        text-transform: uppercase;
+      }
+
+      /* Forensic measurement ruler bar & marker track */
+      .timeline-ruler-track {
+        position: relative;
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .timeline-ruler {
+        position: relative;
+        flex: 1;
+        height: 24px;
+        border-bottom: 3px solid #141414;
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        margin-right: 24px;
+      }
+
+      .ruler-tick {
+        width: 2px;
+        height: 10px;
+        background-color: #141414;
+      }
+
+      .ruler-tick.major {
+        height: 18px;
+        width: 3px;
+      }
+
+      .timeline-marker-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background-color: #f5f0e4;
+        border: 2px solid #141414;
+        padding: 6px 14px;
+        border-radius: 4px;
+        box-shadow: 3px 3px 0px #141414;
+        flex-shrink: 0;
+      }
+
+      .marker-dot {
+        display: inline-block;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background-color: #ff6a1a;
+        border: 2px solid #141414;
+        flex-shrink: 0;
+      }
+
+      .marker-label {
+        display: inline-block;
+        font-size: 18px;
+        font-weight: 900;
+        color: #141414;
+        letter-spacing: 0.5px;
+        line-height: 1.2;
+        white-space: nowrap;
+      }
+
+      /* Video Frame Wrapper (Collage archival document) */
+      #video-frame-wrapper {
+        position: absolute;
+        top: 290px;
+        left: 60px;
+        width: 960px;
+        height: 1060px;
+        border: 5px solid #141414;
+        background-color: #141414;
+        box-shadow: 14px 14px 0px rgba(20, 20, 20, 0.9);
+        overflow: hidden;
+        z-index: 10;
+        transform-origin: top left;
+      }
+
+      #vid-men-handshake {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+
+      /* Paper tape decor on top of video */
+      .paper-tape {
+        position: absolute;
+        top: -12px;
+        right: 280px;
+        width: 160px;
+        height: 34px;
+        background-color: rgba(245, 240, 228, 0.95);
+        border: 2px solid #141414;
+        transform: rotate(3deg);
+        z-index: 15;
+        box-shadow: 2px 3px 0px rgba(20, 20, 20, 0.3);
+      }
+
+      /* Video timestamp watermark positioned at safe top-right inside video frame */
+      .video-watermark {
+        position: absolute;
+        top: 40px;
+        right: 40px;
+        padding: 8px 16px;
+        font-size: 16px;
+        font-weight: 900;
+        letter-spacing: 1.5px;
+        border: 2px solid #141414;
+        border-radius: 4px;
+        z-index: 16;
+      }
+
+      /* OVERLAY 1: Punch phrase "MA MEN DẪN LỐI" */
+      #overlay-mamen-box {
+        position: absolute;
+        top: 1140px;
+        left: 80px;
+        width: 920px;
+        height: auto;
+        padding: 24px 32px;
+        border: 4px solid #141414;
+        box-shadow: 10px 10px 0px #ff6a1a;
+        z-index: 40;
+      }
+
+      .punch-tag {
+        display: inline-block;
+        padding: 4px 12px;
+        font-size: 18px;
+        font-weight: 900;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        margin-bottom: 10px;
+      }
+
+      .punch-heading {
+        margin: 0;
+        font-size: 64px;
+        font-weight: 900;
+        line-height: 1.15;
+        letter-spacing: -0.5px;
+        color: #f7f4ec;
+        text-transform: uppercase;
+      }
+
+      .punch-subtext {
+        margin-top: 8px;
+        font-size: 22px;
+        font-weight: 700;
+        color: #ff6a1a;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+      }
+
+      /* OVERLAY 2: Person Icon Dossier Badge */
+      #person-dossier-card {
+        position: absolute;
+        top: 330px;
+        left: 90px;
+        width: 480px;
+        height: auto;
+        background-color: #f5f0e4;
+        border: 4px solid #141414;
+        box-shadow: 8px 8px 0px rgba(20, 20, 20, 0.9);
+        padding: 18px 24px;
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        z-index: 35;
+      }
+
+      .person-svg-container {
+        width: 84px;
+        height: 84px;
+        flex-shrink: 0;
+        background-color: #e7e3d9;
+        border: 2px solid #141414;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .person-svg-container svg {
+        width: 54px;
+        height: 54px;
+      }
+
+      .person-svg-container path,
+      .person-svg-container circle {
+        fill: none;
+        stroke: #141414;
+        stroke-width: 5;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
+      .person-info {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      .person-badge {
+        display: inline-block;
+        font-size: 15px;
+        font-weight: 900;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        padding: 2px 8px;
+        width: fit-content;
+      }
+
+      .person-title {
+        margin: 0;
+        font-size: 28px;
+        font-weight: 900;
+        line-height: 1.2;
+        color: #141414;
+      }
+
+      .person-desc {
+        margin: 0;
+        font-size: 18px;
+        font-weight: 700;
+        color: #141414;
+      }
+
+      /* OVERLAY 3: "TÌNH NGHĨA LÁNG GIỀNG" */
+      #overlay-tinhnghia-box {
+        position: absolute;
+        top: 1140px;
+        left: 80px;
+        width: 920px;
+        height: auto;
+        padding: 24px 32px;
+        border: 4px solid #141414;
+        box-shadow: 10px 10px 0px rgba(20, 20, 20, 0.9);
+        z-index: 45;
+      }
+
+      .tinhnghia-tag {
+        display: inline-block;
+        padding: 4px 14px;
+        font-size: 18px;
+        font-weight: 900;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        margin-bottom: 10px;
+      }
+
+      .tinhnghia-heading {
+        margin: 0;
+        font-size: 60px;
+        font-weight: 900;
+        line-height: 1.15;
+        letter-spacing: -0.5px;
+        color: #f7f4ec;
+        text-transform: uppercase;
+      }
+
+      .tinhnghia-subtext {
+        margin-top: 8px;
+        font-size: 22px;
+        font-weight: 700;
+        color: #ff6a1a;
+        letter-spacing: 0.8px;
+        text-transform: uppercase;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s03"
+      data-width="1080"
+      data-height="1920"
+      data-duration="7.02"
+    >
+      <!-- Top Dossier Header (Timeline / Archival Context) -->
+      <header id="investigation-header">
+        <div class="header-meta-row">
+          <span class="case-tag hf-plate-ink">BẢN ÁN SỐ 14/2024</span>
+          <span class="phase-text">PHÂN ĐOẠN 01 • KHỞI ĐIỂM</span>
+        </div>
+        <div class="timeline-ruler-track">
+          <div class="timeline-ruler">
+            <div class="ruler-tick major"></div>
+            <div class="ruler-tick"></div>
+            <div class="ruler-tick"></div>
+            <div class="ruler-tick"></div>
+            <div class="ruler-tick major"></div>
+            <div class="ruler-tick"></div>
+            <div class="ruler-tick"></div>
+            <div class="ruler-tick"></div>
+            <div class="ruler-tick major"></div>
+            <div class="ruler-tick"></div>
+            <div class="ruler-tick"></div>
+            <div class="ruler-tick"></div>
+            <div class="ruler-tick major"></div>
+          </div>
+          <div class="timeline-marker-badge">
+            <span class="marker-dot"></span>
+            <span class="marker-label">GIAO HẢO BAN ĐẦU</span>
+          </div>
+        </div>
+      </header>
+
+      <!-- Video Archival Frame (NO data-start on wrapper to protect media query) -->
+      <div id="video-frame-wrapper">
+        <div class="paper-tape"></div>
+        <video
+          id="vid-men-handshake"
+          src="assets/vid-04-rural-men-handshake-agreement.mp4"
+          muted
+          playsinline
+          data-start="0"
+          data-duration="7.02"
+          data-media-start="0.5"
+        ></video>
+        <div class="video-watermark hf-plate-ink">TƯ LIỆU VỤ ÁN</div>
+      </div>
+
+      <!-- TIMED OVERLAY 1: "MA MEN DẪN LỐI" (at 0.78s, hold 2.0s) -->
+      <div
+        id="clip-overlay-mamen"
+        class="clip"
+        data-start="0.78"
+        data-duration="2.6"
+      >
+        <div id="overlay-mamen-box" class="hf-plate-ink">
+          <div class="punch-tag hf-hl-orange">NGUYÊN CƠ BI KỊCH</div>
+          <h1 class="punch-heading">MA MEN DẪN LỐI</h1>
+          <div class="punch-subtext">RƯỢU VÀO • MÂU THUẪN PHÁT SINH</div>
+        </div>
+      </div>
+
+      <!-- TIMED OVERLAY 2: ICON PERSON (at 3.73s, hold 2.0s) -->
+      <div
+        id="clip-overlay-person"
+        class="clip"
+        data-start="3.73"
+        data-duration="2.0"
+      >
+        <div id="person-dossier-card">
+          <div class="person-svg-container">
+            <svg
+              id="svg-person"
+              viewBox="0 0 100 100"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <circle id="person-head" cx="50" cy="32" r="18" />
+              <path
+                id="person-body"
+                d="M 18 84 C 18 60, 82 60, 82 84"
+              />
+            </svg>
+          </div>
+          <div class="person-info">
+            <span class="person-badge hf-hl-orange">ĐỐI TƯỢNG</span>
+            <h3 class="person-title">HAI NGƯỜI ĐÀN ÔNG</h3>
+            <p class="person-desc">Hàng xóm láng giềng gần gũi</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- TIMED OVERLAY 3: "TÌNH NGHĨA LÁNG GIỀNG" (at 4.88s, hold 2.14s) -->
+      <div
+        id="clip-overlay-tinhnghia"
+        class="clip"
+        data-start="4.88"
+        data-duration="2.14"
+      >
+        <div id="overlay-tinhnghia-box" class="hf-plate-ink">
+          <div class="tinhnghia-tag hf-hl-orange">MỐI QUAN HỆ GỐC</div>
+          <h2 class="tinhnghia-heading">TÌNH NGHĨA LÁNG GIỀNG</h2>
+          <div class="tinhnghia-subtext">THÂN THIẾT • TƯỞNG NHƯ BỀN CHẶT</div>
+        </div>
+      </div>
+
+      <!-- Permanent Bottom Signature Bar -->
+      <div class="bottom-brand-bar"></div>
+    </div>
+
+    <script>
+      // Single paused GSAP timeline
+      const tl = gsap.timeline({ paused: true });
+
+      // Setup SVG path lengths for clean progressive draw
+      const personHead = document.getElementById("person-head");
+      const personBody = document.getElementById("person-body");
+      if (personHead && personBody) {
+        const headLen = personHead.getTotalLength();
+        const bodyLen = personBody.getTotalLength();
+        personHead.style.strokeDasharray = headLen;
+        personHead.style.strokeDashoffset = headLen;
+        personBody.style.strokeDasharray = bodyLen;
+        personBody.style.strokeDashoffset = bodyLen;
+      }
+
+      // 1. Entrance transition: Peel / Unfurl archival document frame (t = 0.0s -> 0.7s)
+      tl.fromTo(
+        "#video-frame-wrapper",
+        {
+          clipPath: "polygon(0% 0%, 0% 0%, 0% 100%, 0% 100%)",
+          scale: 0.96,
+          rotation: -1.5,
+        },
+        {
+          clipPath: "polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)",
+          scale: 1,
+          rotation: 0,
+          duration: 0.7,
+          ease: "power3.out",
+        },
+        0.05
+      );
+
+      tl.fromTo(
+        ".paper-tape",
+        { scaleX: 0 },
+        { scaleX: 1, duration: 0.35, ease: "power2.out" },
+        0.45
+      );
+
+      // Header entrance
+      tl.fromTo(
+        "#investigation-header",
+        { opacity: 0, y: -25 },
+        { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" },
+        0.2
+      );
+
+      // 2. OVERLAY 1: "MA MEN DẪN LỐI" entrance (0.78s) and exit (3.0s)
+      tl.fromTo(
+        "#overlay-mamen-box",
+        { scale: 0.88, opacity: 0, y: 35 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.55, ease: "power3.out" },
+        0.78
+      );
+
+      tl.to(
+        "#overlay-mamen-box",
+        { opacity: 0, y: -20, duration: 0.35, ease: "power2.in" },
+        3.0
+      );
+
+      // 3. OVERLAY 2: Person Icon Dossier Card (3.73s)
+      tl.fromTo(
+        "#person-dossier-card",
+        { scale: 0.85, opacity: 0, x: -30 },
+        { scale: 1, opacity: 1, x: 0, duration: 0.5, ease: "power3.out" },
+        3.73
+      );
+
+      // SVG path progressive trace
+      if (personHead && personBody) {
+        tl.to(
+          personHead,
+          { strokeDashoffset: 0, duration: 0.5, ease: "power2.out" },
+          3.9
+        );
+        tl.to(
+          personBody,
+          { strokeDashoffset: 0, duration: 0.55, ease: "power2.out" },
+          4.15
+        );
+      }
+
+      // Exit person card before next text arrives
+      tl.to(
+        "#person-dossier-card",
+        { opacity: 0, scale: 0.92, duration: 0.35, ease: "power2.in" },
+        5.2
+      );
+
+      // 4. OVERLAY 3: "TÌNH NGHĨA LÁNG GIỀNG" entrance (4.88s)
+      tl.fromTo(
+        "#overlay-tinhnghia-box",
+        { opacity: 0, y: 40, scale: 0.95 },
+        { opacity: 1, y: 0, scale: 1, duration: 0.55, ease: "power3.out" },
+        4.88
+      );
+
+      // Register the master timeline
+      window.__timelines = window.__timelines || {};
+      window.__timelines["scene-s03"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

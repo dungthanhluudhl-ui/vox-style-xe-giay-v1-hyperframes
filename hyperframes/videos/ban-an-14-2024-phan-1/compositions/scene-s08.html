@@ -1,0 +1,551 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+/* hf-safe-colors (tất định từ style-tokens.json) */
+.hf-text-ink { color: #141414; }
+.hf-text-light { color: #F7F4EC; }
+.hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+.hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+.hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+.hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        padding: 0;
+        background: #141414;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      #root {
+        position: relative;
+        width: 1080px;
+        height: 1920px;
+        background: #f5f0e4; /* backgroundCard */
+        overflow: hidden;
+      }
+
+      /* Lớp quy ước chuẩn của HyperFrames */
+      .clip {
+        position: absolute;
+        inset: 0;
+      }
+
+      /* Lớp nền hồ sơ tư pháp (Dossier texture) */
+      .dossier-backdrop {
+        position: absolute;
+        inset: 0;
+        background-color: #f5f0e4;
+        background-image: 
+          linear-gradient(rgba(20, 20, 20, 0.05) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(20, 20, 20, 0.05) 1px, transparent 1px);
+        background-size: 84px 84px;
+        pointer-events: none;
+      }
+
+      /* Khối hồ sơ lật trang (flip container) */
+      #dossier-wrapper {
+        position: absolute;
+        inset: 0;
+        transform-origin: 50% 50%;
+        will-change: transform, opacity;
+      }
+
+      /* Thanh tiêu đề hồ sơ tư pháp */
+      .dossier-header {
+        position: absolute;
+        top: 170px;
+        left: 70px;
+        width: 940px;
+        height: 84px;
+        background: #141414;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 28px;
+        border-bottom: 4px solid #ff6a1a;
+      }
+
+      .header-title-group {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
+
+      .header-tag {
+        background: #ff6a1a;
+        color: #141414;
+        font-size: 20px;
+        font-weight: 900;
+        padding: 6px 14px;
+        border-radius: 2px;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+      }
+
+      .header-main-title {
+        color: #f7f4ec;
+        font-size: 26px;
+        font-weight: 900;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+
+      .header-case-num {
+        color: #f7f4ec;
+        font-size: 22px;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        opacity: 0.9;
+      }
+
+      /* Khung ảnh bị cáo đứng trước tòa */
+      .photo-container {
+        position: absolute;
+        top: 280px;
+        left: 70px;
+        width: 940px;
+        height: 820px;
+        background: #141414;
+        border: 4px solid #141414;
+        border-radius: 4px;
+        overflow: hidden;
+        box-shadow: 0 16px 36px rgba(20, 20, 20, 0.18);
+      }
+
+      .photo-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center 25%;
+        display: block;
+        transform-origin: 50% 40%;
+      }
+
+      /* Con dấu nước hồ sơ toà án góc ảnh */
+      .photo-watermark {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        background: #141414;
+        border: 2px solid #ff6a1a;
+        padding: 8px 16px;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .watermark-dot {
+        width: 10px;
+        height: 10px;
+        background: #ff6a1a;
+        border-radius: 50%;
+      }
+
+      .watermark-text {
+        color: #f7f4ec;
+        font-size: 18px;
+        font-weight: 900;
+        letter-spacing: 0.08em;
+      }
+
+      /* Overlay 1: Nhãn tên bị cáo (Identity plate) */
+      #badge-name {
+        position: absolute;
+        bottom: 24px;
+        left: 24px;
+        background: #141414;
+        border-left: 8px solid #ff6a1a;
+        padding: 18px 28px;
+        border-radius: 0 4px 4px 0;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        will-change: transform, opacity;
+      }
+
+      .badge-label-small {
+        color: #ff6a1a;
+        font-size: 18px;
+        font-weight: 900;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .badge-title-large {
+        color: #f7f4ec;
+        font-size: 42px;
+        font-weight: 900;
+        line-height: 1.1;
+        letter-spacing: 0.02em;
+        margin: 0;
+      }
+
+      /* Khối thông tin nhân thân (Grid 2 cột) */
+      .meta-grid {
+        position: absolute;
+        top: 1128px;
+        left: 70px;
+        width: 940px;
+        display: flex;
+        gap: 20px;
+      }
+
+      /* Overlay 2: Thẻ nghề nghiệp & Icon Person */
+      #badge-job {
+        flex: 1;
+        background: #f5f0e4;
+        border: 4px solid #141414;
+        border-radius: 4px;
+        padding: 20px 24px;
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        box-shadow: 6px 6px 0px #141414;
+        will-change: transform, opacity;
+      }
+
+      .person-svg-wrap {
+        width: 52px;
+        height: 52px;
+        flex-shrink: 0;
+        background: #141414;
+        border-radius: 4px;
+        display: grid;
+        place-items: center;
+      }
+
+      .meta-text-group {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      .meta-tag-label {
+        font-size: 16px;
+        font-weight: 900;
+        color: #141414;
+        opacity: 0.75;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+      }
+
+      .meta-val-large {
+        font-size: 28px;
+        font-weight: 900;
+        color: #141414;
+        margin: 0;
+        line-height: 1.2;
+      }
+
+      /* Overlay 3: Thẻ Dân tộc Mường */
+      #badge-ethnic {
+        flex: 1;
+        background: #141414;
+        border: 4px solid #141414;
+        border-radius: 4px;
+        padding: 20px 24px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 4px;
+        box-shadow: 6px 6px 0px #ff6a1a;
+        will-change: transform, opacity;
+      }
+
+      .ethnic-tag-label {
+        font-size: 16px;
+        font-weight: 900;
+        color: #ff6a1a;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+      }
+
+      .ethnic-val-large {
+        font-size: 28px;
+        font-weight: 900;
+        color: #f7f4ec;
+        margin: 0;
+        line-height: 1.2;
+      }
+
+      /* Overlay 4: Punch-phrase KHÔNG BIẾT CHỮ */
+      #punch-illiterate {
+        position: absolute;
+        top: 1300px;
+        left: 70px;
+        width: 940px;
+        height: 154px;
+        background: #ff6a1a;
+        border: 5px solid #141414;
+        border-radius: 6px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 10px 10px 0px #141414;
+        transform-origin: 50% 50%;
+        will-change: transform, opacity;
+      }
+
+      .punch-sub {
+        font-size: 20px;
+        font-weight: 900;
+        color: #141414;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        margin-bottom: 2px;
+      }
+
+      .punch-main {
+        font-size: 64px;
+        font-weight: 900;
+        color: #141414;
+        letter-spacing: 0.03em;
+        text-transform: uppercase;
+        margin: 0;
+        line-height: 1;
+      }
+
+      /* Chữ ký thị giác: Thanh cam đáy khung hình */
+      .brand-bottom-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 1080px;
+        height: 14px;
+        background: #ff6a1a;
+        z-index: 100;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s08"
+      data-width="1080"
+      data-height="1920"
+      data-duration="6.76"
+    >
+      <!-- Background texture -->
+      <div class="dossier-backdrop"></div>
+
+      <!-- Main Scene Clip -->
+      <div class="clip" data-start="0" data-duration="6.76">
+        <!-- Khối chứa hồ sơ nhân thân hiệu ứng Flip -->
+        <div id="dossier-wrapper">
+          <!-- Thanh tiêu đề hồ sơ vụ án -->
+          <div class="dossier-header">
+            <div class="header-title-group">
+              <span class="header-tag">TÒA ÁN</span>
+              <span class="header-main-title">HỒ SƠ BỊ CÁO</span>
+            </div>
+            <span class="header-case-num">SỐ 14/2024/HS-ST</span>
+          </div>
+
+          <!-- Khung ảnh bị cáo tại tòa -->
+          <div class="photo-container">
+            <img
+              id="photo-img"
+              class="photo-img"
+              src="assets/img-03-defendant-standing-in-courtroom.jpg"
+              alt="Bị cáo Bùi Thanh H tại tòa án"
+            />
+
+            <!-- Con dấu watermark tài liệu -->
+            <div class="photo-watermark">
+              <div class="watermark-dot"></div>
+              <span class="watermark-text">LÝ LỊCH TƯ PHÁP</span>
+            </div>
+
+            <!-- Overlay 1: BÙI THANH H (1982) -->
+            <div id="badge-name">
+              <span class="badge-label-small">BỊ CÁO TRONG VỤ ÁN</span>
+              <h1 class="badge-title-large">BÙI THANH H (1982)</h1>
+            </div>
+          </div>
+
+          <!-- Lưới thông tin nhân thân -->
+          <div class="meta-grid">
+            <!-- Overlay 2: Nghề nghiệp tự do + Icon Person -->
+            <div id="badge-job">
+              <div class="person-svg-wrap">
+                <svg id="icon-person" width="34" height="34" viewBox="0 0 40 40" fill="none">
+                  <circle cx="20" cy="13" r="6.5" stroke="#FF6A1A" stroke-width="3.5" stroke-linecap="round" />
+                  <path d="M 8 33 C 8 23.5, 32 23.5, 32 33" stroke="#FF6A1A" stroke-width="3.5" stroke-linecap="round" />
+                </svg>
+              </div>
+              <div class="meta-text-group">
+                <span class="meta-tag-label">NGHỀ NGHIỆP</span>
+                <span class="meta-val-large">NGHỀ TỰ DO</span>
+              </div>
+            </div>
+
+            <!-- Overlay 3: Dân tộc Mường -->
+            <div id="badge-ethnic">
+              <span class="ethnic-tag-label">THÀNH PHẦN DÂN TỘC</span>
+              <span class="ethnic-val-large">DÂN TỘC MƯỜNG</span>
+            </div>
+          </div>
+
+          <!-- Overlay 4: Punch-phrase KHÔNG BIẾT CHỮ -->
+          <div id="punch-illiterate">
+            <span class="punch-sub">TRÌNH ĐỘ VĂN HÓA</span>
+            <h2 class="punch-main">KHÔNG BIẾT CHỮ</h2>
+          </div>
+        </div>
+      </div>
+
+      <!-- Thanh cam đáy cố định -->
+      <div class="brand-bottom-bar"></div>
+    </div>
+
+    <script>
+      // Thiết lập SVG stroke animation cho icon person
+      const personPaths = document.querySelectorAll("#icon-person circle, #icon-person path");
+      personPaths.forEach((path) => {
+        const len = path.getTotalLength();
+        path.style.strokeDasharray = len + "";
+        path.style.strokeDashoffset = len + "";
+      });
+
+      // Tạo timeline chính, paused: true theo chuẩn HyperFrames
+      const tl = gsap.timeline({ paused: true });
+
+      // 1. Vào cảnh: Flip hồ sơ tài liệu từ t = 0s đến 0.65s
+      tl.fromTo(
+        "#dossier-wrapper",
+        {
+          rotationY: -18,
+          transformPerspective: 1200,
+          opacity: 0,
+          scale: 0.94,
+        },
+        {
+          rotationY: 0,
+          opacity: 1,
+          scale: 1,
+          duration: 0.65,
+          ease: "power3.out",
+        },
+        0
+      );
+
+      // 2. Ken Burns zoom chậm toàn cảnh từ 1.0x lên 1.06x suốt 6.76s
+      tl.fromTo(
+        "#photo-img",
+        { scale: 1.0 },
+        { scale: 1.06, duration: 6.76, ease: "none" },
+        0
+      );
+
+      // 3. Overlay 1: BÙI THANH H (1982) xuất hiện lúc 1.45s (50090 - 48640 = 1450ms)
+      tl.fromTo(
+        "#badge-name",
+        {
+          y: 35,
+          opacity: 0,
+          scale: 0.92,
+        },
+        {
+          y: 0,
+          opacity: 1,
+          scale: 1,
+          duration: 0.55,
+          ease: "power3.out",
+        },
+        1.45
+      );
+
+      // 4. Overlay 2: Nghề tự do + icon person xuất hiện lúc 3.16s (51800 - 48640 = 3160ms)
+      tl.fromTo(
+        "#badge-job",
+        {
+          y: 28,
+          opacity: 0,
+        },
+        {
+          y: 0,
+          opacity: 1,
+          duration: 0.45,
+          ease: "power3.out",
+        },
+        3.16
+      );
+
+      // Tự vẽ nét icon person
+      tl.to(
+        "#icon-person circle",
+        {
+          strokeDashoffset: 0,
+          duration: 0.4,
+          ease: "power2.out",
+        },
+        3.25
+      );
+      tl.to(
+        "#icon-person path",
+        {
+          strokeDashoffset: 0,
+          duration: 0.4,
+          ease: "power2.out",
+        },
+        3.4
+      );
+
+      // 5. Overlay 3: DÂN TỘC MƯỜNG xuất hiện lúc 4.12s (52760 - 48640 = 4120ms)
+      tl.fromTo(
+        "#badge-ethnic",
+        {
+          y: 28,
+          opacity: 0,
+        },
+        {
+          y: 0,
+          opacity: 1,
+          duration: 0.45,
+          ease: "power3.out",
+        },
+        4.12
+      );
+
+      // 6. Overlay 4: Punch-phrase KHÔNG BIẾT CHỮ đóng dấu cộp lúc 5.02s (53660 - 48640 = 5020ms)
+      tl.fromTo(
+        "#punch-illiterate",
+        {
+          scale: 1.25,
+          opacity: 0,
+          rotation: -4,
+        },
+        {
+          scale: 1,
+          opacity: 1,
+          rotation: -1.5,
+          duration: 0.4,
+          ease: "power4.out",
+        },
+        5.02
+      );
+
+      // Đăng ký timeline cho HyperFrames seek runtime
+      window.__timelines["scene-s08"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

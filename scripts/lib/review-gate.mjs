@@ -26,7 +26,14 @@ function availableVideoSec(shot, media) {
  * - Shot dùng VIDEO dài hơn đoạn video có sẵn (28% shot video mọi video, vd Flow 8s cho shot 9s) →
  *   `videoHoldNote`. Đo thật 2026-09-26: render HyperFrames 0.8.56 TỰ GIỮ frame cuối khi data-duration dài
  *   hơn media (SSIM 0.985 với frame cuối file gốc, khác hẳn khung trống 0.37) — generator từng tự chế freeze
- *   bằng canvas/drawImage/event video (không tất định) và bị reviewer chặn đúng (ban-an-425 S10). */
+ *   bằng canvas/drawImage/event video (không tất định) và bị reviewer chặn đúng (ban-an-425 S10).
+ * - NGƯỢC LẠI: shot dùng VIDEO có đoạn trim (`trimStartSec`/`trimEndSec`) DÀI HƠN thời lượng shot →
+ *   `videoRetimeNote`. Gặp thật ở scene S10 doi-dau-xe-tang-checkpoint-charlie (2026-09-27, Stage 6 ghi
+ *   `trimStartSec:0, trimEndSec:8` cho shot chỉ dài 5.77s, kèm chỉ dẫn "retime có chủ đích") — HyperFrames
+ *   KHÔNG có cơ chế đổi tốc độ phát video được tài liệu hoá/kiểm chứng cho generator dùng (runtime có
+ *   `data-playback-rate` thật nhưng KHÔNG nằm trong skill docs cấp cho reviewer → dùng vẫn bị bác vì "lạ"),
+ *   khiến generator cố lách bằng cách không tất định (ghép nhiều clip nhỏ, thuộc tính tự chế) — FAIL nhiều
+ *   lần liền. Annotate để generator KHÔNG thử retime ngay từ đầu, chỉ trim đúng bằng độ dài shot. */
 export function annotateShotsForCodegen(shots, mediaById) {
   return shots.map((s) => {
     const media = mediaById[s.assetId];
@@ -37,6 +44,9 @@ export function annotateShotsForCodegen(shots, mediaById) {
       const dur = (s.endMs - s.startMs) / 1000;
       if (avail !== null && dur > avail + 0.05) {
         out.videoHoldNote = `Shot dài ${dur.toFixed(2)}s nhưng đoạn video có sẵn chỉ ${avail.toFixed(2)}s. Đặt data-duration của <video> = ${dur.toFixed(2)} (trọn shot): HyperFrames TỰ GIỮ frame cuối trong ${(dur - avail).toFixed(2)}s còn lại khi render (đã kiểm chứng). TUYỆT ĐỐI KHÔNG tự viết cơ chế freeze/giữ frame bằng canvas, drawImage, poster hay event video (loadeddata/seeked/timeupdate) — không tất định khi render. Muốn nhấn phần giữ frame thì chỉ zoom/pan wrapper KHÔNG có data-start.`;
+      } else if (avail !== null && avail > dur + 0.05) {
+        const trimStart = Number.isFinite(s.trimStartSec) ? s.trimStartSec : 0;
+        out.videoRetimeNote = `Đoạn trim khai báo (trimStartSec=${trimStart.toFixed(2)}, trimEndSec=${(trimStart + avail).toFixed(2)}) dài ${avail.toFixed(2)}s nhưng shot chỉ dài ${dur.toFixed(2)}s — KHÔNG có cơ chế đổi tốc độ phát (retime/playback-rate) nào được kiểm chứng dùng được cho generator. Đặt data-media-start=${trimStart.toFixed(2)}, data-duration=${dur.toFixed(2)} (tức chỉ phát ${dur.toFixed(2)}s ĐẦU của đoạn trim, tốc độ phát BÌNH THƯỜNG) — KHÔNG ghép nhiều thẻ <video>, KHÔNG dùng thuộc tính đổi tốc độ nào. Chấp nhận không thấy hết toàn bộ đoạn trim đã khai báo.`;
       }
     }
     return out;
@@ -104,6 +114,16 @@ const ADVISORY_RES = [
   /chữ hoa|chữ thường|viết hoa|in hoa|hoa\/thường|uppercase|lowercase/i,
 ];
 
+// Model đôi khi liệt kê MỖI bước kiểm tra hợp đồng làm 1 dòng trong BLOCKING (thay vì chỉ liệt kê lỗi
+// thật), NÊU TÊN các quy tắc contract (`#root`, `__timelines`, `paused`, `Date.now`...) ngay cả khi đang
+// XÁC NHẬN tuân thủ đúng, rồi tự kết luận ngay trong dòng đó là KHÔNG có lỗi — gặp thật ở scene S10
+// doi-dau-xe-tang-checkpoint-charlie (2026-09-26): FAIL 3/3 dù hầu hết dòng BLOCKING tự phủ nhận chính
+// nó ("không phải lỗi chặn", "không có lỗi ở đây"...). HARD_RE (dùng cho các mục ADVISORY_RES ở trên)
+// QUÁ RỘNG cho trường hợp này vì nó chỉ so khớp TÊN quy tắc, không phân biệt được "vi phạm X" với "xác
+// nhận KHÔNG vi phạm X" — nên dùng gate riêng, hẹp hơn, chỉ chặn khi có động từ vi phạm rõ ràng.
+const SELF_RESOLVED_RE = /không phải (là )?lỗi( chặn)?\b|không (còn )?chặn\b|không có lỗi[^.]{0,20}(ở đây|chặn|blocking)|không vi phạm|\bbỏ qua\.?$/i;
+const SELF_RESOLVED_HARD_RE = /\bvi phạm\b|sai (chữ|số|ý|nội dung)|thiếu (hẳn )?(overlay|punch|label|nhãn)|ngoài khung|không hiển thị|không bao giờ hiện|gây lỗi|không đạt/i;
+
 function paletteSwapOnly(item, paletteHexes) {
   const hexes = [...String(item).matchAll(/#[0-9a-f]{6}\b/gi)].map((m) => m[0].toLowerCase());
   return hexes.length >= 2 && hexes.every((h) => paletteHexes.has(h));
@@ -114,7 +134,8 @@ export function demoteAdvisoryItems(blocking, { paletteHexes = new Set() } = {})
   const demoted = [];
   for (const b of blocking) {
     const advisoryLike = ADVISORY_RES.some((re) => re.test(b)) || paletteSwapOnly(b, paletteHexes);
-    if (advisoryLike && !HARD_RE.test(b)) demoted.push(b);
+    const selfResolved = SELF_RESOLVED_RE.test(b) && !SELF_RESOLVED_HARD_RE.test(b);
+    if ((advisoryLike && !HARD_RE.test(b)) || selfResolved) demoted.push(b);
     else keep.push(b);
   }
   return { keep, demoted };
@@ -124,9 +145,15 @@ export function parseReviewVerdict(rawText, { paletteHexes } = {}) {
   // Model hay bọc tiêu đề bằng markdown đậm ("**BLOCKING:**") — bỏ trước khi parse, nếu không dấu "*"
   // còn sót bị đọc thành 1 lỗi chặn giả.
   const text = String(rawText).replace(/\*\*|__/g, "");
-  const verdictPass = /VERDICT:\s*[*_#\s]*PASS/i.test(text);
-  const rawBlocking = section(text, "BLOCKING");
-  const advisory = section(text, "ADVISORY") ?? [];
+  // Model đôi khi "nghĩ to" (tự liệt kê rồi tự phản biện) trước khi chốt câu trả lời cuối, sinh nhiều khối
+  // VERDICT/BLOCKING lặp lại dù prompt yêu cầu đúng 1 khối duy nhất (gặp thật ở scene S03
+  // doi-dau-xe-tang-checkpoint-charlie, 2026-09-26: model tự FAIL rồi tự sửa "Kết luận cuối: VERDICT: PASS").
+  // Luôn lấy khối VERDICT CUỐI CÙNG (kết luận thật) thay vì khối đầu tiên (có thể là bản nháp tự suy luận).
+  const verdictMatches = [...text.matchAll(/VERDICT\s*:/gi)];
+  const finalText = verdictMatches.length > 0 ? text.slice(verdictMatches[verdictMatches.length - 1].index) : text;
+  const verdictPass = /VERDICT:\s*[*_#\s]*PASS/i.test(finalText);
+  const rawBlocking = section(finalText, "BLOCKING");
+  const advisory = section(finalText, "ADVISORY") ?? [];
   if (rawBlocking === null) {
     const legacy = section(text, "ISSUES") ?? [];
     return { structured: false, pass: verdictPass, blocking: verdictPass ? [] : legacy, advisory: [], demoted: [], verdictPass };

@@ -1,0 +1,429 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap">
+      <style>
+/* hf-safe-colors (tất định từ style-tokens.json) */
+.hf-text-ink { color: #141414; }
+.hf-text-light { color: #F7F4EC; }
+.hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+.hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+.hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+.hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      width: 1080px;
+      height: 1920px;
+      background-color: #E7E3D9;
+      font-family: "Be Vietnam Pro", sans-serif;
+      overflow: hidden;
+      color: #141414;
+    }
+
+    #root {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #E7E3D9;
+    }
+
+    .clip {
+      position: absolute;
+      inset: 0;
+    }
+
+    /* Lưới nền phong cách Vox */
+    .bg-grid {
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(to right, rgba(20, 20, 20, 0.14) 1.5px, transparent 1.5px),
+        linear-gradient(to bottom, rgba(20, 20, 20, 0.14) 1.5px, transparent 1.5px);
+      background-size: 84px 84px;
+      pointer-events: none;
+    }
+
+    /* Khung ảnh chính fit 9:16 có chuyển động pan camera */
+    .photo-viewport {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+    }
+
+    .photo-asset {
+      position: absolute;
+      width: 100%;
+      height: 120%;
+      top: 0;
+      left: 0;
+      object-fit: cover;
+      object-position: center bottom;
+      will-change: transform;
+    }
+
+    /* Thanh cam nhận diện thương hiệu cố định mép đáy */
+    .bottom-brand-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 14px;
+      background-color: #FF6A1A;
+      z-index: 100;
+    }
+
+    /* Lớp peel transition bóc mở đầu scene */
+    .peel-wrapper {
+      position: absolute;
+      inset: 0;
+      background-color: #E7E3D9;
+      z-index: 30;
+      will-change: clip-path;
+    }
+
+    .peel-shadow-edge {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(20, 20, 20, 0.4) 0%, transparent 60%);
+      pointer-events: none;
+    }
+
+    /* Overlay 1: TỪ MỘT CHÉN RƯỢU */
+    .overlay-1-box {
+      position: absolute;
+      top: 260px;
+      left: 60px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0;
+      z-index: 40;
+    }
+
+    .tag-accent-orange {
+      background-color: #FF6A1A;
+      color: #141414;
+      font-size: 26px;
+      font-weight: 900;
+      letter-spacing: 2px;
+      padding: 10px 22px;
+      text-transform: uppercase;
+      box-shadow: 4px 4px 0 #141414;
+      border: 2px solid #141414;
+    }
+
+    .plate-ink-large {
+      background-color: #141414;
+      color: #F7F4EC;
+      font-size: 54px;
+      font-weight: 900;
+      line-height: 1.25;
+      padding: 20px 32px;
+      box-shadow: 6px 6px 0 #FF6A1A;
+      border-left: 8px solid #FF6A1A;
+      max-width: 820px;
+    }
+
+    /* Overlay 2: Split "LỜI QUA TIẾNG LẠI" */
+    .split-container {
+      position: absolute;
+      top: 640px;
+      left: 40px;
+      right: 40px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 16px;
+      z-index: 40;
+    }
+
+    .split-side {
+      flex: 1;
+      padding: 24px 20px;
+      text-align: center;
+      font-size: 42px;
+      font-weight: 900;
+      letter-spacing: 1px;
+      border: 3px solid #141414;
+      will-change: transform, opacity;
+    }
+
+    .split-left {
+      background-color: #141414;
+      color: #F7F4EC;
+      box-shadow: -6px 6px 0 #FF6A1A;
+    }
+
+    .split-right {
+      background-color: #FF6A1A;
+      color: #141414;
+      box-shadow: 6px 6px 0 #141414;
+    }
+
+    .split-clash-icon {
+      width: 76px;
+      height: 76px;
+      background-color: #141414;
+      border: 3px solid #FF6A1A;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+      flex-shrink: 0;
+      z-index: 2;
+    }
+
+    /* Overlay 3: Icon "question" chuẩn Vox Vocabulary */
+    .question-icon-badge {
+      position: absolute;
+      top: 920px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 120px;
+      height: 120px;
+      background-color: #141414;
+      border: 4px solid #FF6A1A;
+      border-radius: 50%;
+      box-shadow: 0 10px 26px rgba(0, 0, 0, 0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 45;
+    }
+
+    .question-svg {
+      width: 68px;
+      height: 68px;
+    }
+
+    /* Overlay 4: Punch-phrase "AI PHẢI RÓT?" */
+    .punch-wrapper {
+      position: absolute;
+      top: 1070px;
+      left: 60px;
+      right: 60px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      z-index: 50;
+      will-change: transform, opacity;
+    }
+
+    .punch-pre-tag {
+      background-color: #141414;
+      color: #F7F4EC;
+      font-size: 26px;
+      font-weight: 900;
+      letter-spacing: 2px;
+      padding: 8px 24px;
+      text-transform: uppercase;
+      border: 2px solid #FF6A1A;
+      margin-bottom: -4px;
+      z-index: 2;
+    }
+
+    .punch-card-main {
+      width: 100%;
+      background-color: #FF6A1A;
+      color: #141414;
+      font-size: 76px;
+      font-weight: 900;
+      line-height: 1.25;
+      text-align: center;
+      padding: 24px 30px;
+      border: 4px solid #141414;
+      box-shadow: 10px 10px 0 #141414;
+      letter-spacing: 1.5px;
+    }
+  </style>
+
+  <div
+    id="root"
+    data-composition-id="scene-s015"
+    data-width="1080"
+    data-height="1920"
+    data-duration="6.24"
+  >
+    <!-- Thanh viền cam nhận diện thương hiệu ở đáy khung hình -->
+    <div class="bottom-brand-bar"></div>
+
+    <!-- 1. Background Scene Clip (Toàn bộ 6.24s) -->
+    <div id="clip-bg-scene" class="clip" data-start="0" data-duration="6.24">
+      <div class="bg-grid"></div>
+      <div class="photo-viewport" data-layout-allow-overflow="true">
+        <img
+          id="photo-img-main"
+          class="photo-asset"
+          src="assets/img-07-drinking-argument-men-dispute.jpg"
+          alt="Tranh cãi bên bàn nhậu"
+        />
+      </div>
+    </div>
+
+    <!-- 2. Peel Entrance Transition (0s - 0.75s) -->
+    <div id="clip-peel-transition" class="clip" data-start="0" data-duration="0.75">
+      <div id="peel-sheet" class="peel-wrapper">
+        <div class="bg-grid"></div>
+        <div class="peel-shadow-edge"></div>
+      </div>
+    </div>
+
+    <!-- 3. Overlay 1: "TỪ MỘT CHÉN RƯỢU" (0.56s - 2.56s) -->
+    <div id="clip-overlay-1" class="clip" data-start="0.56" data-duration="2.0">
+      <div id="overlay-1-content" class="overlay-1-box">
+        <div class="tag-accent-orange">NGUỒN CƠN MÂU THUẪN</div>
+        <div class="plate-ink-large">TỪ MỘT CHÉN RƯỢU</div>
+      </div>
+    </div>
+
+    <!-- 4. Overlay 2: Split "LỜI QUA TIẾNG LẠI" (2.82s - 4.35s) -->
+    <div id="clip-overlay-2" class="clip" data-start="2.82" data-duration="1.53">
+      <div class="split-container">
+        <div id="split-item-left" class="split-side split-left">LỜI QUA</div>
+        <div id="split-clash-badge" class="split-clash-icon">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#FF6A1A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+          </svg>
+        </div>
+        <div id="split-item-right" class="split-side split-right">TIẾNG LẠI</div>
+      </div>
+    </div>
+
+    <!-- 5. Overlay 3: Question Icon (4.27s - 6.24s) -->
+    <div id="clip-overlay-3" class="clip" data-start="4.27" data-duration="1.97">
+      <div id="question-icon-wrap" class="question-icon-badge">
+        <svg class="question-svg" viewBox="0 0 100 100" fill="none">
+          <path
+            id="question-stroke-path"
+            d="M 28 35 C 28 16 72 16 72 35 C 72 50 50 54 50 68"
+            stroke="#FF6A1A"
+            stroke-width="12"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+          <circle id="question-dot-circle" cx="50" cy="84" r="6" fill="#FF6A1A" />
+        </svg>
+      </div>
+    </div>
+
+    <!-- 6. Overlay 4: Punch-phrase "AI PHẢI RÓT?" (4.59s - 6.24s) -->
+    <div id="clip-overlay-4" class="clip" data-start="4.59" data-duration="1.65">
+      <div id="punch-main-box" class="punch-wrapper">
+        <div class="punch-pre-tag">XUNG ĐỘT BỘC PHÁT</div>
+        <div class="punch-card-main">AI PHẢI RÓT?</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const tl = gsap.timeline({ paused: true });
+
+    // 1. Camera Motion: Pan dọc chậm từ bàn nhậu/ly rượu lên hai gương mặt (0s -> 6.24s)
+    tl.fromTo(
+      "#photo-img-main",
+      { y: -160, scale: 1.05 },
+      { y: 0, scale: 1.15, duration: 6.24, ease: "none" },
+      0
+    );
+
+    // 2. Peel Entrance Transition: Lột chéo góc giấy mở màn kịch tính (0.05s -> 0.65s)
+    tl.fromTo(
+      "#peel-sheet",
+      { clipPath: "polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)" },
+      { clipPath: "polygon(100% 0%, 100% 0%, 100% 100%, 100% 100%)", duration: 0.6, ease: "power2.inOut" },
+      0.05
+    );
+
+    // 3. Overlay 1: "TỪ MỘT CHÉN RƯỢU" (vào 0.56s, rút đi 2.2s)
+    tl.fromTo(
+      "#overlay-1-content",
+      { x: -50, opacity: 0 },
+      { x: 0, opacity: 1, duration: 0.45, ease: "power3.out" },
+      0.56
+    );
+    tl.to(
+      "#overlay-1-content",
+      { x: -30, opacity: 0, duration: 0.35, ease: "power2.in" },
+      2.18
+    );
+
+    // 4. Overlay 2: Split "LỜI QUA TIẾNG LẠI" (va chạm hai phía 2.82s, rút đi 4.05s)
+    tl.fromTo(
+      "#split-item-left",
+      { x: -280, opacity: 0 },
+      { x: 0, opacity: 1, duration: 0.42, ease: "power3.out" },
+      2.82
+    );
+    tl.fromTo(
+      "#split-item-right",
+      { x: 280, opacity: 0 },
+      { x: 0, opacity: 1, duration: 0.42, ease: "power3.out" },
+      2.82
+    );
+    tl.fromTo(
+      "#split-clash-badge",
+      { scale: 0, rotation: -90, opacity: 0 },
+      { scale: 1, rotation: 0, opacity: 1, duration: 0.3, ease: "back.out(1.7)" },
+      3.05
+    );
+    tl.to(
+      ["#split-item-left", "#split-item-right", "#split-clash-badge"],
+      { y: -25, opacity: 0, duration: 0.28, ease: "power2.in" },
+      4.05
+    );
+
+    // 5. Overlay 3: Icon "question" tự vẽ theo Vox Vocabulary (4.27s)
+    const qPath = document.querySelector("#question-stroke-path");
+    if (qPath) {
+      const qLen = qPath.getTotalLength();
+      tl.fromTo(
+        "#question-icon-wrap",
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.35, ease: "power3.out" },
+        4.27
+      );
+      tl.fromTo(
+        "#question-stroke-path",
+        { strokeDasharray: qLen, strokeDashoffset: qLen },
+        { strokeDashoffset: 0, duration: 0.42, ease: "power2.out" },
+        4.35
+      );
+      tl.fromTo(
+        "#question-dot-circle",
+        { scale: 0, transformOrigin: "50% 50%" },
+        { scale: 1, duration: 0.2, ease: "power3.out" },
+        4.65
+      );
+    }
+
+    // 6. Overlay 4: Punch-phrase "AI PHẢI RÓT?" (4.59s)
+    tl.fromTo(
+      "#punch-main-box",
+      { scale: 0.85, y: 35, opacity: 0 },
+      { scale: 1, y: 0, opacity: 1, duration: 0.42, ease: "power3.out" },
+      4.59
+    );
+    // Nhấn micro-shake thể hiện căng thẳng đỉnh điểm lúc 5.2s
+    tl.to("#punch-main-box", { rotation: -1.2, duration: 0.08, ease: "none" }, 5.20);
+    tl.to("#punch-main-box", { rotation: 1.2, duration: 0.08, ease: "none" }, 5.28);
+    tl.to("#punch-main-box", { rotation: 0, duration: 0.08, ease: "none" }, 5.36);
+
+    // Đăng ký timeline cho HyperFrames seek
+    window.__timelines["scene-s015"] = tl;
+  </script>
+
+    </template>
+  </body>
+</html>
