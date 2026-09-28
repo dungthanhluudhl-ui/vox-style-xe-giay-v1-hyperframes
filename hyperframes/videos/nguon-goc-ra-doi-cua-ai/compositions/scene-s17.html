@@ -1,0 +1,659 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap">
+      <style>
+    /* hf-safe-colors (tất định từ style-tokens.json) */
+    .hf-text-ink { color: #141414; }
+    .hf-text-light { color: #F7F4EC; }
+    .hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+    .hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+    .hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+    .hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #E7E3D9;
+      color: #141414;
+      font-family: "Be Vietnam Pro", sans-serif;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    #root {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #E7E3D9;
+    }
+
+    .clip {
+      position: absolute;
+      inset: 0;
+    }
+
+    /* Background Variant: Chart (Ruled horizontal lines at 20%, 40%, 60%, 80% + left orange ticks) */
+    .chart-background {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .chart-line {
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background-color: rgba(20, 20, 20, 0.22);
+    }
+
+    .chart-tick {
+      position: absolute;
+      left: 0;
+      width: 24px;
+      height: 6px;
+      background-color: #FF6A1A;
+    }
+
+    /* Signature bottom brand orange bar */
+    .bottom-brand-bar {
+      position: absolute;
+      left: 0;
+      bottom: 0;
+      width: 1080px;
+      height: 14px;
+      background-color: #FF6A1A;
+      z-index: 100;
+    }
+
+    /* Scene main content wrapper */
+    #scene-content {
+      position: absolute;
+      inset: 0;
+      z-index: 10;
+    }
+
+    /* Top Section (Safe zone: y = 160px - 310px) */
+    .header-group {
+      position: absolute;
+      top: 175px;
+      left: 65px;
+      width: 950px;
+    }
+
+    .category-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background-color: #141414;
+      color: #FF6A1A;
+      font-size: 20px;
+      font-weight: 900;
+      letter-spacing: 2px;
+      padding: 6px 18px;
+      border-radius: 4px;
+      margin-bottom: 14px;
+    }
+
+    .category-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: #FF6A1A;
+    }
+
+    .main-headline {
+      font-size: 48px;
+      font-weight: 900;
+      line-height: 1.25;
+      color: #141414;
+      text-transform: uppercase;
+      letter-spacing: -0.5px;
+    }
+
+    /* Natural Language Input Speech Chips (y: 315px - 445px) */
+    .speech-stream {
+      position: absolute;
+      top: 315px;
+      left: 65px;
+      width: 950px;
+      height: 130px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-content: space-between;
+    }
+
+    .speech-chip {
+      width: 460px;
+      height: 58px;
+      background-color: #F5F0E4;
+      border: 2px solid #141414;
+      border-radius: 29px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 23px;
+      font-weight: 700;
+      color: #141414;
+      box-shadow: 0 4px 0 rgba(20, 20, 20, 0.12);
+    }
+
+    /* Central Binary Filter Funnel (y: 450px - 720px) */
+    .funnel-container {
+      position: absolute;
+      top: 450px;
+      left: 220px;
+      width: 640px;
+      height: 270px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .funnel-svg {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    .funnel-badge {
+      position: relative;
+      z-index: 20;
+      margin-top: -15px;
+      opacity: 0;
+    }
+
+    .funnel-badge-inner {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background-color: #141414;
+      border: 3px solid #FF6A1A;
+      padding: 12px 28px;
+      border-radius: 8px;
+      box-shadow: 0 6px 16px rgba(20, 20, 20, 0.3);
+    }
+
+    .funnel-badge-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background-color: #FF6A1A;
+    }
+
+    .funnel-badge-title {
+      font-size: 26px;
+      font-weight: 900;
+      letter-spacing: 2px;
+      color: #F7F4EC;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    /* Result Binary Pillars (y: 740px - 1300px, usable band ends at 1390px) */
+    .pillar {
+      position: absolute;
+      top: 740px;
+      width: 455px;
+      height: 550px;
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 0 0 16px 0;
+      overflow: hidden;
+    }
+
+    .pillar-left {
+      left: 65px;
+      background-color: #F5F0E4;
+      border: 4px solid #141414;
+      box-shadow: 6px 8px 0px rgba(20, 20, 20, 0.25);
+    }
+
+    .pillar-right {
+      left: 560px;
+      background-color: #141414;
+      border: 4px solid #FF6A1A;
+      box-shadow: 6px 8px 0px rgba(20, 20, 20, 0.35);
+    }
+
+    /* Pillar Headers */
+    .pillar-header {
+      width: 100%;
+      height: 54px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      font-weight: 900;
+      letter-spacing: 2px;
+    }
+
+    .header-true {
+      background-color: #FF6A1A;
+      color: #141414;
+      border-bottom: 3px solid #141414;
+    }
+
+    .header-false {
+      background-color: #141414;
+      color: #FF6A1A;
+      border-bottom: 3px solid #FF6A1A;
+    }
+
+    /* Giant Numbers */
+    .pillar-number-box {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      margin-top: 10px;
+      margin-bottom: 8px;
+    }
+
+    .giant-number {
+      font-size: 140px;
+      font-weight: 900;
+      line-height: 130px;
+    }
+
+    .number-true {
+      color: #141414;
+    }
+
+    .number-false {
+      color: #FF6A1A;
+    }
+
+    .number-label {
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      margin-top: 2px;
+    }
+
+    .label-true {
+      color: #141414;
+    }
+
+    .label-false {
+      color: #F7F4EC;
+    }
+
+    /* Sorted Speech Chips inside pillars */
+    .sorted-tags {
+      width: 395px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .sorted-tag {
+      width: 100%;
+      height: 42px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      padding: 0 14px;
+      font-size: 18px;
+      font-weight: 700;
+      gap: 10px;
+    }
+
+    .tag-true {
+      background-color: #E7E3D9;
+      border: 2px solid #141414;
+      color: #141414;
+    }
+
+    .tag-false {
+      background-color: #141414;
+      border: 2px solid rgba(247, 244, 236, 0.3);
+      color: #F7F4EC;
+    }
+
+    .tag-icon {
+      font-weight: 900;
+      font-size: 20px;
+    }
+
+    /* Punch Phrase Badges */
+    .punch-badge {
+      width: 395px;
+      height: 72px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transform-origin: center center;
+    }
+
+    .punch-true {
+      background-color: #FF6A1A;
+      border: 4px solid #141414;
+      color: #141414;
+      font-size: 36px;
+      font-weight: 900;
+      letter-spacing: 2px;
+      box-shadow: 4px 4px 0 #141414;
+    }
+
+    .punch-false {
+      background-color: #141414;
+      border: 4px solid #FF6A1A;
+      color: #F7F4EC;
+      font-size: 36px;
+      font-weight: 900;
+      letter-spacing: 2px;
+      box-shadow: 4px 4px 0 #FF6A1A;
+    }
+
+    .punch-zero {
+      color: #FF6A1A;
+    }
+  </style>
+
+  <div
+    id="root"
+    data-composition-id="scene-s17"
+    data-start="0"
+    data-width="1080"
+    data-height="1920"
+    data-duration="5.8"
+  >
+    <!-- Background Variant: Chart (Horizontal ruled lines + left orange ticks, strictly decorative) -->
+    <div class="chart-background" data-layout-ignore="true">
+      <div class="chart-line" style="top: 384px;"></div>
+      <div class="chart-tick" style="top: 382px;"></div>
+
+      <div class="chart-line" style="top: 768px;"></div>
+      <div class="chart-tick" style="top: 766px;"></div>
+
+      <div class="chart-line" style="top: 1152px;"></div>
+      <div class="chart-tick" style="top: 1150px;"></div>
+
+      <div class="chart-line" style="top: 1536px;"></div>
+      <div class="chart-tick" style="top: 1534px;"></div>
+    </div>
+
+    <!-- Shot Clip Container -->
+    <section id="shot-s17-1" class="clip" data-start="0" data-duration="5.8">
+      <div id="scene-content">
+        <!-- Top Context Section -->
+        <div class="header-group">
+          <div id="category-badge" class="category-badge">
+            <span class="category-dot"></span>
+            <span>HỆ THỐNG LOGIC BOOLE</span>
+          </div>
+          <h1 id="main-headline" class="main-headline">
+            QUY MỌI CÂU NÓI VỀ 2 GIÁ TRỊ
+          </h1>
+        </div>
+
+        <!-- Natural Speech Inputs Stream -->
+        <div id="speech-stream" class="speech-stream">
+          <div id="chip-1" class="speech-chip speech-chip-true">
+            “1 + 1 = 2”
+          </div>
+          <div id="chip-2" class="speech-chip speech-chip-false">
+            “2 + 2 = 5”
+          </div>
+          <div id="chip-3" class="speech-chip speech-chip-true">
+            “LỬA THÌ NÓNG”
+          </div>
+          <div id="chip-4" class="speech-chip speech-chip-false">
+            “CÁ BIẾT BAY”
+          </div>
+        </div>
+
+        <!-- Central Mechanism: Funnel & Logic Splitter -->
+        <div id="funnel-container" class="funnel-container">
+          <svg class="funnel-svg" width="640" height="270" viewBox="0 0 640 270" fill="none">
+            <!-- Funnel chamber outlines -->
+            <path d="M 80 20 L 250 140 L 250 170 L 100 230" stroke="#141414" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
+            <path d="M 560 20 L 390 140 L 390 170 L 540 230" stroke="#141414" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
+
+            <!-- Center divider notch -->
+            <polygon points="320,130 300,165 340,165" fill="#141414" />
+
+            <!-- Dynamic routing channels -->
+            <path id="path-left" d="M 280 170 C 250 210, 180 230, 80 230" stroke="#FF6A1A" stroke-width="5" stroke-linecap="round" stroke-dasharray="10 8" />
+            <path id="path-right" d="M 360 170 C 390 210, 460 230, 560 230" stroke="#141414" stroke-width="5" stroke-linecap="round" stroke-dasharray="10 8" />
+          </svg>
+
+          <!-- Overlay 1: Diagram Label (PHỄU LỌC NHỊ PHÂN) -->
+          <div id="funnel-badge" class="funnel-badge">
+            <div class="funnel-badge-inner">
+              <span class="funnel-badge-dot"></span>
+              <span class="funnel-badge-title">PHỄU LỌC NHỊ PHÂN</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Left Pillar: ĐÚNG / 1 -->
+        <div id="pillar-true" class="pillar pillar-left">
+          <div class="pillar-header header-true">
+            <span>GIÁ TRỊ: ĐÚNG</span>
+          </div>
+
+          <div class="pillar-number-box">
+            <div id="num-1" class="giant-number number-true">1</div>
+            <div class="number-label label-true">TRUE / CHÂN LÝ</div>
+          </div>
+
+          <div class="sorted-tags">
+            <div id="tag-true-1" class="sorted-tag tag-true">
+              <span class="tag-icon">✓</span>
+              <span>1 + 1 = 2</span>
+            </div>
+            <div id="tag-true-2" class="sorted-tag tag-true">
+              <span class="tag-icon">✓</span>
+              <span>LỬA THÌ NÓNG</span>
+            </div>
+          </div>
+
+          <!-- Overlay 2: Punch Phrase (ĐÚNG = 1) -->
+          <div id="punch-true" class="punch-badge punch-true">
+            <span>ĐÚNG = 1</span>
+          </div>
+        </div>
+
+        <!-- Right Pillar: SAI / 0 -->
+        <div id="pillar-false" class="pillar pillar-right">
+          <div class="pillar-header header-false">
+            <span>GIÁ TRỊ: SAI</span>
+          </div>
+
+          <div class="pillar-number-box">
+            <div id="num-0" class="giant-number number-false">0</div>
+            <div class="number-label label-false">FALSE / NGUY TẠO</div>
+          </div>
+
+          <div class="sorted-tags">
+            <div id="tag-false-1" class="sorted-tag tag-false">
+              <span class="tag-icon">✗</span>
+              <span>2 + 2 = 5</span>
+            </div>
+            <div id="tag-false-2" class="sorted-tag tag-false">
+              <span class="tag-icon">✗</span>
+              <span>CÁ BIẾT BAY</span>
+            </div>
+          </div>
+
+          <!-- Overlay 3: Punch Phrase (SAI = 0) -->
+          <div id="punch-false" class="punch-badge punch-false">
+            <span>SAI = <span class="punch-zero">0</span></span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Bottom brand accent line -->
+    <div class="bottom-brand-bar"></div>
+  </div>
+
+  <script>
+    const tl = gsap.timeline({ paused: true });
+
+    // Subtle camera zoom-in (0.98 -> 1.0)
+    tl.fromTo(
+      "#scene-content",
+      { scale: 0.98 },
+      { scale: 1.0, duration: 5.8, ease: "power1.out" },
+      0
+    );
+
+    // 0.1s - Header entrances
+    tl.fromTo(
+      "#category-badge",
+      { y: -20, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.45, ease: "power3.out" },
+      0.1
+    );
+
+    tl.fromTo(
+      "#main-headline",
+      { y: 24, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.5, ease: "power3.out" },
+      0.2
+    );
+
+    // 0.35s - Natural speech chips appear
+    tl.fromTo(
+      ".speech-chip",
+      { scale: 0, opacity: 0, y: -20 },
+      { scale: 1, opacity: 1, y: 0, duration: 0.45, stagger: 0.08, ease: "power3.out" },
+      0.35
+    );
+
+    // 0.75s - Funnel structure scales in
+    tl.fromTo(
+      "#funnel-container",
+      { scale: 0.85, opacity: 0 },
+      { scale: 1, opacity: 1, duration: 0.5, ease: "power3.out" },
+      0.75
+    );
+
+    // 1.29s - Overlay 1: PHỄU LỌC NHỊ PHÂN badge reveal (Shotlist atMs: 128010 -> offset 1.29s)
+    tl.fromTo(
+      "#funnel-badge",
+      { scale: 0, opacity: 0, y: -15 },
+      { scale: 1, opacity: 1, y: 0, duration: 0.45, ease: "power3.out" },
+      1.29
+    );
+
+    // 1.7s - Result Pillars rise into place
+    tl.fromTo(
+      "#pillar-true",
+      { y: 60, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.6, ease: "power3.out" },
+      1.7
+    );
+
+    tl.fromTo(
+      "#pillar-false",
+      { y: 60, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.6, ease: "power3.out" },
+      1.85
+    );
+
+    // 2.15s - Natural speech chips flow down into the funnel
+    tl.fromTo(
+      ".speech-chip-true",
+      { y: 0, x: 0, scale: 1, opacity: 1 },
+      { y: 110, x: -30, scale: 0.35, opacity: 0, duration: 0.55, stagger: 0.08, ease: "power2.in" },
+      2.15
+    );
+
+    tl.fromTo(
+      ".speech-chip-false",
+      { y: 0, x: 0, scale: 1, opacity: 1 },
+      { y: 110, x: 30, scale: 0.35, opacity: 0, duration: 0.55, stagger: 0.08, ease: "power2.in" },
+      2.25
+    );
+
+    // 2.65s - Routing channels draw toward the pillars
+    tl.fromTo(
+      "#path-left",
+      { strokeDashoffset: 140, opacity: 0 },
+      { strokeDashoffset: 0, opacity: 1, duration: 0.5, ease: "power2.out" },
+      2.65
+    );
+
+    tl.fromTo(
+      "#path-right",
+      { strokeDashoffset: -140, opacity: 0 },
+      { strokeDashoffset: 0, opacity: 1, duration: 0.5, ease: "power2.out" },
+      2.75
+    );
+
+    // 2.95s - Sorted statements appear within the respective binary pillars
+    tl.fromTo(
+      "#tag-true-1, #tag-true-2",
+      { x: -30, opacity: 0 },
+      { x: 0, opacity: 1, duration: 0.4, stagger: 0.1, ease: "power3.out" },
+      2.95
+    );
+
+    tl.fromTo(
+      "#tag-false-1, #tag-false-2",
+      { x: 30, opacity: 0 },
+      { x: 0, opacity: 1, duration: 0.4, stagger: 0.1, ease: "power3.out" },
+      3.1
+    );
+
+    // 3.40s - Giant Binary Digits reveal
+    tl.fromTo(
+      "#num-1",
+      { scale: 0.2, opacity: 0 },
+      { scale: 1, opacity: 1, duration: 0.55, ease: "power3.out" },
+      3.40
+    );
+
+    tl.fromTo(
+      "#num-0",
+      { scale: 0.2, opacity: 0 },
+      { scale: 1, opacity: 1, duration: 0.55, ease: "power3.out" },
+      3.55
+    );
+
+    // 4.65s - Overlay 2: Punch Phrase ĐÚNG = 1 slams in (Shotlist atMs: 131370 -> offset 4.65s)
+    tl.fromTo(
+      "#punch-true",
+      { scale: 1.3, opacity: 0 },
+      { scale: 1, opacity: 1, duration: 0.4, ease: "power4.out" },
+      4.65
+    );
+
+    // 5.30s - Overlay 3: Punch Phrase SAI = 0 slams in (Shotlist atMs: 132020 -> offset 5.30s)
+    tl.fromTo(
+      "#punch-false",
+      { scale: 1.3, opacity: 0 },
+      { scale: 1, opacity: 1, duration: 0.35, ease: "power4.out" },
+      5.30
+    );
+
+    window.__timelines["scene-s17"] = tl;
+  </script>
+
+    </template>
+  </body>
+</html>

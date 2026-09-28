@@ -1,0 +1,433 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+/* hf-safe-colors (tất định từ style-tokens.json) */
+.hf-text-ink { color: #141414; }
+.hf-text-light { color: #F7F4EC; }
+.hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+.hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+.hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+.hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+      *, *::before, *::after {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        width: 1080px;
+        height: 1920px;
+        background-color: #E7E3D9;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+
+      /* Quy ước bắt buộc của HyperFrames Core */
+      .clip {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+      }
+
+      /* Nền lưới kỹ thuật Vox 84px */
+      .grid-canvas {
+        position: absolute;
+        inset: 0;
+        background-color: #E7E3D9;
+        background-image:
+          linear-gradient(rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px),
+          linear-gradient(90deg, rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px);
+        background-size: 84px 84px;
+        z-index: 1;
+      }
+
+      /* Khung ảnh chân dung & hệ thống bánh răng MIT */
+      #photo-card {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+        z-index: 2;
+      }
+      #photo-inner {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center;
+        display: block;
+        transform-origin: center center;
+      }
+
+      /* Dấu kỹ thuật / Metadata phong cách tư liệu Vox */
+      .archive-stamp {
+        position: absolute;
+        top: 80px;
+        left: 60px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        background: #141414;
+        padding: 10px 20px;
+        border-radius: 4px;
+        z-index: 10;
+        border-left: 4px solid #FF6A1A;
+      }
+      .archive-stamp-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background-color: #FF6A1A;
+      }
+      .archive-stamp-text {
+        font-size: 18px;
+        font-weight: 700;
+        letter-spacing: 1.5px;
+        color: #F7F4EC;
+        text-transform: uppercase;
+      }
+
+      /* Technical crosshairs ở 4 góc */
+      .crosshair {
+        position: absolute;
+        width: 24px;
+        height: 24px;
+        pointer-events: none;
+        z-index: 10;
+        opacity: 0.6;
+      }
+      .crosshair::before {
+        content: "";
+        position: absolute;
+        top: 11px;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: #F7F4EC;
+      }
+      .crosshair::after {
+        content: "";
+        position: absolute;
+        left: 11px;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: #F7F4EC;
+      }
+      .ch-tl { top: 80px; right: 60px; }
+      .ch-bl { bottom: 100px; left: 60px; }
+      .ch-br { bottom: 100px; right: 60px; }
+
+      /* Lớp Overlays */
+      .overlay-layer {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        z-index: 20;
+      }
+
+      /* Overlay 1: PUNCH PHRASE "BƯỚC NGOẶT 1937" */
+      #punch-container {
+        position: absolute;
+        top: 240px;
+        left: 70px;
+        right: 70px;
+        display: flex;
+        justify-content: flex-start;
+      }
+      .punch-badge {
+        background: #141414;
+        padding: 24px 38px;
+        border-radius: 8px;
+        border-left: 10px solid #FF6A1A;
+        box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+      }
+      .punch-tag {
+        display: inline-block;
+        font-size: 22px;
+        font-weight: 900;
+        letter-spacing: 2px;
+        color: #FF6A1A;
+        margin-bottom: 8px;
+        text-transform: uppercase;
+      }
+      .punch-title {
+        margin: 0;
+        font-size: 66px;
+        font-weight: 900;
+        line-height: 1.25;
+        letter-spacing: -0.5px;
+        color: #F7F4EC;
+      }
+      .punch-title .accent-orange {
+        color: #FF6A1A;
+      }
+
+      /* Overlay 2: ANNOTATED CALLOUT "HỌC VIÊN 21 TUỔI" */
+      #callout-container {
+        position: absolute;
+        top: 620px;
+        left: 70px;
+        width: 580px;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .callout-pointer {
+        display: flex;
+        align-items: center;
+        margin-bottom: -2px;
+        margin-left: 28px;
+      }
+      .callout-dot {
+        width: 16px;
+        height: 16px;
+        background-color: #FF6A1A;
+        border-radius: 50%;
+        box-shadow: 0 0 0 4px #141414;
+      }
+      .callout-card {
+        background: #141414;
+        padding: 22px 30px;
+        border-radius: 6px;
+        border: 2px solid #FF6A1A;
+        box-shadow: 0 14px 32px rgba(0, 0, 0, 0.4);
+      }
+      .callout-tag {
+        display: block;
+        font-size: 20px;
+        font-weight: 900;
+        letter-spacing: 1.5px;
+        color: #FF6A1A;
+        text-transform: uppercase;
+        margin-bottom: 6px;
+      }
+      .callout-title {
+        font-size: 44px;
+        font-weight: 900;
+        line-height: 1.2;
+        color: #F7F4EC;
+        margin-bottom: 6px;
+      }
+      .callout-sub {
+        font-size: 22px;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        color: #E7E3D9;
+      }
+
+      /* Overlay 3: NAMEPLATE "CLAUDE SHANNON (MIT)" */
+      #nameplate-container {
+        position: absolute;
+        top: 1120px;
+        left: 70px;
+        right: 70px;
+      }
+      .nameplate-card {
+        display: flex;
+        background: #141414;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 20px 48px rgba(0, 0, 0, 0.5);
+      }
+      .nameplate-stripe {
+        width: 12px;
+        background: #FF6A1A;
+        flex-shrink: 0;
+      }
+      .nameplate-content {
+        padding: 26px 36px;
+        flex-grow: 1;
+      }
+      .nameplate-role {
+        display: block;
+        font-size: 20px;
+        font-weight: 900;
+        letter-spacing: 2px;
+        color: #FF6A1A;
+        text-transform: uppercase;
+        margin-bottom: 8px;
+      }
+      .nameplate-name {
+        font-size: 52px;
+        font-weight: 900;
+        line-height: 1.15;
+        letter-spacing: -0.5px;
+        color: #F7F4EC;
+        margin-bottom: 8px;
+        white-space: nowrap;
+      }
+      .nameplate-sub {
+        font-size: 24px;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        color: #E7E3D9;
+      }
+
+      /* Thanh cam nhận diện thương hiệu cố định mép đáy */
+      .bottom-orange-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 12px;
+        background-color: #FF6A1A;
+        z-index: 100;
+      }
+    </style>
+
+    <!-- Composition Root: Standalone portrait 1080x1920, duration = 8.96s -->
+    <div
+      id="root"
+      data-composition-id="scene-s22"
+      data-start="0"
+      data-width="1080"
+      data-height="1920"
+      data-duration="8.96"
+    >
+      <!-- Scene Clip: S22-1 (0.0s đến 8.96s) -->
+      <section id="scene-s22" class="clip" data-start="0" data-duration="8.96">
+        <!-- Nền lưới giấy ngà 84px -->
+        <div class="grid-canvas"></div>
+
+        <!-- Khung ảnh Ken Burns zoom-in với cờ layout hợp lệ -->
+        <div id="photo-card" data-layout-allow-overflow="true">
+          <img
+            id="photo-inner"
+            src="assets/img-07-man-working-gears-logic.jpg"
+            alt="Claude Shannon 1937"
+            data-layout-allow-overflow="true"
+          />
+        </div>
+
+        <!-- Technical Corner Markings & Archive Badge -->
+        <div class="archive-stamp">
+          <div class="archive-stamp-dot"></div>
+          <span class="archive-stamp-text">ARCHIVE // MIT 1937 • REF: S22</span>
+        </div>
+        <div class="crosshair ch-tl"></div>
+        <div class="crosshair ch-bl"></div>
+        <div class="crosshair ch-br"></div>
+
+        <!-- Các lớp Overlay đồng bộ nhịp thoại -->
+        <div class="overlay-layer">
+          <!-- Beat 1 (1.25s): Punch phrase "BƯỚC NGOẶT 1937" -->
+          <div id="punch-container">
+            <div class="punch-badge">
+              <span class="punch-tag">MỐC LỊCH SỬ</span>
+              <h1 class="punch-title">BƯỚC NGOẶT <span class="accent-orange">1937</span></h1>
+            </div>
+          </div>
+
+          <!-- Beat 2 (4.66s): Callout "HỌC VIÊN 21 TUỔI" -->
+          <div id="callout-container">
+            <div class="callout-pointer">
+              <div class="callout-dot"></div>
+            </div>
+            <div class="callout-card">
+              <span class="callout-tag">THÔNG TIN NHÂN SỰ</span>
+              <div class="callout-title">HỌC VIÊN 21 TUỔI</div>
+              <div class="callout-sub">HỆ CAO HỌC ĐIỆN KHÍ (MIT)</div>
+            </div>
+          </div>
+
+          <!-- Beat 3 (7.72s): Label "CLAUDE SHANNON (MIT)" -->
+          <div id="nameplate-container">
+            <div class="nameplate-card">
+              <div class="nameplate-stripe"></div>
+              <div class="nameplate-content">
+                <span class="nameplate-role">NHÀ NGHIÊN CỨU TRẺ</span>
+                <div class="nameplate-name">CLAUDE SHANNON (MIT)</div>
+                <div class="nameplate-sub">VIỆN CÔNG NGHỆ MASSACHUSETTS</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Thanh cam chữ ký Vox cố định mép dưới cùng -->
+        <div class="bottom-orange-bar"></div>
+      </section>
+    </div>
+
+    <!-- Animation Runtime: Seekable paused GSAP timeline -->
+    <script>
+      // Khởi tạo timeline paused bắt buộc của HyperFrames
+      const tl = gsap.timeline({ paused: true });
+
+      // Thiết lập trạng thái tĩnh ban đầu (tránh xung đột CSS transform)
+      gsap.set("#photo-inner", { scale: 1.0 });
+      gsap.set("#photo-card", { y: 50, opacity: 0 });
+      gsap.set("#punch-container", { y: 30, opacity: 0 });
+      gsap.set("#callout-container", { scale: 0.85, opacity: 0, transformOrigin: "20px 0%" });
+      gsap.set("#nameplate-container", { x: -40, opacity: 0 });
+
+      // 1. Entrance: Photo rise vào cảnh (0.0s -> 0.8s)
+      tl.to("#photo-card", {
+        y: 0,
+        opacity: 1,
+        duration: 0.8,
+        ease: "power3.out"
+      }, 0);
+
+      // 2. Ken Burns zoom-in chậm từ 1.0 đến 1.07 xuyên suốt cảnh (0.0s -> 8.96s)
+      tl.to("#photo-inner", {
+        scale: 1.07,
+        duration: 8.96,
+        ease: "none"
+      }, 0);
+
+      // 3. Overlay 1: BƯỚC NGOẶT 1937 (1.25s, hold ~2.2s, biến mất lúc 3.65s)
+      tl.to("#punch-container", {
+        y: 0,
+        opacity: 1,
+        duration: 0.5,
+        ease: "power3.out"
+      }, 1.25);
+      tl.to("#punch-container", {
+        y: -20,
+        opacity: 0,
+        duration: 0.35,
+        ease: "power2.in"
+      }, 3.65);
+
+      // 4. Overlay 2: HỌC VIÊN 21 TUỔI (4.66s, hold ~2.0s, biến mất lúc 6.80s)
+      tl.to("#callout-container", {
+        scale: 1.0,
+        opacity: 1,
+        duration: 0.5,
+        ease: "power3.out"
+      }, 4.66);
+      tl.to("#callout-container", {
+        scale: 0.9,
+        opacity: 0,
+        duration: 0.35,
+        ease: "power2.in"
+      }, 6.80);
+
+      // 5. Overlay 3: CLAUDE SHANNON (MIT) (7.72s, hold vững chãi đến hết scene)
+      tl.to("#nameplate-container", {
+        x: 0,
+        opacity: 1,
+        duration: 0.5,
+        ease: "power3.out"
+      }, 7.72);
+
+      // Đăng ký timeline duy nhất trên window.__timelines
+      window.__timelines = window.__timelines || {};
+      window.__timelines["scene-s22"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

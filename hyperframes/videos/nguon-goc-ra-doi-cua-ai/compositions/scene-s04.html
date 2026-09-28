@@ -1,0 +1,627 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+/* hf-safe-colors (tất định từ style-tokens.json) */
+.hf-text-ink { color: #141414; }
+.hf-text-light { color: #F7F4EC; }
+.hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+.hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+.hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+.hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+      /* Presets màu an toàn (WCAG conformant) */
+      .hf-text-ink { color: #141414; }
+      .hf-text-light { color: #F7F4EC; }
+      .hf-hl-orange { background-color: #FF6A1A; color: #141414; }
+      .hf-plate-ink { background-color: #141414; color: #F7F4EC; }
+      .hf-plate-ink-orange { background-color: #141414; color: #FF6A1A; }
+      .hf-plate-paper { background-color: #F5F0E4; color: #141414; }
+
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #E7E3D9;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+      #root {
+        position: relative;
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+        background-color: #E7E3D9;
+      }
+      .clip {
+        position: absolute;
+        inset: 0;
+      }
+
+      /* Camera & Scene wrapper */
+      #camera-rig {
+        position: absolute;
+        inset: 0;
+        transform-origin: 50% 45%;
+        will-change: transform;
+      }
+      #scene-content {
+        position: absolute;
+        inset: 0;
+        will-change: transform, opacity;
+      }
+
+      /* Chart Background Variant (Thuần đồ họa, không chứa text để tránh che khuất & lệch contrast) */
+      .chart-line {
+        position: absolute;
+        left: 40px;
+        right: 40px;
+        height: 2px;
+        background-color: rgba(20, 20, 20, 0.22);
+        transform-origin: left center;
+      }
+      .chart-tick {
+        position: absolute;
+        left: 40px;
+        width: 10px;
+        height: 20px;
+        background-color: #FF6A1A;
+        transform: translateY(-9px);
+        transform-origin: left center;
+      }
+
+      /* Top Header / Category */
+      .header-pill {
+        position: absolute;
+        top: 175px;
+        left: 60px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .pill-badge {
+        background-color: #141414;
+        color: #F7F4EC;
+        font-size: 19px;
+        font-weight: 900;
+        padding: 7px 16px;
+        border-radius: 6px;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+      }
+      .pill-label {
+        font-size: 19px;
+        font-weight: 700;
+        color: #141414;
+        letter-spacing: 1px;
+      }
+
+      /* 1. Hobbes Quote Card */
+      #quote-card {
+        position: absolute;
+        top: 235px;
+        left: 60px;
+        width: 960px;
+        background-color: #F5F0E4;
+        border: 2px solid #141414;
+        border-radius: 8px;
+        padding: 20px 28px;
+        box-shadow: 6px 6px 0px rgba(20, 20, 20, 0.12);
+        will-change: transform, opacity;
+      }
+      .quote-tag {
+        display: inline-block;
+        background-color: #FF6A1A;
+        color: #141414;
+        font-size: 15px;
+        font-weight: 900;
+        padding: 4px 10px;
+        border-radius: 4px;
+        margin-bottom: 10px;
+        letter-spacing: 1px;
+      }
+      .quote-content {
+        font-size: 24px;
+        font-weight: 900;
+        line-height: 1.35;
+        color: #141414;
+        margin: 0 0 8px 0;
+        text-transform: uppercase;
+      }
+      .quote-author {
+        font-size: 17px;
+        font-weight: 700;
+        color: #141414;
+        letter-spacing: 0.5px;
+      }
+
+      /* 2. Timeline Measurement Container (Overlay 1) */
+      #timeline-container {
+        position: absolute;
+        top: 435px;
+        left: 60px;
+        width: 960px;
+        background-color: #F5F0E4;
+        border: 2px solid #141414;
+        border-radius: 8px;
+        padding: 22px 28px;
+        will-change: transform, opacity;
+      }
+      .diagram-title-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24px;
+      }
+      .diagram-tag {
+        background-color: #141414;
+        color: #FF6A1A;
+        font-size: 17px;
+        font-weight: 900;
+        padding: 5px 12px;
+        border-radius: 4px;
+        letter-spacing: 1.5px;
+      }
+      .diagram-sub {
+        font-size: 17px;
+        font-weight: 700;
+        color: #141414;
+        letter-spacing: 0.8px;
+      }
+      .axis-wrapper {
+        position: relative;
+        height: 90px;
+        margin: 0 16px;
+      }
+      .axis-main-line {
+        position: absolute;
+        top: 36px;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background-color: #141414;
+        transform-origin: left center;
+      }
+      .axis-arrow-left, .axis-arrow-right {
+        position: absolute;
+        top: 30px;
+        width: 14px;
+        height: 14px;
+        border-top: 4px solid #141414;
+        border-left: 4px solid #141414;
+      }
+      .axis-arrow-left {
+        left: 0;
+        transform: rotate(-45deg);
+      }
+      .axis-arrow-right {
+        right: 0;
+        transform: rotate(135deg);
+      }
+      .milestone {
+        position: absolute;
+        top: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        will-change: transform, opacity;
+      }
+      .milestone-left {
+        left: 10px;
+      }
+      .milestone-right {
+        right: 10px;
+      }
+      .milestone-badge {
+        background-color: #141414;
+        color: #F7F4EC;
+        font-size: 24px;
+        font-weight: 900;
+        padding: 6px 14px;
+        border-radius: 6px;
+        border: 2px solid #FF6A1A;
+        box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+      }
+      .milestone-label {
+        margin-top: 12px;
+        font-size: 15px;
+        font-weight: 700;
+        color: #141414;
+        text-align: center;
+        white-space: nowrap;
+      }
+      .tick-marker {
+        position: absolute;
+        top: 28px;
+        width: 2px;
+        height: 18px;
+        background-color: rgba(20, 20, 20, 0.35);
+      }
+
+      /* 3. Punch Phrase Card: 300 NĂM (Overlay 2) */
+      #weight-card {
+        position: absolute;
+        top: 650px;
+        left: 60px;
+        width: 960px;
+        background-color: #141414;
+        border-radius: 8px;
+        border-top: 8px solid #FF6A1A;
+        padding: 26px 32px;
+        box-shadow: 0 14px 28px rgba(0, 0, 0, 0.22);
+        will-change: transform, opacity;
+      }
+      .weight-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 6px;
+      }
+      .weight-label {
+        color: #FF6A1A;
+        font-size: 19px;
+        font-weight: 900;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+      }
+      .weight-tag-alt {
+        background-color: #F7F4EC;
+        color: #141414;
+        font-size: 15px;
+        font-weight: 900;
+        padding: 4px 10px;
+        border-radius: 4px;
+      }
+      .weight-giant-number {
+        font-size: 96px;
+        font-weight: 900;
+        line-height: 1;
+        color: #F7F4EC;
+        letter-spacing: -2px;
+        margin: 8px 0 14px 0;
+      }
+      #punch-badge {
+        display: inline-block;
+        background-color: #FF6A1A;
+        color: #141414;
+        font-size: 30px;
+        font-weight: 900;
+        padding: 8px 20px;
+        border-radius: 6px;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        box-shadow: 4px 4px 0px #F7F4EC;
+      }
+      .weight-desc {
+        margin-top: 16px;
+        font-size: 19px;
+        font-weight: 700;
+        color: #F7F4EC;
+        line-height: 1.35;
+      }
+
+      /* 4. Scale Icon & Weighing Indicator (Overlay 3) */
+      #scale-section {
+        position: absolute;
+        top: 1010px;
+        left: 60px;
+        width: 960px;
+        background-color: #F5F0E4;
+        border: 2px solid #141414;
+        border-radius: 8px;
+        padding: 20px 28px;
+        display: flex;
+        align-items: center;
+        gap: 28px;
+        will-change: transform, opacity;
+      }
+      .scale-svg-box {
+        width: 160px;
+        height: 130px;
+        flex-shrink: 0;
+      }
+      .scale-stroke {
+        stroke: #141414;
+        stroke-width: 4;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        fill: none;
+      }
+      .scale-info {
+        flex: 1;
+      }
+      .scale-headline {
+        font-size: 24px;
+        font-weight: 900;
+        color: #141414;
+        margin: 0 0 4px 0;
+        text-transform: uppercase;
+      }
+      .scale-caption {
+        font-size: 18px;
+        font-weight: 700;
+        color: #141414;
+        line-height: 1.35;
+        margin: 0;
+      }
+      .scale-highlight-tag {
+        display: inline-block;
+        margin-top: 8px;
+        background-color: #FF6A1A;
+        color: #141414;
+        font-size: 15px;
+        font-weight: 900;
+        padding: 4px 10px;
+        border-radius: 4px;
+        letter-spacing: 0.5px;
+      }
+
+      /* Permanent Bottom Accent Bar */
+      #bottom-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 12px;
+        background-color: #FF6A1A;
+        z-index: 1000;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s04"
+      data-width="1080"
+      data-height="1920"
+      data-duration="6.75"
+    >
+      <!-- Shot S04-1 Clip -->
+      <div id="shot-s04" class="clip" data-start="0" data-duration="6.75">
+        <div id="camera-rig">
+          <!-- Chart Grid Lines (thuần đồ họa, không chứa text nhằm giữ safe zone & WCAG) -->
+          <div class="chart-line" style="top: 384px;"></div>
+          <div class="chart-tick" style="top: 384px;"></div>
+
+          <div class="chart-line" style="top: 768px;"></div>
+          <div class="chart-tick" style="top: 768px;"></div>
+
+          <div class="chart-line" style="top: 1152px;"></div>
+          <div class="chart-tick" style="top: 1152px;"></div>
+
+          <div class="chart-line" style="top: 1536px;"></div>
+          <div class="chart-tick" style="top: 1536px;"></div>
+
+          <!-- Main Visual Elements -->
+          <div id="scene-content">
+            <!-- Header Identity -->
+            <div class="header-pill">
+              <span class="pill-badge">HỒ SƠ TƯ TƯỞNG</span>
+              <span class="pill-label">NGHỊCH LÝ THỜI GIAN</span>
+            </div>
+
+            <!-- 1. Hobbes Quote Card -->
+            <div id="quote-card">
+              <span class="quote-tag">TRÍCH DẪN GỐC</span>
+              <p class="quote-content">
+                «CUỘC SỐNG CON NGƯỜI LÀ ĐƠN ĐỘC, NGHÈO NÀN, ĐÁNG GHÊ TỞM VÀ NGẮN NGỦI»
+              </p>
+              <div class="quote-author">— THOMAS HOBBES, LEVIATHAN (1651)</div>
+            </div>
+
+            <!-- 2. Overlay 1: Timeline 1651 -> 1950 -->
+            <div id="timeline-container">
+              <div class="diagram-title-row">
+                <span class="diagram-tag">TIMELINE: 1651 → 1950</span>
+                <span class="diagram-sub">ĐO ĐỘ GIÃN CÁCH THỜI GIAN</span>
+              </div>
+
+              <div class="axis-wrapper">
+                <div class="axis-arrow-left"></div>
+                <div id="timeline-axis" class="axis-main-line"></div>
+                <div class="axis-arrow-right"></div>
+
+                <!-- Intermediate ticks -->
+                <div class="tick-marker" style="left: 20%;"></div>
+                <div class="tick-marker" style="left: 35%;"></div>
+                <div class="tick-marker" style="left: 50%;"></div>
+                <div class="tick-marker" style="left: 65%;"></div>
+                <div class="tick-marker" style="left: 80%;"></div>
+
+                <!-- Milestone 1651 -->
+                <div id="milestone-1651" class="milestone milestone-left">
+                  <div class="milestone-badge">NĂM 1651</div>
+                  <div class="milestone-label">ĐẶT VẤN ĐỀ</div>
+                </div>
+
+                <!-- Milestone 1950 -->
+                <div id="milestone-1950" class="milestone milestone-right">
+                  <div class="milestone-badge">NĂM 1950</div>
+                  <div class="milestone-label">GIẢI MÃ CẤU TRÚC</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 3. Overlay 2: Punch-phrase "KHOẢNG CÁCH 300 NĂM" -->
+            <div id="weight-card">
+              <div class="weight-header">
+                <span class="weight-label">SỨC NẶNG CỦA THỜI GIAN</span>
+                <span class="weight-tag-alt">ΔT = 3 THẾ KỶ</span>
+              </div>
+              <div class="weight-giant-number">300 NĂM</div>
+              <div id="punch-badge">KHOẢNG CÁCH 300 NĂM</div>
+              <div class="weight-desc">
+                Phải mất đúng ba thế kỷ để nhân loại hiểu hết bản chất bế tắc mà Hobbes đã nhìn thấy.
+              </div>
+            </div>
+
+            <!-- 4. Overlay 3: Scale Icon & Weight Label -->
+            <div id="scale-section">
+              <svg class="scale-svg-box" viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg">
+                <!-- Center Pillar & Base -->
+                <line class="scale-stroke" x1="100" y1="28" x2="100" y2="148" />
+                <line class="scale-stroke" x1="55" y1="148" x2="145" y2="148" />
+                <circle cx="100" cy="38" r="5" fill="#141414" />
+
+                <!-- Tilting Beam -->
+                <g id="scale-beam-group">
+                  <line class="scale-stroke" x1="28" y1="38" x2="172" y2="38" />
+                </g>
+
+                <!-- Left Pan (1651 side) -->
+                <g id="scale-left-pan">
+                  <path class="scale-stroke" d="M 28 38 L 10 92 M 28 38 L 46 92" />
+                  <path class="scale-stroke" d="M 6 92 Q 28 112 50 92 Z" />
+                </g>
+
+                <!-- Right Pan (1950 Weight side) -->
+                <g id="scale-right-pan">
+                  <path class="scale-stroke" d="M 172 38 L 154 92 M 172 38 L 190 92" />
+                  <path class="scale-stroke" d="M 150 92 Q 172 112 194 92 Z" />
+                  <!-- Sức nặng khối 300 năm -->
+                  <rect x="162" y="74" width="20" height="18" rx="2" fill="#FF6A1A" stroke="#141414" stroke-width="2" />
+                </g>
+              </svg>
+
+              <div class="scale-info">
+                <div class="scale-headline" id="scale-label">SỨC NẶNG LỊCH SỬ</div>
+                <p class="scale-caption">
+                  Một nhận định triết học vượt thời gian, đè nặng lên mọi nỗ lực hợp tác của xã hội.
+                </p>
+                <span class="scale-highlight-tag">ĐÃ ĐƯỢC CHỨNG MINH</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Permanent Orange Brand Footer -->
+        <div id="bottom-bar"></div>
+      </div>
+    </div>
+
+    <script>
+      // Setup progressive path drawing on scale SVG
+      const scaleStrokes = document.querySelectorAll(".scale-stroke");
+      scaleStrokes.forEach(function (path) {
+        const len = path.getTotalLength ? path.getTotalLength() : 200;
+        path.style.strokeDasharray = len + "px";
+        path.style.strokeDashoffset = len + "px";
+      });
+
+      // Master Paused Timeline
+      const tl = gsap.timeline({ paused: true });
+
+      // 1. Camera Motion: Subtle continuous zoom-in throughout the 6.75s shot
+      tl.to("#camera-rig", {
+        scale: 1.04,
+        duration: 6.75,
+        ease: "none"
+      }, 0);
+
+      // 2. Entrance Animation ("grow"): Whole scene enters smoothly
+      tl.fromTo("#scene-content",
+        { scale: 0.95, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.6, ease: "power3.out" },
+        0.1
+      );
+
+      // 3. Background Chart Lines Reveal
+      tl.fromTo(".chart-line",
+        { scaleX: 0 },
+        { scaleX: 1, duration: 0.6, stagger: 0.08, ease: "power2.out" },
+        0.15
+      );
+      tl.fromTo(".chart-tick",
+        { scaleX: 0 },
+        { scaleX: 1, duration: 0.35, stagger: 0.06, ease: "power2.out" },
+        0.3
+      );
+
+      // 4. Hobbes Quote Card Arrival
+      tl.fromTo("#quote-card",
+        { y: 25, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.55, ease: "power3.out" },
+        0.25
+      );
+
+      // 5. Overlay 1 (atMs: 26650 -> offset 0.80s): Diagram TIMELINE: 1651 -> 1950
+      tl.fromTo("#timeline-container",
+        { y: 30, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.6, ease: "power3.out" },
+        0.8
+      );
+      tl.fromTo("#milestone-1651",
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.45, ease: "power3.out" },
+        0.95
+      );
+      tl.fromTo("#timeline-axis",
+        { scaleX: 0 },
+        { scaleX: 1, duration: 0.7, ease: "power2.inOut" },
+        1.1
+      );
+      tl.fromTo("#milestone-1950",
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.45, ease: "power3.out" },
+        1.6
+      );
+
+      // 6. Overlay 2 (atMs: 28300 -> offset 2.45s): Punch phrase "KHOẢNG CÁCH 300 NĂM"
+      tl.fromTo("#weight-card",
+        { y: -40, scale: 1.08, opacity: 0 },
+        { y: 0, scale: 1, opacity: 1, duration: 0.65, ease: "power4.out" },
+        2.45
+      );
+      // Timeline & Quote slight physical resonance upon impact
+      tl.fromTo("#quote-card",
+        { y: 0 },
+        { y: 6, duration: 0.1, yoyo: true, repeat: 1, ease: "power1.inOut" },
+        2.5
+      );
+      // Punch badge pop
+      tl.fromTo("#punch-badge",
+        { scale: 0.85, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.4, ease: "power3.out" },
+        2.7
+      );
+
+      // 7. Overlay 3 (atMs: 31420 -> offset 5.57s): Icon "scale" self-drawing & weighing
+      tl.fromTo("#scale-section",
+        { y: 20, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.5, ease: "power3.out" },
+        5.57
+      );
+      // Trace scale outline
+      tl.to(".scale-stroke",
+        { strokeDashoffset: 0, duration: 0.6, stagger: 0.04, ease: "power2.out" },
+        5.65
+      );
+      // Scale tilts under weight
+      tl.to("#scale-beam-group",
+        { rotation: -7, transformOrigin: "100px 38px", duration: 0.45, ease: "power2.out" },
+        6.1
+      );
+      tl.to("#scale-left-pan",
+        { y: -5, duration: 0.45, ease: "power2.out" },
+        6.1
+      );
+      tl.to("#scale-right-pan",
+        { y: 5, duration: 0.45, ease: "power2.out" },
+        6.1
+      );
+
+      // Register seekable timeline
+      window.__timelines["scene-s04"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

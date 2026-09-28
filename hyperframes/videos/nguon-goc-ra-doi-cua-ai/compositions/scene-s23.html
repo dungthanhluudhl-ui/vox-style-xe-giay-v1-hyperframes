@@ -1,0 +1,681 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+    /* hf-safe-colors (tất định từ style-tokens.json) */
+    .hf-text-ink { color: #141414; }
+    .hf-text-light { color: #F7F4EC; }
+    .hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+    .hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+    .hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+    .hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background: #F5F0E4;
+      color: #141414;
+      font-family: "Be Vietnam Pro", sans-serif;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    #root {
+      position: relative;
+      width: 1080px;
+      height: 1920px;
+      background: #F5F0E4;
+      overflow: hidden;
+    }
+
+    /* Quy ước bắt buộc: .clip inset:0 */
+    .clip {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+    }
+
+    /* Thanh cam nhận diện cố định ở đáy */
+    #bottom-accent-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 1080px;
+      height: 14px;
+      background: #FF6A1A;
+      z-index: 100;
+    }
+
+    /* Stage wrapper cho hiệu ứng camera pan */
+    #camera-stage {
+      position: absolute;
+      inset: 0;
+      will-change: transform;
+    }
+
+    /* Header & Punch Phrase (Vùng Y: 170px - 300px an toàn) */
+    .header-zone {
+      position: absolute;
+      top: 170px;
+      left: 60px;
+      width: 960px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      z-index: 20;
+    }
+
+    .topic-badge {
+      align-self: flex-start;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: #141414;
+      color: #F7F4EC;
+      padding: 10px 22px;
+      border-radius: 6px;
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      box-shadow: 4px 4px 0px rgba(20,20,20,0.15);
+    }
+
+    .topic-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #FF6A1A;
+      display: inline-block;
+    }
+
+    .punch-headline {
+      font-size: 60px;
+      font-weight: 900;
+      line-height: 1.25;
+      color: #141414;
+      text-transform: uppercase;
+      letter-spacing: -0.5px;
+    }
+
+    /* Container chia đôi Split Layout (Y: 320px - 1230px) */
+    .split-container {
+      position: absolute;
+      top: 320px;
+      left: 50px;
+      width: 980px;
+      height: 910px;
+      display: flex;
+      justify-content: space-between;
+      z-index: 10;
+    }
+
+    /* Card phong cách collage giấy cắt */
+    .split-card {
+      position: relative;
+      width: 474px;
+      height: 910px;
+      background: #E7E3D9;
+      border: 4px solid #141414;
+      box-shadow: 8px 8px 0px #141414;
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      will-change: transform, opacity;
+    }
+
+    /* Banner phân loại đầu thẻ */
+    .card-banner {
+      width: 100%;
+      height: 72px;
+      padding: 0 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      border-bottom: 4px solid #141414;
+      flex-shrink: 0;
+    }
+
+    .banner-theory {
+      background: #FF6A1A;
+      color: #141414;
+    }
+
+    .banner-practice {
+      background: #141414;
+      color: #F7F4EC;
+    }
+
+    .card-title {
+      font-size: 24px;
+      font-weight: 900;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      line-height: 1.2;
+    }
+
+    /* Nội dung thân thẻ xếp theo luồng dọc tự nhiên (không đè lên nhau) */
+    .card-body {
+      position: relative;
+      flex: 1;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      background: #E7E3D9;
+    }
+
+    /* Thẻ phụ chú thích */
+    .sub-tag {
+      display: inline-block;
+      align-self: flex-start;
+      background: #F5F0E4;
+      border: 2px solid #141414;
+      color: #141414;
+      padding: 6px 14px;
+      border-radius: 4px;
+      font-size: 19px;
+      font-weight: 700;
+    }
+
+    /* Biểu đồ Logic Boole bên Thẻ Trái */
+    .boole-diagram {
+      width: 100%;
+      height: 220px;
+      background: #F5F0E4;
+      border: 3px solid #141414;
+      border-radius: 6px;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .venn-svg {
+      width: 300px;
+      height: 140px;
+    }
+
+    .logic-formulas {
+      display: flex;
+      gap: 12px;
+      margin-top: 8px;
+    }
+
+    .formula-pill {
+      background: #141414;
+      color: #F7F4EC;
+      padding: 5px 12px;
+      border-radius: 4px;
+      font-size: 18px;
+      font-weight: 900;
+      letter-spacing: 0.5px;
+    }
+
+    /* Bảng chân trị logic (Truth Table) */
+    .truth-table-box {
+      width: 100%;
+      border: 3px solid #141414;
+      border-radius: 6px;
+      background: #F5F0E4;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    .truth-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1.2fr;
+      padding: 8px 12px;
+      border-bottom: 2px solid rgba(20,20,20,0.2);
+      font-size: 20px;
+      font-weight: 700;
+      text-align: center;
+      color: #141414;
+    }
+
+    .truth-header {
+      background: #141414;
+      color: #F7F4EC;
+      font-weight: 900;
+      border-bottom: 3px solid #141414;
+      padding: 9px 12px;
+    }
+
+    .val-true {
+      color: #141414;
+      font-weight: 900;
+    }
+
+    .val-false {
+      color: #141414;
+      font-weight: 700;
+    }
+
+    /* Thẻ tài liệu doc (xuất hiện ở t=4.70s trong luồng flex riêng) */
+    .doc-overlay-card {
+      width: 100%;
+      background: #F5F0E4;
+      border: 3px solid #141414;
+      box-shadow: 5px 5px 0px #FF6A1A;
+      padding: 14px 16px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-shrink: 0;
+      will-change: transform, opacity;
+    }
+
+    .doc-icon-svg {
+      width: 48px;
+      height: 48px;
+      flex-shrink: 0;
+    }
+
+    .doc-text-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .doc-label {
+      font-size: 16px;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: #141414;
+      letter-spacing: 0.5px;
+    }
+
+    .doc-name {
+      font-size: 20px;
+      font-weight: 900;
+      color: #141414;
+      line-height: 1.25;
+    }
+
+    /* Đồ hoạ Máy Tính Cơ Khí Thẻ Phải */
+    .machine-graphic {
+      width: 100%;
+      height: 380px;
+      background: #F5F0E4;
+      border: 3px solid #141414;
+      border-radius: 6px;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    .gears-svg {
+      width: 380px;
+      height: 340px;
+    }
+
+    /* Thông số cơ khí */
+    .specs-card {
+      border: 3px solid #141414;
+      background: #F5F0E4;
+      border-radius: 6px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+
+    .spec-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 2px dashed rgba(20,20,20,0.3);
+      padding-bottom: 8px;
+    }
+
+    .spec-item:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+
+    .spec-key {
+      font-size: 19px;
+      font-weight: 700;
+      color: #141414;
+    }
+
+    .spec-val {
+      font-size: 20px;
+      font-weight: 900;
+      color: #141414;
+    }
+
+    /* Cầu nối giao thoa giữa 2 card (Y: 1260px - 1344px an toàn trên dải caption) */
+    .nexus-bridge {
+      position: absolute;
+      top: 1260px;
+      left: 60px;
+      width: 960px;
+      height: 84px;
+      background: #141414;
+      border: 4px solid #141414;
+      box-shadow: 6px 6px 0px #FF6A1A;
+      border-radius: 8px;
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 30;
+      will-change: transform, opacity;
+    }
+
+    .nexus-left {
+      font-size: 23px;
+      font-weight: 900;
+      color: #FF6A1A;
+      text-transform: uppercase;
+    }
+
+    .nexus-symbol {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: #FF6A1A;
+      color: #141414;
+      padding: 8px 16px;
+      border-radius: 4px;
+      font-size: 22px;
+      font-weight: 900;
+      letter-spacing: 1px;
+    }
+
+    .nexus-right {
+      font-size: 23px;
+      font-weight: 900;
+      color: #F7F4EC;
+      text-transform: uppercase;
+    }
+  </style>
+
+  <div
+    id="root"
+    data-composition-id="scene-s23"
+    data-width="1080"
+    data-height="1920"
+    data-duration="10.46"
+    data-fps="30"
+  >
+    <!-- Thanh cam signature ở đáy -->
+    <div id="bottom-accent-bar"></div>
+
+    <section class="clip" data-start="0" data-duration="10.46">
+      <div id="camera-stage">
+        <!-- Vùng tiêu đề / Punch Headline -->
+        <div class="header-zone" id="header-zone">
+          <div class="topic-badge" id="topic-badge">
+            <span class="topic-dot"></span>
+            <span>Giao Thoa Tư Duy</span>
+          </div>
+          <h1 class="punch-headline" id="main-headline">
+            TRIẾT HỌC &amp; MÁY TÍNH CƠ
+          </h1>
+        </div>
+
+        <!-- Khung Split 2 phần di chuyển về phía nhau -->
+        <div class="split-container">
+          <!-- CARD TRÁI: ĐẠI SỐ BOOLE (Lý thuyết) -->
+          <div class="split-card" id="card-left">
+            <div class="card-banner banner-theory" id="banner-theory">
+              <span class="card-title">LÝ THUYẾT: ĐẠI SỐ BOOLE</span>
+            </div>
+
+            <div class="card-body">
+              <div class="sub-tag">LỚP TRIẾT HỌC ĐẠI HỌC</div>
+
+              <!-- Sơ đồ Venn logic Boole -->
+              <div class="boole-diagram">
+                <svg class="venn-svg" viewBox="0 0 320 150">
+                  <circle cx="115" cy="75" r="62" fill="none" stroke="#141414" stroke-width="5" />
+                  <circle cx="205" cy="75" r="62" fill="none" stroke="#141414" stroke-width="5" />
+                  <path d="M 160 27 A 62 62 0 0 1 160 123 A 62 62 0 0 1 160 27 Z" fill="#FF6A1A" />
+                  <text x="75" y="82" font-family="'Be Vietnam Pro', sans-serif" font-weight="900" font-size="20" fill="#141414">A</text>
+                  <text x="235" y="82" font-family="'Be Vietnam Pro', sans-serif" font-weight="900" font-size="20" fill="#141414">B</text>
+                  <text x="146" y="82" font-family="'Be Vietnam Pro', sans-serif" font-weight="900" font-size="18" fill="#141414">A·B</text>
+                </svg>
+                <div class="logic-formulas">
+                  <span class="formula-pill">AND: A ∧ B</span>
+                  <span class="formula-pill">OR: A ∨ B</span>
+                </div>
+              </div>
+
+              <!-- Bảng chân trị nhị phân -->
+              <div class="truth-table-box">
+                <div class="truth-row truth-header">
+                  <div>ĐẦU VÀO</div>
+                  <div>TRẠNG THÁI</div>
+                  <div>LOGIC</div>
+                </div>
+                <div class="truth-row">
+                  <div>ĐÓNG (1)</div>
+                  <div>MỞ (0)</div>
+                  <div class="val-false">0 (SAI)</div>
+                </div>
+                <div class="truth-row">
+                  <div>ĐÓNG (1)</div>
+                  <div>ĐÓNG (1)</div>
+                  <div class="val-true">1 (ĐÚNG)</div>
+                </div>
+              </div>
+
+              <!-- Badge tài liệu "doc" xếp độc lập bên dưới bảng chân trị, xuất hiện lúc 4.70s -->
+              <div class="doc-overlay-card" id="doc-overlay">
+                <svg class="doc-icon-svg" viewBox="0 0 52 52">
+                  <rect x="8" y="4" width="36" height="44" rx="4" fill="#F5F0E4" stroke="#141414" stroke-width="4" />
+                  <path id="doc-path-1" d="M 16 16 L 36 16" stroke="#141414" stroke-width="4" stroke-linecap="round" />
+                  <path id="doc-path-2" d="M 16 26 L 36 26" stroke="#141414" stroke-width="4" stroke-linecap="round" />
+                  <path id="doc-path-3" d="M 16 36 L 28 36" stroke="#FF6A1A" stroke-width="4" stroke-linecap="round" />
+                </svg>
+                <div class="doc-text-group">
+                  <span class="doc-label">GIÁO TRÌNH GỐC</span>
+                  <span class="doc-name">Laws of Thought (1854)</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- CARD PHẢI: MÁY TÍNH CƠ (Thực thi) -->
+          <div class="split-card" id="card-right">
+            <div class="card-banner banner-practice" id="banner-practice">
+              <span class="card-title">THỰC THI: MÁY TÍNH CƠ</span>
+            </div>
+
+            <div class="card-body">
+              <div class="sub-tag">PHÒNG THÍ NGHIỆM CAO HỌC</div>
+
+              <!-- Đồ hoạ cơ cấu bánh răng vi phân -->
+              <div class="machine-graphic">
+                <svg class="gears-svg" viewBox="0 0 380 340">
+                  <!-- Bánh răng lớn 1 -->
+                  <g id="gear-large" transform="translate(130, 160)">
+                    <circle cx="0" cy="0" r="90" fill="#E7E3D9" stroke="#141414" stroke-width="5" />
+                    <!-- Răng cưa bánh răng 1 -->
+                    <path d="M -12 -105 L 12 -105 L 10 -90 L -10 -90 Z" fill="#141414" />
+                    <path d="M -12 105 L 12 105 L 10 90 L -10 90 Z" fill="#141414" />
+                    <path d="M -105 -12 L -105 12 L -90 10 L -90 -10 Z" fill="#141414" />
+                    <path d="M 105 -12 L 105 12 L 90 10 L 90 -10 Z" fill="#141414" />
+                    <path d="M -74 -74 L -58 -90 L -46 -80 L -64 -64 Z" fill="#141414" />
+                    <path d="M 74 74 L 58 90 L 46 80 L 64 64 Z" fill="#141414" />
+                    <path d="M -74 74 L -90 58 L -80 46 L -64 64 Z" fill="#141414" />
+                    <path d="M 74 -74 L 90 -58 L 80 -46 L 64 -64 Z" fill="#141414" />
+                    <!-- Trục tâm -->
+                    <circle cx="0" cy="0" r="30" fill="#FF6A1A" stroke="#141414" stroke-width="4" />
+                    <circle cx="0" cy="0" r="10" fill="#141414" />
+                    <line x1="-60" y1="0" x2="60" y2="0" stroke="#141414" stroke-width="4" />
+                    <line x1="0" y1="-60" x2="0" y2="60" stroke="#141414" stroke-width="4" />
+                  </g>
+
+                  <!-- Bánh răng phụ 2 ăn khớp -->
+                  <g id="gear-small" transform="translate(275, 120)">
+                    <circle cx="0" cy="0" r="55" fill="#E7E3D9" stroke="#141414" stroke-width="4" />
+                    <path d="M -8 -65 L 8 -65 L 6 -55 L -6 -55 Z" fill="#141414" />
+                    <path d="M -8 65 L 8 65 L 6 55 L -6 55 Z" fill="#141414" />
+                    <path d="M -65 -8 L -65 8 L -55 6 L -55 -6 Z" fill="#141414" />
+                    <path d="M 65 -8 L 65 8 L 55 6 L 55 -6 Z" fill="#141414" />
+                    <circle cx="0" cy="0" r="18" fill="#141414" />
+                  </g>
+
+                  <!-- Trục quay liên kết & thanh cơ khí -->
+                  <rect x="20" y="270" width="340" height="12" fill="#141414" rx="3" />
+                  <rect x="50" y="260" width="30" height="32" fill="#FF6A1A" stroke="#141414" stroke-width="3" rx="2" />
+                  <rect x="290" y="260" width="30" height="32" fill="#FF6A1A" stroke="#141414" stroke-width="3" rx="2" />
+                </svg>
+              </div>
+
+              <!-- Thẻ thông số phần cứng cơ khí -->
+              <div class="specs-card">
+                <div class="spec-item">
+                  <span class="spec-key">HỆ THỐNG</span>
+                  <span class="spec-val">MÁY PHÂN TÍCH VI PHÂN</span>
+                </div>
+                <div class="spec-item">
+                  <span class="spec-key">CƠ CHẾ</span>
+                  <span class="spec-val">BÁNH RĂNG &amp; TRỤC XOAY</span>
+                </div>
+                <div class="spec-item">
+                  <span class="spec-key">GIỚI HẠN</span>
+                  <span class="spec-val">CỒNG KỀNH &amp; HAO MÒN</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Cầu nối ý tưởng đột phá (Giai đoạn kết thúc) -->
+        <div class="nexus-bridge" id="nexus-bridge">
+          <div class="nexus-left">ĐẠI SỐ BOOLE (0 / 1)</div>
+          <div class="nexus-symbol">
+            <span>⇄</span>
+            <span>CÔNG TẮC ĐÓNG / MỞ</span>
+          </div>
+          <div class="nexus-right">MẠCH ĐIỆN TỬ</div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    // Khởi tạo GSAP Timeline chính tuân thủ contract HyperFrames
+    const tl = gsap.timeline({
+      paused: true,
+      defaults: { ease: "power3.out" }
+    });
+
+    // 1. Giai đoạn mở màn (t = 0.0s - 1.2s): Grow entrance của tiêu đề và 2 thẻ từ 2 góc
+    tl.fromTo(
+      "#header-zone",
+      { y: -30, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.8 },
+      0.1
+    );
+
+    // Hai mảnh ghép di chuyển từ hai phía về nhau
+    tl.fromTo(
+      "#card-left",
+      { x: -90, scale: 0.94, opacity: 0 },
+      { x: 0, scale: 1, opacity: 1, duration: 0.9 },
+      0.25
+    );
+
+    tl.fromTo(
+      "#card-right",
+      { x: 90, scale: 0.94, opacity: 0 },
+      { x: 0, scale: 1, opacity: 1, duration: 0.9 },
+      0.35
+    );
+
+    // 2. Điểm mốc Overlays 1 (atMs: 175620 tương đối là 1.46s):
+    // Nhấn mạnh LÝ THUYẾT: ĐẠI SỐ BOOLE
+    tl.fromTo(
+      "#banner-theory",
+      { scale: 0.92 },
+      { scale: 1, duration: 0.6, ease: "power2.out" },
+      1.46
+    );
+
+    tl.fromTo(
+      ".venn-svg",
+      { scale: 0.88, opacity: 0.3 },
+      { scale: 1, opacity: 1, duration: 0.65 },
+      1.60
+    );
+
+    // 3. Điểm mốc Overlays 2 (atMs: 178860 tương đối là 4.70s):
+    // Xuất hiện tài liệu icon "doc" của lớp triết học trong khối riêng biệt
+    tl.fromTo(
+      "#doc-overlay",
+      { scale: 0.85, opacity: 0, y: 24 },
+      { scale: 1, opacity: 1, y: 0, duration: 0.65, ease: "power3.out" },
+      4.70
+    );
+
+    // 4. Camera Motion & chuyển động cơ khí (t = 5.5s - 8.95s):
+    // Camera pan nhẹ sang phải để hướng sự chú ý sang máy tính cơ khí
+    tl.to(
+      "#camera-stage",
+      { x: -24, duration: 3.2, ease: "power2.inOut" },
+      5.50
+    );
+
+    // Các bánh răng cơ khí bắt đầu vận hành xoay chuyển
+    tl.to(
+      "#gear-large",
+      { rotation: 180, transformOrigin: "0px 0px", duration: 4.8, ease: "none" },
+      5.60
+    );
+
+    tl.to(
+      "#gear-small",
+      { rotation: -290, transformOrigin: "0px 0px", duration: 4.8, ease: "none" },
+      5.60
+    );
+
+    // 5. Điểm mốc Overlays 3 (atMs: 183110 tương đối là 8.95s):
+    // Nhấn mạnh THỰC THI: MÁY TÍNH CƠ
+    tl.fromTo(
+      "#banner-practice",
+      { scale: 0.94 },
+      { scale: 1, duration: 0.55 },
+      8.95
+    );
+
+    // Hiển thị cầu nối giao thoa giữa Lý thuyết và Thực nghiệm ở cuối scene
+    tl.fromTo(
+      "#nexus-bridge",
+      { y: 36, opacity: 0, scale: 0.96 },
+      { y: 0, opacity: 1, scale: 1, duration: 0.65, ease: "power3.out" },
+      9.15
+    );
+
+    // Đăng ký timeline duy nhất vào HyperFrames runtime
+    window.__timelines = window.__timelines || {};
+    window.__timelines["scene-s23"] = tl;
+  </script>
+
+    </template>
+  </body>
+</html>

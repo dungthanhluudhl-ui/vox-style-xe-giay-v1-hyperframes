@@ -1,0 +1,573 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap">
+      <style>
+    /* hf-safe-colors (tất định từ style-tokens.json) */
+    .hf-text-ink { color: #141414; }
+    .hf-text-light { color: #F7F4EC; }
+    .hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+    .hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+    .hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+    .hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background: #E7E3D9;
+      color: #141414;
+      font-family: "Be Vietnam Pro", sans-serif;
+      overflow: hidden;
+      width: 1080px;
+      height: 1920px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    #root {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #E7E3D9;
+    }
+
+    /* Core layout convention: .clip uses inset:0 */
+    .clip {
+      position: absolute;
+      inset: 0;
+    }
+
+    /* Vox 84px Grid background */
+    .grid-canvas {
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(to right, rgba(20, 20, 20, 0.18) 1.5px, transparent 1.5px),
+        linear-gradient(to bottom, rgba(20, 20, 20, 0.18) 1.5px, transparent 1.5px);
+      background-size: 84px 84px;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    /* Perspective wrapper for unfold entrance */
+    #scene-canvas {
+      position: absolute;
+      inset: 0;
+      perspective: 1200px;
+      transform-style: preserve-3d;
+      z-index: 2;
+    }
+
+    /* Hero media background - giữ nguyên màu gốc của ảnh không dùng scrim/filter */
+    .bg-media-container {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .hero-image {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transform-origin: center center;
+      display: block;
+    }
+
+    /* Persistent Vox bottom brand bar */
+    .brand-bottom-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 14px;
+      background: #FF6A1A;
+      z-index: 999;
+    }
+
+    /* Overlay 1: Punch phrase discovery */
+    #overlay-discovery {
+      position: absolute;
+      top: 240px;
+      left: 70px;
+      right: 70px;
+      bottom: auto;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 16px;
+      z-index: 20;
+    }
+
+    .badge-tag {
+      display: inline-flex;
+      align-items: center;
+      padding: 10px 24px;
+      font-size: 26px;
+      font-weight: 900;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      border-radius: 4px;
+      box-shadow: 6px 6px 0px rgba(20, 20, 20, 0.9);
+    }
+
+    .discovery-card {
+      width: 100%;
+      padding: 38px 44px;
+      border-left: 10px solid #FF6A1A;
+      border-radius: 6px;
+      box-shadow: 12px 14px 0px rgba(20, 20, 20, 0.85);
+    }
+
+    .discovery-title {
+      font-size: 64px;
+      font-weight: 900;
+      line-height: 1.15;
+      text-transform: uppercase;
+      letter-spacing: -0.5px;
+      color: #F7F4EC;
+      margin-bottom: 12px;
+    }
+
+    .discovery-subtitle {
+      font-size: 32px;
+      font-weight: 700;
+      line-height: 1.35;
+      color: #E7E3D9;
+    }
+
+    /* Overlay 2: Technical Diagram Card */
+    #overlay-diagram {
+      position: absolute;
+      top: 380px;
+      left: 60px;
+      right: 60px;
+      bottom: auto;
+      padding: 44px 40px;
+      border-radius: 12px;
+      border: 4px solid #141414;
+      box-shadow: 16px 18px 0px rgba(20, 20, 20, 0.9);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 32px;
+      z-index: 25;
+    }
+
+    .diagram-header {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 2px solid rgba(247, 244, 236, 0.2);
+      padding-bottom: 20px;
+    }
+
+    .diagram-title-text {
+      font-size: 40px;
+      font-weight: 900;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: #F7F4EC;
+    }
+
+    .diagram-svg-wrap {
+      width: 100%;
+      height: 250px;
+      background: #1c1c1c;
+      border-radius: 8px;
+      border: 2px dashed rgba(255, 106, 26, 0.5);
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    .diagram-state-row {
+      width: 100%;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+
+    .state-indicator {
+      padding: 24px;
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .state-indicator.active {
+      background: #FF6A1A;
+      color: #141414;
+      box-shadow: 6px 6px 0px rgba(20, 20, 20, 0.7);
+    }
+
+    .state-indicator.inactive {
+      background: #232323;
+      color: #F7F4EC;
+      opacity: 0.45;
+    }
+
+    .state-name {
+      font-size: 38px;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    .state-desc {
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: 1px;
+    }
+
+    /* Overlay 3: High impact Punch Phrase ĐÓNG ⟷ MỞ */
+    #overlay-dual-states {
+      position: absolute;
+      top: 420px;
+      left: 60px;
+      right: 60px;
+      bottom: auto;
+      padding: 48px 36px;
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 32px;
+      box-shadow: 18px 20px 0px rgba(20, 20, 20, 0.95);
+      z-index: 30;
+    }
+
+    .dual-header-badge {
+      padding: 10px 28px;
+      font-size: 26px;
+      font-weight: 900;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      border-radius: 4px;
+    }
+
+    .dual-cards-row {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+    }
+
+    .binary-card {
+      flex: 1;
+      padding: 46px 20px;
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+    }
+
+    .binary-card-dong {
+      background-color: #FF6A1A;
+      color: #141414;
+      box-shadow: 8px 8px 0px rgba(20, 20, 20, 0.8);
+    }
+
+    .binary-card-mo {
+      background-color: #F7F4EC;
+      color: #141414;
+      box-shadow: 8px 8px 0px rgba(20, 20, 20, 0.8);
+    }
+
+    .binary-card-title {
+      font-size: 72px;
+      font-weight: 900;
+      line-height: 1;
+      text-transform: uppercase;
+      letter-spacing: -1px;
+    }
+
+    .binary-card-sub {
+      font-size: 26px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .binary-separator {
+      font-size: 52px;
+      font-weight: 900;
+      color: #FF6A1A;
+      padding: 0 4px;
+    }
+  </style>
+
+  <div
+    id="root"
+    data-composition-id="scene-s24"
+    data-width="1080"
+    data-height="1920"
+    data-duration="10.63"
+  >
+    <!-- Background Grid -->
+    <div class="grid-canvas"></div>
+
+    <!-- Perspective entrance canvas -->
+    <div id="scene-canvas" class="clip" data-start="0" data-duration="10.63">
+      <!-- Media container with Ken Burns Zoom (nguyên màu gốc không có scrim) -->
+      <div class="bg-media-container">
+        <img
+          id="bg-image"
+          class="hero-image"
+          src="assets/img-05-logic-diagram-expert-explanation.jpg"
+          alt="Logic Diagram Expert"
+        />
+      </div>
+    </div>
+
+    <!-- OVERLAY 1: PHÁT HIỆN LỊCH SỬ (atMs: 186280 -> rel 1.66s, holdMs: 2200) -->
+    <div
+      id="overlay-discovery"
+      class="clip"
+      data-start="1.66"
+      data-duration="3.60"
+    >
+      <div class="badge-tag hf-hl-orange">70 NĂM QUA</div>
+      <div class="discovery-card hf-plate-ink">
+        <div class="discovery-title">PHÁT HIỆN LỊCH SỬ</div>
+        <div class="discovery-subtitle">MỘT ĐIỀU CHƯA AI TỪNG NHẬN RA</div>
+      </div>
+    </div>
+
+    <!-- OVERLAY 2: DIAGRAM CÔNG TẮC ĐIỆN VẬT LÝ (atMs: 190720 -> rel 6.10s, holdMs: 2000) -->
+    <div
+      id="overlay-diagram"
+      class="clip hf-plate-ink"
+      data-start="5.50"
+      data-duration="3.65"
+    >
+      <div class="diagram-header">
+        <span class="diagram-title-text">CÔNG TẮC ĐIỆN VẬT LÝ</span>
+        <span class="badge-tag hf-hl-orange" style="font-size: 20px; padding: 6px 16px;">SƠ ĐỒ CƠ HỌC</span>
+      </div>
+
+      <!-- Schematic SVG Circuit with dynamic toggle arm -->
+      <div class="diagram-svg-wrap">
+        <svg viewBox="0 0 800 240" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+          <!-- Baseline Wire Left -->
+          <line x1="80" y1="130" x2="280" y2="130" stroke="#FF6A1A" stroke-width="8" stroke-linecap="round"/>
+          <circle cx="280" cy="130" r="15" fill="#FF6A1A"/>
+
+          <!-- Contact Point Right -->
+          <circle cx="520" cy="130" r="15" fill="#E7E3D9" stroke="#FF6A1A" stroke-width="4"/>
+          <!-- Baseline Wire Right -->
+          <line x1="520" y1="130" x2="720" y2="130" stroke="#FF6A1A" stroke-width="8" stroke-linecap="round"/>
+
+          <!-- Animated Switch Lever Arm (pivoting around 280, 130) -->
+          <line
+            id="switch-lever"
+            x1="280"
+            y1="130"
+            x2="520"
+            y2="75"
+            stroke="#F7F4EC"
+            stroke-width="12"
+            stroke-linecap="round"
+            style="transform-origin: 280px 130px;"
+          />
+
+          <!-- Spark indicator on contact -->
+          <circle id="contact-spark" cx="520" cy="130" r="24" fill="#FF6A1A" opacity="0"/>
+        </svg>
+      </div>
+
+      <!-- Indicators of Two Physical States -->
+      <div class="diagram-state-row">
+        <div id="state-open" class="state-indicator active">
+          <span class="state-name">MỞ (OPEN)</span>
+          <span class="state-desc">NGẮT MẠCH • GIÁ TRỊ 0</span>
+        </div>
+        <div id="state-closed" class="state-indicator inactive">
+          <span class="state-name">ĐÓNG (CLOSED)</span>
+          <span class="state-desc">THÔNG MẠCH • GIÁ TRỊ 1</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- OVERLAY 3: PUNCH PHRASE ĐÓNG ⟷ MỞ (atMs: 194210 -> rel 9.59s, holdMs: 2000) -->
+    <div
+      id="overlay-dual-states"
+      class="clip hf-plate-ink"
+      data-start="9.30"
+      data-duration="1.33"
+    >
+      <div class="dual-header-badge hf-hl-orange">CHỈ CÓ HAI TRẠNG THÁI</div>
+      <div class="dual-cards-row">
+        <div id="card-dong" class="binary-card binary-card-dong">
+          <div class="binary-card-title">ĐÓNG</div>
+          <div class="binary-card-sub">THÔNG MẠCH (1)</div>
+        </div>
+        <div class="binary-separator">⟷</div>
+        <div id="card-mo" class="binary-card binary-card-mo">
+          <div class="binary-card-title">MỞ</div>
+          <div class="binary-card-sub">NGẮT MẠCH (0)</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Persistent Bottom Orange Line -->
+    <div class="brand-bottom-bar"></div>
+  </div>
+
+  <script>
+    // HyperFrames contract: Single paused GSAP master timeline registered on window.__timelines
+    const tl = gsap.timeline({ paused: true });
+
+    // 1. Scene entrance unfold effect (0s - 0.9s)
+    tl.fromTo(
+      "#scene-canvas",
+      { scale: 0.92, opacity: 0, rotationX: 18 },
+      { scale: 1.0, opacity: 1, rotationX: 0, duration: 0.9, ease: "power3.out" },
+      0
+    );
+
+    // 2. Slow Ken Burns zoom-in (1.0 -> 1.08 over full scene duration 10.63s)
+    tl.fromTo(
+      "#bg-image",
+      { scale: 1.0 },
+      { scale: 1.08, duration: 10.63, ease: "none" },
+      0
+    );
+
+    // 3. OVERLAY 1: "PHÁT HIỆN LỊCH SỬ" (appears at 1.66s, exits at 4.90s)
+    tl.fromTo(
+      "#overlay-discovery",
+      { y: -50, opacity: 0, scale: 0.92 },
+      { y: 0, opacity: 1, scale: 1.0, duration: 0.55, ease: "power3.out" },
+      1.66
+    );
+    tl.to(
+      "#overlay-discovery",
+      { y: -30, opacity: 0, duration: 0.35, ease: "power2.in" },
+      4.85
+    );
+
+    // 4. OVERLAY 2: Technical Diagram Card (appears at 5.50s, toggles states, exits at 8.95s)
+    tl.fromTo(
+      "#overlay-diagram",
+      { y: 60, opacity: 0, scale: 0.94 },
+      { y: 0, opacity: 1, scale: 1.0, duration: 0.55, ease: "power3.out" },
+      5.50
+    );
+
+    // Mechanical Switch Toggle 1: Snap to CLOSED at 6.40s
+    tl.to(
+      "#switch-lever",
+      { rotation: 14, duration: 0.22, ease: "power3.inOut" },
+      6.40
+    );
+    tl.fromTo(
+      "#contact-spark",
+      { opacity: 0.9, scale: 0.6 },
+      { opacity: 0, scale: 1.8, duration: 0.35, ease: "power2.out" },
+      6.55
+    );
+    tl.to(
+      "#state-open",
+      { opacity: 0.45, backgroundColor: "#232323", color: "#F7F4EC", duration: 0.2 },
+      6.55
+    );
+    tl.to(
+      "#state-closed",
+      { opacity: 1.0, backgroundColor: "#FF6A1A", color: "#141414", duration: 0.2 },
+      6.55
+    );
+
+    // Mechanical Switch Toggle 2: Snap back to OPEN at 7.45s
+    tl.to(
+      "#switch-lever",
+      { rotation: 0, duration: 0.25, ease: "back.out(1.4)" },
+      7.45
+    );
+    tl.to(
+      "#state-closed",
+      { opacity: 0.45, backgroundColor: "#232323", color: "#F7F4EC", duration: 0.2 },
+      7.55
+    );
+    tl.to(
+      "#state-open",
+      { opacity: 1.0, backgroundColor: "#FF6A1A", color: "#141414", duration: 0.2 },
+      7.55
+    );
+
+    // Mechanical Switch Toggle 3: Snap back to CLOSED at 8.25s
+    tl.to(
+      "#switch-lever",
+      { rotation: 14, duration: 0.2, ease: "power2.out" },
+      8.25
+    );
+    tl.fromTo(
+      "#contact-spark",
+      { opacity: 0.9, scale: 0.6 },
+      { opacity: 0, scale: 1.8, duration: 0.3, ease: "power2.out" },
+      8.38
+    );
+    tl.to(
+      "#state-open",
+      { opacity: 0.45, backgroundColor: "#232323", color: "#F7F4EC", duration: 0.18 },
+      8.38
+    );
+    tl.to(
+      "#state-closed",
+      { opacity: 1.0, backgroundColor: "#FF6A1A", color: "#141414", duration: 0.18 },
+      8.38
+    );
+
+    // Exit Diagram overlay before next punch phrase
+    tl.to(
+      "#overlay-diagram",
+      { y: -30, opacity: 0, scale: 0.96, duration: 0.35, ease: "power2.in" },
+      8.95
+    );
+
+    // 5. OVERLAY 3: Dual States "ĐÓNG ⟷ MỞ" (enters at 9.30s, holds till scene end 10.63s)
+    tl.fromTo(
+      "#overlay-dual-states",
+      { scale: 0.88, opacity: 0 },
+      { scale: 1.0, opacity: 1.0, duration: 0.45, ease: "power3.out" },
+      9.30
+    );
+    tl.fromTo(
+      "#card-dong",
+      { x: -50, opacity: 0 },
+      { x: 0, opacity: 1, duration: 0.4, ease: "power3.out" },
+      9.42
+    );
+    tl.fromTo(
+      "#card-mo",
+      { x: 50, opacity: 0 },
+      { x: 0, opacity: 1, duration: 0.4, ease: "power3.out" },
+      9.50
+    );
+
+    // Register paused timeline with exact composition-id
+    window.__timelines["scene-s24"] = tl;
+  </script>
+
+    </template>
+  </body>
+</html>

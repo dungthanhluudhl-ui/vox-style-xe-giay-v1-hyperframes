@@ -250,6 +250,17 @@ quét từng video: `planning/incident-log.md`.
 - [x] Stage 7b integration check PASS (2026-09-28) — 6/6 scene, audio, caption-track, `hyperframes check` ok=true (36 mốc/12 shot).
 - [x] Render bản đầy đủ (2026-09-28) — `out/lay-bac-tu-phim-x-quang-full.mp4`, **49.367s** (khớp audio thật 49.575s), 1080×1920 h264/aac, 47.4MB. `completion-manifest.json` xác nhận mọi field `*Ok=true`. **Chưa được người dùng xem/xác nhận.**
 
+### Video "nguon-goc-ra-doi-cua-ai" (lịch sử ý tưởng AI — Hobbes → Boole → Shannon → Turing, 307.4s, 37 scene/37 shot — lần đầu dùng flag `--images-only` mới thêm ở Stage 2b)
+- [x] Nhận script + audio (2026-09-28) từ `Vox style 3.1_test/.../kiến thức thú vị/Hóa ra AI được ra đời ĐỈNH CHÓP như vậy` — không có media nguồn sẵn.
+- [x] Transcribe (whisper.cpp CUDA) + align với script gốc qua 9router (2026-09-28) — 1032/1032 từ khớp script gốc (script dài nhất kể từ `cach-hoat-dong-cua-kinh-te-meo`), cơ chế tự chia đôi khi tràn token hoạt động đúng (nhiều lần chia tới depth=3), audio thật 307.416s.
+- [x] **Thêm mới flag `--images-only`** cho `scripts/02b-media-generate.router.mjs` (+ pass-through qua `scripts/run-stages-1-6.mjs`) — theo yêu cầu người dùng chỉ cần ảnh tĩnh, bỏ qua hẳn Giai đoạn 2 (tạo chuyển động) thay vì phải sinh video rồi bỏ đi. Tạo media qua Google Flow (Stage 2b, 2026-09-28, account `default`) — 11 ảnh, 0 video (chủ động, đúng thiết kế).
+- [x] Phân tích + chuẩn hoá tên media qua 9router[vision] (2026-09-28) — 11/11 ảnh.
+- [x] Scene Plan (2026-09-28) — 37 scene (nhiều thứ nhì từ trước tới nay, sau `cach-hoat-dong-cua-kinh-te-meo` 51 scene).
+- [x] Shotlist (2026-09-28) — 37 shot/37 scene.
+- [x] Dựng composition qua nhánh HyperFrames (2026-09-28) — chạy thẳng 37 scene song song (concurrency=10): **37/37 PASS ngay lần đầu**, không cần `--issue-file` can thiệp tay, không gặp lại race condition bootstrap đã vá ở video trước.
+- [x] Stage 7b integration check PASS (2026-09-28) — 37/37 scene, audio, caption-track, `hyperframes check` ok=true (111 mốc/37 shot).
+- [x] Render bản đầy đủ (2026-09-28) — `out/nguon-goc-ra-doi-cua-ai-full.mp4`, **307.433s** (khớp audio thật 307.416s), 1080×1920 h264/aac, 194.4MB, render mất 10m24s (37 scene/9223 frame). `completion-manifest.json` xác nhận mọi field `*Ok=true`. **Chưa được người dùng xem/xác nhận.**
+
 ## Archive: pipeline Remotion cũ (4 video đầu, `archive/remotion-legacy/`)
 
 Giữ lại đúng nguyên trạng để tham khảo/sửa lỗi cho 4 video archive — KHÔNG áp dụng cho video mới.

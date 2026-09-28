@@ -1,0 +1,572 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+/* hf-safe-colors (tất định từ style-tokens.json) */
+.hf-text-ink { color: #141414; }
+.hf-text-light { color: #F7F4EC; }
+.hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+.hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+.hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+.hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #e7e3d9;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      /* Safe palette utility classes */
+      .hf-text-ink {
+        color: #141414;
+      }
+      .hf-text-light {
+        color: #f7f4ec;
+      }
+      .hf-hl-orange {
+        background-color: #ff6a1a;
+        color: #141414;
+      }
+      .hf-plate-ink {
+        background-color: #141414;
+        color: #f7f4ec;
+      }
+      .hf-plate-ink-orange {
+        background-color: #141414;
+        color: #ff6a1a;
+      }
+      .hf-plate-paper {
+        background-color: #f5f0e4;
+        color: #141414;
+      }
+
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: #e7e3d9;
+        background-image:
+          linear-gradient(to right, rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px),
+          linear-gradient(to bottom, rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px);
+        background-size: 84px 84px;
+      }
+
+      .clip {
+        position: absolute;
+        inset: 0;
+      }
+
+      /* Camera rig wrapper for subtle organic pan */
+      #camera-rig {
+        position: absolute;
+        inset: 0;
+        will-change: transform;
+      }
+
+      /* Header section */
+      #header-box {
+        position: absolute;
+        top: 184px;
+        left: 50px;
+        right: 50px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+      }
+
+      .badge-evidence {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #ff6a1a;
+        color: #141414;
+        font-weight: 900;
+        font-size: 22px;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        padding: 8px 24px;
+        border: 3.5px solid #141414;
+        box-shadow: 4px 4px 0px #141414;
+        border-radius: 999px;
+        margin-bottom: 16px;
+      }
+
+      .punch-headline {
+        font-size: 64px;
+        font-weight: 900;
+        line-height: 1.25;
+        margin: 0;
+        text-transform: uppercase;
+        letter-spacing: -1px;
+        color: #141414;
+      }
+
+      .header-underline {
+        width: 320px;
+        height: 8px;
+        background-color: #ff6a1a;
+        border: 2px solid #141414;
+        margin-top: 16px;
+      }
+
+      /* 3D Perspective Container for Unfolding Books */
+      #books-stage {
+        position: absolute;
+        top: 410px;
+        left: 50px;
+        width: 980px;
+        height: 720px;
+        display: flex;
+        gap: 30px;
+        perspective: 1400px;
+      }
+
+      .book-page {
+        flex: 1;
+        height: 100%;
+        background-color: #f5f0e4;
+        border: 3.5px solid #141414;
+        box-shadow: 10px 10px 0px #141414;
+        border-radius: 8px;
+        padding: 28px 24px;
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        transform-style: preserve-3d;
+        will-change: transform, opacity;
+      }
+
+      #card-latin {
+        transform-origin: left center;
+      }
+
+      #card-calculus {
+        transform-origin: right center;
+      }
+
+      /* Vintage spine tape simulation */
+      .page-spine {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 16px;
+        background: rgba(20, 20, 20, 0.08);
+        border-right: 1.5px dashed rgba(20, 20, 20, 0.28);
+      }
+      #card-latin .page-spine {
+        left: 0;
+      }
+      #card-calculus .page-spine {
+        right: 0;
+        border-right: none;
+        border-left: 1.5px dashed rgba(20, 20, 20, 0.28);
+      }
+
+      .card-tag {
+        display: inline-block;
+        align-self: flex-start;
+        background-color: #141414;
+        color: #ff6a1a;
+        font-size: 19px;
+        font-weight: 900;
+        letter-spacing: 1.5px;
+        padding: 6px 14px;
+        border-radius: 4px;
+        margin-bottom: 12px;
+      }
+
+      .card-title {
+        font-size: 32px;
+        font-weight: 900;
+        color: #141414;
+        margin: 0 0 6px 0;
+        text-transform: uppercase;
+        letter-spacing: -0.5px;
+      }
+
+      .card-subtitle {
+        font-size: 19px;
+        font-weight: 700;
+        color: #141414;
+        margin: 0 0 24px 0;
+        opacity: 0.85;
+      }
+
+      /* Item entries inside the pages */
+      .entries-list {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        flex: 1;
+      }
+
+      .entry-row {
+        background: rgba(231, 227, 217, 0.65);
+        border: 2px solid #141414;
+        border-radius: 6px;
+        padding: 12px 14px;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      .entry-term {
+        font-size: 20px;
+        font-weight: 900;
+        color: #141414;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .entry-desc {
+        font-size: 16px;
+        font-weight: 700;
+        color: #141414;
+        opacity: 0.8;
+      }
+
+      .math-formula {
+        font-size: 24px;
+        font-weight: 900;
+        font-family: "Be Vietnam Pro", monospace;
+        color: #141414;
+        letter-spacing: 0.5px;
+      }
+
+      /* Underline decorative SVG */
+      .marker-svg {
+        margin-top: 4px;
+        display: block;
+      }
+
+      /* Synthesis Plate at the bottom */
+      #synthesis-plate {
+        position: absolute;
+        top: 1165px;
+        left: 50px;
+        right: 50px;
+        height: 150px;
+        background-color: #141414;
+        border: 3.5px solid #141414;
+        box-shadow: 8px 8px 0px #ff6a1a;
+        border-radius: 12px;
+        padding: 20px 28px;
+        display: flex;
+        align-items: center;
+        gap: 24px;
+        will-change: transform, opacity;
+      }
+
+      .icon-box {
+        width: 80px;
+        height: 80px;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .synthesis-content {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      .synth-tag {
+        font-size: 20px;
+        font-weight: 900;
+        color: #ff6a1a;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+      }
+
+      .synth-title {
+        font-size: 28px;
+        font-weight: 900;
+        color: #f7f4ec;
+        margin: 0;
+        line-height: 1.25;
+      }
+
+      /* Fixed bottom orange bar (DNA signature) */
+      #bottom-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 12px;
+        background-color: #ff6a1a;
+        z-index: 100;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s12"
+      data-width="1080"
+      data-height="1920"
+      data-duration="5.64"
+    >
+      <section id="scene-clip" class="clip" data-start="0" data-duration="5.64">
+        <div id="camera-rig">
+          <!-- Top Header / Narrative Anchor -->
+          <header id="header-box">
+            <div class="badge-evidence">CHỨNG CỨ TỰ HỌC</div>
+            <h1 class="punch-headline">CHỈ TỪ SÁCH VỞ</h1>
+            <div class="header-underline"></div>
+          </header>
+
+          <!-- Main Visual: Two Unfolding Books -->
+          <div id="books-stage">
+            <!-- Left Page: Ngôn Ngữ Cổ Điển (Latinh) -->
+            <div id="card-latin" class="book-page">
+              <div class="page-spine"></div>
+              <span class="card-tag">LATINA</span>
+              <h2 class="card-title">NGÔN NGỮ CỔ ĐIỂN</h2>
+              <p class="card-subtitle">Tự học tiếng Latinh cổ</p>
+
+              <svg class="marker-svg" viewBox="0 0 380 12" width="100%" height="10" fill="none">
+                <path id="latin-line" d="M 4 6 Q 190 2 376 6" stroke="#FF6A1A" stroke-width="4.5" stroke-linecap="round" />
+              </svg>
+
+              <div class="entries-list" style="margin-top: 14px;">
+                <div class="entry-row latin-entry">
+                  <div class="entry-term">
+                    <span>1. LINGUA LATINA</span>
+                    <span style="font-size: 15px; color: #ff6a1a; background: #141414; padding: 2px 6px; border-radius: 3px;">GỐC</span>
+                  </div>
+                  <div class="entry-desc">Ngữ pháp La Tinh cổ điển</div>
+                </div>
+
+                <div class="entry-row latin-entry">
+                  <div class="entry-term">
+                    <span>2. VERITAS VINCIT</span>
+                  </div>
+                  <div class="entry-desc">Chân lý luôn chiến thắng</div>
+                </div>
+
+                <div class="entry-row latin-entry">
+                  <div class="entry-term">
+                    <span>3. PRINCIPIA</span>
+                  </div>
+                  <div class="entry-desc">Đọc trực tiếp tác phẩm kinh điển</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Right Page: Vi Tích Phân (Calculus) -->
+            <div id="card-calculus" class="book-page">
+              <div class="page-spine"></div>
+              <span class="card-tag">CALCULUS</span>
+              <h2 class="card-title">VI TÍCH PHÂN</h2>
+              <p class="card-subtitle">Tự học giải tích vi phân</p>
+
+              <svg class="marker-svg" viewBox="0 0 380 12" width="100%" height="10" fill="none">
+                <path id="calc-line" d="M 4 6 Q 190 2 376 6" stroke="#FF6A1A" stroke-width="4.5" stroke-linecap="round" />
+              </svg>
+
+              <div class="entries-list" style="margin-top: 14px;">
+                <div class="entry-row calc-entry">
+                  <div class="entry-term math-formula">
+                    <span>∫ f(x) dx</span>
+                    <span style="font-size: 15px; color: #ff6a1a; background: #141414; padding: 2px 6px; border-radius: 3px;">TÍCH PHÂN</span>
+                  </div>
+                  <div class="entry-desc">Tính toán diện tích & giới hạn</div>
+                </div>
+
+                <div class="entry-row calc-entry">
+                  <div class="entry-term math-formula">
+                    <span>df/dx = lim Δy/Δx</span>
+                  </div>
+                  <div class="entry-desc">Tốc độ biến thiên vi phân</div>
+                </div>
+
+                <div class="entry-row calc-entry">
+                  <div class="entry-term math-formula">
+                    <span>∑ aₙ (Chuỗi vô hạn)</span>
+                  </div>
+                  <div class="entry-desc">Đại số giải tích trừu tượng</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bottom Synthesis Plate with Self-drawing 'doc' Icon -->
+          <div id="synthesis-plate">
+            <div class="icon-box">
+              <svg id="doc-icon-svg" viewBox="0 0 64 64" width="70" height="70" fill="none">
+                <path
+                  id="doc-outline"
+                  d="M 14 6 L 40 6 L 52 18 L 52 58 L 14 58 Z"
+                  stroke="#FF6A1A"
+                  stroke-width="4.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+                <path
+                  id="doc-fold"
+                  d="M 40 6 L 40 18 L 52 18"
+                  stroke="#FF6A1A"
+                  stroke-width="4.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+                <line class="doc-line" x1="22" y1="28" x2="44" y2="28" stroke="#F7F4EC" stroke-width="3.5" stroke-linecap="round" />
+                <line class="doc-line" x1="22" y1="38" x2="44" y2="38" stroke="#F7F4EC" stroke-width="3.5" stroke-linecap="round" />
+                <line class="doc-line" x1="22" y1="48" x2="34" y2="48" stroke="#F7F4EC" stroke-width="3.5" stroke-linecap="round" />
+              </svg>
+            </div>
+            <div class="synthesis-content">
+              <span class="synth-tag">100% TÀI LIỆU NGUỒN</span>
+              <h3 class="synth-title">KHÔNG CÓ THẦY DẠY — HOÀN TOÀN TỰ LẬP</h3>
+            </div>
+          </div>
+        </div>
+
+        <!-- Fixed bottom orange bar -->
+        <div id="bottom-bar"></div>
+      </section>
+    </div>
+
+    <script>
+      // Single paused master timeline registered on window.__timelines
+      const tl = gsap.timeline({ paused: true });
+
+      // Prepare SVG path dash properties for clean progressive draws
+      const latinLine = document.getElementById("latin-line");
+      if (latinLine) {
+        latinLine.style.strokeDasharray = "400";
+        latinLine.style.strokeDashoffset = "400";
+      }
+
+      const calcLine = document.getElementById("calc-line");
+      if (calcLine) {
+        calcLine.style.strokeDasharray = "400";
+        calcLine.style.strokeDashoffset = "400";
+      }
+
+      const docOutline = document.getElementById("doc-outline");
+      if (docOutline) {
+        docOutline.style.strokeDasharray = "200";
+        docOutline.style.strokeDashoffset = "200";
+      }
+
+      const docFold = document.getElementById("doc-fold");
+      if (docFold) {
+        docFold.style.strokeDasharray = "40";
+        docFold.style.strokeDashoffset = "40";
+      }
+
+      const docLines = document.querySelectorAll(".doc-line");
+      docLines.forEach((l) => {
+        l.style.strokeDasharray = "30";
+        l.style.strokeDashoffset = "30";
+      });
+
+      // 1. Subtle continuous camera drift (pan-left feel)
+      tl.fromTo(
+        "#camera-rig",
+        { x: 18 },
+        { x: -18, duration: 5.64, ease: "none" },
+        0
+      );
+
+      // 2. Header entrance
+      tl.fromTo(
+        "#header-box",
+        { y: -30, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.65, ease: "power3.out" },
+        0.15
+      );
+
+      // 3. Left Book Page (Unfold transition)
+      // Opens like a book leaf unfolding from spine
+      tl.fromTo(
+        "#card-latin",
+        { rotateY: -75, opacity: 0, scale: 0.9 },
+        { rotateY: 0, opacity: 1, scale: 1, duration: 0.7, ease: "power3.out" },
+        0.45
+      );
+
+      // Overlay 1: diagram "NGÔN NGỮ CỔ ĐIỂN" at atMs: 91540 -> 1.02s
+      tl.to(
+        "#latin-line",
+        { strokeDashoffset: 0, duration: 0.55, ease: "power2.out" },
+        1.02
+      );
+      tl.fromTo(
+        ".latin-entry",
+        { opacity: 0, x: -20 },
+        { opacity: 1, x: 0, duration: 0.45, stagger: 0.12, ease: "power3.out" },
+        1.08
+      );
+
+      // 4. Right Book Page (Unfold transition)
+      tl.fromTo(
+        "#card-calculus",
+        { rotateY: 75, opacity: 0, scale: 0.9 },
+        { rotateY: 0, opacity: 1, scale: 1, duration: 0.7, ease: "power3.out" },
+        2.35
+      );
+
+      // Overlay 2: diagram "VI TÍCH PHÂN" at atMs: 93460 -> 2.94s
+      tl.to(
+        "#calc-line",
+        { strokeDashoffset: 0, duration: 0.55, ease: "power2.out" },
+        2.94
+      );
+      tl.fromTo(
+        ".calc-entry",
+        { opacity: 0, x: 20 },
+        { opacity: 1, x: 0, duration: 0.45, stagger: 0.12, ease: "power3.out" },
+        3.0
+      );
+
+      // 5. Overlay 3: icon "doc" + synthesis card at atMs: 94910 -> 4.39s
+      tl.fromTo(
+        "#synthesis-plate",
+        { scale: 0.85, opacity: 0, y: 24 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.5, ease: "power3.out" },
+        4.39
+      );
+
+      // Self-drawing doc icon
+      tl.to(
+        "#doc-outline",
+        { strokeDashoffset: 0, duration: 0.5, ease: "power2.out" },
+        4.45
+      );
+      tl.to(
+        "#doc-fold",
+        { strokeDashoffset: 0, duration: 0.25, ease: "power2.out" },
+        4.7
+      );
+      tl.to(
+        ".doc-line",
+        { strokeDashoffset: 0, duration: 0.3, stagger: 0.08, ease: "power2.out" },
+        4.8
+      );
+
+      // Register master timeline on window.__timelines
+      window.__timelines["scene-s12"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

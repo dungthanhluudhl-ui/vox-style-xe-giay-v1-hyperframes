@@ -1,0 +1,846 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap">
+      <style>
+/* hf-safe-colors (tất định từ style-tokens.json) */
+.hf-text-ink { color: #141414; }
+.hf-text-light { color: #F7F4EC; }
+.hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+.hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+.hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+.hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background: #E7E3D9;
+      color: #141414;
+      font-family: "Be Vietnam Pro", sans-serif;
+      overflow: hidden;
+    }
+
+    #root {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #E7E3D9;
+    }
+
+    .clip {
+      position: absolute;
+      inset: 0;
+    }
+
+    /* Spotlight background with 84px technical grid */
+    .bg-spotlight {
+      position: absolute;
+      inset: 0;
+      background-color: #E7E3D9;
+      background-image:
+        radial-gradient(ellipse 70% 60% at 50% 45%, rgba(231, 227, 217, 0) 25%, rgba(20, 20, 20, 0.28) 100%),
+        linear-gradient(to right, rgba(20, 20, 20, 0.20) 1.5px, transparent 1.5px),
+        linear-gradient(to bottom, rgba(20, 20, 20, 0.20) 1.5px, transparent 1.5px);
+      background-size: 100% 100%, 84px 84px, 84px 84px;
+      pointer-events: none;
+    }
+
+    /* Content wrapper */
+    #main-content {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 1080px;
+      height: 1920px;
+      will-change: transform, opacity;
+    }
+
+    /* Header Bar */
+    #header-bar {
+      position: absolute;
+      top: 180px;
+      left: 60px;
+      width: 960px;
+      height: 52px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .header-pill {
+      background: #141414;
+      color: #FF6A1A;
+      padding: 8px 18px;
+      border-radius: 4px;
+      font-weight: 900;
+      font-size: 18px;
+      letter-spacing: 2px;
+    }
+
+    .header-tag {
+      background: #F5F0E4;
+      border: 2.5px solid #141414;
+      color: #141414;
+      padding: 6px 16px;
+      font-weight: 900;
+      font-size: 16px;
+      letter-spacing: 1px;
+    }
+
+    /* Isolated Rooms A & B (Bố cục ẩn danh hoàn toàn từ đầu) */
+    .room-card {
+      position: absolute;
+      top: 256px;
+      width: 462px;
+      height: 310px;
+      background: #F5F0E4;
+      border: 3.5px solid #141414;
+      box-shadow: 6px 6px 0px #141414;
+      display: flex;
+      flex-direction: column;
+      will-change: transform;
+    }
+
+    #room-a {
+      left: 60px;
+      z-index: 5;
+    }
+
+    #room-b {
+      left: 558px;
+      z-index: 6;
+    }
+
+    .room-header {
+      background: #141414;
+      color: #F7F4EC;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      font-weight: 900;
+      font-size: 20px;
+      letter-spacing: 1px;
+    }
+
+    .room-header-status {
+      font-size: 14px;
+      color: #FF6A1A;
+      letter-spacing: 2px;
+    }
+
+    .room-body {
+      position: relative;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    .room-icon-box {
+      width: 74px;
+      height: 74px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 12px;
+    }
+
+    .id-tag-container {
+      position: relative;
+      width: 380px;
+      height: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .id-tag-init {
+      position: absolute;
+      inset: 0;
+      background: #141414;
+      color: #FF6A1A;
+      font-size: 18px;
+      font-weight: 900;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      letter-spacing: 1.5px;
+    }
+
+    .id-tag-masked {
+      position: absolute;
+      inset: 0;
+      background: #FF6A1A;
+      color: #141414;
+      font-size: 18px;
+      font-weight: 900;
+      border: 3px solid #141414;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      letter-spacing: 1.5px;
+      opacity: 0;
+    }
+
+    .room-sub-note {
+      color: #141414;
+      font-size: 14px;
+      font-weight: 700;
+      margin-top: 10px;
+      letter-spacing: 1px;
+    }
+
+    /* Dividing Barrier (Bức tường ngăn cách) */
+    #divider-barrier {
+      position: absolute;
+      top: 590px;
+      left: 60px;
+      width: 960px;
+      height: 46px;
+      background: #141414;
+      border: 3px solid #141414;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transform-origin: center center;
+    }
+
+    .divider-text {
+      color: #F7F4EC;
+      font-size: 15px;
+      font-weight: 900;
+      letter-spacing: 3px;
+    }
+
+    /* Question mark badge in the center */
+    #question-badge {
+      position: absolute;
+      top: 563px;
+      left: 490px;
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      background: #FF6A1A;
+      border: 4px solid #141414;
+      box-shadow: 4px 4px 0px #141414;
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transform-origin: center center;
+      will-change: transform;
+    }
+
+    /* Interrogator Room (Room C) */
+    #interrogator-room {
+      position: absolute;
+      top: 660px;
+      left: 60px;
+      width: 960px;
+      height: 278px;
+      background: #F5F0E4;
+      border: 3.5px solid #141414;
+      box-shadow: 6px 6px 0px #141414;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .interrogator-header {
+      background: #141414;
+      color: #F7F4EC;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      font-weight: 900;
+      font-size: 20px;
+      letter-spacing: 1px;
+    }
+
+    .interrogator-role {
+      color: #FF6A1A;
+      font-size: 15px;
+      letter-spacing: 2px;
+    }
+
+    .interrogator-body {
+      padding: 16px 20px;
+      display: flex;
+      gap: 20px;
+      height: 148px;
+    }
+
+    .terminal-box {
+      flex: 1;
+      background: #E7E3D9;
+      border: 2.5px solid #141414;
+      padding: 12px 16px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .terminal-title {
+      font-size: 14px;
+      font-weight: 900;
+      color: #141414;
+      display: flex;
+      justify-content: space-between;
+      border-bottom: 2px solid rgba(20, 20, 20, 0.2);
+      padding-bottom: 4px;
+    }
+
+    .terminal-q {
+      font-size: 14px;
+      font-weight: 700;
+      color: #141414;
+      margin-top: 6px;
+    }
+
+    .terminal-a {
+      font-size: 15px;
+      font-weight: 900;
+      color: #141414;
+      background: #F5F0E4;
+      padding: 4px 8px;
+      border-left: 3px solid #141414;
+    }
+
+    .interrogator-footer {
+      position: absolute;
+      bottom: 14px;
+      left: 20px;
+      right: 20px;
+      height: 46px;
+    }
+
+    .status-panel-initial {
+      position: absolute;
+      inset: 0;
+      background: #E7E3D9;
+      border: 2px solid #141414;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      font-weight: 900;
+      color: #141414;
+      letter-spacing: 1.5px;
+    }
+
+    .status-panel-alert {
+      position: absolute;
+      inset: 0;
+      background: #FF6A1A;
+      border: 2.5px solid #141414;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      font-weight: 900;
+      color: #141414;
+      letter-spacing: 2px;
+      opacity: 0;
+    }
+
+    /* PUNCH PHRASE CARD (Overlay 2: atMs 272140) */
+    #punch-card {
+      position: absolute;
+      top: 970px;
+      left: 60px;
+      width: 960px;
+      height: 220px;
+      background: #141414;
+      border: 4px solid #FF6A1A;
+      box-shadow: 8px 8px 0px rgba(20, 20, 20, 0.4);
+      padding: 24px 32px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      will-change: transform, opacity;
+    }
+
+    .punch-tag {
+      align-self: flex-start;
+      background: #FF6A1A;
+      color: #141414;
+      padding: 4px 14px;
+      font-weight: 900;
+      font-size: 16px;
+      border-radius: 3px;
+      letter-spacing: 2px;
+      margin-bottom: 10px;
+    }
+
+    .punch-headline {
+      color: #F7F4EC;
+      font-size: 66px;
+      font-weight: 900;
+      line-height: 1.15;
+      letter-spacing: -1px;
+    }
+
+    .punch-sub {
+      color: #E7E3D9;
+      font-size: 22px;
+      font-weight: 700;
+      margin-top: 8px;
+      letter-spacing: 0.5px;
+    }
+
+    .punch-accent-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      height: 6px;
+      width: 100%;
+      background: #FF6A1A;
+      transform-origin: left center;
+    }
+
+    /* OFFICIAL STAMP CARD (Overlay 3: atMs 276400) */
+    #stamp-box {
+      position: absolute;
+      top: 960px;
+      left: 60px;
+      width: 960px;
+      height: 246px;
+      background: #141414;
+      border: 6px solid #FF6A1A;
+      box-shadow: 10px 10px 0px #141414;
+      padding: 22px 30px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      transform-origin: center center;
+      will-change: transform, opacity;
+    }
+
+    .stamp-inner-border {
+      position: absolute;
+      inset: 8px;
+      border: 2px dashed #FF6A1A;
+      pointer-events: none;
+    }
+
+    .stamp-top-line {
+      color: #FF6A1A;
+      font-size: 18px;
+      font-weight: 900;
+      letter-spacing: 3px;
+      margin-bottom: 6px;
+    }
+
+    .stamp-title {
+      color: #F7F4EC;
+      font-size: 64px;
+      font-weight: 900;
+      line-height: 1.1;
+      letter-spacing: 1px;
+    }
+
+    .stamp-badge {
+      display: inline-block;
+      background: #FF6A1A;
+      color: #141414;
+      font-size: 28px;
+      font-weight: 900;
+      padding: 4px 20px;
+      border-radius: 4px;
+      letter-spacing: 4px;
+      margin: 8px 0;
+    }
+
+    .stamp-bottom-note {
+      color: #E7E3D9;
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: 1px;
+    }
+
+    .stamp-corner {
+      position: absolute;
+      color: #FF6A1A;
+      font-size: 20px;
+      font-weight: 900;
+    }
+
+    .stamp-tl { top: 14px; left: 18px; }
+    .stamp-tr { top: 14px; right: 18px; }
+    .stamp-bl { bottom: 14px; left: 18px; }
+    .stamp-br { bottom: 14px; right: 18px; }
+
+    /* Shockwave ring around the stamp */
+    #stamp-shockwave {
+      position: absolute;
+      top: 940px;
+      left: 40px;
+      width: 1000px;
+      height: 286px;
+      border: 4px solid #FF6A1A;
+      opacity: 0;
+      pointer-events: none;
+      transform-origin: center center;
+    }
+
+    /* Signature bottom orange bar */
+    .bottom-orange-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 1080px;
+      height: 14px;
+      background: #FF6A1A;
+      z-index: 999;
+    }
+  </style>
+
+  <div
+    id="root"
+    data-composition-id="scene-s34"
+    data-width="1080"
+    data-height="1920"
+    data-duration="9.6"
+  >
+    <!-- Background layer -->
+    <div class="bg-spotlight"></div>
+
+    <!-- MAIN SHOT CLIP (0.0s to 9.6s) -->
+    <div id="shot-s34-1" class="clip" data-start="0" data-duration="9.6">
+      <div id="main-content">
+
+        <!-- Header -->
+        <div id="header-bar">
+          <div class="header-pill">THÍ NGHIỆM TƯ DUY • 1950</div>
+          <div class="header-tag">PHÉP THỬ IMITATION GAME</div>
+        </div>
+
+        <!-- Room A (Left) - Hoàn toàn ẩn danh từ t=0 -->
+        <div id="room-a" class="room-card">
+          <div class="room-header">
+            <span>PHÒNG A</span>
+            <span class="room-header-status">KÊNH X</span>
+          </div>
+          <div class="room-body">
+            <div class="room-icon-box">
+              <svg viewBox="0 0 64 64" width="58" height="58">
+                <rect x="6" y="6" width="52" height="52" rx="8" fill="#141414" />
+                <text x="32" y="42" font-family="'Be Vietnam Pro', sans-serif" font-weight="900" font-size="32" fill="#FF6A1A" text-anchor="middle">X</text>
+              </svg>
+            </div>
+            <div class="id-tag-container">
+              <div id="id-tag-a-init" class="id-tag-init">ĐỐI TƯỢNG X: ẨN DANH</div>
+              <div id="id-tag-a-masked" class="id-tag-masked">? ? ? AI LÀ MÁY ? ? ?</div>
+            </div>
+            <div id="sub-note-a" class="room-sub-note">CHỈ GIAO TIẾP VĂN BẢN</div>
+          </div>
+        </div>
+
+        <!-- Room B (Right) - Hoàn toàn ẩn danh từ t=0 -->
+        <div id="room-b" class="room-card">
+          <div class="room-header">
+            <span>PHÒNG B</span>
+            <span class="room-header-status">KÊNH Y</span>
+          </div>
+          <div class="room-body">
+            <div class="room-icon-box">
+              <svg viewBox="0 0 64 64" width="58" height="58">
+                <rect x="6" y="6" width="52" height="52" rx="8" fill="#141414" />
+                <text x="32" y="42" font-family="'Be Vietnam Pro', sans-serif" font-weight="900" font-size="32" fill="#FF6A1A" text-anchor="middle">Y</text>
+              </svg>
+            </div>
+            <div class="id-tag-container">
+              <div id="id-tag-b-init" class="id-tag-init">ĐỐI TƯỢNG Y: ẨN DANH</div>
+              <div id="id-tag-b-masked" class="id-tag-masked">? ? ? AI LÀ NGƯỜI ? ? ?</div>
+            </div>
+            <div id="sub-note-b" class="room-sub-note">CÁCH LY HOÀN TOÀN</div>
+          </div>
+        </div>
+
+        <!-- Dividing Barrier -->
+        <div id="divider-barrier">
+          <span class="divider-text">// BỨC TƯỜNG CÁCH LY • BẢO MẬT TUYỆT ĐỐI //</span>
+        </div>
+
+        <!-- Question Badge (Overlay 1: atMs 269580 = 1.62s) -->
+        <div id="question-badge">
+          <svg viewBox="0 0 100 100" width="64" height="64">
+            <path
+              id="q-mark-path"
+              d="M 32 36 C 32 20 68 20 68 36 C 68 48 50 52 50 64"
+              fill="none"
+              stroke="#141414"
+              stroke-width="8"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+            <circle id="q-mark-dot" cx="50" cy="78" r="5" fill="#141414" />
+          </svg>
+        </div>
+
+        <!-- Interrogator Room (Room C) -->
+        <div id="interrogator-room">
+          <div class="interrogator-header">
+            <span>NGƯỜI THẨM VẤN (C)</span>
+            <span class="interrogator-role">VỊ TRÍ: BÊN NGOÀI</span>
+          </div>
+          <div class="interrogator-body">
+            <div class="terminal-box">
+              <div class="terminal-title">
+                <span>KÊNH TRUYỀN: ĐỐI TƯỢNG X</span>
+                <span>STATUS: ONLINE</span>
+              </div>
+              <div class="terminal-q">HỎI: "Bạn có cảm xúc thật không?"</div>
+              <div class="terminal-a">ĐÁP: "Tôi thấy hồi hộp khi bạn hỏi vậy."</div>
+            </div>
+            <div class="terminal-box">
+              <div class="terminal-title">
+                <span>KÊNH TRUYỀN: ĐỐI TƯỢNG Y</span>
+                <span>STATUS: ONLINE</span>
+              </div>
+              <div class="terminal-q">HỎI: "Hãy làm một câu thơ ngắn?"</div>
+              <div class="terminal-a">ĐÁP: "Ánh trăng lạnh rọi bàn phím khuya."</div>
+            </div>
+          </div>
+          <div class="interrogator-footer">
+            <div id="interrogator-status-initial" class="status-panel-initial">
+              ĐANG ĐỐI CHIẾU PHẢN HỒI HAI BÊN...
+            </div>
+            <div id="interrogator-status-alert" class="status-panel-alert">
+              KẾT QUẢ: KHÔNG THỂ PHÂN BIỆT ĐÂU LÀ MÁY!
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- PUNCH PHRASE CLIP (Overlay 2: 4.18s to 7.78s) -->
+    <div id="punch-phrase-clip" class="clip" data-start="4.18" data-duration="3.6">
+      <div id="punch-card">
+        <div class="punch-tag">TIÊU CHUẨN TURING (1950)</div>
+        <div class="punch-headline">MÁY BIẾT SUY NGHĨ</div>
+        <div class="punch-sub">KHI NGƯỜI NGOÀI KHÔNG THỂ PHÂN BIỆT</div>
+        <div id="punch-accent" class="punch-accent-bar"></div>
+      </div>
+    </div>
+
+    <!-- OFFICIAL STAMP CLIP (Overlay 3: 7.8s to 9.6s) -->
+    <div id="stamp-clip" class="clip" data-start="7.8" data-duration="1.8">
+      <div id="stamp-shockwave" data-layout-allow-overflow="true"></div>
+      <div id="stamp-box">
+        <div class="stamp-inner-border"></div>
+        <span class="stamp-corner stamp-tl">+</span>
+        <span class="stamp-corner stamp-tr">+</span>
+        <span class="stamp-corner stamp-bl">+</span>
+        <span class="stamp-corner stamp-br">+</span>
+        <div class="stamp-top-line">★ XÁC NHẬN TIÊU CHUẨN LỊCH SỬ ★</div>
+        <div class="stamp-title">PHÉP THỬ TURING</div>
+        <div>
+          <span class="stamp-badge">TURING TEST</span>
+        </div>
+        <div class="stamp-bottom-note">CHUẨN MỰC XÁC ĐỊNH TRÍ TUỆ NHÂN TẠO</div>
+      </div>
+    </div>
+
+    <!-- Signature bottom orange bar -->
+    <div class="bottom-orange-bar" data-layout-ignore="true"></div>
+  </div>
+
+  <script>
+    // Build single seekable paused GSAP timeline
+    const tl = gsap.timeline({ paused: true });
+
+    // Path draw setup for SVG question mark
+    const qPath = document.getElementById("q-mark-path");
+    if (qPath) {
+      const qLen = qPath.getTotalLength();
+      qPath.style.strokeDasharray = qLen;
+      qPath.style.strokeDashoffset = qLen;
+    }
+
+    // ----------------------------------------------------
+    // PHASE 1: ENTRANCE (0.0s - 1.5s) - "strike" transition
+    // Cả hai phòng xuất hiện hoàn toàn ẩn danh (Đối tượng X & Y)
+    // ----------------------------------------------------
+    tl.fromTo(
+      "#main-content",
+      { y: -24, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.5, ease: "power3.out" },
+      0.0
+    );
+
+    tl.fromTo(
+      "#header-bar",
+      { opacity: 0, y: -15 },
+      { opacity: 1, y: 0, duration: 0.4, ease: "power2.out" },
+      0.15
+    );
+
+    tl.fromTo(
+      "#room-a",
+      { scale: 0.9, opacity: 0 },
+      { scale: 1, opacity: 1, duration: 0.45, ease: "power3.out" },
+      0.2
+    );
+
+    tl.fromTo(
+      "#room-b",
+      { scale: 0.9, opacity: 0 },
+      { scale: 1, opacity: 1, duration: 0.45, ease: "power3.out" },
+      0.3
+    );
+
+    tl.fromTo(
+      "#divider-barrier",
+      { scaleX: 0 },
+      { scaleX: 1, duration: 0.4, ease: "power2.out" },
+      0.4
+    );
+
+    tl.fromTo(
+      "#interrogator-room",
+      { y: 30, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.5, ease: "power3.out" },
+      0.45
+    );
+
+    // Initial state of question badge
+    tl.set("#question-badge", { scale: 0, opacity: 0 }, 0);
+
+    // ----------------------------------------------------
+    // PHASE 2: HOÁN ĐỔI VỊ TRÍ & DẤU HỎI LỚN (1.62s - 4.0s)
+    // Overlay 1: question icon atMs 269580 -> local 1.62s
+    // Hai căn phòng hoán đổi vị trí và xáo trộn danh tính
+    // ----------------------------------------------------
+    tl.fromTo(
+      "#question-badge",
+      { scale: 0, opacity: 0, rotation: -40 },
+      { scale: 1, opacity: 1, rotation: 0, duration: 0.4, ease: "back.out(1.8)" },
+      1.62
+    );
+
+    if (qPath) {
+      tl.to(
+        qPath,
+        { strokeDashoffset: 0, duration: 0.45, ease: "power2.out" },
+        1.65
+      );
+    }
+
+    tl.fromTo(
+      "#q-mark-dot",
+      { scale: 0 },
+      { scale: 1, duration: 0.2, ease: "back.out(2)" },
+      1.9
+    );
+
+    // Hoán đổi vị trí vật lý giữa Phòng A và Phòng B (khoảng cách tâm = 498px)
+    tl.to("#room-a", { x: 498, duration: 0.65, ease: "power2.inOut" }, 1.65);
+    tl.to("#room-b", { x: -498, duration: 0.65, ease: "power2.inOut" }, 1.65);
+
+    // Chuyển thẻ định danh sang trạng thái nghi vấn "Ai là máy? Ai là người?"
+    tl.to("#id-tag-a-init", { opacity: 0, duration: 0.2 }, 1.62);
+    tl.fromTo(
+      "#id-tag-a-masked",
+      { opacity: 0, scale: 0.85 },
+      { opacity: 1, scale: 1, duration: 0.3, ease: "power2.out" },
+      1.65
+    );
+
+    tl.to("#id-tag-b-init", { opacity: 0, duration: 0.2 }, 1.62);
+    tl.fromTo(
+      "#id-tag-b-masked",
+      { opacity: 0, scale: 0.85 },
+      { opacity: 1, scale: 1, duration: 0.3, ease: "power2.out" },
+      1.65
+    );
+
+    // Cập nhật cảnh báo người thẩm vấn: "KHÔNG THỂ PHÂN BIỆT ĐÂU LÀ MÁY!"
+    tl.to("#interrogator-status-initial", { opacity: 0, duration: 0.2 }, 1.8);
+    tl.fromTo(
+      "#interrogator-status-alert",
+      { opacity: 0, scale: 0.95 },
+      { opacity: 1, scale: 1, duration: 0.3, ease: "power2.out" },
+      1.85
+    );
+
+    // ----------------------------------------------------
+    // PHASE 3: PUNCH PHRASE (4.18s - 7.78s)
+    // Overlay 2: "MÁY BIẾT SUY NGHĨ" atMs 272140 -> local 4.18s
+    // ----------------------------------------------------
+    tl.fromTo(
+      "#punch-card",
+      { scale: 0.9, opacity: 0, y: 24 },
+      { scale: 1, opacity: 1, y: 0, duration: 0.42, ease: "power3.out" },
+      4.18
+    );
+
+    tl.fromTo(
+      "#punch-accent",
+      { scaleX: 0 },
+      { scaleX: 1, duration: 0.35, ease: "power2.out" },
+      4.4
+    );
+
+    // Smooth exit before punch phrase clip unmounts at 7.78s
+    tl.to(
+      "#punch-card",
+      { opacity: 0, scale: 0.95, duration: 0.25, ease: "power2.in" },
+      7.5
+    );
+
+    // ----------------------------------------------------
+    // PHASE 4: CERTIFICATION STAMP (7.8s - 9.6s)
+    // Overlay 3: "CON DẤU: TURING TEST" atMs 276400 -> local 8.44s
+    // ----------------------------------------------------
+    // Stamp drops from scale 2.2 to 1.0, striking at 8.44s
+    tl.fromTo(
+      "#stamp-box",
+      { scale: 2.2, opacity: 0, rotation: -8 },
+      { scale: 1.0, opacity: 1, rotation: -3, duration: 0.38, ease: "power4.in" },
+      8.06
+    );
+
+    // Strike impact recoil & shockwave at exactly 8.44s
+    tl.fromTo(
+      "#main-content",
+      { y: -10 },
+      { y: 0, duration: 0.22, ease: "power2.out" },
+      8.44
+    );
+
+    tl.fromTo(
+      "#stamp-shockwave",
+      { scale: 0.75, opacity: 0.9 },
+      { scale: 1.25, opacity: 0, duration: 0.45, ease: "power2.out" },
+      8.44
+    );
+
+    // Register paused timeline on window.__timelines
+    window.__timelines["scene-s34"] = tl;
+  </script>
+
+    </template>
+  </body>
+</html>

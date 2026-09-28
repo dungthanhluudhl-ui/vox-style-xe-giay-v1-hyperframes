@@ -1,0 +1,741 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+      /* hf-safe-colors (tất định từ style-tokens.json) */
+      .hf-text-ink { color: #141414; }
+      .hf-text-light { color: #F7F4EC; }
+      .hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+      .hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+      .hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+      .hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #F5F0E4;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+      #root {
+        position: relative;
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+        background-color: #F5F0E4;
+      }
+      .clip {
+        position: absolute;
+        inset: 0;
+      }
+
+      /* Camera rig */
+      #camera-rig {
+        position: absolute;
+        inset: 0;
+        transform-origin: 540px 750px;
+        will-change: transform;
+      }
+
+      /* Scene content wrapper */
+      #scene-content {
+        position: absolute;
+        inset: 0;
+        will-change: transform, opacity;
+      }
+
+      /* Header Zone: Dual Badges at Y = 175px (Safe Zone Y: 160px - 1390px) */
+      #badge-1950 {
+        position: absolute;
+        top: 175px;
+        left: 80px;
+        width: 440px;
+        height: 54px;
+        padding: 0 22px;
+        border-radius: 27px;
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        box-shadow: 4px 4px 0px rgba(20, 20, 20, 0.2);
+        z-index: 30;
+      }
+      .badge-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background-color: #FF6A1A;
+        flex-shrink: 0;
+      }
+      .badge-title {
+        font-size: 22px;
+        font-weight: 900;
+        letter-spacing: 0.5px;
+      }
+      .badge-sub {
+        font-size: 16px;
+        font-weight: 700;
+        color: #FF6A1A;
+        border-left: 2px solid rgba(247, 244, 236, 0.3);
+        padding-left: 10px;
+      }
+
+      /* Overlay 2: Pin Marker */
+      #pin-marker {
+        position: absolute;
+        top: 175px;
+        left: 660px;
+        width: 340px;
+        height: 54px;
+        padding: 0 20px;
+        border-radius: 27px;
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        box-shadow: 4px 4px 0px rgba(20, 20, 20, 0.2);
+        z-index: 30;
+        will-change: transform, opacity;
+      }
+      .pin-icon-wrap {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+      .pin-tag {
+        font-size: 20px;
+        font-weight: 900;
+        letter-spacing: 0.5px;
+      }
+
+      /* Document Card (Y: 255px - 700px) */
+      #doc-card {
+        position: absolute;
+        top: 255px;
+        left: 80px;
+        width: 920px;
+        height: 445px;
+        background-color: #FAF7F0;
+        border: 3px solid #141414;
+        box-shadow: 8px 8px 0px rgba(20, 20, 20, 0.18);
+        padding: 28px 40px;
+        border-radius: 4px;
+        z-index: 10;
+        will-change: transform, opacity;
+      }
+      .doc-header-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 2px solid #141414;
+        padding-bottom: 10px;
+        margin-bottom: 14px;
+      }
+      .doc-journal {
+        font-size: 18px;
+        font-weight: 900;
+        letter-spacing: 1.5px;
+        color: #141414;
+      }
+      .doc-year {
+        font-size: 18px;
+        font-weight: 900;
+        color: #141414;
+      }
+      .doc-title {
+        font-size: 32px;
+        font-weight: 900;
+        line-height: 1.25;
+        margin: 0 0 6px 0;
+        color: #141414;
+      }
+      .doc-author {
+        font-size: 18px;
+        font-weight: 700;
+        color: #141414;
+        margin-bottom: 16px;
+      }
+      .doc-line {
+        height: 8px;
+        background-color: rgba(20, 20, 20, 0.16);
+        border-radius: 3px;
+        margin-bottom: 14px;
+        width: 86%;
+      }
+
+      /* Highlighted Turing Note */
+      #key-note {
+        position: relative;
+        background-color: #E7E3D9;
+        border: 2px solid #141414;
+        border-left: 8px solid #FF6A1A;
+        padding: 16px 20px;
+        border-radius: 2px;
+      }
+      .note-tag {
+        display: inline-block;
+        font-size: 16px;
+        font-weight: 900;
+        color: #141414;
+        background-color: #FF6A1A;
+        padding: 4px 10px;
+        margin-bottom: 8px;
+        border-radius: 2px;
+      }
+      .note-content {
+        font-size: 22px;
+        font-weight: 900;
+        line-height: 1.35;
+        color: #141414;
+      }
+      .note-highlight-text {
+        background-color: #FF6A1A;
+        color: #141414;
+        padding: 2px 6px;
+      }
+
+      /* Magnifying Glass */
+      #magnifier-wrapper {
+        position: absolute;
+        top: 425px;
+        left: 560px;
+        width: 300px;
+        height: 300px;
+        pointer-events: none;
+        z-index: 25;
+        will-change: transform, opacity;
+      }
+      .lens-glass {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 190px;
+        height: 190px;
+        border-radius: 50%;
+        border: 8px solid #141414;
+        background-color: rgba(255, 106, 26, 0.14);
+        box-shadow: 0 16px 36px rgba(20, 20, 20, 0.35);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .lens-crosshair-h {
+        position: absolute;
+        width: 150px;
+        height: 1.5px;
+        background-color: rgba(20, 20, 20, 0.4);
+      }
+      .lens-crosshair-v {
+        position: absolute;
+        height: 150px;
+        width: 1.5px;
+        background-color: rgba(20, 20, 20, 0.4);
+      }
+      .lens-reflection {
+        position: absolute;
+        top: 20px;
+        left: 24px;
+        width: 42px;
+        height: 18px;
+        border-radius: 50%;
+        background-color: rgba(255, 255, 255, 0.6);
+        transform: rotate(-35deg);
+      }
+      .lens-handle {
+        position: absolute;
+        top: 165px;
+        left: 165px;
+        width: 20px;
+        height: 95px;
+        background-color: #141414;
+        border-radius: 8px;
+        transform: rotate(-45deg);
+        transform-origin: top center;
+        border: 2px solid #FF6A1A;
+      }
+
+      /* SVG Circuit Beam Connector */
+      #connector-svg {
+        position: absolute;
+        top: 675px;
+        left: 0;
+        width: 1080px;
+        height: 250px;
+        z-index: 15;
+        pointer-events: none;
+      }
+      #connector-line {
+        fill: none;
+        stroke: #FF6A1A;
+        stroke-width: 6;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
+      /* Punch Phrase: Overlay 3 (Y: 725px - 855px) */
+      #punch-container {
+        position: absolute;
+        top: 725px;
+        left: 80px;
+        width: 920px;
+        padding: 18px 36px;
+        border-radius: 6px;
+        border: 3px solid #141414;
+        box-shadow: 8px 8px 0px #141414;
+        z-index: 40;
+        will-change: transform, opacity;
+      }
+      .punch-label-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 6px;
+      }
+      .punch-tag-black {
+        background-color: #141414;
+        color: #F7F4EC;
+        font-size: 16px;
+        font-weight: 900;
+        padding: 4px 12px;
+        border-radius: 3px;
+        letter-spacing: 1px;
+      }
+      .punch-title {
+        font-size: 54px;
+        font-weight: 900;
+        line-height: 1.15;
+        letter-spacing: -1px;
+        margin: 0;
+      }
+
+      /* Modern Device & Smartphone: Overlay 4 (Y: 885px - 1360px) */
+      #modern-device {
+        position: absolute;
+        top: 885px;
+        left: 80px;
+        width: 920px;
+        height: 465px;
+        border: 3px solid #141414;
+        border-radius: 12px;
+        box-shadow: 8px 8px 0px rgba(20, 20, 20, 0.2);
+        padding: 24px 32px;
+        z-index: 20;
+        will-change: transform, opacity;
+      }
+      .device-top-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 18px;
+        border-bottom: 1.5px solid rgba(247, 244, 236, 0.2);
+        padding-bottom: 10px;
+      }
+      .device-badge {
+        font-size: 22px;
+        font-weight: 900;
+        letter-spacing: 1px;
+      }
+      .device-status {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 17px;
+        font-weight: 700;
+      }
+      .status-pulse-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background-color: #FF6A1A;
+      }
+      .device-body {
+        display: flex;
+        align-items: center;
+        gap: 36px;
+      }
+
+      /* Phone Mockup Frame */
+      #phone-frame {
+        position: relative;
+        width: 220px;
+        height: 355px;
+        background-color: #141414;
+        border: 3.5px solid #FF6A1A;
+        border-radius: 34px;
+        padding: 10px;
+        box-shadow: 0 16px 32px rgba(0, 0, 0, 0.45);
+        flex-shrink: 0;
+        display: flex;
+        flex-direction: column;
+      }
+      .phone-dynamic-island {
+        position: absolute;
+        top: 15px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 58px;
+        height: 12px;
+        background-color: #141414;
+        border-radius: 8px;
+        z-index: 5;
+      }
+      .phone-screen {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        background-color: #1F1F1F;
+        border-radius: 24px;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        padding: 24px 14px 14px 14px;
+      }
+      .phone-top-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 11px;
+        font-weight: 900;
+        color: #F7F4EC;
+        opacity: 0.8;
+      }
+      .phone-display-card {
+        background-color: #292929;
+        border: 1.5px solid #FF6A1A;
+        border-radius: 12px;
+        padding: 14px 10px;
+        text-align: center;
+        position: relative;
+      }
+      .phone-chip-tag {
+        font-size: 11px;
+        font-weight: 900;
+        color: #FF6A1A;
+        letter-spacing: 0.5px;
+      }
+      .phone-chip-headline {
+        font-size: 15px;
+        font-weight: 900;
+        color: #F7F4EC;
+        margin: 4px 0 2px 0;
+      }
+      .phone-signal-wave {
+        width: 100%;
+        height: 28px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+        margin-top: 6px;
+      }
+      .signal-bar {
+        width: 4px;
+        background-color: #FF6A1A;
+        border-radius: 2px;
+      }
+      .signal-bar:nth-child(1) { height: 10px; }
+      .signal-bar:nth-child(2) { height: 18px; }
+      .signal-bar:nth-child(3) { height: 26px; }
+      .signal-bar:nth-child(4) { height: 16px; }
+      .signal-bar:nth-child(5) { height: 8px; }
+      .phone-home-indicator {
+        width: 60px;
+        height: 4px;
+        background-color: #F7F4EC;
+        border-radius: 2px;
+        margin: 0 auto;
+        opacity: 0.6;
+      }
+      .radar-pulse-ring {
+        position: absolute;
+        inset: -12px;
+        border: 2px solid #FF6A1A;
+        border-radius: 40px;
+        pointer-events: none;
+        opacity: 0;
+      }
+
+      /* Device text content */
+      .device-desc {
+        flex: 1;
+      }
+      .device-headline {
+        font-size: 32px;
+        font-weight: 900;
+        line-height: 1.25;
+        margin: 0 0 12px 0;
+      }
+      .device-subtext {
+        font-size: 20px;
+        font-weight: 700;
+        color: #E7E3D9;
+        line-height: 1.42;
+        margin: 0 0 16px 0;
+      }
+      .device-pill-highlight {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 14px;
+        border-radius: 6px;
+        font-size: 15px;
+        font-weight: 900;
+        letter-spacing: 0.5px;
+      }
+
+      /* Vox Signature Bottom Orange Bar */
+      #bottom-brand-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 14px;
+        background-color: #FF6A1A;
+        z-index: 100;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s35"
+      data-width="1080"
+      data-height="1920"
+      data-duration="11.68"
+      data-start="0"
+    >
+      <div id="scene-clip" class="clip" data-start="0" data-duration="11.68">
+        <div id="camera-rig">
+          <div id="scene-content">
+
+            <!-- Overlay 1: BÀI BÁO NĂM 1950 -->
+            <div id="badge-1950" class="hf-plate-ink">
+              <span class="badge-dot"></span>
+              <span class="badge-title hf-text-light">BÀI BÁO NĂM 1950</span>
+              <span class="badge-sub">MIND VOL. LIX</span>
+            </div>
+
+            <!-- Overlay 2: Pin Marker (ĐIỂM THEN CHỐT) -->
+            <div id="pin-marker" class="hf-plate-ink">
+              <div class="pin-icon-wrap">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none">
+                  <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" fill="#FF6A1A"/>
+                  <circle cx="12" cy="9" r="2.5" fill="#141414"/>
+                </svg>
+              </div>
+              <span class="pin-tag hf-text-light">ĐIỂM THEN CHỐT</span>
+            </div>
+
+            <!-- 1950 Turing Paper Card -->
+            <div id="doc-card">
+              <div class="doc-header-row">
+                <span class="doc-journal">MIND: A QUARTERLY REVIEW</span>
+                <span class="doc-year">OCTOBER 1950</span>
+              </div>
+              <h1 class="doc-title">COMPUTING MACHINERY AND INTELLIGENCE</h1>
+              <div class="doc-author">A. M. Turing — University of Manchester</div>
+
+              <div class="doc-line"></div>
+
+              <!-- Key Note Box: Bám sát shotlist & kịch bản Turing -->
+              <div id="key-note">
+                <span class="note-tag">Ý NIỆM BỊ BỎ QUÊN NĂM 1950</span>
+                <div class="note-content">
+                  "Một ý tưởng nền tảng được Turing để lại trong bài báo mà lúc bấy giờ hầu như không ai chú ý tới..."
+                  <span class="note-highlight-text">Ý NIỆM CỐT LÕI</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Magnifying Glass (Kính lúp soi chiếu ghi chú) -->
+            <div id="magnifier-wrapper" data-layout-allow-overlap="true" data-layout-allow-occlusion="true">
+              <div class="lens-glass">
+                <div class="lens-crosshair-h"></div>
+                <div class="lens-crosshair-v"></div>
+                <div class="lens-reflection"></div>
+              </div>
+              <div class="lens-handle"></div>
+            </div>
+
+            <!-- Connector SVG -->
+            <svg id="connector-svg" viewBox="0 0 1080 250" data-layout-allow-overlap="true">
+              <path
+                id="connector-line"
+                d="M 540 10 L 540 60 L 260 60 L 260 230"
+              />
+            </svg>
+
+            <!-- Overlay 3: Punch-phrase -->
+            <div id="punch-container" class="hf-hl-orange">
+              <div class="punch-label-row">
+                <span class="punch-tag-black">TẦM NHÌN TURING</span>
+              </div>
+              <h2 class="punch-title hf-text-ink">Ý NIỆM VƯỢT THỜI GIAN</h2>
+            </div>
+
+            <!-- Overlay 4: Diagram & Modern Smartphone Device -->
+            <div id="modern-device" class="hf-plate-ink">
+              <div class="device-top-bar">
+                <span class="device-badge hf-plate-ink-orange">KẾT NỐI MÁY HIỆN ĐẠI</span>
+                <div class="device-status">
+                  <span class="status-pulse-dot"></span>
+                  <span class="hf-text-light">ĐIỆN THOẠI SỐ</span>
+                </div>
+              </div>
+              <div class="device-body">
+                <!-- Điện thoại thông minh hiện đại -->
+                <div id="phone-frame">
+                  <div class="phone-dynamic-island"></div>
+                  <div class="phone-screen">
+                    <div class="phone-top-bar">
+                      <span>09:41</span>
+                      <span>5G 100%</span>
+                    </div>
+                    <div class="phone-display-card">
+                      <div class="phone-chip-tag">SMARTPHONE 2025</div>
+                      <div class="phone-chip-headline">ĐANG VẬN HÀNH</div>
+                      <div class="phone-signal-wave">
+                        <div class="signal-bar"></div>
+                        <div class="signal-bar"></div>
+                        <div class="signal-bar"></div>
+                        <div class="signal-bar"></div>
+                        <div class="signal-bar"></div>
+                      </div>
+                    </div>
+                    <div class="phone-home-indicator"></div>
+                  </div>
+                  <div class="radar-pulse-ring"></div>
+                </div>
+
+                <div class="device-desc">
+                  <h3 class="device-headline hf-text-light">TRONG CHIẾC ĐIỆN THOẠI CỦA BẠN</h3>
+                  <p class="device-subtext">Ý niệm bị lãng quên từ năm 1950 nay chính là thứ đang âm thầm chạy trong mọi chiếc máy tính và điện thoại bạn dùng hôm nay.</p>
+                  <div class="device-pill-highlight hf-hl-orange">
+                    <span>VẬN HÀNH MỖI NGÀY</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Fixed bottom brand bar -->
+        <div id="bottom-brand-bar"></div>
+      </div>
+    </div>
+
+    <script>
+      // Initialize SVG dash measurements
+      const connPath = document.getElementById("connector-line");
+      const pathLength = connPath ? connPath.getTotalLength() : 450;
+      if (connPath) {
+        connPath.style.strokeDasharray = pathLength;
+        connPath.style.strokeDashoffset = pathLength;
+      }
+
+      // Create paused GSAP timeline
+      const tl = gsap.timeline({ paused: true });
+
+      // 1. Initial State Settings (tất định, seek-safe)
+      tl.set("#badge-1950", { opacity: 0, y: -20 });
+      tl.set("#pin-marker", { opacity: 0, scale: 0.6, y: -15 });
+      tl.set("#magnifier-wrapper", { opacity: 0, scale: 0.8, x: 120, y: -40 });
+      tl.set("#punch-container", { opacity: 0, scale: 0.92, y: 24 });
+      tl.set("#modern-device", { opacity: 0, y: 30 });
+
+      // 2. Camera entrance & continuous slow zoom (0s - 11.68s)
+      tl.fromTo(
+        "#scene-content",
+        { scale: 0.94, opacity: 0 },
+        { scale: 1.0, opacity: 1, duration: 1.1, ease: "power3.out" },
+        0
+      );
+      tl.to(
+        "#camera-rig",
+        { scale: 1.04, y: -16, duration: 11.68, ease: "none" },
+        0
+      );
+
+      // 3. Document card entrance (0.3s)
+      tl.fromTo(
+        "#doc-card",
+        { y: 40, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.9, ease: "power3.out" },
+        0.3
+      );
+
+      // 4. Overlay 1: BÀI BÁO NĂM 1950 (atMs 279940 -> 2.38s)
+      tl.to(
+        "#badge-1950",
+        { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" },
+        2.38
+      );
+
+      // 5. Magnifying Glass moves over the key note (3.2s)
+      tl.to(
+        "#magnifier-wrapper",
+        { opacity: 1, scale: 1.0, x: 0, y: 0, duration: 1.1, ease: "power3.out" },
+        3.2
+      );
+
+      // 6. Overlay 2: Pin marker "ĐIỂM THEN CHỐT" (atMs 283350 -> 5.79s)
+      tl.to(
+        "#pin-marker",
+        { opacity: 1, scale: 1.0, y: 0, duration: 0.5, ease: "power3.out" },
+        5.79
+      );
+
+      // Nhấn viền cam ở hộp ghi chú khi nhắc tới ý niệm
+      tl.to(
+        "#key-note",
+        { borderColor: "#FF6A1A", duration: 0.4, ease: "power2.out" },
+        6.1
+      );
+
+      // 7. Overlay 3: Punch-phrase "Ý NIỆM VƯỢT THỜI GIAN" (atMs 286420 -> 8.86s)
+      tl.to(
+        "#punch-container",
+        { opacity: 1, scale: 1.0, y: 0, duration: 0.65, ease: "power3.out" },
+        8.86
+      );
+
+      // 8. Connector beam shoots down to smartphone (9.5s)
+      tl.to(
+        "#connector-line",
+        { strokeDashoffset: 0, duration: 0.7, ease: "power2.inOut" },
+        9.5
+      );
+
+      // 9. Overlay 4: Diagram "KẾT NỐI MÁY HIỆN ĐẠI" with smartphone (atMs 287770 -> 10.21s)
+      tl.to(
+        "#modern-device",
+        { opacity: 1, y: 0, duration: 0.65, ease: "power3.out" },
+        10.21
+      );
+
+      // Signal wave & radar pulse animation on smartphone
+      tl.fromTo(
+        ".radar-pulse-ring",
+        { scale: 0.9, opacity: 0.9 },
+        { scale: 1.25, opacity: 0, duration: 0.8, ease: "power2.out" },
+        10.45
+      );
+
+      // Register timeline on HyperFrames global registry
+      window.__timelines = window.__timelines || {};
+      window.__timelines["scene-s35"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

@@ -17,7 +17,7 @@
 //                                              không có cờ override — --script= không tác động gì
 //                                              tới Stage 2b.
 //   [--model=] [--language=]                  pass-through Stage 1.
-//   [--flow-account=] [--style-notes=] [--resume-project=] [--retry-animate]  pass-through Stage 2b.
+//   [--flow-account=] [--style-notes=] [--resume-project=] [--retry-animate] [--images-only]  pass-through Stage 2b.
 //   [--transcript-from=1|2|skip]              mặc định 1 — resume điểm bắt đầu nhánh transcript.
 //   [--media-from=2b|3|skip]                  mặc định 2b — resume điểm bắt đầu nhánh media.
 //   [--skip-stage7]                           mặc định KHÔNG set = tự chạy Stage 7 sau Stage 6.
@@ -190,6 +190,7 @@ async function runMediaBranch() {
     if (flags["style-notes"] != null) args2b.push(`--style-notes=${flags["style-notes"]}`);
     if (flags["resume-project"]) args2b.push(`--resume-project=${flags["resume-project"]}`);
     if (has("retry-animate")) args2b.push("--retry-animate");
+    if (has("images-only")) args2b.push("--images-only");
     const r2b = await runNode("scripts/02b-media-generate.router.mjs", args2b, "02b-media");
     if (r2b.code !== 0) return { ok: false, stage: "02b", message: excerpt(r2b.output) };
   } else if (mediaFrom === "3") {

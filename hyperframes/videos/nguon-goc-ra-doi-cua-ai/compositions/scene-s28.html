@@ -1,0 +1,589 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+/* hf-safe-colors (tất định từ style-tokens.json) */
+.hf-text-ink { color: #141414; }
+.hf-text-light { color: #F7F4EC; }
+.hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+.hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+.hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+.hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background: #E7E3D9;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+      .clip {
+        position: absolute;
+        inset: 0;
+      }
+
+      /* Camera Rig */
+      #camera-rig {
+        position: absolute;
+        inset: 0;
+        transform-origin: 540px 750px;
+      }
+
+      /* Chart Background Elements */
+      .chart-line {
+        position: absolute;
+        left: 0;
+        width: 1080px;
+        height: 2px;
+        background: rgba(20, 20, 20, 0.32);
+      }
+      .chart-tick {
+        position: absolute;
+        left: 0;
+        width: 20px;
+        height: 4px;
+        background: #FF6A1A;
+      }
+      .meta-header {
+        position: absolute;
+        top: 175px;
+        left: 44px;
+        right: 44px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 14px;
+        font-weight: 700;
+        letter-spacing: 2px;
+        color: #141414;
+        text-transform: uppercase;
+        border-bottom: 2px solid rgba(20, 20, 20, 0.32);
+        padding-bottom: 8px;
+      }
+
+      /* Circuit SVG Network */
+      .circuit-svg {
+        position: absolute;
+        inset: 0;
+        width: 1080px;
+        height: 1920px;
+        pointer-events: none;
+        z-index: 10;
+      }
+      .circuit-path {
+        fill: none;
+        stroke: #141414;
+        stroke-width: 3px;
+        stroke-linecap: square;
+        stroke-linejoin: miter;
+      }
+
+      /* Peripheral Architecture Nodes */
+      .node-badge {
+        position: absolute;
+        width: 156px;
+        background: #141414;
+        color: #F7F4EC;
+        border: 2px solid #FF6A1A;
+        padding: 8px 10px;
+        text-align: center;
+        box-shadow: 4px 4px 0px rgba(20, 20, 20, 0.3);
+        z-index: 25;
+      }
+      .node-num {
+        font-size: 11px;
+        font-weight: 900;
+        color: #FF6A1A;
+        letter-spacing: 1.5px;
+        margin-bottom: 2px;
+      }
+      .node-text {
+        font-size: 13px;
+        font-weight: 900;
+        letter-spacing: 0.8px;
+        color: #F7F4EC;
+        text-transform: uppercase;
+        line-height: 1.25;
+      }
+
+      /* 1937 MIT Thesis Document Card */
+      #thesis-doc {
+        position: absolute;
+        top: 310px;
+        left: 220px;
+        width: 640px;
+        height: 510px;
+        background: #F5F0E4;
+        border: 3px solid #141414;
+        box-shadow: 12px 12px 0px #141414;
+        padding: 24px 28px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        z-index: 20;
+        transform-origin: 50% 50%;
+      }
+      .doc-inner-border {
+        position: absolute;
+        inset: 10px;
+        border: 1.5px solid rgba(20, 20, 20, 0.35);
+        pointer-events: none;
+      }
+      .doc-univ {
+        text-align: center;
+        font-size: 17px;
+        font-weight: 900;
+        letter-spacing: 1.5px;
+        color: #141414;
+        text-transform: uppercase;
+        margin-top: 2px;
+      }
+      .doc-sub-univ {
+        text-align: center;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 1px;
+        color: #141414;
+        margin-top: 3px;
+      }
+      .doc-divider {
+        width: 100%;
+        height: 2px;
+        background: #141414;
+        margin: 10px 0 12px 0;
+      }
+      .doc-title-lead {
+        text-align: center;
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: 2px;
+        color: #141414;
+        text-transform: uppercase;
+      }
+      .doc-title-main {
+        text-align: center;
+        font-size: 27px;
+        font-weight: 900;
+        line-height: 1.2;
+        letter-spacing: 0.8px;
+        color: #141414;
+        text-transform: uppercase;
+        margin: 6px 0 10px 0;
+      }
+      .doc-author-box {
+        align-self: center;
+        background: #E7E3D9;
+        border: 2px solid #141414;
+        padding: 5px 18px;
+        font-size: 17px;
+        font-weight: 900;
+        letter-spacing: 1.5px;
+        color: #141414;
+        text-transform: uppercase;
+      }
+      .doc-schematic {
+        background: #E7E3D9;
+        border: 1.5px dashed #141414;
+        padding: 8px 12px;
+        display: flex;
+        justify-content: space-around;
+        align-items: center;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.8px;
+        color: #141414;
+      }
+      .doc-schematic span {
+        background: #141414;
+        color: #F7F4EC;
+        padding: 2px 6px;
+        font-weight: 900;
+      }
+      .doc-degree {
+        text-align: center;
+        font-size: 11px;
+        font-weight: 700;
+        line-height: 1.35;
+        color: #141414;
+        letter-spacing: 0.8px;
+        text-transform: uppercase;
+        max-width: 520px;
+        margin: 4px auto 0 auto;
+      }
+
+      /* Overlay 1: Label (at 1.95s) */
+      #overlay-label {
+        position: absolute;
+        top: 232px;
+        left: 330px;
+        width: 420px;
+        height: 48px;
+        background: #FF6A1A;
+        color: #141414;
+        border: 3px solid #141414;
+        box-shadow: 6px 6px 0px #141414;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        font-weight: 900;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        z-index: 30;
+      }
+
+      /* Overlay 3: Stamp - Bản Thiết Kế (at 9.17s) */
+      #stamp-overlay {
+        position: absolute;
+        top: 860px;
+        left: 145px;
+        width: 660px;
+        height: 116px;
+        background: #FF6A1A;
+        color: #141414;
+        border: 4px solid #141414;
+        box-shadow: 8px 8px 0px #141414;
+        padding: 16px 20px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 40;
+        transform-origin: 50% 50%;
+      }
+      .stamp-title {
+        font-size: 27px;
+        font-weight: 900;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        text-align: center;
+        line-height: 1.2;
+        white-space: nowrap;
+      }
+      .stamp-sub {
+        font-size: 15px;
+        font-weight: 900;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        margin-top: 5px;
+        border-top: 2px solid #141414;
+        padding-top: 4px;
+        width: 82%;
+        text-align: center;
+      }
+
+      /* Overlay 4: Check Icon Badge (at 11.35s) */
+      #check-seal {
+        position: absolute;
+        top: 860px;
+        left: 825px;
+        width: 116px;
+        height: 116px;
+        background: #141414;
+        border: 4px solid #FF6A1A;
+        border-radius: 50%;
+        box-shadow: 6px 6px 0px rgba(20, 20, 20, 0.4);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 45;
+        transform-origin: 50% 50%;
+      }
+      .check-svg {
+        width: 66px;
+        height: 66px;
+      }
+
+      /* Overlay 2: Punch Phrase (at 6.35s) */
+      #overlay-punch {
+        position: absolute;
+        top: 1015px;
+        left: 110px;
+        width: 860px;
+        background: #141414;
+        border: 3px solid #FF6A1A;
+        box-shadow: 10px 10px 0px rgba(255, 106, 26, 0.45);
+        padding: 22px 28px;
+        z-index: 35;
+      }
+      .punch-tag {
+        font-size: 15px;
+        font-weight: 900;
+        letter-spacing: 2.5px;
+        color: #FF6A1A;
+        text-transform: uppercase;
+        margin-bottom: 4px;
+      }
+      .punch-heading {
+        font-size: 56px;
+        font-weight: 900;
+        line-height: 1.15;
+        letter-spacing: 1px;
+        color: #F7F4EC;
+        text-transform: uppercase;
+        margin: 0;
+      }
+      .punch-sub {
+        font-size: 19px;
+        font-weight: 700;
+        color: #E7E3D9;
+        margin-top: 6px;
+        letter-spacing: 1px;
+      }
+
+      /* Bottom Brand Accent Bar */
+      #bottom-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 1080px;
+        height: 12px;
+        background: #FF6A1A;
+        z-index: 100;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s28"
+      data-width="1080"
+      data-height="1920"
+      data-duration="12.6"
+    >
+      <div id="scene-s28" class="clip" data-start="0" data-duration="12.6">
+        <div id="camera-rig">
+          <!-- Background Chart Grid Lines (20%, 40%, 60%, 80%) -->
+          <div class="chart-line" style="top: 384px;"></div>
+          <div class="chart-tick" style="top: 383px;"></div>
+
+          <div class="chart-line" style="top: 768px;"></div>
+          <div class="chart-tick" style="top: 767px;"></div>
+
+          <div class="chart-line" style="top: 1152px;"></div>
+          <div class="chart-tick" style="top: 1151px;"></div>
+
+          <div class="chart-line" style="top: 1536px;"></div>
+          <div class="chart-tick" style="top: 1535px;"></div>
+
+          <!-- Scene Category & Metadata Header -->
+          <div class="meta-header">
+            <span>CHART // ARCHIVE MIT 1937</span>
+            <span>CLAUDE SHANNON THESIS</span>
+            <span>DIGITAL GENESIS</span>
+          </div>
+
+          <!-- Circuit Diagram Wiring Overlay -->
+          <svg class="circuit-svg" viewBox="0 0 1080 1920">
+            <!-- Branch 1: Connector to Boolean Logic -->
+            <path id="path-1" class="circuit-path" d="M 220 387 L 200 387" />
+            <!-- Branch 2: Connector to Relay Switching -->
+            <path id="path-2" class="circuit-path" d="M 860 387 L 880 387" />
+            <!-- Branch 3: Connector to Logic Gates -->
+            <path id="path-3" class="circuit-path" d="M 220 677 L 200 677" />
+            <!-- Branch 4: Connector to Microprocessors -->
+            <path id="path-4" class="circuit-path" d="M 860 677 L 880 677" />
+
+            <!-- Bus traces extending outward -->
+            <path id="path-5" class="circuit-path" d="M 122 360 L 122 280 L 44 280" />
+            <path id="path-6" class="circuit-path" d="M 958 360 L 958 280 L 1036 280" />
+            <path id="path-7" class="circuit-path" d="M 122 708 L 122 790 L 44 790" />
+            <path id="path-8" class="circuit-path" d="M 958 708 L 958 790 L 1036 790" />
+          </svg>
+
+          <!-- Peripheral Architecture Device Badges -->
+          <div id="node-1" class="node-badge" style="top: 360px; left: 44px;">
+            <div class="node-num">01 // NỀN TẢNG</div>
+            <div class="node-text">ĐẠI SỐ BOOLE</div>
+          </div>
+          <div id="node-2" class="node-badge" style="top: 360px; left: 880px;">
+            <div class="node-num">02 // PHẦN CỨNG</div>
+            <div class="node-text">RƠ-LE ĐIỆN TỬ</div>
+          </div>
+          <div id="node-3" class="node-badge" style="top: 650px; left: 44px;">
+            <div class="node-num">03 // CẤU TRÚC</div>
+            <div class="node-text">CỔNG LOGIC SỐ</div>
+          </div>
+          <div id="node-4" class="node-badge" style="top: 650px; left: 880px;">
+            <div class="node-num">04 // KẾ THỪA</div>
+            <div class="node-text">VI XỬ LÝ SỐ</div>
+          </div>
+
+          <!-- 1937 MIT Thesis Document Card -->
+          <div id="thesis-doc">
+            <div class="doc-inner-border"></div>
+            <div>
+              <div class="doc-univ">MASSACHUSETTS INSTITUTE OF TECHNOLOGY</div>
+              <div class="doc-sub-univ">DEPARTMENT OF ELECTRICAL ENGINEERING • CAMBRIDGE 1937</div>
+              <div class="doc-divider"></div>
+              <div class="doc-title-lead">A SYMBOLIC ANALYSIS OF</div>
+              <div class="doc-title-main">RELAY &amp; SWITCHING CIRCUITS</div>
+            </div>
+
+            <div style="display: flex; justify-content: center;">
+              <div class="doc-author-box">CLAUDE ELWOOD SHANNON</div>
+            </div>
+
+            <div class="doc-schematic">
+              <div>ĐÓNG MẠCH = <span>1 (TRUE)</span></div>
+              <div style="font-weight: 900;">⇄</div>
+              <div>NGẮT MẠCH = <span>0 (FALSE)</span></div>
+            </div>
+
+            <div class="doc-degree">
+              SUBMITTED IN PARTIAL FULFILLMENT OF THE REQUIREMENTS FOR THE DEGREE OF MASTER OF SCIENCE
+            </div>
+          </div>
+
+          <!-- Overlay 1: Label (at 1.95s) -->
+          <div id="overlay-label">
+            LUẬN VĂN THẠC SĨ MIT
+          </div>
+
+          <!-- Overlay 3: Stamp Banner (at 9.17s) -->
+          <div id="stamp-overlay">
+            <div class="stamp-title">[ BẢN THIẾT KẾ CỦA MỌI MÁY TÍNH ]</div>
+            <div class="stamp-sub">KIẾN TRÚC MÁY TÍNH</div>
+          </div>
+
+          <!-- Overlay 4: Check Icon Badge (at 11.35s) -->
+          <div id="check-seal">
+            <svg class="check-svg" viewBox="0 0 100 100">
+              <path
+                id="check-path"
+                d="M 28 52 L 44 68 L 74 34"
+                fill="none"
+                stroke="#FF6A1A"
+                stroke-width="9"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </div>
+
+          <!-- Overlay 2: Punch Phrase (at 6.35s) -->
+          <div id="overlay-punch">
+            <div class="punch-tag">ĐÁNH GIÁ LỊCH SỬ</div>
+            <h1 class="punch-heading">ĐỈNH CAO THẾ KỶ 20</h1>
+            <div class="punch-sub">LUẬN VĂN THẠC SĨ QUAN TRỌNG NHẤT</div>
+          </div>
+        </div>
+
+        <!-- Fixed Bottom Orange Bar -->
+        <div id="bottom-bar"></div>
+      </div>
+    </div>
+
+    <script>
+      // Prepare SVG path dash lengths deterministically
+      const paths = document.querySelectorAll(".circuit-path");
+      paths.forEach((p) => {
+        const len = p.getTotalLength();
+        p.style.strokeDasharray = len;
+        p.style.strokeDashoffset = len;
+      });
+
+      const checkPath = document.getElementById("check-path");
+      if (checkPath) {
+        const cLen = checkPath.getTotalLength();
+        checkPath.style.strokeDasharray = cLen;
+        checkPath.style.strokeDashoffset = cLen;
+      }
+
+      // Initial visual states for seek-safe animation
+      gsap.set("#thesis-doc", { scale: 0.88, opacity: 0, y: 35 });
+      gsap.set("#overlay-label", { scale: 0.85, opacity: 0, y: -20 });
+      gsap.set(".node-badge", { scale: 0, opacity: 0 });
+      gsap.set("#overlay-punch", { y: 40, opacity: 0, scale: 0.96 });
+      gsap.set("#stamp-overlay", { scale: 1.35, opacity: 0, rotation: 5 });
+      gsap.set("#check-seal", { scale: 0, opacity: 0, rotation: -25 });
+
+      // Build Master Paused Timeline
+      const tl = gsap.timeline({ paused: true });
+
+      // 0.0s - Continuous gentle camera documentary push
+      tl.to("#camera-rig", { scale: 1.05, duration: 12.6, ease: "none" }, 0);
+
+      // 0.2s - Thesis Document Entrance (Grow transition)
+      tl.to(
+        "#thesis-doc",
+        { scale: 1, opacity: 1, y: 0, duration: 0.85, ease: "power3.out" },
+        0.2
+      );
+
+      // 1.95s - Overlay 1: LUẬN VĂN THẠC SĨ MIT (Shotlist atMs: 216550)
+      tl.to(
+        "#overlay-label",
+        { scale: 1, opacity: 1, y: 0, duration: 0.45, ease: "power3.out" },
+        1.95
+      );
+
+      // 4.0s - Circuit branches start tracing outward to modern electronics
+      tl.to(
+        ".circuit-path",
+        { strokeDashoffset: 0, duration: 1.8, ease: "power2.out", stagger: 0.12 },
+        4.0
+      );
+      tl.to(
+        ".node-badge",
+        { scale: 1, opacity: 1, duration: 0.4, ease: "power3.out", stagger: 0.1 },
+        4.4
+      );
+
+      // 6.35s - Overlay 2: ĐỈNH CAO THẾ KỶ 20 (Shotlist atMs: 220950)
+      tl.to(
+        "#overlay-punch",
+        { y: 0, opacity: 1, scale: 1, duration: 0.55, ease: "power3.out" },
+        6.35
+      );
+
+      // 9.17s - Overlay 3: KIẾN TRÚC MÁY TÍNH / BẢN THIẾT KẾ CỦA MỌI MÁY TÍNH (Shotlist atMs: 223770)
+      tl.to(
+        "#stamp-overlay",
+        { scale: 1, opacity: 1, rotation: -1, duration: 0.38, ease: "power4.out" },
+        9.17
+      );
+      // Subtle documentary impact shudder on stamp hit
+      tl.to(
+        "#thesis-doc",
+        { y: 3, duration: 0.08, yoyo: true, repeat: 1, ease: "power1.inOut" },
+        9.22
+      );
+
+      // 11.35s - Overlay 4: Check Icon Badge (Shotlist atMs: 225950)
+      tl.to(
+        "#check-seal",
+        { scale: 1, opacity: 1, rotation: 0, duration: 0.35, ease: "power3.out" },
+        11.35
+      );
+      if (checkPath) {
+        tl.to(
+          checkPath,
+          { strokeDashoffset: 0, duration: 0.35, ease: "power2.out" },
+          11.5
+        );
+      }
+
+      // Register timeline on HyperFrames global registry
+      window.__timelines = window.__timelines || {};
+      window.__timelines["scene-s28"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

@@ -1,0 +1,567 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap">
+      <style>
+    /* hf-safe-colors (tất định từ style-tokens.json) */
+    .hf-text-ink { color: #141414; }
+    .hf-text-light { color: #F7F4EC; }
+    .hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+    .hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+    .hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+    .hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      width: 1080px;
+      height: 1920px;
+      overflow: hidden;
+      background-color: #E7E3D9;
+      font-family: "Be Vietnam Pro", sans-serif;
+      color: #141414;
+    }
+
+    #root {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    .clip {
+      position: absolute;
+      inset: 0;
+    }
+
+    /* Nền lưới 84px chuẩn Vox Style */
+    .bg-grid {
+      position: absolute;
+      inset: 0;
+      background-color: #E7E3D9;
+      background-image:
+        linear-gradient(rgba(20, 20, 20, 0.22) 1.5px, transparent 1.5px),
+        linear-gradient(90deg, rgba(20, 20, 20, 0.22) 1.5px, transparent 1.5px);
+      background-size: 84px 84px;
+    }
+
+    /* Biến thể Spotlight: vignette tối dần ra các mép viền */
+    .bg-spotlight {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 50% 46%, transparent 30%, rgba(20, 20, 20, 0.28) 100%);
+      pointer-events: none;
+    }
+
+    /* Thanh cam nhận diện thương hiệu cố định mép đáy */
+    .brand-bottom-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 1080px;
+      height: 14px;
+      background-color: #FF6A1A;
+      z-index: 100;
+    }
+
+    /* Khu vực bố cục nằm trọn trong Safe Zone [160px, 1390px] */
+    .stage-container {
+      position: absolute;
+      top: 170px;
+      left: 50px;
+      width: 980px;
+      height: 1200px;
+      display: flex;
+      flex-direction: column;
+      perspective: 1200px;
+    }
+
+    /* Khối tiêu đề trên cùng */
+    .header-box {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      transform-style: preserve-3d;
+    }
+
+    .header-pill {
+      background-color: #F5F0E4;
+      border: 3px solid #141414;
+      border-radius: 8px;
+      padding: 8px 20px;
+      font-size: 20px;
+      font-weight: 900;
+      letter-spacing: 2px;
+      color: #141414;
+      text-transform: uppercase;
+      box-shadow: 4px 4px 0px #141414;
+      margin-bottom: 14px;
+    }
+
+    .header-title {
+      font-size: 64px;
+      font-weight: 900;
+      line-height: 1.15;
+      color: #141414;
+      text-transform: uppercase;
+      letter-spacing: -1px;
+    }
+
+    .header-subtitle {
+      margin-top: 10px;
+      font-size: 22px;
+      font-weight: 700;
+      color: #141414;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    /* Lưới phân chia 2 cột đối chiếu (Split layout) */
+    .split-grid {
+      margin-top: 36px;
+      width: 100%;
+      height: 940px;
+      display: flex;
+      justify-content: space-between;
+      transform-style: preserve-3d;
+    }
+
+    /* Thẻ cột dữ liệu */
+    .col-card {
+      width: 470px;
+      height: 100%;
+      background-color: #F5F0E4;
+      border: 4px solid #141414;
+      border-radius: 20px;
+      box-shadow: 12px 12px 0px #141414;
+      padding: 24px 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      transform-style: preserve-3d;
+    }
+
+    /* Phần trên của thẻ: Tên logic Boole */
+    .logic-section {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+
+    .logic-badge {
+      padding: 6px 18px;
+      border-radius: 6px;
+      font-size: 19px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .badge-true {
+      background-color: #141414;
+      color: #FF6A1A;
+    }
+
+    .badge-false {
+      background-color: #141414;
+      color: #F7F4EC;
+    }
+
+    .logic-word {
+      font-size: 82px;
+      font-weight: 900;
+      line-height: 1;
+      margin: 14px 0 6px;
+      color: #141414;
+      text-transform: uppercase;
+    }
+
+    .logic-desc {
+      font-size: 19px;
+      font-weight: 700;
+      color: #141414;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    /* Vòng tròn nối liên kết (≡) */
+    .connector-box {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin: 8px 0;
+    }
+
+    .eq-badge {
+      width: 54px;
+      height: 54px;
+      background-color: #141414;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 30px;
+      font-weight: 900;
+      color: #F7F4EC;
+      box-shadow: 0 4px 10px rgba(20, 20, 20, 0.2);
+    }
+
+    /* Sơ đồ mạch điện vật lý (Circuit Diagram) */
+    .circuit-box {
+      width: 100%;
+      background-color: #E7E3D9;
+      border: 3px solid #141414;
+      border-radius: 12px;
+      padding: 16px 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      transition: border-color 0.3s;
+    }
+
+    .circuit-svg {
+      width: 380px;
+      height: 120px;
+      display: block;
+    }
+
+    .circuit-label {
+      margin-top: 8px;
+      font-size: 17px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #141414;
+    }
+
+    /* Khối khóa khớp Punch-Phrase ở chân cột */
+    .lock-slot {
+      width: 100%;
+      height: 180px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .lock-plate {
+      width: 100%;
+      border-radius: 14px;
+      border: 3px solid #141414;
+      padding: 18px 14px;
+      text-align: center;
+      box-shadow: 6px 6px 0px #141414;
+      transform-origin: 50% 50%;
+    }
+
+    /* Khóa khớp ĐÓNG = ĐÚNG = 1: nền Cam, chữ Mực (Contrast 6.4:1) */
+    .lock-true-style {
+      background-color: #FF6A1A;
+      color: #141414;
+    }
+
+    /* Khóa khớp MỞ = SAI = 0: nền Mực, chữ Sáng & nhấn Cam (Contrast 16.8:1 / 6.4:1) */
+    .lock-false-style {
+      background-color: #141414;
+      color: #F7F4EC;
+    }
+
+    .lock-main-text {
+      font-size: 32px;
+      font-weight: 900;
+      line-height: 1.2;
+      text-transform: uppercase;
+      letter-spacing: -0.5px;
+    }
+
+    .lock-sub-text {
+      margin-top: 6px;
+      font-size: 17px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .sub-orange {
+      color: #FF6A1A;
+    }
+
+    .sub-ink {
+      color: #141414;
+    }
+  </style>
+
+  <div
+    id="root"
+    data-composition-id="scene-s25"
+    data-width="1080"
+    data-height="1920"
+    data-duration="7.41"
+  >
+    <!-- Background layer -->
+    <div class="bg-grid"></div>
+    <div class="bg-spotlight"></div>
+    <div class="brand-bottom-bar"></div>
+
+    <!-- Main Scene Clip -->
+    <div id="shot-s25" class="clip" data-start="0" data-duration="7.41">
+      <div class="stage-container">
+        <!-- Header -->
+        <div id="header-box" class="header-box">
+          <div class="header-pill">QUY LUẬT NHỊ PHÂN</div>
+          <h1 id="header-title" class="header-title">BOOLE: ĐÚNG VÀ SAI</h1>
+          <p class="header-subtitle">HAI GIÁ TRỊ TUYỆT ĐỐI TRONG ĐẠI SỐ</p>
+        </div>
+
+        <!-- Split comparison area -->
+        <div class="split-grid">
+          <!-- Cột bên trái: ĐÚNG (TRUE / 1) -> Luôn mang trạng thái mạch ĐÓNG (CLOSED) -->
+          <div id="col-true" class="col-card">
+            <div class="logic-section">
+              <span class="logic-badge badge-true">GIÁ TRỊ LOGIC</span>
+              <div id="word-true" class="logic-word">ĐÚNG</div>
+              <span class="logic-desc">TRUE • BIT 1</span>
+            </div>
+
+            <div class="connector-box">
+              <div class="eq-badge">≡</div>
+            </div>
+
+            <div id="circuit-box-left" class="circuit-box">
+              <svg class="circuit-svg" viewBox="0 0 380 120" xmlns="http://www.w3.org/2000/svg">
+                <!-- Đường dây mạch điện -->
+                <line class="circuit-wire" x1="20" y1="60" x2="100" y2="60" stroke="#141414" stroke-width="6" stroke-linecap="round" />
+                <line class="circuit-wire" x1="280" y1="60" x2="360" y2="60" stroke="#141414" stroke-width="6" stroke-linecap="round" />
+                <!-- Cực tiếp xúc -->
+                <circle cx="100" cy="60" r="10" fill="#141414" />
+                <circle cx="280" cy="60" r="10" fill="#141414" />
+                <!-- Cần mạch: ĐÓNG chặt ngay từ đầu (rotation: 0) nối liền 2 cực -->
+                <line id="switch-blade-left" x1="100" y1="60" x2="280" y2="60" stroke="#141414" stroke-width="8" stroke-linecap="round" />
+                <!-- Tia sáng tiếp xúc bừng sáng khi nhấn mạnh lúc 4.84s -->
+                <circle id="spark-left" cx="280" cy="60" r="16" fill="none" stroke="#FF6A1A" stroke-width="5" opacity="0" />
+                <!-- Xung dòng điện chạy qua dây khi khóa khớp -->
+                <line id="wire-current-left" x1="20" y1="60" x2="360" y2="60" stroke="#FF6A1A" stroke-width="4" stroke-linecap="round" opacity="0" />
+              </svg>
+              <span class="circuit-label">TRẠNG THÁI: KHÓA ĐÓNG</span>
+            </div>
+
+            <div class="lock-slot">
+              <div id="lock-true" class="lock-plate lock-true-style" style="opacity: 0;">
+                <div class="lock-main-text">ĐÓNG = ĐÚNG = 1</div>
+                <div class="lock-sub-text sub-ink">DÒNG ĐIỆN THÔNG SUỐT</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Cột bên phải: SAI (FALSE / 0) -> Luôn mang trạng thái mạch MỞ (OPEN) -->
+          <div id="col-false" class="col-card">
+            <div class="logic-section">
+              <span class="logic-badge badge-false">GIÁ TRỊ LOGIC</span>
+              <div id="word-false" class="logic-word">SAI</div>
+              <span class="logic-desc">FALSE • BIT 0</span>
+            </div>
+
+            <div class="connector-box">
+              <div class="eq-badge">≡</div>
+            </div>
+
+            <div id="circuit-box-right" class="circuit-box">
+              <svg class="circuit-svg" viewBox="0 0 380 120" xmlns="http://www.w3.org/2000/svg">
+                <!-- Đường dây mạch điện -->
+                <line class="circuit-wire" x1="20" y1="60" x2="100" y2="60" stroke="#141414" stroke-width="6" stroke-linecap="round" />
+                <line class="circuit-wire" x1="280" y1="60" x2="360" y2="60" stroke="#141414" stroke-width="6" stroke-linecap="round" />
+                <!-- Cực tiếp xúc -->
+                <circle cx="100" cy="60" r="10" fill="#141414" />
+                <circle cx="280" cy="60" r="10" fill="#141414" />
+                <!-- Cần mạch: MỞ ngắt ngay từ đầu (rotation: -32) tạo khoảng hở rõ rệt -->
+                <line id="switch-blade-right" x1="100" y1="60" x2="280" y2="60" stroke="#141414" stroke-width="8" stroke-linecap="round" />
+                <!-- Biểu tượng chỉ báo ngắt mạch tại khoảng hở -->
+                <g id="disconnect-mark" opacity="0">
+                  <circle cx="280" cy="60" r="18" fill="none" stroke="#141414" stroke-width="3" stroke-dasharray="6 4" />
+                  <line x1="268" y1="48" x2="292" y2="72" stroke="#141414" stroke-width="3" stroke-linecap="round" />
+                </g>
+              </svg>
+              <span class="circuit-label">TRẠNG THÁI: KHÓA MỞ</span>
+            </div>
+
+            <div class="lock-slot">
+              <div id="lock-false" class="lock-plate lock-false-style" style="opacity: 0;">
+                <div class="lock-main-text">MỞ = SAI = 0</div>
+                <div class="lock-sub-text sub-orange">DÒNG ĐIỆN BỊ NGẮT</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Thiết lập đường nét stroke-dasharray cho circuit wire
+    document.querySelectorAll(".circuit-wire").forEach((line) => {
+      const len = 120;
+      line.style.strokeDasharray = `${len}`;
+      line.style.strokeDashoffset = `${len}`;
+    });
+
+    // Điểm tựa xoay cho 2 cần gạt mạch điện tại cực bên trái (100px, 60px)
+    const bladeLeft = document.getElementById("switch-blade-left");
+    const bladeRight = document.getElementById("switch-blade-right");
+    bladeLeft.style.transformOrigin = "100px 60px";
+    bladeRight.style.transformOrigin = "100px 60px";
+
+    // Khởi tạo GSAP Timeline đơn nhất, paused = true
+    const tl = gsap.timeline({ paused: true });
+
+    // ĐẢM BẢO CHÍNH XÁC NỘI DUNG LOGIC NGAY TỪ T=0:
+    // Cột ĐÚNG: Cần gạt ĐÓNG (rotation: 0) nối mạch thông suốt.
+    // Cột SAI: Cần gạt MỞ (rotation: -32) ngắt mạch tạo khoảng cách hở.
+    tl.set(bladeLeft, { rotation: 0 }, 0);
+    tl.set(bladeRight, { rotation: -32 }, 0);
+
+    // 0.15s: Tiêu đề lật 3D vào khung hình (transitionIn: flip)
+    tl.fromTo(
+      "#header-box",
+      { rotationX: -85, opacity: 0, y: -40 },
+      { rotationX: 0, opacity: 1, y: 0, duration: 0.65, ease: "power3.out" },
+      0.15
+    );
+
+    // 0.60s: Cột bên trái (ĐÚNG - MẠCH ĐÓNG) lật vào từ bên trái
+    tl.fromTo(
+      "#col-true",
+      { rotationY: -55, opacity: 0, y: 40 },
+      { rotationY: 0, opacity: 1, y: 0, duration: 0.65, ease: "power3.out" },
+      0.60
+    );
+
+    // 0.92s: Cột bên phải (SAI - MẠCH MỞ) lật vào (khớp atMs: 196170 "BOOLE: ĐÚNG VÀ SAI")
+    tl.fromTo(
+      "#col-false",
+      { rotationY: 55, opacity: 0, y: 40 },
+      { rotationY: 0, opacity: 1, y: 0, duration: 0.65, ease: "power3.out" },
+      0.92
+    );
+
+    // 1.15s: Hai huy hiệu kết nối (≡) nảy ra cùng các đường nét mạch điện
+    tl.fromTo(
+      ".eq-badge",
+      { scale: 0, rotation: -45 },
+      { scale: 1, rotation: 0, duration: 0.5, stagger: 0.15, ease: "back.out(2)" },
+      1.15
+    );
+
+    tl.fromTo(
+      ".circuit-wire",
+      { strokeDashoffset: 120 },
+      { strokeDashoffset: 0, duration: 0.6, stagger: 0.1, ease: "power2.out" },
+      1.25
+    );
+
+    // 2.50s - 3.20s: Chuyển động nhấn nhịp giữa cảnh (giữ nhịp sinh động < 3s dead-air)
+    tl.fromTo(
+      "#word-true",
+      { scale: 1 },
+      { scale: 1.08, duration: 0.28, yoyo: true, repeat: 1, ease: "power2.inOut" },
+      2.50
+    );
+
+    tl.fromTo(
+      "#word-false",
+      { scale: 1 },
+      { scale: 1.08, duration: 0.28, yoyo: true, repeat: 1, ease: "power2.inOut" },
+      3.20
+    );
+
+    // 4.84s: Overlay 2 - "ĐÓNG = ĐÚNG = 1" (khớp atMs: 200090)
+    // Cần mạch bên trái (đang ĐÓNG) nhận xung điện: dày lên và chuyển màu cam rực rỡ
+    tl.fromTo(
+      bladeLeft,
+      { stroke: "#141414", strokeWidth: 8 },
+      { stroke: "#FF6A1A", strokeWidth: 10, duration: 0.18, yoyo: true, repeat: 1, ease: "power2.out" },
+      4.84
+    );
+
+    // Tia sáng tiếp xúc bừng sáng
+    tl.fromTo(
+      "#spark-left",
+      { scale: 0.4, opacity: 0 },
+      { scale: 1.5, opacity: 1, duration: 0.22, yoyo: true, repeat: 1, ease: "power2.out" },
+      4.84
+    );
+
+    // Dòng điện cam chạy dọc toàn bộ mạch
+    tl.fromTo(
+      "#wire-current-left",
+      { opacity: 0 },
+      { opacity: 0.9, duration: 0.35, ease: "power1.inOut" },
+      4.84
+    );
+
+    // Viền khung mạch điện chuyển cam nhấn mạnh
+    tl.to("#circuit-box-left", { borderColor: "#FF6A1A", duration: 0.3 }, 4.84);
+
+    // Tấm khóa khớp ĐÓNG = ĐÚNG = 1 đập mạnh vào vị trí
+    tl.fromTo(
+      "#lock-true",
+      { scale: 1.35, opacity: 0, y: 30 },
+      { scale: 1, opacity: 1, y: 0, duration: 0.42, ease: "power3.out" },
+      4.84
+    );
+
+    // Chấn động nhẹ trên cột trái khi khóa khớp (tất định hoàn toàn)
+    tl.to("#col-true", { x: -4, duration: 0.05 }, 5.04);
+    tl.to("#col-true", { x: 4, duration: 0.05 }, 5.09);
+    tl.to("#col-true", { x: 0, duration: 0.05 }, 5.14);
+
+    // 6.54s: Overlay 3 - "MỞ = SAI = 0" (khớp atMs: 201790)
+    // Cần mạch bên phải (đang MỞ) nảy giật mở dứt khoát xác nhận trạng thái ngắt
+    tl.fromTo(
+      bladeRight,
+      { rotation: -32 },
+      { rotation: -40, duration: 0.14, yoyo: true, repeat: 1, ease: "power2.out" },
+      6.54
+    );
+
+    // Dấu chỉ báo ngắt mạch xuất hiện tại khe hở
+    tl.fromTo(
+      "#disconnect-mark",
+      { scale: 0.5, opacity: 0 },
+      { scale: 1.25, opacity: 1, duration: 0.25, yoyo: true, repeat: 1, ease: "power2.out" },
+      6.54
+    );
+
+    // Tấm khóa khớp MỞ = SAI = 0 đập mạnh vào vị trí
+    tl.fromTo(
+      "#lock-false",
+      { scale: 1.35, opacity: 0, y: 30 },
+      { scale: 1, opacity: 1, y: 0, duration: 0.42, ease: "power3.out" },
+      6.54
+    );
+
+    // Chấn động nhẹ trên cột phải khi khóa khớp (tất định hoàn toàn)
+    tl.to("#col-false", { x: -4, duration: 0.05 }, 6.74);
+    tl.to("#col-false", { x: 4, duration: 0.05 }, 6.79);
+    tl.to("#col-false", { x: 0, duration: 0.05 }, 6.84);
+
+    // Đăng ký timeline gốc vào window.__timelines
+    window.__timelines = window.__timelines || {};
+    window.__timelines["scene-s25"] = tl;
+  </script>
+
+    </template>
+  </body>
+</html>

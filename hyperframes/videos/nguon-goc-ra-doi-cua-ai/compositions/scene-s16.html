@@ -1,0 +1,635 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+/* hf-safe-colors (tất định từ style-tokens.json) */
+.hf-text-ink { color: #141414; }
+.hf-text-light { color: #F7F4EC; }
+.hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+.hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+.hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+.hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+      *, *::before, *::after {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background: #E7E3D9;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      /* Base Composition Box */
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: #E7E3D9;
+      }
+
+      /* HyperFrames Clip standard contract */
+      .clip {
+        position: absolute;
+        inset: 0;
+      }
+
+      /* 84px Grid Background Texture (Vox Ivory + Fine Charcoal Grid) */
+      .grid-layer {
+        position: absolute;
+        inset: 0;
+        background-image:
+          linear-gradient(to right, rgba(20, 20, 20, 0.16) 1.5px, transparent 1.5px),
+          linear-gradient(to bottom, rgba(20, 20, 20, 0.16) 1.5px, transparent 1.5px);
+        background-size: 84px 84px;
+        pointer-events: none;
+      }
+
+      /* Camera Stage Wrapper for subtle cinematic movement */
+      #camera-stage {
+        position: absolute;
+        inset: 0;
+        transform-origin: 50% 50%;
+        will-change: transform;
+      }
+
+      /* Safe-zone content wrapper (Y: 160px - 1390px, Left/Right: 60px) */
+      .scene-content {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 1080px;
+        height: 1920px;
+        pointer-events: none;
+      }
+
+      /* Category Pill / Tag */
+      .category-tag {
+        position: absolute;
+        top: 180px;
+        left: 60px;
+        height: 44px;
+        display: inline-flex;
+        align-items: center;
+        padding: 0 18px;
+        background: #141414;
+        color: #F7F4EC;
+        font-size: 20px;
+        font-weight: 900;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        border-radius: 4px;
+      }
+
+      /* Punch Phrase Group */
+      .punch-block {
+        position: absolute;
+        top: 246px;
+        left: 60px;
+        width: 960px;
+      }
+      .punch-eyebrow {
+        font-size: 24px;
+        font-weight: 700;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        color: #141414;
+        margin-bottom: 8px;
+      }
+      .punch-headline {
+        margin: 0;
+        font-size: 68px;
+        font-weight: 900;
+        line-height: 1.18;
+        letter-spacing: -1px;
+        text-transform: uppercase;
+        color: #141414;
+      }
+      .punch-underline {
+        width: 240px;
+        height: 8px;
+        background: #FF6A1A;
+        margin-top: 14px;
+        transform-origin: left center;
+      }
+
+      /* Abstract Thought Cluster (Diagram / Flow Component) */
+      .thought-cluster {
+        position: absolute;
+        top: 440px;
+        left: 60px;
+        width: 960px;
+        height: 240px;
+      }
+      .thought-cards-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+        position: relative;
+        z-index: 2;
+      }
+      .thought-node {
+        width: 290px;
+        height: 120px;
+        background: #F5F0E4;
+        border: 3.5px solid #141414;
+        border-radius: 12px;
+        padding: 16px 20px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        box-shadow: 6px 6px 0px #141414;
+      }
+      .thought-node-label {
+        font-size: 18px;
+        font-weight: 900;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        color: #141414;
+        margin-bottom: 4px;
+      }
+      .thought-node-formula {
+        font-size: 26px;
+        font-weight: 900;
+        color: #141414;
+      }
+      .thought-node-symbol {
+        font-family: monospace;
+        letter-spacing: 0.5px;
+      }
+
+      /* SVG Flow & Convergence Connector lines */
+      .convergence-svg {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 960px;
+        height: 260px;
+        overflow: visible;
+        z-index: 1;
+      }
+      .flow-path-dashed {
+        fill: none;
+        stroke: #FF6A1A;
+        stroke-width: 3;
+        stroke-dasharray: 8 6;
+      }
+
+      /* Slate Blackboard / Mathematical Formula Plate */
+      .formula-slate {
+        position: absolute;
+        top: 710px;
+        left: 60px;
+        width: 960px;
+        height: 480px;
+        background: #141414;
+        border: 4px solid #141414;
+        border-radius: 20px;
+        padding: 34px 40px;
+        box-shadow: 12px 14px 0px rgba(20, 20, 20, 0.28);
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+      .slate-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .slate-badge {
+        background: #FF6A1A;
+        color: #141414;
+        font-size: 20px;
+        font-weight: 900;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        padding: 6px 16px;
+        border-radius: 4px;
+      }
+      .slate-meta {
+        color: #F7F4EC;
+        font-size: 19px;
+        font-weight: 700;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+      }
+      .slate-hero-formula {
+        position: relative;
+        padding: 16px 0;
+        border-bottom: 2px solid rgba(247, 244, 236, 0.18);
+      }
+      .formula-caption {
+        font-size: 22px;
+        font-weight: 700;
+        letter-spacing: 2px;
+        color: #FF6A1A;
+        text-transform: uppercase;
+        margin-bottom: 8px;
+      }
+      .formula-equation {
+        margin: 0;
+        font-size: 52px;
+        font-weight: 900;
+        letter-spacing: 0.5px;
+        color: #F7F4EC;
+        white-space: nowrap;
+      }
+      .formula-prefix {
+        color: #FF6A1A;
+        margin-right: 8px;
+      }
+      .formula-accent-line {
+        position: absolute;
+        bottom: -2px;
+        left: 0;
+        width: 100%;
+        height: 4px;
+        background: #FF6A1A;
+        transform-origin: left center;
+      }
+
+      /* Binary Logic Flow row inside Slate */
+      .logic-pipeline {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: rgba(247, 244, 236, 0.06);
+        border: 2px dashed rgba(247, 244, 236, 0.28);
+        border-radius: 12px;
+        padding: 16px 24px;
+      }
+      .pipeline-step {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+      .step-tag {
+        font-size: 15px;
+        font-weight: 700;
+        color: #F7F4EC;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        margin-bottom: 4px;
+      }
+      .step-val {
+        font-size: 26px;
+        font-weight: 900;
+        color: #F7F4EC;
+      }
+      .step-val.val-orange {
+        color: #FF6A1A;
+      }
+      .pipeline-arrow {
+        color: #FF6A1A;
+        font-size: 28px;
+        font-weight: 900;
+      }
+
+      /* Check / Verification Badge (Overlay 3 at 4.24s) */
+      .verify-badge {
+        position: absolute;
+        top: 1220px;
+        left: 60px;
+        width: 960px;
+        height: 124px;
+        background: #F5F0E4;
+        border: 3.5px solid #141414;
+        border-radius: 16px;
+        padding: 0 32px;
+        display: flex;
+        align-items: center;
+        gap: 24px;
+        box-shadow: 8px 8px 0px #141414;
+      }
+      .verify-icon-box {
+        width: 72px;
+        height: 72px;
+        background: #FF6A1A;
+        border: 3px solid #141414;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        flex-shrink: 0;
+      }
+      .verify-icon-svg {
+        width: 44px;
+        height: 44px;
+        overflow: visible;
+      }
+      .verify-check-path {
+        fill: none;
+        stroke: #141414;
+        stroke-width: 6;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+      .verify-info {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+      }
+      .verify-title {
+        font-size: 30px;
+        font-weight: 900;
+        letter-spacing: -0.5px;
+        text-transform: uppercase;
+        color: #141414;
+        line-height: 1.2;
+      }
+      .verify-sub {
+        font-size: 20px;
+        font-weight: 700;
+        color: #141414;
+      }
+
+      /* Vox Brand Signature Bottom Orange Bar */
+      .brand-bottom-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 12px;
+        background: #FF6A1A;
+        z-index: 100;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s16"
+      data-start="0"
+      data-width="1080"
+      data-height="1920"
+      data-duration="5.5"
+    >
+      <!-- Subdued Paper Grid Background -->
+      <div class="grid-layer"></div>
+
+      <!-- Main Camera Action Stage -->
+      <section id="scene-s16" class="clip" data-start="0" data-duration="5.5">
+        <div id="camera-stage">
+          <div class="scene-content">
+            <!-- 1. Category Tag -->
+            <div id="category-tag" class="category-tag">
+              KHOA HỌC DỮ LIỆU // BƯỚC NGOẶT
+            </div>
+
+            <!-- 2. Punch Phrase: "ĐẠI SỐ HÓA TƯ DUY" (atMs: 122520 -> 1.30s) -->
+            <div id="punch-block" class="punch-block">
+              <div class="punch-eyebrow">CHUYỂN HÓA KHÁI NIỆM</div>
+              <h1 class="punch-headline">ĐẠI SỐ HÓA TƯ DUY</h1>
+              <div id="punch-underline" class="punch-underline"></div>
+            </div>
+
+            <!-- 3. Abstract Thought Cluster & Funnel Vectors -->
+            <div id="thought-cluster" class="thought-cluster">
+              <svg class="convergence-svg" viewBox="0 0 960 260">
+                <!-- Connecting lines funneling down toward equation center -->
+                <path id="line-left" class="flow-path-dashed" d="M 145 130 C 145 190, 480 180, 480 250" />
+                <path id="line-center" class="flow-path-dashed" d="M 480 130 L 480 250" />
+                <path id="line-right" class="flow-path-dashed" d="M 815 130 C 815 190, 480 180, 480 250" />
+                <circle cx="480" cy="250" r="6" fill="#141414" />
+              </svg>
+
+              <div class="thought-cards-row">
+                <!-- Node 1 -->
+                <div id="node-1" class="thought-node">
+                  <div class="thought-node-label">TIỀN ĐỀ A</div>
+                  <div class="thought-node-formula thought-node-symbol">Xác Thực (1)</div>
+                </div>
+                <!-- Node 2 -->
+                <div id="node-2" class="thought-node">
+                  <div class="thought-node-label">MỆNH ĐỀ LOGIC</div>
+                  <div class="thought-node-formula thought-node-symbol">A ∧ (B ∨ C)</div>
+                </div>
+                <!-- Node 3 -->
+                <div id="node-3" class="thought-node">
+                  <div class="thought-node-label">PHỦ ĐỊNH ¬</div>
+                  <div class="thought-node-formula thought-node-symbol">Giả Định (0)</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 4. Chalkboard Card: verbatim "CÔNG THỨC: f(x) = NGHĨ" (atMs: 124140 -> 2.92s) -->
+            <div id="formula-slate" class="formula-slate">
+              <div class="slate-header">
+                <span class="slate-badge">MÔ HÌNH TOÁN HỌC</span>
+                <span class="slate-meta">GEORGE BOOLE (1854)</span>
+              </div>
+
+              <div class="slate-hero-formula">
+                <div class="formula-caption">BIỂU THỨC ĐẠI SỐ</div>
+                <h2 id="formula-equation" class="formula-equation"><span class="formula-prefix">CÔNG THỨC:</span> f(x) = NGHĨ</h2>
+                <div id="formula-accent-line" class="formula-accent-line"></div>
+              </div>
+
+              <!-- Binary Logic Pipeline Inside Slate -->
+              <div class="logic-pipeline">
+                <div class="pipeline-step">
+                  <span class="step-tag">Ý NIỆM (x)</span>
+                  <span class="step-val">TRỪU TƯỢNG</span>
+                </div>
+                <div class="pipeline-arrow">➔</div>
+                <div class="pipeline-step">
+                  <span class="step-tag">HÀM f(x)</span>
+                  <span class="step-val val-orange">ĐẠI SỐ LOGIC</span>
+                </div>
+                <div class="pipeline-arrow">➔</div>
+                <div class="pipeline-step">
+                  <span class="step-tag">KẾT QUẢ</span>
+                  <span class="step-val">{ 0 , 1 }</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- 5. Verification Checkmark Badge: "check" (atMs: 125460 -> 4.24s) -->
+            <div id="verify-badge" class="verify-badge">
+              <div class="verify-icon-box">
+                <svg viewBox="0 0 48 48" class="verify-icon-svg">
+                  <path id="check-tick-path" class="verify-check-path" d="M 10 24 L 20 34 L 38 14" />
+                </svg>
+              </div>
+              <div id="verify-info" class="verify-info">
+                <div class="verify-title">CHỨNG MINH HOÀN TẤT</div>
+                <div class="verify-sub">BIẾN SUY NGHĨ THÀNH PHÉP TÍNH XÁC THỰC</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Signature Brand Bottom Strip -->
+      <div class="brand-bottom-bar"></div>
+    </div>
+
+    <!-- Animation Orchestration -->
+    <script>
+      // 1. Initialize Single Paused GSAP Timeline
+      const tl = gsap.timeline({ paused: true });
+      window.__timelines = window.__timelines || {};
+      window.__timelines["scene-s16"] = tl;
+
+      // 2. Measure SVG Path lengths deterministically
+      const checkPath = document.getElementById("check-tick-path");
+      if (checkPath) {
+        const checkLen = Math.ceil(checkPath.getTotalLength()) || 45;
+        checkPath.style.strokeDasharray = checkLen + "px";
+        checkPath.style.strokeDashoffset = checkLen + "px";
+      }
+
+      const flowLines = ["#line-left", "#line-center", "#line-right"];
+      flowLines.forEach(function (selector) {
+        const el = document.querySelector(selector);
+        if (el) {
+          const len = Math.ceil(el.getTotalLength()) || 180;
+          el.style.strokeDasharray = len + "px";
+          el.style.strokeDashoffset = len + "px";
+        }
+      });
+
+      // 3. Camera subtle pan-left movement across the full 5.5s shot duration
+      tl.fromTo(
+        "#camera-stage",
+        { x: 20 },
+        { x: -16, duration: 5.5, ease: "none" },
+        0
+      );
+
+      // 4. Beat 1: Scene Entrance (Rise) & Thought Nodes (0.0s - 1.2s)
+      tl.fromTo(
+        "#category-tag",
+        { y: -24, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.5, ease: "power3.out" },
+        0.2
+      );
+
+      tl.fromTo(
+        "#thought-cluster",
+        { y: 50, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.65, ease: "power3.out" },
+        0.3
+      );
+
+      tl.fromTo(
+        ".thought-node",
+        { scale: 0.82, opacity: 0, y: 24 },
+        {
+          scale: 1,
+          opacity: 1,
+          y: 0,
+          duration: 0.55,
+          stagger: 0.12,
+          ease: "power3.out",
+        },
+        0.4
+      );
+
+      // Subtle organic float on thought nodes (finite, deterministic repeats)
+      tl.to("#node-1", { y: -6, duration: 1.3, yoyo: true, repeat: 3, ease: "sine.inOut" }, 0.95);
+      tl.to("#node-2", { y: 6, duration: 1.45, yoyo: true, repeat: 3, ease: "sine.inOut" }, 0.95);
+      tl.to("#node-3", { y: -5, duration: 1.2, yoyo: true, repeat: 3, ease: "sine.inOut" }, 0.95);
+
+      // 5. Beat 2: Punch Phrase ("ĐẠI SỐ HÓA TƯ DUY") at 1.30s (atMs: 122520)
+      tl.fromTo(
+        "#punch-block",
+        { y: 28, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.55, ease: "power3.out" },
+        1.3
+      );
+
+      tl.fromTo(
+        "#punch-underline",
+        { scaleX: 0 },
+        { scaleX: 1, duration: 0.5, ease: "power2.out" },
+        1.5
+      );
+
+      // Convergence SVG lines draw down toward the center equation (1.75s - 2.5s)
+      tl.to(
+        "#line-left",
+        { strokeDashoffset: 0, duration: 0.7, ease: "power2.out" },
+        1.75
+      );
+      tl.to(
+        "#line-center",
+        { strokeDashoffset: 0, duration: 0.6, ease: "power2.out" },
+        1.9
+      );
+      tl.to(
+        "#line-right",
+        { strokeDashoffset: 0, duration: 0.7, ease: "power2.out" },
+        1.85
+      );
+
+      // Thought nodes compress inward slightly as they converge into the formula
+      tl.to(
+        "#thought-cluster",
+        { scale: 0.95, duration: 0.8, ease: "power2.out" },
+        2.4
+      );
+
+      // 6. Beat 3: Formula Slate verbatim ("CÔNG THỨC: f(x) = NGHĨ") at 2.92s (atMs: 124140)
+      tl.fromTo(
+        "#formula-slate",
+        { y: 44, opacity: 0, scale: 0.96 },
+        { y: 0, opacity: 1, scale: 1, duration: 0.6, ease: "power3.out" },
+        2.92
+      );
+
+      tl.fromTo(
+        "#formula-equation",
+        { opacity: 0, scale: 0.92, y: 12 },
+        { opacity: 1, scale: 1, y: 0, duration: 0.45, ease: "power3.out" },
+        3.18
+      );
+
+      tl.fromTo(
+        "#formula-accent-line",
+        { scaleX: 0 },
+        { scaleX: 1, duration: 0.5, ease: "power2.out" },
+        3.35
+      );
+
+      tl.fromTo(
+        ".pipeline-step, .pipeline-arrow",
+        { opacity: 0, y: 10 },
+        { opacity: 1, y: 0, duration: 0.4, stagger: 0.08, ease: "power2.out" },
+        3.5
+      );
+
+      // 7. Beat 4: Checkmark Icon & Verification Badge at 4.24s (atMs: 125460)
+      tl.fromTo(
+        "#verify-badge",
+        { scale: 0.88, opacity: 0, y: 24 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.45, ease: "power3.out" },
+        4.24
+      );
+
+      // Draw checkmark stroke
+      tl.to(
+        "#check-tick-path",
+        { strokeDashoffset: 0, duration: 0.4, ease: "power2.out" },
+        4.45
+      );
+
+      tl.fromTo(
+        "#verify-info",
+        { opacity: 0, x: -16 },
+        { opacity: 1, x: 0, duration: 0.38, ease: "power2.out" },
+        4.52
+      );
+    </script>
+  
+    </template>
+  </body>
+</html>

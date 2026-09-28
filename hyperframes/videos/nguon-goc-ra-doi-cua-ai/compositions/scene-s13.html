@@ -1,0 +1,626 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+/* hf-safe-colors (tất định từ style-tokens.json) */
+.hf-text-ink { color: #141414; }
+.hf-text-light { color: #F7F4EC; }
+.hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+.hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+.hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+.hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+      /* Built-in safe color classes (WCAG AA compliant) */
+      .hf-text-ink { color: #141414; }
+      .hf-text-light { color: #F7F4EC; }
+      .hf-hl-orange { background-color: #FF6A1A; color: #141414; }
+      .hf-plate-ink { background-color: #141414; color: #F7F4EC; }
+      .hf-plate-ink-orange { background-color: #141414; color: #FF6A1A; }
+      .hf-plate-paper { background-color: #F5F0E4; color: #141414; }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        background: #E7E3D9;
+        font-family: "Be Vietnam Pro", sans-serif;
+        color: #141414;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: #E7E3D9;
+      }
+
+      .clip {
+        position: absolute;
+        inset: 0;
+      }
+
+      /* Background Chart Variant: 4 horizontal ruled lines + left-edge orange tick marks */
+      .chart-grid {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        z-index: 1;
+      }
+      .chart-rule {
+        position: absolute;
+        left: 0;
+        width: 100%;
+        height: 2px;
+        background: rgba(20, 20, 20, 0.32);
+      }
+      .chart-tick {
+        position: absolute;
+        left: 0;
+        top: -4px;
+        width: 24px;
+        height: 10px;
+        background: #FF6A1A;
+      }
+
+      /* Scene Layout & Camera Rig */
+      #camera-rig {
+        position: absolute;
+        inset: 0;
+        transform-origin: 540px 960px;
+        z-index: 2;
+      }
+
+      #scene-container {
+        position: absolute;
+        inset: 0;
+      }
+
+      /* Header Eyebrow */
+      #header-eyebrow {
+        position: absolute;
+        top: 175px;
+        left: 50px;
+        right: 50px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
+      .eyebrow-badge {
+        padding: 6px 14px;
+        font-size: 16px;
+        font-weight: 900;
+        letter-spacing: 1px;
+        border-radius: 4px;
+        text-transform: uppercase;
+      }
+      .eyebrow-text {
+        font-size: 18px;
+        font-weight: 700;
+        color: #141414;
+        letter-spacing: 0.5px;
+      }
+
+      /* Punch Phrase: GIÁO SƯ TOÁN 1849 */
+      #punch-wrapper {
+        position: absolute;
+        top: 245px;
+        left: 50px;
+        right: 50px;
+        border-radius: 8px;
+        padding: 24px 30px;
+        border-left: 10px solid #FF6A1A;
+        box-shadow: 0 16px 36px rgba(20, 20, 20, 0.16);
+      }
+      .punch-label {
+        font-size: 18px;
+        font-weight: 900;
+        color: #FF6A1A;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        margin-bottom: 6px;
+      }
+      .punch-title {
+        font-size: 66px;
+        font-weight: 900;
+        line-height: 1.15;
+        color: #F7F4EC;
+        letter-spacing: -1px;
+      }
+      #punch-accent-bar {
+        position: absolute;
+        bottom: 0;
+        left: 30px;
+        right: 30px;
+        height: 4px;
+        background: #FF6A1A;
+        transform-origin: left center;
+      }
+
+      /* Split Arena (Left: Credentials vs Right: Chair) */
+      #split-arena {
+        position: absolute;
+        top: 430px;
+        left: 50px;
+        width: 980px;
+        height: 870px;
+      }
+
+      .split-col {
+        position: absolute;
+        top: 0;
+        width: 470px;
+        height: 870px;
+        background: #F5F0E4;
+        border: 2px solid #141414;
+        border-radius: 12px;
+        padding: 24px;
+      }
+      #col-credentials {
+        left: 0;
+      }
+      #col-appointment {
+        left: 510px;
+      }
+
+      .col-header {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .col-tag {
+        align-self: flex-start;
+        padding: 4px 10px;
+        font-size: 13px;
+        font-weight: 900;
+        letter-spacing: 0.5px;
+        border-radius: 4px;
+      }
+      .col-title {
+        font-size: 28px;
+        font-weight: 900;
+        color: #141414;
+        line-height: 1.2;
+      }
+      .col-subtitle {
+        font-size: 13px;
+        font-weight: 700;
+        color: #141414;
+        letter-spacing: 0.3px;
+      }
+
+      /* Left Column: Empty Diploma */
+      #diploma-frame {
+        position: relative;
+        width: 100%;
+        height: 480px;
+        margin-top: 18px;
+        background: #E7E3D9;
+        border: 3px dashed #141414;
+        border-radius: 8px;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
+        padding-top: 32px;
+      }
+      .diploma-seal-top {
+        width: 58px;
+        height: 58px;
+        border: 3px solid #141414;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        margin-bottom: 20px;
+      }
+      .diploma-line {
+        height: 4px;
+        background: #141414;
+        margin: 8px 0;
+        border-radius: 2px;
+      }
+      .diploma-watermark {
+        font-size: 15px;
+        font-weight: 900;
+        color: #141414;
+        letter-spacing: 1px;
+        margin-top: auto;
+        margin-bottom: 24px;
+        text-align: center;
+      }
+
+      /* Strike & Stamp on Diploma */
+      #strike-svg {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+      }
+      #stamp-no-degree {
+        position: absolute;
+        top: 165px;
+        left: 24px;
+        right: 24px;
+        border: 5px solid #141414;
+        padding: 16px 10px;
+        text-align: center;
+        box-shadow: 6px 6px 0 #141414;
+        transform-origin: center center;
+        z-index: 5;
+      }
+      .stamp-text {
+        font-size: 24px;
+        font-weight: 900;
+        color: #141414;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+      }
+
+      /* Right Column: Academic Podium & Rise Graphic */
+      #podium-box {
+        position: relative;
+        width: 100%;
+        height: 480px;
+        margin-top: 18px;
+        background: #141414;
+        border-radius: 8px;
+        overflow: hidden;
+      }
+      .podium-pillar {
+        position: absolute;
+        bottom: 24px;
+        background: #141414;
+        border: 2px solid #FF6A1A;
+        border-bottom: none;
+        border-radius: 4px 4px 0 0;
+        transform-origin: bottom center;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+        align-items: center;
+        padding-bottom: 14px;
+        gap: 2px;
+      }
+      .pillar-1 {
+        left: 20px;
+        width: 105px;
+        height: 120px;
+      }
+      .pillar-2 {
+        left: 145px;
+        width: 105px;
+        height: 220px;
+      }
+      .pillar-3 {
+        left: 270px;
+        width: 125px;
+        height: 330px;
+      }
+      .pillar-sub {
+        font-size: 13px;
+        font-weight: 900;
+        color: #F7F4EC;
+        text-align: center;
+        line-height: 1.2;
+      }
+      .pillar-badge {
+        padding: 3px 6px;
+        border-radius: 3px;
+        font-size: 12px;
+        font-weight: 900;
+        text-align: center;
+        line-height: 1.2;
+      }
+
+      #rise-svg {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+      }
+
+      #rise-badge {
+        position: absolute;
+        top: 24px;
+        right: 20px;
+        border: 3px solid #141414;
+        padding: 8px 12px;
+        border-radius: 6px;
+        text-align: center;
+        box-shadow: 4px 4px 0 #FF6A1A;
+        transform-origin: center center;
+        z-index: 5;
+      }
+      .rise-badge-sup {
+        font-size: 11px;
+        font-weight: 900;
+        letter-spacing: 1px;
+        color: #141414;
+      }
+      .rise-badge-main {
+        font-size: 18px;
+        font-weight: 900;
+        color: #141414;
+        margin-top: 2px;
+      }
+
+      /* Metric Rows */
+      .metric-row {
+        margin-top: 24px;
+        border-top: 2px solid rgba(20, 20, 20, 0.2);
+        padding-top: 14px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .metric-label {
+        font-size: 14px;
+        font-weight: 700;
+        color: #141414;
+      }
+      .metric-val {
+        font-size: 20px;
+        font-weight: 900;
+        color: #141414;
+      }
+
+      /* Signature Vox Orange Bottom Bar */
+      #bottom-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 12px;
+        background: #FF6A1A;
+        z-index: 100;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s13"
+      data-start="0"
+      data-width="1080"
+      data-height="1920"
+      data-duration="7.2"
+    >
+      <!-- Background Chart Variant: pure ruled lines + ticks, layout ignored -->
+      <div class="chart-grid" aria-hidden="true" data-layout-ignore>
+        <div class="chart-rule" style="top: 384px;"><div class="chart-tick"></div></div>
+        <div class="chart-rule" style="top: 768px;"><div class="chart-tick"></div></div>
+        <div class="chart-rule" style="top: 1152px;"><div class="chart-tick"></div></div>
+        <div class="chart-rule" style="top: 1536px;"><div class="chart-tick"></div></div>
+      </div>
+
+      <!-- Main Visual Clip -->
+      <section id="scene-s13" class="clip" data-start="0" data-duration="7.2">
+        <div id="camera-rig">
+          <div id="scene-container">
+            
+            <!-- Category Eyebrow -->
+            <div id="header-eyebrow">
+              <div class="eyebrow-badge hf-hl-orange">NGHỊCH LÝ 1849</div>
+              <div class="eyebrow-text">QUEEN'S COLLEGE CORK • IRELAND</div>
+            </div>
+
+            <!-- Punch Phrase -->
+            <div id="punch-wrapper" class="hf-plate-ink">
+              <div class="punch-label">BỔ NHIỆM NGOẠI LỆ</div>
+              <h1 class="punch-title">GIÁO SƯ TOÁN 1849</h1>
+              <div id="punch-accent-bar"></div>
+            </div>
+
+            <!-- Split Arena (Credentials vs Chair) -->
+            <div id="split-arena">
+              
+              <!-- Left Column: Bằng cấp -->
+              <div id="col-credentials" class="split-col">
+                <div class="col-header">
+                  <div class="col-tag hf-plate-ink">TIÊU CHUẨN 01</div>
+                  <h2 class="col-title">BẰNG ĐẠI HỌC</h2>
+                  <div class="col-subtitle">ĐIỀU KIỆN TIÊN QUYẾT BẮT BUỘC</div>
+                </div>
+
+                <div id="diploma-frame">
+                  <div class="diploma-seal-top">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#141414" stroke-width="2">
+                      <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                    </svg>
+                  </div>
+                  <div class="diploma-line" style="width: 78%;"></div>
+                  <div class="diploma-line" style="width: 62%;"></div>
+                  <div class="diploma-line" style="width: 70%;"></div>
+                  <div class="diploma-line" style="width: 48%;"></div>
+                  <div class="diploma-watermark" data-layout-allow-occlusion="true">[ CHƯA TỪNG THEO HỌC ]</div>
+
+                  <!-- Overlay 3: Strike Slash SVG & Stamped Box -->
+                  <svg id="strike-svg" viewBox="0 0 422 480">
+                    <line id="strike-slash-1" x1="24" y1="456" x2="398" y2="24" stroke="#FF6A1A" stroke-width="12" stroke-linecap="round"/>
+                    <line id="strike-slash-2" x1="24" y1="24" x2="398" y2="456" stroke="#FF6A1A" stroke-width="12" stroke-linecap="round"/>
+                  </svg>
+
+                  <div id="stamp-no-degree" class="hf-hl-orange">
+                    <div class="stamp-text">KHÔNG CÓ BẰNG CẤP</div>
+                  </div>
+                </div>
+
+                <div class="metric-row">
+                  <span class="metric-label">HỌC VỊ TÍCH LŨY</span>
+                  <span class="metric-val">0 BẰNG</span>
+                </div>
+              </div>
+
+              <!-- Right Column: Bục giảng giáo sư -->
+              <div id="col-appointment" class="split-col">
+                <div class="col-header">
+                  <div class="col-tag hf-hl-orange">THỰC TẾ 1849</div>
+                  <h2 class="col-title">BỤC GIẢNG GIÁO SƯ</h2>
+                  <div class="col-subtitle">CHAIR OF MATHEMATICS</div>
+                </div>
+
+                <div id="podium-box">
+                  <!-- Stepped Pillars -->
+                  <div id="step-1" class="podium-pillar pillar-1">
+                    <div class="pillar-sub">TỰ HỌC</div>
+                    <div class="pillar-sub">16 TUỔI</div>
+                  </div>
+                  <div id="step-2" class="podium-pillar pillar-2">
+                    <div class="pillar-sub">CÔNG BỐ</div>
+                    <div class="pillar-sub">1847</div>
+                  </div>
+                  <div id="step-3" class="podium-pillar pillar-3">
+                    <div class="pillar-badge hf-hl-orange">GIÁO SƯ</div>
+                    <div class="pillar-badge hf-hl-orange">CHÍNH THỨC</div>
+                  </div>
+
+                  <!-- Overlay 2: Rise Icon SVG Vector -->
+                  <svg id="rise-svg" viewBox="0 0 422 480">
+                    <path id="rise-path" d="M 72 350 L 195 255 L 330 140" fill="none" stroke="#FF6A1A" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+                    <polygon id="rise-arrowhead" points="318,155 344,132 322,122" fill="#FF6A1A"/>
+                  </svg>
+
+                  <div id="rise-badge" class="hf-hl-orange">
+                    <div class="rise-badge-sup">BỔ NHIỆM 1849</div>
+                    <div class="rise-badge-main">GIÁO SƯ TOÁN</div>
+                  </div>
+                </div>
+
+                <div class="metric-row">
+                  <span class="metric-label">CẤP BẬC HỌC THUẬT</span>
+                  <span class="metric-val">ĐỈNH CAO</span>
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      <!-- Signature Orange Bar at Bottom Edge -->
+      <div id="bottom-bar"></div>
+    </div>
+
+    <script>
+      const tl = gsap.timeline({ paused: true });
+
+      // Path length measurements for stroke drawing animation
+      const slash1 = document.getElementById("strike-slash-1");
+      const slash2 = document.getElementById("strike-slash-2");
+      const risePath = document.getElementById("rise-path");
+
+      let len1 = 600;
+      let len2 = 600;
+      let rLen = 400;
+
+      if (slash1) {
+        len1 = slash1.getTotalLength();
+        slash1.style.strokeDasharray = len1;
+        slash1.style.strokeDashoffset = len1;
+      }
+      if (slash2) {
+        len2 = slash2.getTotalLength();
+        slash2.style.strokeDasharray = len2;
+        slash2.style.strokeDashoffset = len2;
+      }
+      if (risePath) {
+        rLen = risePath.getTotalLength();
+        risePath.style.strokeDasharray = rLen;
+        risePath.style.strokeDashoffset = rLen;
+      }
+
+      // Continuous subtle camera motion across the 7.2s scene
+      tl.fromTo("#camera-rig", { scale: 1.0 }, { scale: 1.03, duration: 7.2, ease: "none" }, 0);
+
+      // Strike transition entrance (t=0.0s)
+      tl.fromTo(
+        "#scene-container",
+        { scale: 1.06, opacity: 0 },
+        { scale: 1.0, opacity: 1, duration: 0.35, ease: "power4.out" },
+        0
+      );
+
+      // Eyebrow and arena columns reveal (t=0.1s - 0.26s)
+      tl.fromTo(
+        "#header-eyebrow",
+        { y: -20, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.35, ease: "power3.out" },
+        0.1
+      );
+      tl.fromTo(
+        "#col-credentials",
+        { y: 30, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.45, ease: "power3.out" },
+        0.18
+      );
+      tl.fromTo(
+        "#col-appointment",
+        { y: 30, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.45, ease: "power3.out" },
+        0.26
+      );
+
+      // Overlay 1: Punch phrase "GIÁO SƯ TOÁN 1849" at t=0.37s
+      tl.fromTo(
+        "#punch-wrapper",
+        { scale: 1.12, opacity: 0, y: -15 },
+        { scale: 1.0, opacity: 1, y: 0, duration: 0.45, ease: "power4.out" },
+        0.37
+      );
+      tl.fromTo(
+        "#punch-accent-bar",
+        { scaleX: 0 },
+        { scaleX: 1.0, duration: 0.45, ease: "power2.out" },
+        0.55
+      );
+
+      // Overlay 2: "rise" icon and podium ascent at t=3.24s
+      tl.fromTo("#step-1", { scaleY: 0 }, { scaleY: 1, duration: 0.35, ease: "power3.out" }, 3.1);
+      tl.fromTo("#step-2", { scaleY: 0 }, { scaleY: 1, duration: 0.35, ease: "power3.out" }, 3.22);
+      tl.fromTo("#step-3", { scaleY: 0 }, { scaleY: 1, duration: 0.45, ease: "power3.out" }, 3.32);
+
+      tl.fromTo("#rise-path", { strokeDashoffset: rLen }, { strokeDashoffset: 0, duration: 0.65, ease: "power2.out" }, 3.35);
+      tl.fromTo("#rise-arrowhead", { scale: 0, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.2, ease: "power3.out" }, 3.9);
+      tl.fromTo(
+        "#rise-badge",
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.4, ease: "power3.out" },
+        3.95
+      );
+
+      // Overlay 3: Diagram "KHÔNG CÓ BẰNG CẤP" at t=5.20s
+      tl.fromTo("#strike-slash-1", { strokeDashoffset: len1 }, { strokeDashoffset: 0, duration: 0.22, ease: "power3.out" }, 5.20);
+      tl.fromTo("#strike-slash-2", { strokeDashoffset: len2 }, { strokeDashoffset: 0, duration: 0.22, ease: "power3.out" }, 5.30);
+
+      tl.fromTo(
+        "#stamp-no-degree",
+        { scale: 1.35, opacity: 0, rotation: -16 },
+        { scale: 1.0, opacity: 1, rotation: -5, duration: 0.32, ease: "power4.out" },
+        5.38
+      );
+
+      // Jolt on stamp impact
+      tl.fromTo("#camera-rig", { y: -6 }, { y: 0, duration: 0.15, ease: "power2.out" }, 5.42);
+
+      window.__timelines["scene-s13"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

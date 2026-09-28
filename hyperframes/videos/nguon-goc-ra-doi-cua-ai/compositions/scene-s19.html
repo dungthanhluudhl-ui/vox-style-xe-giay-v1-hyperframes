@@ -1,0 +1,483 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap">
+      <style>
+    /* hf-safe-colors (chuẩn WCAG từ style-tokens.json) */
+    .hf-text-ink { color: #141414; }
+    .hf-text-light { color: #F7F4EC; }
+    .hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+    .hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+    .hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+    .hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      background: #F5F0E4;
+      color: #141414;
+      font-family: "Be Vietnam Pro", sans-serif;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+    #root {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #F5F0E4;
+    }
+    .clip {
+      position: absolute;
+      inset: 0;
+    }
+
+    /* Fixed Vox branding bar at canvas bottom */
+    .vox-bottom-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 14px;
+      background: #FF6A1A;
+      z-index: 100;
+    }
+
+    /* Main editorial container constrained within safe zones:
+       usable Y: [160, 1390], X: [40, 1040] */
+    .scene-container {
+      position: absolute;
+      top: 170px;
+      left: 60px;
+      width: 960px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    /* Section A: Header & Meta */
+    .header-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 2px solid #141414;
+      padding-bottom: 10px;
+    }
+    .tag-kicker {
+      font-size: 22px;
+      font-weight: 900;
+      letter-spacing: 2px;
+      color: #141414;
+      text-transform: uppercase;
+    }
+    .tag-badge {
+      background: #141414;
+      color: #F7F4EC;
+      font-size: 18px;
+      font-weight: 700;
+      padding: 4px 14px;
+      border-radius: 4px;
+      letter-spacing: 1px;
+    }
+
+    /* Section B: Upper Panel - Tranh biện triết học */
+    .debate-panel {
+      position: relative;
+      background: #E7E3D9;
+      border: 3px solid #141414;
+      border-radius: 12px;
+      padding: 20px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      transform-origin: 50% 0%;
+    }
+    .panel-header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .panel-sub {
+      font-size: 20px;
+      font-weight: 700;
+      color: #141414;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+    }
+
+    /* Dedicated slot for Overlay 1 to prevent any overlap or occlusion */
+    .stamp-wrap {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 58px;
+    }
+    .stamp-label {
+      background: #FF6A1A;
+      color: #141414;
+      border: 3px solid #141414;
+      padding: 10px 28px;
+      font-size: 30px;
+      font-weight: 900;
+      letter-spacing: 1.5px;
+      text-align: center;
+      box-shadow: 6px 6px 0px #141414;
+      border-radius: 6px;
+      transform-origin: 50% 50%;
+    }
+
+    .quote-group {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .quote-box {
+      background: #F7F4EC;
+      border: 2px solid #141414;
+      border-radius: 8px;
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .quote-text {
+      font-size: 24px;
+      font-weight: 700;
+      color: #141414;
+      line-height: 1.35;
+    }
+    .quote-tag {
+      font-size: 18px;
+      font-weight: 900;
+      color: #141414;
+      border-left: 2px solid #141414;
+      padding-left: 10px;
+      white-space: nowrap;
+    }
+
+    /* Section C: Strike divider transition */
+    .strike-divider {
+      position: relative;
+      width: 100%;
+      height: 4px;
+      background: #141414;
+      transform-origin: 0% 50%;
+      margin: 4px 0;
+    }
+    .divider-marker {
+      position: absolute;
+      right: 0;
+      top: -14px;
+      background: #141414;
+      color: #F7F4EC;
+      font-size: 16px;
+      font-weight: 900;
+      padding: 2px 10px;
+      letter-spacing: 1px;
+    }
+
+    /* Section D: Lower Hero - Overlay 2 (LOGIC -> ĐẠI SỐ) */
+    .hero-algebra-card {
+      position: relative;
+      background: #141414;
+      color: #F7F4EC;
+      border-radius: 14px;
+      padding: 26px 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      box-shadow: 8px 8px 0px rgba(20,20,20,0.22);
+      transform-origin: 50% 50%;
+    }
+    .hero-kicker {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      color: #FF6A1A;
+      text-transform: uppercase;
+    }
+    .hero-title-row {
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 20px;
+    }
+    .hero-word {
+      font-size: 58px;
+      font-weight: 900;
+      letter-spacing: 1px;
+      color: #F7F4EC;
+      line-height: 1.1;
+    }
+    .hero-arrow {
+      font-size: 58px;
+      font-weight: 900;
+      color: #FF6A1A;
+      line-height: 1;
+      transform-origin: 50% 50%;
+    }
+    .hero-sub {
+      font-size: 22px;
+      font-weight: 700;
+      color: #E7E3D9;
+      line-height: 1.4;
+      border-top: 1px solid rgba(247, 244, 236, 0.25);
+      padding-top: 12px;
+    }
+
+    /* Section E: Operators [+] and [−] */
+    .operators-container {
+      display: flex;
+      gap: 16px;
+      width: 100%;
+    }
+    .op-card {
+      flex: 1;
+      background: #F7F4EC;
+      border: 3px solid #141414;
+      border-radius: 12px;
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      box-shadow: 5px 5px 0px #141414;
+    }
+    .op-glyph-box {
+      width: 58px;
+      height: 58px;
+      background: #141414;
+      color: #FF6A1A;
+      display: grid;
+      place-items: center;
+      font-size: 46px;
+      font-weight: 900;
+      border-radius: 8px;
+      line-height: 1;
+    }
+    .op-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .op-title {
+      font-size: 24px;
+      font-weight: 900;
+      color: #141414;
+      text-transform: uppercase;
+    }
+    .op-desc {
+      font-size: 18px;
+      font-weight: 700;
+      color: #141414;
+    }
+
+    /* Section F: Final Diagram Badge (Overlay 3) */
+    .diagram-badge-wrap {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+    }
+    .diagram-badge {
+      background: #FF6A1A;
+      color: #141414;
+      border: 3px solid #141414;
+      padding: 14px 28px;
+      font-size: 26px;
+      font-weight: 900;
+      letter-spacing: 1.5px;
+      border-radius: 8px;
+      box-shadow: 6px 6px 0px #141414;
+      text-align: center;
+      text-transform: uppercase;
+      transform-origin: 50% 50%;
+    }
+  </style>
+
+  <div
+    id="root"
+    data-composition-id="scene-s19"
+    data-width="1080"
+    data-height="1920"
+    data-duration="7.72"
+  >
+    <!-- Scene S19 Master Clip (7.72s duration) -->
+    <section id="scene-s19" class="clip" data-start="0" data-duration="7.72">
+      <div class="scene-container">
+        
+        <!-- Header / Context -->
+        <div class="header-meta" id="header-meta">
+          <span class="tag-kicker">CUỘC CÁCH MẠNG BOOLE</span>
+          <span class="tag-badge">KẾT LUẬN</span>
+        </div>
+
+        <!-- Upper Panel: Tranh biện triết học -->
+        <div class="debate-panel" id="debate-panel">
+          <div class="panel-header-row">
+            <span class="panel-sub">TRIẾT HỌC CỔ ĐIỂN</span>
+            <span class="panel-sub">TRANH LUẬN BẰNG LỜI</span>
+          </div>
+
+          <!-- Overlay 1: 2.000 NĂM TRANH BIỆN (trong slot riêng không đè chữ) -->
+          <div class="stamp-wrap">
+            <div class="stamp-label" id="stamp-debate">
+              2.000 NĂM TRANH BIỆN
+            </div>
+          </div>
+
+          <div class="quote-group">
+            <div class="quote-box" id="quote-1">
+              <span class="quote-text">"Lập luận mơ hồ qua ngôn từ"</span>
+              <span class="quote-tag">TRỪU TƯỢNG</span>
+            </div>
+            <div class="quote-box" id="quote-2">
+              <span class="quote-text">"Tranh cãi vô tận không thể kiểm chứng"</span>
+              <span class="quote-tag">BẤT ĐỒNG</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Strike transition divider -->
+        <div class="strike-divider" id="strike-divider">
+          <span class="divider-marker">CHUYỂN HÓA</span>
+        </div>
+
+        <!-- Lower Hero Card: Overlay 2 - LOGIC -> ĐẠI SỐ -->
+        <div class="hero-algebra-card" id="algebra-hero">
+          <div class="hero-kicker">HỆ THỐNG TOÁN HỌC MỚI</div>
+          <div class="hero-title-row">
+            <span class="hero-word">LOGIC</span>
+            <span class="hero-arrow">→</span>
+            <span class="hero-word">ĐẠI SỐ</span>
+          </div>
+          <div class="hero-sub">
+            Mọi quy luật tư duy được giản lược thành công thức tính toán chính xác.
+          </div>
+        </div>
+
+        <!-- Operators Section: [+] và [−] -->
+        <div class="operators-container" id="operators-box">
+          <div class="op-card" id="op-plus-card">
+            <div class="op-glyph-box">+</div>
+            <div class="op-info">
+              <span class="op-title">PHÉP CỘNG</span>
+              <span class="op-desc">Tuyển logic (HOẶC)</span>
+            </div>
+          </div>
+          <div class="op-card" id="op-minus-card">
+            <div class="op-glyph-box">−</div>
+            <div class="op-info">
+              <span class="op-title">PHÉP TRỪ</span>
+              <span class="op-desc">Phủ định & Loại trừ</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Overlay 3: Diagram Badge -->
+        <div class="diagram-badge-wrap" id="diagram-badge-wrap">
+          <div class="diagram-badge" id="diagram-badge">
+            ĐÓNG KHUNG BẰNG [+] VÀ [−]
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Signature Vox Orange Bottom Bar -->
+      <div class="vox-bottom-bar"></div>
+    </section>
+  </div>
+
+  <script>
+    // HyperFrames Seekable GSAP Timeline Registration
+    const tl = gsap.timeline({ paused: true });
+
+    // Initial setup states (strictly deterministic)
+    tl.set("#header-meta", { opacity: 0, y: -20 });
+    tl.set("#debate-panel", { opacity: 0, y: 30 });
+    tl.set("#stamp-debate", { opacity: 0, scale: 0.6 });
+    tl.set("#strike-divider", { scaleX: 0 });
+    tl.set("#algebra-hero", { opacity: 0, y: 40, scale: 0.95 });
+    tl.set("#op-plus-card", { opacity: 0, x: -30 });
+    tl.set("#op-minus-card", { opacity: 0, x: 30 });
+    tl.set("#diagram-badge-wrap", { opacity: 0, y: 20 });
+
+    // --- PHASE 1: Entrance (Strike in establishing the 2000-year philosophical debate) ---
+    // t = 0.2s: Header and debate panel appear
+    tl.to("#header-meta", { opacity: 1, y: 0, duration: 0.4, ease: "power2.out" }, 0.2);
+    tl.to("#debate-panel", { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, 0.3);
+
+    // --- PHASE 2: Overlay 1 ("2.000 NĂM TRANH BIỆN" at 1.42s) ---
+    // 144180ms - 142760ms = 1420ms = 1.42s
+    tl.to("#stamp-debate", {
+      opacity: 1,
+      scale: 1,
+      duration: 0.45,
+      ease: "power3.out"
+    }, 1.42);
+
+    // Divider strike cut launches
+    tl.to("#strike-divider", { scaleX: 1, duration: 0.45, ease: "expo.out" }, 3.2);
+
+    // --- PHASE 3: Compression of Debate Panel & Arrival of Algebraic Punch Phrase ---
+    // Upper debate panel shrinks slightly to yield focus to mathematical logic
+    tl.to("#debate-panel", {
+      scale: 0.94,
+      opacity: 0.75,
+      duration: 0.6,
+      ease: "power2.inOut"
+    }, 4.2);
+
+    // Overlay 2: Punch-phrase "LOGIC -> ĐẠI SỐ" at 4.88s
+    // 147640ms - 142760ms = 4880ms = 4.88s
+    tl.to("#algebra-hero", {
+      opacity: 1,
+      y: 0,
+      scale: 1,
+      duration: 0.6,
+      ease: "power3.out"
+    }, 4.88);
+
+    // Arrow pulse emphasis
+    tl.fromTo(".hero-arrow", 
+      { scale: 0.9 }, 
+      { scale: 1.2, duration: 0.25, yoyo: true, repeat: 1, ease: "power2.out" }, 
+      5.35
+    );
+
+    // --- PHASE 4: Overlay 3 - Diagram "ĐÓNG KHUNG BẰNG [+] VÀ [−]" at 6.84s ---
+    // 149600ms - 142760ms = 6840ms = 6.84s
+    tl.to("#op-plus-card", {
+      opacity: 1,
+      x: 0,
+      duration: 0.35,
+      ease: "power3.out"
+    }, 6.4);
+
+    tl.to("#op-minus-card", {
+      opacity: 1,
+      x: 0,
+      duration: 0.35,
+      ease: "power3.out"
+    }, 6.55);
+
+    tl.to("#diagram-badge-wrap", {
+      opacity: 1,
+      y: 0,
+      duration: 0.45,
+      ease: "power3.out"
+    }, 6.84);
+
+    // Register paused timeline with HyperFrames runtime
+    window.__timelines = window.__timelines || {};
+    window.__timelines["scene-s19"] = tl;
+  </script>
+
+    </template>
+  </body>
+</html>

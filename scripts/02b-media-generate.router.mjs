@@ -100,6 +100,14 @@ const resumeProjectArg = (process.argv.find((a) => a.startsWith("--resume-projec
 // Dùng khi Giai đoạn 2 bị lỗi/fail (vd Flow báo "video failed to generate") nhưng ảnh ở Giai đoạn
 // 1 đã đúng — tránh tốn credit tạo lại ảnh từ đầu.
 const retryAnimateArg = process.argv.includes("--retry-animate");
+// Chỉ tạo ảnh, bỏ qua hẳn Giai đoạn 2 (tạo chuyển động/video) — dùng khi người dùng chủ động chọn
+// chỉ cần ảnh tĩnh cho video này (vd để tiết kiệm credit tạo video, hoặc account đang cạn hạn mức
+// video). Không tương thích với --retry-animate (mục đích ngược nhau).
+const imagesOnlyArg = process.argv.includes("--images-only");
+if (imagesOnlyArg && retryAnimateArg) {
+  console.error("⚠ --images-only và --retry-animate mâu thuẫn nhau (bỏ qua vs. chạy lại Giai đoạn 2) — chỉ dùng 1 trong 2.");
+  process.exit(1);
+}
 
 if (!fs.existsSync(vp.scriptFile)) {
   console.error(`Không tìm thấy kịch bản tại ${vp.scriptFile}. Tạo file này trước khi chạy.`);
@@ -699,19 +707,23 @@ async function attemptWithAccount(accountName, { skipResume }) {
       logLine(`  ⚠ Không lấy được URL project hiện tại (${urlResult.error || "không rõ lý do"}) — bỏ qua bước lưu resume, không ảnh hưởng phần còn lại.`);
     }
 
-    const phase2 = await runPhase({
-      phaseName: "2-tao-chuyen-dong",
-      phaseGoal:
-        "Điền (fill) đúng tin nhắn được cung cấp bên dưới vào ô chat Agent của project đang mở và gửi đi, để yêu cầu Flow tạo chuyển động/video từ các ảnh vừa tạo ở giai đoạn trước. Đợi Flow tạo xong các clip video. Chỉ được trả done khi video ĐÃ xuất hiện trong khu vực media và không còn dấu hiệu đang xử lý.",
-      messageToSend: buildAnimatePrompt(),
-      maxSteps: 25,
-      downloadedRef,
-    });
-    if (phase2.status !== "done") {
-      stopEarly(phase2, "2-tao-chuyen-dong");
-      return { ok: false, result: phase2, phaseName: "2-tao-chuyen-dong" };
+    if (imagesOnlyArg) {
+      logLine(`\n--images-only: bỏ qua hẳn Giai đoạn 2 (tạo chuyển động/video), chỉ dùng ${phase1.reason ? "ảnh vừa tạo" : "ảnh"}.`);
+    } else {
+      const phase2 = await runPhase({
+        phaseName: "2-tao-chuyen-dong",
+        phaseGoal:
+          "Điền (fill) đúng tin nhắn được cung cấp bên dưới vào ô chat Agent của project đang mở và gửi đi, để yêu cầu Flow tạo chuyển động/video từ các ảnh vừa tạo ở giai đoạn trước. Đợi Flow tạo xong các clip video. Chỉ được trả done khi video ĐÃ xuất hiện trong khu vực media và không còn dấu hiệu đang xử lý.",
+        messageToSend: buildAnimatePrompt(),
+        maxSteps: 25,
+        downloadedRef,
+      });
+      if (phase2.status !== "done") {
+        stopEarly(phase2, "2-tao-chuyen-dong");
+        return { ok: false, result: phase2, phaseName: "2-tao-chuyen-dong" };
+      }
+      logLine(`✓ Giai đoạn 2 xong: ${phase2.reason || ""}`);
     }
-    logLine(`✓ Giai đoạn 2 xong: ${phase2.reason || ""}`);
   }
 
   const phase3 = await runPhase({

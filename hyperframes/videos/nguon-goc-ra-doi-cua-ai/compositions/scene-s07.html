@@ -1,0 +1,793 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+      /* hf-safe-colors (tất định từ style-tokens.json) */
+      .hf-text-ink { color: #141414; }
+      .hf-text-light { color: #F7F4EC; }
+      .hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+      .hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+      .hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+      .hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #E7E3D9;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: radial-gradient(circle at 50% 45%, #E7E3D9 30%, #DDD7CB 65%, #C2BAAC 100%);
+      }
+
+      /* Full frame clip convention */
+      .clip {
+        position: absolute;
+        inset: 0;
+      }
+
+      /* 84px Vox architectural grid */
+      .grid-layer {
+        position: absolute;
+        inset: 0;
+        background-image:
+          linear-gradient(to right, rgba(20, 20, 20, 0.16) 1.5px, transparent 1.5px),
+          linear-gradient(to bottom, rgba(20, 20, 20, 0.16) 1.5px, transparent 1.5px);
+        background-size: 84px 84px;
+        pointer-events: none;
+      }
+
+      /* Spotlight edge vignette for consequence beat */
+      .spotlight-vignette {
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(circle at 50% 48%, rgba(20,20,20,0) 40%, rgba(20,20,20,0.36) 100%);
+        pointer-events: none;
+      }
+
+      /* Signature bottom orange bar */
+      #bottom-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 1080px;
+        height: 10px;
+        background-color: #FF6A1A;
+        z-index: 100;
+      }
+
+      /* Camera rig for continuous subtle zoom */
+      #camera-rig {
+        position: absolute;
+        inset: 0;
+        transform-origin: 50% 45%;
+      }
+
+      /* Safe container (Y: 175 to 1365px, X: 50 to 1030px) */
+      #main-container {
+        position: absolute;
+        top: 175px;
+        left: 50px;
+        width: 980px;
+        height: 1190px;
+      }
+
+      /* Top header category banner (Y: 175 -> 235px) */
+      .category-banner {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        height: 50px;
+        margin-bottom: 20px;
+      }
+      .category-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        padding: 8px 18px;
+        border: 2px solid #141414;
+        background-color: #141414;
+        color: #F7F4EC;
+        font-size: 19px;
+        font-weight: 900;
+        letter-spacing: 2px;
+        border-radius: 6px;
+      }
+      .category-indicator {
+        width: 10px;
+        height: 10px;
+        background-color: #FF6A1A;
+        border-radius: 50%;
+      }
+      .epoch-tag {
+        font-size: 18px;
+        font-weight: 900;
+        color: #141414;
+        letter-spacing: 1.5px;
+      }
+
+      /* ZONE 2: Overlays Zone (Y: 245 -> 425px, height: 180px) */
+      #overlay-zone {
+        position: relative;
+        width: 100%;
+        height: 170px;
+        margin-bottom: 25px;
+      }
+
+      /* Overlay 1: Label at 1.17s */
+      #overlay-label {
+        position: absolute;
+        top: 40px;
+        left: 0;
+        padding: 12px 26px;
+        background-color: #FF6A1A;
+        color: #141414;
+        font-size: 26px;
+        font-weight: 900;
+        letter-spacing: 2px;
+        border: 3px solid #141414;
+        box-shadow: 6px 6px 0 #141414;
+        border-radius: 6px;
+        opacity: 0;
+      }
+
+      /* Overlay 2: Punch Phrase at 5.31s */
+      #overlay-punch {
+        position: absolute;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background-color: #141414;
+        border: 4px solid #FF6A1A;
+        box-shadow: 10px 10px 0 rgba(20,20,20,0.4);
+        padding: 20px 48px;
+        border-radius: 12px;
+        text-align: center;
+        white-space: nowrap;
+        opacity: 0;
+      }
+      .punch-text {
+        font-size: 64px;
+        font-weight: 900;
+        line-height: 1.1;
+        letter-spacing: 2px;
+        margin: 0;
+      }
+      .punch-white { color: #F7F4EC; }
+      .punch-orange { color: #FF6A1A; }
+
+      /* Overlay 4: Warning Alert at 8.88s */
+      #overlay-warning {
+        position: absolute;
+        top: 15px;
+        left: 50%;
+        transform: translateX(-50%);
+        background-color: #141414;
+        border: 4px solid #FF6A1A;
+        box-shadow: 12px 12px 0 rgba(20,20,20,0.5);
+        border-radius: 12px;
+        padding: 18px 36px;
+        display: flex;
+        align-items: center;
+        gap: 22px;
+        white-space: nowrap;
+        opacity: 0;
+      }
+      .warning-svg {
+        width: 72px;
+        height: 72px;
+        flex-shrink: 0;
+      }
+      .warning-content {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .warning-pill {
+        background-color: #FF6A1A;
+        color: #141414;
+        padding: 4px 14px;
+        font-size: 16px;
+        font-weight: 900;
+        letter-spacing: 2px;
+        border-radius: 4px;
+        margin-bottom: 6px;
+      }
+      .warning-title {
+        color: #F7F4EC;
+        font-size: 30px;
+        font-weight: 900;
+        letter-spacing: 1px;
+        margin: 0;
+      }
+
+      /* Overlay 3: Diagram Callout at 7.01s (anchored directly above AI Pane) */
+      #overlay-diagram {
+        position: absolute;
+        top: 105px;
+        right: 40px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        opacity: 0;
+        z-index: 40;
+      }
+      .diagram-badge {
+        background-color: #141414;
+        color: #F7F4EC;
+        border: 2px solid #FF6A1A;
+        padding: 10px 18px;
+        border-radius: 6px;
+        font-size: 18px;
+        font-weight: 900;
+        letter-spacing: 1.5px;
+        box-shadow: 4px 4px 0 rgba(20,20,20,0.3);
+      }
+      .diagram-arrow-svg {
+        width: 32px;
+        height: 32px;
+        overflow: visible;
+      }
+
+      /* ZONE 3: Split Arena (Y: 440 -> 1350px, height: 910px) */
+      .split-stage {
+        position: relative;
+        width: 980px;
+        height: 910px;
+      }
+
+      /* Left Pane: 17th Century Manuscript (x: 0, width: 360px) */
+      #pane-hobbes {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 360px;
+        height: 910px;
+        background-color: #F5F0E4;
+        border: 3px solid #141414;
+        box-shadow: 8px 8px 0 rgba(20,20,20,0.18);
+        padding: 28px 24px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+      .manuscript-header {
+        border-bottom: 2px solid #141414;
+        padding-bottom: 14px;
+      }
+      .latin-epoch {
+        font-size: 15px;
+        font-weight: 900;
+        letter-spacing: 2px;
+        color: #141414;
+        margin-bottom: 4px;
+      }
+      .philosopher-name {
+        font-size: 34px;
+        font-weight: 900;
+        line-height: 1.15;
+        margin: 0;
+        color: #141414;
+      }
+      .treatise-title {
+        font-size: 17px;
+        font-weight: 900;
+        color: #141414;
+        opacity: 0.85;
+        margin-top: 4px;
+      }
+      .hobbes-diagram-box {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 12px 0;
+      }
+      .diagram-title-label {
+        font-size: 15px;
+        font-weight: 900;
+        letter-spacing: 1.5px;
+        color: #141414;
+        margin-bottom: 12px;
+      }
+      .hobbes-quote-card {
+        border-left: 4px solid #141414;
+        padding: 14px 16px;
+        background-color: #E7E3D9;
+      }
+      .quote-latin {
+        font-size: 16px;
+        font-weight: 900;
+        font-style: italic;
+        color: #141414;
+        margin-bottom: 6px;
+      }
+      .quote-vn {
+        font-size: 17px;
+        font-weight: 700;
+        line-height: 1.35;
+        color: #141414;
+      }
+      .manuscript-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-top: 2px solid #141414;
+        padding-top: 12px;
+        font-size: 15px;
+        font-weight: 900;
+        color: #141414;
+      }
+
+      /* Right Pane: Modern Chatbot & AI Terminal (x: 380px, width: 600px) */
+      #pane-ai {
+        position: absolute;
+        top: 0;
+        left: 380px;
+        width: 600px;
+        height: 910px;
+        background-color: #141414;
+        border: 3px solid #FF6A1A;
+        box-shadow: 12px 12px 0 rgba(20,20,20,0.35);
+        padding: 28px 24px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        opacity: 0;
+      }
+      .terminal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 2px solid rgba(247, 244, 236, 0.2);
+        padding-bottom: 14px;
+      }
+      /* Vox DNA compliant header dots: Cam duy nhất kết hợp các sắc độ mực/kem */
+      .traffic-lights {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+      .dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+      }
+      .dot-accent {
+        background-color: #FF6A1A;
+      }
+      .dot-light {
+        background-color: #F7F4EC;
+      }
+      .dot-dim {
+        background-color: rgba(247, 244, 236, 0.35);
+        border: 1px solid rgba(247, 244, 236, 0.6);
+      }
+      .terminal-title {
+        font-size: 20px;
+        font-weight: 900;
+        color: #F7F4EC;
+        letter-spacing: 1.5px;
+      }
+      .ai-status-badge {
+        padding: 5px 12px;
+        background-color: #FF6A1A;
+        color: #141414;
+        font-size: 15px;
+        font-weight: 900;
+        border-radius: 4px;
+      }
+
+      /* Chat stream container */
+      .chat-stream {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        margin: 10px 0;
+      }
+      .chat-card {
+        padding: 16px 20px;
+        border-radius: 6px;
+      }
+      .chat-msg-user {
+        background-color: #141414;
+        border: 2px solid rgba(247, 244, 236, 0.25);
+        border-left: 5px solid rgba(247, 244, 236, 0.6);
+      }
+      .chat-msg-ai {
+        background-color: #141414;
+        border: 2px solid #FF6A1A;
+        border-left: 6px solid #FF6A1A;
+      }
+      .speaker-tag {
+        font-size: 15px;
+        font-weight: 900;
+        letter-spacing: 1.5px;
+        margin-bottom: 8px;
+      }
+      .speaker-user { color: #E7E3D9; }
+      .speaker-ai { color: #FF6A1A; }
+      .chat-text {
+        font-size: 20px;
+        font-weight: 700;
+        line-height: 1.4;
+        color: #F7F4EC;
+        margin: 0;
+      }
+
+      /* Neural token matrix visualization */
+      .neural-matrix-box {
+        background-color: #141414;
+        border: 2px solid rgba(255, 106, 26, 0.35);
+        padding: 18px 20px;
+        border-radius: 6px;
+      }
+      .matrix-label {
+        font-size: 15px;
+        font-weight: 900;
+        color: #FF6A1A;
+        letter-spacing: 1.5px;
+        margin-bottom: 12px;
+      }
+      .token-grid {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 8px;
+        margin-bottom: 14px;
+      }
+      .neural-token {
+        height: 32px;
+        background-color: #141414;
+        border: 1px solid rgba(255, 106, 26, 0.5);
+        color: #F7F4EC;
+        font-size: 13px;
+        font-weight: 900;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 4px;
+      }
+      .metrics-row {
+        display: flex;
+        justify-content: space-between;
+        border-top: 1px solid rgba(247, 244, 236, 0.15);
+        padding-top: 10px;
+      }
+      .metric-item {
+        font-size: 14px;
+        font-weight: 900;
+        color: #F7F4EC;
+      }
+      .metric-highlight {
+        color: #FF6A1A;
+      }
+
+      /* Bottom alert status inside terminal */
+      #ai-warning-bar {
+        background-color: #FF6A1A;
+        color: #141414;
+        padding: 12px 18px;
+        border-radius: 6px;
+        font-size: 18px;
+        font-weight: 900;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        letter-spacing: 1px;
+        transform-origin: bottom center;
+        opacity: 0;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s07"
+      data-width="1080"
+      data-height="1920"
+      data-duration="10.64"
+    >
+      <!-- Background Visual Layers -->
+      <div class="grid-layer"></div>
+      <div class="spotlight-vignette"></div>
+
+      <!-- Main Scene Clip -->
+      <section id="scene-s07" class="clip" data-start="0" data-duration="10.64">
+        <div id="camera-rig">
+          <div id="main-container">
+            <!-- Top Category Indicator -->
+            <div class="category-banner">
+              <div class="category-pill">
+                <span class="category-indicator"></span>
+                <span>TRIẾT HỌC → KỶ NGUYÊN AI</span>
+              </div>
+              <div class="epoch-tag">1651 → 2024</div>
+            </div>
+
+            <!-- Overlays Zone (Dedicated vertical space Y: 245 -> 425px) -->
+            <div id="overlay-zone">
+              <!-- Overlay 1: Label at 1.17s -->
+              <div id="overlay-label">Ý TƯỞNG VƯỢT THỜI GIAN</div>
+
+              <!-- Overlay 2: Punch Phrase at 5.31s -->
+              <div id="overlay-punch">
+                <h1 class="punch-text">
+                  <span class="punch-white">4 THẾ KỶ </span><span class="punch-orange">SAU</span>
+                </h1>
+              </div>
+
+              <!-- Overlay 4: Warning Icon & Notice at 8.88s -->
+              <div id="overlay-warning">
+                <svg class="warning-svg" viewBox="0 0 100 100">
+                  <path class="warning-path" d="M 50 14 L 90 84 L 10 84 Z" fill="none" stroke="#FF6A1A" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" />
+                  <line class="warning-path" x1="50" y1="38" x2="50" y2="60" stroke="#FF6A1A" stroke-width="7" stroke-linecap="round" />
+                  <circle cx="50" cy="73" r="4.5" fill="#FF6A1A" />
+                </svg>
+                <div class="warning-content">
+                  <div class="warning-pill">NGUY CƠ TOÀN CẦU</div>
+                  <h2 class="warning-title">AI THỐNG TRỊ THẾ GIỚI</h2>
+                </div>
+              </div>
+
+              <!-- Overlay 3: Diagram Callout at 7.01s -->
+              <div id="overlay-diagram">
+                <div class="diagram-badge">CỬA SỔ CHATBOT AI</div>
+                <svg class="diagram-arrow-svg" viewBox="0 0 32 32">
+                  <path id="diagram-arrow-path" class="diagram-arrow" d="M 16 4 L 16 26 M 8 18 L 16 26 L 24 18" fill="none" stroke="#FF6A1A" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+              </div>
+            </div>
+
+            <!-- Split Arena Stage (Y: 440 -> 1350px, width 980px) -->
+            <div class="split-stage">
+              <!-- Left Pane: 17th Century Manuscript (width 360px, x: 0) -->
+              <div id="pane-hobbes">
+                <div class="manuscript-header">
+                  <div class="latin-epoch">ANNO DOMINI 1651</div>
+                  <h2 class="philosopher-name">THOMAS<br />HOBBES</h2>
+                  <div class="treatise-title">LEVIATHAN · CHƯƠNG V</div>
+                </div>
+
+                <div class="hobbes-diagram-box">
+                  <div class="diagram-title-label">LOGICA = COMPUTATIO</div>
+                  <svg class="hobbes-svg" width="190" height="190" viewBox="0 0 220 220">
+                    <circle class="hobbes-path" cx="110" cy="110" r="90" fill="none" stroke="#141414" stroke-width="2.5" />
+                    <circle class="hobbes-path" cx="110" cy="110" r="65" fill="none" stroke="#141414" stroke-width="1.5" stroke-dasharray="6,4" />
+                    <line class="hobbes-path" x1="20" y1="110" x2="200" y2="110" stroke="#141414" stroke-width="2" />
+                    <line class="hobbes-path" x1="110" y1="20" x2="110" y2="200" stroke="#141414" stroke-width="2" />
+                    <line class="hobbes-path" x1="46" y1="46" x2="174" y2="174" stroke="#141414" stroke-width="1.5" />
+                    <line class="hobbes-path" x1="46" y1="174" x2="174" y2="46" stroke="#141414" stroke-width="1.5" />
+                    <circle cx="110" cy="110" r="4" fill="#141414" />
+                    <circle cx="20" cy="110" r="4" fill="#141414" />
+                    <circle cx="200" cy="110" r="4" fill="#141414" />
+                    <circle cx="110" cy="20" r="4" fill="#141414" />
+                    <circle cx="110" cy="200" r="4" fill="#141414" />
+                  </svg>
+                </div>
+
+                <div class="hobbes-quote-card">
+                  <div class="quote-latin">"Reason is nothing but reckoning."</div>
+                  <div class="quote-vn">Lý trí chẳng qua là sự tính toán: cộng và trừ các ý niệm.</div>
+                </div>
+
+                <div class="manuscript-footer">
+                  <span>FOLIO MDCLI</span>
+                  <span>DE CORPORE</span>
+                </div>
+              </div>
+
+              <!-- Right Pane: Modern Chatbot & AI Terminal (width 600px, x: 380px) -->
+              <div id="pane-ai">
+                <div class="terminal-header">
+                  <div class="traffic-lights">
+                    <div class="dot dot-accent"></div>
+                    <div class="dot dot-light"></div>
+                    <div class="dot dot-dim"></div>
+                  </div>
+                  <div class="terminal-title">CHATGPT-4 // LLM ENGINE</div>
+                  <div class="ai-status-badge">ONLINE</div>
+                </div>
+
+                <div class="chat-stream">
+                  <div class="chat-card chat-msg-user">
+                    <div class="speaker-tag speaker-user">[INPUT 1651 // HOBBES]</div>
+                    <p class="chat-text">"Có thể xem trí tuệ con người như một cỗ máy tính toán cơ giới?"</p>
+                  </div>
+
+                  <div class="chat-card chat-msg-ai">
+                    <div class="speaker-tag speaker-ai">[CHATGPT-4 // 4 THẾ KỶ SAU]</div>
+                    <p class="chat-text">"Chính xác. Ý tưởng 1651 của ông đã khai sinh AI ngày nay."</p>
+                  </div>
+                </div>
+
+                <div class="neural-matrix-box">
+                  <div class="matrix-label">MA TRẬN NƠ-RON TƯ DUY (400 NĂM TIẾN HOÁ)</div>
+                  <div class="token-grid">
+                    <div class="neural-token">0x7F</div>
+                    <div class="neural-token">TENS</div>
+                    <div class="neural-token">NODE</div>
+                    <div class="neural-token">ATTN</div>
+                    <div class="neural-token">VECT</div>
+                    <div class="neural-token">LOGIC</div>
+                    <div class="neural-token">MATH</div>
+                    <div class="neural-token">CALC</div>
+                    <div class="neural-token">SYNC</div>
+                    <div class="neural-token">AUTO</div>
+                  </div>
+                  <div class="metrics-row">
+                    <div class="metric-item">MÔ HÌNH: <span class="metric-highlight">GPT-4.0</span></div>
+                    <div class="metric-item">THÔNG SỐ: <span class="metric-highlight">1.8 TỶ NƠ-RON</span></div>
+                    <div class="metric-item">PHẠM VI: <span class="metric-highlight">TOÀN CẦU</span></div>
+                  </div>
+                </div>
+
+                <div id="ai-warning-bar">
+                  <span>⚠ HỆ THỐNG: KỶ NGUYÊN AI XÁC LẬP</span>
+                  <span>99.98% THỐNG TRỊ</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Persistent Signature Bottom Orange Bar -->
+      <div id="bottom-bar"></div>
+    </div>
+
+    <script>
+      // Setup paths for SVG progressive drawing
+      document.querySelectorAll(".hobbes-path, .warning-path, .diagram-arrow").forEach((p) => {
+        if (typeof p.getTotalLength === "function") {
+          const len = p.getTotalLength();
+          p.style.strokeDasharray = len + "";
+          p.style.strokeDashoffset = len + "";
+        }
+      });
+
+      // Master Paused Timeline
+      const tl = gsap.timeline({ paused: true });
+
+      // 1. Camera Motion: Continuous subtle zoom-in over full scene
+      tl.fromTo(
+        "#camera-rig",
+        { scale: 1 },
+        { scale: 1.04, duration: 10.64, ease: "none" },
+        0
+      );
+
+      // 2. Entrance Transition: zoom-through reveal
+      tl.fromTo(
+        "#main-container",
+        { scale: 0.9, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.75, ease: "power3.out" },
+        0
+      );
+
+      // Draw Hobbes geometric proof diagram paths
+      tl.to(
+        ".hobbes-path",
+        { strokeDashoffset: 0, duration: 1.1, ease: "power2.out", stagger: 0.1 },
+        0.3
+      );
+
+      // 3. Overlay 1: Label "Ý TƯỞNG VƯỢT THỜI GIAN" (1.17s -> exit 3.37s)
+      tl.fromTo(
+        "#overlay-label",
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.45, ease: "power3.out" },
+        1.17
+      );
+      tl.to(
+        "#overlay-label",
+        { opacity: 0, y: -15, duration: 0.35, ease: "power2.in" },
+        3.37
+      );
+
+      // 4. Split Dynamic Shift: AI Pane trỗi dậy và xuất hiện bên phải (t = 4.45s)
+      tl.to(
+        "#pane-hobbes",
+        { opacity: 0.6, duration: 0.8, ease: "power2.out" },
+        4.45
+      );
+      tl.fromTo(
+        "#pane-ai",
+        { x: 40, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.85, ease: "power3.out" },
+        4.45
+      );
+
+      // 5. Overlay 2: Punch Phrase "4 THẾ KỶ SAU" (5.31s -> exit 7.31s)
+      tl.fromTo(
+        "#overlay-punch",
+        { scale: 0.7, opacity: 0, y: 20 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.5, ease: "power3.out" },
+        5.31
+      );
+      tl.to(
+        "#overlay-punch",
+        { opacity: 0, scale: 1.05, duration: 0.35, ease: "power2.in" },
+        7.31
+      );
+
+      // Chatbot dialog elements reveal
+      tl.fromTo(
+        ".chat-msg-user",
+        { opacity: 0, y: 12 },
+        { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" },
+        5.65
+      );
+      tl.fromTo(
+        ".chat-msg-ai",
+        { opacity: 0, y: 12 },
+        { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" },
+        6.35
+      );
+
+      // Neural token activation
+      tl.fromTo(
+        ".neural-token",
+        { opacity: 0.15, scale: 0.8 },
+        { opacity: 1, scale: 1, duration: 0.25, stagger: 0.04, ease: "power1.out" },
+        6.1
+      );
+
+      // 6. Overlay 3: Diagram "CỬA SỔ CHATBOT AI" (7.01s -> exit 9.01s)
+      tl.fromTo(
+        "#overlay-diagram",
+        { opacity: 0, y: -10 },
+        { opacity: 1, y: 0, duration: 0.45, ease: "power3.out" },
+        7.01
+      );
+      tl.to(
+        "#diagram-arrow-path",
+        { strokeDashoffset: 0, duration: 0.5, ease: "power2.out" },
+        7.15
+      );
+      tl.to(
+        "#overlay-diagram",
+        { opacity: 0, duration: 0.35, ease: "power2.in" },
+        9.01
+      );
+
+      // 7. Overlay 4: Warning Icon & Announcement (8.88s -> exit 10.58s)
+      tl.fromTo(
+        "#overlay-warning",
+        { scale: 0.75, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.5, ease: "power3.out" },
+        8.88
+      );
+      tl.to(
+        ".warning-path",
+        { strokeDashoffset: 0, duration: 0.55, ease: "power2.out" },
+        8.98
+      );
+
+      // Terminal warning status bar reveal
+      tl.fromTo(
+        "#ai-warning-bar",
+        { opacity: 0, scaleY: 0 },
+        { opacity: 1, scaleY: 1, duration: 0.4, ease: "power3.out" },
+        9.2
+      );
+
+      // Register seekable timeline
+      window.__timelines["scene-s07"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>
