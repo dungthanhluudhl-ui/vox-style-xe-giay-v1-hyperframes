@@ -7,414 +7,542 @@
     <template>
       <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
       <style>
-      * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-      }
+/* hf-safe-colors (tất định từ style-tokens.json) */
+.hf-text-ink { color: #141414; }
+.hf-text-light { color: #F7F4EC; }
+.hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+.hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+.hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+.hf-plate-paper { color: #141414; background-color: #F5F0E4; }
 
-      html,
-      body {
-        margin: 0;
-        padding: 0;
-        width: 1080px;
-        height: 1920px;
-        overflow: hidden;
-        background: #e7e3d9;
-        font-family: "Be Vietnam Pro", sans-serif;
-        -webkit-font-smoothing: antialiased;
-      }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
-      #root {
-        position: relative;
-        width: 100%;
-        height: 100%;
-        overflow: hidden;
-        background: #e7e3d9;
-      }
+    body {
+      background-color: #E7E3D9;
+      color: #141414;
+      font-family: "Be Vietnam Pro", sans-serif;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
 
-      /* Base clip layout: full-frame half-open visibility governed by HyperFrames runtime */
-      .clip {
-        position: absolute;
-        inset: 0;
-        pointer-events: none;
-      }
+    #root {
+      position: relative;
+      width: 1080px;
+      height: 1920px;
+      overflow: hidden;
+      background-color: #E7E3D9;
+    }
 
-      /* Scene visual layers */
-      #hero-container {
-        position: absolute;
-        inset: 0;
-        overflow: hidden;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
+    /* Quy ước .clip định vị full khung, không cố định width/height px */
+    .clip {
+      position: absolute;
+      inset: 0;
+    }
 
-      #hero-img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        object-position: center center;
-        display: block;
-        transform-origin: 50% 50%;
-        will-change: transform;
-      }
+    /* Nền biến thể "chart": 4 đường kẻ ngang ở 20%, 40%, 60%, 80% kèm tick cam bên trái */
+    .chart-background {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 1;
+    }
 
-      /* Subtle paper grid pattern from Style DNA */
-      .grid-overlay {
-        position: absolute;
-        inset: 0;
-        background-image:
-          linear-gradient(to right, rgba(20, 20, 20, 0.12) 1.5px, transparent 1.5px),
-          linear-gradient(to bottom, rgba(20, 20, 20, 0.12) 1.5px, transparent 1.5px);
-        background-size: 84px 84px;
-        mix-blend-mode: multiply;
-        pointer-events: none;
-      }
+    .chart-grid-line {
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background-color: rgba(20, 20, 20, 0.32);
+    }
 
-      /* Radial vignette to give organic paper focus */
-      .paper-vignette {
-        position: absolute;
-        inset: 0;
-        background: radial-gradient(circle at 50% 50%, transparent 55%, rgba(20, 20, 20, 0.22) 100%);
-        mix-blend-mode: multiply;
-        pointer-events: none;
-      }
+    .chart-grid-line.line-20 { top: 384px; }
+    .chart-grid-line.line-40 { top: 768px; }
+    .chart-grid-line.line-60 { top: 1152px; }
+    .chart-grid-line.line-80 { top: 1536px; }
 
-      /* Mandatory brand signature orange bottom bar */
-      .bottom-bar {
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        width: 1080px;
-        height: 10px;
-        background: #ff6a1a;
-        z-index: 100;
-      }
+    .chart-tick {
+      position: absolute;
+      left: 0;
+      width: 24px;
+      height: 6px;
+      background-color: #FF6A1A;
+    }
 
-      /* Overlay 1: Narrative Label */
-      .editorial-badge {
-        position: absolute;
-        top: 200px;
-        left: 60px;
-        display: inline-flex;
-        align-items: center;
-        gap: 16px;
-        background: #141414;
-        padding: 16px 28px;
-        border-radius: 8px;
-        border-left: 8px solid #ff6a1a;
-        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
-      }
+    .chart-tick.tick-20 { top: 382px; }
+    .chart-tick.tick-40 { top: 766px; }
+    .chart-tick.tick-60 { top: 1150px; }
+    .chart-tick.tick-80 { top: 1534px; }
 
-      .badge-accent-tag {
-        background: #ff6a1a;
-        color: #141414;
-        font-size: 24px;
-        font-weight: 900;
-        padding: 6px 14px;
-        border-radius: 4px;
-        letter-spacing: 0.05em;
-      }
+    /* Thanh cam đáy cố định xuyên suốt - visual signature của thương hiệu */
+    .brand-bottom-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 14px;
+      background-color: #FF6A1A;
+      z-index: 100;
+    }
 
-      .badge-text {
-        color: #f7f4ec;
-        font-size: 38px;
-        font-weight: 900;
-        letter-spacing: -0.01em;
-      }
+    /* Utility classes màu tương phản WCAG an toàn */
+    .hf-plate-ink {
+      background-color: #141414;
+      color: #F7F4EC;
+    }
 
-      /* Icon cards: money & rise */
-      .icon-card {
-        position: absolute;
-        width: 176px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 12px;
-        background: rgba(20, 20, 20, 0.94);
-        padding: 20px 16px;
-        border-radius: 14px;
-        border: 2px solid #ff6a1a;
-        box-shadow: 0 16px 36px rgba(0, 0, 0, 0.4);
-      }
+    .hf-plate-paper {
+      background-color: #E7E3D9;
+      color: #141414;
+    }
 
-      #card-money {
-        top: 420px;
-        right: 60px;
-      }
+    .hf-hl-orange {
+      background-color: #FF6A1A;
+      color: #141414;
+    }
 
-      #card-rise {
-        top: 960px;
-        right: 60px;
-      }
+    .text-orange-on-dark {
+      color: #FF6A1A;
+    }
 
-      .icon-svg {
-        width: 80px;
-        height: 80px;
-      }
+    /* Header badge ở vùng an toàn Y: 180px */
+    .header-badge {
+      position: absolute;
+      top: 180px;
+      left: 60px;
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 20px;
+      background-color: #141414;
+      border-radius: 8px;
+      z-index: 20;
+    }
 
-      .icon-svg path,
-      .icon-svg circle {
-        fill: none;
-        stroke: #ff6a1a;
-        stroke-width: 4;
-        stroke-linecap: round;
-        stroke-linejoin: round;
-      }
+    .header-badge-tag {
+      font-size: 20px;
+      font-weight: 900;
+      letter-spacing: 2px;
+      color: #FF6A1A;
+      text-transform: uppercase;
+    }
 
-      .icon-label {
-        color: #f7f4ec;
-        font-size: 22px;
-        font-weight: 900;
-        letter-spacing: 0.04em;
-        text-align: center;
-      }
+    .header-badge-title {
+      font-size: 22px;
+      font-weight: 700;
+      color: #F7F4EC;
+    }
 
-      /* Overlay 3: Mechanism Callout */
-      .editorial-callout {
-        position: absolute;
-        top: 720px;
-        left: 60px;
-        display: inline-flex;
-        align-items: center;
-        gap: 18px;
-        background: #141414;
-        padding: 18px 32px;
-        border-radius: 10px;
-        border-left: 8px solid #ff6a1a;
-        box-shadow: 0 14px 36px rgba(0, 0, 0, 0.4);
-      }
+    /* Container tranh ảnh cắt dán collage trung tâm */
+    .hero-collage-frame {
+      position: absolute;
+      top: 270px;
+      left: 60px;
+      width: 960px;
+      height: 760px;
+      border: 4px solid #141414;
+      border-radius: 14px;
+      background-color: #141414;
+      box-shadow: 14px 14px 0px rgba(20, 20, 20, 0.9);
+      overflow: hidden;
+      z-index: 10;
+    }
 
-      .callout-tag {
-        background: #ff6a1a;
-        color: #141414;
-        font-size: 24px;
-        font-weight: 900;
-        padding: 6px 14px;
-        border-radius: 4px;
-        letter-spacing: 0.05em;
-      }
+    .hero-media-wrapper {
+      position: absolute;
+      inset: -40px;
+      will-change: transform;
+    }
 
-      .callout-text {
-        color: #f7f4ec;
-        font-size: 42px;
-        font-weight: 900;
-        letter-spacing: -0.01em;
-      }
+    .hero-media-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
 
-      /* Overlay 5: Climax Punch Phrase */
-      .punch-box {
-        position: absolute;
-        top: 1220px;
-        left: 60px;
-        width: 960px;
-        background: #141414;
-        padding: 32px 36px;
-        border-radius: 14px;
-        border-left: 12px solid #ff6a1a;
-        box-shadow: 0 18px 44px rgba(0, 0, 0, 0.45);
-      }
+    /* Overlay đồ thị SVG biểu thị kinh tế nhích lên trong Shot 1 */
+    .chart-overlay-svg {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 15;
+    }
 
-      .punch-kicker {
-        color: #ff6a1a;
-        font-size: 26px;
-        font-weight: 900;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-        margin-bottom: 8px;
-      }
+    .chart-trend-path {
+      fill: none;
+      stroke: #FF6A1A;
+      stroke-width: 10;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
 
-      .punch-title {
-        color: #f7f4ec;
-        font-size: 58px;
-        font-weight: 900;
-        line-height: 1.25;
-        letter-spacing: -0.02em;
-      }
-    </style>
+    /* Thẻ đo chỉ số kinh tế trên đồ thị */
+    .metric-badge {
+      position: absolute;
+      top: 320px;
+      right: 90px;
+      padding: 14px 22px;
+      background-color: #141414;
+      border-left: 6px solid #FF6A1A;
+      border-radius: 8px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+      z-index: 20;
+    }
 
-    <div
-      id="root"
-      data-composition-id="scene-s47"
-      data-start="0"
-      data-duration="7.06"
-      data-width="1080"
-      data-height="1920"
-    >
-      <!-- Base Scene Track (Track 0): Hero image with multi-segment Ken Burns motion + Paper Grid -->
-      <section id="scene-bg" class="clip" data-start="0" data-duration="7.06" data-track-index="0">
-        <div id="hero-container">
-          <img
-            id="hero-img"
-            src="assets/img-21-paper-cutout-money-printing-inflation.jpeg"
-            alt="Cỗ máy in tiền Ngân hàng Trung ương Mèo"
-          />
-        </div>
-        <div class="grid-overlay"></div>
-        <div class="paper-vignette"></div>
-        <div class="bottom-bar"></div>
-      </section>
+    .metric-label {
+      font-size: 18px;
+      font-weight: 700;
+      color: #F7F4EC;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      margin-bottom: 4px;
+    }
 
-      <!-- Overlay 1 (Track 1): Label 'TÌM BIỆN PHÁP CỨU NỀN KINH TẾ' (atMs: 409160, holdMs: 2400) -->
-      <div id="clip-label-1" class="clip" data-start="0.43" data-duration="2.40" data-track-index="1">
-        <div class="editorial-badge" id="badge-1">
-          <span class="badge-accent-tag">KHỦNG HOẢNG</span>
-          <span class="badge-text">TÌM BIỆN PHÁP CỨU NỀN KINH TẾ</span>
-        </div>
-      </div>
+    .metric-value {
+      font-size: 32px;
+      font-weight: 900;
+      color: #FF6A1A;
+    }
 
-      <!-- Overlay 2 (Track 2): Icon 'money' (atMs: 410860, holdMs: 2500) -->
-      <div id="clip-icon-money" class="clip" data-start="2.13" data-duration="2.50" data-track-index="2">
-        <div class="icon-card" id="card-money">
-          <svg class="icon-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-            <path
-              id="money-p1"
-              d="M 15 28 L 85 28 C 88 28 90 30 90 33 L 90 67 C 90 70 88 72 85 72 L 15 72 C 12 72 10 70 10 67 L 10 33 C 10 30 12 28 15 28 Z"
-            />
-            <circle id="money-p2" cx="50" cy="50" r="14" />
-            <path
-              id="money-p3"
-              d="M 10 42 C 18 42 22 36 22 28 M 90 42 C 82 42 78 36 78 28 M 10 58 C 18 58 22 64 22 72 M 90 58 C 82 58 78 64 78 72"
-            />
-          </svg>
-          <div class="icon-label">IN TIỀN CÁ</div>
-        </div>
-      </div>
+    /* Các thẻ so sánh đối nghịch trong Shot 2 (Hàng vs Tiền) */
+    .comparison-container {
+      position: absolute;
+      top: 300px;
+      left: 80px;
+      right: 80px;
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+      z-index: 20;
+    }
 
-      <!-- Overlay 3 (Track 1): Label 'IN THÊM TIỀN CÁ' (atMs: 411720, holdMs: 2200) -->
-      <div id="clip-label-2" class="clip" data-start="2.99" data-duration="2.20" data-track-index="1">
-        <div class="editorial-callout" id="card-printing">
-          <span class="callout-tag">BIỆN PHÁP</span>
-          <span class="callout-text">IN THÊM TIỀN CÁ</span>
-        </div>
-      </div>
+    .compare-card {
+      flex: 1;
+      padding: 18px 20px;
+      border-radius: 10px;
+      border: 3px solid #141414;
+      box-shadow: 6px 6px 0px #141414;
+    }
 
-      <!-- Overlay 4 (Track 2): Icon 'rise' (atMs: 413700, holdMs: 2200) -->
-      <div id="clip-icon-rise" class="clip" data-start="4.97" data-duration="2.09" data-track-index="2">
-        <div class="icon-card" id="card-rise">
-          <svg class="icon-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-            <path id="rise-arrow" d="M 15 80 L 40 55 L 60 65 L 85 25 M 70 25 L 85 25 L 85 40" />
-            <path id="rise-bar" d="M 10 85 L 90 85" />
-          </svg>
-          <div class="icon-label">TĂNG TRƯỞNG</div>
-        </div>
-      </div>
+    .compare-card.card-goods {
+      background-color: #F5F0E4;
+      color: #141414;
+    }
 
-      <!-- Overlay 5 (Track 3): Punch Phrase 'BƠM VỐN CỨU DOANH NGHIỆP' (atMs: 414310, holdMs: 1600) -->
-      <div id="clip-punch" class="clip" data-start="5.58" data-duration="1.48" data-track-index="3">
-        <div class="punch-box" id="punch-hero">
-          <div class="punch-kicker">GIẢI CỨU THỊ TRƯỜNG</div>
-          <div class="punch-title">BƠM VỐN CỨU DOANH NGHIỆP</div>
-        </div>
-      </div>
+    .compare-card.card-money {
+      background-color: #FF6A1A;
+      color: #141414;
+    }
+
+    .compare-title {
+      font-size: 20px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 6px;
+    }
+
+    .compare-metric {
+      font-size: 34px;
+      font-weight: 900;
+      line-height: 1.1;
+    }
+
+    /* Vùng chứa Punch Phrase và Label ở dải an toàn Y: 1070px - 1360px */
+    .editorial-lower-zone {
+      position: absolute;
+      top: 1070px;
+      left: 60px;
+      width: 960px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      z-index: 30;
+    }
+
+    /* Label phụ tối đa 4 từ */
+    .editorial-label {
+      align-self: flex-start;
+      padding: 10px 22px;
+      background-color: #141414;
+      border-radius: 8px;
+      box-shadow: 4px 4px 0px rgba(20, 20, 20, 0.4);
+    }
+
+    .editorial-label-text {
+      font-size: 26px;
+      font-weight: 900;
+      color: #F7F4EC;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+    }
+
+    /* Khối Punch-phrase chính cỡ lớn */
+    .punch-card {
+      padding: 24px 32px;
+      background-color: #141414;
+      border-radius: 12px;
+      border-left: 12px solid #FF6A1A;
+      box-shadow: 10px 10px 0px rgba(20, 20, 20, 0.6);
+    }
+
+    .punch-text {
+      font-size: 64px;
+      font-weight: 900;
+      line-height: 1.34;
+      color: #F7F4EC;
+      text-transform: uppercase;
+    }
+
+    .punch-highlight {
+      color: #FF6A1A;
+    }
+  </style>
+
+  <div
+    id="root"
+    data-composition-id="scene-s47"
+    data-width="1080"
+    data-height="1920"
+    data-duration="10.22"
+    data-fps="30"
+  >
+    <!-- Nền dạng đồ thị theo Style DNA (chart variant) -->
+    <div class="chart-background">
+      <div class="chart-grid-line line-20"></div>
+      <div class="chart-grid-line line-40"></div>
+      <div class="chart-grid-line line-60"></div>
+      <div class="chart-grid-line line-80"></div>
+      <div class="chart-tick tick-20"></div>
+      <div class="chart-tick tick-40"></div>
+      <div class="chart-tick tick-60"></div>
+      <div class="chart-tick tick-80"></div>
     </div>
 
-    <script>
-      // Initialize SVG stroke dash arrays for self-drawing vector icon effects
-      const svgElements = document.querySelectorAll(".icon-svg path, .icon-svg circle");
-      svgElements.forEach((el) => {
-        try {
-          const length = el.getTotalLength() || 260;
-          el.style.strokeDasharray = length;
-          el.style.strokeDashoffset = length;
-        } catch (err) {
-          el.style.strokeDasharray = 260;
-          el.style.strokeDashoffset = 260;
-        }
-      });
+    <!-- Thanh cam cố định nhận diện thương hiệu -->
+    <div class="brand-bottom-bar"></div>
 
-      // Master paused timeline bound to composition root ID
-      window.__timelines = window.__timelines || {};
-      const tl = gsap.timeline({ paused: true });
+    <!-- SHOT 1 (t = 0.00s đến 5.21s): Hiệu ứng nới lỏng tiền tệ làm kinh tế nhích lên -->
+    <section id="shot-1" class="clip" data-start="0" data-duration="5.21">
+      <div class="header-badge" id="s1-badge">
+        <span class="header-badge-tag">GIAI ĐOẠN 1</span>
+        <span class="header-badge-title">KÍCH CẦU THỊ TRƯỜNG</span>
+      </div>
 
-      // 1. Ken Burns camera motion divided into 3 connected segments (< 2.5s each, non-linear eases)
-      // Segment A (0.0s - 2.2s): Initial confident grow zoom-in into the printing machine
-      tl.fromTo(
-        "#hero-img",
-        { scale: 1.05, x: 0, y: 0 },
-        { scale: 1.12, x: -20, y: -15, duration: 2.2, ease: "power2.out" },
-        0
-      );
+      <!-- Khung tranh collage có hiệu ứng camera Pan-left -->
+      <div class="hero-collage-frame" id="s1-frame">
+        <div class="hero-media-wrapper" id="s1-media">
+          <img
+            class="hero-media-img"
+            src="assets/img-21-paper-cutout-money-printing-inflation.jpeg"
+            alt="May in tien kich thich kinh te"
+          />
+        </div>
 
-      // Segment B (2.2s - 4.5s): Smooth narrative pan following the flow of newly printed currency
+        <!-- Biểu đồ đường vẽ tăng trưởng kinh tế -->
+        <svg class="chart-overlay-svg" viewBox="0 0 960 760">
+          <path
+            id="s1-curve"
+            class="chart-trend-path"
+            d="M 80 620 C 300 580, 480 440, 860 220"
+          />
+        </svg>
+
+        <!-- Thẻ chỉ số thị trường khởi sắc -->
+        <div class="metric-badge" id="s1-metric">
+          <div class="metric-label">TIỀN LƯU THÔNG</div>
+          <div class="metric-value">↗ TĂNG TỨC THÌ</div>
+        </div>
+      </div>
+
+      <!-- Vùng Punch Phrase của Shot 1 -->
+      <div class="editorial-lower-zone">
+        <div class="punch-card" id="s1-punch">
+          <h1 class="punch-text">
+            CHÍNH SÁCH <span class="punch-highlight">TIỀN TỆ</span>
+          </h1>
+        </div>
+      </div>
+    </section>
+
+    <!-- SHOT 2 (t = 5.21s đến 10.22s): Núi tiền ngập tràn gây bùng phát lạm phát -->
+    <section id="shot-2" class="clip" data-start="5.21" data-duration="5.01">
+      <div class="header-badge" id="s2-badge">
+        <span class="header-badge-tag">NGHỊCH LÝ</span>
+        <span class="header-badge-title">CƠ CHẾ LẠM PHÁT</span>
+      </div>
+
+      <!-- Khung tranh collage có hiệu ứng camera Zoom-out làm nổi bật lượng tiền thừa -->
+      <div class="hero-collage-frame" id="s2-frame">
+        <div class="hero-media-wrapper" id="s2-media">
+          <img
+            class="hero-media-img"
+            src="assets/img-21-paper-cutout-money-printing-inflation.jpeg"
+            alt="Nui tien gay lam phat"
+          />
+        </div>
+
+        <!-- Thẻ so sánh thực tế: Hàng hoá giữ nguyên vs Tiền tăng vọt -->
+        <div class="comparison-container">
+          <div class="compare-card card-goods" id="s2-card-goods">
+            <div class="compare-title">SẢN LƯỢNG PATE</div>
+            <div class="compare-metric">KHÔNG ĐỔI</div>
+          </div>
+          <div class="compare-card card-money" id="s2-card-money">
+            <div class="compare-title">LƯỢNG TIỀN IN RA</div>
+            <div class="compare-metric">BÙNG NỔ ↑</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Vùng Label và Punch Phrase của Shot 2 -->
+      <div class="editorial-lower-zone">
+        <!-- Label bổ trợ (tối đa 4 từ) -->
+        <div class="editorial-label" id="s2-label">
+          <span class="editorial-label-text">HÀNG ÍT : TIỀN NHIỀU</span>
+        </div>
+
+        <!-- Punch-phrase đỉnh điểm của cảnh -->
+        <div class="punch-card" id="s2-punch">
+          <h1 class="punch-text">
+            BÙNG PHÁT <span class="punch-highlight">LẠM PHÁT</span>
+          </h1>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    // Chuẩn bị đo độ dài đường path SVG biểu đồ
+    const curvePath = document.getElementById("s1-curve");
+    if (curvePath) {
+      const curveLen = curvePath.getTotalLength();
+      curvePath.style.strokeDasharray = curveLen + "";
+      curvePath.style.strokeDashoffset = curveLen + "";
+    }
+
+    // Đăng ký đúng 1 paused timeline gốc cho HyperFrames
+    const tl = gsap.timeline({ paused: true });
+
+    // ==========================================
+    // DIỄN HOẠT SHOT 1 (t = 0.00s -> 5.21s)
+    // ==========================================
+
+    // Entrance "punch" cho khung hình và badge đầu shot 1
+    tl.fromTo(
+      "#s1-badge",
+      { y: -30, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.45, ease: "power3.out" },
+      0.1
+    );
+
+    tl.fromTo(
+      "#s1-frame",
+      { scale: 0.88, opacity: 0 },
+      { scale: 1, opacity: 1, duration: 0.6, ease: "power3.out" },
+      0.15
+    );
+
+    // Camera motion: pan-left cho ảnh bên trong
+    tl.fromTo(
+      "#s1-media",
+      { x: 30, scale: 1.25 },
+      { x: -50, scale: 1.25, duration: 5.0, ease: "none" },
+      0.2
+    );
+
+    // SVG đường xu hướng kinh tế đi lên vẽ dần (svg-path-draw)
+    if (curvePath) {
       tl.to(
-        "#hero-img",
-        { scale: 1.18, x: -45, y: -30, duration: 2.3, ease: "power1.inOut" },
-        2.2
+        "#s1-curve",
+        { strokeDashoffset: 0, duration: 1.6, ease: "power2.out" },
+        0.8
       );
+    }
 
-      // Segment C (4.5s - 6.8s): Gentle final push settling as capital reaches the factories
-      tl.to(
-        "#hero-img",
-        { scale: 1.22, x: -60, y: -40, duration: 2.3, ease: "power1.out" },
-        4.5
-      );
+    // Thẻ chỉ số thị trường xuất hiện sau khi đường xu hướng nhích lên
+    tl.fromTo(
+      "#s1-metric",
+      { scale: 0, opacity: 0 },
+      { scale: 1, opacity: 1, duration: 0.5, ease: "power3.out" },
+      1.8
+    );
 
-      // 2. Overlay 1: 'TÌM BIỆN PHÁP CỨU NỀN KINH TẾ' (0.43s -> 2.83s)
-      tl.fromTo(
-        "#badge-1",
-        { scale: 0.88, opacity: 0, y: 28 },
-        { scale: 1, opacity: 1, y: 0, duration: 0.48, ease: "power3.out" },
-        0.43
-      );
-      tl.to(
-        "#badge-1",
-        { opacity: 0, y: -18, duration: 0.32, ease: "power2.in" },
-        2.48
-      );
+    // Punch-phrase Shot 1: "CHÍNH SÁCH TIỀN TỆ" xuất hiện dứt khoát
+    tl.fromTo(
+      "#s1-punch",
+      { y: 40, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.55, ease: "power3.out" },
+      3.8
+    );
 
-      // 3. Overlay 2: Icon 'money' (2.13s -> 4.63s)
-      tl.fromTo(
-        "#card-money",
-        { scale: 0.82, opacity: 0, y: 20 },
-        { scale: 1, opacity: 1, y: 0, duration: 0.42, ease: "power3.out" },
-        2.13
-      );
-      tl.to("#money-p1", { strokeDashoffset: 0, duration: 0.42, ease: "power2.out" }, 2.25);
-      tl.to("#money-p2", { strokeDashoffset: 0, duration: 0.35, ease: "power2.out" }, 2.52);
-      tl.to("#money-p3", { strokeDashoffset: 0, duration: 0.35, ease: "power2.out" }, 2.76);
-      tl.to(
-        "#card-money",
-        { opacity: 0, scale: 0.9, duration: 0.3, ease: "power2.in" },
-        4.30
-      );
+    // ==========================================
+    // DIỄN HOẠT SHOT 2 (t = 5.21s -> 10.22s)
+    // ==========================================
 
-      // 4. Overlay 3: 'IN THÊM TIỀN CÁ' (2.99s -> 5.19s)
-      tl.fromTo(
-        "#card-printing",
-        { scale: 0.88, opacity: 0, x: -32 },
-        { scale: 1, opacity: 1, x: 0, duration: 0.48, ease: "power3.out" },
-        2.99
-      );
-      tl.to(
-        "#card-printing",
-        { opacity: 0, x: -22, duration: 0.34, ease: "power2.in" },
-        4.82
-      );
+    // Transition cut tại 5.21s, badge và khung Shot 2 xuất hiện ngay
+    tl.fromTo(
+      "#s2-badge",
+      { y: -20, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.35, ease: "power3.out" },
+      5.25
+    );
 
-      // 5. Overlay 4: Icon 'rise' (4.97s -> 7.06s)
-      tl.fromTo(
-        "#card-rise",
-        { scale: 0.82, opacity: 0, y: 20 },
-        { scale: 1, opacity: 1, y: 0, duration: 0.42, ease: "power3.out" },
-        4.97
-      );
-      tl.to("#rise-arrow", { strokeDashoffset: 0, duration: 0.52, ease: "power2.out" }, 5.16);
-      tl.to("#rise-bar", { strokeDashoffset: 0, duration: 0.38, ease: "power2.out" }, 5.42);
+    tl.fromTo(
+      "#s2-frame",
+      { scale: 0.94, opacity: 0 },
+      { scale: 1, opacity: 1, duration: 0.45, ease: "power3.out" },
+      5.25
+    );
 
-      // 6. Overlay 5: Punch Phrase 'BƠM VỐN CỨU DOANH NGHIỆP' (5.58s -> 7.06s)
-      tl.fromTo(
-        "#punch-hero",
-        { scale: 0.92, opacity: 0, y: 38 },
-        { scale: 1, opacity: 1, y: 0, duration: 0.54, ease: "power3.out" },
-        5.58
-      );
+    // Camera motion: zoom-out hé lộ quy mô núi tiền giấy
+    tl.fromTo(
+      "#s2-media",
+      { scale: 1.35, y: -20 },
+      { scale: 1.05, y: 10, duration: 4.8, ease: "sine.out" },
+      5.25
+    );
 
-      // Register timeline with the framework
-      window.__timelines["scene-s47"] = tl;
-    </script>
-  
+    // Hai thẻ đối nghịch xuất hiện dạng stamp so sánh (Hàng hoá vs Tiền)
+    tl.fromTo(
+      "#s2-card-goods",
+      { scale: 0.8, opacity: 0, y: -15 },
+      { scale: 1, opacity: 1, y: 0, duration: 0.4, ease: "power3.out" },
+      5.9
+    );
+
+    tl.fromTo(
+      "#s2-card-money",
+      { scale: 0.8, opacity: 0, y: -15 },
+      { scale: 1, opacity: 1, y: 0, duration: 0.4, ease: "power3.out" },
+      6.4
+    );
+
+    // Label bổ trợ: "HÀNG ÍT : TIỀN NHIỀU"
+    tl.fromTo(
+      "#s2-label",
+      { y: 24, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.45, ease: "power3.out" },
+      7.4
+    );
+
+    // Punch-phrase cao trào: "BÙNG PHÁT LẠM PHÁT"
+    tl.fromTo(
+      "#s2-punch",
+      { scale: 0.85, opacity: 0 },
+      { scale: 1, opacity: 1, duration: 0.5, ease: "power4.out" },
+      8.6
+    );
+
+    // Gắn timeline vào window registry phục vụ render seekable
+    window.__timelines = window.__timelines || {};
+    window.__timelines["scene-s47"] = tl;
+  </script>
+
     </template>
   </body>
 </html>

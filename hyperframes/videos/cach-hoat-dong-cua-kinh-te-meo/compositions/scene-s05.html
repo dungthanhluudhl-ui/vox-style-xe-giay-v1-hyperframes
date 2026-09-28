@@ -1,807 +1,607 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
   <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF-8" />
   </head>
   <body>
     <template>
-      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap">
+      <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap"
+    />
       <style>
-    *, *::before, *::after {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    body {
-      background-color: #141414;
-      color: #141414;
-      font-family: "Be Vietnam Pro", sans-serif;
-      overflow: hidden;
-      margin: 0;
-      padding: 0;
-      width: 100%;
-      height: 100%;
-      -webkit-font-smoothing: antialiased;
-    }
-
-    #root {
-      position: relative;
-      width: 100%;
-      height: 100%;
-      background-color: #F5F0E4;
-      overflow: hidden;
-      perspective: 1200px;
-    }
-
-    /* Quy ước HyperFrames Core: .clip inset: 0 */
-    .clip {
-      position: absolute;
-      inset: 0;
-    }
-
-    /* Layer điều khiển camera zoom-out độc lập */
-    #camera-zoom-layer {
-      position: absolute;
-      inset: 0;
-      transform-origin: 540px 920px;
-      will-change: transform;
-    }
-
-    /* Layer hiệu ứng transition flip card lúc bắt đầu */
-    #flip-entrance-layer {
-      position: absolute;
-      inset: 0;
-      transform-origin: 540px 920px;
-      will-change: transform, opacity;
-    }
-
-    /* Thanh cam nhận diện thương hiệu Vox ở mép dưới */
-    .bottom-brand-bar {
-      position: absolute;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      height: 14px;
-      background-color: #FF6A1A;
-      z-index: 100;
-    }
-
-    /* Header tài liệu điều tra phong cách Vox */
-    .header-doc {
-      position: absolute;
-      top: 170px;
-      left: 60px;
-      right: 60px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 2px solid rgba(20, 20, 20, 0.2);
-      padding-bottom: 16px;
-      z-index: 20;
-    }
-
-    .doc-tag {
-      display: inline-flex;
-      align-items: center;
-      gap: 10px;
-      font-size: 22px;
-      font-weight: 900;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      color: #141414;
-    }
-
-    .doc-tag-badge {
-      background-color: #141414;
-      color: #F7F4EC;
-      padding: 4px 10px;
-      border-radius: 4px;
-      font-size: 18px;
-    }
-
-    .doc-serial {
-      font-size: 20px;
-      font-weight: 700;
-      letter-spacing: 1.5px;
-      color: rgba(20, 20, 20, 0.6);
-    }
-
-    /* Warning Overlay Card (Overlay 1) */
-    #warning-badge {
-      position: absolute;
-      top: 250px;
-      left: 60px;
-      display: inline-flex;
-      align-items: center;
-      gap: 16px;
-      background-color: #141414;
-      border-left: 6px solid #FF6A1A;
-      padding: 14px 24px;
-      border-radius: 6px;
-      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.15);
-      z-index: 25;
-      transform-origin: left center;
-      opacity: 0;
-    }
-
-    .warning-icon-svg {
-      width: 38px;
-      height: 38px;
-      flex-shrink: 0;
-    }
-
-    .warning-text-group {
-      display: flex;
-      flex-direction: column;
-    }
-
-    .warning-title {
-      font-size: 24px;
-      font-weight: 900;
-      color: #FF6A1A;
-      letter-spacing: 1px;
-      text-transform: uppercase;
-    }
-
-    .warning-sub {
-      font-size: 19px;
-      font-weight: 700;
-      color: #F7F4EC;
-    }
-
-    /* Vùng sơ đồ chính (Diagram Blueprint) */
-    #diagram-stage {
-      position: absolute;
-      top: 360px;
-      left: 50px;
-      width: 980px;
-      height: 980px;
-      z-index: 10;
-    }
-
-    .blueprint-svg {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      overflow: visible;
-    }
-
-    /* Quầy trung tâm độc quyền */
-    #monopoly-center {
-      position: absolute;
-      left: 490px;
-      top: 490px;
-      width: 160px;
-      height: 160px;
-      margin-left: -80px;
-      margin-top: -80px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      z-index: 30;
-      transform-origin: center center;
-    }
-
-    .center-stall-box {
-      width: 130px;
-      height: 130px;
-      background-color: #141414;
-      border: 4px solid #FF6A1A;
-      border-radius: 20px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 16px 36px rgba(255, 106, 26, 0.35);
-      position: relative;
-    }
-
-    .stall-icon {
-      width: 56px;
-      height: 56px;
-    }
-
-    .stall-badge-monopoly {
-      position: absolute;
-      bottom: -16px;
-      background-color: #FF6A1A;
-      color: #141414;
-      font-size: 18px;
-      font-weight: 900;
-      padding: 4px 12px;
-      border-radius: 12px;
-      letter-spacing: 0.5px;
-      white-space: nowrap;
-    }
-
-    /* Bảng giá leo thang */
-    #price-meter {
-      position: absolute;
-      left: 590px;
-      top: 410px;
-      background-color: #141414;
-      border: 2px solid #FF6A1A;
-      padding: 10px 18px;
-      border-radius: 10px;
-      display: flex;
-      flex-direction: column;
-      align-items: flex-start;
-      z-index: 32;
-      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.2);
-      transform-origin: left bottom;
-      opacity: 0;
-    }
-
-    /* Bảng giá cạnh tranh giảm xuống */
-    #price-drop-meter {
-      position: absolute;
-      left: 590px;
-      top: 410px;
-      background-color: #141414;
-      border: 2px solid #F7F4EC;
-      padding: 10px 18px;
-      border-radius: 10px;
-      display: flex;
-      flex-direction: column;
-      align-items: flex-start;
-      z-index: 32;
-      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.2);
-      transform-origin: left bottom;
-      opacity: 0;
-    }
-
-    .price-label {
-      font-size: 16px;
-      font-weight: 700;
-      color: #F7F4EC;
-      text-transform: uppercase;
-    }
-
-    .price-val {
-      font-size: 34px;
-      font-weight: 900;
-      color: #FF6A1A;
-      line-height: 1.1;
-    }
-
-    .price-val-drop {
-      font-size: 34px;
-      font-weight: 900;
-      color: #F7F4EC;
-      line-height: 1.1;
-    }
-
-    /* Quầy đối thủ xuất hiện */
-    .competitor-stall {
-      position: absolute;
-      width: 90px;
-      height: 90px;
-      margin-left: -45px;
-      margin-top: -45px;
-      background-color: #F5F0E4;
-      border: 4px solid #141414;
-      border-radius: 16px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      z-index: 28;
-      box-shadow: 0 10px 25px rgba(20, 20, 20, 0.2);
-      transform-origin: center center;
-      opacity: 0;
-    }
-
-    .competitor-stall svg {
-      width: 44px;
-      height: 44px;
-    }
-
-    .competitor-badge {
-      position: absolute;
-      bottom: -14px;
-      background-color: #141414;
-      color: #F7F4EC;
-      font-size: 13px;
-      font-weight: 900;
-      padding: 2px 8px;
-      border-radius: 8px;
-      white-space: nowrap;
-    }
-
-    /* Label 1 (DUY NHẤT 1 QUẦY BÁN) */
-    #callout-label-single {
-      position: absolute;
-      left: 80px;
-      top: 450px;
-      background-color: #141414;
-      padding: 14px 22px;
-      border-radius: 8px;
-      z-index: 40;
-      transform-origin: right center;
-      opacity: 0;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.18);
-    }
-
-    .label-single-text {
-      font-size: 26px;
-      font-weight: 900;
-      color: #F7F4EC;
-      letter-spacing: 1px;
-      text-transform: uppercase;
-    }
-
-    /* Punch-phrase (THỊ TRƯỜNG ĐỘC QUYỀN) */
-    #punch-phrase-container {
-      position: absolute;
-      top: 1380px;
-      left: 60px;
-      right: 60px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      z-index: 50;
-      transform-origin: center center;
-      opacity: 0;
-    }
-
-    .punch-pill {
-      background-color: #FF6A1A;
-      color: #141414;
-      font-size: 22px;
-      font-weight: 900;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      padding: 6px 18px;
-      border-radius: 6px;
-      margin-bottom: 12px;
-    }
-
-    .punch-main-box {
-      background-color: #141414;
-      border: 3px solid #141414;
-      padding: 24px 36px;
-      border-radius: 12px;
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
-      text-align: center;
-      width: 100%;
-    }
-
-    .punch-title {
-      font-size: 64px;
-      font-weight: 900;
-      color: #F7F4EC;
-      line-height: 1.15;
-      text-transform: uppercase;
-      letter-spacing: -0.5px;
-    }
-
-    .punch-highlight {
-      color: #FF6A1A;
-    }
-
-    /* Label 2 (ĐỐI THỦ XÂM NHẬP) */
-    #callout-label-rivals {
-      position: absolute;
-      top: 1380px;
-      left: 60px;
-      right: 60px;
-      background-color: #141414;
-      border-left: 10px solid #FF6A1A;
-      padding: 26px 36px;
-      border-radius: 12px;
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
-      z-index: 52;
-      opacity: 0;
-      transform-origin: center bottom;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .rivals-left {
-      display: flex;
-      flex-direction: column;
-    }
-
-    .rivals-pill {
-      font-size: 20px;
-      font-weight: 900;
-      color: #FF6A1A;
-      text-transform: uppercase;
-      letter-spacing: 1.5px;
-      margin-bottom: 4px;
-    }
-
-    .rivals-title {
-      font-size: 52px;
-      font-weight: 900;
-      color: #F7F4EC;
-      text-transform: uppercase;
-      line-height: 1.1;
-    }
-
-    .rivals-tag {
-      background-color: #FF6A1A;
-      color: #141414;
-      font-size: 24px;
-      font-weight: 900;
-      padding: 12px 20px;
-      border-radius: 8px;
-      text-transform: uppercase;
-    }
-
-    /* Vạch tọa độ kỹ thuật xung quanh */
-    .corner-mark {
-      position: absolute;
-      width: 24px;
-      height: 24px;
-      border-color: rgba(20, 20, 20, 0.35);
-      border-style: solid;
-    }
-    .cm-tl { top: 40px; left: 40px; border-width: 3px 0 0 3px; }
-    .cm-tr { top: 40px; right: 40px; border-width: 3px 3px 0 0; }
-    .cm-bl { bottom: 60px; left: 40px; border-width: 0 0 3px 3px; }
-    .cm-br { bottom: 60px; right: 40px; border-width: 0 3px 3px 0; }
-
-    /* Bản đồ chú thích góc dưới */
-    .legend-box {
-      position: absolute;
-      left: 60px;
-      top: 1300px;
-      display: flex;
-      gap: 30px;
-      z-index: 20;
-    }
-
-    .legend-item {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-size: 19px;
-      font-weight: 700;
-      color: rgba(20, 20, 20, 0.8);
-    }
-
-    .legend-dot {
-      width: 14px;
-      height: 14px;
-      border-radius: 50%;
-    }
-  </style>
-
-  <div data-hf-id="hf-llmd" id="root" data-composition-id="scene-s05" data-width="1080" data-height="1920" data-duration="7.13">
-    <!-- Clip chính chứa toàn bộ scene -->
-    <section data-hf-id="hf-kpbe" id="scene-clip" class="clip" data-start="0" data-duration="7.13">
-      <!-- Camera zoom layer tách riêng -->
-      <div data-hf-id="hf-nxko" id="camera-zoom-layer">
-        <!-- Flip entrance layer tách riêng tránh xung đột writer -->
-        <div data-hf-id="hf-ubsz" id="flip-entrance-layer">
-          
-          <!-- Góc định vị tọa độ thẩm mỹ Vox -->
-          <div data-hf-id="hf-8i3e" class="corner-mark cm-tl"></div>
-          <div data-hf-id="hf-xj4c" class="corner-mark cm-tr"></div>
-          <div data-hf-id="hf-kscg" class="corner-mark cm-bl"></div>
-          <div data-hf-id="hf-lgiu" class="corner-mark cm-br"></div>
-
-          <!-- Header kiểu tài liệu phân tích -->
-          <header data-hf-id="hf-4sde" class="header-doc">
-            <div data-hf-id="hf-q8n9" class="doc-tag">
-              <span data-hf-id="hf-0uwy" class="doc-tag-badge">SƠ ĐỒ 05</span>
-              <span data-hf-id="hf-o5ti">BẢN ĐỒ THỊ TRƯỜNG RỪNG</span>
-            </div>
-            <div data-hf-id="hf-paar" class="doc-serial">KV-409 // KINH TẾ HỌC</div>
-          </header>
-
-          <!-- Warning overlay (Overlay 1 - atMs: 30850, 0.15s) -->
-          <aside data-hf-id="hf-ykzy" id="warning-badge">
-            <svg data-hf-id="hf-0uzn" class="warning-icon-svg" viewBox="0 0 24 24" fill="none" stroke="#FF6A1A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <path data-hf-id="hf-2l4s" d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
-              <line data-hf-id="hf-0inb" x1="12" y1="9" x2="12" y2="13" />
-              <line data-hf-id="hf-wkov" x1="12" y1="17" x2="12.01" y2="17" />
-            </svg>
-            <div data-hf-id="hf-049i" class="warning-text-group">
-              <span data-hf-id="hf-us2h" class="warning-title">CẢNH BÁO THỊ TRƯỜNG</span>
-              <span data-hf-id="hf-ou3r" class="warning-sub">KHÔNG CÓ ĐỐI THỦ CẠNH TRANH</span>
-            </div>
-          </aside>
-
-          <!-- Label 1: DUY NHẤT 1 QUẦY BÁN (atMs: 32090, 1.39s) -->
-          <div data-hf-id="hf-npqj" id="callout-label-single">
-            <span data-hf-id="hf-dlvp" class="label-single-text">DUY NHẤT 1 QUẦY BÁN</span>
-          </div>
-
-          <!-- Diagram Blueprint Stage -->
-          <main data-hf-id="hf-uf71" id="diagram-stage">
-            <svg data-hf-id="hf-u4ye" class="blueprint-svg" viewBox="0 0 980 980" fill="none">
-              <defs data-hf-id="hf-mh0t">
-                <marker data-hf-id="hf-9es2" id="arrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-                  <path data-hf-id="hf-kiwi" d="M 0 1 L 8 5 L 0 9 z" fill="#141414" />
-                </marker>
-              </defs>
-
-              <!-- Trục tọa độ tâm -->
-              <line data-hf-id="hf-lpxf" x1="490" y1="40" x2="490" y2="940" stroke="rgba(20,20,20,0.18)" stroke-width="1.5" stroke-dasharray="8 8" />
-              <line data-hf-id="hf-d14v" x1="40" y1="490" x2="940" y2="490" stroke="rgba(20,20,20,0.18)" stroke-width="1.5" stroke-dasharray="8 8" />
-              <circle data-hf-id="hf-e77b" cx="490" cy="490" r="140" stroke="rgba(20,20,20,0.15)" stroke-width="1.5" />
-              <circle data-hf-id="hf-gkd2" cx="490" cy="490" r="260" stroke="rgba(20,20,20,0.15)" stroke-width="1.5" />
-              
-              <!-- Chu vi ranh giới rừng (Forest Perimeter) -->
-              <circle data-hf-id="hf-8o2g" id="forest-perimeter" cx="490" cy="490" r="410" stroke="#141414" stroke-width="3" />
-              
-              <!-- Sóng độc chiếm thị trường (Monopoly Forcefield Rings) -->
-              <circle data-hf-id="hf-8r0t" class="monopoly-pulse" cx="490" cy="490" r="190" stroke="#FF6A1A" stroke-width="2.5" stroke-dasharray="6 6" opacity="0" />
-              <circle data-hf-id="hf-ggk3" class="monopoly-pulse" cx="490" cy="490" r="300" stroke="#FF6A1A" stroke-width="2" stroke-dasharray="8 6" opacity="0" />
-              <circle data-hf-id="hf-92da" class="monopoly-pulse" cx="490" cy="490" r="390" stroke="#FF6A1A" stroke-width="2.5" opacity="0" />
-
-              <!-- Đường nứt pháo đài độc quyền (Cracks at monopoly breach) -->
-              <path data-hf-id="hf-i7t2" id="crack-line-1" d="M 490 230 L 470 170 L 510 110 L 490 80" stroke="#FF6A1A" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" fill="none" />
-              <path data-hf-id="hf-tc39" id="crack-line-2" d="M 680 390 L 740 370 L 790 410 L 870 380" stroke="#FF6A1A" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" fill="none" />
-              <path data-hf-id="hf-14fd" id="crack-line-3" d="M 330 630 L 270 670 L 230 630 L 130 680" stroke="#FF6A1A" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" fill="none" />
-              
-              <!-- Đường đo kết nối từ Label Single đến Quầy trung tâm -->
-              <path data-hf-id="hf-gh1b" id="leader-line" d="M 380 360 L 440 440" stroke="#141414" stroke-width="2" stroke-dasharray="4 4" opacity="0" />
-              
-              <!-- Mũi tên áp đặt mua hàng hướng tâm -->
-              <g data-hf-id="hf-y9jh" id="demand-arrows" opacity="0">
-                <path data-hf-id="hf-5k9y" d="M 490 800 L 490 600" stroke="#141414" stroke-width="3" marker-end="url(#arrow)" />
-                <path data-hf-id="hf-afex" d="M 230 490 L 390 490" stroke="#141414" stroke-width="3" marker-end="url(#arrow)" />
-                <path data-hf-id="hf-bjzq" d="M 750 490 L 590 490" stroke="#141414" stroke-width="3" marker-end="url(#arrow)" />
-              </g>
-            </svg>
-
-            <!-- Quầy Mèo bán bánh Độc Quyền tại tâm -->
-            <div data-hf-id="hf-7iv4" id="monopoly-center">
-              <div data-hf-id="hf-ojbe" class="center-stall-box">
-                <svg data-hf-id="hf-n5d1" class="stall-icon" viewBox="0 0 24 24" fill="none" stroke="#FF6A1A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path data-hf-id="hf-8pmy" d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7" />
-                  <path data-hf-id="hf-d579" d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
-                  <path data-hf-id="hf-9p52" d="M15 22v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4" />
-                  <path data-hf-id="hf-jc22" d="M2 7h20" />
-                  <circle data-hf-id="hf-auh7" cx="12" cy="11" r="2" fill="#FF6A1A" />
-                </svg>
-                <div data-hf-id="hf-m6vs" class="stall-badge-monopoly">MÈO BÁN BÁNH</div>
-              </div>
-            </div>
-
-            <!-- Bảng giá độc quyền tăng vọt (DOM counter seekable) -->
-            <div data-hf-id="hf-v9t8" id="price-meter">
-              <span data-hf-id="hf-i6d7" class="price-label">GIÁ BÁN ĐỘC QUYỀN</span>
-              <span data-hf-id="hf-v356" class="price-val">+<span data-hf-id="hf-aifb" id="price-val-num">100</span>%</span>
-            </div>
-
-            <!-- Bảng giá cạnh tranh khi đối thủ xuất hiện -->
-            <div data-hf-id="hf-bfay" id="price-drop-meter">
-              <span data-hf-id="hf-3pje" class="price-label">GIÁ BÌNH ỔN</span>
-              <span data-hf-id="hf-0hz8" class="price-val-drop">-60%</span>
-            </div>
-
-            <!-- Các Quầy Đối Thủ Xâm Nhập quanh chu vi -->
-            <div data-hf-id="hf-m1ao" class="competitor-stall" id="comp-1" style="left: 490px; top: 120px;">
-              <svg data-hf-id="hf-4v04" viewBox="0 0 24 24" fill="none" stroke="#141414" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path data-hf-id="hf-09zi" d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7" />
-                <path data-hf-id="hf-e4ll" d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
-                <path data-hf-id="hf-7g5q" d="M2 7h20" />
-              </svg>
-              <span data-hf-id="hf-9djo" class="competitor-badge">QUẦY 02</span>
-            </div>
-
-            <div data-hf-id="hf-o63f" class="competitor-stall" id="comp-2" style="left: 770px; top: 220px;">
-              <svg data-hf-id="hf-a03w" viewBox="0 0 24 24" fill="none" stroke="#141414" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path data-hf-id="hf-0oaj" d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7" />
-                <path data-hf-id="hf-fbio" d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
-                <path data-hf-id="hf-7ugr" d="M2 7h20" />
-              </svg>
-              <span data-hf-id="hf-8z8n" class="competitor-badge">QUẦY 03</span>
-            </div>
-
-            <div data-hf-id="hf-vfir" class="competitor-stall" id="comp-3" style="left: 870px; top: 550px;">
-              <svg data-hf-id="hf-8t6t" viewBox="0 0 24 24" fill="none" stroke="#141414" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path data-hf-id="hf-12lk" d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7" />
-                <path data-hf-id="hf-ex7n" d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
-                <path data-hf-id="hf-88rs" d="M2 7h20" />
-              </svg>
-              <span data-hf-id="hf-a65q" class="competitor-badge">QUẦY 04</span>
-            </div>
-
-            <div data-hf-id="hf-4kik" class="competitor-stall" id="comp-4" style="left: 520px; top: 860px;">
-              <svg data-hf-id="hf-97hu" viewBox="0 0 24 24" fill="none" stroke="#141414" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path data-hf-id="hf-yagd" d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7" />
-                <path data-hf-id="hf-cxoi" d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
-                <path data-hf-id="hf-5gml" d="M2 7h20" />
-              </svg>
-              <span data-hf-id="hf-9rup" class="competitor-badge">QUẦY 05</span>
-            </div>
-
-            <div data-hf-id="hf-cvd9" class="competitor-stall" id="comp-5" style="left: 180px; top: 730px;">
-              <svg data-hf-id="hf-b70z" viewBox="0 0 24 24" fill="none" stroke="#141414" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path data-hf-id="hf-yore" d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7" />
-                <path data-hf-id="hf-cjdh" d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
-                <path data-hf-id="hf-5uxm" d="M2 7h20" />
-              </svg>
-              <span data-hf-id="hf-ayrs" class="competitor-badge">QUẦY 06</span>
-            </div>
-
-            <div data-hf-id="hf-l38i" class="competitor-stall" id="comp-6" style="left: 140px; top: 310px;">
-              <svg data-hf-id="hf-blc0" viewBox="0 0 24 24" fill="none" stroke="#141414" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path data-hf-id="hf-z32f" d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7" />
-                <path data-hf-id="hf-dqak" d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
-                <path data-hf-id="hf-698n" d="M2 7h20" />
-              </svg>
-              <span data-hf-id="hf-akgr" class="competitor-badge">QUẦY 07</span>
-            </div>
-          </main>
-
-          <!-- Ghi chú chú giải bản đồ (Legend) -->
-          <footer data-hf-id="hf-c4yt" class="legend-box">
-            <div data-hf-id="hf-7six" class="legend-item">
-              <div data-hf-id="hf-8hgq" class="legend-dot" style="background-color: #FF6A1A;"></div>
-              <span data-hf-id="hf-l0re">Quầy độc quyền</span>
-            </div>
-            <div data-hf-id="hf-exb1" class="legend-item">
-              <div data-hf-id="hf-awdk" class="legend-dot" style="background-color: #141414;"></div>
-              <span data-hf-id="hf-35r0">Quầy đối thủ mới</span>
-            </div>
-          </footer>
-
-          <!-- Punch Phrase (Overlay 3 - atMs: 34540, 3.84s) -->
-          <section data-hf-id="hf-qcoh" id="punch-phrase-container" data-layout-allow-overlap="true">
-            <div data-hf-id="hf-oaa4" class="punch-pill">CƠ CHẾ KINH TẾ</div>
-            <div data-hf-id="hf-9vua" class="punch-main-box">
-              <h1 data-hf-id="hf-9dk3" class="punch-title">THỊ TRƯỜNG <span data-hf-id="hf-a7e6" class="punch-highlight">ĐỘC QUYỀN</span></h1>
-            </div>
-          </section>
-
-          <!-- Label 2: ĐỐI THỦ XÂM NHẬP (Overlay 4 - atMs: 36110, 5.41s) -->
-          <section data-hf-id="hf-34nc" id="callout-label-rivals" data-layout-allow-overlap="true">
-            <div data-hf-id="hf-yccr" class="rivals-left">
-              <span data-hf-id="hf-k14g" class="rivals-pill">PHÁ VỠ THẾ ĐỘC TÔN</span>
-              <h2 data-hf-id="hf-myev" class="rivals-title">ĐỐI THỦ XÂM NHẬP</h2>
-            </div>
-            <div data-hf-id="hf-gt66" class="rivals-tag">CẠNH TRANH</div>
-          </section>
-
-        </div>
-      </div>
-    </section>
-
-    <!-- Thanh cam đáy cố định nhận diện thương hiệu -->
-    <div data-hf-id="hf-8g79" class="bottom-brand-bar"></div>
-  </div>
-
-  <script>
-    // Chuẩn bị các stroke đường nứt SVG
-    const crack1 = document.getElementById("crack-line-1");
-    const crack2 = document.getElementById("crack-line-2");
-    const crack3 = document.getElementById("crack-line-3");
-    
-    [crack1, crack2, crack3].forEach(path => {
-      if (path) {
-        const len = path.getTotalLength ? path.getTotalLength() : 300;
-        path.style.strokeDasharray = `${len}`;
-        path.style.strokeDashoffset = `${len}`;
+      /* hf-safe-colors (tất định từ style-tokens.json) */
+      .hf-text-ink { color: #141414; }
+      .hf-text-light { color: #F7F4EC; }
+      .hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+      .hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+      .hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+      .hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+      * {
+        box-sizing: border-box;
       }
-    });
+      body {
+        margin: 0;
+        padding: 0;
+        background: #141414;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
 
-    // Khởi tạo Timeline GSAP duy nhất theo contract của HyperFrames
-    const tl = gsap.timeline({ paused: true });
+      /* Khung canvas chuẩn 1080x1920 */
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
 
-    // 0.00s: Entrance Transition (Flip Card Effect trên flip-entrance-layer)
-    tl.fromTo("#flip-entrance-layer", 
-      { rotationY: 25, scale: 0.9, opacity: 0 },
-      { rotationY: 0, scale: 1.0, opacity: 1, duration: 0.65, ease: "power3.out" },
-      0.0
-    );
+      /* Quy ước clip của HyperFrames */
+      .clip {
+        position: absolute;
+        inset: 0;
+      }
 
-    // 0.15s: Warning Badge Overlay xuất hiện (atMs 30850)
-    tl.fromTo("#warning-badge",
-      { x: -50, opacity: 0 },
-      { x: 0, opacity: 1, duration: 0.5, ease: "power3.out" },
-      0.15
-    );
+      /* Lớp nền Spotlight kết hợp Grid kẻ ô 84px của Vox */
+      #bg-spotlight {
+        position: absolute;
+        inset: 0;
+        background-color: #e7e3d9;
+        background-image:
+          radial-gradient(
+            circle at 50% 38%,
+            rgba(231, 227, 217, 0.25) 20%,
+            rgba(60, 50, 40, 0.45) 60%,
+            rgba(15, 15, 15, 0.88) 100%
+          ),
+          linear-gradient(rgba(20, 20, 20, 0.25) 1.5px, transparent 1.5px),
+          linear-gradient(90deg, rgba(20, 20, 20, 0.25) 1.5px, transparent 1.5px);
+        background-size:
+          100% 100%,
+          84px 84px,
+          84px 84px;
+        z-index: 1;
+      }
 
-    // 0.40s: Quầy trung tâm Mèo Bán Bánh xuất hiện bằng Spring-Pop
-    tl.fromTo("#monopoly-center",
-      { scale: 0, opacity: 0 },
-      { scale: 1, opacity: 1, duration: 0.65, ease: "power3.out" },
-      0.40
-    );
+      /* Camera container chứa hero image */
+      #camera-wrapper {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        transform-origin: 50% 35%;
+      }
 
-    // 0.80s: Sóng độc quyền tỏa ra (Monopoly pulse rings)
-    tl.fromTo(".monopoly-pulse",
-      { scale: 0.7, opacity: 0, transformOrigin: "490px 490px" },
-      { scale: 1.0, opacity: 0.85, duration: 0.8, stagger: 0.15, ease: "power2.out" },
-      0.80
-    );
+      #hero-image-box {
+        position: absolute;
+        width: 1080px;
+        height: 1920px;
+        left: 0;
+        top: 0;
+      }
 
-    // 1.39s: Label "DUY NHẤT 1 QUẦY BÁN" (atMs 32090)
-    tl.fromTo("#callout-label-single",
-      { x: -40, opacity: 0 },
-      { x: 0, opacity: 1, duration: 0.5, ease: "power3.out" },
-      1.39
-    );
-    tl.to("#leader-line", { opacity: 1, duration: 0.3 }, 1.50);
+      #hero-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
 
-    // 1.60s: Bảng giá độc quyền xuất hiện
-    tl.fromTo("#price-meter",
-      { scale: 0.5, opacity: 0 },
-      { scale: 1, opacity: 1, duration: 0.45, ease: "power3.out" },
-      1.60
-    );
+      /* Container chứa Flow Diagram & Badges (tách layer độc lập) */
+      #flow-container {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+      }
 
-    // 1.80s - 3.40s: Giá leo thang từ 100% -> 500% (seekable deterministic DOM counter)
-    tl.fromTo("#price-val-num",
-      { innerText: 100 },
-      { innerText: 500, snap: { innerText: 1 }, duration: 1.6, ease: "power2.inOut" },
-      1.80
-    );
+      #flow-svg {
+        position: absolute;
+        inset: 0;
+        width: 1080px;
+        height: 1920px;
+        pointer-events: none;
+      }
 
-    // Mũi tên nhu cầu bắt buộc hướng về tâm
-    tl.to("#demand-arrows", { opacity: 0.7, duration: 0.5 }, 1.90);
+      /* Các chip nhãn chỉ luồng flow trên ảnh (nền đặc đảm bảo contrast WCAG AAA) */
+      .flow-node-badge {
+        position: absolute;
+        padding: 10px 22px;
+        border-radius: 4px;
+        font-weight: 900;
+        font-size: 22px;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        box-shadow: 0 10px 28px rgba(0, 0, 0, 0.7);
+        pointer-events: none;
+      }
 
-    // 2.75s: Warning badge fade out (holdMs: 2600ms = 0.15s + 2.6s = 2.75s)
-    tl.to("#warning-badge", { opacity: 0, y: -20, duration: 0.4, ease: "power2.in" }, 2.75);
+      /* Đặt badge-source tại top: 1120px (Y: 1120-1170) an toàn cao hơn Caption Zone (>=1390px) */
+      #badge-source {
+        top: 1120px;
+        right: 80px;
+        background: #141414;
+        color: #f7f4ec;
+        border-left: 6px solid #ff6a1a;
+      }
 
-    // 3.59s: Label "DUY NHẤT 1 QUẦY BÁN" mờ đi để nhường chỗ cho Punch Phrase
-    tl.to(["#callout-label-single", "#leader-line"], { opacity: 0, duration: 0.3 }, 3.59);
+      /* Đặt badge-target tại top: 700px chỉ về mèo trùm */
+      #badge-target {
+        top: 700px;
+        left: 100px;
+        background: #ff6a1a;
+        color: #141414;
+        border: 3px solid #141414;
+      }
 
-    // 3.84s: Punch-Phrase "THỊ TRƯỜNG ĐỘC QUYỀN" xuất hiện (atMs 34540)
-    tl.fromTo("#punch-phrase-container",
-      { scale: 0.85, opacity: 0, y: 30 },
-      { scale: 1, opacity: 1, y: 0, duration: 0.55, ease: "power4.out" },
-      3.84
-    );
+      /* Header hồ sơ điều tra phóng sự Vox (nằm trong vùng an toàn > 160px) */
+      #top-report-tag {
+        position: absolute;
+        top: 180px;
+        left: 60px;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        z-index: 100;
+      }
 
-    // 4.10s: Vòng bảo hộ xuất hiện vết nứt vỡ
-    tl.to(crack1, { strokeDashoffset: 0, duration: 0.6, ease: "power2.out" }, 4.10);
-    tl.to(crack2, { strokeDashoffset: 0, duration: 0.6, ease: "power2.out" }, 4.25);
-    tl.to(crack3, { strokeDashoffset: 0, duration: 0.6, ease: "power2.out" }, 4.40);
+      .tag-pill {
+        background: #141414;
+        color: #ff6a1a;
+        font-weight: 900;
+        font-size: 22px;
+        letter-spacing: 2px;
+        padding: 8px 18px;
+        border-radius: 2px;
+        text-transform: uppercase;
+      }
 
-    // 4.60s: Vòng sóng độc quyền tan biến dần
-    tl.to(".monopoly-pulse", { opacity: 0.15, duration: 0.6 }, 4.60);
+      .tag-title {
+        background: #f5f0e4;
+        color: #141414;
+        font-weight: 900;
+        font-size: 22px;
+        letter-spacing: 1px;
+        padding: 8px 18px;
+        border-radius: 2px;
+      }
 
-    // 5.20s: Punch phrase thu lại trước khi Label 2 xuất hiện (tránh xung đột nội dung)
-    tl.to("#punch-phrase-container", { opacity: 0, scale: 0.95, duration: 0.2, ease: "power2.in" }, 5.20);
+      /* Overlay 1: Label Đe dọa tiểu thương */
+      #label-wrapper {
+        position: absolute;
+        top: 360px;
+        left: 60px;
+        right: 60px;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        z-index: 50;
+      }
 
-    // 5.35s: Bảng giá độc quyền biến mất
-    tl.to("#price-meter", { scale: 0.7, opacity: 0, duration: 0.25, ease: "power2.in" }, 5.35);
+      .label-plate {
+        background: #141414;
+        border-left: 10px solid #ff6a1a;
+        padding: 24px 34px;
+        border-radius: 4px;
+        box-shadow: 0 16px 40px rgba(0, 0, 0, 0.8);
+        max-width: 900px;
+      }
 
-    // 5.41s: Label "ĐỐI THỦ XÂM NHẬP" xuất hiện (atMs 36110)
-    tl.fromTo("#callout-label-rivals",
-      { y: 50, opacity: 0 },
-      { y: 0, opacity: 1, duration: 0.5, ease: "power3.out" },
-      5.41
-    );
+      .label-category {
+        color: #ff6a1a;
+        font-size: 24px;
+        font-weight: 900;
+        letter-spacing: 3px;
+        text-transform: uppercase;
+        margin-bottom: 8px;
+      }
 
-    // 5.41s: Camera Motion Zoom-out toàn cảnh trên camera-zoom-layer (tách biệt)
-    tl.to("#camera-zoom-layer", {
-      scale: 0.93,
-      duration: 1.6,
-      ease: "power1.inOut"
-    }, 5.41);
+      .label-main-text {
+        color: #f7f4ec;
+        font-size: 58px;
+        font-weight: 900;
+        line-height: 1.22;
+        letter-spacing: -0.5px;
+        text-transform: uppercase;
+      }
 
-    // 5.45s - 5.90s: Các quầy đối thủ pop-in liên tiếp quanh chu vi
-    const competitors = ["#comp-1", "#comp-2", "#comp-3", "#comp-4", "#comp-5", "#comp-6"];
-    tl.fromTo(competitors,
-      { scale: 0, opacity: 0 },
-      { scale: 1, opacity: 1, duration: 0.45, stagger: 0.08, ease: "power3.out" },
-      5.45
-    );
+      /* Overlay 2: Punch phrase Bảo kê & chia lãi */
+      #punch-wrapper {
+        position: absolute;
+        top: 400px;
+        left: 60px;
+        right: 60px;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        z-index: 60;
+      }
 
-    // 5.60s: Bảng giá cạnh tranh giảm xuất hiện
-    tl.fromTo("#price-drop-meter",
-      { scale: 0.5, opacity: 0 },
-      { scale: 1, opacity: 1, duration: 0.45, ease: "power3.out" },
-      5.60
-    );
+      .punch-tag {
+        background: #ff6a1a;
+        color: #141414;
+        font-size: 26px;
+        font-weight: 900;
+        letter-spacing: 2px;
+        padding: 10px 24px;
+        border-radius: 4px 4px 0 0;
+        text-transform: uppercase;
+        border: 4px solid #141414;
+        border-bottom: none;
+      }
 
-    // Đăng ký timeline duy nhất vào HyperFrames runtime
-    window.__timelines["scene-s05"] = tl;
-  </script>
+      .punch-plate {
+        background: #141414;
+        color: #f7f4ec;
+        font-size: 68px;
+        font-weight: 900;
+        line-height: 1.25;
+        padding: 30px 40px;
+        border-radius: 0 4px 4px 4px;
+        border: 4px solid #141414;
+        border-bottom: 10px solid #ff6a1a;
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.9);
+        text-transform: uppercase;
+        letter-spacing: -1px;
+      }
 
+      .punch-plate span.highlight-orange {
+        color: #ff6a1a;
+      }
+
+      /* Dấu mộc điều tra Monopoly đóng chéo */
+      #punch-stamp {
+        position: absolute;
+        right: 20px;
+        bottom: -32px;
+        background: #141414;
+        color: #ff6a1a;
+        border: 5px solid #ff6a1a;
+        padding: 10px 26px;
+        font-size: 34px;
+        font-weight: 900;
+        letter-spacing: 4px;
+        text-transform: uppercase;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.85);
+      }
+
+      /* Thanh cam nhận diện thương hiệu cố định mép đáy */
+      #brand-bottom-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 12px;
+        background: #ff6a1a;
+        z-index: 999;
+      }
+
+      /* Tối ưu render tăng tốc phần cứng */
+      #camera-wrapper,
+      #label-wrapper,
+      #punch-wrapper,
+      #punch-stamp,
+      #flow-container {
+        will-change: transform, opacity;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s05"
+      data-width="1080"
+      data-height="1920"
+      data-duration="8.45"
+    >
+      <!-- Nền Spotlight & Grid của Vox -->
+      <div id="bg-spotlight"></div>
+
+      <!-- Tag nhận diện phóng sự điều tra -->
+      <header id="top-report-tag">
+        <span class="tag-pill">HỒ SƠ #05</span>
+        <span class="tag-title">MAFIA HÓA THỊ TRƯỜNG</span>
+      </header>
+
+      <!-- Visual Clip chính: Toàn bộ Shot 1 (0s - 8.45s) -->
+      <section
+        id="visual-shot-clip"
+        class="clip"
+        data-start="0"
+        data-duration="8.45"
+        style="z-index: 10"
+      >
+        <div id="camera-wrapper">
+          <!-- Ảnh cắt dán AI Google Flow giữ nguyên màu gốc -->
+          <div id="hero-image-box">
+            <img
+              id="hero-img"
+              src="assets/img-17-monopoly-threat-extortion-cutout.jpeg"
+              alt="Mèo Mafia đe dọa thợ làm bánh"
+            />
+          </div>
+        </div>
+      </section>
+
+      <!-- Flow Diagram Clip: Hiển thị minh họa từ t = 1.2s đến 5.7s (trước khi punch phrase xuất hiện) -->
+      <section
+        id="flow-clip"
+        class="clip"
+        data-start="1.2"
+        data-duration="4.5"
+        style="z-index: 25"
+      >
+        <div id="flow-container">
+          <!-- Lớp đồ họa Flow: Đường nộp tiền cưỡng đoạt rẽ hướng về mèo trùm -->
+          <svg id="flow-svg" viewBox="0 0 1080 1920" fill="none">
+            <defs>
+              <marker
+                id="arrow-marker"
+                viewBox="0 0 12 12"
+                refX="10"
+                refY="6"
+                markerWidth="8"
+                markerHeight="8"
+                orient="auto-start-reverse"
+              >
+                <path d="M 0 0 L 12 6 L 0 12 z" fill="#FF6A1A" />
+              </marker>
+            </defs>
+
+            <!-- Nhánh 1: Từ quầy bánh bên phải hướng lên mèo trùm -->
+            <path
+              id="flow-path-main"
+              d="M 760 1120 C 860 960, 640 860, 360 740"
+              stroke="#FF6A1A"
+              stroke-width="9"
+              stroke-linecap="round"
+              stroke-dasharray="14 10"
+              marker-end="url(#arrow-marker)"
+            />
+
+            <!-- Nhánh 2: Từ quầy bánh bên trái hướng lên mèo trùm -->
+            <path
+              id="flow-path-sub"
+              d="M 280 1240 C 200 1060, 240 910, 330 790"
+              stroke="#FF6A1A"
+              stroke-width="7"
+              stroke-linecap="round"
+              stroke-dasharray="10 8"
+              marker-end="url(#arrow-marker)"
+            />
+          </svg>
+
+          <!-- Các badge nhãn chỉ dẫn luồng nộp tiền -->
+          <div id="badge-source" class="flow-node-badge">Tiền Lãi Quầy Bánh</div>
+          <div id="badge-target" class="flow-node-badge">Về Túi Mèo Trùm</div>
+        </div>
+      </section>
+
+      <!-- Overlay 1: Label ĐE DỌA TIỂU THƯƠNG (40320 - 37510 = 2.81s, hold 2.0s) -->
+      <section
+        id="label-shot-clip"
+        class="clip"
+        data-start="2.81"
+        data-duration="2.0"
+        style="z-index: 40"
+      >
+        <div id="label-wrapper">
+          <div class="label-plate">
+            <div class="label-category">Áp Lực Cưỡng Đoạt</div>
+            <div class="label-main-text">Đe Dọa Tiểu Thương</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Overlay 2: Punch phrase BẢO KÊ & CHIA LÃI (43550 - 37510 = 6.04s, hold 2.41s) -->
+      <section
+        id="punch-shot-clip"
+        class="clip"
+        data-start="6.04"
+        data-duration="2.41"
+        style="z-index: 50"
+      >
+        <div id="punch-wrapper">
+          <div class="punch-tag">Mô Hình Băng Nhóm</div>
+          <div class="punch-plate">
+            Bảo Kê & <span class="highlight-orange">Chia Lãi</span>
+          </div>
+          <div id="punch-stamp">MONOPOLY</div>
+        </div>
+      </section>
+
+      <!-- Thanh màu cam cố định đáy màn hình (Signature của phong cách) -->
+      <div id="brand-bottom-bar"></div>
+    </div>
+
+    <!-- GSAP Master Animation Script -->
+    <script>
+      // 1. Tạo timeline paused duy nhất theo quy ước HyperFrames
+      const tl = gsap.timeline({ paused: true });
+
+      // 2. Setup trước độ dài nét vẽ cho các đường Flow SVG
+      const pathMain = document.getElementById("flow-path-main");
+      const pathSub = document.getElementById("flow-path-sub");
+
+      const lenMain = pathMain ? pathMain.getTotalLength() : 900;
+      const lenSub = pathSub ? pathSub.getTotalLength() : 750;
+
+      if (pathMain) {
+        pathMain.style.strokeDasharray = lenMain + " " + lenMain;
+        pathMain.style.strokeDashoffset = lenMain;
+      }
+      if (pathSub) {
+        pathSub.style.strokeDasharray = lenSub + " " + lenSub;
+        pathSub.style.strokeDashoffset = lenSub;
+      }
+
+      // 3. ENTRANCE: "Strike" Transition (t = 0.0s đến 0.65s)
+      // Cú đập mạnh giáng xuống từ trên của bóng mèo trùm khổng lồ, camera rung chấn
+      tl.fromTo(
+        "#camera-wrapper",
+        {
+          y: -130,
+          x: 0,
+          scale: 1.3,
+          opacity: 0,
+        },
+        {
+          y: 0,
+          x: 0,
+          scale: 1.22,
+          opacity: 1,
+          duration: 0.44,
+          ease: "power4.in",
+        },
+        0.0,
+      );
+
+      // Camera chấn động phản lực (strike impact shake)
+      tl.to(
+        "#camera-wrapper",
+        {
+          y: 16,
+          duration: 0.07,
+          ease: "power2.out",
+        },
+        0.44,
+      );
+      tl.to(
+        "#camera-wrapper",
+        {
+          y: -8,
+          duration: 0.07,
+          ease: "power2.inOut",
+        },
+        0.51,
+      );
+      tl.to(
+        "#camera-wrapper",
+        {
+          y: 0,
+          duration: 0.12,
+          ease: "power2.out",
+        },
+        0.58,
+      );
+
+      // Header xuất hiện ngay sau cú strike
+      tl.fromTo(
+        "#top-report-tag",
+        { y: -24, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.4, ease: "power3.out" },
+        0.65,
+      );
+
+      // 4. CAMERA MOTION: Pan nhẹ trôi xuống nhóm thợ bánh đang sợ hãi (t = 0.8s -> 8.45s)
+      tl.to(
+        "#camera-wrapper",
+        {
+          y: -140,
+          x: -45,
+          scale: 1.15,
+          duration: 7.65,
+          ease: "none",
+        },
+        0.8,
+      );
+
+      // 5. FLOW LANGUAGE: Mũi tên uốn lượn và badge nộp tiền lãi rẽ hướng (t = 1.3s -> 5.5s)
+      tl.to(
+        "#flow-path-main",
+        {
+          strokeDashoffset: 0,
+          duration: 1.3,
+          ease: "power2.out",
+        },
+        1.3,
+      );
+
+      tl.to(
+        "#flow-path-sub",
+        {
+          strokeDashoffset: 0,
+          duration: 1.1,
+          ease: "power2.out",
+        },
+        1.65,
+      );
+
+      // Badge nguồn tiền bánh hiện ra
+      tl.fromTo(
+        "#badge-source",
+        { scale: 0, opacity: 0, y: 24 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.45, ease: "power3.out" },
+        1.4,
+      );
+
+      // Badge đích nộp về túi mèo trùm bật lên
+      tl.fromTo(
+        "#badge-target",
+        { scale: 0, opacity: 0, y: -20 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.45, ease: "power3.out" },
+        2.1,
+      );
+
+      // Thu gọn nhẹ nhàng flow container trước khi clip kết thúc ở 5.7s
+      tl.to(
+        "#flow-container",
+        {
+          opacity: 0,
+          scale: 0.94,
+          duration: 0.38,
+          ease: "power2.in",
+        },
+        5.2,
+      );
+
+      // 6. OVERLAY 1: "ĐE DỌA TIỂU THƯƠNG" (Clip hiển thị từ t = 2.81s đến 4.81s)
+      tl.fromTo(
+        "#label-wrapper",
+        { x: -60, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.46, ease: "power3.out" },
+        2.81,
+      );
+
+      tl.to(
+        "#label-wrapper",
+        {
+          x: 35,
+          opacity: 0,
+          duration: 0.28,
+          ease: "power2.in",
+        },
+        4.53,
+      );
+
+      // 7. OVERLAY 2: "BẢO KÊ & CHIA LÃI" (Clip hiển thị từ t = 6.04s đến 8.45s)
+      tl.fromTo(
+        "#punch-wrapper",
+        { scale: 0.88, opacity: 0, y: 35 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.5, ease: "power3.out" },
+        6.04,
+      );
+
+      // Đóng dấu MONOPOLY đập mạnh vào góc dưới của punch card
+      tl.fromTo(
+        "#punch-stamp",
+        { scale: 2.1, opacity: 0, rotation: -26 },
+        {
+          scale: 1,
+          opacity: 1,
+          rotation: -7,
+          duration: 0.36,
+          ease: "power4.out",
+        },
+        6.36,
+      );
+
+      // 8. Đăng ký timeline chính thức cho HyperFrames seek runtime
+      window.__timelines["scene-s05"] = tl;
+    </script>
+  
     </template>
   </body>
 </html>

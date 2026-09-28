@@ -1,494 +1,613 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
   <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF-8" />
   </head>
   <body>
     <template>
-      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap">
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
       <style>
-      *,
-      *::before,
-      *::after {
+/* hf-safe-colors (tất định từ style-tokens.json) */
+.hf-text-ink { color: #141414; }
+.hf-text-light { color: #F7F4EC; }
+.hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+.hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+.hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+.hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+      * {
         box-sizing: border-box;
       }
-
       body {
         margin: 0;
         padding: 0;
-        background: #0b0f14;
-        color: #141414;
+        background: #E7E3D9;
         font-family: "Be Vietnam Pro", sans-serif;
+        color: #141414;
         overflow: hidden;
         -webkit-font-smoothing: antialiased;
       }
-
       #root {
         position: relative;
         width: 100%;
         height: 100%;
         overflow: hidden;
-        background: #e7e3d9;
       }
-
-      /* Nền giấy ngà + lưới ô vuông Vox 84px + Grain texture multiply */
-      .bg-base {
+      .clip {
         position: absolute;
         inset: 0;
-        background-color: #e7e3d9;
-        z-index: 1;
       }
 
+      /* Background layers */
       .bg-grid {
         position: absolute;
         inset: 0;
         background-image:
-          linear-gradient(rgba(20, 20, 20, 0.22) 1.5px, transparent 1.5px),
-          linear-gradient(90deg, rgba(20, 20, 20, 0.22) 1.5px, transparent 1.5px);
+          linear-gradient(to right, rgba(20, 20, 20, 0.22) 1.5px, transparent 1.5px),
+          linear-gradient(to bottom, rgba(20, 20, 20, 0.22) 1.5px, transparent 1.5px);
         background-size: 84px 84px;
-        z-index: 2;
         pointer-events: none;
       }
-
-      .bg-grain {
+      .bg-spotlight {
         position: absolute;
         inset: 0;
-        opacity: 0.18;
-        mix-blend-mode: multiply;
-        background-image: radial-gradient(rgba(20, 20, 20, 0.7) 1px, transparent 0);
-        background-size: 4px 4px;
-        z-index: 3;
+        background: radial-gradient(circle at 50% 48%, rgba(231, 227, 217, 0.15) 30%, rgba(20, 20, 20, 0.28) 100%);
         pointer-events: none;
       }
 
-      /* Khung Video trung tâm theo phong cách Collage Cắt Giấy */
-      .video-wrapper {
-        position: absolute;
-        inset: 0;
-        z-index: 10;
-        overflow: hidden;
-        background: #141414;
-        transform-origin: 50% 50%;
-      }
-
-      #scene-video {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 1080px;
-        height: 1920px;
-        object-fit: cover;
-        display: block;
-        transform-origin: 50% 50%;
-      }
-
-      .video-overlay {
-        position: absolute;
-        inset: 0;
-        background:
-          radial-gradient(circle at 50% 50%, transparent 60%, rgba(20, 20, 20, 0.45) 100%),
-          linear-gradient(
-            to bottom,
-            rgba(20, 20, 20, 0.5) 0%,
-            transparent 18%,
-            transparent 75%,
-            rgba(20, 20, 20, 0.65) 100%
-          );
-        pointer-events: none;
-      }
-
-      /* Dossier Tag trên cùng (Safe zone top > 160px) */
-      .dossier-tag {
-        position: absolute;
-        top: 175px;
-        left: 48px;
-        z-index: 30;
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        opacity: 0;
-      }
-
-      .dossier-pill {
-        background: #ff6a1a;
-        color: #141414;
-        font-size: 20px;
-        font-weight: 900;
-        letter-spacing: 1.5px;
-        padding: 6px 14px;
-        border-radius: 4px;
-        text-transform: uppercase;
-      }
-
-      .dossier-title {
-        background: rgba(20, 20, 20, 0.9);
-        color: #f7f4ec;
-        font-size: 22px;
-        font-weight: 700;
-        letter-spacing: 1px;
-        padding: 6px 16px;
-        border-radius: 4px;
-        border-left: 4px solid #ff6a1a;
-      }
-
-      /* Flow Step Cards: Hệ thống nhãn HUD Vox */
-      .step-card {
-        position: absolute;
-        left: 48px;
-        z-index: 30;
-        display: flex;
-        align-items: center;
-        gap: 20px;
-        background: rgba(20, 20, 20, 0.94);
-        padding: 16px 24px;
-        border-radius: 12px;
-        border-left: 8px solid #ff6a1a;
-        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
-        opacity: 0;
-      }
-
-      .step-card-1 {
-        top: 270px;
-      }
-
-      .step-card-2 {
-        top: 390px;
-      }
-
-      .step-card-3 {
-        top: 510px;
-      }
-
-      .step-badge {
-        background: #ff6a1a;
-        color: #141414;
-        font-size: 16px;
-        font-weight: 900;
-        letter-spacing: 1px;
-        padding: 4px 10px;
-        border-radius: 4px;
-        white-space: nowrap;
-      }
-
-      .step-badge-dark {
-        background: #f7f4ec;
-        color: #141414;
-      }
-
-      .step-badge-check {
-        background: #ff6a1a;
-        color: #141414;
-      }
-
-      .icon-box {
-        width: 60px;
-        height: 60px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-shrink: 0;
-      }
-
-      .svg-icon {
-        width: 100%;
-        height: 100%;
-        display: block;
-      }
-
-      .step-text-wrap {
-        display: flex;
-        flex-direction: column;
-        gap: 4px;
-      }
-
-      .step-sub {
-        font-size: 18px;
-        font-weight: 700;
-        color: #ff6a1a;
-        letter-spacing: 2px;
-        text-transform: uppercase;
-      }
-
-      .step-main {
-        font-size: 32px;
-        font-weight: 900;
-        color: #f7f4ec;
-        letter-spacing: 0.5px;
-        white-space: nowrap;
-      }
-
-      /* Punch Phrase Card Kết Luận */
-      .punch-container {
-        position: absolute;
-        top: 1140px;
-        left: 0;
-        right: 0;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        z-index: 40;
-        pointer-events: none;
-      }
-
-      .punch-card {
-        background: #141414;
-        border: 4px solid #ff6a1a;
-        padding: 32px 52px;
-        border-radius: 16px;
-        box-shadow: 12px 16px 0px #ff6a1a, 0 20px 50px rgba(0, 0, 0, 0.6);
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        text-align: center;
-        opacity: 0;
-        transform-origin: 50% 50%;
-      }
-
-      .punch-stamp {
-        font-size: 20px;
-        font-weight: 900;
-        color: #141414;
-        background: #ff6a1a;
-        padding: 6px 18px;
-        border-radius: 4px;
-        letter-spacing: 2.5px;
-        margin-bottom: 14px;
-        text-transform: uppercase;
-      }
-
-      .punch-title {
-        font-size: 64px;
-        font-weight: 900;
-        line-height: 1.15;
-        color: #f7f4ec;
-        letter-spacing: -1px;
-        text-transform: uppercase;
-        margin: 0;
-        white-space: nowrap;
-      }
-
-      .punch-line {
-        width: 100%;
-        height: 6px;
-        background: #ff6a1a;
-        margin-top: 18px;
-        transform-origin: 0% 50%;
-      }
-
-      /* Thanh cam nhận diện cố định ở mép đáy khung hình */
-      .bottom-orange-bar {
+      /* Vox visual signature: bottom orange stripe */
+      .signature-bar {
         position: absolute;
         bottom: 0;
         left: 0;
-        width: 100%;
-        height: 12px;
-        background: #ff6a1a;
+        right: 0;
+        height: 16px;
+        background: #FF6A1A;
         z-index: 100;
+      }
+
+      /* Stage container */
+      .stage {
+        position: absolute;
+        inset: 0;
+        transform-origin: 50% 45%;
+      }
+
+      /* Top narrative indicator (safe zone: y >= 160) */
+      .header-tracker {
+        position: absolute;
+        top: 180px;
+        left: 60px;
+        width: 960px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .tracker-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        background: #141414;
+        padding: 10px 22px;
+        border-radius: 8px;
+      }
+      .tracker-dot {
+        width: 12px;
+        height: 12px;
+        background: #FF6A1A;
+        border-radius: 50%;
+      }
+      .tracker-text {
+        font-size: 20px;
+        font-weight: 900;
+        color: #F7F4EC;
+        letter-spacing: 1.5px;
+      }
+      .tracker-tag {
+        font-size: 18px;
+        font-weight: 700;
+        color: #141414;
+        background: #F5F0E4;
+        border: 2px solid #141414;
+        padding: 8px 18px;
+        border-radius: 8px;
+      }
+
+      /* Arena: Split Territories */
+      .territory-a {
+        position: absolute;
+        top: 260px;
+        left: 60px;
+        width: 960px;
+        height: 310px;
+        background: #F5F0E4;
+        border: 4px solid #141414;
+        border-radius: 16px;
+        padding: 24px;
+        box-shadow: 8px 8px 0px #141414;
+      }
+      .territory-b {
+        position: absolute;
+        top: 710px;
+        left: 60px;
+        width: 960px;
+        height: 330px;
+        background: #141414;
+        border: 4px solid #141414;
+        border-radius: 16px;
+        padding: 24px;
+        box-shadow: 8px 8px 0px rgba(20, 20, 20, 0.4);
+      }
+      .territory-title {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 20px;
+      }
+      .territory-title-a {
+        font-size: 24px;
+        font-weight: 900;
+        color: #141414;
+        letter-spacing: 0.5px;
+      }
+      .territory-tag-a {
+        background: #FF6A1A;
+        color: #141414;
+        font-size: 16px;
+        font-weight: 900;
+        padding: 6px 14px;
+        border-radius: 6px;
+      }
+      .territory-title-b {
+        font-size: 24px;
+        font-weight: 900;
+        color: #F7F4EC;
+        letter-spacing: 0.5px;
+      }
+      .territory-tag-b {
+        background: #FF6A1A;
+        color: #141414;
+        font-size: 16px;
+        font-weight: 900;
+        padding: 6px 14px;
+        border-radius: 6px;
+      }
+
+      /* Flow track and convoys */
+      .convoy-wrapper {
+        display: flex;
+        gap: 20px;
+        justify-content: space-around;
+        margin-top: 14px;
+      }
+      .cargo-card {
+        flex: 1;
+        background: #E7E3D9;
+        border: 3px solid #141414;
+        border-radius: 12px;
+        padding: 16px 14px;
+        text-align: center;
+      }
+      .cargo-header {
+        font-size: 16px;
+        font-weight: 900;
+        color: #141414;
+        border-bottom: 2px dashed #141414;
+        padding-bottom: 6px;
+        margin-bottom: 8px;
+      }
+      .cargo-icon-svg {
+        display: block;
+        margin: 0 auto 8px auto;
+      }
+      .cargo-payload {
+        font-size: 18px;
+        font-weight: 900;
+        color: #141414;
+      }
+
+      /* Flow vector path */
+      .flow-path-svg {
+        position: absolute;
+        top: 570px;
+        left: 60px;
+        width: 960px;
+        height: 140px;
+        pointer-events: none;
+      }
+
+      /* The Wall of Law / Trade Barrier */
+      .barrier-wall {
+        position: absolute;
+        top: 590px;
+        left: 60px;
+        width: 960px;
+        height: 110px;
+        background: #141414;
+        border: 4px solid #FF6A1A;
+        border-radius: 12px;
+        box-shadow: 0px 12px 28px rgba(0, 0, 0, 0.45);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 32px;
+        z-index: 40;
+      }
+      .barrier-hazard {
+        width: 44px;
+        height: 100%;
+        background: repeating-linear-gradient(
+          -45deg,
+          #FF6A1A,
+          #FF6A1A 12px,
+          #141414 12px,
+          #141414 24px
+        );
+      }
+      .barrier-body {
+        text-align: center;
+        flex: 1;
+      }
+      .barrier-headline {
+        font-size: 40px;
+        font-weight: 900;
+        color: #F7F4EC;
+        letter-spacing: 1px;
+        line-height: 1.1;
+      }
+      .barrier-subline {
+        font-size: 18px;
+        font-weight: 900;
+        color: #FF6A1A;
+        letter-spacing: 2px;
+        margin-top: 4px;
+      }
+
+      /* Foreign territory internal layout */
+      .foreign-target-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+        margin-top: 24px;
+      }
+      .foreign-slot {
+        background: rgba(247, 244, 236, 0.06);
+        border: 2px dashed rgba(247, 244, 236, 0.25);
+        border-radius: 10px;
+        padding: 24px 12px;
+        text-align: center;
+      }
+      .slot-title {
+        font-size: 16px;
+        font-weight: 700;
+        color: rgba(247, 244, 236, 0.5);
+        margin-bottom: 8px;
+      }
+      .slot-state {
+        font-size: 20px;
+        font-weight: 900;
+        color: #FF6A1A;
+      }
+
+      /* Punch-phrase Plate (t >= 2.68s) */
+      .punch-container {
+        position: absolute;
+        top: 1080px;
+        left: 60px;
+        width: 960px;
+        background: #141414;
+        border-radius: 16px;
+        padding: 26px 36px;
+        box-shadow: 10px 10px 0px #FF6A1A;
+        z-index: 50;
+      }
+      .punch-phrase {
+        margin: 0;
+        font-size: 64px;
+        font-weight: 900;
+        line-height: 1.25;
+        color: #F7F4EC;
+        text-align: center;
+        letter-spacing: -0.5px;
+      }
+
+      /* Secondary Overlays: Label + Ban Icon (safe zone: y <= 1380) */
+      .status-row {
+        position: absolute;
+        top: 1250px;
+        left: 60px;
+        width: 960px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 24px;
+        z-index: 50;
+      }
+      .label-badge {
+        display: inline-flex;
+        align-items: center;
+        background: #FF6A1A;
+        color: #141414;
+        padding: 16px 32px;
+        border-radius: 12px;
+        font-size: 30px;
+        font-weight: 900;
+        box-shadow: 4px 4px 0px #141414;
+      }
+      .icon-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 74px;
+        height: 74px;
+        background: #141414;
+        border: 4px solid #FF6A1A;
+        border-radius: 14px;
+        box-shadow: 4px 4px 0px rgba(20, 20, 20, 0.5);
       }
     </style>
 
-    <div data-hf-id="hf-gina" id="root" data-composition-id="scene-s16" data-width="1080" data-height="1920" data-duration="10.01">
-      <!-- Nền giấy ngà + lưới ô vuông Vox 84px + Grain texture -->
-      <div data-hf-id="hf-7v19" class="bg-base"></div>
-      <div data-hf-id="hf-yqqm" class="bg-grid"></div>
-      <div data-hf-id="hf-ae6v" class="bg-grain"></div>
+    <div
+      id="root"
+      data-composition-id="scene-s16"
+      data-width="1080"
+      data-height="1920"
+      data-duration="6.92"
+    >
+      <div class="bg-grid"></div>
+      <div class="bg-spotlight"></div>
+      <div class="signature-bar"></div>
 
-      <!-- Video Fit 9:16 Cỗ Máy Rửa Cá (Paper Cutout) -->
-      <div data-hf-id="hf-3ksg" id="video-wrapper" class="video-wrapper">
-        <video data-hf-id="hf-eyot" id="scene-video" data-start="0" data-duration="10.01" data-media-start="0" src="assets/vid-13-money-laundering-shell-corp-cat.mp4" muted playsinline></video>
-        <div data-hf-id="hf-tq4e" class="video-overlay"></div>
-      </div>
+      <section id="scene-s16" class="clip" data-start="0" data-duration="6.92">
+        <div id="stage-wrapper" class="stage">
+          <!-- Top Tracker -->
+          <div class="header-tracker">
+            <div class="tracker-badge">
+              <span class="tracker-dot"></span>
+              <span class="tracker-text">SƠ ĐỒ XUẤT KHẨU</span>
+            </div>
+            <div class="tracker-tag">QUAN HỆ THƯƠNG MẠI</div>
+          </div>
 
-      <!-- Tag Hồ Sơ Góc Trên (Safe zone top > 160px) -->
-      <div data-hf-id="hf-0sn2" id="dossier-tag" class="dossier-tag">
-        <span data-hf-id="hf-o0xj" class="dossier-pill">HỒ SƠ TỘI PHẠM #16</span>
-        <span data-hf-id="hf-6ghk" class="dossier-title">CƠ CHẾ RỬA CÁ</span>
-      </div>
+          <!-- Zone A: Domestic Territory (Cat Mafia Bakery) -->
+          <div id="zone-domestic" class="territory-a">
+            <div class="territory-title">
+              <span class="territory-title-a">RỪNG NỘI ĐỊA (MÈO MAFIA)</span>
+              <span class="territory-tag-a">NGUỒN XUẤT</span>
+            </div>
+            <div class="convoy-wrapper">
+              <div id="convoy-1" class="cargo-card">
+                <div class="cargo-header">XE HÀNG 01</div>
+                <svg class="cargo-icon-svg" width="48" height="40" viewBox="0 0 48 40" fill="none">
+                  <rect x="4" y="10" width="40" height="24" rx="4" fill="#FF6A1A" stroke="#141414" stroke-width="3"/>
+                  <circle cx="14" cy="34" r="5" fill="#141414"/>
+                  <circle cx="34" cy="34" r="5" fill="#141414"/>
+                  <path d="M12 20h24" stroke="#141414" stroke-width="3" stroke-linecap="round"/>
+                </svg>
+                <div class="cargo-payload">1,000 Ổ BÁNH</div>
+              </div>
+              <div id="convoy-2" class="cargo-card">
+                <div class="cargo-header">XE HÀNG 02</div>
+                <svg class="cargo-icon-svg" width="48" height="40" viewBox="0 0 48 40" fill="none">
+                  <rect x="4" y="10" width="40" height="24" rx="4" fill="#FF6A1A" stroke="#141414" stroke-width="3"/>
+                  <circle cx="14" cy="34" r="5" fill="#141414"/>
+                  <circle cx="34" cy="34" r="5" fill="#141414"/>
+                  <path d="M12 20h24" stroke="#141414" stroke-width="3" stroke-linecap="round"/>
+                </svg>
+                <div class="cargo-payload">1,000 Ổ BÁNH</div>
+              </div>
+              <div id="convoy-3" class="cargo-card">
+                <div class="cargo-header">XE HÀNG 03</div>
+                <svg class="cargo-icon-svg" width="48" height="40" viewBox="0 0 48 40" fill="none">
+                  <rect x="4" y="10" width="40" height="24" rx="4" fill="#FF6A1A" stroke="#141414" stroke-width="3"/>
+                  <circle cx="14" cy="34" r="5" fill="#141414"/>
+                  <circle cx="34" cy="34" r="5" fill="#141414"/>
+                  <path d="M12 20h24" stroke="#141414" stroke-width="3" stroke-linecap="round"/>
+                </svg>
+                <div class="cargo-payload">1,000 Ổ BÁNH</div>
+              </div>
+            </div>
+          </div>
 
-      <!-- Overlay 1: Doc Icon + "CÔNG TY MA VỎ BỌC" -->
-      <div data-hf-id="hf-v2jl" id="overlay-step-1" class="step-card step-card-1">
-        <div data-hf-id="hf-azdf" class="step-badge">BƯỚC 1</div>
-        <div data-hf-id="hf-mb27" class="icon-box">
-          <svg data-hf-id="hf-lkg4" class="svg-icon" viewBox="0 0 64 64" fill="none">
-            <path data-hf-id="hf-wq6f" class="draw-doc" d="M16 8 H40 L52 20 V56 H16 Z" stroke="#FF6A1A" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" />
-            <path data-hf-id="hf-ntb7" class="draw-doc" d="M40 8 V20 H52" stroke="#FF6A1A" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
-            <path data-hf-id="hf-w2bl" class="draw-doc" d="M24 30 H44" stroke="#F7F4EC" stroke-width="4" stroke-linecap="round" />
-            <path data-hf-id="hf-u1am" class="draw-doc" d="M24 40 H44" stroke="#F7F4EC" stroke-width="4" stroke-linecap="round" />
-            <path data-hf-id="hf-syt4" class="draw-doc" d="M24 50 H34" stroke="#F7F4EC" stroke-width="4" stroke-linecap="round" />
+          <!-- Flow vectors between territories -->
+          <svg class="flow-path-svg" viewBox="0 0 960 140" fill="none">
+            <line id="flow-line-1" x1="200" y1="0" x2="200" y2="140" stroke="#FF6A1A" stroke-width="6" stroke-dasharray="10 10"/>
+            <line id="flow-line-2" x1="480" y1="0" x2="480" y2="140" stroke="#FF6A1A" stroke-width="6" stroke-dasharray="10 10"/>
+            <line id="flow-line-3" x1="760" y1="0" x2="760" y2="140" stroke="#FF6A1A" stroke-width="6" stroke-dasharray="10 10"/>
+            <polygon points="190,126 200,140 210,126" fill="#FF6A1A"/>
+            <polygon points="470,126 480,140 490,126" fill="#FF6A1A"/>
+            <polygon points="750,126 760,140 770,126" fill="#FF6A1A"/>
           </svg>
-        </div>
-        <div data-hf-id="hf-wa8r" class="step-text-wrap">
-          <div data-hf-id="hf-j13w" class="step-sub">GIẤY TỜ PHÁP LÝ</div>
-          <div data-hf-id="hf-xfpi" class="step-main">CÔNG TY MA VỎ BỌC</div>
-        </div>
-      </div>
 
-      <!-- Overlay 2: Fall Icon + "ĐẦU TƯ CÁ BẨN VÀO" -->
-      <div data-hf-id="hf-6bxl" id="overlay-step-2" class="step-card step-card-2">
-        <div data-hf-id="hf-yam7" class="step-badge step-badge-dark">BƯỚC 2</div>
-        <div data-hf-id="hf-ly0v" class="icon-box">
-          <svg data-hf-id="hf-f0u4" class="svg-icon" viewBox="0 0 64 64" fill="none">
-            <path data-hf-id="hf-nlde" class="draw-fall" d="M32 10 V46" stroke="#FF6A1A" stroke-width="5" stroke-linecap="round" />
-            <path data-hf-id="hf-jhmg" class="draw-fall" d="M18 34 L32 48 L46 34" stroke="#FF6A1A" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" />
-            <path data-hf-id="hf-7vi6" class="draw-fall" d="M14 20 C22 28, 26 30, 32 30 C38 30, 42 28, 50 20" stroke="#F7F4EC" stroke-width="3.5" stroke-linecap="round" />
-          </svg>
-        </div>
-        <div data-hf-id="hf-2ty3" class="step-text-wrap">
-          <div data-hf-id="hf-tsfk" class="step-sub">DÒNG TIỀN ĐEN</div>
-          <div data-hf-id="hf-ft41" class="step-main">ĐẦU TƯ CÁ BẨN VÀO</div>
-        </div>
-      </div>
+          <!-- The Barrier / Legal Wall -->
+          <div id="barrier-wall" class="barrier-wall">
+            <div class="barrier-hazard"></div>
+            <div class="barrier-body">
+              <div class="barrier-headline">LUẬT CẤM BÁN BÁNH</div>
+              <div class="barrier-subline">SẮC LỆNH TỔNG THỐNG LÁNG GIỀNG</div>
+            </div>
+            <div class="barrier-hazard"></div>
+          </div>
 
-      <!-- Overlay 3: Check Icon + "NHẬN LẠI CÁ SẠCH" -->
-      <div data-hf-id="hf-3cud" id="overlay-step-3" class="step-card step-card-3">
-        <div data-hf-id="hf-8txi" class="step-badge step-badge-check">BƯỚC 3</div>
-        <div data-hf-id="hf-ljpu" class="icon-box">
-          <svg data-hf-id="hf-dtx1" class="svg-icon" viewBox="0 0 64 64" fill="none">
-            <circle data-hf-id="hf-bo9g" class="draw-check" cx="32" cy="32" r="24" stroke="#FF6A1A" stroke-width="4.5" />
-            <path data-hf-id="hf-y03j" class="draw-check" d="M20 33 L28 41 L44 23" stroke="#F7F4EC" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" />
-          </svg>
-        </div>
-        <div data-hf-id="hf-2fn2" class="step-text-wrap">
-          <div data-hf-id="hf-or5e" class="step-sub">LỢI NHUẬN HỢP PHÁP</div>
-          <div data-hf-id="hf-k7mr" class="step-main">NHẬN LẠI CÁ SẠCH</div>
-        </div>
-      </div>
+          <!-- Zone B: Foreign Territory (President) -->
+          <div id="zone-foreign" class="territory-b">
+            <div class="territory-title">
+              <span class="territory-title-b">RỪNG BÊN CẠNH (TỔNG THỐNG)</span>
+              <span class="territory-tag-b">THỊ TRƯỜNG ĐÓNG</span>
+            </div>
+            <div class="foreign-target-grid">
+              <div class="foreign-slot">
+                <div class="slot-title">PHÂN PHỐI 01</div>
+                <div class="slot-state">BỊ KHÓA</div>
+              </div>
+              <div class="foreign-slot">
+                <div class="slot-title">PHÂN PHỐI 02</div>
+                <div class="slot-state">BỊ KHÓA</div>
+              </div>
+              <div class="foreign-slot">
+                <div class="slot-title">PHÂN PHỐI 03</div>
+                <div class="slot-state">BỊ KHÓA</div>
+              </div>
+            </div>
+          </div>
 
-      <!-- Overlay 4: Punch Phrase "RỬA TIỀN - RỬA CÁ" -->
-      <div data-hf-id="hf-4m96" id="punch-container" class="punch-container">
-        <div data-hf-id="hf-nzw6" id="punch-card" class="punch-card">
-          <div data-hf-id="hf-90pv" class="punch-stamp">KẾT LUẬN THỦ ĐOẠN</div>
-          <h1 data-hf-id="hf-zqg5" class="punch-title">RỬA TIỀN - RỬA CÁ</h1>
-          <div data-hf-id="hf-kfvy" id="punch-line" class="punch-line"></div>
-        </div>
-      </div>
+          <!-- Punch-phrase overlay (atMs: 150150 -> 2.68s) -->
+          <div id="punch-card" class="punch-container">
+            <h1 class="punch-phrase">XUẤT KHẨU BỊ CHẶN</h1>
+          </div>
 
-      <!-- Thanh cam nhận diện cố định ở mép đáy khung hình -->
-      <div data-hf-id="hf-2ykk" class="bottom-orange-bar"></div>
+          <!-- Overlays: Label & Ban Icon -->
+          <div class="status-row">
+            <div id="label-market" class="label-badge">RÀO CẢN THỊ TRƯỜNG</div>
+            <div id="icon-ban-box" class="icon-badge">
+              <svg id="ban-svg" width="48" height="48" viewBox="0 0 48 48" fill="none">
+                <circle id="ban-circle" cx="24" cy="24" r="19" stroke="#FF6A1A" stroke-width="5"/>
+                <line id="ban-slash" x1="11" y1="11" x2="37" y2="37" stroke="#FF6A1A" stroke-width="5" stroke-linecap="round"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
 
     <script>
-      // Khởi tạo stroke-dash pattern cho SVG icon paths theo chuẩn Style DNA
-      function initSvgPath(selector) {
-        var elements = document.querySelectorAll(selector);
-        elements.forEach(function (el) {
-          var len = el.getTotalLength ? Math.ceil(el.getTotalLength()) : 200;
-          el.style.strokeDasharray = (len + 2) + "px";
-          el.style.strokeDashoffset = (len + 2) + "px";
-        });
-      }
-
-      initSvgPath(".draw-doc");
-      initSvgPath(".draw-fall");
-      initSvgPath(".draw-check");
-
-      // Khởi tạo GSAP Timeline duy nhất và paused cho composition "scene-s16"
       const tl = gsap.timeline({ paused: true });
 
-      // 1. Unfold Entrance Animation (0.0s -> 0.7s)
+      // Elements
+      const stage = document.getElementById("stage-wrapper");
+      const zoneA = document.getElementById("zone-domestic");
+      const zoneB = document.getElementById("zone-foreign");
+      const barrier = document.getElementById("barrier-wall");
+      const punchCard = document.getElementById("punch-card");
+      const labelMarket = document.getElementById("label-market");
+      const iconBanBox = document.getElementById("icon-ban-box");
+      const banCircle = document.getElementById("ban-circle");
+      const banSlash = document.getElementById("ban-slash");
+
+      const convoy1 = document.getElementById("convoy-1");
+      const convoy2 = document.getElementById("convoy-2");
+      const convoy3 = document.getElementById("convoy-3");
+
+      const flow1 = document.getElementById("flow-line-1");
+      const flow2 = document.getElementById("flow-line-2");
+      const flow3 = document.getElementById("flow-line-3");
+
+      // Measure SVG path lengths for ban icon
+      const circleLen = banCircle.getTotalLength();
+      const slashLen = banSlash.getTotalLength();
+
+      banCircle.style.strokeDasharray = circleLen;
+      banCircle.style.strokeDashoffset = circleLen;
+      banSlash.style.strokeDasharray = slashLen;
+      banSlash.style.strokeDashoffset = slashLen;
+
+      // 1. Initial Transition In: "flip" entrance (0.0s - 0.7s)
       tl.fromTo(
-        "#video-wrapper",
-        { scaleY: 0.1, opacity: 0 },
-        { scaleY: 1, opacity: 1, duration: 0.7, ease: "power3.out" },
-        0
+        stage,
+        { rotationX: -14, transformPerspective: 1200, opacity: 0, scale: 0.94 },
+        { rotationX: 0, opacity: 1, scale: 1, duration: 0.7, ease: "power3.out" },
+        0.0
       );
 
-      // 2. Camera Motion: Zoom-in liên tục
-      // 0s -> 8.0s: Zoom nhẹ vào toàn cảnh cỗ máy mèo buôn lậu
+      // Camera motion: slow steady zoom-in as specified in shotlist
       tl.fromTo(
-        "#scene-video",
-        { scale: 1.0 },
-        { scale: 1.08, duration: 8.0, ease: "none" },
-        0
-      );
-      // 8.0s -> 10.01s: Freeze frame cuối, zoom sâu vào khay cá sạch thành phẩm
-      tl.fromTo(
-        "#scene-video",
-        { scale: 1.08, y: 0 },
-        { scale: 1.2, y: -45, duration: 2.01, ease: "power2.out" },
-        8.0
+        stage,
+        { scale: 1 },
+        { scale: 1.04, duration: 6.22, ease: "none" },
+        0.7
       );
 
-      // 3. Dossier Tag Header (0.3s -> 0.8s)
+      // Stagger convoy cards entrance inside Domestic territory
       tl.fromTo(
-        "#dossier-tag",
-        { y: -24, opacity: 0 },
-        { y: 0, opacity: 1, duration: 0.5, ease: "power3.out" },
-        0.3
+        [convoy1, convoy2, convoy3],
+        { y: -20, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.5, stagger: 0.12, ease: "power2.out" },
+        0.35
       );
 
-      // 4. Overlay 1: Doc Icon + "CÔNG TY MA VỎ BỌC" (1.03s -> 4.2s)
+      // Flow lines activation: convey moving bread trucks outward
       tl.fromTo(
-        "#overlay-step-1",
-        { x: -50, opacity: 0 },
-        { x: 0, opacity: 1, duration: 0.45, ease: "power3.out" },
-        1.03
+        [flow1, flow2, flow3],
+        { opacity: 0 },
+        { opacity: 1, duration: 0.4, stagger: 0.1, ease: "power1.out" },
+        0.85
+      );
+
+      // Convoys start creeping downward along the trade route
+      tl.fromTo(
+        [convoy1, convoy2, convoy3],
+        { y: 0 },
+        { y: 35, duration: 1.4, ease: "power1.inOut" },
+        1.1
+      );
+
+      // Hide barrier, punch card, label, and ban icon initially
+      gsap.set(barrier, { y: -80, opacity: 0, scale: 1.15 });
+      gsap.set(punchCard, { scale: 0.85, opacity: 0 });
+      gsap.set(labelMarket, { y: 24, opacity: 0 });
+      gsap.set(iconBanBox, { scale: 0, opacity: 0 });
+
+      // 2. The Blockade (t = 2.68s / 150150ms):
+      // The Wall of Law SLAMS down, halting trade flow abruptly!
+      tl.fromTo(
+        barrier,
+        { y: -90, opacity: 0, scale: 1.2 },
+        { y: 0, opacity: 1, scale: 1, duration: 0.45, ease: "power4.out" },
+        2.68
+      );
+
+      // Convoys recoil back upon hitting the legal blockade
+      tl.to(
+        [convoy1, convoy2, convoy3],
+        { y: 15, duration: 0.25, ease: "back.out(2)" },
+        2.78
+      );
+
+      // Flow lines dim to indicate cutoff
+      tl.to(
+        [flow1, flow2, flow3],
+        { opacity: 0.25, duration: 0.3, ease: "power2.out" },
+        2.78
+      );
+
+      // Punch Phrase enters firmly (atMs: 150150 -> 2.68s)
+      tl.fromTo(
+        punchCard,
+        { scale: 0.86, opacity: 0, y: 30 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.5, ease: "power3.out" },
+        2.68
+      );
+
+      // 3. Label "RÀO CẢN THỊ TRƯỜNG" enters (atMs: 152990 -> 5.52s)
+      tl.fromTo(
+        labelMarket,
+        { y: 24, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.4, ease: "power3.out" },
+        5.52
+      );
+
+      // 4. Icon "ban" badge pops & draws in (atMs: 153480 -> 6.01s)
+      tl.fromTo(
+        iconBanBox,
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.35, ease: "power3.out" },
+        6.01
+      );
+
+      // Progressive SVG path draw for Ban circle & slash
+      tl.to(
+        banCircle,
+        { strokeDashoffset: 0, duration: 0.42, ease: "power2.out" },
+        6.05
       );
       tl.to(
-        ".draw-doc",
-        { strokeDashoffset: 0, duration: 0.65, ease: "power2.out", stagger: 0.08 },
-        1.15
-      );
-      tl.fromTo(
-        "#overlay-step-1",
-        { x: 0, opacity: 1 },
-        { x: 30, opacity: 0, duration: 0.33, ease: "power2.in" },
-        4.2
+        banSlash,
+        { strokeDashoffset: 0, duration: 0.3, ease: "power2.out" },
+        6.35
       );
 
-      // 5. Overlay 2: Fall Icon + "ĐẦU TƯ CÁ BẨN VÀO" (4.42s -> 6.62s)
-      tl.fromTo(
-        "#overlay-step-2",
-        { x: -50, opacity: 0 },
-        { x: 0, opacity: 1, duration: 0.45, ease: "power3.out" },
-        4.42
-      );
-      tl.to(
-        ".draw-fall",
-        { strokeDashoffset: 0, duration: 0.65, ease: "power2.out", stagger: 0.1 },
-        4.55
-      );
-      tl.fromTo(
-        "#overlay-step-2",
-        { x: 0, opacity: 1 },
-        { x: 30, opacity: 0, duration: 0.35, ease: "power2.in" },
-        6.62
-      );
-
-      // 6. Overlay 3: Check Icon + "NHẬN LẠI CÁ SẠCH" (6.56s -> 8.3s)
-      tl.fromTo(
-        "#overlay-step-3",
-        { x: -50, opacity: 0 },
-        { x: 0, opacity: 1, duration: 0.45, ease: "power3.out" },
-        6.56
-      );
-      tl.to(
-        ".draw-check",
-        { strokeDashoffset: 0, duration: 0.6, ease: "power2.out", stagger: 0.12 },
-        6.7
-      );
-      tl.fromTo(
-        "#overlay-step-3",
-        { opacity: 1 },
-        { opacity: 0, duration: 0.25, ease: "power2.in" },
-        8.3
-      );
-
-      // 7. Overlay 4: Punch-phrase "RỬA TIỀN - RỬA CÁ" (8.41s -> 10.01s)
-      tl.fromTo(
-        "#punch-card",
-        { scale: 0.85, y: 35, opacity: 0 },
-        { scale: 1, y: 0, opacity: 1, duration: 0.5, ease: "power3.out" },
-        8.41
-      );
-      tl.fromTo(
-        "#punch-line",
-        { scaleX: 0 },
-        { scaleX: 1, duration: 0.45, ease: "power2.out" },
-        8.65
-      );
-
-      // Đăng ký timeline vào hệ thống seek của HyperFrames
+      // Register master timeline
+      window.__timelines = window.__timelines || {};
       window.__timelines["scene-s16"] = tl;
     </script>
   

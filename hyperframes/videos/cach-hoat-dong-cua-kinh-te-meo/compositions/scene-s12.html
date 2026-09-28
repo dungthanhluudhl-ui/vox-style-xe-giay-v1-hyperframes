@@ -1,383 +1,655 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
   <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF-8" />
   </head>
   <body>
     <template>
-      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap">
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
       <style>
-      *, *::before, *::after { box-sizing: border-box; }
-      body {
-        margin: 0; padding: 0;
-        background-color: #F5F0E4;
-        color: #141414;
-        font-family: "Be Vietnam Pro", sans-serif;
-        overflow: hidden;
-        -webkit-font-smoothing: antialiased;
-      }
-      #root {
-        position: relative;
-        width: 100%; height: 100%;
-        overflow: hidden;
-        background-color: #F5F0E4;
-      }
-      .clip { position: absolute; inset: 0; overflow: hidden; }
-      .paper-grain {
-        position: absolute; inset: 0; pointer-events: none;
-        opacity: 0.15; mix-blend-mode: multiply; z-index: 1;
-        background-image: radial-gradient(#141414 0.75px, transparent 0.75px);
-        background-size: 16px 16px;
-      }
-      #bottom-bar {
-        position: absolute; bottom: 0; left: 0;
-        width: 1080px; height: 14px;
-        background-color: #FF6A1A; z-index: 99;
-      }
-      #camera-rig {
-        position: absolute; inset: 0;
-        transform-origin: 540px 960px;
-      }
-      /* Header */
-      #header-group {
-        position: absolute; top: 150px; left: 60px; right: 60px;
-        display: flex; flex-direction: column; gap: 10px; z-index: 10;
-      }
-      .category-pill {
-        display: inline-flex; align-items: center; gap: 8px;
-        background-color: #141414; color: #F7F4EC;
-        padding: 8px 18px; border-radius: 6px;
-        font-size: 20px; font-weight: 900; letter-spacing: 1px;
-        text-transform: uppercase; width: fit-content;
-      }
-      .category-pill .dot {
-        width: 10px; height: 10px; border-radius: 50%;
-        background-color: #FF6A1A;
-      }
-      .main-title {
-        font-size: 44px; font-weight: 900; line-height: 1.25;
-        color: #141414; margin: 0; text-transform: uppercase;
-      }
-      /* Cards */
-      .diagram-card {
-        position: absolute; left: 60px; right: 60px;
-        background-color: #FFFFFF; border: 4px solid #141414;
-        border-radius: 16px; box-shadow: 8px 8px 0px #141414;
-        padding: 22px 26px; z-index: 5;
-      }
-      .card-header-row {
-        display: flex; justify-content: space-between; align-items: center;
-        border-bottom: 2px solid rgba(20, 20, 20, 0.15);
-        padding-bottom: 12px; margin-bottom: 16px;
-      }
-      .card-title-tag {
-        font-size: 24px; font-weight: 900; color: #141414; text-transform: uppercase;
-      }
-      .status-chip {
-        font-size: 16px; font-weight: 900; padding: 4px 12px;
-        border-radius: 4px; background-color: #F5F0E4;
-        color: #141414; border: 1.5px solid #141414; text-transform: uppercase;
-      }
-      .status-chip.orange { background-color: #FF6A1A; color: #141414; }
-      #card-neighbor { top: 310px; height: 320px; }
-      .card-body { display: flex; gap: 24px; align-items: center; }
-      .visual-badge {
-        flex-shrink: 0; width: 140px; height: 180px;
-        background-color: #F5F0E4; border: 3px solid #141414;
-        border-radius: 12px; display: flex; flex-direction: column;
-        align-items: center; justify-content: center; gap: 8px;
-      }
-      .features-column { flex: 1; display: flex; flex-direction: column; gap: 12px; }
-      .feature-item {
-        display: flex; align-items: center; gap: 14px;
-        background-color: #141414; color: #F7F4EC;
-        padding: 10px 16px; border-radius: 10px;
-        border-left: 6px solid #FF6A1A;
-      }
-      .icon-circle {
-        flex-shrink: 0; width: 40px; height: 40px; border-radius: 50%;
-        background-color: #141414; border: 2px solid #FF6A1A;
-        display: flex; align-items: center; justify-content: center;
-      }
-      .feature-text { font-size: 21px; font-weight: 900; }
-      .sub-badge {
-        display: inline-flex; align-items: center; gap: 10px;
-        background-color: #F5F0E4; border: 2px solid #141414;
-        border-radius: 8px; padding: 10px 16px;
-        color: #141414; font-size: 19px; font-weight: 900;
-      }
-      /* Transit Corridor */
-      #transit-corridor {
-        position: absolute; top: 650px; left: 0; right: 0;
-        height: 270px; z-index: 4;
-      }
-      #border-demarcation {
-        position: absolute; top: 130px; left: 60px; right: 60px;
-        height: 4px; border-top: 3px dashed rgba(20, 20, 20, 0.4);
-        display: flex; align-items: center; justify-content: flex-start;
-      }
-      #checkpoint-badge {
-        background-color: #141414; color: #F7F4EC;
-        border: 2px solid #FF6A1A; padding: 6px 18px;
-        border-radius: 20px; font-size: 16px; font-weight: 900;
-        text-transform: uppercase; transform: translateY(-2px);
-      }
-      #trade-svg-canvas {
-        position: absolute; inset: 0; width: 1080px; height: 100%;
-        pointer-events: none;
-      }
-      /* Cargo Crate */
-      #cargo-crate-1 {
-        position: absolute; top: 630px; left: 640px;
-        width: 170px; height: 95px; background-color: #FFFFFF;
-        border: 3px solid #141414; border-radius: 12px;
-        box-shadow: 6px 6px 0px #141414; display: flex;
-        flex-direction: column; align-items: center;
-        justify-content: center; gap: 3px; z-index: 8;
-      }
-      .crate-label { font-size: 16px; font-weight: 900; color: #141414; }
-      .crate-tag {
-        background-color: #FF6A1A; color: #141414;
-        font-size: 13px; font-weight: 900; padding: 2px 8px;
-        border-radius: 4px; text-transform: uppercase;
-      }
-      /* Card 2 */
-      #card-home { top: 935px; height: 300px; }
-      .pin-target-box {
-        display: flex; align-items: center; gap: 16px;
-        background-color: #F5F0E4; border: 2px solid #141414;
-        border-radius: 12px; padding: 16px 20px;
-      }
-      #pin-container {
-        flex-shrink: 0; width: 50px; height: 50px;
-        display: flex; align-items: center; justify-content: center;
-      }
-      /* Punch Card */
-      #punch-card {
-        position: absolute; top: 1260px; left: 60px; right: 60px;
-        height: 190px; background-color: #141414;
-        border: 4px solid #FF6A1A; border-radius: 16px;
-        box-shadow: 8px 8px 0px #FF6A1A; display: flex;
-        flex-direction: column; justify-content: center;
-        padding: 20px 32px; z-index: 20;
-      }
-      .punch-kicker {
-        font-size: 16px; font-weight: 900; color: #FF6A1A;
-        text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 4px;
-      }
-      .punch-main-text {
-        font-size: 50px; font-weight: 900; color: #F7F4EC;
-        text-transform: uppercase; line-height: 1.15; margin: 0;
-      }
-      .punch-sub-text {
-        font-size: 19px; font-weight: 700; color: #E7E3D9; margin-top: 6px;
-      }
-      #punch-stamp {
-        position: absolute; right: 28px; top: 22px;
-        border: 3px solid #FF6A1A; padding: 6px 14px;
-        border-radius: 6px; color: #FF6A1A; font-size: 16px;
-        font-weight: 900; text-transform: uppercase;
-      }
-    </style>
+    /* hf-safe-colors (tất định từ style-tokens.json) */
+    .hf-text-ink { color: #141414; }
+    .hf-text-light { color: #F7F4EC; }
+    .hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+    .hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+    .hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+    .hf-plate-paper { color: #141414; background-color: #F5F0E4; }
 
-    <div data-hf-id="hf-dv07" id="root" data-composition-id="scene-s12" data-width="1080" data-height="1920" data-duration="9">
-      <div data-hf-id="hf-osr0" class="paper-grain"></div>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
-      <section data-hf-id="hf-yyjw" id="scene-s12" class="clip" data-start="0" data-duration="9">
-        <div data-hf-id="hf-iu6l" id="camera-rig">
-          <!-- Header -->
-          <div data-hf-id="hf-vek8" id="header-group">
-            <div data-hf-id="hf-5io4" class="category-pill">
-              <span data-hf-id="hf-9gry" class="dot"></span>
-              <span data-hf-id="hf-emue">CƠ CHẾ THƯƠNG MẠI • LỢI THẾ SO SÁNH</span>
-            </div>
-            <h1 data-hf-id="hf-3npe" class="main-title">DÒNG CHẢY HÀNG HOÁ LIÊN RỪNG</h1>
-          </div>
+    body {
+      background-color: #E7E3D9;
+      color: #141414;
+      font-family: "Be Vietnam Pro", sans-serif;
+      overflow: hidden;
+      width: 1080px;
+      height: 1920px;
+      margin: 0;
+    }
 
-          <!-- Card 1: Rừng lân cận -->
-          <div data-hf-id="hf-d4u5" id="card-neighbor" class="diagram-card">
-            <div data-hf-id="hf-x10j" class="card-header-row">
-              <span data-hf-id="hf-0luy" class="card-title-tag">1. KHU RỪNG BÊN CẠNH</span>
-              <span data-hf-id="hf-eone" class="status-chip orange">Nguồn Cung Cấp</span>
-            </div>
-            <div data-hf-id="hf-h0w3" class="card-body">
-              <div data-hf-id="hf-lez2" class="visual-badge">
-                <svg data-hf-id="hf-d336" width="68" height="68" viewBox="0 0 64 64" fill="none" stroke="#141414" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-                  <path data-hf-id="hf-yuq3" d="M22 46 L32 28 L42 46 Z" fill="#F5F0E4" />
-                  <path data-hf-id="hf-zv2h" d="M26 34 L32 22 L38 34 Z" fill="#FF6A1A" />
-                  <path data-hf-id="hf-4r73" d="M12 56 L24 38 L36 56 Z" fill="#F5F0E4" />
-                  <path data-hf-id="hf-bpe8" d="M28 56 L40 38 L52 56 Z" fill="#F5F0E4" />
-                  <line data-hf-id="hf-m7s5" x1="32" y1="46" x2="32" y2="56" />
-                </svg>
-                <span data-hf-id="hf-bmya" style="font-size: 13px; font-weight: 900; color: #141414;">RỪNG ĐỐI TÁC</span>
-              </div>
-              <div data-hf-id="hf-8xv8" class="features-column">
-                <div data-hf-id="hf-vhpi" id="label-cheap-tasty" class="feature-item">
-                  <div data-hf-id="hf-8hvq" id="check-pill" class="icon-circle">
-                    <svg data-hf-id="hf-7txc" width="22" height="22" viewBox="0 0 32 32" fill="none">
-                      <path data-hf-id="hf-wwlp" id="check-path" d="M 7 16 L 14 23 L 26 9" stroke="#FF6A1A" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
-                    </svg>
-                  </div>
-                  <span data-hf-id="hf-c4d1" class="feature-text">NGON HƠN &amp; RẺ HƠN</span>
-                </div>
-                <div data-hf-id="hf-a1cz" id="label-superior-ingredients" class="sub-badge">
-                  <svg data-hf-id="hf-4uuw" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FF6A1A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-                    <polygon data-hf-id="hf-9m10" points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-                  </svg>
-                  <span data-hf-id="hf-rvf8">NGUYÊN LIỆU VƯỢT TRỘI</span>
-                </div>
-              </div>
-            </div>
-          </div>
+    #root {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #E7E3D9;
+    }
 
-          <!-- Transit Corridor -->
-          <div data-hf-id="hf-d8p5" id="transit-corridor">
-            <svg data-hf-id="hf-49al" id="trade-svg-canvas" viewBox="0 0 1080 270" fill="none">
-              <path data-hf-id="hf-hys5" d="M 720 0 C 720 100, 720 170, 720 270" stroke="rgba(20, 20, 20, 0.15)" stroke-width="12" stroke-linecap="round" />
-              <path data-hf-id="hf-9ll0" id="trade-route-line" d="M 720 0 C 720 100, 720 170, 720 270" stroke="#FF6A1A" stroke-width="8" stroke-dasharray="10 8" stroke-linecap="round" />
-            </svg>
-            <div data-hf-id="hf-6o2x" id="border-demarcation">
-              <span data-hf-id="hf-eewr" id="checkpoint-badge">RANH GIỚI BIÊN GIỚI RỪNG</span>
-            </div>
-          </div>
+    .clip {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
 
-          <!-- Cargo Crate -->
-          <div data-hf-id="hf-idx3" id="cargo-crate-1" data-layout-allow-overlap="true">
-            <svg data-hf-id="hf-puje" width="30" height="30" viewBox="0 0 32 32" fill="none">
-              <ellipse data-hf-id="hf-w1gq" cx="16" cy="9" rx="11" ry="5" fill="#FF6A1A" stroke="#141414" stroke-width="2" />
-              <path data-hf-id="hf-3an8" d="M 5 9 V 23 C 5 26, 27 26, 27 23 V 9" fill="#F5F0E4" stroke="#141414" stroke-width="2" />
-              <ellipse data-hf-id="hf-kthk" cx="16" cy="23" rx="11" ry="5" stroke="#141414" stroke-width="2" />
-            </svg>
-            <span data-hf-id="hf-rgt1" class="crate-label" data-layout-allow-overlap="true">KIỆN PATE</span>
-            <span data-hf-id="hf-0c4h" class="crate-tag" data-layout-allow-overlap="true">NHẬP KHẨU</span>
-          </div>
+    /* Vox Grid Background */
+    .bg-grid {
+      position: absolute;
+      inset: 0;
+      background-size: 84px 84px;
+      background-image:
+        linear-gradient(to right, rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px),
+        linear-gradient(to bottom, rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px);
+      z-index: 1;
+    }
 
-          <!-- Card 2: Rừng nội địa -->
-          <div data-hf-id="hf-yosu" id="card-home" class="diagram-card">
-            <div data-hf-id="hf-pnj7" class="card-header-row">
-              <span data-hf-id="hf-4e5d" class="card-title-tag">2. KHU RỪNG CỦA MÌNH</span>
-              <span data-hf-id="hf-5z67" class="status-chip">Thị Trường Nội Địa</span>
-            </div>
-            <div data-hf-id="hf-3l1f" class="card-body">
-              <div data-hf-id="hf-zbiq" class="visual-badge">
-                <svg data-hf-id="hf-tpl2" width="68" height="68" viewBox="0 0 64 64" fill="none" stroke="#141414" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-                  <path data-hf-id="hf-rec0" d="M 8 24 L 32 12 L 56 24 L 52 32 L 12 32 Z" fill="#FF6A1A" />
-                  <line data-hf-id="hf-u46u" x1="16" y1="32" x2="16" y2="54" />
-                  <line data-hf-id="hf-o6m6" x1="48" y1="32" x2="48" y2="54" />
-                  <rect data-hf-id="hf-gwqp" x="20" y="38" width="24" height="16" fill="#F5F0E4" />
-                </svg>
-                <span data-hf-id="hf-f09q" style="font-size: 13px; font-weight: 900; color: #141414;">ĐIỂM TIÊU THỤ</span>
-              </div>
-              <div data-hf-id="hf-ek5o" class="features-column">
-                <div data-hf-id="hf-zts1" class="pin-target-box">
-                  <div data-hf-id="hf-bk18" id="pin-container">
-                    <svg data-hf-id="hf-arko" width="44" height="44" viewBox="0 0 32 32" fill="none">
-                      <path data-hf-id="hf-2eph" d="M 16 3 C 10.5 3, 6 7.5, 6 13 C 6 20, 16 29, 16 29 C 16 29, 26 20, 26 13 C 26 7.5, 21.5 3, 16 3 Z" fill="#FF6A1A" stroke="#141414" stroke-width="2.5" />
-                      <circle data-hf-id="hf-rps5" cx="16" cy="13" r="4" fill="#F7F4EC" />
-                    </svg>
-                  </div>
-                  <div data-hf-id="hf-eltf" id="pin-label">
-                    <div data-hf-id="hf-4y55" style="font-size: 20px; font-weight: 900; color: #141414; line-height: 1.2;">MÈO MAFIA MUA VỀ BÁN</div>
-                    <div data-hf-id="hf-md6y" style="font-size: 15px; font-weight: 700; color: #4A4742; margin-top: 4px;">PHÂN PHỐI CHO CẢ RỪNG</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+    /* Spotlight Vignette (Style DNA variant: spotlight) */
+    .bg-spotlight {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 50% 45%, rgba(20, 20, 20, 0) 40%, rgba(20, 20, 20, 0.35) 100%);
+      z-index: 2;
+    }
 
-          <!-- Overlay 5: Punch Phrase -->
-          <div data-hf-id="hf-k4cm" id="punch-card">
-            <span data-hf-id="hf-7k2j" class="punch-kicker">KẾT LUẬN ĐỊNH NGHĨA</span>
-            <h2 data-hf-id="hf-q7y7" class="punch-main-text">HOẠT ĐỘNG NHẬP KHẨU</h2>
-            <div data-hf-id="hf-jl9k" class="punch-sub-text">MUA TỪ RỪNG BÊN NGOÀI • BÁN TẠI THỊ TRƯỜNG NỘI ĐỊA</div>
-            <div data-hf-id="hf-8xhh" id="punch-stamp">THƯƠNG MẠI</div>
-          </div>
-        </div>
+    /* Fixed Bottom Orange Bar */
+    .bottom-signature-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 12px;
+      background-color: #FF6A1A;
+      z-index: 999;
+    }
 
-        <div data-hf-id="hf-rdr4" id="bottom-bar"></div>
-      </section>
+    /* ========================================== */
+    /* SHOT 1 ELEMENTS (0.0s - 6.8s)              */
+    /* ========================================== */
+
+    #video-wrapper {
+      position: absolute;
+      inset: 0;
+      z-index: 5;
+      overflow: hidden;
+      transform-origin: 50% 45%;
+      will-change: transform;
+    }
+
+    #vid-s12-1 {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .strike-banner-wrap {
+      position: absolute;
+      top: 180px;
+      left: 60px;
+      right: 60px;
+      display: flex;
+      justify-content: flex-start;
+      z-index: 25;
+    }
+
+    .strike-banner {
+      background-color: #141414;
+      color: #F7F4EC;
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      border-left: 8px solid #FF6A1A;
+      box-shadow: 6px 6px 0px rgba(20, 20, 20, 0.6);
+      transform-origin: 0% 50%;
+    }
+
+    .strike-tag {
+      background-color: #FF6A1A;
+      color: #141414;
+      font-weight: 900;
+      font-size: 22px;
+      padding: 4px 10px;
+      letter-spacing: 1px;
+    }
+
+    .strike-text {
+      font-weight: 700;
+      font-size: 26px;
+      color: #F7F4EC;
+      letter-spacing: 0.5px;
+    }
+
+    .label-center-wrap {
+      position: absolute;
+      top: 290px;
+      left: 60px;
+      right: 60px;
+      display: flex;
+      justify-content: flex-start;
+    }
+
+    .label-box {
+      background-color: #141414;
+      color: #F7F4EC;
+      padding: 24px 36px;
+      border: 3px solid #141414;
+      border-left: 12px solid #FF6A1A;
+      box-shadow: 8px 8px 0px rgba(255, 106, 26, 0.9);
+      max-width: 800px;
+      transform-origin: 0% 50%;
+      will-change: transform, opacity;
+    }
+
+    .label-sub {
+      font-size: 22px;
+      font-weight: 900;
+      color: #FF6A1A;
+      letter-spacing: 2px;
+      margin-bottom: 6px;
+    }
+
+    .label-title {
+      font-size: 52px;
+      font-weight: 900;
+      line-height: 1.2;
+      color: #F7F4EC;
+      letter-spacing: 0.5px;
+    }
+
+    /* ========================================== */
+    /* SHOT 2 ELEMENTS (6.8s - 12.85s)            */
+    /* ========================================== */
+
+    /* Shot 2 Full-Frame Background */
+    .shot2-bg-frame {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      background-color: #141414;
+    }
+
+    #img-s12-2 {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center 30%;
+      display: block;
+    }
+
+    /* Section Header */
+    .shot2-header-wrap {
+      position: absolute;
+      top: 180px;
+      left: 60px;
+      width: 960px;
+    }
+
+    .section-header {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      will-change: transform, opacity;
+    }
+
+    .header-pill {
+      background-color: #141414;
+      color: #F7F4EC;
+      padding: 10px 22px;
+      font-size: 22px;
+      font-weight: 900;
+      letter-spacing: 1.5px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border-left: 6px solid #FF6A1A;
+      box-shadow: 4px 4px 0px rgba(20, 20, 20, 0.5);
+    }
+
+    .header-pill-dot {
+      width: 12px;
+      height: 12px;
+      background-color: #FF6A1A;
+      border-radius: 50%;
+    }
+
+    .header-tag {
+      background-color: #F5F0E4;
+      color: #141414;
+      padding: 10px 22px;
+      font-size: 22px;
+      font-weight: 900;
+      letter-spacing: 1px;
+      border: 3px solid #141414;
+      box-shadow: 4px 4px 0px rgba(20, 20, 20, 0.5);
+    }
+
+    /* Mechanism Flow Diagram */
+    .mechanism-strip {
+      position: absolute;
+      top: 890px;
+      left: 60px;
+      width: 960px;
+      height: 120px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .mech-box {
+      flex: 1;
+      height: 100%;
+      padding: 16px 24px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      box-shadow: 6px 6px 0px rgba(20, 20, 20, 0.45);
+      border: 3px solid #141414;
+      will-change: transform, opacity;
+    }
+
+    .mech-left {
+      background-color: #F5F0E4;
+      color: #141414;
+    }
+
+    .mech-right {
+      background-color: #141414;
+      color: #F7F4EC;
+    }
+
+    .mech-title {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      margin-bottom: 4px;
+    }
+
+    .mech-left .mech-title {
+      color: #141414;
+    }
+
+    .mech-right .mech-title {
+      color: #FF6A1A;
+    }
+
+    .mech-val {
+      font-size: 28px;
+      font-weight: 900;
+      letter-spacing: 0.5px;
+    }
+
+    .mech-left .mech-val {
+      color: #141414;
+    }
+
+    .mech-right .mech-val {
+      color: #F7F4EC;
+    }
+
+    .mech-arrow-wrap {
+      width: 70px;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .mech-arrow {
+      width: 60px;
+      height: 60px;
+      background-color: #FF6A1A;
+      color: #141414;
+      font-size: 32px;
+      font-weight: 900;
+      display: grid;
+      place-items: center;
+      border: 3px solid #141414;
+      box-shadow: 4px 4px 0px rgba(20, 20, 20, 0.4);
+      will-change: transform, opacity;
+    }
+
+    /* Punch-Phrase Overlay: ĐỘI GIÁ BỞI THUẾ */
+    .punch-wrapper {
+      position: absolute;
+      top: 1050px;
+      left: 60px;
+      width: 730px;
+      height: 180px;
+    }
+
+    .punch-plate {
+      width: 100%;
+      height: 100%;
+      background-color: #141414;
+      color: #F7F4EC;
+      padding: 24px 32px;
+      border: 4px solid #141414;
+      border-left: 16px solid #FF6A1A;
+      box-shadow: 10px 10px 0px rgba(20, 20, 20, 0.6);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      will-change: transform, opacity;
+    }
+
+    .punch-tag {
+      font-size: 20px;
+      font-weight: 900;
+      color: #FF6A1A;
+      letter-spacing: 2px;
+      margin-bottom: 6px;
+    }
+
+    .punch-headline {
+      font-size: 52px;
+      font-weight: 900;
+      line-height: 1.18;
+      color: #F7F4EC;
+      letter-spacing: 0.5px;
+    }
+
+    /* Scale Icon Seal (Vox Vocabulary) */
+    .scale-seal-wrap {
+      position: absolute;
+      top: 1050px;
+      left: 810px;
+      width: 210px;
+      height: 180px;
+    }
+
+    .scale-seal {
+      width: 100%;
+      height: 100%;
+      background-color: #F5F0E4;
+      border: 4px solid #141414;
+      border-radius: 16px;
+      box-shadow: 8px 8px 0px #FF6A1A;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 12px;
+      transform-origin: 50% 50%;
+      will-change: transform, opacity;
+    }
+
+    .scale-svg {
+      width: 76px;
+      height: 76px;
+      display: block;
+    }
+
+    .scale-tag {
+      font-size: 14px;
+      font-weight: 900;
+      color: #141414;
+      letter-spacing: 1px;
+      margin-top: 4px;
+    }
+  </style>
+
+  <div
+    id="root"
+    data-composition-id="scene-s12"
+    data-width="1080"
+    data-height="1920"
+    data-duration="12.85"
+  >
+    <!-- Background Canvas Decorators -->
+    <div class="bg-grid"></div>
+    <div class="bg-spotlight"></div>
+
+    <!-- Fixed Bottom Accent Signature Bar -->
+    <div class="bottom-signature-bar"></div>
+
+    <!-- ========================================== -->
+    <!-- SHOT 1 (0.0s - 6.8s): Video Customs Barrier -->
+    <!-- ========================================== -->
+
+    <!-- Video Wrapper (Without data-start to satisfy video nesting contract) -->
+    <div id="video-wrapper">
+      <video
+        id="vid-s12-1"
+        src="assets/vid-01-smuggling-customs-cat-cutout.mp4"
+        muted
+        playsinline
+        data-start="0"
+        data-duration="6.8"
+        data-media-start="0"
+      ></video>
     </div>
 
-    <script>
-      const tl = gsap.timeline({ paused: true });
+    <!-- Strike Customs Top Stamp (0.0s - 6.8s) -->
+    <div class="clip" data-start="0" data-duration="6.8" style="z-index: 25;">
+      <div class="strike-banner-wrap">
+        <div id="strike-stamp" class="strike-banner">
+          <span class="strike-tag">HẢI QUAN MÈO</span>
+          <span class="strike-text">RÀO CHẮN THUẾ QUAN ĐÓNG</span>
+        </div>
+      </div>
+    </div>
 
-      const tradePath = document.getElementById("trade-route-line");
-      if (tradePath) {
-        const len = tradePath.getTotalLength();
-        tradePath.style.strokeDasharray = `${len}`;
-        tradePath.style.strokeDashoffset = `${len}`;
-      }
+    <!-- Overlay Label: BẢO HỘ SẢN XUẤT (3.48s - 5.48s) -->
+    <div id="clip-s12-1-label" class="clip" data-start="3.48" data-duration="2.0" style="z-index: 30;">
+      <div class="label-center-wrap">
+        <div id="label-box" class="label-box">
+          <div class="label-sub">CHÍNH SÁCH THUẾ QUAN</div>
+          <div class="label-title">BẢO HỘ SẢN XUẤT</div>
+        </div>
+      </div>
+    </div>
 
-      const checkPath = document.getElementById("check-path");
-      if (checkPath) {
-        const clen = checkPath.getTotalLength();
-        checkPath.style.strokeDasharray = `${clen}`;
-        checkPath.style.strokeDashoffset = `${clen}`;
-      }
+    <!-- ========================================== -->
+    <!-- SHOT 2 (6.8s - 12.85s): Full-Frame Image + Diagram -->
+    <!-- ========================================== -->
 
-      gsap.set("#cargo-crate-1", { opacity: 0, scale: 0.3 });
-      gsap.set("#check-pill", { opacity: 0, scale: 0 });
-      gsap.set("#label-cheap-tasty", { opacity: 0, x: -30 });
-      gsap.set("#label-superior-ingredients", { opacity: 0, y: 20 });
-      gsap.set("#pin-container", { opacity: 0, y: -40, scale: 0.5 });
-      gsap.set("#pin-label", { opacity: 0, x: 20 });
-      gsap.set("#punch-card", { opacity: 0, y: 35, scale: 0.95 });
-      gsap.set("#punch-stamp", { opacity: 0, scale: 1.5, rotation: -12 });
+    <!-- Shot 2 Full-Frame Background Image -->
+    <div id="clip-s12-2-bg" class="clip" data-start="6.8" data-duration="6.05" style="z-index: 10;">
+      <div class="shot2-bg-frame">
+        <img
+          id="img-s12-2"
+          src="assets/img-01-smuggling-customs-evasion-cutout.jpeg"
+          alt="Cổng rào thuế quan"
+        />
+      </div>
+    </div>
 
-      // Camera drift & Spiral entrance
-      tl.fromTo("#camera-rig", { scale: 0.88, rotation: -4, opacity: 0 }, { scale: 1, rotation: 0, opacity: 1, duration: 0.75, ease: "power3.out" }, 0);
-      tl.fromTo("#camera-rig", { x: 18 }, { x: -18, duration: 9.0, ease: "none" }, 0);
+    <!-- Shot 2 Diagram & Header Layer -->
+    <div id="clip-s12-2-diagram" class="clip" data-start="6.8" data-duration="6.05" style="z-index: 20;">
+      <!-- Header Row -->
+      <div class="shot2-header-wrap">
+        <div id="shot2-header" class="section-header">
+          <div class="header-pill">
+            <span class="header-pill-dot"></span>
+            <span>CƠ CHẾ KINH TẾ</span>
+          </div>
+          <div class="header-tag">
+            <span>THUẾ BẢO HỘ NỘI ĐỊA</span>
+          </div>
+        </div>
+      </div>
 
-      // Header reveal
-      tl.fromTo("#header-group", { y: -25, opacity: 0 }, { y: 0, opacity: 1, duration: 0.55, ease: "power3.out" }, 0.15);
+      <!-- Mechanism Flow Diagram -->
+      <div class="mechanism-strip">
+        <div id="mech-card-left" class="mech-box mech-left">
+          <div class="mech-title">PATE NHẬP KHẨU</div>
+          <div class="mech-val">+ THUẾ BẢO HỘ</div>
+        </div>
+        <div class="mech-arrow-wrap">
+          <div id="mech-arrow" class="mech-arrow">➔</div>
+        </div>
+        <div id="mech-card-right" class="mech-box mech-right">
+          <div class="mech-title">MỤC TIÊU ĐIỀU TIẾT</div>
+          <div class="mech-val">CÂN BẰNG GIÁ NỘI ĐỊA</div>
+        </div>
+      </div>
+    </div>
 
-      // Cards arrival
-      tl.fromTo("#card-neighbor", { y: 30, opacity: 0 }, { y: 0, opacity: 1, duration: 0.55, ease: "power3.out" }, 0.3);
-      tl.fromTo("#card-home", { y: 30, opacity: 0 }, { y: 0, opacity: 1, duration: 0.55, ease: "power3.out" }, 0.45);
+    <!-- Overlay Punch-Phrase: ĐỘI GIÁ BỞI THUẾ (9.42s - 12.85s) -->
+    <div id="clip-s12-2-punch" class="clip" data-start="9.42" data-duration="3.43" style="z-index: 30;">
+      <div class="punch-wrapper">
+        <div id="punch-plate" class="punch-plate">
+          <div class="punch-tag">MỤC TIÊU HẢI QUAN</div>
+          <div class="punch-headline">ĐỘI GIÁ BỞI THUẾ</div>
+        </div>
+      </div>
+    </div>
 
-      // Border line & Trade route draw
-      tl.fromTo("#border-demarcation", { scaleX: 0, opacity: 0 }, { scaleX: 1, opacity: 1, duration: 0.5, ease: "power2.out" }, 0.4);
-      tl.to("#trade-route-line", { strokeDashoffset: 0, duration: 1.0, ease: "power2.out" }, 0.65);
+    <!-- Overlay Icon: Scale Cán Cân (12.17s - 12.85s) -->
+    <div id="clip-s12-2-icon" class="clip" data-start="12.17" data-duration="0.68" style="z-index: 35;">
+      <div class="scale-seal-wrap">
+        <div id="scale-badge" class="scale-seal">
+          <svg class="scale-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <!-- Center Pillar -->
+            <line x1="50" y1="18" x2="50" y2="82" stroke="#141414" stroke-width="5" stroke-linecap="round" />
+            <!-- Base Stand -->
+            <line x1="28" y1="82" x2="72" y2="82" stroke="#141414" stroke-width="6" stroke-linecap="round" />
+            <!-- Fulcrum Hub -->
+            <circle cx="50" cy="22" r="5" fill="#FF6A1A" stroke="#141414" stroke-width="2" />
+            <!-- Horizontal Beam -->
+            <line x1="16" y1="26" x2="84" y2="26" stroke="#141414" stroke-width="4.5" stroke-linecap="round" />
+            <!-- Left Strings -->
+            <line x1="16" y1="26" x2="6" y2="56" stroke="#141414" stroke-width="2.5" />
+            <line x1="16" y1="26" x2="26" y2="56" stroke="#141414" stroke-width="2.5" />
+            <!-- Left Pan -->
+            <path d="M 4 56 Q 16 66 28 56 Z" fill="#FF6A1A" stroke="#141414" stroke-width="2.5" />
+            <!-- Right Strings -->
+            <line x1="84" y1="26" x2="74" y2="56" stroke="#141414" stroke-width="2.5" />
+            <line x1="84" y1="26" x2="94" y2="56" stroke="#141414" stroke-width="2.5" />
+            <!-- Right Pan -->
+            <path d="M 72 56 Q 84 66 96 56 Z" fill="#FF6A1A" stroke="#141414" stroke-width="2.5" />
+          </svg>
+          <span class="scale-tag">CÂN BẰNG GIÁ</span>
+        </div>
+      </div>
+    </div>
+  </div>
 
-      // Overlay 1: check icon
-      tl.to("#check-pill", { opacity: 1, scale: 1, duration: 0.35, ease: "power3.out" }, 0.94);
-      tl.to("#check-path", { strokeDashoffset: 0, duration: 0.3, ease: "power2.out" }, 1.05);
+  <script>
+    // HyperFrames GSAP Seekable Timeline Setup
+    const tl = gsap.timeline({ paused: true });
 
-      // Overlay 2: "NGON HƠN & RẺ HƠN"
-      tl.to("#label-cheap-tasty", { opacity: 1, x: 0, duration: 0.45, ease: "power3.out" }, 1.52);
+    // ===============================================
+    // SHOT 1 CHOREOGRAPHY (0.0s to 6.8s)
+    // ===============================================
 
-      // Overlay 3: "NGUYÊN LIỆU VƯỢT TRỘI"
-      tl.to("#label-superior-ingredients", { opacity: 1, y: 0, duration: 0.45, ease: "power3.out" }, 3.35);
+    // Entrance "strike" animation on video wrapper
+    tl.fromTo(
+      "#video-wrapper",
+      { y: -60, scale: 1.12, opacity: 0 },
+      { y: 0, scale: 1.0, opacity: 1, duration: 0.5, ease: "power4.out" },
+      0.0
+    );
 
-      // Cargo crate travels along right corridor
-      tl.to("#cargo-crate-1", { opacity: 1, scale: 1, duration: 0.4, ease: "power2.out" }, 3.6);
-      tl.to("#cargo-crate-1", {
-        keyframes: [
-          { y: 70, duration: 0.65, ease: "power1.inOut" },
-          { y: 155, duration: 0.65, ease: "power1.inOut" },
-          { y: 240, duration: 0.65, ease: "power1.inOut" },
-          { y: 310, duration: 0.65, ease: "power1.inOut" }
-        ]
-      }, 3.8);
+    // Subtle continuous camera zoom-in during shot 1
+    tl.to(
+      "#video-wrapper",
+      { scale: 1.07, duration: 6.3, ease: "sine.out" },
+      0.5
+    );
 
-      // Checkpoint pulse
-      tl.fromTo("#checkpoint-badge",
-        { scale: 1, backgroundColor: "#141414", color: "#F7F4EC" },
-        { scale: 1.08, backgroundColor: "#FF6A1A", color: "#141414", duration: 0.3, yoyo: true, repeat: 1, ease: "power2.inOut" },
-        4.8
-      );
+    // Customs stamp strikes down
+    tl.fromTo(
+      "#strike-stamp",
+      { y: -100, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.45, ease: "power4.out" },
+      0.1
+    );
 
-      // Overlay 4: Pin icon & label
-      tl.to("#pin-container", { opacity: 1, y: 0, scale: 1, duration: 0.45, ease: "back.out(1.5)" }, 5.80);
-      tl.to("#pin-label", { opacity: 1, x: 0, duration: 0.4, ease: "power2.out" }, 6.0);
+    // Overlay Label: BẢO HỘ SẢN XUẤT (at 3.48s, duration 2.0s)
+    tl.fromTo(
+      "#label-box",
+      { scale: 0.85, opacity: 0, x: -30 },
+      { scale: 1, opacity: 1, x: 0, duration: 0.45, ease: "power3.out" },
+      3.48
+    );
 
-      // Overlay 5: Punch Phrase "HOẠT ĐỘNG NHẬP KHẨU"
-      tl.to("#punch-card", { opacity: 1, y: 0, scale: 1, duration: 0.55, ease: "power3.out" }, 7.44);
-      tl.to("#punch-stamp", { opacity: 1, scale: 1, rotation: -3, duration: 0.35, ease: "back.out(1.4)" }, 7.75);
+    tl.to(
+      "#label-box",
+      { opacity: 0, y: -15, duration: 0.35, ease: "power2.in" },
+      5.13
+    );
 
-      window.__timelines["scene-s12"] = tl;
-    </script>
-  
+    // ===============================================
+    // SHOT 2 CHOREOGRAPHY (6.8s to 12.85s)
+    // ===============================================
+
+    // Full-frame background image hard cut at 6.8s
+    tl.fromTo(
+      "#clip-s12-2-bg",
+      { opacity: 0 },
+      { opacity: 1, duration: 0.15, ease: "none" },
+      6.8
+    );
+
+    // Section header entrance
+    tl.fromTo(
+      "#shot2-header",
+      { y: -25, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.4, ease: "power3.out" },
+      6.9
+    );
+
+    // Mechanism Flow Strip Staggered Entrance
+    tl.fromTo(
+      "#mech-card-left",
+      { x: -40, opacity: 0 },
+      { x: 0, opacity: 1, duration: 0.4, ease: "power3.out" },
+      7.2
+    );
+
+    tl.fromTo(
+      "#mech-arrow",
+      { scale: 0, opacity: 0 },
+      { scale: 1, opacity: 1, duration: 0.35, ease: "power3.out" },
+      7.45
+    );
+
+    tl.fromTo(
+      "#mech-card-right",
+      { x: 40, opacity: 0 },
+      { x: 0, opacity: 1, duration: 0.4, ease: "power3.out" },
+      7.6
+    );
+
+    // Overlay Punch-Phrase: ĐỘI GIÁ BỞI THUẾ (at 9.42s)
+    tl.fromTo(
+      "#punch-plate",
+      { scale: 0.9, opacity: 0, y: 24 },
+      { scale: 1, opacity: 1, y: 0, duration: 0.45, ease: "power3.out" },
+      9.42
+    );
+
+    // Overlay Icon: Scale Cán Cân (at 12.17s)
+    tl.fromTo(
+      "#scale-badge",
+      { scale: 0, opacity: 0, rotation: -12 },
+      { scale: 1, opacity: 1, rotation: 0, duration: 0.35, ease: "power3.out" },
+      12.17
+    );
+
+    // Register paused timeline on HyperFrames registry
+    window.__timelines["scene-s12"] = tl;
+  </script>
+
     </template>
   </body>
 </html>

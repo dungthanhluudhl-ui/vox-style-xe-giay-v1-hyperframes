@@ -1,435 +1,451 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
   <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF-8" />
   </head>
   <body>
     <template>
-      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap">
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
       <style>
-      *, *::before, *::after {
-        box-sizing: border-box;
-      }
-      body {
-        margin: 0;
-        padding: 0;
-        background-color: #E7E3D9;
-        color: #141414;
-        font-family: "Be Vietnam Pro", sans-serif;
-        overflow: hidden;
-        -webkit-font-smoothing: antialiased;
-      }
-      #root {
-        position: relative;
-        width: 100%;
-        height: 100%;
-        overflow: hidden;
-        background-color: #F5F0E4; /* Biến thể nền card */
-      }
+    /* hf-safe-colors (tất định từ style-tokens.json) */
+    .hf-text-ink { color: #141414; }
+    .hf-text-light { color: #F7F4EC; }
+    .hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+    .hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+    .hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+    .hf-plate-paper { color: #141414; background-color: #F5F0E4; }
 
-      /* Nền trang trí phong cách báo cáo hồ sơ tư liệu Vox (Card variant) */
-      .bg-paper-grid {
-        position: absolute;
-        inset: 0;
-        pointer-events: none;
-        background-image: radial-gradient(#141414 1.2px, transparent 1.2px);
-        background-size: 48px 48px;
-        opacity: 0.08;
-      }
+    * {
+      box-sizing: border-box;
+    }
 
-      /* Khung camera chính (zoom-through & pan) */
-      #camera-rig {
-        position: absolute;
-        inset: 0;
-        transform-origin: 50% 45%;
-        will-change: transform;
-      }
+    body {
+      margin: 0;
+      padding: 0;
+      width: 1080px;
+      height: 1920px;
+      background-color: #141414;
+      font-family: "Be Vietnam Pro", sans-serif;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
 
-      /* Header metadata dossier */
-      .dossier-header {
-        position: absolute;
-        top: 80px;
-        left: 70px;
-        right: 70px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        border-bottom: 2px solid #141414;
-        padding-bottom: 14px;
-        z-index: 10;
-      }
-      .dossier-tag {
-        font-size: 22px;
-        font-weight: 700;
-        letter-spacing: 2px;
-        text-transform: uppercase;
-        color: #141414;
-        display: flex;
-        align-items: center;
-        gap: 12px;
-      }
-      .dossier-tag::before {
-        content: "";
-        display: inline-block;
-        width: 14px;
-        height: 14px;
-        background-color: #FF6A1A;
-      }
-      .dossier-id {
-        font-size: 20px;
-        font-weight: 700;
-        letter-spacing: 1px;
-        color: #141414;
-        opacity: 0.75;
-      }
+    #root {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #141414;
+    }
 
-      /* Video Stage & Collage Frame */
-      #video-wrapper {
-        position: absolute;
-        top: 180px;
-        left: 70px;
-        width: 940px;
-        height: 980px;
-        background-color: #141414;
-        border: 4px solid #141414;
-        box-shadow: 16px 16px 0px #FF6A1A;
-        overflow: hidden;
-        z-index: 5;
-        will-change: transform;
-      }
-      #vid-main {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        object-position: center;
-        display: block;
-      }
+    .clip {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
 
-      /* Mẩu băng dính Washi Tape dán góc collage */
-      .tape-label {
-        position: absolute;
-        top: 155px;
-        left: 100px;
-        background-color: #FF6A1A;
-        color: #141414;
-        font-weight: 900;
-        font-size: 26px;
-        padding: 8px 24px;
-        letter-spacing: 1px;
-        border: 3px solid #141414;
-        box-shadow: 4px 4px 0px #141414;
-        z-index: 20;
-        transform-origin: left center;
-      }
+    /* Full-Frame Background Photo */
+    .bg-photo-wrap {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #141414;
+    }
 
-      /* Overlay Card 1: Thành lập doanh nghiệp (Doc) */
-      #card-doc {
-        position: absolute;
-        top: 320px;
-        left: 100px;
-        width: 780px;
-        background-color: #F5F0E4;
-        border: 4px solid #141414;
-        box-shadow: 10px 10px 0px #141414;
-        padding: 24px 32px;
-        display: flex;
-        align-items: center;
-        gap: 28px;
-        z-index: 30;
-      }
-      .icon-box {
-        width: 84px;
-        height: 84px;
-        flex-shrink: 0;
-        display: grid;
-        place-items: center;
-        background-color: #E7E3D9;
-        border: 3px solid #141414;
-      }
-      .card-text-group {
-        display: flex;
-        flex-direction: column;
-        gap: 4px;
-      }
-      .card-sub {
-        font-size: 20px;
-        font-weight: 700;
-        letter-spacing: 1.5px;
-        text-transform: uppercase;
-        color: #141414;
-        opacity: 0.85;
-      }
-      .card-title {
-        font-size: 38px;
-        font-weight: 900;
-        line-height: 1.15;
-        color: #141414;
-        margin: 0;
-        letter-spacing: 0.5px;
-      }
+    .bg-photo-img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center center;
+      display: block;
+      transform-origin: 50% 50%;
+    }
 
-      /* Overlay Card 2: Mục tiêu lợi nhuận (Rise) */
-      #card-profit {
-        position: absolute;
-        top: 760px;
-        left: 100px;
-        width: 780px;
-        background-color: #141414;
-        border: 4px solid #FF6A1A;
-        box-shadow: 10px 10px 0px #141414;
-        padding: 24px 32px;
-        display: flex;
-        align-items: center;
-        gap: 28px;
-        z-index: 30;
-      }
-      .icon-box-dark {
-        width: 84px;
-        height: 84px;
-        flex-shrink: 0;
-        display: grid;
-        place-items: center;
-        background-color: #1F1F1F;
-        border: 3px solid #FF6A1A;
-      }
-      .card-title-light {
-        font-size: 38px;
-        font-weight: 900;
-        line-height: 1.15;
-        color: #F7F4EC;
-        margin: 0;
-        letter-spacing: 0.5px;
-      }
-      .card-sub-orange {
-        font-size: 20px;
-        font-weight: 700;
-        letter-spacing: 1.5px;
-        text-transform: uppercase;
-        color: #FF6A1A;
-      }
+    /* Scene Header Context Bar */
+    .header-bar {
+      position: absolute;
+      top: 170px;
+      left: 40px;
+      right: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 20;
+    }
 
-      /* Punch Phrase: CHỦ NGHĨA TƯ BẢN */
-      #punch-wrapper {
-        position: absolute;
-        top: 1220px;
-        left: 70px;
-        right: 70px;
-        background-color: #141414;
-        border: 4px solid #141414;
-        box-shadow: 14px 14px 0px #FF6A1A;
-        padding: 34px 44px;
-        z-index: 40;
-      }
-      .punch-label {
-        font-size: 22px;
-        font-weight: 700;
-        letter-spacing: 2px;
-        text-transform: uppercase;
-        color: #FF6A1A;
-        margin-bottom: 8px;
-      }
-      .punch-heading {
-        margin: 0;
-        font-size: 64px;
-        font-weight: 900;
-        line-height: 1.15;
-        color: #F7F4EC;
-        letter-spacing: -0.5px;
-      }
-      .punch-underline {
-        width: 100%;
-        height: 8px;
-        background-color: #FF6A1A;
-        margin-top: 16px;
-        transform-origin: left center;
-      }
+    .header-tag {
+      background-color: #141414;
+      color: #FF6A1A;
+      font-size: 22px;
+      font-weight: 900;
+      padding: 8px 18px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      border-radius: 4px;
+    }
 
-      /* SVG Icon strokes */
-      .doc-stroke {
-        fill: none;
-        stroke: #141414;
-        stroke-width: 6;
-        stroke-linecap: round;
-        stroke-linejoin: round;
-      }
-      .rise-stroke {
-        fill: none;
-        stroke: #FF6A1A;
-        stroke-width: 7;
-        stroke-linecap: round;
-        stroke-linejoin: round;
-      }
+    .header-brand {
+      background-color: #E7E3D9;
+      color: #141414;
+      font-size: 24px;
+      font-weight: 900;
+      padding: 8px 20px;
+      border: 2px solid #141414;
+      border-radius: 4px;
+      letter-spacing: 0.5px;
+    }
 
-      /* Signature bottom bar màu cam đặc trưng phong cách Vox */
-      #signature-bottom-bar {
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        width: 1080px;
-        height: 14px;
-        background-color: #FF6A1A;
-        z-index: 100;
-      }
-    </style>
+    /* Overlay 1: VỐN 3 : BÁN 30 */
+    .overlay-cost-container {
+      position: absolute;
+      top: 270px;
+      left: 50px;
+      right: 50px;
+      background-color: #141414;
+      border-left: 10px solid #FF6A1A;
+      box-shadow: 12px 12px 0px #FF6A1A;
+      padding: 32px 36px;
+      z-index: 30;
+      transform-origin: left top;
+    }
 
-    <div data-hf-id="hf-rp7x" id="root" data-composition-id="scene-s34" data-width="1080" data-height="1920" data-duration="7">
-      <!-- Nền họa tiết card phong cách Vox -->
-      <div data-hf-id="hf-6mat" class="bg-paper-grid"></div>
+    .cost-subtitle {
+      font-size: 22px;
+      font-weight: 700;
+      color: #FF6A1A;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
 
-      <!-- Camera Rig: Zoom-through & Pan chuyển động -->
-      <div data-hf-id="hf-iu6l" id="camera-rig">
-        <!-- Header Bar -->
-        <div data-hf-id="hf-e7m7" class="dossier-header">
-          <div data-hf-id="hf-2azg" class="dossier-tag">Hồ Sơ Doanh Nghiệp // S34</div>
-          <div data-hf-id="hf-izvz" class="dossier-id">CÔNG TY TƯ NHÂN</div>
-        </div>
+    .cost-headline {
+      font-size: 64px;
+      font-weight: 900;
+      color: #F7F4EC;
+      line-height: 1.15;
+      margin: 0 0 20px 0;
+      letter-spacing: 1px;
+    }
 
-        <!-- Khung video sản xuất dây chuyền đóng hộp pate (timed media element) -->
-        <div data-hf-id="hf-3dfo" id="video-wrapper">
-          <video data-hf-id="hf-xe8j" id="vid-main" src="assets/vid-18-fake-commercial-production-factory.mp4" data-start="0" data-duration="7" data-media-start="0.5" muted playsinline></video>
-        </div>
+    .cost-breakdown {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
 
-        <!-- Nhãn băng dính Washi Tape "CÔNG TY TƯ NHÂN" -->
-        <div data-hf-id="hf-ufhx" id="badge-tape" class="tape-label">
-          CÔNG TY TƯ NHÂN
-        </div>
+    .cost-pill-dark {
+      background-color: #262626;
+      border: 2px solid #3d3d3d;
+      padding: 10px 18px;
+      border-radius: 6px;
+      display: flex;
+      flex-direction: column;
+    }
 
-        <!-- Overlay 1: Doc Icon + THÀNH LẬP DOANH NGHIỆP -->
-        <div data-hf-id="hf-qp26" id="card-doc">
-          <div data-hf-id="hf-mb27" class="icon-box">
-            <svg data-hf-id="hf-bp5e" viewBox="0 0 100 100" width="60" height="60">
-              <path data-hf-id="hf-9vjp" class="doc-stroke" d="M 25 15 L 62 15 L 82 35 L 82 88 L 25 88 Z" />
-              <path data-hf-id="hf-x4rf" class="doc-stroke" d="M 62 15 L 62 35 L 82 35" />
-              <path data-hf-id="hf-zk2z" class="doc-stroke" d="M 38 48 L 70 48" />
-              <path data-hf-id="hf-90mf" class="doc-stroke" d="M 38 64 L 70 64" />
-              <path data-hf-id="hf-dk83" class="doc-stroke" d="M 38 76 L 56 76" />
-            </svg>
-          </div>
-          <div data-hf-id="hf-1mkc" class="card-text-group">
-            <span data-hf-id="hf-xwy0" class="card-sub">Quyền Sở Hữu Cá Nhân</span>
-            <h2 data-hf-id="hf-z0h6" class="card-title">THÀNH LẬP DOANH NGHIỆP</h2>
-          </div>
-        </div>
+    .pill-label {
+      font-size: 16px;
+      font-weight: 700;
+      color: #E7E3D9;
+      margin-bottom: 2px;
+    }
 
-        <!-- Overlay 2: Rise Icon + MỤC TIÊU LỢI NHUẬN -->
-        <div data-hf-id="hf-m9hm" id="card-profit">
-          <div data-hf-id="hf-20w4" class="icon-box-dark">
-            <svg data-hf-id="hf-6kpi" viewBox="0 0 100 100" width="60" height="60">
-              <path data-hf-id="hf-lkop" class="rise-stroke" d="M 16 80 L 42 54 L 60 70 L 86 28" />
-              <path data-hf-id="hf-2wyk" class="rise-stroke" d="M 66 28 L 86 28 L 86 48" />
-            </svg>
-          </div>
-          <div data-hf-id="hf-nies" class="card-text-group">
-            <span data-hf-id="hf-y3ua" class="card-sub-orange">Động Lực Vận Hành</span>
-            <h2 data-hf-id="hf-luqp" class="card-title-light">MỤC TIÊU LỢI NHUẬN</h2>
-          </div>
-        </div>
+    .pill-value {
+      font-size: 28px;
+      font-weight: 900;
+      color: #F7F4EC;
+    }
 
-        <!-- Punch Phrase Kết Luận: CHỦ NGHĨA TƯ BẢN -->
-        <div data-hf-id="hf-rpph" id="punch-wrapper">
-          <div data-hf-id="hf-037l" class="punch-label">Quy Luật Tối Đa Hóa</div>
-          <h1 data-hf-id="hf-1ghv" class="punch-heading">CHỦ NGHĨA TƯ BẢN</h1>
-          <div data-hf-id="hf-9zpu" id="punch-line" class="punch-underline"></div>
-        </div>
+    .cost-arrow {
+      font-size: 32px;
+      font-weight: 900;
+      color: #FF6A1A;
+      transform-origin: left center;
+    }
+
+    .cost-badge-mult {
+      background-color: #FF6A1A;
+      color: #141414;
+      font-size: 26px;
+      font-weight: 900;
+      padding: 12px 22px;
+      border-radius: 6px;
+      letter-spacing: 1px;
+      transform-origin: center center;
+    }
+
+    /* Doctor Endorsement Stamp */
+    .doctor-stamp {
+      position: absolute;
+      top: 730px;
+      right: 60px;
+      width: 260px;
+      height: 260px;
+      background-color: #141414;
+      border: 5px dashed #FF6A1A;
+      border-radius: 50%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      box-shadow: 10px 10px 0px #141414;
+      transform-origin: center center;
+      z-index: 25;
+      padding: 16px;
+    }
+
+    .stamp-star {
+      color: #FF6A1A;
+      font-size: 22px;
+      margin-bottom: 4px;
+    }
+
+    .stamp-title {
+      font-size: 26px;
+      font-weight: 900;
+      color: #F7F4EC;
+      line-height: 1.15;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .stamp-sub {
+      font-size: 16px;
+      font-weight: 700;
+      color: #FF6A1A;
+      letter-spacing: 1px;
+      margin-top: 6px;
+      text-transform: uppercase;
+    }
+
+    /* Overlay 2: Punch Phrase - THỔI PHỒNG GIÁ TRỊ */
+    .punch-container {
+      position: absolute;
+      top: 1080px;
+      left: 40px;
+      right: 40px;
+      background-color: #141414;
+      border-left: 14px solid #FF6A1A;
+      box-shadow: 16px 16px 0px #FF6A1A;
+      padding: 30px 40px;
+      z-index: 35;
+      transform-origin: center bottom;
+    }
+
+    .punch-category {
+      font-size: 22px;
+      font-weight: 700;
+      color: #FF6A1A;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+
+    .punch-headline {
+      font-size: 68px;
+      font-weight: 900;
+      color: #F7F4EC;
+      line-height: 1.15;
+      margin: 0;
+      letter-spacing: 1px;
+    }
+
+    .punch-footer-line {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-top: 18px;
+    }
+
+    .punch-subtag {
+      background-color: #E7E3D9;
+      color: #141414;
+      font-size: 20px;
+      font-weight: 900;
+      padding: 6px 14px;
+      border-radius: 4px;
+      letter-spacing: 0.5px;
+    }
+
+    .punch-underline {
+      height: 4px;
+      flex-grow: 1;
+      background-color: #FF6A1A;
+      transform-origin: left center;
+    }
+
+    /* Brand Accent Bottom Bar */
+    #brand-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 12px;
+      background-color: #FF6A1A;
+      z-index: 90;
+    }
+  </style>
+
+  <div
+    id="root"
+    data-composition-id="scene-s34"
+    data-width="1080"
+    data-height="1920"
+    data-duration="6.07"
+    data-start="0"
+  >
+    <!-- Brand Bottom Bar (Visual Signature) -->
+    <div id="brand-bar"></div>
+
+    <!-- Clip 1: Full-Frame Background Photo -->
+    <div id="clip-bg" class="clip" data-start="0" data-duration="6.07" data-track-index="0">
+      <div class="bg-photo-wrap">
+        <img
+          id="hero-bg-img"
+          class="bg-photo-img"
+          src="assets/img-08-fake-product-marketing-collage.jpeg"
+          alt="Nhèo's Premium Paté Marketing Collage"
+          data-layout-allow-overflow="true"
+        />
       </div>
-
-      <!-- Chữ ký thương hiệu Vox dưới đáy khung hình -->
-      <div data-hf-id="hf-gy8j" id="signature-bottom-bar"></div>
     </div>
 
-    <script>
-      // 1. Chuẩn bị SVG paths cho animation stroke draw
-      document.querySelectorAll(".doc-stroke, .rise-stroke").forEach((p) => {
-        const len = p.getTotalLength();
-        p.style.strokeDasharray = len + "px";
-        p.style.strokeDashoffset = len + "px";
-      });
+    <!-- Clip 2: Header / Brand Context -->
+    <div id="clip-header" class="clip" data-start="0" data-duration="6.07" data-track-index="1">
+      <div class="header-bar">
+        <div class="header-tag">CHIẾN DỊCH QUẢNG BÁ</div>
+        <div class="header-brand">NHÈO'S PREMIUM PATÉ</div>
+      </div>
+    </div>
 
-      // 2. Khởi tạo duy nhất 1 GSAP timeline PAUSED cho composition "scene-s34"
-      const tl = gsap.timeline({ paused: true });
+    <!-- Clip 3: Overlay 1 - Label VỐN 3 : BÁN 30 -->
+    <div id="clip-overlay-cost" class="clip" data-start="1.08" data-duration="2.5" data-track-index="2">
+      <div id="overlay-cost-card" class="overlay-cost-container">
+        <div class="cost-subtitle">BẢNG ĐỊNH GIÁ GẤP 10 LẦN</div>
+        <div class="cost-headline">VỐN 3 : BÁN 30</div>
+        <div class="cost-breakdown">
+          <div class="cost-pill-dark">
+            <span class="pill-label">CHI PHÍ GỐC</span>
+            <span class="pill-value">3 CÁ</span>
+          </div>
+          <div id="cost-arrow" class="cost-arrow">➜</div>
+          <div class="cost-pill-dark">
+            <span class="pill-label">GIÁ NIÊM YẾT</span>
+            <span class="pill-value">30 CÁ</span>
+          </div>
+          <div id="cost-multiplier-badge" class="cost-badge-mult">LỢI NHUẬN x10</div>
+        </div>
+      </div>
+    </div>
 
-      // Giai đoạn 0.0s -> 0.8s: TransitionIn "zoom-through" & Camera pan-right nhẹ
-      tl.fromTo(
-        "#camera-rig",
-        { scale: 1.18, opacity: 0 },
-        { scale: 1.0, opacity: 1, duration: 0.75, ease: "power3.out" },
-        0
-      );
-      tl.fromTo(
-        "#video-wrapper",
-        { x: -24 },
-        { x: 24, duration: 7.0, ease: "none" },
-        0
-      );
+    <!-- Clip 4: Doctor Certification Callout Stamp -->
+    <div id="clip-doctor-stamp" class="clip" data-start="2.4" data-duration="3.67" data-track-index="3">
+      <div id="doctor-stamp" class="doctor-stamp">
+        <div class="stamp-star">★ ★ ★</div>
+        <div class="stamp-title">BÁC SĨ BẢO CHỨNG</div>
+        <div class="stamp-sub">CHUẨN SỨC KHỎE</div>
+      </div>
+    </div>
 
-      // 0.2s: Nhãn CÔNG TY TƯ NHÂN dán góc vào
-      tl.fromTo(
-        "#badge-tape",
-        { scale: 0, opacity: 0, rotation: -8 },
-        { scale: 1, opacity: 1, rotation: -2, duration: 0.45, ease: "power3.out" },
-        0.2
-      );
+    <!-- Clip 5: Overlay 2 - Punch Phrase THỔI PHỒNG GIÁ TRỊ -->
+    <div id="clip-punch-phrase" class="clip" data-start="4.0" data-duration="2.07" data-track-index="4">
+      <div id="punch-card" class="punch-container">
+        <div class="punch-category">NGHỆ THUẬT TIẾP THỊ</div>
+        <h1 class="punch-headline">THỔI PHỒNG GIÁ TRỊ</h1>
+        <div class="punch-footer-line">
+          <div class="punch-subtag">BAO BÌ SANG CHẢNH + BÁC SĨ ẢO</div>
+          <div id="punch-underline" class="punch-underline"></div>
+        </div>
+      </div>
+    </div>
+  </div>
 
-      // Giai đoạn 0.75s -> 3.75s: Cụm THÀNH LẬP DOANH NGHIỆP & Icon Doc
-      tl.fromTo(
-        "#card-doc",
-        { y: 40, opacity: 0 },
-        { y: 0, opacity: 1, duration: 0.4, ease: "power3.out" },
-        0.75
-      );
-      tl.to(
-        ".doc-stroke",
-        {
-          strokeDashoffset: 0,
-          duration: 0.55,
-          stagger: 0.08,
-          ease: "power2.out"
-        },
-        0.91
-      );
-      tl.to(
-        "#card-doc",
-        { opacity: 0, y: -20, duration: 0.35, ease: "power2.in" },
-        3.75
-      );
+  <script>
+    const tl = gsap.timeline({ paused: true });
 
-      // Giai đoạn 4.4s -> 7.0s: Cụm MỤC TIÊU LỢI NHUẬN & Icon Rise
-      tl.fromTo(
-        "#card-profit",
-        { y: 40, opacity: 0 },
-        { y: 0, opacity: 1, duration: 0.4, ease: "power3.out" },
-        4.4
-      );
-      tl.to(
-        ".rise-stroke",
-        {
-          strokeDashoffset: 0,
-          duration: 0.5,
-          stagger: 0.1,
-          ease: "power2.out"
-        },
-        4.57
-      );
+    // Scene Entrance: Zoom-through & steady documentary zoom-in
+    tl.fromTo(
+      "#hero-bg-img",
+      { scale: 1.38, opacity: 0 },
+      { scale: 1.08, opacity: 1, duration: 0.75, ease: "power3.out" },
+      0
+    );
 
-      // Giai đoạn 5.44s -> 7.0s: Punch-Phrase "CHỦ NGHĨA TƯ BẢN"
-      tl.fromTo(
-        "#punch-wrapper",
-        { scale: 0.88, opacity: 0, y: 35 },
-        { scale: 1, opacity: 1, y: 0, duration: 0.5, ease: "power3.out" },
-        5.44
-      );
-      tl.fromTo(
-        "#punch-line",
-        { scaleX: 0 },
-        { scaleX: 1, duration: 0.45, ease: "power2.out" },
-        5.65
-      );
+    tl.to(
+      "#hero-bg-img",
+      { scale: 1.25, duration: 5.32, ease: "sine.inOut" },
+      0.75
+    );
 
-      // Đăng ký timeline chính vào window.__timelines["scene-s34"]
-      window.__timelines = window.__timelines || {};
-      window.__timelines["scene-s34"] = tl;
-    </script>
-  
+    // Header Badge Entrance
+    tl.fromTo(
+      "#clip-header .header-bar",
+      { y: -30, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.5, ease: "power2.out" },
+      0.15
+    );
+
+    // Overlay 1: "VỐN 3 : BÁN 30" (enters at 1.08s)
+    tl.fromTo(
+      "#overlay-cost-card",
+      { scale: 0.88, y: 30, opacity: 0 },
+      { scale: 1.0, y: 0, opacity: 1, duration: 0.5, ease: "power3.out" },
+      1.08
+    );
+
+    tl.fromTo(
+      "#cost-arrow",
+      { scaleX: 0 },
+      { scaleX: 1, duration: 0.3, ease: "power2.out" },
+      1.38
+    );
+
+    tl.fromTo(
+      "#cost-multiplier-badge",
+      { scale: 0.2, opacity: 0 },
+      { scale: 1.0, opacity: 1, duration: 0.45, ease: "power3.out" },
+      1.55
+    );
+
+    // Overlay 1 Exit before Overlay 2 lands
+    tl.to(
+      "#overlay-cost-card",
+      { y: -24, opacity: 0, duration: 0.35, ease: "power2.in" },
+      3.2
+    );
+
+    // Clip 4: Doctor Stamp Entrance (at 2.4s)
+    tl.fromTo(
+      "#doctor-stamp",
+      { scale: 1.8, rotation: -28, opacity: 0 },
+      { scale: 1.0, rotation: -8, opacity: 1, duration: 0.45, ease: "power4.out" },
+      2.4
+    );
+
+    // Overlay 2: Punch Phrase "THỔI PHỒNG GIÁ TRỊ" (enters at 4.0s)
+    tl.fromTo(
+      "#punch-card",
+      { y: 60, scale: 0.92, opacity: 0 },
+      { y: 0, scale: 1.0, opacity: 1, duration: 0.55, ease: "power3.out" },
+      4.0
+    );
+
+    tl.fromTo(
+      "#punch-underline",
+      { scaleX: 0 },
+      { scaleX: 1, duration: 0.45, ease: "power2.out" },
+      4.35
+    );
+
+    // Register paused timeline on window.__timelines
+    window.__timelines = window.__timelines || {};
+    window.__timelines["scene-s34"] = tl;
+  </script>
+
     </template>
   </body>
 </html>

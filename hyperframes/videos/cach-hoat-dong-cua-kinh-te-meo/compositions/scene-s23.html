@@ -7,458 +7,365 @@
     <template>
       <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
       <style>
+      /* hf-safe-colors (tất định từ style-tokens.json) */
+      .hf-text-ink { color: #141414; }
+      .hf-text-light { color: #F7F4EC; }
+      .hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+      .hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+      .hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+      .hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
       * {
-        margin: 0;
-        padding: 0;
         box-sizing: border-box;
       }
-
-      html,
       body {
         margin: 0;
         padding: 0;
-        width: 100%;
-        height: 100%;
-        overflow: hidden;
         background-color: #E7E3D9;
-        font-family: "Be Vietnam Pro", -apple-system, BlinkMacSystemFont, sans-serif;
+        font-family: "Be Vietnam Pro", sans-serif;
         color: #141414;
         -webkit-font-smoothing: antialiased;
+        overflow: hidden;
       }
-
-      /* Composition Root: sized 100% via runtime canvas contract */
       #root {
         position: relative;
-        width: 100%;
-        height: 100%;
+        width: 1080px;
+        height: 1920px;
+        background-color: #E7E3D9;
         overflow: hidden;
-        background-color: #E7E3D9;
       }
 
-      /* Background Paper Grid (84px cells, Vox DNA) */
-      .bg-grid {
-        position: absolute;
-        inset: 0;
-        background-color: #E7E3D9;
-        background-image:
-          linear-gradient(to right, rgba(20, 20, 20, 0.08) 1.5px, transparent 1.5px),
-          linear-gradient(to bottom, rgba(20, 20, 20, 0.08) 1.5px, transparent 1.5px);
-        background-size: 84px 84px;
-        pointer-events: none;
-        z-index: 1;
-      }
-
-      /* Fixed bottom orange signature bar */
-      .bottom-orange-bar {
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        width: 100%;
-        height: 8px;
-        background-color: #FF6A1A;
-        z-index: 100;
-      }
-
-      /* Clip layout contract: absolute, inset 0 */
+      /* Base clip rule per HyperFrames contract */
       .clip {
         position: absolute;
         inset: 0;
         overflow: hidden;
       }
 
-      /* ========================================================
-         PHASE 1: BẪY NỢ TÍN DỤNG ĐEN (0.00s -> 3.30s)
-         ======================================================== */
-      #clip-phase1 {
-        z-index: 10;
-      }
-
-      /* Phase 1 Top Context Header (Y: 170 -> 226) */
-      .header-phase1 {
+      /* Inner wrappers for safe GSAP transformations */
+      .shot-inner {
         position: absolute;
-        top: 170px;
-        left: 80px;
-        right: 80px;
-        height: 56px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        background: #141414;
-        color: #F7F4EC;
-        padding: 0 24px;
-        border-radius: 8px;
-        border: 2px solid #FF6A1A;
-        box-shadow: 4px 4px 0 #FF6A1A;
-        z-index: 15;
-      }
-
-      .header-tag {
-        font-size: 18px;
-        font-weight: 900;
-        color: #141414;
-        background: #FF6A1A;
-        padding: 4px 12px;
-        border-radius: 4px;
-        letter-spacing: 1px;
-      }
-
-      .header-title {
-        font-size: 22px;
-        font-weight: 900;
-        letter-spacing: 1.5px;
-        text-transform: uppercase;
-      }
-
-      /* Phase 1 Dossier Card (Y: 246 -> 1166, ends cleanly above label) */
-      #card-phase1 {
-        position: absolute;
-        top: 246px;
-        left: 80px;
-        width: 920px;
-        height: 920px;
-        background: #1A1A1A;
-        border: 4px solid #141414;
-        border-radius: 16px;
-        box-shadow: 10px 10px 0 #FF6A1A;
-        display: flex;
-        flex-direction: column;
-        overflow: hidden;
-        z-index: 12;
-      }
-
-      .card1-dossier-bar {
-        height: 56px;
-        background: #242424;
-        border-bottom: 2px solid #333333;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 0 24px;
-        font-size: 18px;
-        font-weight: 900;
-        letter-spacing: 1px;
-      }
-
-      .card1-photo-container {
-        position: relative;
-        width: 100%;
-        height: 860px;
-        background: #0D0D0D;
+        inset: 0;
         overflow: hidden;
       }
 
-      .card1-img {
+      /* Full-bleed background photo presentation */
+      .photo-bg-wrap {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+      }
+      .photo-full {
+        position: absolute;
+        inset: 0;
         width: 100%;
         height: 100%;
         object-fit: cover;
-        object-position: center;
         display: block;
+        transform-origin: center center;
       }
 
-      /* Overlay: Ban Icon Stamp (Y: 360 -> 560, over photo only, no text under) */
-      #overlay-ban {
+      /* Editorial Registration Accents */
+      .card-crosshair {
+        position: absolute;
+        user-select: none;
+        z-index: 5;
+        pointer-events: none;
+      }
+      .cross-tl { top: 32px; left: 32px; }
+      .cross-tr { top: 32px; right: 32px; }
+
+      /* Top Header Pill */
+      .header-pill {
+        position: absolute;
+        top: 172px;
+        left: 60px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 20px;
+        background-color: #141414;
+        border: 2px solid #FF6A1A;
+        border-radius: 6px;
+        z-index: 20;
+      }
+      .header-indicator {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background-color: #FF6A1A;
+      }
+      .header-text {
+        font-size: 20px;
+        font-weight: 700;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        color: #F7F4EC;
+      }
+
+      /* Overlay Badges for Shot 1 */
+      .label-plate-container {
+        position: absolute;
+        top: 1120px;
+        left: 60px;
+        width: 960px;
+        height: 160px;
+        z-index: 20;
+      }
+      .shot-badge {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding: 22px 32px;
+        border: 4px solid #141414;
+        border-radius: 8px;
+      }
+      .badge-eyebrow {
+        font-size: 20px;
+        font-weight: 700;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        margin-bottom: 6px;
+      }
+      .badge-main-text {
+        font-size: 52px;
+        font-weight: 900;
+        letter-spacing: 0.5px;
+        line-height: 1.15;
+      }
+
+      /* Shot 2 Diagram Layout */
+      .diag-wrapper {
         position: absolute;
         top: 360px;
-        right: 120px;
-        width: 200px;
-        height: 200px;
-        background: #FF6A1A;
-        border: 5px solid #141414;
-        border-radius: 50%;
+        left: 60px;
+        width: 960px;
+        z-index: 15;
+      }
+      .diag-top-row {
+        position: relative;
+        width: 100%;
+        height: 160px;
+      }
+      .diag-salary-box {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 320px;
+        height: 160px;
+        background-color: #F5F0E4;
+        border: 4px solid #141414;
+        border-radius: 6px;
+        padding: 16px 20px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+      .diag-salary-title {
+        font-size: 26px;
+        font-weight: 900;
+        color: #141414;
+        line-height: 1.2;
+      }
+      .diag-salary-desc {
+        font-size: 18px;
+        font-weight: 700;
+        color: #141414;
+      }
+
+      /* Flow connector */
+      .flow-connector {
+        position: absolute;
+        top: 10px;
+        left: 330px;
+        width: 250px;
+        height: 140px;
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        box-shadow: 8px 8px 0 #141414;
-        z-index: 25;
       }
-
-      .stamp-text {
-        font-size: 22px;
-        font-weight: 900;
-        color: #141414;
-        letter-spacing: 2px;
-        margin-top: 4px;
-      }
-
-      /* Overlay: Refusal Label (Y: 1210 -> 1334, isolated zone below card) */
-      #label-refuse {
-        position: absolute;
-        top: 1210px;
-        left: 80px;
-        right: 80px;
-        background: #FF6A1A;
-        border: 4px solid #141414;
-        box-shadow: 8px 8px 0 #141414;
-        border-radius: 12px;
-        padding: 18px 24px;
-        text-align: center;
-        z-index: 26;
-      }
-
-      .refuse-tag {
-        display: inline-block;
+      .flow-label {
         font-size: 16px;
         font-weight: 900;
-        letter-spacing: 2px;
-        color: #F7F4EC;
-        background: #141414;
-        padding: 4px 14px;
-        border-radius: 4px;
-        margin-bottom: 8px;
-        text-transform: uppercase;
-      }
-
-      .refuse-title {
-        font-size: 40px;
-        font-weight: 900;
-        color: #141414;
         letter-spacing: 1px;
         text-transform: uppercase;
+        background-color: #FF6A1A;
+        color: #141414;
+        padding: 4px 10px;
+        border: 2px solid #141414;
+        border-radius: 4px;
+        margin-bottom: 8px;
+        white-space: nowrap;
+      }
+      .flow-svg {
+        width: 240px;
+        height: 40px;
       }
 
-      /* ========================================================
-         PHASE 2: NHÂN VIÊN VĂN PHÒNG CHÍNH NGẠCH (3.30s -> 6.04s)
-         ======================================================== */
-      #clip-phase2 {
-        z-index: 20;
-      }
-
-      /* Phase 2 Top Context Header (Y: 170 -> 226) */
-      .header-phase2 {
+      /* Shield Fund Box */
+      .diag-fund-box {
         position: absolute;
-        top: 170px;
-        left: 80px;
-        right: 80px;
-        height: 56px;
+        top: 0;
+        right: 0;
+        width: 370px;
+        height: 160px;
+        background-color: #FF6A1A;
+        border: 4px solid #141414;
+        border-radius: 6px;
+        padding: 16px 20px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+      .diag-fund-header {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        background: #F5F0E4;
-        color: #141414;
-        padding: 0 24px;
-        border-radius: 8px;
-        border: 3px solid #141414;
-        box-shadow: 4px 4px 0 #141414;
-        z-index: 25;
       }
-
-      .header-tag2 {
-        font-size: 18px;
+      .diag-fund-title {
+        font-size: 28px;
         font-weight: 900;
         color: #141414;
-        background: #FF6A1A;
-        padding: 4px 12px;
+        line-height: 1.2;
+      }
+      .diag-fund-badge {
+        font-size: 15px;
+        font-weight: 900;
+        background-color: #141414;
+        color: #F7F4EC;
+        padding: 4px 8px;
         border-radius: 4px;
-        letter-spacing: 1px;
+      }
+      .diag-fund-sub {
+        font-size: 18px;
+        font-weight: 700;
+        color: #141414;
       }
 
-      .header-title2 {
+      /* Coverage Benefits Panel */
+      .diag-benefits-panel {
+        position: absolute;
+        top: 185px;
+        left: 0;
+        width: 960px;
+        background-color: #141414;
+        border: 4px solid #FF6A1A;
+        border-radius: 8px;
+        padding: 24px 30px;
+        color: #F7F4EC;
+      }
+      .benefits-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 18px;
+        border-bottom: 2px solid rgba(247, 244, 236, 0.25);
+        padding-bottom: 12px;
+      }
+      .benefits-headline {
         font-size: 22px;
         font-weight: 900;
         letter-spacing: 1.5px;
         text-transform: uppercase;
-      }
-
-      /* Phase 2 Card: Employee Badge ID (Y: 246 -> 1186, ends cleanly above punch-phrase) */
-      #card-phase2 {
-        position: absolute;
-        top: 246px;
-        left: 80px;
-        width: 920px;
-        height: 940px;
-        background: #FFFFFF;
-        border: 4px solid #141414;
-        border-radius: 20px;
-        box-shadow: 10px 10px 0 #FF6A1A, 10px 10px 0 4px #141414;
-        display: flex;
-        flex-direction: column;
-        overflow: hidden;
-        z-index: 22;
-      }
-
-      /* Badge Lanyard Clip hole (centered via calc, no CSS transform conflict) */
-      .badge-strap-hole {
-        position: absolute;
-        top: 12px;
-        left: calc(50% - 50px);
-        width: 100px;
-        height: 16px;
-        background: #E7E3D9;
-        border: 3px solid #141414;
-        border-radius: 8px;
-        z-index: 30;
-      }
-
-      /* Badge Header Strip */
-      .card2-header {
-        height: 110px;
-        background: #141414;
-        color: #F7F4EC;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: flex-end;
-        padding-bottom: 14px;
-        border-bottom: 4px solid #FF6A1A;
-      }
-
-      .card2-company {
-        font-size: 26px;
-        font-weight: 900;
-        letter-spacing: 2px;
         color: #FF6A1A;
       }
-
-      .card2-subhead {
-        font-size: 15px;
+      .benefits-tag {
+        font-size: 16px;
         font-weight: 700;
-        letter-spacing: 3px;
-        color: #E7E3D9;
-        text-transform: uppercase;
-        margin-top: 4px;
+        color: #F7F4EC;
+        border: 1px solid rgba(247, 244, 236, 0.4);
+        padding: 4px 10px;
+        border-radius: 4px;
       }
-
-      /* Card 2 Body */
-      .card2-body {
-        padding: 24px 36px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 18px;
-        flex: 1;
-      }
-
-      .card2-photo-box {
-        position: relative;
-        width: 840px;
-        height: 420px;
-        background: #F5F0E4;
-        border: 3px solid #141414;
-        border-radius: 12px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        overflow: hidden;
-      }
-
-      /* Office window background lines inside photo */
-      .photo-window-bg {
-        position: absolute;
-        inset: 0;
-        background:
-          linear-gradient(to right, rgba(20, 20, 20, 0.08) 2px, transparent 2px),
-          linear-gradient(to bottom, rgba(20, 20, 20, 0.08) 2px, transparent 2px);
-        background-size: 60px 60px;
-      }
-
-      /* Employee Details Grid */
-      .card2-details-grid {
-        width: 100%;
+      .benefits-grid {
         display: grid;
         grid-template-columns: 1fr 1fr;
-        gap: 14px;
+        gap: 20px;
       }
-
-      .detail-item {
-        background: #F5F0E4;
-        border: 2px solid #141414;
-        border-radius: 8px;
-        padding: 10px 16px;
-      }
-
-      .detail-label {
-        font-size: 14px;
-        font-weight: 700;
-        color: #555555;
-        letter-spacing: 1px;
-        text-transform: uppercase;
-      }
-
-      .detail-value {
-        font-size: 20px;
-        font-weight: 900;
-        color: #141414;
-        margin-top: 2px;
-      }
-
-      .detail-highlight {
-        background: #141414;
-        border: 2px solid #141414;
-      }
-
-      .detail-highlight .detail-label {
-        color: #E7E3D9;
-      }
-
-      .detail-highlight .detail-value {
-        color: #FF6A1A;
-      }
-
-      /* Overlay: Person Icon Badge (Y: 420 -> 600, over photo box only) */
-      #overlay-person {
-        position: absolute;
-        top: 420px;
-        right: 110px;
-        width: 180px;
-        height: 180px;
-        background: #FF6A1A;
-        border: 5px solid #141414;
-        border-radius: 50%;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        box-shadow: 8px 8px 0 #141414;
-        z-index: 35;
-        padding: 8px;
-        text-align: center;
-      }
-
-      .person-badge-text {
-        font-size: 14px;
-        font-weight: 900;
-        color: #141414;
-        letter-spacing: 1px;
-        line-height: 1.2;
-        margin-top: 4px;
-      }
-
-      /* Overlay: Punch Phrase Banner (Y: 1210 -> 1350, isolated zone below card) */
-      #punch-phrase {
-        position: absolute;
-        top: 1210px;
-        left: 80px;
-        right: 80px;
-        background: #141414;
-        border: 4px solid #FF6A1A;
-        box-shadow: 8px 8px 0 #FF6A1A;
-        border-radius: 14px;
-        padding: 18px 24px;
-        text-align: center;
-        z-index: 36;
-      }
-
-      .punch-tag {
-        display: inline-block;
-        font-size: 16px;
-        font-weight: 900;
-        letter-spacing: 2px;
-        color: #141414;
-        background: #FF6A1A;
-        padding: 4px 14px;
+      .benefit-item {
+        background-color: #22201D;
+        border-left: 6px solid #FF6A1A;
+        padding: 16px 20px;
         border-radius: 4px;
-        margin-bottom: 8px;
-        text-transform: uppercase;
       }
-
-      .punch-text {
-        font-size: 42px;
+      .benefit-case {
+        font-size: 24px;
         font-weight: 900;
         color: #F7F4EC;
-        letter-spacing: 1px;
-        line-height: 1.25;
+        margin-bottom: 6px;
+      }
+      .benefit-solution {
+        font-size: 18px;
+        font-weight: 700;
+        color: #F7F4EC;
+      }
+
+      /* Shot 2 Punch Phrase */
+      .punch-container {
+        position: absolute;
+        top: 860px;
+        left: 60px;
+        width: 960px;
+        height: 144px;
+        z-index: 25;
+      }
+      .punch-card {
+        position: absolute;
+        inset: 0;
+        background-color: #141414;
+        border: 4px solid #FF6A1A;
+        border-radius: 8px;
+        padding: 20px 32px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .punch-text-group {
+        display: flex;
+        flex-direction: column;
+      }
+      .punch-eyebrow {
+        font-size: 18px;
+        font-weight: 700;
+        letter-spacing: 2px;
+        color: #FF6A1A;
         text-transform: uppercase;
+        margin-bottom: 4px;
+      }
+      .punch-main-phrase {
+        font-size: 56px;
+        font-weight: 900;
+        color: #F7F4EC;
+        letter-spacing: 0.5px;
+        line-height: 1.1;
+      }
+      .check-badge {
+        width: 82px;
+        height: 82px;
+        background-color: #FF6A1A;
+        border: 3px solid #141414;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+      .check-svg {
+        width: 54px;
+        height: 54px;
+      }
+
+      /* Permanent Brand Signature Bar */
+      .brand-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 14px;
+        background-color: #FF6A1A;
       }
     </style>
 
@@ -466,256 +373,290 @@
       id="root"
       data-composition-id="scene-s23"
       data-start="0"
-      data-duration="6.04"
       data-width="1080"
       data-height="1920"
+      data-duration="12"
     >
-      <!-- Background Paper Grid (Consistent Vox Aesthetic) -->
-      <div class="bg-grid"></div>
+      <!-- Editorial Crosshair Accents -->
+      <svg class="card-crosshair cross-tl" width="18" height="18" viewBox="0 0 18 18" fill="none" data-layout-ignore>
+        <path d="M9 0v18M0 9h18" stroke="#141414" stroke-width="2.5" />
+      </svg>
+      <svg class="card-crosshair cross-tr" width="18" height="18" viewBox="0 0 18 18" fill="none" data-layout-ignore>
+        <path d="M9 0v18M0 9h18" stroke="#141414" stroke-width="2.5" />
+      </svg>
 
-      <!-- ========================================================
-           PHASE 1: CLIP BẪY NỢ (0.00s -> 3.30s)
-           ======================================================== -->
-      <div id="clip-phase1" class="clip" data-start="0" data-duration="3.3" data-track-index="0">
-        <!-- Top Context Header -->
-        <div id="banner-phase1" class="header-phase1">
-          <span class="header-tag">01 // BẪY NỢ</span>
-          <span class="header-title">HỢP ĐỒNG TÍN DỤNG ĐEN</span>
-        </div>
+      <!-- Permanent Editorial Header -->
+      <div class="header-pill">
+        <div class="header-indicator"></div>
+        <div class="header-text">Kinh Tế Mèo // Định Nghĩa S23</div>
+      </div>
 
-        <!-- Card 1: Hợp Đồng Ép Buộc (Dossier Layout, Y: 246 -> 1166) -->
-        <div id="card-phase1">
-          <div class="card1-dossier-bar">
-            <span style="color: #F7F4EC;">HỒ SƠ TÍN DỤNG MAFIA</span>
-            <span style="color: #FF6A1A;">CẮT LÃI TRƯỚC</span>
-          </div>
-          <div class="card1-photo-container">
+      <!-- SHOT 1: 0.0s to 6.3s -->
+      <div id="shot-1" class="clip" data-start="0" data-duration="6.3">
+        <div id="shot-1-inner" class="shot-inner">
+          <!-- Full-bleed background photo (crop on office cat) -->
+          <div class="photo-bg-wrap">
             <img
-              id="img-phase1"
-              class="card1-img"
-              src="assets/img-06-predatory-loan-contract-cats.jpeg"
-              alt="Hợp đồng nợ mafia"
+              id="photo-s1"
+              class="photo-full"
+              src="assets/img-09-cat-wage-tax-deduction.jpeg"
+              alt="Mèo làm việc văn phòng"
             />
           </div>
-        </div>
 
-        <!-- Overlay: Ban Icon Stamp (atMs: 208250 -> 0.55s) -->
-        <div id="overlay-ban">
-          <svg viewBox="0 0 100 100" width="80" height="80">
-            <circle cx="50" cy="50" r="42" fill="none" stroke="#141414" stroke-width="10" />
-            <line x1="20" y1="20" x2="80" y2="80" stroke="#141414" stroke-width="10" stroke-linecap="round" />
-          </svg>
-          <span class="stamp-text">TỪ CHỐI</span>
-        </div>
-
-        <!-- Overlay: Label TỪ CHỐI BẪY NỢ (atMs: 209020 -> 1.32s, Y: 1210 -> 1334) -->
-        <div id="label-refuse">
-          <div class="refuse-tag">QUYẾT TÂM</div>
-          <div class="refuse-title">TỪ CHỐI BẪY NỢ</div>
-        </div>
-      </div>
-
-      <!-- ========================================================
-           PHASE 2: CLIP NHÂN VIÊN VĂN PHÒNG (3.30s -> 6.04s)
-           ======================================================== -->
-      <div id="clip-phase2" class="clip" data-start="3.3" data-duration="2.74" data-track-index="0">
-        <!-- Top Context Header -->
-        <div id="banner-phase2" class="header-phase2">
-          <span class="header-tag2">02 // TỰ CHỦ</span>
-          <span class="header-title2">LAO ĐỘNG CHÍNH NGẠCH</span>
-        </div>
-
-        <!-- Card 2: Thẻ Nhân Viên Văn Phòng (Y: 246 -> 1186) -->
-        <div id="card-phase2">
-          <div class="badge-strap-hole"></div>
-          <div class="card2-header">
-            <div class="card2-company">CÔNG TY CỔ PHẦN CÁ TƯƠI</div>
-            <div class="card2-subhead">THẺ NHÂN VIÊN CHÍNH THỨC</div>
-          </div>
-          <div class="card2-body">
-            <!-- Illustrated Cat Office Worker Photo Box -->
-            <div class="card2-photo-box">
-              <div class="photo-window-bg"></div>
-              <!-- Cat Office Worker Graphic (Pure SVG, no overlapping DOM text) -->
-              <svg viewBox="0 0 400 300" width="360" height="270" style="z-index: 2;">
-                <!-- Desk Surface -->
-                <rect x="20" y="240" width="360" height="50" rx="6" fill="#141414" />
-                <!-- Laptop on desk -->
-                <rect x="230" y="190" width="110" height="60" rx="4" fill="#E7E3D9" stroke="#141414" stroke-width="4" />
-                <path d="M 270 215 L 290 215" stroke="#FF6A1A" stroke-width="6" stroke-linecap="round" />
-                <!-- Cat Body / Suit -->
-                <path d="M 80 250 C 90 180, 120 160, 170 160 C 220 160, 250 180, 260 250 Z" fill="#141414" />
-                <!-- White Shirt Collar -->
-                <polygon points="170,160 145,210 195,210" fill="#FFFFFF" stroke="#141414" stroke-width="2" />
-                <!-- Orange Necktie -->
-                <polygon points="170,180 162,245 170,255 178,245" fill="#FF6A1A" stroke="#141414" stroke-width="3" />
-                <!-- Cat Head -->
-                <circle cx="170" cy="115" r="50" fill="#E7E3D9" stroke="#141414" stroke-width="5" />
-                <!-- Cat Ears -->
-                <polygon points="125,90 135,40 160,75" fill="#E7E3D9" stroke="#141414" stroke-width="5" stroke-linejoin="round" />
-                <polygon points="215,90 205,40 180,75" fill="#E7E3D9" stroke="#141414" stroke-width="5" stroke-linejoin="round" />
-                <!-- Glasses -->
-                <circle cx="150" cy="115" r="16" fill="none" stroke="#141414" stroke-width="4" />
-                <circle cx="190" cy="115" r="16" fill="none" stroke="#141414" stroke-width="4" />
-                <line x1="166" y1="115" x2="174" y2="115" stroke="#141414" stroke-width="4" />
-                <!-- Cat Whiskers -->
-                <line x1="120" y1="125" x2="90" y2="120" stroke="#141414" stroke-width="3" stroke-linecap="round" />
-                <line x1="120" y1="135" x2="90" y2="140" stroke="#141414" stroke-width="3" stroke-linecap="round" />
-                <line x1="220" y1="125" x2="250" y2="120" stroke="#141414" stroke-width="3" stroke-linecap="round" />
-                <line x1="220" y1="135" x2="250" y2="140" stroke="#141414" stroke-width="3" stroke-linecap="round" />
-                <!-- Cat Nose & Smile -->
-                <polygon points="166,128 174,128 170,134" fill="#FF6A1A" />
-                <path d="M 164 136 Q 170 142 176 136" fill="none" stroke="#141414" stroke-width="3" stroke-linecap="round" />
-              </svg>
+          <!-- Overlays for Shot 1 -->
+          <div class="label-plate-container">
+            <!-- Label 1: LÀM VIỆC CHÂN CHÍNH (at 1.98s, hold 1.8s) -->
+            <div id="label-1" class="shot-badge hf-plate-ink">
+              <div class="badge-eyebrow" style="color: #FF6A1A;">TỰ LẬP TÀI CHÍNH</div>
+              <div class="badge-main-text">LÀM VIỆC CHÂN CHÍNH</div>
             </div>
 
-            <!-- Credentials -->
-            <div class="card2-details-grid">
-              <div class="detail-item">
-                <div class="detail-label">NHÂN SỰ</div>
-                <div class="detail-value">MÈO VĂN PHÒNG</div>
-              </div>
-              <div class="detail-item">
-                <div class="detail-label">MÃ SỐ</div>
-                <div class="detail-value">CAT-9981-VP</div>
-              </div>
-              <div class="detail-item">
-                <div class="detail-label">CHỨC DANH</div>
-                <div class="detail-value">CHUYÊN VIÊN</div>
-              </div>
-              <div class="detail-item detail-highlight">
-                <div class="detail-label">MỤC TIÊU</div>
-                <div class="detail-value">KIẾM CÁ MUA NHÀ</div>
-              </div>
+            <!-- Label 2: NHÂN VIÊN CÔNG SỞ (at 4.63s, hold 1.8s) -->
+            <div id="label-2" class="shot-badge hf-hl-orange">
+              <div class="badge-eyebrow" style="color: #141414;">BƯỚC NGOẶT MỚI</div>
+              <div class="badge-main-text">NHÂN VIÊN CÔNG SỞ</div>
             </div>
           </div>
         </div>
+      </div>
 
-        <!-- Overlay: Person Icon (atMs: 211590 -> 3.89s) -->
-        <div id="overlay-person">
-          <svg viewBox="0 0 100 100" width="70" height="70">
-            <circle cx="50" cy="34" r="18" fill="none" stroke="#141414" stroke-width="8" />
-            <path d="M 20 84 C 20 62, 34 54, 50 54 C 66 54, 80 62, 80 84" fill="none" stroke="#141414" stroke-width="8" stroke-linecap="round" />
-          </svg>
-          <span class="person-badge-text">CHÍNH THỨC</span>
-        </div>
+      <!-- SHOT 2: 6.3s to 12.0s -->
+      <div id="shot-2" class="clip" data-start="6.3" data-duration="5.7">
+        <div id="shot-2-inner" class="shot-inner">
+          <!-- Full-bleed background photo (pan right across wage deduction) -->
+          <div class="photo-bg-wrap">
+            <img
+              id="photo-s2"
+              class="photo-full"
+              src="assets/img-09-cat-wage-tax-deduction.jpeg"
+              alt="Trích nộp quỹ bảo hiểm"
+            />
+          </div>
 
-        <!-- Overlay: Punch Phrase LÀM NHÂN VIÊN VĂN PHÒNG (atMs: 212140 -> 4.44s, Y: 1210 -> 1350) -->
-        <div id="punch-phrase">
-          <div class="punch-tag">BƯỚC NGOẶT</div>
-          <div class="punch-text">LÀM NHÂN VIÊN VĂN PHÒNG</div>
+          <!-- Diagram Overlay: Salary -> Shield Fund -> Benefits -->
+          <div class="diag-wrapper">
+            <div class="diag-top-row">
+              <!-- Box A: Lương tháng -->
+              <div id="diag-salary" class="diag-salary-box">
+                <div class="diag-salary-title">LƯƠNG THÁNG (CÁ)</div>
+                <div class="diag-salary-desc">Thu nhập tự kiếm được</div>
+              </div>
+
+              <!-- Flow Connector Arrow -->
+              <div id="diag-connector" class="flow-connector">
+                <div class="flow-label">TRÍCH NỘP TỰ ĐỘNG</div>
+                <svg class="flow-svg" viewBox="0 0 240 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path
+                    id="flow-arrow-path"
+                    d="M 10 20 L 210 20"
+                    stroke="#FF6A1A"
+                    stroke-width="6"
+                    stroke-linecap="round"
+                  />
+                  <polygon id="flow-arrow-head" points="208,10 230,20 208,30" fill="#FF6A1A" />
+                </svg>
+              </div>
+
+              <!-- Box B: Quỹ An Sinh -->
+              <div id="diag-fund" class="diag-fund-box">
+                <div class="diag-fund-header">
+                  <div class="diag-fund-title">HỘP KHIÊN AN SINH</div>
+                  <div class="diag-fund-badge">CHÍNH PHỦ</div>
+                </div>
+                <div class="diag-fund-sub">Tích lũy quỹ dự phòng</div>
+              </div>
+            </div>
+
+            <!-- Bottom Benefits Panel -->
+            <div id="diag-benefits" class="diag-benefits-panel">
+              <div class="benefits-header">
+                <div class="benefits-headline">CƠ CHẾ BẢO VỆ KHI GẶP BIẾN CỐ</div>
+                <div class="benefits-tag">CHI TRẢ TIỀN MẶT</div>
+              </div>
+              <div class="benefits-grid">
+                <div class="benefit-item">
+                  <div class="benefit-case">KHI BỊ ỐM ĐAU</div>
+                  <div class="benefit-solution">Chính phủ hỗ trợ viện phí</div>
+                </div>
+                <div class="benefit-item">
+                  <div class="benefit-case">KHI MẤT VIỆC</div>
+                  <div class="benefit-solution">Trợ cấp duy trì cuộc sống</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Punch Phrase Card & Self-drawing Check Icon -->
+          <div class="punch-container">
+            <div id="punch-box" class="punch-card">
+              <div class="punch-text-group">
+                <div class="punch-eyebrow">KHÁI NIỆM CỐT LÕI</div>
+                <div class="punch-main-phrase">ĐÓNG PHÍ BẢO HIỂM</div>
+              </div>
+              <div id="check-badge" class="check-badge">
+                <svg class="check-svg" viewBox="0 0 54 54" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path
+                    id="check-path"
+                    d="M 12 28 L 23 39 L 43 16"
+                    stroke="#141414"
+                    stroke-width="7"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
-      <!-- Signature Orange Bar at Bottom -->
-      <div class="bottom-orange-bar"></div>
+      <!-- Permanent Bottom Orange Bar Signature -->
+      <div id="brand-bar-clip" class="clip" data-start="0" data-duration="12" style="z-index: 100;">
+        <div class="brand-bar"></div>
+      </div>
     </div>
 
-    <!-- GSAP Seek-Safe Deterministic Animation -->
     <script>
+      // Single paused master timeline for HyperFrames
       const tl = gsap.timeline({ paused: true });
 
-      // ==========================================================
-      // PHASE 1 CHOREOGRAPHY (0.00s -> 3.30s)
-      // ==========================================================
+      // 1. Setup SVG Paths for stroke-dash animation
+      const flowArrow = document.getElementById("flow-arrow-path");
+      if (flowArrow) {
+        const len = flowArrow.getTotalLength ? flowArrow.getTotalLength() : 200;
+        flowArrow.style.strokeDasharray = len + "px";
+        flowArrow.style.strokeDashoffset = len + "px";
+      }
 
-      // 1. Initial entrance of Phase 1 elements (0.05s -> 0.45s)
-      tl.fromTo(
-        "#banner-phase1",
-        { y: -30, opacity: 0 },
-        { y: 0, opacity: 1, duration: 0.4, ease: "power3.out" },
-        0.05
-      );
+      const checkPath = document.getElementById("check-path");
+      if (checkPath) {
+        const checkLen = checkPath.getTotalLength ? checkPath.getTotalLength() : 50;
+        checkPath.style.strokeDasharray = checkLen + "px";
+        checkPath.style.strokeDashoffset = checkLen + "px";
+      }
 
+      // Initial visual states
+      gsap.set("#label-1", { opacity: 0, scale: 0.9, y: 30 });
+      gsap.set("#label-2", { opacity: 0, scale: 0.9, y: 30 });
+      gsap.set("#diag-salary", { opacity: 0, x: -40 });
+      gsap.set("#diag-connector", { opacity: 0 });
+      gsap.set("#flow-arrow-head", { opacity: 0, scale: 0, transformOrigin: "center center" });
+      gsap.set("#diag-fund", { opacity: 0, scale: 0.9 });
+      gsap.set("#diag-benefits", { opacity: 0, y: 35 });
+      gsap.set("#punch-box", { opacity: 0, scale: 0.9, y: 30 });
+      gsap.set("#check-badge", { opacity: 0, scale: 0 });
+
+      // ==========================================
+      // CHOREOGRAPHY - SHOT 1 (0.0s - 6.3s)
+      // ==========================================
+
+      // Entrance animation: "peel" (corner curl / unfold entrance on inner wrapper)
       tl.fromTo(
-        "#card-phase1",
-        { y: 50, opacity: 0, scale: 0.96 },
-        { y: 0, opacity: 1, scale: 1, duration: 0.45, ease: "power3.out" },
+        "#shot-1-inner",
+        { clipPath: "polygon(0% 100%, 0% 100%, 0% 100%, 0% 100%)" },
+        { clipPath: "polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)", duration: 0.85, ease: "power3.out" },
         0.1
       );
 
-      // Subtle push on predatory contract photo (0.0s -> 2.8s)
+      // Camera motion: zoom-in into the cat working at desk
       tl.fromTo(
-        "#img-phase1",
-        { scale: 1.0 },
-        { scale: 1.05, duration: 2.8, ease: "none" },
-        0.0
+        "#photo-s1",
+        { scale: 1.05, y: 0 },
+        { scale: 1.22, y: -30, duration: 6.3, ease: "none" },
+        0
       );
 
-      // 2. Overlay: Icon BAN stamp (atMs: 208250 -> 0.55s, hold: 2200ms)
-      tl.fromTo(
-        "#overlay-ban",
-        { scale: 2.2, opacity: 0, rotation: 25 },
-        { scale: 1, opacity: 1, rotation: -10, duration: 0.35, ease: "power3.out" },
-        0.55
-      );
-
-      // 3. Overlay: Label TỪ CHỐI BẪY NỢ (atMs: 209020 -> 1.32s, hold: 2000ms)
-      tl.fromTo(
-        "#label-refuse",
-        { y: 35, opacity: 0, scale: 0.92 },
-        { y: 0, opacity: 1, scale: 1, duration: 0.4, ease: "power3.out" },
-        1.32
-      );
-
-      // 4. Phase 1 Exit: Peel out cleanly before Clip 2 arrives (2.80s -> 3.25s)
+      // Overlay 1: "LÀM VIỆC CHÂN CHÍNH" (starts at 1.98s, holds 1.8s -> ends at 3.78s)
       tl.to(
-        "#card-phase1",
-        { x: -1100, y: -160, rotation: -12, opacity: 0, duration: 0.45, ease: "power2.in" },
-        2.8
+        "#label-1",
+        { opacity: 1, scale: 1, y: 0, duration: 0.45, ease: "power3.out" },
+        1.98
       );
       tl.to(
-        "#banner-phase1",
-        { opacity: 0, y: -20, duration: 0.3, ease: "power1.out" },
-        2.85
+        "#label-1",
+        { opacity: 0, y: -20, duration: 0.35, ease: "power2.in" },
+        3.78
+      );
+
+      // Overlay 2: "NHÂN VIÊN CÔNG SỞ" (starts at 4.63s, holds 1.8s -> ends at 6.3s)
+      tl.to(
+        "#label-2",
+        { opacity: 1, scale: 1, y: 0, duration: 0.45, ease: "power3.out" },
+        4.63
+      );
+
+      // ==========================================
+      // CHOREOGRAPHY - SHOT 2 (6.3s - 12.0s)
+      // ==========================================
+
+      // Camera motion: pan-right across wage deduction documents
+      tl.fromTo(
+        "#photo-s2",
+        { scale: 1.18, x: 35 },
+        { scale: 1.28, x: -45, duration: 5.7, ease: "none" },
+        6.3
+      );
+
+      // Diagram progressive reveal
+      // Step A: Monthly salary box arrives
+      tl.to(
+        "#diag-salary",
+        { opacity: 1, x: 0, duration: 0.5, ease: "power3.out" },
+        6.55
+      );
+
+      // Step B: Connector fades in and SVG arrow draws
+      tl.to(
+        "#diag-connector",
+        { opacity: 1, duration: 0.3, ease: "power1.out" },
+        7.15
       );
       tl.to(
-        "#label-refuse",
-        { opacity: 0, scale: 0.85, duration: 0.3, ease: "power2.in" },
-        2.85
+        "#flow-arrow-path",
+        { strokeDashoffset: 0, duration: 0.55, ease: "power2.out" },
+        7.25
       );
       tl.to(
-        "#overlay-ban",
-        { opacity: 0, scale: 0.8, duration: 0.3, ease: "power2.in" },
-        2.85
+        "#flow-arrow-head",
+        { opacity: 1, scale: 1, duration: 0.22, ease: "back.out(1.7)" },
+        7.7
       );
 
-      // ==========================================================
-      // PHASE 2 CHOREOGRAPHY (3.30s -> 6.04s)
-      // ==========================================================
-
-      // 5. Entrance of Phase 2 Card & Banner (3.30s -> 3.75s)
-      tl.fromTo(
-        "#banner-phase2",
-        { y: -30, opacity: 0 },
-        { y: 0, opacity: 1, duration: 0.35, ease: "power3.out" },
-        3.3
+      // Step C: Shield Fund box arrives
+      tl.to(
+        "#diag-fund",
+        { opacity: 1, scale: 1, duration: 0.5, ease: "power3.out" },
+        7.85
       );
 
-      tl.fromTo(
-        "#card-phase2",
-        { y: 70, opacity: 0, scale: 0.95 },
-        { y: 0, opacity: 1, scale: 1, duration: 0.45, ease: "power3.out" },
-        3.3
+      // Step D: Benefits coverage panel arrives
+      tl.to(
+        "#diag-benefits",
+        { opacity: 1, y: 0, duration: 0.55, ease: "power3.out" },
+        8.6
       );
 
-      // 6. Overlay: Icon PERSON (atMs: 211590 -> 3.89s, hold: 2100ms)
-      tl.fromTo(
-        "#overlay-person",
-        { scale: 0, opacity: 0, rotation: -15 },
-        { scale: 1, opacity: 1, rotation: 0, duration: 0.4, ease: "power3.out" },
-        3.89
+      // Punch Phrase: "ĐÓNG PHÍ BẢO HIỂM" (starts at 10.0s, holds 2.0s -> 12.0s)
+      tl.to(
+        "#punch-box",
+        { opacity: 1, scale: 1, y: 0, duration: 0.48, ease: "power4.out" },
+        10.0
       );
 
-      // 7. Overlay: Punch Phrase LÀM NHÂN VIÊN VĂN PHÒNG (atMs: 212140 -> 4.44s, hold: 1600ms)
-      tl.fromTo(
-        "#punch-phrase",
-        { scale: 0.9, opacity: 0, y: 35 },
-        { scale: 1, opacity: 1, y: 0, duration: 0.45, ease: "power3.out" },
-        4.44
+      // Check Icon: circular badge pops in and checkmark draws (starts at 11.18s)
+      tl.to(
+        "#check-badge",
+        { opacity: 1, scale: 1, duration: 0.3, ease: "back.out(1.5)" },
+        11.18
+      );
+      tl.to(
+        "#check-path",
+        { strokeDashoffset: 0, duration: 0.42, ease: "power2.out" },
+        11.32
       );
 
-      // Register timeline ONLY AFTER build completes (mandatory HyperFrames contract)
+      // Register timeline on HyperFrames window object
       window.__timelines["scene-s23"] = tl;
     </script>
   

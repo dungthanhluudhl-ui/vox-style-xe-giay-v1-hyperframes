@@ -1,491 +1,304 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
   <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF-8" />
   </head>
   <body>
     <template>
-      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap">
+      <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap"
+    />
       <style>
+      /* hf-safe-colors (tất định từ style-tokens.json) */
+      .hf-text-ink { color: #141414; }
+      .hf-text-light { color: #F7F4EC; }
+      .hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+      .hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+      .hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+      .hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
       * {
         box-sizing: border-box;
       }
       body {
         margin: 0;
         padding: 0;
-        background-color: #E7E3D9;
+        background: #e7e3d9;
         color: #141414;
         font-family: "Be Vietnam Pro", sans-serif;
         overflow: hidden;
         -webkit-font-smoothing: antialiased;
       }
-
       #root {
         position: relative;
         width: 100%;
         height: 100%;
         overflow: hidden;
+        background-color: #e7e3d9;
       }
 
+      /* Video wrapper without data-start to allow seekable camera zooms */
+      #video-wrapper {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+        z-index: 2;
+        transform-origin: 50% 50%;
+        will-change: transform;
+      }
+      #vid-19 {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+
+      /* Background chart variant: ruled horizontal lines + orange left ticks (pure visual lines, no text) */
+      #chart-bg {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        z-index: 3;
+      }
+      .chart-line {
+        position: absolute;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: rgba(20, 20, 20, 0.32);
+      }
+      .chart-tick {
+        position: absolute;
+        left: 0;
+        width: 28px;
+        height: 6px;
+        background: #ff6a1a;
+        transform: translateY(-2px);
+      }
+
+      /* Standard clip contract */
       .clip {
         position: absolute;
         inset: 0;
         pointer-events: none;
-      }
-
-      /* Background Video - oversized width prevents white edge leak during pan */
-      #bg-video {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 115%;
-        height: 100%;
-        max-width: none;
-        object-fit: cover;
-        z-index: 1;
-        filter: contrast(1.08) brightness(0.96);
-        pointer-events: none;
-      }
-
-      /* Vox Signature Grid Texture (84px square cells) */
-      .grid-layer {
-        position: absolute;
-        inset: 0;
-        background-image:
-          linear-gradient(to right, rgba(20, 20, 20, 0.28) 1.5px, transparent 1.5px),
-          linear-gradient(to bottom, rgba(20, 20, 20, 0.28) 1.5px, transparent 1.5px);
-        background-size: 84px 84px;
-        mix-blend-mode: multiply;
-        pointer-events: none;
-        z-index: 2;
-      }
-
-      /* Paper Grain Layer */
-      .grain-layer {
-        position: absolute;
-        inset: 0;
-        opacity: 0.18;
-        mix-blend-mode: multiply;
-        pointer-events: none;
-        z-index: 3;
-        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
-      }
-
-      /* Vignette overlay for depth */
-      .vignette-layer {
-        position: absolute;
-        inset: 0;
-        background: radial-gradient(circle at 50% 50%, rgba(231, 227, 217, 0.1) 40%, rgba(20, 20, 20, 0.46) 100%);
-        pointer-events: none;
-        z-index: 4;
-      }
-
-      /* Editorial Topic Tag - Safe Zone at top: 175px */
-      .editorial-header {
-        position: absolute;
-        top: 175px;
-        left: 80px;
-        width: auto;
-        height: auto;
-        display: flex;
-        align-items: center;
-        gap: 12px;
         z-index: 10;
       }
-      .topic-badge {
-        background-color: #141414;
-        color: #F7F4EC;
-        font-size: 20px;
-        font-weight: 900;
-        letter-spacing: 1.5px;
-        text-transform: uppercase;
-        padding: 8px 18px;
-        border-radius: 6px;
-      }
-      .chapter-text {
-        font-size: 20px;
-        font-weight: 700;
-        color: #141414;
-        background-color: #F5F0E4;
-        padding: 8px 16px;
-        border: 2px solid #141414;
-        border-radius: 6px;
-      }
 
-      /* Diagram Card: Balance Scale */
-      #diagram-card {
+      /* Safe container positioning for overlay cards */
+      .overlay-container {
         position: absolute;
-        top: 250px;
-        left: 80px;
-        width: 920px;
-        height: 610px;
-        background-color: #F5F0E4;
-        border: 3.5px solid #141414;
-        border-radius: 16px;
-        box-shadow: 10px 10px 0px #FF6A1A;
-        padding: 24px 32px;
-        z-index: 15;
-        transform-origin: 50% 50%;
-      }
-
-      .card-header-bar {
+        left: 0;
+        right: 0;
         display: flex;
-        justify-content: space-between;
+        justify-content: center;
         align-items: center;
-        border-bottom: 2px solid rgba(20, 20, 20, 0.2);
-        padding-bottom: 14px;
-        margin-bottom: 16px;
+        pointer-events: none;
       }
-      .card-title {
-        font-size: 22px;
-        font-weight: 900;
-        color: #141414;
-        text-transform: uppercase;
-        display: flex;
-        align-items: center;
-        gap: 10px;
+      .pos-top {
+        top: 360px;
       }
-      .card-title-dot {
-        width: 10px;
-        height: 10px;
-        border-radius: 50%;
-        background-color: #FF6A1A;
+      .pos-mid {
+        top: 660px;
+      }
+      .pos-bot {
+        top: 980px;
       }
 
-      /* Ratio Badge: 6 CẦU ĐỐI 1 CUNG */
-      #label-ratio {
-        background-color: #FF6A1A;
-        color: #141414;
-        font-size: 24px;
-        font-weight: 900;
-        padding: 8px 20px;
-        border: 2px solid #141414;
-        border-radius: 8px;
-        box-shadow: 4px 4px 0px #141414;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        transform-origin: 50% 50%;
-      }
-
-      .scale-svg-container {
-        width: 100%;
-        height: 480px;
-      }
-
-      /* Punch Phrase Card */
-      #punch-phrase-card {
-        position: absolute;
-        top: 480px;
-        left: 80px;
-        width: 920px;
-        height: auto;
+      /* Solid card designs with strict WCAG contrast */
+      .plate-ink {
         background-color: #141414;
-        border: 4px solid #FF6A1A;
+        color: #f7f4ec;
         border-radius: 16px;
-        box-shadow: 12px 12px 0px rgba(20, 20, 20, 0.45);
-        padding: 44px 48px;
-        z-index: 20;
-        transform-origin: 50% 50%;
-      }
-      .punch-eyebrow {
-        font-size: 22px;
-        font-weight: 900;
-        color: #FF6A1A;
-        letter-spacing: 2.5px;
-        text-transform: uppercase;
-        margin-bottom: 14px;
-      }
-      .punch-headline {
-        font-size: 74px;
-        font-weight: 900;
-        color: #F7F4EC;
-        line-height: 1.15;
-        letter-spacing: -1px;
-        text-transform: uppercase;
-        margin: 0;
-      }
-      .punch-underline-bar {
-        display: block;
-        width: 220px;
-        height: 8px;
-        background-color: #FF6A1A;
-        margin: 20px 0 16px 0;
-        transform-origin: 0% 50%;
-      }
-      .punch-subtext {
-        font-size: 28px;
-        font-weight: 700;
-        color: #E7E3D9;
-        margin: 0;
-        line-height: 1.35;
-      }
-
-      /* Monopoly Baker Cat Label - explicit height: auto prevents inheritance bug */
-      #label-monopoly {
-        position: absolute;
-        top: 1160px;
-        left: 80px;
-        width: auto;
-        height: auto;
+        padding: 24px 36px;
+        box-shadow: 0 16px 36px rgba(0, 0, 0, 0.35);
         display: inline-flex;
+        flex-direction: column;
         align-items: center;
-        gap: 16px;
-        background-color: #FF6A1A;
+        text-align: center;
+        will-change: transform, opacity;
+      }
+      .plate-orange {
+        background-color: #ff6a1a;
         color: #141414;
-        border: 3.5px solid #141414;
-        border-radius: 12px;
-        box-shadow: 8px 8px 0px #141414;
-        padding: 18px 32px;
-        z-index: 25;
-        transform-origin: 0% 50%;
-      }
-      .monopoly-icon {
-        width: 36px;
-        height: 36px;
-      }
-      .monopoly-text {
-        font-size: 38px;
-        font-weight: 900;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
+        border-radius: 16px;
+        padding: 24px 40px;
+        box-shadow: 0 16px 36px rgba(0, 0, 0, 0.3);
+        display: inline-flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        will-change: transform, opacity;
       }
 
-      /* Signature Vox Orange Bottom Bar */
-      .bottom-orange-bar {
+      /* Typography & tags */
+      .badge-tag-orange {
+        background-color: #ff6a1a;
+        color: #141414;
+        font-size: 22px;
+        font-weight: 900;
+        padding: 6px 16px;
+        border-radius: 6px;
+        letter-spacing: 1px;
+        margin-bottom: 12px;
+        text-transform: uppercase;
+      }
+      .badge-tag-ink {
+        background-color: #141414;
+        color: #f7f4ec;
+        font-size: 22px;
+        font-weight: 900;
+        padding: 6px 16px;
+        border-radius: 6px;
+        letter-spacing: 1px;
+        margin-bottom: 12px;
+        text-transform: uppercase;
+      }
+      .badge-title {
+        font-size: 64px;
+        font-weight: 900;
+        line-height: 1.24;
+        margin: 0;
+      }
+      .punch-title {
+        font-size: 72px;
+        font-weight: 900;
+        line-height: 1.2;
+        margin: 0;
+      }
+      .text-orange {
+        color: #ff6a1a;
+      }
+      .text-ink {
+        color: #141414;
+      }
+      .text-light {
+        color: #f7f4ec;
+      }
+
+      /* Signature bottom orange bar */
+      #bottom-bar {
         position: absolute;
         bottom: 0;
         left: 0;
-        width: 1080px;
+        right: 0;
         height: 14px;
-        background-color: #FF6A1A;
+        background-color: #ff6a1a;
         z-index: 100;
       }
     </style>
 
-    <div data-hf-id="hf-bcrw" id="root" data-composition-id="scene-s02" data-width="1080" data-height="1920" data-duration="5.13">
-      <!-- Direct child timed video clip -->
-      <video data-hf-id="hf-pgzo" id="bg-video" src="assets/vid-15-animated-cat-paper-cutout.mp4" muted playsinline data-start="0" data-duration="5.13" data-media-start="1.5"></video>
+    <div
+      id="root"
+      data-composition-id="scene-s02"
+      data-width="1080"
+      data-height="1920"
+      data-duration="7.79"
+    >
+      <!-- Video wrapper for deterministic camera zoom -->
+      <div id="video-wrapper">
+        <video
+          id="vid-19"
+          src="assets/vid-19-high-profit-cutout-infographic.mp4"
+          muted
+          playsinline
+          data-start="0"
+          data-duration="7.79"
+          data-media-start="0.2"
+        ></video>
+      </div>
 
-      <!-- Aesthetic Background Texture Overlays -->
-      <div data-hf-id="hf-3rbk" class="grid-layer"></div>
-      <div data-hf-id="hf-s2bh" class="grain-layer"></div>
-      <div data-hf-id="hf-nbj6" class="vignette-layer"></div>
-
-      <!-- Overlays Scene Clip -->
-      <div data-hf-id="hf-fmf7" id="overlays-clip" class="clip" data-start="0" data-duration="5.13">
-        <!-- Editorial Topic Tag -->
-        <div data-hf-id="hf-kcdb" class="editorial-header">
-          <div data-hf-id="hf-o4bu" class="topic-badge">KINH TẾ HỌC MÈO</div>
-          <div data-hf-id="hf-cz8b" class="chapter-text">QUY LUẬT CUNG - CẦU</div>
+      <!-- Background Chart Variant: horizontal ruled lines + orange left ticks (decorative, no occluded text) -->
+      <div id="chart-bg">
+        <div class="chart-line" style="top: 384px;">
+          <div class="chart-tick"></div>
         </div>
-
-        <!-- Diagram Card: Balance Scale of Supply and Demand -->
-        <div data-hf-id="hf-g6r1" id="diagram-card" data-layout-allow-occlusion="true">
-          <div data-hf-id="hf-ltxw" class="card-header-bar">
-            <div data-hf-id="hf-ot5r" class="card-title">
-              <span data-hf-id="hf-oli8" class="card-title-dot"></span>
-              SƠ ĐỒ CÁN CÂN THỊ TRƯỜNG
-            </div>
-            <div data-hf-id="hf-qtoq" id="label-ratio">6 CẦU ĐỐI 1 CUNG</div>
-          </div>
-
-          <div data-hf-id="hf-t3qx" class="scale-svg-container">
-            <svg data-hf-id="hf-vnpx" viewBox="0 0 856 460" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
-              <!-- Center Fulcrum Structure (Fixed) -->
-              <polygon data-hf-id="hf-7rhc" points="428,210 400,340 456,340" fill="#141414" />
-              <rect data-hf-id="hf-jr73" x="370" y="340" width="116" height="12" rx="4" fill="#141414" />
-
-              <!-- Pivoting Scale Beam Group -->
-              <g data-hf-id="hf-8u4f" id="scale-beam-group">
-                <!-- Beam Bar -->
-                <line data-hf-id="hf-lg8h" x1="90" y1="210" x2="766" y2="210" stroke="#141414" stroke-width="8" stroke-linecap="round" />
-                <circle data-hf-id="hf-xddf" cx="428" cy="210" r="10" fill="#FF6A1A" stroke="#141414" stroke-width="4" />
-
-                <!-- Left Suspension Ropes & Pan (DEMAND / 6 CATS) -->
-                <line data-hf-id="hf-awpc" x1="130" y1="210" x2="130" y2="290" stroke="#141414" stroke-width="3.5" stroke-dasharray="6,4" />
-                <path data-hf-id="hf-kf3f" d="M 50 290 Q 130 325 210 290" fill="none" stroke="#141414" stroke-width="6" stroke-linecap="round" />
-
-                <!-- 6 Cats Cluster on Left Pan -->
-                <g data-hf-id="hf-nkg3" id="cats-cluster" transform="translate(68, 185)">
-                  <!-- Cat 1 (Bottom Left) -->
-                  <g data-hf-id="hf-32lw" transform="translate(0, 50)">
-                    <circle data-hf-id="hf-1m5f" cx="16" cy="18" r="14" fill="#141414" />
-                    <polygon data-hf-id="hf-y8rc" points="5,8 11,0 17,9" fill="#141414" />
-                    <polygon data-hf-id="hf-64e5" points="15,9 21,0 27,8" fill="#141414" />
-                  </g>
-                  <!-- Cat 2 (Bottom Mid) -->
-                  <g data-hf-id="hf-fsfa" transform="translate(42, 50)">
-                    <circle data-hf-id="hf-d6cj" cx="16" cy="18" r="14" fill="#141414" />
-                    <polygon data-hf-id="hf-4180" points="5,8 11,0 17,9" fill="#141414" />
-                    <polygon data-hf-id="hf-q4lt" points="15,9 21,0 27,8" fill="#141414" />
-                  </g>
-                  <!-- Cat 3 (Bottom Right) -->
-                  <g data-hf-id="hf-fzdc" transform="translate(84, 50)">
-                    <circle data-hf-id="hf-cs1i" cx="16" cy="18" r="14" fill="#141414" />
-                    <polygon data-hf-id="hf-2uax" points="5,8 11,0 17,9" fill="#141414" />
-                    <polygon data-hf-id="hf-rbiw" points="15,9 21,0 27,8" fill="#141414" />
-                  </g>
-                  <!-- Cat 4 (Mid Left) -->
-                  <g data-hf-id="hf-5c9r" transform="translate(20, 22)">
-                    <circle data-hf-id="hf-cdqh" cx="16" cy="18" r="14" fill="#141414" />
-                    <polygon data-hf-id="hf-38ly" points="5,8 11,0 17,9" fill="#141414" />
-                    <polygon data-hf-id="hf-qx7v" points="15,9 21,0 27,8" fill="#141414" />
-                  </g>
-                  <!-- Cat 5 (Mid Right) -->
-                  <g data-hf-id="hf-zf91" transform="translate(62, 22)">
-                    <circle data-hf-id="hf-bzfg" cx="16" cy="18" r="14" fill="#141414" />
-                    <polygon data-hf-id="hf-21ov" points="5,8 11,0 17,9" fill="#141414" />
-                    <polygon data-hf-id="hf-oxoq" points="15,9 21,0 27,8" fill="#141414" />
-                  </g>
-                  <!-- Cat 6 (Top) -->
-                  <g data-hf-id="hf-vq8w" transform="translate(42, -6)">
-                    <circle data-hf-id="hf-vgfm" cx="16" cy="18" r="15" fill="#141414" />
-                    <polygon data-hf-id="hf-2fzw" points="5,8 11,0 17,9" fill="#141414" />
-                    <polygon data-hf-id="hf-ojdp" points="15,9 21,0 27,8" fill="#141414" />
-                  </g>
-                </g>
-
-                <!-- Left Text Label -->
-                <text data-hf-id="hf-csn6" x="130" y="345" font-family="'Be Vietnam Pro', sans-serif" font-weight="900" font-size="22" fill="#141414" text-anchor="middle">
-                  CẦU (6 MÈO)
-                </text>
-
-                <!-- Downward Force Indicator -->
-                <g data-hf-id="hf-qxwt" id="indicator-left" transform="translate(118, 360)">
-                  <path data-hf-id="hf-x5hn" d="M 12 0 L 12 28 M 4 20 L 12 28 L 20 20" fill="none" stroke="#FF6A1A" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" />
-                </g>
-
-                <!-- Right Suspension Ropes & Pan (SUPPLY / 1 CAKE) -->
-                <line data-hf-id="hf-vthy" x1="726" y1="210" x2="726" y2="290" stroke="#141414" stroke-width="3.5" stroke-dasharray="6,4" />
-                <path data-hf-id="hf-v26c" d="M 646 290 Q 726 325 806 290" fill="none" stroke="#141414" stroke-width="6" stroke-linecap="round" />
-
-                <!-- 1 Single Cake on Right Pan -->
-                <g data-hf-id="hf-okqi" id="cake-payload" transform="translate(696, 218)">
-                  <path data-hf-id="hf-4i03" d="M 0 45 L 60 45 L 54 20 L 6 20 Z" fill="#FF6A1A" stroke="#141414" stroke-width="3.5" stroke-linejoin="round" />
-                  <path data-hf-id="hf-3lu6" d="M 6 20 Q 30 10 54 20" fill="#F7F4EC" stroke="#141414" stroke-width="3.5" />
-                  <circle data-hf-id="hf-4f6m" cx="30" cy="8" r="7" fill="#141414" />
-                  <path data-hf-id="hf-0c6y" d="M 30 2 Q 38 -6 42 -2" fill="none" stroke="#141414" stroke-width="3" stroke-linecap="round" />
-                </g>
-
-                <!-- Right Text Label -->
-                <text data-hf-id="hf-utu0" x="726" y="345" font-family="'Be Vietnam Pro', sans-serif" font-weight="900" font-size="22" fill="#141414" text-anchor="middle">
-                  CUNG (1 BÁNH)
-                </text>
-
-                <!-- Upward Float Indicator -->
-                <g data-hf-id="hf-e5n7" id="indicator-right" transform="translate(714, 390)">
-                  <path data-hf-id="hf-md2j" d="M 12 28 L 12 0 M 4 8 L 12 0 L 20 8" fill="none" stroke="#FF6A1A" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" />
-                </g>
-              </g>
-            </svg>
-          </div>
+        <div class="chart-line" style="top: 768px;">
+          <div class="chart-tick"></div>
         </div>
-
-        <!-- Punch Phrase Card: LỆCH CUNG - CẦU -->
-        <div data-hf-id="hf-ggzc" id="punch-phrase-card" data-layout-allow-occlusion="true">
-          <div data-hf-id="hf-iv0y" class="punch-eyebrow">QUY LUẬT THỊ TRƯỜNG</div>
-          <h1 data-hf-id="hf-ogaa" class="punch-headline">LỆCH CUNG - CẦU</h1>
-          <div data-hf-id="hf-8haw" id="punch-underline" class="punch-underline-bar"></div>
-          <p data-hf-id="hf-gb3o" class="punch-subtext">6 người mua tranh nhau 1 sản phẩm duy nhất</p>
+        <div class="chart-line" style="top: 1152px;">
+          <div class="chart-tick"></div>
         </div>
-
-        <!-- Label: LÒ BÁNH ĐỘC QUYỀN (Points to Baker Cat) -->
-        <div data-hf-id="hf-dftd" id="label-monopoly">
-          <svg data-hf-id="hf-ot31" class="monopoly-icon" viewBox="0 0 24 24" fill="none" stroke="#141414" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-            <path data-hf-id="hf-67os" d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-          </svg>
-          <span data-hf-id="hf-j1wl" class="monopoly-text">LÒ BÁNH ĐỘC QUYỀN</span>
+        <div class="chart-line" style="top: 1536px;">
+          <div class="chart-tick"></div>
         </div>
       </div>
 
-      <!-- Static Orange Bottom Bar -->
-      <div data-hf-id="hf-2ykk" class="bottom-orange-bar"></div>
+      <!-- Overlay 1: GIÁ GỐC: 5K (atMs: 14380 -> rel 2.48s, hold 1.8s) -->
+      <div id="overlay-1" class="clip" data-start="2.48" data-duration="1.8">
+        <div class="overlay-container pos-top">
+          <div id="badge-1" class="plate-ink">
+            <span class="badge-tag-orange">MÈO LÀM BÁNH</span>
+            <h2 class="badge-title text-light">GIÁ GỐC: <span class="text-orange">5K</span></h2>
+          </div>
+        </div>
+      </div>
+
+      <!-- Overlay 2: ĐẨY GIÁ 20K (atMs: 17420 -> rel 5.52s, hold 2.27s) -->
+      <div id="overlay-2" class="clip" data-start="5.52" data-duration="2.27">
+        <div class="overlay-container pos-mid">
+          <div id="badge-2" class="plate-ink">
+            <span class="badge-tag-orange">LỰC CẦU TĂNG VỌT ▲</span>
+            <h1 class="punch-title text-light">ĐẨY GIÁ <span class="text-orange">20K</span></h1>
+          </div>
+        </div>
+      </div>
+
+      <!-- Overlay 3: LẠM PHÁT CẦU KÉO (atMs: 18700 -> rel 6.80s, to scene end 7.79s -> dur 0.99s) -->
+      <div id="overlay-3" class="clip" data-start="6.80" data-duration="0.99">
+        <div class="overlay-container pos-bot">
+          <div id="badge-3" class="plate-orange">
+            <span class="badge-tag-ink">CƠ CHẾ KINH TẾ</span>
+            <h2 class="badge-title text-ink">LẠM PHÁT CẦU KÉO</h2>
+          </div>
+        </div>
+      </div>
+
+      <!-- Permanent signature bottom bar -->
+      <div id="bottom-bar"></div>
     </div>
 
-    <!-- GSAP Seekable Timeline Script -->
     <script>
       const tl = gsap.timeline({ paused: true });
 
-      // 1. Initial State: camera motion pan-left on video across scene duration
-      tl.fromTo("#bg-video", { x: 0 }, { x: -65, duration: 5.13, ease: "none" }, 0);
-
-      // 2. Diagram Card arrives at t = 0.17s (8070ms - 7900ms) with clean settle
+      // Camera motion & entrance: grow entrance (0 -> 0.6s) followed by subtle continuous zoom
       tl.fromTo(
-        "#diagram-card",
-        { y: 45, opacity: 0, scale: 0.94 },
-        { y: 0, opacity: 1, scale: 1, duration: 0.52, ease: "power3.out" },
-        0.17
+        "#video-wrapper",
+        { scale: 0.94, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.6, ease: "power3.out" },
+        0
       );
-
-      // 3. Balance tilts sharply into imbalance at t = 1.01s (8910ms - 7900ms)
-      // svgOrigin sets pivot exactly at fulcrum coordinates (428, 210)
       tl.to(
-        "#scale-beam-group",
-        { rotation: 14, svgOrigin: "428 210", duration: 0.65, ease: "power3.inOut" },
-        1.01
+        "#video-wrapper",
+        { scale: 1.06, duration: 7.19, ease: "sine.inOut" },
+        0.6
       );
 
-      // Ratio badge pops in when balance tilts
+      // Entrance for Overlay 1 badge
       tl.fromTo(
-        "#label-ratio",
-        { scale: 0, opacity: 0 },
-        { scale: 1, opacity: 1, duration: 0.38, ease: "power3.out" },
-        1.01
+        "#badge-1",
+        { scale: 0.85, opacity: 0, y: 30 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.45, ease: "power3.out" },
+        2.48
       );
 
-      // Force indicators pop in to accentuate imbalance
+      // Entrance for Overlay 2 punch phrase badge
       tl.fromTo(
-        "#indicator-left",
-        { scale: 0, opacity: 0, transformOrigin: "12px 14px" },
-        { scale: 1, opacity: 1, duration: 0.32, ease: "power3.out" },
-        1.18
+        "#badge-2",
+        { scale: 0.85, opacity: 0, y: 40 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.5, ease: "power3.out" },
+        5.52
       );
+
+      // Entrance for Overlay 3 concept label badge (crisp stamp settle)
       tl.fromTo(
-        "#indicator-right",
-        { scale: 0, opacity: 0, transformOrigin: "12px 14px" },
-        { scale: 1, opacity: 1, duration: 0.32, ease: "power3.out" },
-        1.22
+        "#badge-3",
+        { scale: 1.15, opacity: 0, rotation: -2 },
+        { scale: 1, opacity: 1, rotation: 0, duration: 0.4, ease: "power3.out" },
+        6.80
       );
 
-      // Diagram Card exits cleanly before punch phrase starts (at t = 2.20s -> 2.50s)
-      tl.to(
-        "#diagram-card",
-        { y: -35, opacity: 0, scale: 0.96, duration: 0.3, ease: "power2.in" },
-        2.20
-      );
-
-      // 4. Punch Phrase Card enters at t = 2.76s (10660ms - 7900ms)
-      tl.fromTo(
-        "#punch-phrase-card",
-        { y: 40, opacity: 0, scale: 0.94 },
-        { y: 0, opacity: 1, scale: 1, duration: 0.44, ease: "power3.out" },
-        2.76
-      );
-
-      // Orange underline draw reveal
-      tl.fromTo(
-        "#punch-underline",
-        { scaleX: 0 },
-        { scaleX: 1, duration: 0.36, ease: "power2.out" },
-        2.92
-      );
-
-      // Punch Phrase Card exit at t = 4.15s (holds 1.39s, well above 1.6s combined reading window)
-      tl.to(
-        "#punch-phrase-card",
-        { y: -30, opacity: 0, duration: 0.22, ease: "power2.in" },
-        4.15
-      );
-
-      // 5. Label: LÒ BÁNH ĐỘC QUYỀN enters at t = 4.35s (12250ms - 7900ms) to scene end
-      tl.fromTo(
-        "#label-monopoly",
-        { y: 25, opacity: 0, scale: 0.88 },
-        { y: 0, opacity: 1, scale: 1, duration: 0.35, ease: "power3.out" },
-        4.35
-      );
-
-      // Register the paused timeline with window.__timelines["scene-s02"]
+      // Register root timeline to HyperFrames runtime
       window.__timelines["scene-s02"] = tl;
     </script>
   

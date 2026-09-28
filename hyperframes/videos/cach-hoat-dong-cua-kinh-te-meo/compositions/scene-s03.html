@@ -1,508 +1,583 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
   <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF-8" />
   </head>
   <body>
     <template>
-      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap">
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
       <style>
+/* hf-autofix contrast (tất định, màu palette) */
+.hf-cfix-s03-1 { color: #141414 !important; }
+
+/* hf-safe-colors (tất định từ style-tokens.json) */
+.hf-text-ink { color: #141414; }
+.hf-text-light { color: #F7F4EC; }
+.hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+.hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+.hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+.hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
       * {
         box-sizing: border-box;
       }
       body {
         margin: 0;
         padding: 0;
-        background-color: #e7e3d9;
-        font-family: "Be Vietnam Pro", sans-serif;
+        background-color: #E7E3D9;
         color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
         overflow: hidden;
         -webkit-font-smoothing: antialiased;
       }
+
+      /* Root container */
       #root {
         position: relative;
         width: 100%;
         height: 100%;
         overflow: hidden;
+        background-color: #E7E3D9;
       }
+
+      /* Base clip rule */
       .clip {
         position: absolute;
         inset: 0;
-        pointer-events: none;
       }
 
-      /* Nền Chart với 4 đường kẻ ngang 20/40/60/80% và tick cam mép trái theo đúng STYLE DNA */
-      .chart-grid-layer {
-        position: absolute;
-        inset: 0;
+      /* Safe WCAG Color Classes */
+      .hf-text-ink { color: #141414; }
+      .hf-text-light { color: #F7F4EC; }
+      .hf-hl-orange { background-color: #FF6A1A; color: #141414; }
+      .hf-plate-ink { background-color: #141414; color: #F7F4EC; }
+      .hf-plate-ink-orange { background-color: #141414; color: #FF6A1A; }
+      .hf-plate-paper { background-color: #E7E3D9; color: #141414; }
+
+      /* Background variant: chart */
+      #chart-bg {
         pointer-events: none;
-        z-index: 10;
+        z-index: 1;
       }
-      .chart-line-row {
+      .chart-line {
         position: absolute;
         left: 0;
         right: 0;
         height: 2px;
-        background: rgba(20, 20, 20, 0.22);
-        display: flex;
-        align-items: center;
+        background: rgba(20, 20, 20, 0.28);
       }
       .chart-tick {
-        width: 24px;
-        height: 4px;
-        background-color: #ff6a1a;
-        transform-origin: left center;
+        position: absolute;
+        left: 0;
+        width: 20px;
+        height: 5px;
+        background: #FF6A1A;
+        transform: translateY(-2px);
       }
 
-      /* Video chính và Camera Rig */
-      #video-layer {
-        position: absolute;
-        inset: 0;
-        overflow: hidden;
-        z-index: 2;
-      }
-      #camera-rig {
-        position: absolute;
-        inset: 0;
-        width: 100%;
-        height: 100%;
-        transform-origin: 50% 45%;
-      }
-      #vid-19 {
-        position: absolute;
-        inset: 0;
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        display: block;
-      }
-
-      /* Lớp phủ Paper Grain tạo chất giấy báo cổ điển */
-      .grain-overlay {
-        position: absolute;
-        inset: 0;
-        pointer-events: none;
-        opacity: 0.18;
-        mix-blend-mode: multiply;
-        z-index: 30;
-        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-      }
-
-      /* Thanh cam nhận diện thương hiệu cố định mép đáy */
+      /* Fixed bottom orange signature bar */
       #bottom-brand-bar {
         position: absolute;
         bottom: 0;
         left: 0;
         right: 0;
-        height: 14px;
-        background-color: #ff6a1a;
+        height: 12px;
+        background: #FF6A1A;
         z-index: 999;
       }
 
-      /* OVERLAY 1: Thẻ Giá Ban Đầu 5K */
-      #label-5k-card {
+      /* Global card styles */
+      .vox-card {
+        background-color: #F5F0E4;
+        border: 4px solid #141414;
+        box-shadow: 10px 10px 0px #141414;
         position: absolute;
-        top: 220px;
-        left: 60px;
-        width: 420px;
-        background-color: #f5f0e4;
-        border: 3px solid #141414;
-        border-radius: 14px;
-        box-shadow: 8px 8px 0px #141414;
-        padding: 22px 26px;
-        z-index: 20;
-      }
-      .tag-subtitle {
-        font-size: 20px;
-        font-weight: 700;
-        color: #141414;
-        letter-spacing: 2px;
-        text-transform: uppercase;
-        margin-bottom: 14px;
-      }
-      .price-container {
-        position: relative;
-        display: inline-block;
-      }
-      .price-number-ink {
-        font-size: 78px;
-        font-weight: 900;
-        color: #141414;
-        line-height: 1;
-        margin: 0;
-      }
-      .strikethrough-svg {
-        position: absolute;
-        top: -6px;
-        left: -8px;
-        width: calc(100% + 16px);
-        height: calc(100% + 12px);
-        overflow: visible;
-        pointer-events: none;
-      }
-      #badge-soldout {
-        margin-top: 12px;
-        display: inline-block;
-        background-color: #141414;
-        color: #ff6a1a;
-        font-size: 19px;
-        font-weight: 900;
-        padding: 6px 14px;
-        border-radius: 6px;
-        letter-spacing: 1px;
-        transform-origin: left center;
       }
 
-      /* OVERLAY 2: Icon Rise (Mũi tên tăng vọt + Sức mua) */
-      #rise-card {
+      /* SHOT 1 STYLES */
+      #shot1-header-card {
         position: absolute;
-        top: 520px;
+        top: 180px;
+        left: 60px;
         right: 60px;
-        width: 420px;
-        background-color: #141414;
-        border: 3px solid #ff6a1a;
-        border-radius: 14px;
-        box-shadow: 8px 8px 0px #ff6a1a;
-        padding: 22px 26px;
-        z-index: 22;
+        height: 84px;
+        padding: 0 24px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        z-index: 10;
       }
-      .rise-tag {
-        font-size: 19px;
-        font-weight: 700;
-        color: #ff6a1a;
-        letter-spacing: 2px;
-        text-transform: uppercase;
-        margin-bottom: 10px;
+      .header-tag {
+        display: inline-block;
+        padding: 6px 14px;
+        font-weight: 900;
+        font-size: 22px;
+        letter-spacing: 1px;
       }
-      .rise-svg-wrap {
+      .header-title {
+        font-weight: 900;
+        font-size: 32px;
+        letter-spacing: 0.5px;
+      }
+
+      #shot1-image-viewport {
+        position: absolute;
+        top: 284px;
+        left: 60px;
+        right: 60px;
+        height: 740px;
+        overflow: hidden;
+        border: 4px solid #141414;
+        box-shadow: 10px 10px 0px #141414;
+        background-color: #F5F0E4;
+        z-index: 5;
+      }
+      #shot1-img {
         width: 100%;
-        height: 105px;
-        margin-bottom: 12px;
+        height: auto;
+        position: absolute;
+        bottom: -20px;
+        left: 0;
       }
-      #rise-arrowhead {
-        transform-box: fill-box;
-        transform-origin: center;
-      }
-      #rise-badge {
+
+      /* Ingredient callout tags inside Shot 1 */
+      .ingredient-plate {
+        position: absolute;
+        padding: 10px 18px;
+        border: 3px solid #141414;
+        box-shadow: 6px 6px 0px #141414;
+        font-weight: 900;
         font-size: 22px;
-        font-weight: 900;
-        color: #141414;
-        background: #ff6a1a;
-        padding: 8px 14px;
-        border-radius: 8px;
-        text-align: center;
-        letter-spacing: 1px;
-        transform-origin: center center;
+        z-index: 8;
+      }
+      #ing-tag-1 {
+        bottom: 84px;
+        left: 24px;
+      }
+      #ing-tag-2 {
+        bottom: 24px;
+        left: 24px;
       }
 
-      /* OVERLAY 3: Thẻ Giá Mới 20K (x4) */
-      #label-20k-card {
+      /* Overlay 2 in Shot 1: Total Capital 2K */
+      #shot1-capital-card {
         position: absolute;
-        top: 220px;
-        right: 60px;
-        width: 430px;
-        background-color: #141414;
-        border: 3px solid #ff6a1a;
-        border-radius: 14px;
-        box-shadow: 8px 8px 0px #ff6a1a;
-        padding: 22px 26px;
-        z-index: 24;
-      }
-      .tag-subtitle-orange {
-        font-size: 20px;
-        font-weight: 700;
-        color: #ff6a1a;
-        letter-spacing: 2px;
-        text-transform: uppercase;
-        margin-bottom: 18px;
-        line-height: 1.2;
-      }
-      .price-number-white {
-        font-size: 78px;
-        font-weight: 900;
-        color: #f7f4ec;
-        line-height: 1;
-        margin: 0;
-      }
-      #pill-multiplier {
-        margin-top: 14px;
-        display: inline-block;
-        background-color: #ff6a1a;
-        color: #141414;
-        font-size: 20px;
-        font-weight: 900;
-        padding: 6px 14px;
-        border-radius: 8px;
-        transform-origin: left center;
-      }
-
-      /* OVERLAY 4: Punch-Phrase "LẠM PHÁT CẦU KÉO" */
-      #punch-card {
-        position: absolute;
-        top: 1180px;
+        top: 1050px;
         left: 60px;
         right: 60px;
-        background-color: rgba(20, 20, 20, 0.96);
-        border: 4px solid #ff6a1a;
-        border-radius: 16px;
-        box-shadow: 10px 10px 0px #ff6a1a;
-        padding: 30px 34px;
-        text-align: center;
-        z-index: 26;
+        height: 250px;
+        padding: 24px 30px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        z-index: 10;
       }
-      .punch-label {
-        font-size: 22px;
-        font-weight: 700;
-        color: #ff6a1a;
-        letter-spacing: 4px;
-        text-transform: uppercase;
-        margin-bottom: 8px;
-      }
-      .punch-headline {
-        font-size: 58px;
+      .capital-sub {
         font-weight: 900;
-        color: #f7f4ec;
-        line-height: 1.25;
-        margin: 0;
+        font-size: 24px;
         letter-spacing: 1px;
+        color: #141414;
+      }
+      .capital-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .capital-badge {
+        padding: 12px 28px;
+        border: 3px solid #141414;
+        box-shadow: 6px 6px 0px #141414;
+        font-weight: 900;
+        font-size: 48px;
+        letter-spacing: 0.5px;
+      }
+      .capital-desc {
+        font-weight: 700;
+        font-size: 26px;
+        color: #141414;
+        line-height: 1.3;
+      }
+
+      /* SHOT 2 STYLES */
+      #shot2-image-viewport {
+        position: absolute;
+        top: 180px;
+        left: 60px;
+        right: 60px;
+        height: 480px;
+        overflow: hidden;
+        border: 4px solid #141414;
+        box-shadow: 10px 10px 0px #141414;
+        background-color: #F5F0E4;
+        z-index: 5;
+      }
+      #shot2-img {
+        width: 100%;
+        height: auto;
+        position: absolute;
+        top: -60px;
+        left: 0;
+      }
+
+      /* Comparison chart in Shot 2 */
+      #shot2-chart-card {
+        position: absolute;
+        top: 686px;
+        left: 60px;
+        right: 60px;
+        height: 380px;
+        padding: 24px 30px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        z-index: 10;
+      }
+      .chart-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 2px dashed rgba(20, 20, 20, 0.4);
+        padding-bottom: 12px;
+      }
+      .chart-label {
+        font-weight: 900;
+        font-size: 22px;
+        letter-spacing: 1px;
+      }
+      .chart-revenue {
+        font-weight: 900;
+        font-size: 26px;
+        padding: 4px 12px;
+        border: 2px solid #141414;
+      }
+
+      .bars-container {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-around;
+        height: 240px;
+        padding: 10px 20px 0;
+      }
+      .bar-group {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+        width: 40%;
+      }
+      .bar-value {
+        font-weight: 900;
+        font-size: 28px;
+      }
+      .bar-pillar-wrap {
+        width: 100%;
+        height: 180px;
+        display: flex;
+        align-items: flex-end;
+      }
+      .bar-pillar {
+        width: 100%;
+        border: 3px solid #141414;
+        transform-origin: bottom center;
+      }
+      #bar-cost {
+        height: 24px;
+        background-color: #141414;
+        box-shadow: 4px 4px 0px rgba(20, 20, 20, 0.4);
+      }
+      #bar-profit {
+        height: 170px;
+        background-color: #FF6A1A;
+        box-shadow: 6px 6px 0px #141414;
+      }
+      .bar-footer-label {
+        font-weight: 900;
+        font-size: 20px;
         text-transform: uppercase;
       }
-      #punch-highlight-line {
-        height: 8px;
-        background-color: #ff6a1a;
-        margin: 16px auto 0;
-        width: 65%;
-        border-radius: 4px;
-        transform-origin: center center;
+
+      /* Punch Phrase Card in Shot 2 */
+      #shot2-punch-card {
+        position: absolute;
+        top: 1090px;
+        left: 60px;
+        right: 60px;
+        height: 260px;
+        padding: 24px 30px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        z-index: 10;
+        border: 4px solid #141414;
+        box-shadow: 10px 10px 0px #141414;
+      }
+      .punch-top-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .punch-tag {
+        font-weight: 900;
+        font-size: 22px;
+        padding: 6px 16px;
+        letter-spacing: 1px;
+      }
+      .punch-main-title {
+        font-weight: 900;
+        font-size: 58px;
+        line-height: 1.15;
+        letter-spacing: -0.5px;
+      }
+
+      /* Money icon badge */
+      #money-icon-badge {
+        width: 68px;
+        height: 68px;
+        background-color: #FF6A1A;
+        border: 3px solid #141414;
+        box-shadow: 4px 4px 0px #141414;
+        display: grid;
+        place-items: center;
+      }
+      .money-svg {
+        width: 44px;
+        height: 44px;
       }
     </style>
 
-    <div data-hf-id="hf-jbsh" id="root" data-composition-id="scene-s03" data-width="1080" data-height="1920" data-duration="6.67" data-fps="30">
-      <!-- Lớp Video chính có Camera Zoom Rig (video mang data-start và duration) -->
-      <div data-hf-id="hf-arvu" id="video-layer">
-        <div data-hf-id="hf-iu6l" id="camera-rig">
-          <video data-hf-id="hf-zdtu" id="vid-19" src="assets/vid-19-high-profit-cutout-infographic.mp4" data-start="0" data-duration="6.67" data-media-start="0.8" muted playsinline></video>
+    <div
+      id="root"
+      data-composition-id="scene-s03"
+      data-width="1080"
+      data-height="1920"
+      data-duration="11.15"
+    >
+      <!-- Background: Chart variant -->
+      <div id="chart-bg" class="clip" data-start="0" data-duration="11.15">
+        <div class="chart-line" style="top: 20%;"></div>
+        <div class="chart-tick" style="top: 20%;"></div>
+        <div class="chart-line" style="top: 40%;"></div>
+        <div class="chart-tick" style="top: 40%;"></div>
+        <div class="chart-line" style="top: 60%;"></div>
+        <div class="chart-tick" style="top: 60%;"></div>
+        <div class="chart-line" style="top: 80%;"></div>
+        <div class="chart-tick" style="top: 80%;"></div>
+      </div>
+
+      <!-- Persistent bottom signature bar -->
+      <div id="bottom-brand-bar"></div>
+
+      <!-- ==============================================
+           SHOT 1: 0s -> 6.51s (Chi phí đầu vào 2K)
+           ============================================== -->
+      <div id="shot-1" class="clip" data-start="0" data-duration="6.51">
+        <!-- Visual frame with pan-left camera motion -->
+        <div id="shot1-image-viewport">
+          <img
+            id="shot1-img"
+            src="assets/img-13-huge-profit-margin-diagram.jpeg"
+            alt="Thành phần nguyên vật liệu làm bánh"
+          />
+          <!-- Ingredient breakdown plates -->
+          <div id="ing-tag-1" class="ingredient-plate hf-plate-paper ing-chip">
+            BỘT • TRỨNG • ĐƯỜNG • SỮA
+          </div>
+          <div id="ing-tag-2" class="ingredient-plate hf-plate-ink ing-chip">
+            ĐIỆN • NƯỚC • MẶT BẰNG
+          </div>
         </div>
       </div>
 
-      <!-- Lớp đồ họa Chart Grid: 4 đường kẻ ngang 20/40/60/80% cùng tick cam ở mép trái -->
-      <div data-hf-id="hf-atz9" class="chart-grid-layer">
-        <div data-hf-id="hf-c4rl" class="chart-line-row" style="top: 20%;">
-          <div data-hf-id="hf-t4yy" class="chart-tick"></div>
-        </div>
-        <div data-hf-id="hf-lmpn" class="chart-line-row" style="top: 40%;">
-          <div data-hf-id="hf-wqb2" class="chart-tick"></div>
-        </div>
-        <div data-hf-id="hf-drsl" class="chart-line-row" style="top: 60%;">
-          <div data-hf-id="hf-x4m3" class="chart-tick"></div>
-        </div>
-        <div data-hf-id="hf-w11b" class="chart-line-row" style="top: 80%;">
-          <div data-hf-id="hf-xix4" class="chart-tick"></div>
+      <!-- Shot 1 - Overlay 1: CHI PHÍ ĐẦU VÀO -->
+      <div id="shot1-ov1" class="clip" data-start="0.58" data-duration="5.93">
+        <div id="shot1-header-card" class="vox-card">
+          <span class="header-tag hf-hl-orange">HẠNG MỤC</span>
+          <span class="header-title hf-text-ink">CHI PHÍ ĐẦU VÀO</span>
         </div>
       </div>
 
-      <!-- Lớp Grain tạo chất giấy cổ điển -->
-      <div data-hf-id="hf-k01a" class="grain-overlay"></div>
+      <!-- Shot 1 - Overlay 2: TỔNG VỐN: 2K -->
+      <div id="shot1-ov2" class="clip" data-start="4.28" data-duration="2.23">
+        <div id="shot1-capital-card" class="vox-card">
+          <div class="capital-sub">CHI PHÍ SẢN XUẤT 1 CHIẾC BÁNH:</div>
+          <div class="capital-row">
+            <div class="capital-badge hf-hl-orange">TỔNG VỐN: 2K</div>
+            <div class="capital-desc">
+              MỨC ĐẦU TƯ<br />SIÊU NHỎ BÉ
+            </div>
+          </div>
+        </div>
+      </div>
 
-      <!-- Thanh cam thương hiệu cố định mép đáy -->
-      <div data-hf-id="hf-v7lk" id="bottom-brand-bar"></div>
+      <!-- ==============================================
+           SHOT 2: 6.51s -> 11.15s (Siêu lợi nhuận 18K)
+           ============================================== -->
+      <div id="shot-2" class="clip" data-start="6.51" data-duration="4.64">
+        <!-- Visual frame with zoom-out camera motion -->
+        <div id="shot2-image-viewport">
+          <img
+            id="shot2-img"
+            src="assets/img-13-huge-profit-margin-diagram.jpeg"
+            alt="Mèo bán bánh thu về lợi nhuận khổng lồ"
+          />
+        </div>
 
-      <!-- OVERLAY 1: Giá ban đầu 5K (1.35s -> 3.15s) -->
-      <div data-hf-id="hf-dv27" id="overlay-5k" class="clip" data-start="1.35" data-duration="1.8">
-        <div data-hf-id="hf-7ftl" id="label-5k-card">
-          <div data-hf-id="hf-i3m0" class="tag-subtitle">GIÁ BAN ĐẦU</div>
-          <div data-hf-id="hf-zx25" class="price-container">
-            <div data-hf-id="hf-zioo" class="price-number-ink" data-layout-allow-occlusion="true">5K</div>
-            <svg data-hf-id="hf-ppzd" class="strikethrough-svg" viewBox="0 0 160 80" xmlns="http://www.w3.org/2000/svg">
-              <path data-hf-id="hf-pbj6" id="strikethrough-path" d="M 10 65 L 145 15" fill="none" stroke="#141414" stroke-width="9" stroke-linecap="round" />
+        <!-- Comparison Bar Chart: 2K Chi phí vs 18K Lãi -->
+        <div id="shot2-chart-card" class="vox-card">
+          <div class="chart-card-header">
+            <div class="chart-label hf-text-ink">ĐỐI CHIẾU DOANH THU</div>
+            <div class="chart-revenue hf-hl-orange">THU VỀ: 20K</div>
+          </div>
+          <div class="bars-container">
+            <!-- Cost bar: 2k -->
+            <div class="bar-group">
+              <div class="bar-value hf-text-ink">2K</div>
+              <div class="bar-pillar-wrap">
+                <div id="bar-cost" class="bar-pillar"></div>
+              </div>
+              <div class="bar-footer-label hf-text-ink">CHI PHÍ</div>
+            </div>
+            <!-- Profit bar: 18k -->
+            <div class="bar-group">
+              <div class="bar-value hf-text-ink" style="font-size: 32px; color: #141414;">18K</div>
+              <div class="bar-pillar-wrap">
+                <div id="bar-profit" class="bar-pillar"></div>
+              </div>
+              <div class="bar-footer-label hf-text-ink hf-cfix-s03-1" style="color: #FF6A1A;">LỢI NHUẬN</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Shot 2 - Overlay 1: SIÊU LỢI NHUẬN 18K -->
+      <div id="shot2-ov1" class="clip" data-start="7.65" data-duration="3.50">
+        <div id="shot2-punch-card" class="hf-plate-ink">
+          <div class="punch-top-row">
+            <span class="punch-tag hf-hl-orange">TỶ SUẤT 900%</span>
+            <!-- Slot for money icon in top row -->
+            <div id="money-icon-slot" style="width: 68px; height: 68px;"></div>
+          </div>
+          <div class="punch-main-title hf-text-light">
+            SIÊU LỢI NHUẬN 18K
+          </div>
+        </div>
+      </div>
+
+      <!-- Shot 2 - Overlay 2: Money icon -->
+      <div id="shot2-ov2" class="clip" data-start="10.31" data-duration="0.84">
+        <div style="position: absolute; top: 1110px; right: 90px; z-index: 25;">
+          <div id="money-icon-badge">
+            <svg class="money-svg" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="8" y="14" width="48" height="36" rx="4" fill="#E7E3D9" stroke="#141414" stroke-width="4" />
+              <circle cx="32" cy="32" r="10" fill="#FF6A1A" stroke="#141414" stroke-width="3" />
+              <path d="M32 26V38M29 29H35M29 35H35" stroke="#141414" stroke-width="3" stroke-linecap="round" />
+              <circle cx="16" cy="32" r="2.5" fill="#141414" />
+              <circle cx="48" cy="32" r="2.5" fill="#141414" />
             </svg>
           </div>
-          <div data-hf-id="hf-yeow">
-            <div data-hf-id="hf-58e2" id="badge-soldout">HẾT HÀNG</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- OVERLAY 2: Icon Rise (Mũi tên tăng vọt) (3.18s -> 5.38s) -->
-      <div data-hf-id="hf-dwco" id="overlay-rise" class="clip" data-start="3.18" data-duration="2.2">
-        <div data-hf-id="hf-5knh" id="rise-card">
-          <div data-hf-id="hf-g6sx" class="rise-tag">XU HƯỚNG CẦU</div>
-          <div data-hf-id="hf-yi7v" class="rise-svg-wrap">
-            <svg data-hf-id="hf-rtyx" viewBox="0 0 360 105" xmlns="http://www.w3.org/2000/svg" style="width: 100%; height: 100%;">
-              <line data-hf-id="hf-0bj7" x1="10" y1="92" x2="350" y2="92" stroke="rgba(247,244,236,0.18)" stroke-width="2" stroke-dasharray="6 6" />
-              <line data-hf-id="hf-or9n" x1="10" y1="50" x2="350" y2="50" stroke="rgba(247,244,236,0.18)" stroke-width="2" stroke-dasharray="6 6" />
-              <path data-hf-id="hf-f836" id="rise-arrow-path" d="M 20 90 L 105 76 L 190 60 L 265 28 L 325 14" fill="none" stroke="#FF6A1A" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" />
-              <polygon data-hf-id="hf-bsqu" id="rise-arrowhead" points="320,4 342,15 318,27" fill="#FF6A1A" />
-            </svg>
-          </div>
-          <div data-hf-id="hf-e835" id="rise-badge">SỨC MUA BÙNG NỔ</div>
-        </div>
-      </div>
-
-      <!-- OVERLAY 3: Giá mới 20K (x4) (4.39s -> 6.39s) -->
-      <div data-hf-id="hf-h35o" id="overlay-20k" class="clip" data-start="4.39" data-duration="2.0">
-        <div data-hf-id="hf-7jle" id="label-20k-card">
-          <div data-hf-id="hf-x6g9" class="tag-subtitle-orange">GIÁ MỚI</div>
-          <div data-hf-id="hf-wj6u" class="price-number-white">20K</div>
-          <div data-hf-id="hf-y7yw">
-            <div data-hf-id="hf-m9x2" id="pill-multiplier">▲ TĂNG GẤP 4 LẦN</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- OVERLAY 4: Punch-Phrase "LẠM PHÁT CẦU KÉO" (5.07s -> 6.67s) -->
-      <div data-hf-id="hf-5sgq" id="overlay-punch" class="clip" data-start="5.07" data-duration="1.6">
-        <div data-hf-id="hf-k4cm" id="punch-card">
-          <div data-hf-id="hf-5h4p" class="punch-label">CƠ CHẾ KINH TẾ</div>
-          <h1 data-hf-id="hf-mv3m" class="punch-headline">LẠM PHÁT CẦU KÉO</h1>
-          <div data-hf-id="hf-2nm3" id="punch-highlight-line"></div>
         </div>
       </div>
     </div>
 
+    <!-- GSAP Animation Runtime -->
     <script>
-      // 1. Chuẩn bị hình học SVG theo API getTotalLength
-      const strikePath = document.getElementById("strikethrough-path");
-      if (strikePath) {
-        const len = strikePath.getTotalLength() || 145;
-        strikePath.style.strokeDasharray = `${len}`;
-        strikePath.style.strokeDashoffset = `${len}`;
-      }
-
-      const risePath = document.getElementById("rise-arrow-path");
-      if (risePath) {
-        const len = risePath.getTotalLength() || 320;
-        risePath.style.strokeDasharray = `${len}`;
-        risePath.style.strokeDashoffset = `${len}`;
-      }
-
-      // 2. Khởi tạo paused timeline duy nhất cho composition
       const tl = gsap.timeline({ paused: true });
 
-      // Camera motion: zoom-in chậm, mượt mà xuyên suốt 6.67s
+      // ==============================================
+      // SHOT 1 ANIMATIONS (0s - 6.51s)
+      // ==============================================
+
+      // Punch entrance for image card
       tl.fromTo(
-        "#camera-rig",
-        { scale: 1.0 },
-        { scale: 1.08, duration: 6.67, ease: "sine.inOut" },
+        "#shot1-image-viewport",
+        { scale: 1.12, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.6, ease: "power3.out" },
         0
       );
 
-      // Nhịp xuất hiện các vạch cam chart
+      // Camera motion: pan-left
       tl.fromTo(
-        ".chart-tick",
-        { scaleX: 0 },
-        { scaleX: 1, duration: 0.35, stagger: 0.08, ease: "power2.out" },
-        0.15
+        "#shot1-img",
+        { x: 30 },
+        { x: -30, duration: 6.51, ease: "none" },
+        0
       );
 
-      // OVERLAY 1: Giá 5k xuất hiện (t = 1.35s)
+      // Overlay 1 entrance at 0.58s
       tl.fromTo(
-        "#label-5k-card",
-        { scale: 0.85, opacity: 0, y: 25 },
-        { scale: 1, opacity: 1, y: 0, duration: 0.4, ease: "power3.out" },
-        1.35
+        "#shot1-header-card",
+        { y: -30, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.45, ease: "power3.out" },
+        0.58
       );
 
-      // Gạch chéo mực đen xuất hiện khi narrator chuyển ý "nhưng..." (t = 2.15s)
-      tl.to(
-        "#strikethrough-path",
-        { strokeDashoffset: 0, duration: 0.22, ease: "power2.out" },
-        2.15
-      );
-
-      // Nhãn Hết hàng nảy ra (t = 2.28s)
+      // Ingredient tags stagger entrance
       tl.fromTo(
-        "#badge-soldout",
-        { scale: 0, opacity: 0 },
-        { scale: 1, opacity: 1, duration: 0.28, ease: "power3.out" },
-        2.28
+        ".ing-chip",
+        { scale: 0.75, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.4, stagger: 0.2, ease: "power3.out" },
+        1.1
       );
 
-      // Thẻ 5k mờ dần trước khi kết thúc thời lượng clip (t = 2.85s)
-      tl.to(
-        "#label-5k-card",
-        { opacity: 0, y: -18, duration: 0.3, ease: "power2.in" },
-        2.85
-      );
-
-      // OVERLAY 2: Icon Rise xuất hiện (t = 3.18s)
+      // Overlay 2 entrance (Tổng vốn: 2k) at 4.28s
       tl.fromTo(
-        "#rise-card",
-        { scale: 0.85, opacity: 0, x: 30 },
-        { scale: 1, opacity: 1, x: 0, duration: 0.42, ease: "power3.out" },
-        3.18
+        "#shot1-capital-card",
+        { y: 40, opacity: 0, scale: 0.92 },
+        { y: 0, opacity: 1, scale: 1, duration: 0.5, ease: "power3.out" },
+        4.28
       );
 
-      // Đường path mũi tên tự vẽ (t = 3.35s)
-      tl.to(
-        "#rise-arrow-path",
-        { strokeDashoffset: 0, duration: 0.65, ease: "power2.out" },
-        3.35
-      );
+      // ==============================================
+      // SHOT 2 ANIMATIONS (6.51s - 11.15s)
+      // ==============================================
 
-      // Đầu mũi tên bật ra (t = 3.85s)
+      // Camera motion: zoom-out on profit chart
       tl.fromTo(
-        "#rise-arrowhead",
-        { scale: 0 },
-        { scale: 1, duration: 0.22, ease: "power3.out" },
-        3.85
+        "#shot2-img",
+        { scale: 1.18, y: -20 },
+        { scale: 1.02, y: 10, duration: 4.64, ease: "sine.out" },
+        6.51
       );
 
-      // Badge Sức mua bùng nổ (t = 3.92s)
+      // Comparison card entrance
       tl.fromTo(
-        "#rise-badge",
-        { scale: 0.8, opacity: 0 },
-        { scale: 1, opacity: 1, duration: 0.3, ease: "power3.out" },
-        3.92
+        "#shot2-chart-card",
+        { y: 30, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.5, ease: "power3.out" },
+        6.65
       );
 
-      // Thẻ Rise mờ dần trước khi kết thúc slot (t = 5.08s)
-      tl.to(
-        "#rise-card",
-        { opacity: 0, y: -16, duration: 0.3, ease: "power2.in" },
-        5.08
-      );
-
-      // OVERLAY 3: Giá mới 20k xuất hiện (t = 4.39s)
+      // Bars growth animation: cost vs profit
       tl.fromTo(
-        "#label-20k-card",
-        { scale: 0.85, opacity: 0, y: 25 },
-        { scale: 1, opacity: 1, y: 0, duration: 0.45, ease: "power3.out" },
-        4.39
+        "#bar-cost",
+        { scaleY: 0 },
+        { scaleY: 1, duration: 0.4, ease: "power3.out" },
+        6.85
       );
-
-      // Nhãn x4 bật ra (t = 4.7s)
       tl.fromTo(
-        "#pill-multiplier",
-        { scale: 0, opacity: 0 },
-        { scale: 1, opacity: 1, duration: 0.3, ease: "power3.out" },
-        4.7
+        "#bar-profit",
+        { scaleY: 0 },
+        { scaleY: 1, duration: 0.65, ease: "power3.out" },
+        7.15
       );
 
-      // Thẻ 20k mờ dần (t = 6.09s)
-      tl.to(
-        "#label-20k-card",
-        { opacity: 0, y: -16, duration: 0.3, ease: "power2.in" },
-        6.09
-      );
-
-      // OVERLAY 4: Punch-Phrase "LẠM PHÁT CẦU KÉO" (t = 5.07s)
+      // Punch Phrase entrance at 7.65s
       tl.fromTo(
-        "#punch-card",
-        { scale: 0.9, opacity: 0, y: 35 },
-        { scale: 1, opacity: 1, y: 0, duration: 0.4, ease: "power4.out" },
-        5.07
+        "#shot2-punch-card",
+        { y: 40, opacity: 0, scale: 0.94 },
+        { y: 0, opacity: 1, scale: 1, duration: 0.55, ease: "power3.out" },
+        7.65
       );
 
-      // Gạch chân highlight cam mở rộng ra (t = 5.35s)
+      // Money icon entrance at 10.31s
       tl.fromTo(
-        "#punch-highlight-line",
-        { scaleX: 0 },
-        { scaleX: 1, duration: 0.35, ease: "power3.out" },
-        5.35
+        "#money-icon-badge",
+        { scale: 0, opacity: 0, rotation: -20 },
+        { scale: 1, opacity: 1, rotation: 0, duration: 0.4, ease: "power3.out" },
+        10.31
       );
 
-      // 3. Đăng ký timeline đồng bộ với framework HyperFrames
+      // Register master paused timeline
       window.__timelines = window.__timelines || {};
       window.__timelines["scene-s03"] = tl;
     </script>

@@ -1,565 +1,315 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
   <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF-8" />
   </head>
   <body>
     <template>
-      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap">
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
       <style>
+      /* hf-safe-colors (tất định từ style-tokens.json) */
+      .hf-text-ink { color: #141414; }
+      .hf-text-light { color: #F7F4EC; }
+      .hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+      .hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+      .hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+      .hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
       * {
         box-sizing: border-box;
       }
       body {
         margin: 0;
         padding: 0;
-        background: #e7e3d9;
-        color: #141414;
+        background-color: #E7E3D9;
         font-family: "Be Vietnam Pro", sans-serif;
         overflow: hidden;
-        -webkit-font-smoothing: antialiased;
       }
       #root {
         position: relative;
         width: 100%;
         height: 100%;
         overflow: hidden;
-        background-color: #f5f0e4;
-      }
-      .clip {
-        position: absolute;
-        inset: 0;
-      }
-
-      /* Card variant: Nền giấy ngà phẳng kèm hạt grain mịn */
-      .bg-card-texture {
-        position: absolute;
-        inset: 0;
-        background-color: #f5f0e4;
-        z-index: 1;
-      }
-      .bg-grain {
-        position: absolute;
-        inset: 0;
-        opacity: 0.14;
-        mix-blend-mode: multiply;
-        pointer-events: none;
-        z-index: 2;
+        background-color: #E7E3D9;
+        background-image:
+          linear-gradient(rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px),
+          linear-gradient(90deg, rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px);
+        background-size: 84px 84px;
       }
 
-      /* Khung nhìn ảnh quầy giao dịch ngân hàng mèo (Zone Y: 180px -> 800px) */
-      .hero-viewport {
+      /* Video background container */
+      #video-wrapper {
         position: absolute;
-        top: 180px;
-        left: 60px;
-        right: 60px;
-        height: 620px;
-        border-radius: 20px;
+        inset: 0;
         overflow: hidden;
-        background-color: #141414;
-        border: 4px solid #141414;
-        box-shadow: 0 16px 36px rgba(20, 20, 20, 0.2);
-        z-index: 5;
-        clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1;
+        transform-origin: 50% 50%;
       }
-      .hero-image {
-        position: absolute;
-        top: 0;
-        left: 0;
+      #vid-07 {
         width: 100%;
         height: 100%;
         object-fit: cover;
-        will-change: transform;
       }
-      .hero-vignette {
+
+      /* Unfold paper transition mask */
+      #unfold-mask {
         position: absolute;
         inset: 0;
-        background: radial-gradient(circle at center, rgba(20, 20, 20, 0) 50%, rgba(20, 20, 20, 0.4) 100%);
+        background-color: #E7E3D9;
+        background-image:
+          linear-gradient(rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px),
+          linear-gradient(90deg, rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px);
+        background-size: 84px 84px;
+        z-index: 20;
+        transform-origin: 50% 50%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        pointer-events: none;
+      }
+      .unfold-crease {
+        width: 100%;
+        height: 4px;
+        background: #FF6A1A;
+        box-shadow: 0 0 12px rgba(20, 20, 20, 0.5);
+      }
+
+      /* Layout clip quy ước */
+      .clip {
+        position: absolute;
+        inset: 0;
         pointer-events: none;
       }
 
-      /* Hệ thống Overlays (Labels & Icons) nổi trên quầy giao dịch */
-      .overlay-badge {
+      /* Khối chứa Overlay định vị trong Safe Zone [Y: 160 -> 1390] */
+      .overlay-lane {
         position: absolute;
-        top: 210px;
-        left: 90px;
+        top: 220px;
+        left: 60px;
+        right: 60px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        z-index: 10;
+      }
+
+      /* Thẻ thông tin phong cách collage giấy cắt */
+      .card-plate {
+        width: 100%;
+        max-width: 960px;
+        background-color: #141414; /* Nền mực đặc 100% đảm bảo tương phản trên video */
+        border: 4px solid #141414;
+        border-radius: 16px;
+        padding: 36px 44px;
+        box-shadow: 0 18px 36px rgba(0, 0, 0, 0.38);
+        transform-origin: 50% 50%;
+      }
+
+      /* Header Tag */
+      .card-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        background-color: #FF6A1A;
+        color: #141414;
+        font-weight: 700;
+        font-size: 24px;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        padding: 8px 18px;
+        border-radius: 6px;
+      }
+
+      /* Main Title / Punch Phrase */
+      .card-title {
+        margin: 20px 0 0 0;
+        font-weight: 900;
+        font-size: 56px;
+        line-height: 1.25;
+        color: #F7F4EC;
+        letter-spacing: 0.5px;
+      }
+
+      .card-punch-title {
+        margin: 18px 0 0 0;
+        font-weight: 900;
+        font-size: 68px;
+        line-height: 1.2;
+        color: #F7F4EC;
+        letter-spacing: -0.5px;
+      }
+
+      .highlight-block {
+        display: inline-block;
+        background-color: #FF6A1A;
+        color: #141414;
+        padding: 2px 18px;
+        border-radius: 8px;
+        margin-left: 8px;
+      }
+
+      /* Flow connector & sub-label (tối đa 4 từ) */
+      .card-flow-sub {
         display: flex;
         align-items: center;
         gap: 16px;
-        background: rgba(20, 20, 20, 0.95);
-        padding: 12px 24px;
-        border-radius: 12px;
-        border-left: 6px solid #ff6a1a;
-        box-shadow: 0 10px 25px rgba(20, 20, 20, 0.35);
-        z-index: 10;
-        opacity: 0;
-        will-change: transform, opacity;
+        margin-top: 18px;
+        padding-top: 18px;
+        border-top: 2px dashed rgba(247, 244, 236, 0.25);
       }
-      .badge-icon {
-        width: 38px;
-        height: 38px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-shrink: 0;
-      }
-      .badge-text {
+      .flow-label {
+        font-weight: 700;
         font-size: 28px;
-        font-weight: 900;
-        color: #f7f4ec;
-        letter-spacing: 0.04em;
+        color: #FF6A1A;
         text-transform: uppercase;
+        letter-spacing: 1px;
       }
-
-      /* Tờ hồ sơ xin vay vốn (Zone Y: 825px -> 1265px) */
-      .document-card {
-        position: absolute;
-        top: 825px;
-        left: 60px;
-        right: 60px;
-        height: 440px;
-        background-color: #faf8f3;
-        border: 4px solid #141414;
-        border-radius: 16px;
-        box-shadow: 0 18px 40px rgba(20, 20, 20, 0.28);
-        padding: 26px 30px;
-        z-index: 15;
-        display: flex;
-        justify-content: space-between;
-        align-items: stretch;
-        opacity: 0;
-        will-change: transform, opacity;
-      }
-
-      /* Cột trái: Thông tin đơn vay (Zone độc lập: 550px) */
-      .doc-info-col {
-        width: 550px;
-        display: flex;
-        flex-direction: column;
-        justify-content: flex-start;
-      }
-      .doc-header {
-        display: flex;
-        align-items: center;
-        gap: 14px;
-        margin-bottom: 10px;
-      }
-      .doc-badge {
-        background-color: #141414;
-        color: #ff6a1a;
-        font-weight: 900;
-        font-size: 18px;
-        padding: 4px 12px;
-        border-radius: 6px;
-        letter-spacing: 0.06em;
-      }
-      .doc-id {
+      .flow-note {
         font-weight: 700;
-        font-size: 18px;
-        color: #141414;
-        letter-spacing: 0.04em;
-      }
-      .doc-title {
-        font-size: 30px;
-        font-weight: 900;
-        color: #141414;
-        margin: 0 0 14px 0;
-        text-transform: uppercase;
-        letter-spacing: 0.02em;
-        line-height: 1.2;
-      }
-      .doc-row {
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: 10px;
-        font-size: 20px;
-        font-weight: 700;
-        border-bottom: 1px dashed rgba(20, 20, 20, 0.15);
-        padding-bottom: 6px;
-      }
-      .doc-label {
-        color: #504d46;
-      }
-      .doc-value {
-        color: #141414;
-        font-weight: 900;
-      }
-      .doc-value-alert {
-        color: #991b1b;
-        font-weight: 900;
+        font-size: 28px;
+        color: #F7F4EC;
+        letter-spacing: 0.5px;
       }
 
-      /* Cột phải: Khu vực thẩm định dành riêng cho con dấu (Zone độc lập: 320px) */
-      .doc-stamp-zone {
-        width: 320px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
-      .stamp-slot-frame {
-        position: relative;
-        width: 100%;
-        height: 100%;
-        border: 2px dashed rgba(20, 20, 20, 0.28);
-        border-radius: 12px;
-        background-color: rgba(245, 240, 228, 0.4);
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        padding: 16px;
-      }
-      .stamp-slot-label {
-        font-size: 14px;
-        font-weight: 900;
-        color: rgba(20, 20, 20, 0.85);
-        letter-spacing: 0.14em;
-        text-transform: uppercase;
-        margin-bottom: 8px;
-        text-align: center;
-      }
-
-      /* Con dấu đỏ dập TỪ CHỐI (nằm trọn trong cột phải, không đè lên chữ cột trái) */
-      .stamp-container {
-        position: relative;
-        width: 100%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        opacity: 0;
-        will-change: transform, opacity;
-      }
-      .stamp-box {
-        border: 6px solid #991b1b;
-        border-radius: 10px;
-        padding: 14px 18px;
-        background: #fff8f6;
-        box-shadow: 0 8px 24px rgba(153, 27, 27, 0.25);
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        width: 100%;
-        text-align: center;
-      }
-      .stamp-sub {
-        font-size: 16px;
-        font-weight: 900;
-        color: #991b1b;
-        letter-spacing: 0.16em;
-        text-transform: uppercase;
-      }
-      .stamp-main {
-        font-size: 52px;
-        font-weight: 900;
-        color: #991b1b;
-        letter-spacing: 0.08em;
-        line-height: 1.05;
-        margin: 4px 0;
-        text-transform: uppercase;
-      }
-      .stamp-date {
-        font-size: 14px;
-        font-weight: 900;
-        color: #991b1b;
-        letter-spacing: 0.18em;
-        text-transform: uppercase;
-        border-top: 2px solid #991b1b;
-        padding-top: 4px;
-        width: 80%;
-      }
-
-      /* Punch Phrase Banner (Zone Y: 1295px -> 1425px, an toàn trên safe zone 1529px) */
-      .punch-banner-wrap {
-        position: absolute;
-        top: 1295px;
-        left: 60px;
-        right: 60px;
-        z-index: 25;
-        opacity: 0;
-        will-change: transform, opacity;
-      }
-      .punch-banner {
-        background-color: #141414;
-        border-radius: 16px;
-        padding: 20px 28px;
-        border: 3px solid #ff6a1a;
-        box-shadow: 0 16px 36px rgba(20, 20, 20, 0.35);
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-      }
-      .punch-tag {
-        font-size: 20px;
-        font-weight: 900;
-        color: #ff6a1a;
-        letter-spacing: 0.12em;
-        text-transform: uppercase;
-        margin-bottom: 6px;
-      }
-      .punch-headline {
-        font-size: 44px;
-        font-weight: 900;
-        color: #f7f4ec;
-        line-height: 1.15;
-        letter-spacing: 0.02em;
-        text-transform: uppercase;
-      }
-      .punch-status-pill {
-        background-color: #991b1b;
-        color: #ffffff;
-        font-size: 22px;
-        font-weight: 900;
-        padding: 10px 22px;
-        border-radius: 8px;
-        letter-spacing: 0.06em;
-        text-transform: uppercase;
-        white-space: nowrap;
-        box-shadow: 0 4px 14px rgba(153, 27, 27, 0.4);
-      }
-
-      /* Thanh thương hiệu cam cố định ở mép dưới khung hình theo Style DNA */
-      .brand-bottom-bar {
+      /* Thanh cam nhận diện thương hiệu cố định đáy khung hình */
+      #brand-bottom-bar {
         position: absolute;
         bottom: 0;
         left: 0;
         right: 0;
-        height: 10px;
-        background-color: #ff6a1a;
-        z-index: 99;
+        height: 12px;
+        background-color: #FF6A1A;
+        z-index: 50;
       }
     </style>
 
-    <div data-hf-id="hf-bf35" id="root" data-composition-id="scene-s31" data-start="0" data-width="1080" data-height="1920" data-duration="7.01">
-      <!-- Nền biến thể card phẳng kèm grain -->
-      <div data-hf-id="hf-d2ru" class="bg-card-texture"></div>
-      <svg data-hf-id="hf-7tlt" class="bg-grain" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
-        <filter data-hf-id="hf-26fg" id="grain-filter">
-          <feturbulence data-hf-id="hf-2yt5" type="fractalNoise" baseFrequency="0.8" numOctaves="3" stitchTiles="stitch" />
-          <fecolormatrix data-hf-id="hf-ax6v" type="matrix" values="0 0 0 0 0.08  0 0 0 0 0.08  0 0 0 0 0.08  0 0 0 1 0" />
-        </filter>
-        <rect data-hf-id="hf-5tkj" width="100%" height="100%" filter="url(#grain-filter)" />
-      </svg>
-
-      <!-- Khung ảnh quầy giao dịch ngân hàng mèo -->
-      <div data-hf-id="hf-6ocg" id="hero-viewport" class="hero-viewport">
-        <img data-hf-id="hf-h0rq" id="hero-img" class="hero-image" src="assets/img-05-cat-bank-loan-mortgage.jpeg" alt="Quầy giao dịch tín dụng ngân hàng Mèo" data-layout-allow-overflow="true">
-        <div data-hf-id="hf-ggpn" class="hero-vignette"></div>
+    <div
+      id="root"
+      data-composition-id="scene-s31"
+      data-width="1080"
+      data-height="1920"
+      data-duration="6.94"
+    >
+      <!-- Video hoạt cảnh trao sổ đỏ để nhận bao tải tiền vay giải ngân -->
+      <div id="video-wrapper">
+        <video
+          id="vid-07"
+          src="assets/vid-07-cat-bank-loan-cutout.mp4"
+          muted
+          playsinline
+          data-start="0"
+          data-duration="6.94"
+          data-media-start="0.5"
+        ></video>
       </div>
 
-      <!-- Overlay 1: Icon person + Label Nghỉ việc kinh doanh (Beat 1) -->
-      <div data-hf-id="hf-3d5v" id="badge-1" class="overlay-badge">
-        <div data-hf-id="hf-pgw5" class="badge-icon">
-          <svg data-hf-id="hf-02la" viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="#ff6a1a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <path data-hf-id="hf-ehgg" d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-            <circle data-hf-id="hf-ybtk" cx="12" cy="7" r="4" />
-          </svg>
-        </div>
-        <span data-hf-id="hf-up73" class="badge-text">NGHỈ VIỆC KINH DOANH</span>
+      <!-- Hiệu ứng chuyển cảnh Unfold giấy mở từ giữa ra toàn khung -->
+      <div id="unfold-mask" data-layout-ignore="true">
+        <div class="unfold-crease"></div>
       </div>
 
-      <!-- Overlay 2: Icon money + Label Xin vay vốn ngân hàng (Beat 2) -->
-      <div data-hf-id="hf-sho8" id="badge-2" class="overlay-badge">
-        <div data-hf-id="hf-9255" class="badge-icon">
-          <svg data-hf-id="hf-5mo2" viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="#ff6a1a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <rect data-hf-id="hf-en7q" x="2" y="6" width="20" height="12" rx="2" />
-            <circle data-hf-id="hf-2731" cx="12" cy="12" r="3" />
-            <path data-hf-id="hf-d44j" d="M6 12h.01M18 12h.01" />
-          </svg>
-        </div>
-        <span data-hf-id="hf-q8dn" class="badge-text">XIN VAY VỐN NGÂN HÀNG</span>
-      </div>
-
-      <!-- Tờ đơn xin vay vốn ngân hàng mèo (Document layout phân 2 cột độc lập) -->
-      <div data-hf-id="hf-t2sj" id="loan-doc" class="document-card">
-        <!-- Cột trái: Văn bản hồ sơ -->
-        <div data-hf-id="hf-ljwi" class="doc-info-col">
-          <div data-hf-id="hf-23bw" class="doc-header">
-            <span data-hf-id="hf-dbwa" class="doc-badge">HỒ SƠ TÍN DỤNG</span>
-            <span data-hf-id="hf-lo6z" class="doc-id">MÃ: MEOW-8942</span>
-          </div>
-          <h2 data-hf-id="hf-s7gt" class="doc-title">Đơn Vay Cá Khởi Nghiệp</h2>
-          <div data-hf-id="hf-wihp" class="doc-row">
-            <span data-hf-id="hf-83v6" class="doc-label">Đối tượng vay:</span>
-            <span data-hf-id="hf-6w6q" class="doc-value">Mèo Tự Doanh</span>
-          </div>
-          <div data-hf-id="hf-y2ep" class="doc-row">
-            <span data-hf-id="hf-jovt" class="doc-label">Khoản đề xuất:</span>
-            <span data-hf-id="hf-wq1d" class="doc-value">1.000 Bao Cá Khô</span>
-          </div>
-          <div data-hf-id="hf-z9bs" class="doc-row">
-            <span data-hf-id="hf-sgby" class="doc-label">Tài sản đảm bảo:</span>
-            <span data-hf-id="hf-t4bo" class="doc-value-alert">0 (Không tài sản)</span>
-          </div>
-          <div data-hf-id="hf-yv0r" class="doc-row">
-            <span data-hf-id="hf-2m0f" class="doc-label">Khả năng trả lãi:</span>
-            <span data-hf-id="hf-3u98" class="doc-value-alert">Chưa xác minh</span>
-          </div>
-        </div>
-
-        <!-- Cột phải: Khu vực thẩm định dành riêng cho con dấu dập xuống -->
-        <div data-hf-id="hf-xc27" class="doc-stamp-zone">
-          <div data-hf-id="hf-vwkq" class="stamp-slot-frame">
-            <div data-hf-id="hf-0n7r" class="stamp-slot-label">KẾT QUẢ THẨM ĐỊNH</div>
-            <!-- Con dấu đỏ dập TỪ CHỐI -->
-            <div data-hf-id="hf-93o8" id="stamp" class="stamp-container" data-layout-allow-overlap="true" data-layout-allow-occlusion="true">
-              <div data-hf-id="hf-sow9" class="stamp-box">
-                <div data-hf-id="hf-au5w" class="stamp-sub">NGÂN HÀNG MÈO</div>
-                <div data-hf-id="hf-f73p" class="stamp-main">TỪ CHỐI</div>
-                <div data-hf-id="hf-avmi" class="stamp-date">BÁC ĐƠN VAY</div>
-              </div>
+      <!-- Overlay 1: TÀI SẢN ĐẢM BẢO (2.16s -> 3.94s, thời lượng 1.78s) -->
+      <section id="overlay-step-1" class="clip" data-start="2.16" data-duration="1.78">
+        <div class="overlay-lane">
+          <div id="card-asset" class="card-plate">
+            <div class="card-tag">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#141414" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+              </svg>
+              <span>BƯỚC 1: BẢO CHỨNG</span>
+            </div>
+            <h2 class="card-title">TÀI SẢN ĐẢM BẢO</h2>
+            <div class="card-flow-sub">
+              <span class="flow-label">TRAO SỔ ĐỎ</span>
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#FF6A1A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+                <polyline points="12 5 19 12 12 19"></polyline>
+              </svg>
+              <span class="flow-note">VÀO KÉT BẢO CHỨNG</span>
             </div>
           </div>
         </div>
-      </div>
+      </section>
 
-      <!-- Punch Phrase Banner kết thúc paradox: Ngân hàng từ chối -->
-      <div data-hf-id="hf-t1kz" id="punch-wrap" class="punch-banner-wrap">
-        <div data-hf-id="hf-et1n" class="punch-banner">
-          <div data-hf-id="hf-yeow">
-            <div data-hf-id="hf-sutm" class="punch-tag">BẾ TẮC TÍN DỤNG</div>
-            <div data-hf-id="hf-7c3n" class="punch-headline">NGÂN HÀNG TỪ CHỐI</div>
+      <!-- Overlay 2: THẾ CHẤP GIẢI NGÂN (3.94s -> 6.14s, thời lượng 2.20s) -->
+      <section id="overlay-step-2" class="clip" data-start="3.94" data-duration="2.20">
+        <div class="overlay-lane">
+          <div id="card-punch" class="card-plate">
+            <div class="card-tag">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#141414" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+              <span>BƯỚC 2: CẤP VỐN</span>
+            </div>
+            <h1 class="card-punch-title">
+              THẾ CHẤP<span class="highlight-block">GIẢI NGÂN</span>
+            </h1>
+            <div class="card-flow-sub">
+              <span class="flow-label">KHO TIỀN MỞ RA</span>
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#FF6A1A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+                <polyline points="12 5 19 12 12 19"></polyline>
+              </svg>
+              <span class="flow-note">NHẬN BAO TIỀN VAY</span>
+            </div>
           </div>
-          <div data-hf-id="hf-7xgj" class="punch-status-pill">KHÔNG ĐỦ CÁ</div>
         </div>
-      </div>
+      </section>
 
-      <!-- Thanh thương hiệu cam cố định mép dưới theo Style DNA -->
-      <div data-hf-id="hf-v6l5" class="brand-bottom-bar"></div>
+      <!-- Thanh màu cam signature ở đáy -->
+      <div id="brand-bottom-bar" data-layout-ignore="true"></div>
     </div>
 
     <script>
-      // Khởi tạo Timeline GSAP seekable cho HyperFrames
-      window.__timelines = window.__timelines || {};
       const tl = gsap.timeline({ paused: true });
 
-      // 1. Vào cảnh: Peel transition mở ra hình ảnh quầy ngân hàng mèo (t = 0.0s -> 0.75s)
+      // Camera motion: zoom in nhẹ và đều xuyên suốt cảnh (6.94s)
       tl.fromTo(
-        "#hero-viewport",
-        { clipPath: "polygon(0% 0%, 0% 0%, 0% 100%, 0% 100%)" },
-        {
-          clipPath: "polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)",
-          duration: 0.75,
-          ease: "power2.out",
-        },
-        0.0
+        "#video-wrapper",
+        { scale: 1 },
+        { scale: 1.07, duration: 6.94, ease: "none" },
+        0
       );
 
-      // Camera motion: pan-left liên tục từ t = 0.0s đến hết scene
+      // Hiệu ứng mở nếp gấp giấy Unfold ở đầu cảnh (0s -> 0.65s)
       tl.fromTo(
-        "#hero-img",
-        { x: 15, scale: 1.05 },
-        {
-          x: -15,
-          scale: 1.12,
-          duration: 7.01,
-          ease: "none",
-        },
-        0.0
+        "#unfold-mask",
+        { scaleY: 1, opacity: 1 },
+        { scaleY: 0, opacity: 0, duration: 0.65, ease: "power3.inOut" },
+        0
       );
 
-      // 2. Beat 1: Icon Person + Label "NGHỈ VIỆC KINH DOANH" (atMs 281080 -> rel: 1.33s)
+      // Card 1: TÀI SẢN ĐẢM BẢO (xuất hiện tại 2.16s, thoát nhẹ tại 3.74s trước khi clip kết thúc ở 3.94s)
       tl.fromTo(
-        "#badge-1",
-        { opacity: 0, y: 24, scale: 0.94 },
-        {
-          opacity: 1,
-          y: 0,
-          scale: 1,
-          duration: 0.45,
-          ease: "power3.out",
-        },
-        1.33
-      );
-
-      // Badge 1 rút lui êm ái trước khi nhịp 2 bắt đầu (t = 3.90s)
-      tl.to(
-        "#badge-1",
-        {
-          opacity: 0,
-          y: -16,
-          duration: 0.35,
-          ease: "power2.in",
-        },
-        3.90
-      );
-
-      // 3. Đơn xin vay vốn xuất hiện trượt lên ở nửa dưới màn hình (t = 4.60s)
-      tl.fromTo(
-        "#loan-doc",
-        { opacity: 0, y: 50, scale: 0.96 },
-        {
-          opacity: 1,
-          y: 0,
-          scale: 1,
-          duration: 0.55,
-          ease: "power3.out",
-        },
-        4.60
-      );
-
-      // 4. Beat 2: Icon Money + Label "XIN VAY VỐN NGÂN HÀNG" (atMs 284700 -> rel: 4.95s)
-      tl.fromTo(
-        "#badge-2",
-        { opacity: 0, y: 24, scale: 0.94 },
-        {
-          opacity: 1,
-          y: 0,
-          scale: 1,
-          duration: 0.45,
-          ease: "power3.out",
-        },
-        4.95
-      );
-
-      // 5. Cao trào: Con dấu TỪ CHỐI dập xuống khu vực thẩm định độc lập (rel: 5.78s)
-      tl.fromTo(
-        "#stamp",
-        { opacity: 0, scale: 2.2, rotation: -18 },
-        {
-          opacity: 1,
-          scale: 1,
-          rotation: -8,
-          duration: 0.28,
-          ease: "power4.in",
-        },
-        5.78
-      );
-
-      // Rung chấn nhẹ tạo lực va đập dứt khoát của con dấu
-      tl.to(
-        "#loan-doc",
-        {
-          y: 4,
-          duration: 0.05,
-          ease: "power1.inOut",
-        },
-        6.06
+        "#card-asset",
+        { y: -30, opacity: 0, scale: 0.95 },
+        { y: 0, opacity: 1, scale: 1, duration: 0.4, ease: "power3.out" },
+        2.16
       );
       tl.to(
-        "#loan-doc",
-        {
-          y: 0,
-          duration: 0.08,
-          ease: "power2.out",
-        },
-        6.11
+        "#card-asset",
+        { y: -16, opacity: 0, duration: 0.18, ease: "power2.in" },
+        3.74
       );
 
-      // Punch Phrase Banner xuất hiện dứt khoát xác nhận bế tắc (t = 5.85s)
+      // Card 2: THẾ CHẤP GIẢI NGÂN (xuất hiện tại 3.94s, thoát nhẹ tại 5.94s trước khi clip kết thúc ở 6.14s)
       tl.fromTo(
-        "#punch-wrap",
-        { opacity: 0, y: 30 },
-        {
-          opacity: 1,
-          y: 0,
-          duration: 0.45,
-          ease: "power3.out",
-        },
-        5.85
+        "#card-punch",
+        { y: 35, opacity: 0, scale: 0.95 },
+        { y: 0, opacity: 1, scale: 1, duration: 0.42, ease: "power3.out" },
+        3.94
+      );
+      tl.to(
+        "#card-punch",
+        { opacity: 0, scale: 0.98, duration: 0.18, ease: "power2.in" },
+        5.94
       );
 
-      // Đăng ký timeline paused vào window.__timelines["scene-s31"]
       window.__timelines["scene-s31"] = tl;
     </script>
   

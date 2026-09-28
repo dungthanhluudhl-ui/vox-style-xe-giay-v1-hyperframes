@@ -1,541 +1,433 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
   <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF-8" />
   </head>
   <body>
     <template>
       <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap">
       <style>
-      * {
-        box-sizing: border-box;
-      }
+/* hf-safe-colors (tất định từ style-tokens.json) */
+.hf-text-ink { color: #141414; }
+.hf-text-light { color: #F7F4EC; }
+.hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+.hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+.hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+.hf-plate-paper { color: #141414; background-color: #F5F0E4; }
 
-      body {
-        margin: 0;
-        padding: 0;
-        width: 1080px;
-        height: 1920px;
-        background-color: #E7E3D9;
-        font-family: "Be Vietnam Pro", sans-serif;
-        color: #141414;
-        overflow: hidden;
-      }
+    /* CSS Reset & Base */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
-      #root {
-        position: relative;
-        width: 100%;
-        height: 100%;
-        background-color: #E7E3D9;
-        overflow: hidden;
-      }
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #141414;
+      color: #141414;
+      font-family: "Be Vietnam Pro", sans-serif;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
 
-      /* Quy ước bắt buộc: .clip có position: absolute; inset: 0 */
-      .clip {
-        position: absolute;
-        inset: 0;
-        overflow: hidden;
-        pointer-events: none;
-      }
+    #root {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #E7E3D9;
+      background-image: 
+        linear-gradient(rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px),
+        linear-gradient(90deg, rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px);
+      background-size: 84px 84px;
+    }
 
-      /* ==================== 1. VIDEO LAYER & GRAIN ==================== */
-      #scene-video {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 1080px;
-        height: 1920px;
-        object-fit: cover;
-        opacity: 0.90;
-        z-index: 2;
-        transform-origin: 50% 50%;
-        will-change: transform, opacity;
-      }
+    /* Quy ước bắt buộc: .clip { position: absolute; inset: 0; } (không set width/height px) */
+    .clip {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+    }
 
-      /* Lớp phủ giấy ngà nhẹ để hòa trộn video vào phong cách Vox collage */
-      .video-tint {
-        position: absolute;
-        inset: 0;
-        background: #E7E3D9;
-        mix-blend-mode: color;
-        opacity: 0.22;
-        pointer-events: none;
-        z-index: 3;
-      }
+    /* Lớp màu an toàn chuẩn Style Tokens & WCAG */
+    .hf-text-ink {
+      color: #141414;
+    }
 
-      /* Grain overlay 18% opacity, mix-blend-mode: multiply đặt trên video */
-      .grain-overlay {
-        position: absolute;
-        inset: 0;
-        width: 100%;
-        height: 100%;
-        opacity: 0.18;
-        mix-blend-mode: multiply;
-        pointer-events: none;
-        z-index: 4;
-      }
+    .hf-text-light {
+      color: #F7F4EC;
+    }
 
-      /* ==================== 2. CHART BACKGROUND (NO TEXT LABELS) ==================== */
-      /* Style DNA: 4 đường kẻ ngang đậm ở 20, 40, 60, 80% chiều cao + left-edge orange tick marks */
-      #chart-bg {
-        position: absolute;
-        inset: 0;
-        z-index: 5;
-        pointer-events: none;
-      }
+    .hf-hl-orange {
+      background-color: #FF6A1A;
+      color: #141414;
+    }
 
-      .chart-line {
-        position: absolute;
-        left: 0;
-        right: 0;
-        height: 2px;
-        background: rgba(20, 20, 20, 0.32);
-        display: flex;
-        align-items: center;
-      }
+    .hf-plate-ink {
+      background-color: #141414;
+      color: #F7F4EC;
+    }
 
-      .line-20 { top: 384px; }
-      .line-40 { top: 768px; }
-      .line-60 { top: 1152px; }
-      .line-80 { top: 1536px; }
+    .hf-plate-ink-orange {
+      background-color: #141414;
+      color: #FF6A1A;
+    }
 
-      .chart-tick {
-        width: 24px;
-        height: 6px;
-        background-color: #FF6A1A;
-        margin-left: 40px;
-      }
+    .hf-plate-paper {
+      background-color: #E7E3D9;
+      color: #141414;
+    }
 
-      /* ==================== 3. OVERLAYS ==================== */
+    /* Thanh cam thương hiệu cố định ở chân khung hình */
+    #brand-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 16px;
+      background-color: #FF6A1A;
+      z-index: 100;
+      pointer-events: none;
+    }
 
-      /* Overlay 1 & 2: Check icon + SẢN XUẤT HOẠT ĐỘNG LẠI */
-      #clip-production {
-        z-index: 10;
-      }
+    /* Card Layouts - An toàn cho vùng Safe Zone */
+    .overlay-container {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      pointer-events: none;
+    }
 
-      .badge-card {
-        position: absolute;
-        top: 240px;
-        left: 60px;
-        height: auto;
-        background-color: #F5F0E4;
-        border: 4px solid #141414;
-        box-shadow: 8px 8px 0px #141414;
-        padding: 24px 32px;
-        display: flex;
-        align-items: center;
-        gap: 24px;
-        transform-origin: left center;
-        will-change: transform, opacity;
-      }
+    .editorial-card {
+      background-color: #141414;
+      border-radius: 16px;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.65);
+      border-left: 10px solid #FF6A1A;
+      padding: 28px 42px;
+      max-width: 880px;
+      width: 86%;
+      text-align: left;
+    }
 
-      .check-svg-box {
-        width: 64px;
-        height: 64px;
-        flex-shrink: 0;
-      }
+    .punch-card {
+      background-color: #141414;
+      border-radius: 18px;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.7);
+      border: 3px solid #FF6A1A;
+      padding: 32px 48px;
+      max-width: 900px;
+      width: 88%;
+      text-align: center;
+    }
 
-      .badge-content {
-        display: flex;
-        flex-direction: column;
-        gap: 4px;
-      }
+    .quote-card {
+      background-color: #141414;
+      border-radius: 20px;
+      box-shadow: 0 28px 70px rgba(0, 0, 0, 0.75);
+      border: 3px solid #FF6A1A;
+      padding: 36px 48px;
+      max-width: 920px;
+      width: 90%;
+      text-align: center;
+    }
 
-      .badge-kicker {
-        font-size: 22px;
-        font-weight: 700;
-        color: #141414;
-        letter-spacing: 1.5px;
-      }
+    .badge-label {
+      display: inline-block;
+      background-color: #FF6A1A;
+      color: #141414;
+      font-size: 24px;
+      font-weight: 900;
+      padding: 6px 16px;
+      border-radius: 6px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      margin-bottom: 14px;
+    }
 
-      .badge-title {
-        font-size: 34px;
-        font-weight: 900;
-        color: #141414;
-        line-height: 1.25;
-      }
+    .tag-category {
+      font-size: 24px;
+      font-weight: 900;
+      color: #FF6A1A;
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
 
-      /* Overlay 3: Rise icon & GDP Trend curve */
-      #clip-rise {
-        z-index: 11;
-      }
+    .card-title-main {
+      font-size: 58px;
+      font-weight: 900;
+      line-height: 1.22;
+      color: #F7F4EC;
+      text-transform: uppercase;
+    }
 
-      .trend-card {
-        position: absolute;
-        top: 1040px;
-        left: 60px;
-        right: 60px;
-        height: auto;
-        background-color: #F5F0E4;
-        border: 4px solid #141414;
-        box-shadow: 10px 10px 0px #141414;
-        padding: 28px 36px;
-        display: flex;
-        flex-direction: column;
-        gap: 18px;
-        will-change: transform, opacity;
-      }
+    .card-subtext {
+      font-size: 26px;
+      font-weight: 700;
+      color: #E7E3D9;
+      margin-top: 12px;
+      line-height: 1.35;
+    }
 
-      .trend-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-      }
+    .punch-title-main {
+      font-size: 70px;
+      font-weight: 900;
+      line-height: 1.18;
+      color: #F7F4EC;
+      text-transform: uppercase;
+    }
 
-      .trend-tag {
-        font-size: 26px;
-        font-weight: 900;
-        color: #141414;
-        letter-spacing: 1px;
-      }
+    .quote-title-main {
+      font-size: 64px;
+      font-weight: 900;
+      line-height: 1.2;
+      color: #F7F4EC;
+      text-transform: uppercase;
+    }
 
-      .trend-pill {
-        background-color: #141414;
-        color: #F7F4EC;
-        font-size: 22px;
-        font-weight: 900;
-        padding: 8px 18px;
-        border-radius: 6px;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-      }
+    .highlight-orange {
+      color: #FF6A1A;
+    }
 
-      .pill-arrow {
-        color: #FF6A1A;
-        font-size: 24px;
-      }
+    .icon-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 18px;
+      background-color: #141414;
+      border: 3px solid #FF6A1A;
+      border-radius: 40px;
+      padding: 12px 28px;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
+      margin-top: 24px;
+    }
 
-      .trend-svg-wrap {
-        width: 100%;
-        height: 180px;
-      }
+    .icon-badge-text {
+      font-size: 26px;
+      font-weight: 900;
+      color: #F7F4EC;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+    }
 
-      /* Overlay 4: Punch-phrase CHÍNH SÁCH TÀI KHÓA */
-      #clip-punch {
-        z-index: 12;
-      }
+    /* Spotlight Vignette Layers */
+    .spotlight-vignette {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 50% 45%, transparent 35%, rgba(20, 20, 20, 0.72) 100%);
+      pointer-events: none;
+    }
+  </style>
 
-      .punch-card {
-        position: absolute;
-        top: 480px;
-        left: 60px;
-        right: 60px;
-        height: auto;
-        background-color: #141414;
-        border-left: 14px solid #FF6A1A;
-        box-shadow: 12px 12px 0px rgba(20, 20, 20, 0.4);
-        padding: 44px 48px;
-        display: flex;
-        flex-direction: column;
-        gap: 16px;
-        transform-origin: center center;
-        will-change: transform, opacity;
-      }
+  <div
+    id="root"
+    data-composition-id="scene-s50"
+    data-width="1080"
+    data-height="1920"
+    data-duration="14"
+  >
+    <!-- Thanh cam thương hiệu cố định mép dưới -->
+    <div id="brand-bar"></div>
 
-      .punch-kicker {
-        font-size: 24px;
-        font-weight: 700;
-        color: #FF6A1A;
-        letter-spacing: 3px;
-      }
-
-      .punch-heading {
-        margin: 0;
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-      }
-
-      .punch-word-1 {
-        font-size: 64px;
-        font-weight: 900;
-        color: #F7F4EC;
-        line-height: 1.1;
-        letter-spacing: -0.5px;
-      }
-
-      .punch-word-2 {
-        font-size: 72px;
-        font-weight: 900;
-        color: #FF6A1A;
-        line-height: 1.1;
-        letter-spacing: -0.5px;
-      }
-
-      /* Overlay 5: Label PHỤC HỒI KINH TẾ */
-      #clip-summary {
-        z-index: 13;
-      }
-
-      .summary-card {
-        position: absolute;
-        top: 600px;
-        left: 80px;
-        right: 80px;
-        height: auto;
-        background-color: #141414;
-        border: 4px solid #141414;
-        box-shadow: 10px 10px 0px #FF6A1A;
-        padding: 38px 44px;
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-        transform-origin: center center;
-        will-change: transform, opacity;
-      }
-
-      .summary-kicker {
-        font-size: 22px;
-        font-weight: 700;
-        color: #FF6A1A;
-        letter-spacing: 2px;
-      }
-
-      .summary-title {
-        font-size: 54px;
-        font-weight: 900;
-        color: #F7F4EC;
-        line-height: 1.2;
-      }
-
-      .summary-decor-bar {
-        width: 100%;
-        height: 6px;
-        background-color: #FF6A1A;
-        margin-top: 10px;
-        transform-origin: left center;
-      }
-
-      /* ==================== 4. THANH CAM ĐÁY CỐ ĐỊNH ==================== */
-      .signature-bottom-bar {
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        height: 12px;
-        background-color: #FF6A1A;
-        z-index: 100;
-      }
-    </style>
-
-    <!-- Root composition: 1080x1920, 7.91s duration (442760ms - 434850ms) -->
-    <div data-hf-id="hf-3ykf" id="root" data-composition-id="scene-s50" data-start="0" data-width="1080" data-height="1920" data-duration="7.91">
-      <!-- Timed Media Element: vid-05 có data-start="0" và data-duration="7.91" trực tiếp -->
-      <video data-hf-id="hf-1xat" id="scene-video" data-start="0" data-duration="7.91" data-track-index="0" data-media-start="0" src="assets/vid-05-paper-cutout-public-debt-loan.mp4" muted playsinline preload="auto"></video>
-
-      <!-- Video Tint Overlay -->
-      <div data-hf-id="hf-etrt" class="video-tint"></div>
-
-      <!-- SVG Grain Filter (persistent overlay trên video) -->
-      <svg data-hf-id="hf-si98" class="grain-overlay" aria-hidden="true">
-        <filter data-hf-id="hf-xd64" id="noiseFilter">
-          <feturbulence data-hf-id="hf-u6pc" type="fractalNoise" baseFrequency="0.85" numOctaves="3" stitchTiles="stitch" />
-        </filter>
-        <rect data-hf-id="hf-3bax" width="100%" height="100%" filter="url(#noiseFilter)" />
-      </svg>
-
-      <!-- Background Chart Grid: 4 đường kẻ ngang + tick cam (thuần visual motif, không text) -->
-      <div data-hf-id="hf-nprx" id="chart-bg">
-        <div data-hf-id="hf-qtc6" class="chart-line line-20"><div data-hf-id="hf-t4yy" class="chart-tick"></div></div>
-        <div data-hf-id="hf-dfoc" class="chart-line line-40"><div data-hf-id="hf-wqb2" class="chart-tick"></div></div>
-        <div data-hf-id="hf-yo7m" class="chart-line line-60"><div data-hf-id="hf-x4m3" class="chart-tick"></div></div>
-        <div data-hf-id="hf-f0yw" class="chart-line line-80"><div data-hf-id="hf-xix4" class="chart-tick"></div></div>
+    <!-- ========================================== -->
+    <!-- SHOT 1: Gánh nặng nợ công (0.0s - 4.8s)    -->
+    <!-- ========================================== -->
+    <section id="shot-1" class="clip" data-start="0" data-duration="4.8" style="z-index: 10;">
+      <div id="shot-1-viewport" style="position: absolute; inset: 0; transform-origin: 50% 40%;">
+        <img
+          id="shot-1-img"
+          src="assets/img-20-public-debt-infrastructure-loan-cutout.jpeg"
+          alt="Public Debt Infrastructure Loan"
+          style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 30%; transform-origin: 50% 35%;"
+        />
+        <div class="spotlight-vignette"></div>
       </div>
+    </section>
 
-      <!-- Clip 1: Icon Check + Label "SẢN XUẤT HOẠT ĐỘNG LẠI" (0.67s -> 3.60s) -->
-      <div data-hf-id="hf-nw8u" id="clip-production" class="clip" data-start="0.67" data-duration="2.93" data-track-index="1">
-        <div data-hf-id="hf-xs1y" id="production-card" class="badge-card">
-          <div data-hf-id="hf-9zqd" class="check-svg-box">
-            <svg data-hf-id="hf-cvki" viewBox="0 0 64 64" width="64" height="64">
-              <circle data-hf-id="hf-ixtz" cx="32" cy="32" r="28" fill="#141414" stroke="#FF6A1A" stroke-width="3.5" />
-              <path data-hf-id="hf-y8va" id="check-path" d="M18 33 L28 43 L46 21" fill="none" stroke="#FF6A1A" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" />
-            </svg>
-          </div>
-          <div data-hf-id="hf-rq92" id="production-text" class="badge-content">
-            <span data-hf-id="hf-4pew" class="badge-kicker">HOẠT ĐỘNG</span>
-            <span data-hf-id="hf-jmn4" class="badge-title">SẢN XUẤT HOẠT ĐỘNG LẠI</span>
-          </div>
+    <!-- Shot 1 Overlay: Label Gánh nặng trả nợ (1.76s - 4.8s) -->
+    <div id="shot-1-overlay" class="clip" data-start="1.76" data-duration="3.04" style="z-index: 15;">
+      <div class="overlay-container" style="padding-top: 320px;">
+        <div id="shot-1-card" class="editorial-card">
+          <div class="badge-label">CHÍNH SÁCH TÀI KHÓA</div>
+          <div class="card-title-main">GÁNH NẶNG TRẢ NỢ</div>
+          <div class="card-subtext">CAM KẾT BẰNG TÀI NGUYÊN VÀ CÁ CỦA RỪNG MÈO</div>
         </div>
       </div>
-
-      <!-- Clip 2: Icon Rise & Trend GDP Vector (2.55s -> 4.75s) -->
-      <div data-hf-id="hf-9vjy" id="clip-rise" class="clip" data-start="2.55" data-duration="2.20" data-track-index="2">
-        <div data-hf-id="hf-mpc0" id="rise-card" class="trend-card">
-          <div data-hf-id="hf-kik5" class="trend-header">
-            <span data-hf-id="hf-jk9o" class="trend-tag">TĂNG TRƯỞNG KINH TẾ</span>
-            <div data-hf-id="hf-8woj" class="trend-pill">
-              <span data-hf-id="hf-lzou" class="pill-arrow">▲</span>
-              <span data-hf-id="hf-jdr4">VỌT THẲNG</span>
-            </div>
-          </div>
-          <div data-hf-id="hf-13wh" class="trend-svg-wrap">
-            <svg data-hf-id="hf-hwcz" id="trend-svg" viewBox="0 0 880 180" width="100%" height="100%">
-              <line data-hf-id="hf-oc3k" x1="20" y1="150" x2="860" y2="150" stroke="rgba(20,20,20,0.25)" stroke-width="2" stroke-dasharray="6 6" />
-              <line data-hf-id="hf-7yns" x1="20" y1="90" x2="860" y2="90" stroke="rgba(20,20,20,0.25)" stroke-width="2" stroke-dasharray="6 6" />
-              <line data-hf-id="hf-zlqk" x1="20" y1="30" x2="860" y2="30" stroke="rgba(20,20,20,0.25)" stroke-width="2" stroke-dasharray="6 6" />
-              <path data-hf-id="hf-2qzz" id="trend-path" d="M 30 150 L 220 142 L 400 125 C 540 110, 640 65, 740 28 L 820 18" fill="none" stroke="#FF6A1A" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" />
-              <polygon data-hf-id="hf-ay5d" id="trend-arrowhead" points="840,16 808,8 818,36" fill="#FF6A1A" style="transform-origin: 820px 18px;" />
-            </svg>
-          </div>
-        </div>
-      </div>
-
-      <!-- Clip 3: Punch-phrase "CHÍNH SÁCH TÀI KHÓA" (4.06s -> 5.86s) -->
-      <div data-hf-id="hf-adeb" id="clip-punch" class="clip" data-start="4.06" data-duration="1.80" data-track-index="1">
-        <div data-hf-id="hf-nzw6" id="punch-card" class="punch-card">
-          <span data-hf-id="hf-v23m" class="punch-kicker">ĐỘNG LỰC CỐT LÕI</span>
-          <div data-hf-id="hf-c87l" class="punch-heading">
-            <span data-hf-id="hf-wivd" class="punch-word-1">CHÍNH SÁCH</span>
-            <span data-hf-id="hf-4pz3" class="punch-word-2">TÀI KHÓA</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Clip 4: Label "PHỤC HỒI KINH TẾ" (6.25s -> 7.91s) -->
-      <div data-hf-id="hf-6hyt" id="clip-summary" class="clip" data-start="6.25" data-duration="1.66" data-track-index="2">
-        <div data-hf-id="hf-i93y" id="summary-card" class="summary-card">
-          <span data-hf-id="hf-12t7" class="summary-kicker">KẾT QUẢ TỔNG THỂ</span>
-          <span data-hf-id="hf-0vsa" class="summary-title">PHỤC HỒI KINH TẾ</span>
-          <div data-hf-id="hf-bdeu" id="summary-bar" class="summary-decor-bar"></div>
-        </div>
-      </div>
-
-      <!-- Thanh cam đáy cố định nhận diện thương hiệu -->
-      <div data-hf-id="hf-utni" class="signature-bottom-bar"></div>
     </div>
 
-    <!-- GSAP Animation Script -->
-    <script>
-      // Đăng ký timeline chính, paused: true theo HyperFrames contract
-      const tl = gsap.timeline({ paused: true });
+    <!-- ========================================== -->
+    <!-- SHOT 2: Dòng thời gian & Nợ công dài hạn (4.8s - 9.8s) -->
+    <!-- Thẻ video KHÔNG nằm trong phần tử có data-start! -->
+    <!-- ========================================== -->
+    <div id="vid-wrapper" style="position: absolute; inset: 0; overflow: hidden; z-index: 20; pointer-events: none;">
+      <video
+        id="vid-16"
+        src="assets/vid-16-hourglass-papercut-memory-erosion.mp4"
+        muted
+        playsinline
+        data-start="4.8"
+        data-duration="5"
+        data-media-start="0"
+        style="position: absolute; inset: -4% -12% -4% -4%; width: 116%; height: 108%; object-fit: cover; object-position: center;"
+      ></video>
+    </div>
 
-      // 1. SETUP SVG PATHS (Đo độ dài thực tế cho stroke-dashoffset)
-      const checkPath = document.getElementById("check-path");
-      const checkLen = checkPath.getTotalLength();
-      checkPath.style.strokeDasharray = `${checkLen}`;
-      checkPath.style.strokeDashoffset = `${checkLen}`;
+    <!-- Shot 2 Overlay: Punch phrase Nợ công dài hạn (7.38s - 9.8s) -->
+    <div id="shot-2-overlay" class="clip" data-start="7.38" data-duration="2.42" style="z-index: 25;">
+      <div class="overlay-container" style="padding-top: 1000px;">
+        <div id="shot-2-punch" class="punch-card">
+          <div class="tag-category">HỆ QUẢ KINH TẾ</div>
+          <div class="punch-title-main">
+            NỢ CÔNG <span class="highlight-orange">DÀI HẠN</span>
+          </div>
+        </div>
+      </div>
+    </div>
 
-      const trendPath = document.getElementById("trend-path");
-      const trendLen = trendPath.getTotalLength();
-      trendPath.style.strokeDasharray = `${trendLen}`;
-      trendPath.style.strokeDashoffset = `${trendLen}`;
+    <!-- ========================================== -->
+    <!-- SHOT 3: Kết luận triết lý Keynes (9.8s - 14.0s) -->
+    <!-- ========================================== -->
+    <section id="shot-3" class="clip" data-start="9.8" data-duration="4.2" style="z-index: 30;">
+      <div id="shot-3-viewport" style="position: absolute; inset: 0;">
+        <img
+          id="shot-3-img"
+          src="assets/img-02-paper-cutout-hourglass-memory.jpeg"
+          alt="Hourglass Memory"
+          style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center;"
+        />
+        <div class="spotlight-vignette"></div>
+      </div>
+    </section>
 
-      // 2. ENTRANCE TRANSITION & CAMERA MOTION: Unfold mở rộng + Zoom-out êm
-      // Unfold mở rộng khung hình lúc t = 0 -> 0.75s
-      tl.fromTo(
-        "#scene-video",
-        { scaleY: 0.35, scaleX: 0.92, opacity: 0 },
-        { scaleY: 1.08, scaleX: 1.08, opacity: 0.90, duration: 0.75, ease: "power3.out" },
-        0
-      );
+    <!-- Shot 3 Overlay 1: Punch phrase Keynes (12.1s - 14.0s) -->
+    <div id="shot-3-punch-clip" class="clip" data-start="12.1" data-duration="1.9" style="z-index: 35;">
+      <div class="overlay-container" style="padding-top: 380px;">
+        <div id="shot-3-punch" class="quote-card">
+          <div class="tag-category">JOHN MAYNARD KEYNES</div>
+          <div class="quote-title-main">
+            DÀI HẠN: <span class="highlight-orange">AI CŨNG CHẾT</span>
+          </div>
+        </div>
+      </div>
+    </div>
 
-      // Camera Zoom-out từ 1.08 về 1.00 suốt thời lượng còn lại
-      tl.to(
-        "#scene-video",
-        { scaleX: 1.0, scaleY: 1.0, duration: 7.16, ease: "none" },
-        0.75
-      );
+    <!-- Shot 3 Overlay 2: Vocabulary Icon clock (12.79s - 14.0s) -->
+    <div id="shot-3-icon-clip" class="clip" data-start="12.79" data-duration="1.21" style="z-index: 36;">
+      <div class="overlay-container" style="padding-top: 680px;">
+        <div id="shot-3-icon-badge" class="icon-badge">
+          <svg class="clock-svg" width="56" height="56" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle id="clock-rim" cx="30" cy="30" r="22" stroke="#FF6A1A" stroke-width="4.5" stroke-linecap="round" />
+            <line id="clock-hour" x1="30" y1="30" x2="30" y2="17" stroke="#F7F4EC" stroke-width="4.5" stroke-linecap="round" />
+            <line id="clock-minute" x1="30" y1="30" x2="42" y2="30" stroke="#FF6A1A" stroke-width="4.5" stroke-linecap="round" />
+          </svg>
+          <span class="icon-badge-text">THỜI GIAN VÔ TẬN</span>
+        </div>
+      </div>
+    </div>
+  </div>
 
-      // 3. OVERLAY 1 & 2: Check icon (0.67s) + Label SẢN XUẤT HOẠT ĐỘNG LẠI (1.40s)
-      // Thẻ badge xuất hiện lúc 0.67s với spring-pop settle (power3.out)
-      tl.fromTo(
-        "#production-card",
-        { scale: 0.85, opacity: 0, y: -25 },
-        { scale: 1, opacity: 1, y: 0, duration: 0.45, ease: "power3.out" },
-        0.67
-      );
+  <script>
+    // Khởi tạo GSAP Timeline (paused: true)
+    const tl = gsap.timeline({ paused: true });
 
-      // Check icon vẽ đường nét mực cam lúc 0.75s
-      tl.fromTo(
-        checkPath,
-        { strokeDashoffset: checkLen },
-        { strokeDashoffset: 0, duration: 0.45, ease: "power2.out" },
-        0.75
-      );
+    // ==========================================
+    // SHOT 1 CHOREOGRAPHY (0.0s - 4.8s)
+    // ==========================================
+    // TransitionIn: spiral (xoay nhẹ và bung nở)
+    tl.fromTo(
+      "#shot-1-viewport",
+      { scale: 0.78, rotation: -8, opacity: 0 },
+      { scale: 1, rotation: 0, opacity: 1, duration: 0.85, ease: "power3.out" },
+      0
+    );
 
-      // Label "SẢN XUẤT HOẠT ĐỘNG LẠI" xuất hiện bổ sung lúc 1.40s
-      tl.fromTo(
-        "#production-text",
-        { opacity: 0, x: -18 },
-        { opacity: 1, x: 0, duration: 0.40, ease: "power2.out" },
-        1.40
-      );
+    // Camera Motion: zoom-in
+    tl.fromTo(
+      "#shot-1-img",
+      { scale: 1.0 },
+      { scale: 1.15, duration: 4.8, ease: "none" },
+      0
+    );
 
-      // Thẻ fade out êm lúc 3.20s trước khi clip kết thúc ở 3.60s
-      tl.to(
-        "#production-card",
-        { opacity: 0, y: -20, duration: 0.35, ease: "power2.in" },
-        3.20
-      );
+    // Overlay Label "GÁNH NẶNG TRẢ NỢ" (at 1.76s)
+    tl.fromTo(
+      "#shot-1-card",
+      { y: 40, opacity: 0, scale: 0.94 },
+      { y: 0, opacity: 1, scale: 1, duration: 0.55, ease: "power3.out" },
+      1.76
+    );
 
-      // 4. OVERLAY 3: Icon Rise & Trendline tăng trưởng GDP (2.55s -> 4.75s)
-      tl.fromTo(
-        "#rise-card",
-        { scale: 0.90, opacity: 0, y: 35 },
-        { scale: 1, opacity: 1, y: 0, duration: 0.45, ease: "power3.out" },
-        2.55
-      );
+    // ==========================================
+    // SHOT 2 CHOREOGRAPHY (4.8s - 9.8s)
+    // ==========================================
+    // TransitionIn: cut (tự động qua clip window)
+    // Camera Motion: pan-right
+    tl.fromTo(
+      "#vid-wrapper",
+      { x: -50 },
+      { x: 40, duration: 5.0, ease: "none" },
+      4.8
+    );
 
-      // Đường biểu đồ GDP vọt thẳng lên trên nền chart
-      tl.fromTo(
-        trendPath,
-        { strokeDashoffset: trendLen },
-        { strokeDashoffset: 0, duration: 0.70, ease: "power2.out" },
-        2.65
-      );
+    // Overlay Punch-phrase "NỢ CÔNG DÀI HẠN" (at 7.38s)
+    tl.fromTo(
+      "#shot-2-punch",
+      { y: 35, opacity: 0, scale: 0.92 },
+      { y: 0, opacity: 1, scale: 1, duration: 0.55, ease: "power3.out" },
+      7.38
+    );
 
-      // Đầu mũi tên bật ra xác lập đỉnh phục hồi
-      tl.fromTo(
-        "#trend-arrowhead",
-        { scale: 0, opacity: 0 },
-        { scale: 1, opacity: 1, duration: 0.30, ease: "power3.out" },
-        3.30
-      );
+    // ==========================================
+    // SHOT 3 CHOREOGRAPHY (9.8s - 14.0s)
+    // ==========================================
+    // TransitionIn: cut
+    // Camera Motion: static
 
-      // Thẻ trend fade out lúc 4.40s trước khi clip kết thúc ở 4.75s
-      tl.to(
-        "#rise-card",
-        { opacity: 0, y: -15, duration: 0.30, ease: "power2.in" },
-        4.40
-      );
+    // Overlay Punch-phrase "DÀI HẠN: AI CŨNG CHẾT" (at 12.1s)
+    tl.fromTo(
+      "#shot-3-punch",
+      { y: 30, opacity: 0, scale: 0.95 },
+      { y: 0, opacity: 1, scale: 1, duration: 0.5, ease: "power3.out" },
+      12.1
+    );
 
-      // 5. OVERLAY 4: Punch-phrase "CHÍNH SÁCH TÀI KHÓA" (4.06s -> 5.86s)
-      // Entrance pop dứt khoát lúc 4.06s
-      tl.fromTo(
-        "#punch-card",
-        { scale: 0.88, opacity: 0, y: 30 },
-        { scale: 1, opacity: 1, y: 0, duration: 0.48, ease: "power3.out" },
-        4.06
-      );
+    // Overlay Icon clock arrival (at 12.79s)
+    tl.fromTo(
+      "#shot-3-icon-badge",
+      { scale: 0, opacity: 0 },
+      { scale: 1, opacity: 1, duration: 0.45, ease: "power3.out" },
+      12.79
+    );
 
-      // Giữ chắc khung hình > 1.6s theo quy tắc punch phrase rồi fade out lúc 5.50s
-      tl.to(
-        "#punch-card",
-        { opacity: 0, scale: 0.96, duration: 0.30, ease: "power2.in" },
-        5.50
-      );
+    // Self-drawing SVG path cho icon clock
+    const clockRim = document.getElementById("clock-rim");
+    const clockHour = document.getElementById("clock-hour");
+    const clockMinute = document.getElementById("clock-minute");
 
-      // 6. OVERLAY 5: Label "PHỤC HỒI KINH TẾ" (6.25s -> 7.91s)
-      tl.fromTo(
-        "#summary-card",
-        { scale: 0.92, opacity: 0, y: 20 },
-        { scale: 1, opacity: 1, y: 0, duration: 0.42, ease: "power3.out" },
-        6.25
-      );
+    if (clockRim && clockHour && clockMinute) {
+      const rimLen = clockRim.getTotalLength();
+      const hourLen = clockHour.getTotalLength();
+      const minLen = clockMinute.getTotalLength();
 
-      // Thanh gạch chân cam kéo dài xác lập kết quả
-      tl.fromTo(
-        "#summary-bar",
-        { scaleX: 0 },
-        { scaleX: 1, duration: 0.38, ease: "power2.out" },
-        6.45
-      );
+      clockRim.style.strokeDasharray = rimLen;
+      clockRim.style.strokeDashoffset = rimLen;
+      clockHour.style.strokeDasharray = hourLen;
+      clockHour.style.strokeDashoffset = hourLen;
+      clockMinute.style.strokeDasharray = minLen;
+      clockMinute.style.strokeDashoffset = minLen;
 
-      // Đăng ký timeline chính vào HyperFrames runtime
-      window.__timelines["scene-s50"] = tl;
-    </script>
-  
+      tl.to(clockRim, { strokeDashoffset: 0, duration: 0.55, ease: "power2.out" }, 12.85);
+      tl.to(clockHour, { strokeDashoffset: 0, duration: 0.35, ease: "power2.out" }, 13.05);
+      tl.to(clockMinute, { strokeDashoffset: 0, duration: 0.35, ease: "power2.out" }, 13.15);
+    }
+
+    // Đăng ký timeline cho HyperFrames seek
+    window.__timelines["scene-s50"] = tl;
+  </script>
+
     </template>
   </body>
 </html>

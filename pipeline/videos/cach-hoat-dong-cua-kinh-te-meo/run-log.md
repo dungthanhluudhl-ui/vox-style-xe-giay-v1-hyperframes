@@ -12262,3 +12262,157 @@ hyperframes check FAILED (nội dung):
 - **2026-09-24T10:32:40.310Z** — `scripts/07b-integration-check.hf.mjs --video=cach-hoat-dong-cua-kinh-te-meo` — Stage 7b integration check PASS — 51/51 scene, có audio, có caption-track, hyperframes check ok=true.
 
 - **2026-09-25T14:32:11.051Z** — qa-blank-frame-audit: 51 scene kiểm tra, 2 bị flag (S23, S47) — report tại `C:\vox-style-xe-giay-v1-hyperframes\pipeline\videos\cach-hoat-dong-cua-kinh-te-meo\contact-sheet\report.md`
+
+- **2026-09-28T18:58:34.176Z** — `scripts/05-scene-plan.router.mjs` — Scene Plan: 50 scene bằng ag/gemini-3.8-flash-high, ghi planning/videos/cach-hoat-dong-cua-kinh-te-meo/scene-plan.json + scene-plan.md
+
+- **2026-09-28T19:00:18.109Z** — `scripts/06-shotlist.router.mjs` — Shotlist: 81 shot trên 50 scene bằng ag/gemini-3.8-flash-high, ghi planning/videos/cach-hoat-dong-cua-kinh-te-meo/shotlist.json + shotlist.md
+
+- **2026-09-28T19:00:18.138Z** — `scripts/run-stages-1-6.mjs --video=cach-hoat-dong-cua-kinh-te-meo` — Stage 1-6 xong (50 scene: S01,S02,S03,S04,S05,S06,S07,S08,S09,S10,S11,S12,S13,S14,S15,S16,S17,S18,S19,S20,S21,S22,S23,S24,S25,S26,S27,S28,S29,S30,S31,S32,S33,S34,S35,S36,S37,S38,S39,S40,S41,S42,S43,S44,S45,S46,S47,S48,S49,S50) — bỏ qua Stage 7 (--skip-stage7).
+
+- **2026-09-28T19:03:00.311Z** — `scripts/07-codegen.hf.router.mjs --video=cach-hoat-dong-cua-kinh-te-meo --scenes=S06` — Codegen HyperFrames scene [S06] PASS sau 1 lần thử bằng ag/gemini-3.8-flash-high (review: cx/gpt-6-sol) — đã chuyển đổi thành compositions/scene-s06.html.
+
+- **2026-09-28T19:03:08.183Z** — `scripts/07-codegen.hf.router.mjs --video=cach-hoat-dong-cua-kinh-te-meo --scenes=S01` — Codegen HyperFrames scene [S01] PASS sau 1 lần thử bằng ag/gemini-3.8-flash-high (review: cx/gpt-6-sol) — đã chuyển đổi thành compositions/scene-s01.html.
+
+- **2026-09-28T19:03:09.541Z** — `scripts/07-codegen.hf.router.mjs --video=cach-hoat-dong-cua-kinh-te-meo --scenes=S03` — Codegen HyperFrames scene [S03] PASS sau 1 lần thử bằng ag/gemini-3.8-flash-high (review: cx/gpt-6-sol) — đã chuyển đổi thành compositions/scene-s03.html.
+
+- **2026-09-28T19:03:25.198Z** — `scripts/07-codegen.hf.router.mjs --video=cach-hoat-dong-cua-kinh-te-meo --scenes=S09` — Codegen HyperFrames scene [S09] PASS sau 1 lần thử bằng ag/gemini-3.8-flash-high (review: cx/gpt-6-sol) — đã chuyển đổi thành compositions/scene-s09.html.
+
+- **2026-09-28T19:03:49.762Z** — `scripts/07-codegen.hf.router.mjs --video=cach-hoat-dong-cua-kinh-te-meo --scenes=S05` — Codegen HyperFrames scene [S05] PASS sau 2 lần thử bằng ag/gemini-3.8-flash-high (review: cx/gpt-6-sol) — đã chuyển đổi thành compositions/scene-s05.html.
+
+- **2026-09-28T19:03:53.189Z** — `scripts/07-codegen.hf.router.mjs --video=cach-hoat-dong-cua-kinh-te-meo --scenes=S02` — Codegen HyperFrames scene [S02] PASS sau 2 lần thử bằng ag/gemini-3.8-flash-high (review: cx/gpt-6-sol) — đã chuyển đổi thành compositions/scene-s02.html.
+
+- **2026-09-28T19:04:00.671Z** — `scripts/07-codegen.hf.router.mjs --video=cach-hoat-dong-cua-kinh-te-meo --scenes=S07` — Codegen HyperFrames scene [S07] PASS sau 2 lần thử bằng ag/gemini-3.8-flash-high (review: cx/gpt-6-sol) — đã chuyển đổi thành compositions/scene-s07.html.
+
+- **2026-09-28T19:04:33.215Z** — `scripts/07-codegen.hf.router.mjs --video=cach-hoat-dong-cua-kinh-te-meo --scenes=S04` — Codegen HyperFrames scene [S04] PASS sau 2 lần thử bằng ag/gemini-3.8-flash-high (review: cx/gpt-6-sol) — đã chuyển đổi thành compositions/scene-s04.html.
+
+- **2026-09-28T19:04:38.576Z** — `scripts/07-codegen.hf.router.mjs --video=cach-hoat-dong-cua-kinh-te-meo --scenes=S11` — Codegen HyperFrames scene [S11] PASS sau 1 lần thử bằng ag/gemini-3.8-flash-high (review: cx/gpt-6-sol) — đã chuyển đổi thành compositions/scene-s11.html.
+
+- **2026-09-28T19:04:53.543Z** — `scripts/07-codegen.hf.router.mjs --video=cach-hoat-dong-cua-kinh-te-meo --scenes=S13` — Codegen HyperFrames scene [S13] PASS sau 1 lần thử bằng ag/gemini-3.8-flash-high (review: cx/gpt-6-sol) — đã chuyển đổi thành compositions/scene-s13.html.
+
+- **2026-09-28T19:04:54.027Z** — `scripts/07-codegen.hf.router.mjs --video=cach-hoat-dong-cua-kinh-te-meo --scenes=S10` — Codegen HyperFrames scene [S10] PASS sau 2 lần thử bằng ag/gemini-3.8-flash-high (review: cx/gpt-6-sol) — đã chuyển đổi thành compositions/scene-s10.html.
+
+- **2026-09-28T19:05:05.511Z** — `scripts/07-codegen.hf.router.mjs --video=cach-hoat-dong-cua-kinh-te-meo --scenes=S08` — Codegen HyperFrames scene [S08] PASS sau 2 lần thử bằng ag/gemini-3.8-flash-high (review: cx/gpt-6-sol) — đã chuyển đổi thành compositions/scene-s08.html.
+
+- **2026-09-28T19:05:24.751Z** — `scripts/07-codegen.hf.router.mjs --video=cach-hoat-dong-cua-kinh-te-meo --scenes=S16` — Codegen HyperFrames scene [S16] PASS sau 1 lần thử bằng ag/gemini-3.8-flash-high (review: cx/gpt-6-sol) — đã chuyển đổi thành compositions/scene-s16.html.
+
+- **2026-09-28T19:05:38.799Z** — `scripts/07-codegen.hf.router.mjs --video=cach-hoat-dong-cua-kinh-te-meo --scenes=S15` — Codegen HyperFrames scene [S15] PASS sau 1 lần thử bằng ag/gemini-3.8-flash-high (review: cx/gpt-6-sol) — đã chuyển đổi thành compositions/scene-s15.html.
+
+- **2026-09-28T19:05:48.119Z** — `scripts/07-codegen.hf.router.mjs --video=cach-hoat-dong-cua-kinh-te-meo --scenes=S17` — Codegen HyperFrames scene [S17] PASS sau 1 lần thử bằng ag/gemini-3.8-flash-high (review: cx/gpt-6-sol) — đã chuyển đổi thành compositions/scene-s17.html.
+
+- **2026-09-28T19:06:09.673Z** — `scripts/07-codegen.hf.router.mjs --video=cach-hoat-dong-cua-kinh-te-meo --scenes=S19` — Codegen HyperFrames scene [S19] PASS sau 1 lần thử bằng ag/gemini-3.8-flash-high (review: cx/gpt-6-sol) — đã chuyển đổi thành compositions/scene-s19.html.
+
+- **2026-09-28T19:06:14.408Z** — `scripts/07-codegen.hf.router.mjs --video=cach-hoat-dong-cua-kinh-te-meo --scenes=S20` — Codegen HyperFrames scene [S20] PASS sau 1 lần thử bằng ag/gemini-3.8-flash-high (review: cx/gpt-6-sol) — đã chuyển đổi thành compositions/scene-s20.html.
+
+- **2026-09-28T19:07:19.927Z** — `scripts/07-codegen.hf.router.mjs --video=cach-hoat-dong-cua-kinh-te-meo --scenes=S24` — Codegen HyperFrames scene [S24] PASS sau 1 lần thử bằng ag/gemini-3.8-flash-high (review: cx/gpt-6-sol) — đã chuyển đổi thành compositions/scene-s24.html.
+
+- **2026-09-28T19:08:01.050Z** — `scripts/07-codegen.hf.router.mjs --video=cach-hoat-dong-cua-kinh-te-meo --scenes=S26` — Codegen HyperFrames scene [S26] PASS sau 1 lần thử bằng ag/gemini-3.8-flash-high (review: cx/gpt-6-sol) — đã chuyển đổi thành compositions/scene-s26.html.
+
+- **2026-09-28T19:08:02.329Z** — `scripts/07-codegen.hf.router.mjs --video=cach-hoat-dong-cua-kinh-te-meo --scenes=S25` — Codegen HyperFrames scene [S25] PASS sau 1 lần thử bằng ag/gemini-3.8-flash-high (review: cx/gpt-6-sol) — đã chuyển đổi thành compositions/scene-s25.html.
+
+- **2026-09-28T19:08:18.239Z** — `scripts/07-codegen.hf.router.mjs --video=cach-hoat-dong-cua-kinh-te-meo --scenes=S12` — Codegen HyperFrames scene [S12] KHÔNG đạt sau 3 lần thử — cần Claude can thiệp. Verdict cuối:
+VERDICT: FAIL
+BLOCKING:
+- `.shot2-spotlight-vignette` phủ gradient tối lên ảnh S12-2, làm thay đổi màu ảnh bằng code, trái quyết định giữ nguyên màu ảnh của Style DNA.
+ADVISORY:
+- Dòng phụ “CHÍNH SÁCH BẢO VỆ RỪNG” dễ khiến người xem hiểu mục tiêu là bảo vệ rừng thay vì bảo hộ sản xuất nội địa.
+- Punch-phrase giữ 3,43 giây thay vì 2,2 giây; icon cân chỉ còn 0,68 giây trong scene thay vì 1,8 giây theo shotlist.
+Project standalone tạm còn giữ tại: C:\vox-style-xe-giay-v1-hyperframes\hyperframes\.gen-tmp\cach-hoat-dong-cua-kinh-te-meo-s12
+
+- **2026-09-28T19:08:49.932Z** — `scripts/07-codegen.hf.router.mjs --video=cach-hoat-dong-cua-kinh-te-meo --scenes=S14` — Codegen HyperFrames scene [S14] KHÔNG đạt sau 3 lần thử — cần Claude can thiệp. Verdict cuối:
+VERDICT: FAIL
+BLOCKING:
+- Nhãn “CÔNG TY BÌNH PHONG: HOẠT ĐỘNG” ở shot 2 trái với ý chính rằng doanh nghiệp ma chỉ tồn tại trên giấy tờ, không hoạt động thực chất.
+ADVISORY:
+- Overlay biểu tượng tài liệu chỉ có data-duration 1,48 giây, ngắn hơn holdMs 1,8 giây trong shotlist.
+Project standalone tạm còn giữ tại: C:\vox-style-xe-giay-v1-hyperframes\hyperframes\.gen-tmp\cach-hoat-dong-cua-kinh-te-meo-s14
+
+- **2026-09-28T19:08:50.093Z** — `scripts/07-codegen.hf.router.mjs --video=cach-hoat-dong-cua-kinh-te-meo --scenes=S22` — Codegen HyperFrames scene [S22] PASS sau 2 lần thử bằng ag/gemini-3.8-flash-high (review: cx/gpt-6-sol) — đã chuyển đổi thành compositions/scene-s22.html.
+
+- **2026-09-28T19:09:08.304Z** — `scripts/07-codegen.hf.router.mjs --video=cach-hoat-dong-cua-kinh-te-meo --scenes=S18` — Codegen HyperFrames scene [S18] KHÔNG đạt sau 3 lần thử — cần Claude can thiệp. Verdict cuối:
+VERDICT: FAIL
+BLOCKING:
+- Ảnh S18-2 được đặt trong khung 960×1140 có bóng đổ (`#s18-shot2-media`), thay vì dùng làm nền toàn khung và không tạo bóng giả cho ảnh như quyết định Style DNA.
+ADVISORY:
+- Chuyển cảnh S18-2 có hiệu ứng scale và fade 0,35 giây thay vì cut trực tiếp; có thể bỏ hiệu ứng để sát shotlist hơn.
+Project standalone tạm còn giữ tại: C:\vox-style-xe-giay-v1-hyperframes\hyperframes\.gen-tmp\cach-hoat-dong-cua-kinh-te-meo-s18
+
+- **2026-09-28T19:09:17.622Z** — `scripts/07-codegen.hf.router.mjs --video=cach-hoat-dong-cua-kinh-te-meo --scenes=S28` — Codegen HyperFrames scene [S28] PASS sau 1 lần thử bằng ag/gemini-3.8-flash-high (review: cx/gpt-6-sol) — đã chuyển đổi thành compositions/scene-s28.html.
+
+- **2026-09-28T19:09:39.784Z** — `scripts/07-codegen.hf.router.mjs --video=cach-hoat-dong-cua-kinh-te-meo --scenes=S21` — Codegen HyperFrames scene [S21] PASS sau 3 lần thử bằng ag/gemini-3.8-flash-high (review: cx/gpt-6-sol) — đã chuyển đổi thành compositions/scene-s21.html.
+
+- **2026-09-28T19:10:00.269Z** — `scripts/07-codegen.hf.router.mjs --video=cach-hoat-dong-cua-kinh-te-meo --scenes=S27` — Codegen HyperFrames scene [S27] PASS sau 3 lần thử bằng ag/gemini-3.8-flash-high (review: cx/gpt-6-sol) — đã chuyển đổi thành compositions/scene-s27.html.
+
+- **2026-09-28T19:10:12.068Z** — `scripts/07-codegen.hf.router.mjs --video=cach-hoat-dong-cua-kinh-te-meo --scenes=S23` — Codegen HyperFrames scene [S23] PASS sau 3 lần thử bằng ag/gemini-3.8-flash-high (review: cx/gpt-6-sol) — đã chuyển đổi thành compositions/scene-s23.html.
+
+- **2026-09-28T19:11:04.721Z** — `scripts/07-codegen.hf.router.mjs --video=cach-hoat-dong-cua-kinh-te-meo --scenes=S31` — Codegen HyperFrames scene [S31] PASS sau 2 lần thử bằng ag/gemini-3.8-flash-high (review: cx/gpt-6-sol) — đã chuyển đổi thành compositions/scene-s31.html.
+
+- **2026-09-28T19:11:26.026Z** — `scripts/07-codegen.hf.router.mjs --video=cach-hoat-dong-cua-kinh-te-meo --scenes=S29` — Codegen HyperFrames scene [S29] PASS sau 2 lần thử bằng ag/gemini-3.8-flash-high (review: cx/gpt-6-sol) — đã chuyển đổi thành compositions/scene-s29.html.
+
+- **2026-09-28T19:11:35.579Z** — `scripts/07-codegen.hf.router.mjs --video=cach-hoat-dong-cua-kinh-te-meo --scenes=S33` — Codegen HyperFrames scene [S33] PASS sau 2 lần thử bằng ag/gemini-3.8-flash-high (review: cx/gpt-6-sol) — đã chuyển đổi thành compositions/scene-s33.html.
+
+- **2026-09-28T19:11:39.302Z** — `scripts/07-codegen.hf.router.mjs --video=cach-hoat-dong-cua-kinh-te-meo --scenes=S36` — Codegen HyperFrames scene [S36] PASS sau 1 lần thử bằng ag/gemini-3.8-flash-high (review: cx/gpt-6-sol) — đã chuyển đổi thành compositions/scene-s36.html.
+
+- **2026-09-28T19:11:40.916Z** — `scripts/07-codegen.hf.router.mjs --video=cach-hoat-dong-cua-kinh-te-meo --scenes=S32` — Codegen HyperFrames scene [S32] PASS sau 2 lần thử bằng ag/gemini-3.8-flash-high (review: cx/gpt-6-sol) — đã chuyển đổi thành compositions/scene-s32.html.
+
+- **2026-09-28T19:11:43.290Z** — `scripts/07-codegen.hf.router.mjs --video=cach-hoat-dong-cua-kinh-te-meo --scenes=S38` — Codegen HyperFrames scene [S38] PASS sau 1 lần thử bằng ag/gemini-3.8-flash-high (review: cx/gpt-6-sol) — đã chuyển đổi thành compositions/scene-s38.html.
+
+- **2026-09-28T19:12:01.071Z** — `scripts/07-codegen.hf.router.mjs --video=cach-hoat-dong-cua-kinh-te-meo --scenes=S30` — Codegen HyperFrames scene [S30] PASS sau 2 lần thử bằng ag/gemini-3.8-flash-high (review: cx/gpt-6-sol) — đã chuyển đổi thành compositions/scene-s30.html.
+
+- **2026-09-28T19:12:17.329Z** — `scripts/07-codegen.hf.router.mjs --video=cach-hoat-dong-cua-kinh-te-meo --scenes=S34` — Codegen HyperFrames scene [S34] PASS sau 2 lần thử bằng ag/gemini-3.8-flash-high (review: cx/gpt-6-sol) — đã chuyển đổi thành compositions/scene-s34.html.
+
+- **2026-09-28T19:12:35.796Z** — `scripts/07-codegen.hf.router.mjs --video=cach-hoat-dong-cua-kinh-te-meo --scenes=S35` — Codegen HyperFrames scene [S35] PASS sau 2 lần thử bằng ag/gemini-3.8-flash-high (review: cx/gpt-6-sol) — đã chuyển đổi thành compositions/scene-s35.html.
+
+- **2026-09-28T19:13:06.488Z** — `scripts/07-codegen.hf.router.mjs --video=cach-hoat-dong-cua-kinh-te-meo --scenes=S42` — Codegen HyperFrames scene [S42] PASS sau 1 lần thử bằng ag/gemini-3.8-flash-high (review: cx/gpt-6-sol) — đã chuyển đổi thành compositions/scene-s42.html.
+
+- **2026-09-28T19:13:16.892Z** — `scripts/07-codegen.hf.router.mjs --video=cach-hoat-dong-cua-kinh-te-meo --scenes=S41` — Codegen HyperFrames scene [S41] PASS sau 1 lần thử bằng ag/gemini-3.8-flash-high (review: cx/gpt-6-sol) — đã chuyển đổi thành compositions/scene-s41.html.
+
+- **2026-09-28T19:13:35.742Z** — `scripts/07-codegen.hf.router.mjs --video=cach-hoat-dong-cua-kinh-te-meo --scenes=S37` — Codegen HyperFrames scene [S37] PASS sau 2 lần thử bằng ag/gemini-3.8-flash-high (review: cx/gpt-6-sol) — đã chuyển đổi thành compositions/scene-s37.html.
+
+- **2026-09-28T19:14:13.899Z** — `scripts/07-codegen.hf.router.mjs --video=cach-hoat-dong-cua-kinh-te-meo --scenes=S46` — Codegen HyperFrames scene [S46] PASS sau 1 lần thử bằng ag/gemini-3.8-flash-high (review: cx/gpt-6-sol) — đã chuyển đổi thành compositions/scene-s46.html.
+
+- **2026-09-28T19:14:14.177Z** — `scripts/07-codegen.hf.router.mjs --video=cach-hoat-dong-cua-kinh-te-meo --scenes=S44` — Codegen HyperFrames scene [S44] PASS sau 2 lần thử bằng ag/gemini-3.8-flash-high (review: cx/gpt-6-sol) — đã chuyển đổi thành compositions/scene-s44.html.
+
+- **2026-09-28T19:14:42.644Z** — `scripts/07-codegen.hf.router.mjs --video=cach-hoat-dong-cua-kinh-te-meo --scenes=S48` — Codegen HyperFrames scene [S48] PASS sau 1 lần thử bằng ag/gemini-3.8-flash-high (review: cx/gpt-6-sol) — đã chuyển đổi thành compositions/scene-s48.html.
+
+- **2026-09-28T19:14:52.869Z** — `scripts/07-codegen.hf.router.mjs --video=cach-hoat-dong-cua-kinh-te-meo --scenes=S39` — Codegen HyperFrames scene [S39] KHÔNG đạt sau 3 lần thử — cần Claude can thiệp. Verdict cuối:
+VERDICT: FAIL
+BLOCKING:
+- Cả hai shot đặt ảnh trong khung nhỏ thay vì dùng làm nền toàn khung, trái quyết định Style DNA về cách sử dụng ảnh.
+ADVISORY:
+- Punch-phrase xuất hiện sớm khoảng 0,4 giây và chỉ hiện đến hết shot 1, ngắn hơn holdMs 2000.
+- Header “CỔ TỨC Q3” và tỷ lệ thanh 72/28 thêm thông tin không có trong shotlist; nên tránh để chúng bị hiểu là số liệu thực.
+Project standalone tạm còn giữ tại: C:\vox-style-xe-giay-v1-hyperframes\hyperframes\.gen-tmp\cach-hoat-dong-cua-kinh-te-meo-s39
+
+- **2026-09-28T19:14:58.345Z** — `scripts/07-codegen.hf.router.mjs --video=cach-hoat-dong-cua-kinh-te-meo --scenes=S47` — Codegen HyperFrames scene [S47] PASS sau 2 lần thử bằng ag/gemini-3.8-flash-high (review: cx/gpt-6-sol) — đã chuyển đổi thành compositions/scene-s47.html.
+
+- **2026-09-28T19:15:38.178Z** — `scripts/07-codegen.hf.router.mjs --video=cach-hoat-dong-cua-kinh-te-meo --scenes=S50` — Codegen HyperFrames scene [S50] PASS sau 1 lần thử bằng ag/gemini-3.8-flash-high (review: cx/gpt-6-sol) — đã chuyển đổi thành compositions/scene-s50.html.
+
+- **2026-09-28T19:16:07.447Z** — `scripts/07-codegen.hf.router.mjs --video=cach-hoat-dong-cua-kinh-te-meo --scenes=S40` — Codegen HyperFrames scene [S40] KHÔNG đạt sau 3 lần thử — cần Claude can thiệp. Verdict cuối:
+VERDICT: FAIL
+BLOCKING:
+- Card tính toán ghi “+1 cá/ngày” từ mức gửi “10 cá” là 10%/ngày, nhưng trình bày như tương đương 365%/năm; số liệu này sai và làm lệch nội dung chính của shot.
+- `.vignette-overlay` phủ lớp tối lên cả hai ảnh, làm thay đổi màu ảnh bằng code, trái yêu cầu giữ nguyên màu asset.
+ADVISORY:
+- Overlay “DỰ ÁN MA HOANG VẮNG” chỉ hiện đến hết shot 1, ngắn hơn holdMs 2000 của shotlist.
+- Nên bỏ chi tiết “cá” và các nhãn diễn giải thêm nếu không có căn cứ trong nội dung cảnh.
+Project standalone tạm còn giữ tại: C:\vox-style-xe-giay-v1-hyperframes\hyperframes\.gen-tmp\cach-hoat-dong-cua-kinh-te-meo-s40
+
+- **2026-09-28T19:16:10.267Z** — `scripts/07-codegen.hf.router.mjs --video=cach-hoat-dong-cua-kinh-te-meo --scenes=S43` — Codegen HyperFrames scene [S43] PASS sau 2 lần thử bằng ag/gemini-3.8-flash-high (review: cx/gpt-6-sol) — đã chuyển đổi thành compositions/scene-s43.html.
+
+- **2026-09-28T19:16:19.073Z** — `scripts/07-codegen.hf.router.mjs --video=cach-hoat-dong-cua-kinh-te-meo --scenes=S45` — Codegen HyperFrames scene [S45] PASS sau 2 lần thử bằng ag/gemini-3.8-flash-high (review: cx/gpt-6-sol) — đã chuyển đổi thành compositions/scene-s45.html.
+
+- **2026-09-28T19:17:30.909Z** — `scripts/07-codegen.hf.router.mjs --video=cach-hoat-dong-cua-kinh-te-meo --scenes=S49` — Codegen HyperFrames scene [S49] PASS sau 3 lần thử bằng ag/gemini-3.8-flash-high (review: cx/gpt-6-sol) — đã chuyển đổi thành compositions/scene-s49.html.
+
+- **2026-09-28T19:20:23.097Z** — `scripts/07-codegen.hf.router.mjs --video=cach-hoat-dong-cua-kinh-te-meo --scenes=S14 --issue-file=C:\Users\DTL\AppData\Local\Temp\claude\c--vox-style-xe-giay-v1-hyperframes\70f1f8b9-e0f2-4588-ba0a-b40d1fc640e3\scratchpad\issue-s14.txt` — Codegen HyperFrames scene [S14] PASS sau 1 lần thử bằng ag/gemini-3.8-flash-high (review: cx/gpt-6-sol) — đã chuyển đổi thành compositions/scene-s14.html.
+
+- **2026-09-28T19:20:27.720Z** — `scripts/07-codegen.hf.router.mjs --video=cach-hoat-dong-cua-kinh-te-meo --scenes=S39 --issue-file=C:\Users\DTL\AppData\Local\Temp\claude\c--vox-style-xe-giay-v1-hyperframes\70f1f8b9-e0f2-4588-ba0a-b40d1fc640e3\scratchpad\issue-s39.txt` — Codegen HyperFrames scene [S39] PASS sau 1 lần thử bằng ag/gemini-3.8-flash-high (review: cx/gpt-6-sol) — đã chuyển đổi thành compositions/scene-s39.html.
+
+- **2026-09-28T19:20:54.048Z** — `scripts/07-codegen.hf.router.mjs --video=cach-hoat-dong-cua-kinh-te-meo --scenes=S18 --issue-file=C:\Users\DTL\AppData\Local\Temp\claude\c--vox-style-xe-giay-v1-hyperframes\70f1f8b9-e0f2-4588-ba0a-b40d1fc640e3\scratchpad\issue-s18.txt` — Codegen HyperFrames scene [S18] PASS sau 1 lần thử bằng ag/gemini-3.8-flash-high (review: cx/gpt-6-sol) — đã chuyển đổi thành compositions/scene-s18.html.
+
+- **2026-09-28T19:21:23.686Z** — `scripts/07-codegen.hf.router.mjs --video=cach-hoat-dong-cua-kinh-te-meo --scenes=S12 --issue-file=C:\Users\DTL\AppData\Local\Temp\claude\c--vox-style-xe-giay-v1-hyperframes\70f1f8b9-e0f2-4588-ba0a-b40d1fc640e3\scratchpad\issue-s12.txt` — Codegen HyperFrames scene [S12] PASS sau 2 lần thử bằng ag/gemini-3.8-flash-high (review: cx/gpt-6-sol) — đã chuyển đổi thành compositions/scene-s12.html.
+
+- **2026-09-28T19:22:50.352Z** — `scripts/07-codegen.hf.router.mjs --video=cach-hoat-dong-cua-kinh-te-meo --scenes=S40 --issue-file=C:\Users\DTL\AppData\Local\Temp\claude\c--vox-style-xe-giay-v1-hyperframes\70f1f8b9-e0f2-4588-ba0a-b40d1fc640e3\scratchpad\issue-s40.txt` — Codegen HyperFrames scene [S40] PASS sau 3 lần thử bằng ag/gemini-3.8-flash-high (review: cx/gpt-6-sol) — đã chuyển đổi thành compositions/scene-s40.html.
+
+- **2026-09-28T19:26:10.470Z** — `scripts/07b-integration-check.hf.mjs --video=cach-hoat-dong-cua-kinh-te-meo` — Stage 7b integration check PASS — 50/50 scene, có audio, có caption-track, hyperframes check ok=true (243 mốc/81 shot, 185.6s).
+
+- **2026-09-28T19:57:15.481Z** — `scripts/09-render.hf.mjs` — Render bản đầy đủ: out\cach-hoat-dong-cua-kinh-te-meo-full.mp4, 757635500 bytes (722.5MB), 1864.5s render time, quality=looks. Xác minh ffprobe: duration=453.700s (⚠ LỆCH 6.823s so với audio thật 460.523s — KIỂM TRA LẠI), 1080x1920 h264. Capture mode: screenshot (tắt fast-capture do: a CSS 3D rendering context (perspective / preserve-3d / backface-visibility)). GPU mode: hardware (WebGL renderer vendor="Google Inc. (NVIDIA)" renderer="ANGLE (NVIDIA, NVIDIA GeForce GTX 1660 SUPER (0x000021C4) Direct3D11 vs_5_0 ps_5_0, D3D11)"). Stage timing: compile=9.1s, browser_probe=1.8s, video_extract=20.0s, audio_process=22.6s, file_server=0.4s, capture_calibration=7.6s, capture_disk=1426.3s, encode=332.9s, assemble=26.6s.

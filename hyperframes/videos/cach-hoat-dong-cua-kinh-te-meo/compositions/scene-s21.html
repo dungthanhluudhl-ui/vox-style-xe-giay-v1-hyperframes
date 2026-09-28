@@ -1,525 +1,515 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
   <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF-8" />
   </head>
   <body>
     <template>
       <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap">
       <style>
-      * {
-        box-sizing: border-box;
-      }
-      body {
-        margin: 0;
-        padding: 0;
-        background: #141414;
-        color: #F7F4EC;
-        font-family: "Be Vietnam Pro", sans-serif;
-        overflow: hidden;
-        -webkit-font-smoothing: antialiased;
-      }
+/* hf-safe-colors (tất định từ style-tokens.json) */
+.hf-text-ink { color: #141414; }
+.hf-text-light { color: #F7F4EC; }
+.hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+.hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+.hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+.hf-plate-paper { color: #141414; background-color: #F5F0E4; }
 
-      /* Root composition */
-      #root {
-        position: relative;
-        width: 100%;
-        height: 100%;
-        overflow: hidden;
-      }
+    /* CSS Reset & Canvas Defaults */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #141414;
+      font-family: "Be Vietnam Pro", sans-serif;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+    #root {
+      position: relative;
+      width: 1080px;
+      height: 1920px;
+      overflow: hidden;
+      background-color: #E7E3D9;
+    }
 
-      /* Framework clip convention */
-      .clip {
-        position: absolute;
-        inset: 0;
-        pointer-events: none;
-      }
+    /* Timed clip full-frame container (z-index above video) */
+    .clip {
+      position: absolute;
+      inset: 0;
+      z-index: 10;
+    }
 
-      /* Video layer & camera zoom */
-      #video-container {
-        position: absolute;
-        inset: 0;
-        overflow: hidden;
-      }
-      #video-scaler {
-        position: absolute;
-        inset: 0;
-        transform-origin: 50% 50%;
-      }
-      #vid-06 {
-        position: absolute;
-        inset: 0;
-        width: 1080px;
-        height: 1920px;
-        object-fit: cover;
-      }
+    /* Video stage (wrapper has NO data-start, z-index below overlays) */
+    #video-wrapper {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      z-index: 1;
+    }
+    #video-camera {
+      position: absolute;
+      inset: -40px;
+      will-change: transform;
+    }
+    #vid-06 {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
 
-      /* Spotlight variant: dark radial vignette */
-      .spotlight-overlay {
-        position: absolute;
-        inset: 0;
-        background: radial-gradient(circle at 50% 48%, rgba(20, 20, 20, 0.12) 40%, rgba(20, 20, 20, 0.72) 95%);
-        pointer-events: none;
-      }
+    /* Vox Signature Branding */
+    #bottom-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 12px;
+      background-color: #FF6A1A;
+      z-index: 100;
+    }
+    #top-bar {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 8px;
+      background-color: #141414;
+      z-index: 100;
+    }
 
-      /* Subtle grid overlay (Vox 84px pattern) */
-      .grid-overlay {
-        position: absolute;
-        inset: 0;
-        background-image:
-          linear-gradient(rgba(20, 20, 20, 0.22) 1.5px, transparent 1.5px),
-          linear-gradient(90deg, rgba(20, 20, 20, 0.22) 1.5px, transparent 1.5px);
-        background-size: 84px 84px;
-        pointer-events: none;
-        mix-blend-mode: multiply;
-      }
+    /* Overlay containers placed within safe zone (top: 240px, safe from social UI & caption zone) */
+    .overlay-card {
+      position: absolute;
+      top: 240px;
+      left: 60px;
+      right: 60px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 16px;
+    }
 
-      /* Strike transition elements */
-      .strike-beam {
-        position: absolute;
-        top: -60%;
-        left: -60%;
-        width: 220%;
-        height: 220%;
-        background: linear-gradient(115deg, transparent 40%, #FF6A1A 46%, #ff8533 49%, #141414 52%, transparent 56%);
-        pointer-events: none;
-        z-index: 60;
-      }
-      .strike-flash {
-        position: absolute;
-        inset: 0;
-        background: #F7F4EC;
-        pointer-events: none;
-        z-index: 59;
-      }
+    /* Shot 1 Beat 1: KOL Kích Động Giá */
+    .tag-pill {
+      display: inline-flex;
+      align-items: center;
+      padding: 10px 24px;
+      background-color: #FF6A1A;
+      color: #141414;
+      font-weight: 900;
+      font-size: 26px;
+      letter-spacing: 1px;
+      border-radius: 4px;
+      box-shadow: 6px 6px 0 #141414;
+    }
+    .headline-box {
+      padding: 30px 36px;
+      background-color: #141414;
+      border-radius: 4px;
+      border-left: 12px solid #FF6A1A;
+      box-shadow: 8px 8px 0 rgba(20, 20, 20, 0.4);
+      width: 100%;
+    }
+    .headline-title {
+      font-size: 58px;
+      font-weight: 900;
+      line-height: 1.15;
+      letter-spacing: -0.5px;
+      color: #F7F4EC;
+      margin-bottom: 14px;
+    }
+    .headline-sub {
+      display: inline-block;
+      font-size: 24px;
+      font-weight: 900;
+      padding: 8px 16px;
+      background-color: #FF6A1A;
+      color: #141414;
+      border-radius: 3px;
+    }
+    .trend-card {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      padding: 16px 24px;
+      background-color: #F5F0E4;
+      border: 3px solid #141414;
+      border-radius: 4px;
+      box-shadow: 6px 6px 0 #141414;
+    }
+    .trend-badge {
+      padding: 6px 16px;
+      font-size: 26px;
+      font-weight: 900;
+      background-color: #FF6A1A;
+      color: #141414;
+      border-radius: 3px;
+    }
+    .trend-desc {
+      font-size: 24px;
+      font-weight: 900;
+      letter-spacing: 0.5px;
+      color: #141414;
+    }
 
-      /* Persistent Brand Identity */
-      .branding-header {
-        position: absolute;
-        top: 180px;
-        left: 60px;
-        display: flex;
-        align-items: center;
-        gap: 14px;
-        z-index: 40;
-        pointer-events: none;
-      }
-      .dossier-pill {
-        background: #FF6A1A;
-        color: #141414;
-        font-weight: 900;
-        font-size: 20px;
-        letter-spacing: 1.5px;
-        text-transform: uppercase;
-        padding: 6px 14px;
-        border-radius: 6px;
-      }
-      .dossier-code {
-        color: #F7F4EC;
-        font-weight: 700;
-        font-size: 20px;
-        letter-spacing: 2px;
-        background: rgba(20, 20, 20, 0.85);
-        padding: 6px 14px;
-        border-radius: 6px;
-        border: 1px solid rgba(255, 106, 26, 0.4);
-      }
-      .bottom-orange-bar {
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        height: 14px;
-        background: #FF6A1A;
-        z-index: 100;
-        pointer-events: none;
-      }
+    /* Shot 1 Beat 2: Punch Phrase PHÂN LÔ BÁN NỀN */
+    .punch-content {
+      position: absolute;
+      top: 240px;
+      left: 60px;
+      right: 60px;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 14px;
+    }
+    .punch-kicker {
+      align-self: flex-start;
+      font-size: 24px;
+      font-weight: 900;
+      padding: 8px 20px;
+      background-color: #141414;
+      color: #F7F4EC;
+      border-left: 6px solid #FF6A1A;
+      border-radius: 3px;
+      letter-spacing: 1px;
+    }
+    .punch-main {
+      padding: 24px 32px;
+      background-color: #FF6A1A;
+      border-radius: 4px;
+      box-shadow: 8px 8px 0 #141414;
+      text-align: center;
+    }
+    .punch-heading {
+      font-size: 70px;
+      font-weight: 900;
+      line-height: 1.15;
+      letter-spacing: -1px;
+      color: #141414;
+    }
+    .punch-explainer {
+      padding: 16px 24px;
+      background-color: #141414;
+      color: #F7F4EC;
+      border-radius: 4px;
+      font-size: 26px;
+      font-weight: 700;
+      text-align: center;
+      box-shadow: 6px 6px 0 rgba(20, 20, 20, 0.35);
+    }
+    .lots-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      padding: 18px;
+      background-color: #F5F0E4;
+      border: 3px solid #141414;
+      border-radius: 4px;
+      box-shadow: 6px 6px 0 #141414;
+    }
+    .lot-cell {
+      padding: 16px 8px;
+      text-align: center;
+      font-size: 22px;
+      font-weight: 900;
+      border-radius: 3px;
+      background-color: #141414;
+      color: #F7F4EC;
+    }
+    .lot-cell.lot-sold {
+      background-color: #FF6A1A;
+      color: #141414;
+    }
 
-      /* Collage Card Styles */
-      .info-card {
-        position: absolute;
-        top: 260px;
-        left: 60px;
-        right: 60px;
-        height: auto;
-        background: rgba(18, 20, 24, 0.94);
-        border: 3px solid rgba(255, 106, 26, 0.6);
-        border-radius: 16px;
-        box-shadow: 0 20px 48px rgba(0, 0, 0, 0.65), 8px 8px 0px #FF6A1A;
-        padding: 26px 30px;
-        display: flex;
-        align-items: center;
-        gap: 28px;
-        pointer-events: none;
-      }
+    /* Shot 1 Beat 3: Flow & Data Lợi Nhuận Cá Khủng */
+    .profit-content {
+      position: absolute;
+      top: 240px;
+      left: 60px;
+      right: 60px;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 14px;
+    }
+    .profit-tag {
+      align-self: flex-start;
+      font-size: 24px;
+      font-weight: 900;
+      padding: 8px 20px;
+      background-color: #FF6A1A;
+      color: #141414;
+      border-radius: 3px;
+      letter-spacing: 1px;
+      box-shadow: 6px 6px 0 #141414;
+    }
+    .profit-header {
+      padding: 26px 32px;
+      background-color: #141414;
+      border-radius: 4px;
+      border-left: 12px solid #FF6A1A;
+      box-shadow: 8px 8px 0 rgba(20, 20, 20, 0.4);
+    }
+    .profit-title {
+      font-size: 54px;
+      font-weight: 900;
+      line-height: 1.15;
+      color: #F7F4EC;
+      margin-bottom: 12px;
+    }
+    .profit-sub {
+      display: inline-block;
+      font-size: 24px;
+      font-weight: 900;
+      padding: 8px 16px;
+      background-color: #FF6A1A;
+      color: #141414;
+      border-radius: 3px;
+    }
+    .stats-board {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      padding: 20px;
+      background-color: #F5F0E4;
+      border: 3px solid #141414;
+      border-radius: 4px;
+      box-shadow: 6px 6px 0 #141414;
+    }
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .stat-label {
+      font-size: 26px;
+      font-weight: 900;
+      letter-spacing: 0.5px;
+      color: #141414;
+    }
+    .stat-pill-dark {
+      padding: 10px 24px;
+      font-size: 24px;
+      font-weight: 900;
+      border-radius: 4px;
+      background-color: #141414;
+      color: #F7F4EC;
+      box-shadow: 4px 4px 0 #141414;
+    }
+    .stat-pill-orange {
+      padding: 10px 24px;
+      font-size: 24px;
+      font-weight: 900;
+      border-radius: 4px;
+      background-color: #FF6A1A;
+      color: #141414;
+      box-shadow: 4px 4px 0 #141414;
+    }
+  </style>
 
-      .icon-box {
-        width: 104px;
-        height: 104px;
-        min-width: 104px;
-        background: #141414;
-        border: 2px solid #FF6A1A;
-        border-radius: 14px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
-      .icon-svg {
-        display: block;
-      }
-      .draw-path {
-        fill: none;
-      }
+  <div
+    id="root"
+    data-composition-id="scene-s21"
+    data-start="0"
+    data-width="1080"
+    data-height="1920"
+    data-duration="9"
+  >
+    <!-- Vox persistent frame edges -->
+    <div id="top-bar"></div>
+    <div id="bottom-bar"></div>
 
-      .card-content {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-      }
-      .card-pill {
-        align-self: flex-start;
-        background: #FF6A1A;
-        color: #141414;
-        font-size: 19px;
-        font-weight: 900;
-        letter-spacing: 1.5px;
-        text-transform: uppercase;
-        padding: 4px 12px;
-        border-radius: 4px;
-      }
-      .card-heading {
-        margin: 0;
-        font-size: 38px;
-        font-weight: 900;
-        line-height: 1.25;
-        color: #F7F4EC;
-        letter-spacing: -0.5px;
-      }
-      .card-subtext {
-        margin: 0;
-        font-size: 21px;
-        font-weight: 700;
-        color: #E7E3D9;
-        letter-spacing: 0.5px;
-      }
-
-      /* Hero Punch Phrase Card */
-      .punch-card {
-        position: absolute;
-        top: 740px;
-        left: 60px;
-        right: 60px;
-        height: auto;
-        background: rgba(18, 20, 24, 0.96);
-        border: 3px solid #FF6A1A;
-        border-radius: 20px;
-        box-shadow: 0 24px 60px rgba(0, 0, 0, 0.75), 10px 10px 0px #FF6A1A;
-        padding: 38px 44px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        text-align: center;
-        pointer-events: none;
-      }
-      .punch-pill {
-        background: #FF6A1A;
-        color: #141414;
-        font-size: 22px;
-        font-weight: 900;
-        letter-spacing: 2px;
-        text-transform: uppercase;
-        padding: 6px 18px;
-        border-radius: 6px;
-        margin-bottom: 14px;
-      }
-      .punch-heading {
-        margin: 0;
-        font-size: 64px;
-        font-weight: 900;
-        line-height: 1.22;
-        color: #F7F4EC;
-        letter-spacing: -0.5px;
-        text-transform: uppercase;
-      }
-      .punch-underline {
-        width: 100%;
-        max-width: 540px;
-        height: 7px;
-        background: #FF6A1A;
-        margin-top: 14px;
-        margin-bottom: 14px;
-        border-radius: 4px;
-        transform-origin: 0% 50%;
-      }
-      .punch-subtext {
-        margin: 0;
-        font-size: 22px;
-        font-weight: 700;
-        color: #E7E3D9;
-        letter-spacing: 1px;
-      }
-
-      /* Beat 4 Warning Card */
-      .warning-card {
-        top: 1220px;
-        border-color: #FF6A1A;
-      }
-    </style>
-
-    <div data-hf-id="hf-hypf" id="root" data-composition-id="scene-s21" data-start="0" data-width="1080" data-height="1920" data-duration="12" data-fps="30">
-      <!-- Background Video and Atmosphere -->
-      <div data-hf-id="hf-6whs" id="video-container">
-        <div data-hf-id="hf-ze1f" id="video-scaler">
-          <video data-hf-id="hf-lgd0" id="vid-06" data-start="0" data-duration="12" data-track-index="0" src="assets/vid-06-mafia-cat-land-grab.mp4" muted playsinline></video>
-        </div>
-        <!-- Spotlight radial vignette -->
-        <div data-hf-id="hf-vf97" class="spotlight-overlay"></div>
-        <!-- Vox 84px Grid -->
-        <div data-hf-id="hf-gycn" class="grid-overlay"></div>
-        <!-- Strike Entrance Effect -->
-        <div data-hf-id="hf-wiaq" id="strike-beam" class="strike-beam"></div>
-        <div data-hf-id="hf-70ny" id="strike-flash" class="strike-flash"></div>
+    <!-- Video Stage (wrapper has NO data-start, holds fit/camera pan, z-index: 1) -->
+    <div id="video-wrapper">
+      <div id="video-camera">
+        <video
+          id="vid-06"
+          src="assets/vid-06-mafia-cat-land-grab.mp4"
+          muted
+          playsinline
+          data-start="0"
+          data-duration="9"
+          data-media-start="0"
+        ></video>
       </div>
-
-      <!-- Persistent Dossier Header Tag -->
-      <div data-hf-id="hf-ynap" class="branding-header">
-        <div data-hf-id="hf-rksw" class="dossier-pill">ĐIỀU TRA</div>
-        <div data-hf-id="hf-wggs" class="dossier-code">HỒ SƠ ĐẤT ĐAI // S21</div>
-      </div>
-
-      <!-- Persistent Bottom Orange Bar -->
-      <div data-hf-id="hf-2ykk" class="bottom-orange-bar"></div>
-
-      <!-- Overlay Beat 1: Báo chí đẩy bài tiềm năng (0.76s - 3.44s) -->
-      <section data-hf-id="hf-0qc4" id="beat1-clip" class="clip" data-start="0.76" data-duration="2.68" data-track-index="1">
-        <div data-hf-id="hf-j9qd" id="beat1-card" class="info-card">
-          <div data-hf-id="hf-mb27" class="icon-box">
-            <!-- Progressive self-drawing Doc Icon -->
-            <svg data-hf-id="hf-61ck" id="doc-svg" class="icon-svg" viewBox="0 0 100 120" width="68" height="82" fill="none">
-              <!-- Paper outline -->
-              <path data-hf-id="hf-ql4s" class="draw-path" d="M 22 12 L 64 12 L 82 30 L 82 108 L 22 108 Z" stroke="#FF6A1A" stroke-width="6" stroke-linejoin="round" stroke-linecap="round" />
-              <!-- Fold corner -->
-              <path data-hf-id="hf-bc91" class="draw-path" d="M 64 12 L 64 30 L 82 30" stroke="#F7F4EC" stroke-width="5" stroke-linejoin="round" stroke-linecap="round" />
-              <!-- Content lines -->
-              <path data-hf-id="hf-wnp4" class="draw-path" d="M 34 46 L 70 46" stroke="#F7F4EC" stroke-width="5" stroke-linecap="round" />
-              <path data-hf-id="hf-s76m" class="draw-path" d="M 34 66 L 70 66" stroke="#FF6A1A" stroke-width="5" stroke-linecap="round" />
-              <path data-hf-id="hf-oqi8" class="draw-path" d="M 34 86 L 56 86" stroke="#F7F4EC" stroke-width="5" stroke-linecap="round" />
-            </svg>
-          </div>
-          <div data-hf-id="hf-0e5z" id="beat1-text" class="card-content">
-            <div data-hf-id="hf-uj8b" class="card-pill">TRUYỀN THÔNG BẨN</div>
-            <h2 data-hf-id="hf-p26h" class="card-heading">BÁO CHÍ ĐẨY BÀI TIỀM NĂNG</h2>
-            <p data-hf-id="hf-kokq" class="card-subtext">ĐỒNG LOẠT LÊN BÀI THỔI PHỒNG</p>
-          </div>
-        </div>
-      </section>
-
-      <!-- Overlay Beat 2: KOL tạo sóng đồn thổi (3.50s - 6.20s) -->
-      <section data-hf-id="hf-dir3" id="beat2-clip" class="clip" data-start="3.5" data-duration="2.7" data-track-index="1">
-        <div data-hf-id="hf-8zgs" id="beat2-card" class="info-card">
-          <div data-hf-id="hf-ly0v" class="icon-box">
-            <!-- Progressive self-drawing Phone Icon with Broadcast Waves -->
-            <svg data-hf-id="hf-sg1u" id="phone-svg" class="icon-svg" viewBox="0 0 110 120" width="76" height="82" fill="none">
-              <!-- Phone body -->
-              <rect data-hf-id="hf-3gwe" class="draw-path" x="22" y="14" width="50" height="92" rx="10" stroke="#F7F4EC" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" />
-              <!-- Speaker notch -->
-              <line data-hf-id="hf-f9g5" class="draw-path" x1="40" y1="24" x2="54" y2="24" stroke="#F7F4EC" stroke-width="4" stroke-linecap="round" />
-              <!-- Home indicator -->
-              <circle data-hf-id="hf-shju" class="draw-path" cx="47" cy="92" r="3.5" stroke="#FF6A1A" stroke-width="4" />
-              <!-- Broadcast waves -->
-              <path data-hf-id="hf-owdy" id="wave-1" class="draw-path" d="M 80 44 C 88 52 88 68 80 76" stroke="#FF6A1A" stroke-width="5" stroke-linecap="round" />
-              <path data-hf-id="hf-akqs" id="wave-2" class="draw-path" d="M 90 34 C 102 50 102 70 90 86" stroke="#FF6A1A" stroke-width="5" stroke-linecap="round" />
-            </svg>
-          </div>
-          <div data-hf-id="hf-rqfu" id="beat2-text" class="card-content">
-            <div data-hf-id="hf-kxz0" class="card-pill">LIVESTREAM HYPE</div>
-            <h2 data-hf-id="hf-4o8r" class="card-heading">KOL TẠO SÓNG ĐỒN THỔI</h2>
-            <p data-hf-id="hf-s9by" class="card-subtext">HÔ HÀO GIÁ KIỂU GÌ CŨNG TĂNG</p>
-          </div>
-        </div>
-      </section>
-
-      <!-- Overlay Beat 3: Punch Phrase "PHÂN LÔ BÁN NỀN" (6.40s - 9.20s) -->
-      <section data-hf-id="hf-hmvs" id="beat3-clip" class="clip" data-start="6.4" data-duration="2.8" data-track-index="2">
-        <div data-hf-id="hf-ci9d" id="punch-container" class="punch-card">
-          <div data-hf-id="hf-bthz" id="punch-tag" class="punch-pill">CHIÊU THỨC MAFIA</div>
-          <h1 data-hf-id="hf-ne0r" id="punch-title" class="punch-heading">PHÂN LÔ BÁN NỀN</h1>
-          <div data-hf-id="hf-mwnf" id="punch-bar" class="punch-underline"></div>
-          <p data-hf-id="hf-ahy6" id="punch-sub" class="punch-subtext">THỔI BỌT BẤT ĐỘNG SẢN • CHIẾM ĐOẠT ĐẤT RỪNG</p>
-        </div>
-      </section>
-
-      <!-- Overlay Beat 4: Tiếp tục trục lợi (9.67s - 12.00s) -->
-      <section data-hf-id="hf-dwoc" id="beat4-clip" class="clip" data-start="9.67" data-duration="2.33" data-track-index="1">
-        <div data-hf-id="hf-4ul3" id="beat4-card" class="info-card warning-card">
-          <div data-hf-id="hf-ljpu" class="icon-box">
-            <!-- Warning / Loop icon -->
-            <svg data-hf-id="hf-bnc6" id="warning-svg" class="icon-svg" viewBox="0 0 100 120" width="68" height="82" fill="none">
-              <!-- Triangle warning frame -->
-              <path data-hf-id="hf-0xfk" class="draw-path" d="M 50 18 L 86 96 L 14 96 Z" stroke="#FF6A1A" stroke-width="6" stroke-linejoin="round" stroke-linecap="round" />
-              <!-- Exclamation point -->
-              <line data-hf-id="hf-m7qy" class="draw-path" x1="50" y1="44" x2="50" y2="70" stroke="#F7F4EC" stroke-width="5" stroke-linecap="round" />
-              <circle data-hf-id="hf-6vwx" class="draw-path" cx="50" cy="83" r="3" stroke="#F7F4EC" stroke-width="4" />
-            </svg>
-          </div>
-          <div data-hf-id="hf-au2g" id="beat4-content" class="card-content">
-            <div data-hf-id="hf-g0x7" id="beat4-pill" class="card-pill">VÒNG LẶP ĐẦU CƠ</div>
-            <h2 data-hf-id="hf-evwa" class="card-heading">TIẾP TỤC TRỤC LỢI</h2>
-            <p data-hf-id="hf-mzm1" class="card-subtext">LẶP LẠI QUY TRÌNH • KIẾM THÊM RẤT NHIỀU CÁ</p>
-          </div>
-        </div>
-      </section>
     </div>
 
-    <!-- Animation Runtime Contract: exactly 1 paused GSAP timeline on window.__timelines["scene-s21"] -->
-    <script>
-      // Setup SVG progressive paths: measure and set strokeDasharray & strokeDashoffset
-      document.querySelectorAll(".draw-path").forEach(function (path) {
-        var len = Math.ceil(path.getTotalLength());
-        path.style.strokeDasharray = (len + 2) + "px";
-        path.style.strokeDashoffset = (len + 2) + "px";
-      });
+    <!-- Shot 1 - Overlay 1: KOL Kích Động Giá (0.6s -> 3.1s) -->
+    <section id="sec-kol" class="clip" data-start="0.6" data-duration="2.5" data-track-index="1">
+      <div class="overlay-card" id="kol-card">
+        <div class="tag-pill">
+          <span>📢 TRUYỀN THÔNG THỔI GIÁ</span>
+        </div>
+        <div class="headline-box">
+          <div class="headline-title">KOL KÍCH ĐỘNG GIÁ</div>
+          <div class="headline-sub">
+            <span>MÈO INFLUENCER: “ĐẤT RỪNG CHẮC CHẮN TĂNG!”</span>
+          </div>
+        </div>
+        <div class="trend-card" id="kol-trend">
+          <div class="trend-badge">
+            <span>▲ GIÁ TĂNG VỌT</span>
+          </div>
+          <span class="trend-desc">KỲ VỌNG ẢO BÙNG NỔ</span>
+        </div>
+      </div>
+    </section>
 
-      // Master paused timeline for HyperFrames frame-by-frame rendering
-      var tl = gsap.timeline({ paused: true });
+    <!-- Shot 1 - Overlay 2: Punch Phrase PHÂN LÔ BÁN NỀN (3.2s -> 5.8s) -->
+    <section id="sec-punch" class="clip" data-start="3.2" data-duration="2.6" data-track-index="2">
+      <div class="punch-content" id="punch-container">
+        <div class="punch-kicker">
+          <span>THỦ THUẬT MAFIA MÈO</span>
+        </div>
+        <div class="punch-main">
+          <h1 class="punch-heading">PHÂN LÔ BÁN NỀN</h1>
+        </div>
+        <div class="punch-explainer">
+          <span>XẺ ĐẤT RỪNG THÀNH TỪNG Ô ĐỂ BÁN ĐẮT</span>
+        </div>
+        <div class="lots-grid">
+          <div class="lot-cell lot-item">
+            <span>LÔ 01</span>
+          </div>
+          <div class="lot-cell lot-item">
+            <span>LÔ 02</span>
+          </div>
+          <div class="lot-cell lot-item">
+            <span>LÔ 03</span>
+          </div>
+          <div class="lot-cell lot-sold lot-item">
+            <span>ĐÃ BÁN</span>
+          </div>
+        </div>
+      </div>
+    </section>
 
-      // 1. Strike Transition (0s - 0.45s)
-      tl.fromTo(
-        "#strike-beam",
-        { x: -1400, opacity: 1 },
-        { x: 1400, opacity: 0, duration: 0.42, ease: "power4.out" },
-        0
-      );
-      tl.fromTo(
-        "#strike-flash",
-        { opacity: 0.55 },
-        { opacity: 0, duration: 0.32, ease: "power2.out" },
-        0
-      );
+    <!-- Shot 1 - Overlay 3: Flow & Data Kiếm Nhiều Cá (6.0s -> 9.0s) -->
+    <section id="sec-profit" class="clip" data-start="6.0" data-duration="3.0" data-track-index="3">
+      <div class="profit-content" id="profit-container">
+        <div class="profit-tag">
+          <span>VÒNG LẶP ĐẦU CƠ</span>
+        </div>
+        <div class="profit-header">
+          <div class="profit-title">MAFIA GOM SẠCH CÁ</div>
+          <div class="profit-sub">
+            <span>TIẾP TỤC XẺ ĐẤT TRỐNG VÀ KIẾM LỜI</span>
+          </div>
+        </div>
+        <div class="stats-board">
+          <div class="stat-row" id="stat-land">
+            <span class="stat-label">ĐẤT RỪNG TRỐNG:</span>
+            <div class="stat-pill-dark">
+              <span>CÒN RẤT NHIỀU</span>
+            </div>
+          </div>
+          <div class="stat-row" id="stat-fish">
+            <span class="stat-label">LỢI NHUẬN CÁ:</span>
+            <div class="stat-pill-orange">
+              <span>KHỔNG LỒ 🐟</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
 
-      // 2. Camera Zoom: Rapid impact settle at t=0, then smooth continuous zoom (0s - 12s)
-      tl.fromTo(
-        "#video-scaler",
-        { scale: 1.05 },
-        { scale: 1.0, duration: 0.45, ease: "power3.out" },
-        0
-      );
-      tl.to(
-        "#video-scaler",
-        { scale: 1.11, duration: 11.55, ease: "sine.inOut" },
-        0.45
-      );
+  <script>
+    // Register exactly one paused timeline on window.__timelines["scene-s21"]
+    window.__timelines = window.__timelines || {};
+    const tl = gsap.timeline({ paused: true });
 
-      // 3. Beat 1: Báo chí đẩy bài tiềm năng (active 0.76s - 3.44s)
-      tl.fromTo(
-        "#beat1-card",
-        { opacity: 0, y: 35, scale: 0.94 },
-        { opacity: 1, y: 0, scale: 1.0, duration: 0.44, ease: "power3.out" },
-        0.76
-      );
-      tl.to(
-        "#doc-svg .draw-path",
-        { strokeDashoffset: 0, duration: 0.48, stagger: 0.07, ease: "power2.out" },
-        0.82
-      );
-      tl.fromTo(
-        "#beat1-text",
-        { opacity: 0, x: 22 },
-        { opacity: 1, x: 0, duration: 0.38, ease: "power3.out" },
-        1.24
-      );
-      tl.to(
-        "#beat1-card",
-        { opacity: 0, y: -20, scale: 0.96, duration: 0.24, ease: "power2.in" },
-        3.20
-      );
+    // Camera Motion: Continuous pan-right across full 9.0s shot
+    tl.fromTo(
+      "#video-camera",
+      { x: -30, scale: 1.05 },
+      { x: 30, scale: 1.12, duration: 9.0, ease: "sine.inOut" },
+      0
+    );
 
-      // 4. Beat 2: KOL tạo sóng đồn thổi (active 3.50s - 6.20s)
-      tl.fromTo(
-        "#beat2-card",
-        { opacity: 0, y: 35, scale: 0.94 },
-        { opacity: 1, y: 0, scale: 1.0, duration: 0.44, ease: "power3.out" },
-        3.50
-      );
-      tl.to(
-        "#phone-svg .draw-path",
-        { strokeDashoffset: 0, duration: 0.46, stagger: 0.07, ease: "power2.out" },
-        3.56
-      );
-      tl.fromTo(
-        "#beat2-text",
-        { opacity: 0, x: 22 },
-        { opacity: 1, x: 0, duration: 0.38, ease: "power3.out" },
-        4.03
-      );
-      tl.to(
-        "#beat2-card",
-        { opacity: 0, y: -20, scale: 0.96, duration: 0.24, ease: "power2.in" },
-        5.96
-      );
+    // Initial transition in: subtle punch settle at scene start
+    tl.fromTo(
+      "#video-camera",
+      { filter: "contrast(1.2) brightness(1.15)" },
+      { filter: "contrast(1) brightness(1)", duration: 0.6, ease: "power2.out" },
+      0
+    );
 
-      // 5. Beat 3: Hero Punch Phrase "PHÂN LÔ BÁN NỀN" (active 6.40s - 9.20s)
-      tl.fromTo(
-        "#punch-container",
-        { opacity: 0, scale: 0.88, y: 38 },
-        { opacity: 1, scale: 1.0, y: 0, duration: 0.52, ease: "power3.out" },
-        6.40
-      );
-      tl.fromTo(
-        "#punch-tag",
-        { opacity: 0, y: -12 },
-        { opacity: 1, y: 0, duration: 0.32, ease: "power2.out" },
-        6.54
-      );
-      tl.fromTo(
-        "#punch-title",
-        { opacity: 0, scale: 0.92 },
-        { opacity: 1, scale: 1.0, duration: 0.44, ease: "power4.out" },
-        6.62
-      );
-      tl.fromTo(
-        "#punch-bar",
-        { scaleX: 0 },
-        { scaleX: 1, duration: 0.42, ease: "power3.out" },
-        6.82
-      );
-      tl.fromTo(
-        "#punch-sub",
-        { opacity: 0, y: 12 },
-        { opacity: 1, y: 0, duration: 0.36, ease: "power2.out" },
-        6.98
-      );
-      tl.to(
-        "#punch-container",
-        { opacity: 0, scale: 0.92, y: -22, duration: 0.28, ease: "power2.in" },
-        8.92
-      );
+    // ==========================================
+    // Overlay 1: KOL Kích Động Giá (data-start="0.6")
+    // ==========================================
+    tl.fromTo(
+      "#kol-card",
+      { y: 40, opacity: 0, scale: 0.95 },
+      { y: 0, opacity: 1, scale: 1, duration: 0.4, ease: "power3.out" },
+      0.6
+    );
+    tl.fromTo(
+      "#kol-trend",
+      { scale: 0.85, opacity: 0 },
+      { scale: 1, opacity: 1, duration: 0.35, ease: "power2.out" },
+      0.9
+    );
+    tl.to(
+      "#kol-card",
+      { y: -30, opacity: 0, duration: 0.3, ease: "power2.in" },
+      2.7
+    );
 
-      // 6. Beat 4: Tiếp tục trục lợi (active 9.67s - 12.00s)
-      tl.fromTo(
-        "#beat4-card",
-        { opacity: 0, y: 35, scale: 0.94 },
-        { opacity: 1, y: 0, scale: 1.0, duration: 0.46, ease: "power3.out" },
-        9.67
-      );
-      tl.to(
-        "#warning-svg .draw-path",
-        { strokeDashoffset: 0, duration: 0.45, stagger: 0.08, ease: "power2.out" },
-        9.72
-      );
-      tl.fromTo(
-        "#beat4-content",
-        { opacity: 0, x: 22 },
-        { opacity: 1, x: 0, duration: 0.4, ease: "power3.out" },
-        9.85
-      );
+    // ==========================================
+    // Overlay 2: Punch Phrase PHÂN LÔ BÁN NỀN (data-start="3.2")
+    // ==========================================
+    tl.fromTo(
+      "#punch-container",
+      { y: 50, opacity: 0, scale: 0.92 },
+      { y: 0, opacity: 1, scale: 1, duration: 0.45, ease: "power4.out" },
+      3.2
+    );
+    tl.fromTo(
+      ".lot-item",
+      { y: 20, opacity: 0, scale: 0.85 },
+      { y: 0, opacity: 1, scale: 1, duration: 0.3, stagger: 0.08, ease: "power2.out" },
+      3.5
+    );
+    tl.to(
+      "#punch-container",
+      { y: -30, opacity: 0, duration: 0.3, ease: "power2.in" },
+      5.45
+    );
 
-      // Register timeline for HyperFrames engine
-      window.__timelines = window.__timelines || {};
-      window.__timelines["scene-s21"] = tl;
-    </script>
-  
+    // ==========================================
+    // Overlay 3: Flow & Data Kiếm Nhiều Cá (data-start="6.0")
+    // ==========================================
+    tl.fromTo(
+      "#profit-container",
+      { y: 40, opacity: 0, scale: 0.95 },
+      { y: 0, opacity: 1, scale: 1, duration: 0.4, ease: "power3.out" },
+      6.0
+    );
+    tl.fromTo(
+      "#stat-land",
+      { x: -30, opacity: 0 },
+      { x: 0, opacity: 1, duration: 0.35, ease: "power3.out" },
+      6.35
+    );
+    tl.fromTo(
+      "#stat-fish",
+      { x: 30, opacity: 0 },
+      { x: 0, opacity: 1, duration: 0.35, ease: "power3.out" },
+      6.55
+    );
+
+    // Attach timeline to global registry
+    window.__timelines["scene-s21"] = tl;
+  </script>
+
     </template>
   </body>
 </html>

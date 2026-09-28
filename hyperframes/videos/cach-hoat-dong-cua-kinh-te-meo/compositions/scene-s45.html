@@ -1,22 +1,32 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
   <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF-8" />
   </head>
   <body>
     <template>
-      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap">
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
       <style>
+      /* hf-safe-colors (tất định từ style-tokens.json) */
+      .hf-text-ink { color: #141414; }
+      .hf-text-light { color: #F7F4EC; }
+      .hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+      .hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+      .hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+      .hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
       * {
         box-sizing: border-box;
       }
       body {
         margin: 0;
         padding: 0;
-        background: #0b0d10;
-        color: #141414;
-        font-family: "Be Vietnam Pro", sans-serif;
+        width: 1080px;
+        height: 1920px;
         overflow: hidden;
+        background: #0b0f14;
+        font-family: "Be Vietnam Pro", sans-serif;
+        color: #141414;
         -webkit-font-smoothing: antialiased;
       }
       #root {
@@ -31,345 +41,519 @@
         overflow: hidden;
       }
 
-      /* Stage & Camera Rig */
-      .stage {
+      /* Flow card styling */
+      .flow-card {
         position: absolute;
-        inset: 0;
-        transform-origin: 50% 50%;
-        will-change: transform, opacity;
-      }
-
-      /* Base Paper & Grid */
-      .paper-bg {
-        position: absolute;
-        inset: 0;
-        background-color: #e7e3d9;
-      }
-      .grid-lines {
-        position: absolute;
-        inset: 0;
-        background-size: 84px 84px;
-        background-image:
-          linear-gradient(to right, rgba(20, 20, 20, 0.16) 1.5px, transparent 1.5px),
-          linear-gradient(to bottom, rgba(20, 20, 20, 0.16) 1.5px, transparent 1.5px);
-        pointer-events: none;
-      }
-
-      /* Photo Layer */
-      .photo-wrapper {
-        position: absolute;
-        inset: 0;
-        overflow: hidden;
-      }
-      .hero-img {
-        position: absolute;
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        object-position: center 88%;
-        transform-origin: center bottom;
-        filter: grayscale(88%) contrast(1.22) brightness(0.82);
-      }
-
-      /* Spotlight & Texture Overlays */
-      .spotlight-overlay {
-        position: absolute;
-        inset: 0;
-        background: radial-gradient(circle at 50% 45%, rgba(20, 20, 20, 0.05) 0%, rgba(20, 20, 20, 0.58) 64%, rgba(10, 10, 10, 0.94) 100%);
-        mix-blend-mode: multiply;
-        pointer-events: none;
-      }
-      .grain-overlay {
-        position: absolute;
-        inset: 0;
-        opacity: 0.18;
-        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-        mix-blend-mode: multiply;
-        pointer-events: none;
-      }
-
-      /* Vox Signature Bottom Orange Bar */
-      .bottom-accent-bar {
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        height: 12px;
-        background-color: #ff6a1a;
-        z-index: 100;
-      }
-
-      /* Callout Cards (Beat 1 & Beat 2) */
-      .callout-card {
-        position: absolute;
-        left: 60px;
-        max-width: 660px;
-        background: rgba(18, 18, 18, 0.94);
-        border: 2px solid rgba(255, 106, 26, 0.85);
-        box-shadow: 6px 6px 0px #ff6a1a;
+        background: #F5F0E4;
+        border: 4px solid #141414;
+        box-shadow: 8px 8px 0 #141414;
+        border-radius: 12px;
         padding: 16px 24px;
-        display: flex;
-        align-items: center;
-        gap: 20px;
+        transform-origin: 50% 50%;
         z-index: 20;
-        opacity: 0;
-        will-change: transform, opacity;
       }
-      #callout-1 {
-        top: 220px;
-      }
-      #callout-2 {
-        top: 370px;
-      }
-
-      .icon-box {
-        flex-shrink: 0;
-        width: 64px;
-        height: 64px;
-        display: grid;
-        place-items: center;
-      }
-      .icon-svg {
-        display: block;
-      }
-      .draw-path {
-        fill: none;
-        stroke: #ff6a1a;
-        stroke-width: 4.5;
-        stroke-linecap: round;
-        stroke-linejoin: round;
-      }
-
-      .callout-info {
-        display: flex;
-        flex-direction: column;
-        gap: 4px;
-      }
-      .callout-tag {
-        font-size: 15px;
-        font-weight: 900;
-        color: #ff6a1a;
-        letter-spacing: 1.5px;
-        text-transform: uppercase;
-      }
-      .callout-label {
-        font-size: 34px;
-        font-weight: 900;
-        color: #f7f4ec;
-        letter-spacing: 0.5px;
-        line-height: 1.15;
-        margin: 0;
-        opacity: 0;
-      }
-
-      /* Climax Punch Card (Beat 3) */
-      .punch-card {
-        position: absolute;
-        top: 540px;
-        left: 60px;
-        right: 60px;
-        background: rgba(16, 16, 16, 0.96);
-        border: 3px solid #ff6a1a;
-        box-shadow: 8px 8px 0px rgba(255, 106, 26, 0.45);
-        padding: 38px 44px;
-        z-index: 30;
-        opacity: 0;
-        will-change: transform, opacity;
-      }
-      .punch-header {
+      .flow-pill {
         display: inline-block;
-        background: #ff6a1a;
+        background: #FF6A1A;
         color: #141414;
-        font-size: 16px;
+        font-size: 20px;
         font-weight: 900;
-        padding: 5px 14px;
-        letter-spacing: 2px;
+        letter-spacing: 1.5px;
+        padding: 4px 14px;
+        border: 2px solid #141414;
+        border-radius: 6px;
+        margin-bottom: 8px;
         text-transform: uppercase;
-        margin-bottom: 16px;
       }
-      .punch-accent-bar {
-        width: 100%;
-        height: 4px;
-        background: #ff6a1a;
-        margin-bottom: 22px;
-        transform-origin: left center;
-        will-change: transform;
-      }
-      .punch-title {
-        margin: 0;
-        font-size: 60px;
+      .flow-title {
+        font-size: 32px;
         font-weight: 900;
-        color: #f7f4ec;
         line-height: 1.2;
+        color: #141414;
         letter-spacing: -0.5px;
-        opacity: 0;
       }
-      .punch-sub {
-        margin-top: 14px;
+      .flow-desc {
         font-size: 22px;
         font-weight: 700;
-        color: rgba(247, 244, 236, 0.82);
-        letter-spacing: 1px;
-        text-transform: uppercase;
+        color: #141414;
+        margin-top: 4px;
       }
     </style>
 
-    <div data-hf-id="hf-cuti" id="root" data-composition-id="scene-s45" data-width="1080" data-height="1920" data-duration="7.05">
-      <section data-hf-id="hf-ga4b" id="scene-s45" class="clip" data-start="0" data-duration="7.05">
-        <!-- Visual Stage Rig (Camera Zoom & Wobble-Drop) -->
-        <div data-hf-id="hf-lp42" id="stage" class="stage">
-          <div data-hf-id="hf-ug6y" class="paper-bg"></div>
-          <div data-hf-id="hf-kcs6" class="grid-lines"></div>
+    <div
+      id="root"
+      data-composition-id="scene-s45"
+      data-start="0"
+      data-width="1080"
+      data-height="1920"
+      data-duration="8"
+    >
+      <!-- Base paper background with 84px grid and spotlight vignette on background layer -->
+      <div
+        id="base-bg"
+        style="
+          position: absolute;
+          inset: 0;
+          background-color: #E7E3D9;
+          background-image:
+            radial-gradient(circle at 50% 50%, transparent 40%, rgba(20, 20, 20, 0.28) 100%),
+            linear-gradient(to right, rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px),
+            linear-gradient(to bottom, rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px);
+          background-size: 100% 100%, 84px 84px, 84px 84px;
+          z-index: 0;
+        "
+      ></div>
 
-          <!-- Hero Image: Cropped to lower crisis half -->
-          <div data-hf-id="hf-px9v" class="photo-wrapper" data-layout-allow-overflow="true">
-            <img data-hf-id="hf-yhkb" id="hero-img" class="hero-img" src="assets/img-12-economic-crisis-cat-illustration.jpeg" alt="Cảnh khủng hoảng kinh tế và nhà xưởng bỏ hoang">
+      <!-- Signature orange bottom bar -->
+      <div
+        id="signature-bottom-bar"
+        style="
+          position: absolute;
+          bottom: 0;
+          left: 0;
+          right: 0;
+          height: 14px;
+          background: #FF6A1A;
+          z-index: 999;
+        "
+      ></div>
+
+      <!-- ================= SHOT 1 (0.0s - 4.3s) ================= -->
+      <!-- Non-timed camera pan wrapper for video -->
+      <div
+        id="shot1-viewport"
+        style="position: absolute; inset: 0; overflow: hidden; z-index: 1;"
+      >
+        <div
+          id="shot1-cam-pan"
+          style="position: absolute; inset: -4% -8%; width: 116%; height: 108%;"
+        >
+          <video
+            id="vid-02"
+            src="assets/vid-02-economic-crisis-cutout-animation.mp4"
+            muted
+            playsinline
+            data-start="0"
+            data-duration="4.3"
+            data-media-start="0"
+            style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;"
+          ></video>
+        </div>
+      </div>
+
+      <!-- Shot 1 Overlays (Timed clip) -->
+      <div id="shot1-overlay" class="clip" data-start="0" data-duration="4.3" style="z-index: 5;">
+        <!-- Primary Label: LÀN SÓNG SA THẢI -->
+        <div
+          id="shot1-label"
+          style="position: absolute; top: 240px; left: 80px; transform-origin: 0% 50%;"
+        >
+          <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+            <span style="display: inline-block; width: 14px; height: 14px; background: #FF6A1A; border: 2px solid #141414;"></span>
+            <span
+              style="
+                font-size: 20px;
+                font-weight: 900;
+                letter-spacing: 2px;
+                color: #F7F4EC;
+                background: #141414;
+                padding: 4px 14px;
+                border-radius: 4px;
+              "
+            >
+              HỒ SƠ BỐI CẢNH
+            </span>
           </div>
-
-          <div data-hf-id="hf-vf97" class="spotlight-overlay"></div>
-          <div data-hf-id="hf-k01a" class="grain-overlay"></div>
+          <div
+            class="hf-hl-orange"
+            style="
+              display: inline-block;
+              padding: 14px 30px;
+              border: 4px solid #141414;
+              box-shadow: 8px 8px 0 #141414;
+              border-radius: 8px;
+            "
+          >
+            <span style="font-size: 42px; font-weight: 900; letter-spacing: 0.5px; text-transform: uppercase;">
+              LÀN SÓNG SA THẢI
+            </span>
+          </div>
         </div>
 
-        <!-- Signature Brand Bar -->
-        <div data-hf-id="hf-272s" class="bottom-accent-bar"></div>
+        <!-- Secondary Economic Tag -->
+        <div
+          id="shot1-sublabel"
+          style="position: absolute; top: 380px; left: 80px; transform-origin: 0% 50%;"
+        >
+          <div
+            class="hf-plate-ink"
+            style="
+              display: inline-block;
+              padding: 10px 22px;
+              border: 3px solid #FF6A1A;
+              box-shadow: 6px 6px 0 rgba(20, 20, 20, 0.9);
+              border-radius: 8px;
+            "
+          >
+            <span style="font-size: 26px; font-weight: 900; color: #F7F4EC;">
+              SỨC MUA ĐÓNG BĂNG
+            </span>
+          </div>
+        </div>
+      </div>
 
-        <!-- OVERLAY 1: Icon "fall" (0.90s) & Label "MẤT HẾT TÀI SẢN" (1.31s) -->
-        <div data-hf-id="hf-214x" id="callout-1" class="callout-card">
-          <div data-hf-id="hf-mb27" class="icon-box">
-            <svg data-hf-id="hf-fpfr" class="icon-svg" viewBox="0 0 56 56" width="56" height="56">
-              <rect data-hf-id="hf-jdib" width="56" height="56" rx="10" fill="#141414" stroke="#FF6A1A" stroke-width="2.5" />
-              <path data-hf-id="hf-ihk0" class="draw-path fall-draw" d="M 10 16 L 22 28 L 32 20 L 44 38" />
-              <path data-hf-id="hf-zhrt" class="draw-path fall-draw" d="M 32 38 L 44 38 L 44 26" />
+      <!-- ================= SHOT 2 (4.3s - 8.0s) ================= -->
+      <div id="shot2-scene" class="clip" data-start="4.3" data-duration="3.7" style="z-index: 10;">
+        <!-- Background Illustration Image: nguyên màu theo Style DNA, không phủ gradient đen -->
+        <div
+          id="shot2-bg-wrap"
+          style="position: absolute; inset: 0; overflow: hidden;"
+        >
+          <img
+            id="img-12"
+            src="assets/img-12-economic-crisis-cat-illustration.jpeg"
+            alt="Khủng hoảng kinh tế"
+            style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;"
+          />
+        </div>
+
+        <!-- Flow diagram SVG arrows -->
+        <svg
+          id="flow-arrows"
+          viewBox="0 0 1080 1920"
+          style="position: absolute; inset: 0; width: 1080px; height: 1920px; pointer-events: none; z-index: 18;"
+        >
+          <!-- Arrow 1: Node 1 right edge -> Node 2 left edge -->
+          <path
+            id="arrow-1"
+            d="M 514 275 C 555 275, 525 420, 560 420"
+            fill="none"
+            stroke="#FF6A1A"
+            stroke-width="6"
+            stroke-linecap="round"
+          />
+          <polygon id="head-1" points="555,412 568,420 555,428" fill="#FF6A1A" />
+
+          <!-- Arrow 2: Node 2 left edge -> Node 3 right edge -->
+          <path
+            id="arrow-2"
+            d="M 570 445 C 530 445, 565 575, 540 575"
+            fill="none"
+            stroke="#FF6A1A"
+            stroke-width="6"
+            stroke-linecap="round"
+          />
+          <polygon id="head-2" points="545,567 532,575 545,583" fill="#FF6A1A" />
+
+          <!-- Arrow 3 (Loop back): Node 3 left edge -> curves around margin -> Node 1 left edge -->
+          <path
+            id="arrow-3"
+            d="M 80 575 C 18 575, 18 275, 72 275"
+            fill="none"
+            stroke="#FF6A1A"
+            stroke-width="6"
+            stroke-linecap="round"
+          />
+          <polygon id="head-3" points="65,267 78,275 65,283" fill="#FF6A1A" />
+        </svg>
+
+        <!-- Flow Node 1 (left side) -->
+        <div id="flow-node-1" class="flow-card" style="top: 210px; left: 80px; width: 430px;">
+          <div class="flow-pill">BƯỚC 1</div>
+          <div class="flow-title">MẤT VIỆC LÀM</div>
+          <div class="flow-desc">THU NHẬP = 0</div>
+        </div>
+
+        <!-- Flow Node 2 (right side) -->
+        <div id="flow-node-2" class="flow-card" style="top: 360px; right: 80px; width: 430px;">
+          <div class="flow-pill">BƯỚC 2</div>
+          <div class="flow-title">MẤT SỨC MUA</div>
+          <div class="flow-desc">PATE TỒN KHO</div>
+        </div>
+
+        <!-- Flow Node 3 (left side) -->
+        <div id="flow-node-3" class="flow-card" style="top: 510px; left: 80px; width: 450px;">
+          <div class="flow-pill">HỆ QUẢ</div>
+          <div class="flow-title">PHÁ SẢN LAN RỘNG</div>
+          <div class="flow-desc">DÂY CHUYỀN ĐỔ VỠ</div>
+        </div>
+
+        <!-- Climax Punch Card: KHỦNG HOẢNG KINH TẾ (Opaque plate for high contrast) -->
+        <div
+          id="punch-card"
+          style="
+            position: absolute;
+            top: 700px;
+            left: 60px;
+            right: 60px;
+            background: #141414;
+            border: 4px solid #FF6A1A;
+            box-shadow: 12px 12px 0 rgba(20, 20, 20, 0.95);
+            border-radius: 16px;
+            padding: 28px 24px;
+            text-align: center;
+            transform-origin: 50% 50%;
+            z-index: 30;
+          "
+        >
+          <!-- Top Row: Warning icon and Crisis Header -->
+          <div style="display: flex; align-items: center; justify-content: center; gap: 16px;">
+            <svg
+              id="warn-svg"
+              viewBox="0 0 100 100"
+              width="76"
+              height="76"
+              style="overflow: visible; flex-shrink: 0;"
+            >
+              <path
+                id="warn-path"
+                d="M 50 14 L 92 86 L 8 86 Z"
+                fill="none"
+                stroke="#FF6A1A"
+                stroke-width="9"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <path
+                id="warn-stem"
+                d="M 50 40 L 50 62"
+                fill="none"
+                stroke="#FF6A1A"
+                stroke-width="9"
+                stroke-linecap="round"
+              />
+              <circle
+                id="warn-dot"
+                cx="50"
+                cy="76"
+                r="5"
+                fill="#FF6A1A"
+              />
             </svg>
+            <div
+              style="
+                display: inline-block;
+                background: #FF6A1A;
+                color: #141414;
+                font-size: 22px;
+                font-weight: 900;
+                letter-spacing: 2px;
+                padding: 6px 18px;
+                border-radius: 6px;
+                text-transform: uppercase;
+              "
+            >
+              VÒNG XOÁY SUY THOÁI
+            </div>
           </div>
-          <div data-hf-id="hf-72h9" class="callout-info">
-            <span data-hf-id="hf-0wnb" class="callout-tag">GIAI ĐOẠN 1 • CẠN KIỆT</span>
-            <h2 data-hf-id="hf-l9rd" id="label-1" class="callout-label">MẤT HẾT TÀI SẢN</h2>
-          </div>
-        </div>
 
-        <!-- OVERLAY 2: Icon "ban" (3.29s) & Label "CHỢ BÚA ĐÓNG BĂNG" (3.71s) -->
-        <div data-hf-id="hf-5z8y" id="callout-2" class="callout-card">
-          <div data-hf-id="hf-ly0v" class="icon-box">
-            <svg data-hf-id="hf-htif" class="icon-svg" viewBox="0 0 56 56" width="56" height="56">
-              <rect data-hf-id="hf-zqxv" width="56" height="56" rx="10" fill="#141414" stroke="#FF6A1A" stroke-width="2.5" />
-              <circle data-hf-id="hf-bxq0" class="draw-path ban-draw" cx="28" cy="28" r="16" />
-              <line data-hf-id="hf-p2tj" class="draw-path ban-draw" x1="17" y1="17" x2="39" y2="39" />
-            </svg>
+          <!-- Headline Lines -->
+          <div
+            id="punch-title-1"
+            style="
+              font-size: 68px;
+              font-weight: 900;
+              line-height: 1.15;
+              color: #F7F4EC;
+              letter-spacing: -0.5px;
+              margin-top: 14px;
+            "
+          >
+            KHỦNG HOẢNG
           </div>
-          <div data-hf-id="hf-bhc1" class="callout-info">
-            <span data-hf-id="hf-h3v2" class="callout-tag">GIAI ĐOẠN 2 • TÊ LIỆT</span>
-            <h2 data-hf-id="hf-1q0y" id="label-2" class="callout-label">CHỢ BÚA ĐÓNG BĂNG</h2>
+          <div
+            id="punch-title-2"
+            style="
+              font-size: 76px;
+              font-weight: 900;
+              line-height: 1.15;
+              color: #FF6A1A;
+              letter-spacing: -0.5px;
+            "
+          >
+            KINH TẾ
           </div>
         </div>
-
-        <!-- OVERLAY 3: Punch-phrase "DỪNG TOÀN BỘ SẢN XUẤT" (5.25s) -->
-        <div data-hf-id="hf-nzw6" id="punch-card" class="punch-card">
-          <div data-hf-id="hf-cg9l" class="punch-header">HỆ LỤY TẤT YẾU</div>
-          <div data-hf-id="hf-osoy" id="punch-accent-bar" class="punch-accent-bar"></div>
-          <h1 data-hf-id="hf-2lkg" id="punch-title" class="punch-title">DỪNG TOÀN BỘ SẢN XUẤT</h1>
-          <div data-hf-id="hf-p5bq" class="punch-sub">CÔNG TY MÈO ĐÓNG CỬA • KHÔNG CÒN SỨC MUA</div>
-        </div>
-      </section>
+      </div>
     </div>
 
+    <!-- GSAP seekable timeline script -->
     <script>
-      // Setup progressive SVG path drawing
-      document.querySelectorAll(".draw-path").forEach((p) => {
-        const len = typeof p.getTotalLength === "function" ? Math.ceil(p.getTotalLength()) + 2 : 120;
-        p.style.strokeDasharray = len + "";
-        p.style.strokeDashoffset = len + "";
+      // 1. Measure and prepare SVG paths for deterministic progressive drawing
+      const strokeSelectors = ["#arrow-1", "#arrow-2", "#arrow-3", "#warn-path", "#warn-stem"];
+      const strokeLengths = {};
+      strokeSelectors.forEach(function (selector) {
+        const el = document.querySelector(selector);
+        if (el && typeof el.getTotalLength === "function") {
+          const len = Math.ceil(el.getTotalLength()) + 2;
+          strokeLengths[selector] = len;
+          el.style.strokeDasharray = len;
+          el.style.strokeDashoffset = len;
+        } else {
+          strokeLengths[selector] = 300;
+        }
       });
 
-      // Master paused seekable timeline
+      // 2. Build seekable master timeline
       const tl = gsap.timeline({ paused: true });
 
-      // Wobble-drop entrance at t=0s
+      // ----- SHOT 1 MOTION (0.0s - 4.3s) -----
+      // Strike entrance for Shot 1 viewport
       tl.fromTo(
-        "#stage",
-        { y: -70, rotation: -2, scale: 1.15, opacity: 0 },
-        { y: 0, rotation: 0, scale: 1.1, opacity: 1, duration: 0.8, ease: "power2.out" },
+        "#shot1-viewport",
+        { scale: 1.12, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.45, ease: "power4.out" },
         0
       );
 
-      // Camera motion: Continuous zoom-out revealing the crisis scene
-      tl.to(
-        "#stage",
-        { scale: 1.0, y: 15, duration: 6.25, ease: "sine.out" },
-        0.8
+      // Pan left camera motion across the factory sequence
+      tl.fromTo(
+        "#shot1-cam-pan",
+        { x: 35 },
+        { x: -35, duration: 4.3, ease: "none" },
+        0
       );
 
-      // OVERLAY 1: Icon "fall" at 0.90s, Label "MẤT HẾT TÀI SẢN" at 1.31s
+      // Overlay label: LÀN SÓNG SA THẢI (enters at 0.52s = 401220 - 400700)
       tl.fromTo(
-        "#callout-1",
-        { opacity: 0, scale: 0.88, x: -30 },
-        { opacity: 1, scale: 1, x: 0, duration: 0.4, ease: "power3.out" },
-        0.9
-      );
-      tl.to(
-        ".fall-draw",
-        { strokeDashoffset: 0, duration: 0.45, ease: "power2.out", stagger: 0.1 },
-        0.9
-      );
-      tl.fromTo(
-        "#label-1",
-        { opacity: 0, x: -15 },
-        { opacity: 1, x: 0, duration: 0.35, ease: "power3.out" },
-        1.31
-      );
-      // Clean exit before next beat
-      tl.to(
-        "#callout-1",
-        { opacity: 0, x: -25, scale: 0.95, duration: 0.35, ease: "power2.in" },
-        3.35
+        "#shot1-label",
+        { scale: 0, opacity: 0, y: 30 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.45, ease: "power3.out" },
+        0.52
       );
 
-      // OVERLAY 2: Icon "ban" at 3.29s, Label "CHỢ BÚA ĐÓNG BĂNG" at 3.71s
+      // Economic consequence tag (enters at 1.8s)
       tl.fromTo(
-        "#callout-2",
-        { opacity: 0, scale: 0.88, x: -30 },
-        { opacity: 1, scale: 1, x: 0, duration: 0.4, ease: "power3.out" },
-        3.29
-      );
-      tl.to(
-        ".ban-draw",
-        { strokeDashoffset: 0, duration: 0.45, ease: "power2.out", stagger: 0.12 },
-        3.29
-      );
-      tl.fromTo(
-        "#label-2",
-        { opacity: 0, x: -15 },
-        { opacity: 1, x: 0, duration: 0.35, ease: "power3.out" },
-        3.71
-      );
-      // Clean exit before punch-phrase climax
-      tl.to(
-        "#callout-2",
-        { opacity: 0, x: -25, scale: 0.95, duration: 0.35, ease: "power2.in" },
-        5.1
+        "#shot1-sublabel",
+        { x: -30, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.4, ease: "power3.out" },
+        1.8
       );
 
-      // OVERLAY 3: Punch-phrase "DỪNG TOÀN BỘ SẢN XUẤT" at 5.25s (holds to end)
+      // Shot 1 overlays fade out before cut
+      tl.to(
+        "#shot1-label, #shot1-sublabel",
+        { opacity: 0, duration: 0.2, ease: "power2.in" },
+        4.1
+      );
+
+      // ----- SHOT 2 MOTION (4.3s - 8.0s) -----
+      // Hard cut transition into Shot 2 at 4.3s
       tl.fromTo(
-        "#punch-card",
-        { opacity: 0, scale: 0.86, y: 35 },
-        { opacity: 1, scale: 1, y: 0, duration: 0.5, ease: "power3.out" },
-        5.25
+        "#shot2-scene",
+        { opacity: 0 },
+        { opacity: 1, duration: 0.05, ease: "none" },
+        4.3
+      );
+
+      // Causal chain: Flow Step 1 (enters at 4.45s)
+      tl.fromTo(
+        "#flow-node-1",
+        { scale: 0.8, opacity: 0, y: 20 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.38, ease: "power3.out" },
+        4.45
+      );
+
+      // Arrow 1 draws (Node 1 -> Node 2)
+      tl.fromTo(
+        "#arrow-1",
+        { strokeDashoffset: strokeLengths["#arrow-1"] },
+        { strokeDashoffset: 0, duration: 0.25, ease: "power2.out" },
+        4.7
       );
       tl.fromTo(
-        "#punch-accent-bar",
-        { scaleX: 0 },
-        { scaleX: 1, duration: 0.45, ease: "power2.out" },
-        5.4
+        "#head-1",
+        { scale: 0, opacity: 0, transformOrigin: "50% 50%" },
+        { scale: 1, opacity: 1, duration: 0.12, ease: "power3.out" },
+        4.88
+      );
+
+      // Causal chain: Flow Step 2 (enters at 4.95s)
+      tl.fromTo(
+        "#flow-node-2",
+        { scale: 0.8, opacity: 0, y: 20 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.38, ease: "power3.out" },
+        4.95
+      );
+
+      // Arrow 2 draws (Node 2 -> Node 3)
+      tl.fromTo(
+        "#arrow-2",
+        { strokeDashoffset: strokeLengths["#arrow-2"] },
+        { strokeDashoffset: 0, duration: 0.25, ease: "power2.out" },
+        5.2
       );
       tl.fromTo(
-        "#punch-title",
-        { opacity: 0, y: 15 },
-        { opacity: 1, y: 0, duration: 0.4, ease: "power3.out" },
+        "#head-2",
+        { scale: 0, opacity: 0, transformOrigin: "50% 50%" },
+        { scale: 1, opacity: 1, duration: 0.12, ease: "power3.out" },
+        5.38
+      );
+
+      // Causal chain: Flow Step 3 (enters at 5.45s)
+      tl.fromTo(
+        "#flow-node-3",
+        { scale: 0.8, opacity: 0, y: 20 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.38, ease: "power3.out" },
         5.45
       );
 
-      // Register master timeline with exact composition ID
+      // Arrow 3 loop draws back to Node 1 (closing the recession cycle)
+      tl.fromTo(
+        "#arrow-3",
+        { strokeDashoffset: strokeLengths["#arrow-3"] },
+        { strokeDashoffset: 0, duration: 0.35, ease: "power2.out" },
+        5.7
+      );
+      tl.fromTo(
+        "#head-3",
+        { scale: 0, opacity: 0, transformOrigin: "50% 50%" },
+        { scale: 1, opacity: 1, duration: 0.12, ease: "power3.out" },
+        5.95
+      );
+
+      // Punch Phrase Card arrival: KHỦNG HOẢNG KINH TẾ (enters at 6.14s = 406840 - 400700)
+      tl.fromTo(
+        "#punch-card",
+        { scale: 0.86, opacity: 0, y: 35 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.42, ease: "power4.out" },
+        6.14
+      );
+
+      // Progressive SVG draw of Warning icon (enters at 6.85s = 407550 - 400700)
+      tl.fromTo(
+        "#warn-path",
+        { strokeDashoffset: strokeLengths["#warn-path"] },
+        { strokeDashoffset: 0, duration: 0.3, ease: "power2.out" },
+        6.85
+      );
+      tl.fromTo(
+        "#warn-stem",
+        { strokeDashoffset: strokeLengths["#warn-stem"] },
+        { strokeDashoffset: 0, duration: 0.15, ease: "power2.out" },
+        7.08
+      );
+      tl.fromTo(
+        "#warn-dot",
+        { scale: 0, opacity: 0, transformOrigin: "50% 50%" },
+        { scale: 1, opacity: 1, duration: 0.12, ease: "power3.out" },
+        7.2
+      );
+
+      // Border flash accent on punch card
+      tl.to(
+        "#punch-card",
+        { borderColor: "#F7F4EC", duration: 0.12, ease: "power1.out" },
+        7.24
+      );
+      tl.to(
+        "#punch-card",
+        { borderColor: "#FF6A1A", duration: 0.12, ease: "power1.in" },
+        7.36
+      );
+
+      // 3. Register root timeline for HyperFrames frame seek engine
+      window.__timelines = window.__timelines || {};
       window.__timelines["scene-s45"] = tl;
     </script>
   

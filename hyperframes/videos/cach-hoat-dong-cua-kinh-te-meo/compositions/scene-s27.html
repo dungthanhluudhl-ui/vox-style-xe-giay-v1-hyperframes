@@ -1,429 +1,593 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
   <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF-8" />
   </head>
   <body>
     <template>
-      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap">
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
       <style>
-      *, *::before, *::after {
+      /* hf-safe-colors (tất định từ style-tokens.json) */
+      .hf-text-ink { color: #141414; }
+      .hf-text-light { color: #F7F4EC; }
+      .hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+      .hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+      .hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+      .hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+      * {
         box-sizing: border-box;
       }
       body {
         margin: 0;
         padding: 0;
-        background-color: #F5F0E4;
-        color: #141414;
-        font-family: "Be Vietnam Pro", system-ui, -apple-system, sans-serif;
+        background: #E7E3D9;
+        font-family: "Be Vietnam Pro", sans-serif;
         overflow: hidden;
-        -webkit-font-smoothing: antialiased;
+        color: #141414;
       }
       #root {
         position: relative;
-        width: 100%;
-        height: 100%;
+        width: 1080px;
+        height: 1920px;
         overflow: hidden;
-        background-color: #F5F0E4;
+        background: #E7E3D9;
       }
       .clip {
         position: absolute;
         inset: 0;
       }
 
-      /* CAMERA RIG: ZOOM-OUT LIÊN TỤC TOÀN BỘ 10S */
-      #camera-rig {
-        position: absolute;
-        inset: 0;
-        transform-origin: 50% 50%;
-        will-change: transform;
-      }
-
-      /* VIDEO BACKGROUND VÀ FREEZE FRAME FIT 9:16 */
-      .media-video {
-        position: absolute;
-        inset: 0;
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        display: block;
-      }
-
-      /* VIGNETTE ĐEN MỜ TẠO ĐỘ TƯƠNG PHẢN ĐỌC CHO TEXT/UI */
-      .video-vignette {
+      /* Style tokens: background variant chart (4 ruled horizontal lines + left orange tick marks) */
+      .chart-bg {
         position: absolute;
         inset: 0;
         pointer-events: none;
-        background: linear-gradient(
-          to bottom,
-          rgba(20, 20, 20, 0.82) 0%,
-          rgba(20, 20, 20, 0.26) 18%,
-          rgba(20, 20, 20, 0) 38%,
-          rgba(20, 20, 20, 0.24) 60%,
-          rgba(20, 20, 20, 0.88) 84%,
-          rgba(20, 20, 20, 0.98) 100%
-        );
-        z-index: 5;
+        z-index: 1;
       }
-
-      /* GRAIN GIẤY ĐẶC TRƯNG VOX COLLAGE */
-      .grain-overlay {
+      .chart-grid-line {
         position: absolute;
-        inset: 0;
-        width: 100%;
-        height: 100%;
-        pointer-events: none;
-        mix-blend-mode: multiply;
-        opacity: 0.65;
-        z-index: 10;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: rgba(20, 20, 20, 0.32);
       }
-
-      /* SPLIT HEADER: HAI CÁN CÂN ĐỐI LẬP */
-      #split-header {
+      .chart-tick {
         position: absolute;
-        top: 180px;
-        left: 60px;
-        right: 60px;
-        display: flex;
-        gap: 16px;
-        z-index: 25;
-        will-change: transform, opacity;
-      }
-      .split-tab {
-        flex: 1;
-        background-color: #141414;
-        border: 3.5px solid #FF6A1A;
-        border-radius: 14px;
-        padding: 14px 20px;
-        display: flex;
-        flex-direction: column;
-        gap: 4px;
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
-      }
-      .split-tab.inactive {
-        border-color: rgba(255, 255, 255, 0.2);
-        background-color: rgba(20, 20, 20, 0.92);
-      }
-      .tab-tag {
-        font-size: 18px;
-        font-weight: 700;
-        letter-spacing: 2px;
-        text-transform: uppercase;
-        color: #FF6A1A;
-      }
-      .tab-title {
-        font-size: 24px;
-        font-weight: 900;
-        letter-spacing: -0.5px;
-        text-transform: uppercase;
-        color: #F7F4EC;
-        margin: 0;
-        white-space: nowrap;
+        left: 0;
+        width: 36px;
+        height: 4px;
+        background: #FF6A1A;
+        transform: translateY(-1px);
       }
 
-      /* OVERLAY CONTENT (ĐẶT TRÊN VÙNG CAPTION 374PX THEO SAFE ZONE) */
-      .overlay-content {
-        position: absolute;
-        left: 60px;
-        right: 60px;
-        bottom: 420px;
-        display: flex;
-        flex-direction: column;
-        gap: 16px;
-        z-index: 30;
-        will-change: transform, opacity;
-      }
-      .meta-row {
-        display: flex;
-        align-items: center;
-        gap: 16px;
-      }
-      .icon-wrap {
-        width: 80px;
-        height: 80px;
-        flex-shrink: 0;
-        display: grid;
-        place-items: center;
-        transform-origin: 50% 50%;
-        will-change: transform, opacity;
-      }
-      .hud-icon {
-        width: 100%;
-        height: 100%;
-        filter: drop-shadow(4px 4px 0px #FF6A1A);
-      }
-      .label-badge {
-        display: inline-flex;
-        align-items: center;
-        height: auto;
-        padding: 10px 22px;
-        background-color: #141414;
-        color: #F7F4EC;
-        border: 2.5px solid #FF6A1A;
-        border-radius: 10px;
-        font-size: 26px;
-        font-weight: 700;
-        letter-spacing: 1.5px;
-        text-transform: uppercase;
-        box-shadow: 4px 4px 0px rgba(255, 106, 26, 0.4);
-        will-change: transform, opacity;
-      }
-      .punch-card {
-        background-color: #F7F4EC;
-        border: 4px solid #141414;
-        border-radius: 16px;
-        padding: 22px 30px;
-        box-shadow: 8px 8px 0px #FF6A1A;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        will-change: transform, opacity;
-      }
-      .punch-text {
-        font-size: 56px;
-        font-weight: 900;
-        line-height: 1.25;
-        letter-spacing: -0.5px;
-        text-transform: uppercase;
-        color: #141414;
-        text-align: center;
-        margin: 0;
-        white-space: nowrap;
-      }
-
-      /* THANH CAM CHỮ KÝ THƯƠNG HIỆU CỐ ĐỊNH Ở ĐÁY KHUNG HÌNH */
-      .bottom-orange-bar {
+      /* Signature bottom orange bar */
+      .bottom-signature-bar {
         position: absolute;
         bottom: 0;
         left: 0;
         right: 0;
-        height: 12px;
-        background-color: #FF6A1A;
-        z-index: 100;
+        height: 14px;
+        background: #FF6A1A;
+        z-index: 1000;
+      }
+
+      /* Category tracker / top header (in safe zone Y: 160-240) */
+      .top-header {
+        position: absolute;
+        top: 170px;
+        left: 60px;
+        right: 60px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        z-index: 10;
+      }
+      .header-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        background: #141414;
+        color: #F7F4EC;
+        padding: 10px 22px;
+        border-radius: 999px;
+        font-size: 22px;
+        font-weight: 900;
+        letter-spacing: 1px;
+      }
+      .header-dot {
+        width: 10px;
+        height: 10px;
+        background: #FF6A1A;
+        border-radius: 50%;
+      }
+      .header-sub {
+        font-size: 22px;
+        font-weight: 900;
+        color: #141414;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+      }
+
+      /* Hero container cards (top: 260px, bottom: 1090px, inside safe usable band 160-1390) */
+      .hero-card {
+        position: absolute;
+        left: 60px;
+        top: 260px;
+        width: 960px;
+        height: 830px;
+        background: #F5F0E4;
+        border: 4px solid #141414;
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 12px 14px 0px rgba(20, 20, 20, 0.9);
+        z-index: 10;
+      }
+
+      /* Lower overlay plate for labels/punch-phrases (top: 1120px, height ~190px -> bottom ~1310px < 1390px safe zone) */
+      .editorial-plate {
+        position: absolute;
+        left: 60px;
+        top: 1120px;
+        width: 960px;
+        background: #141414;
+        border-radius: 20px;
+        padding: 26px 36px;
+        border: 3px solid #141414;
+        box-shadow: 10px 12px 0px #FF6A1A;
+        z-index: 20;
+        opacity: 0;
+      }
+      .plate-tag {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 8px;
+      }
+      .plate-tag-dot {
+        width: 10px;
+        height: 10px;
+        background: #FF6A1A;
+        border-radius: 50%;
+      }
+      .plate-tag-text {
+        color: #FF6A1A;
+        font-size: 22px;
+        font-weight: 900;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+      }
+      .plate-headline {
+        font-size: 56px;
+        font-weight: 900;
+        color: #F7F4EC;
+        line-height: 1.25;
+        margin-bottom: 8px;
+      }
+      .plate-desc {
+        font-size: 26px;
+        font-weight: 700;
+        color: #E7E3D9;
+      }
+
+      /* Card internal layout for Shot 1 */
+      .s1-media-frame {
+        width: 100%;
+        height: 570px;
+        overflow: hidden;
+        position: relative;
+        border-bottom: 4px solid #141414;
+        background: #141414;
+      }
+      .s1-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: 75% 35%;
+        display: block;
+        transform-origin: 75% 35%;
+      }
+      .s1-diagram-overlay {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+      }
+      .s1-card-footer {
+        padding: 22px 30px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: #F5F0E4;
+      }
+      .pill-asset {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: #E7E3D9;
+        border: 3px solid #141414;
+        border-radius: 10px;
+        padding: 8px 18px;
+        font-size: 22px;
+        font-weight: 900;
+        color: #141414;
+      }
+      .pill-growth {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: #FF6A1A;
+        border: 3px solid #141414;
+        border-radius: 10px;
+        padding: 8px 18px;
+        font-size: 22px;
+        font-weight: 900;
+        color: #141414;
+      }
+
+      /* Card internal layout for Shot 2 */
+      .s2-media-frame {
+        width: 100%;
+        height: 570px;
+        position: relative;
+        border-bottom: 4px solid #141414;
+        background: #141414;
+        overflow: hidden;
+      }
+      .s2-image {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 130%;
+        height: 100%;
+        object-fit: cover;
+        object-position: 85% 40%;
+        display: block;
+      }
+      .s2-svg-graph {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+      }
+      .s2-card-footer {
+        padding: 22px 30px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: #F5F0E4;
+      }
+      .s2-stamp {
+        position: absolute;
+        padding: 10px 18px;
+        border-radius: 10px;
+        font-size: 20px;
+        font-weight: 900;
+        border: 3px solid #141414;
+        opacity: 0;
+        box-shadow: 4px 6px 0px #141414;
+      }
+      .s2-stamp-high {
+        background: #141414;
+        color: #FF6A1A;
+        top: 60px;
+        left: 270px;
+      }
+      .s2-stamp-low {
+        background: #FF6A1A;
+        color: #141414;
+        bottom: 60px;
+        left: 560px;
+      }
+
+      /* Warning icon layout */
+      .punch-split {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 24px;
+      }
+      .warning-icon-wrap {
+        flex-shrink: 0;
+        width: 90px;
+        height: 90px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
       }
     </style>
 
-    <div data-hf-id="hf-1yw1" id="root" data-composition-id="scene-s27" data-width="1080" data-height="1920" data-duration="10">
-      <!-- CAMERA RIG: BAO TOÀN BỘ NỘI DUNG VIDEO ĐỂ ZOOM-OUT MƯỢT MÀ -->
-      <div data-hf-id="hf-iu6l" id="camera-rig">
-        <!-- 1. VIDEO CHÍNH: 8s NGUỒN PHÂN LOẠI TÀI SẢN (0s -> 8s) -->
-        <video data-hf-id="hf-l1vm" id="vid-main" class="media-video" src="assets/vid-17-cat-sorting-asset-allocation.mp4" data-start="0" data-duration="8" data-media-start="0" muted playsinline preload="auto"></video>
-
-        <!-- 2. FREEZE FRAME: 2s CUỐI GIỮ FRAME CUỐI CỦA VIDEO THEO ĐÚNG SHOTLIST RECIPE (8s -> 10s) -->
-        <video data-hf-id="hf-d4zu" id="vid-freeze" class="media-video" src="assets/vid-17-cat-sorting-asset-allocation.mp4" data-start="8" data-duration="2" data-media-start="7.96" muted playsinline preload="auto"></video>
-      </div>
-
-      <!-- VIGNETTE TĂNG TƯƠNG PHẢN ĐỌC CHO OVERLAYS -->
-      <div data-hf-id="hf-she0" class="video-vignette"></div>
-
-      <!-- GRAIN OVERLAY HẠT GIẤY THẬT -->
-      <svg data-hf-id="hf-5ywr" class="grain-overlay" viewBox="0 0 1080 1920" xmlns="http://www.w3.org/2000/svg">
-        <filter data-hf-id="hf-xd64" id="noiseFilter">
-          <feturbulence data-hf-id="hf-yhp5" type="fractalNoise" baseFrequency="0.75" numOctaves="3" stitchTiles="stitch" />
-          <fecolormatrix data-hf-id="hf-e4c2" type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 0.18 0" />
-        </filter>
-        <rect data-hf-id="hf-3bax" width="100%" height="100%" filter="url(#noiseFilter)" />
-      </svg>
-
-      <!-- SPLIT HEADER TRACKER: CÁN CÂN ĐỐI LẬP (0s -> 10s) -->
-      <div data-hf-id="hf-e7rj" id="split-header">
-        <div data-hf-id="hf-rrch" id="tab-tieusan" class="split-tab">
-          <span data-hf-id="hf-27uj" class="tab-tag">01. TIÊU SẢN</span>
-          <h2 data-hf-id="hf-4kpm" class="tab-title">GIẢM THEO THỜI GIAN</h2>
+    <div
+      id="root"
+      data-composition-id="scene-s27"
+      data-width="1080"
+      data-height="1920"
+      data-duration="10"
+    >
+      <!-- Background Variant: chart (4 horizontal lines at 20%, 40%, 60%, 80% height + orange ticks) -->
+      <div class="chart-bg">
+        <div class="chart-grid-line" style="top: 384px;">
+          <div class="chart-tick"></div>
         </div>
-        <div data-hf-id="hf-tcr6" id="tab-phongthu" class="split-tab inactive">
-          <span data-hf-id="hf-i8ug" class="tab-tag">02. PHÒNG THỦ</span>
-          <h2 data-hf-id="hf-vik3" class="tab-title">CHỐNG LẠM PHÁT</h2>
+        <div class="chart-grid-line" style="top: 768px;">
+          <div class="chart-tick"></div>
+        </div>
+        <div class="chart-grid-line" style="top: 1152px;">
+          <div class="chart-tick"></div>
+        </div>
+        <div class="chart-grid-line" style="top: 1536px;">
+          <div class="chart-tick"></div>
         </div>
       </div>
 
-      <!-- PHASE 1 TIMED CLIP: TIÊU SẢN HAO MÒN (CỬA SỔ HIỂN THỊ ĐỘC LẬP: 0.5s -> 5.1s) -->
-      <div data-hf-id="hf-qgk5" id="phase-1-clip" class="clip" data-start="0.5" data-duration="4.6">
-        <div data-hf-id="hf-junp" class="overlay-content" id="phase-1-content">
-          <div data-hf-id="hf-gxgs" class="meta-row">
-            <div data-hf-id="hf-kelm" class="icon-wrap" id="icon-fall-wrap">
-              <svg data-hf-id="hf-3r99" class="hud-icon" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <rect data-hf-id="hf-erf7" x="4" y="4" width="72" height="72" rx="16" fill="#141414" stroke="#FF6A1A" stroke-width="3.5" />
-                <path data-hf-id="hf-6hoa" id="path-fall-line" d="M18 24 L36 42 L48 30 L62 56" fill="none" stroke="#F7F4EC" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round" />
-                <path data-hf-id="hf-f3iq" id="path-fall-arrow" d="M48 56 H62 V42" fill="none" stroke="#FF6A1A" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round" />
+      <!-- Signature bottom orange accent bar -->
+      <div class="bottom-signature-bar"></div>
+
+      <!-- ================= SHOT S27-1 (0.0s - 5.1s) ================= -->
+      <section id="shot-1" class="clip" data-start="0" data-duration="5.1">
+        <!-- Top category header -->
+        <div class="top-header">
+          <div class="header-badge">
+            <span class="header-dot"></span>
+            <span>QUY LUẬT TÀI CHÍNH</span>
+          </div>
+          <div class="header-sub">PHÂN LOẠI TÀI SẢN</div>
+        </div>
+
+        <!-- Main Collage Card: Sổ đỏ / Nhà đất tăng trưởng -->
+        <div id="card-1" class="hero-card">
+          <div class="s1-media-frame">
+            <img
+              id="img-s1"
+              class="s1-image"
+              src="assets/img-11-paper-cutout-asset-allocation.jpeg"
+              alt="Mèo phân loại tài sản vào các hộp"
+            />
+            <!-- Upward growth diagram SVG -->
+            <svg class="s1-diagram-overlay" viewBox="0 0 960 570" preserveAspectRatio="none">
+              <path
+                id="growth-path"
+                d="M 120 480 Q 420 420 860 130"
+                fill="none"
+                stroke="#FF6A1A"
+                stroke-width="10"
+                stroke-linecap="round"
+              />
+              <circle id="growth-dot" cx="860" cy="130" r="14" fill="#141414" stroke="#FF6A1A" stroke-width="5" style="opacity: 0;" />
+            </svg>
+            <!-- Badge overlay inside media -->
+            <div
+              id="growth-badge"
+              style="position: absolute; top: 80px; right: 80px; background: #141414; color: #F7F4EC; border: 3px solid #FF6A1A; border-radius: 12px; padding: 10px 20px; font-size: 20px; font-weight: 900; opacity: 0;"
+            >
+              GIÁ TRỊ TĂNG DẦN
+            </div>
+          </div>
+          <div class="s1-card-footer">
+            <div class="pill-asset">SỔ ĐỎ // BẤT ĐỘNG SẢN</div>
+            <div class="pill-growth">TÍCH LUỸ THEO THỜI GIAN</div>
+          </div>
+        </div>
+
+        <!-- Editorial Plate Overlay (At: 2.22s, hold through shot end) -->
+        <div id="label-s27-1" class="editorial-plate">
+          <div class="plate-tag">
+            <div class="plate-tag-dot"></div>
+            <div class="plate-tag-text">ĐỊNH NGHĨA KINH TẾ</div>
+          </div>
+          <div class="plate-headline">TÀI SẢN SINH LỜI</div>
+          <div class="plate-desc">Thứ tích luỹ và tự gia tăng giá trị theo thời gian</div>
+        </div>
+      </section>
+
+      <!-- ================= SHOT S27-2 (5.1s - 10.0s) ================= -->
+      <section id="shot-2" class="clip" data-start="5.1" data-duration="4.9">
+        <!-- Top category header -->
+        <div class="top-header">
+          <div class="header-badge">
+            <span class="header-dot"></span>
+            <span>RỦI RO THỊ TRƯỜNG</span>
+          </div>
+          <div class="header-sub">BIẾN ĐỘNG CAO</div>
+        </div>
+
+        <!-- Main Card: Pan sang biểu tượng tiền kỹ thuật số & đồ thị hình sin dao động mạnh -->
+        <div id="card-2" class="hero-card">
+          <div class="s2-media-frame">
+            <!-- Asset img-11 hiển thị với camera pan-right -->
+            <img
+              id="img-s2"
+              class="s2-image"
+              src="assets/img-11-paper-cutout-asset-allocation.jpeg"
+              alt="Minh hoạ tiền kỹ thuật số và startup mạo hiểm"
+            />
+            <!-- Volatile SVG graph overlay -->
+            <svg class="s2-svg-graph" viewBox="0 0 960 570">
+              <!-- Grid baseline -->
+              <line x1="60" y1="285" x2="900" y2="285" stroke="#141414" stroke-width="3" stroke-dasharray="10 8" />
+              <rect x="68" y="248" width="112" height="34" rx="6" fill="#141414" />
+              <text x="78" y="272" font-family="Be Vietnam Pro" font-size="18" font-weight="900" fill="#F7F4EC">MỐC 0%</text>
+
+              <!-- Chaotic volatile curve -->
+              <path
+                id="sine-path"
+                d="M 60 285 Q 160 285 240 110 T 400 480 T 560 120 T 720 460 T 890 220"
+                fill="none"
+                stroke="#FF6A1A"
+                stroke-width="10"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+
+            <!-- Peak and Valley stamps -->
+            <div id="peak-badge" class="s2-stamp s2-stamp-high">+420% BIẾN ĐỘNG</div>
+            <div id="valley-badge" class="s2-stamp s2-stamp-low">-85% MẤT VỐN</div>
+          </div>
+          <div class="s2-card-footer">
+            <div class="pill-asset">TIỀN ẢO &amp; STARTUP</div>
+            <div class="pill-growth">DAO ĐỘNG KHÓ ĐOÁN</div>
+          </div>
+        </div>
+
+        <!-- Editorial Punch Plate (At: 8.48s, Warning Icon at 8.98s) -->
+        <div id="overlay-s27-2" class="editorial-plate">
+          <div class="punch-split">
+            <div id="punch-text-col">
+              <div class="plate-tag">
+                <div class="plate-tag-dot"></div>
+                <div class="plate-tag-text">MẠO HIỂM CAO</div>
+              </div>
+              <div class="plate-headline">ĐẦU TƯ MẠO HIỂM</div>
+              <div class="plate-desc">Ranh giới mong manh giữa cơ hội và nguy cơ mất trắng</div>
+            </div>
+
+            <!-- Hand-drawn Warning SVG Icon -->
+            <div id="icon-warning" class="warning-icon-wrap">
+              <svg width="86" height="86" viewBox="0 0 86 86" fill="none">
+                <polygon
+                  points="43,9 81,75 5,75"
+                  fill="#FF6A1A"
+                  stroke="#141414"
+                  stroke-width="5"
+                  stroke-linejoin="round"
+                />
+                <line x1="43" y1="32" x2="43" y2="52" stroke="#141414" stroke-width="7" stroke-linecap="round" />
+                <circle cx="43" cy="64" r="4.5" fill="#141414" />
               </svg>
             </div>
-            <div data-hf-id="hf-f4dy" class="label-badge" id="label-1">ĐIỆN THOẠI, XE, MÁY TÍNH</div>
-          </div>
-          <div data-hf-id="hf-yjst" class="punch-card" id="punch-1">
-            <h1 data-hf-id="hf-f7h6" class="punch-text">TIÊU SẢN HAO MÒN</h1>
           </div>
         </div>
-      </div>
-
-      <!-- PHASE 2 TIMED CLIP: TÀI SẢN PHÒNG THỦ (CỬA SỔ HIỂN THỊ ĐỘC LẬP: 5.5s -> 10.0s, KHÔNG CHỒNG LẤN PHASE 1) -->
-      <div data-hf-id="hf-bboo" id="phase-2-clip" class="clip" data-start="5.5" data-duration="4.5">
-        <div data-hf-id="hf-x86u" class="overlay-content" id="phase-2-content">
-          <div data-hf-id="hf-eosk" class="meta-row">
-            <div data-hf-id="hf-s357" class="icon-wrap" id="icon-check-wrap">
-              <svg data-hf-id="hf-9ntd" class="hud-icon" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <rect data-hf-id="hf-wc6r" x="4" y="4" width="72" height="72" rx="16" fill="#141414" stroke="#FF6A1A" stroke-width="3.5" />
-                <path data-hf-id="hf-mhtc" id="path-check-mark" d="M22 42 L34 54 L58 26" fill="none" stroke="#FF6A1A" stroke-width="6.5" stroke-linecap="round" stroke-linejoin="round" />
-              </svg>
-            </div>
-            <div data-hf-id="hf-qoqj" class="label-badge" id="label-2">MUA VÀNG CHỐNG LẠM PHÁT</div>
-          </div>
-          <div data-hf-id="hf-2hwu" class="punch-card" id="punch-2">
-            <h1 data-hf-id="hf-4nif" class="punch-text">TÀI SẢN PHÒNG THỦ</h1>
-          </div>
-        </div>
-      </div>
-
-      <!-- THANH CAM NHẬN DIỆN THƯƠNG HIỆU CỐ ĐỊNH Ở ĐÁY -->
-      <div data-hf-id="hf-2ykk" class="bottom-orange-bar"></div>
+      </section>
     </div>
 
-    <!-- GSAP DETERMINISTIC SEEKABLE TIMELINE -->
+    <!-- GSAP Seekable Timeline Script -->
     <script>
-      // 1. Đo lường chính xác hình học các nét vẽ SVG (phần tử render visible trong DOM nên getTotalLength chuẩn 100%)
-      const pathFall = document.getElementById("path-fall-line");
-      const lenFall = pathFall ? Math.ceil(pathFall.getTotalLength()) || 75 : 75;
-      if (pathFall) {
-        pathFall.style.strokeDasharray = `${lenFall}`;
-        pathFall.style.strokeDashoffset = `${lenFall}`;
-      }
-
-      const pathArrow = document.getElementById("path-fall-arrow");
-      const lenArrow = pathArrow ? Math.ceil(pathArrow.getTotalLength()) || 35 : 35;
-      if (pathArrow) {
-        pathArrow.style.strokeDasharray = `${lenArrow}`;
-        pathArrow.style.strokeDashoffset = `${lenArrow}`;
-      }
-
-      const pathCheck = document.getElementById("path-check-mark");
-      const lenCheck = pathCheck ? Math.ceil(pathCheck.getTotalLength()) || 65 : 65;
-      if (pathCheck) {
-        pathCheck.style.strokeDasharray = `${lenCheck}`;
-        pathCheck.style.strokeDashoffset = `${lenCheck}`;
-      }
-
-      // 2. Khởi tạo GSAP Timeline bắt buộc paused: true
+      // Initialize single paused timeline
       const tl = gsap.timeline({ paused: true });
 
-      // 3. CAMERA MOTION: Zoom-out từ 1.08 về 1.00 trong suốt 10s (áp dụng trên camera rig chứa cả video và freeze frame)
-      tl.fromTo(
-        "#camera-rig",
-        { scale: 1.08 },
-        { scale: 1.0, duration: 10, ease: "none" },
-        0
-      );
+      // Path length calculation for SVG stroke animations
+      const growthPath = document.querySelector("#growth-path");
+      let growthLen = 1000;
+      if (growthPath) {
+        growthLen = growthPath.getTotalLength();
+        growthPath.style.strokeDasharray = growthLen;
+        growthPath.style.strokeDashoffset = growthLen;
+      }
 
-      // 4. ENTRANCE PUNCH: Header xuất hiện dứt khoát
+      const sinePath = document.querySelector("#sine-path");
+      let sineLen = 1500;
+      if (sinePath) {
+        sineLen = sinePath.getTotalLength();
+        sinePath.style.strokeDasharray = sineLen;
+        sinePath.style.strokeDashoffset = sineLen;
+      }
+
+      // ================= SHOT S27-1 ANIMATION (0.0s - 5.1s) =================
+      // Wobble-drop entrance on Card 1
       tl.fromTo(
-        "#split-header",
-        { y: -40, opacity: 0 },
-        { y: 0, opacity: 1, duration: 0.45, ease: "power3.out" },
+        "#card-1",
+        { y: -180, rotation: -3, opacity: 0 },
+        { y: 0, rotation: 0, opacity: 1, duration: 0.75, ease: "power3.out" },
         0.15
       );
 
-      // 5. PHASE 1: TIÊU SẢN HAO MÒN (từ 0.83s đến 4.4s)
+      // Camera zoom-in motion on image in Shot 1
       tl.fromTo(
-        "#phase-1-content",
-        { opacity: 0 },
-        { opacity: 1, duration: 0.3, ease: "power2.out" },
-        0.83
+        "#img-s1",
+        { scale: 1.0 },
+        { scale: 1.15, duration: 5.1, ease: "none" },
+        0
       );
-      // Icon fall xuất hiện & tự vẽ nét dốc + mũi tên lao xuống
+
+      // Growth curve SVG path trace
+      if (growthPath) {
+        tl.fromTo(
+          growthPath,
+          { strokeDashoffset: growthLen },
+          { strokeDashoffset: 0, duration: 1.5, ease: "power2.out" },
+          0.8
+        );
+      }
       tl.fromTo(
-        "#icon-fall-wrap",
+        "#growth-dot",
         { scale: 0, opacity: 0 },
-        { scale: 1, opacity: 1, duration: 0.45, ease: "power3.out" },
-        0.83
+        { scale: 1, opacity: 1, duration: 0.35, ease: "power3.out" },
+        2.1
       );
       tl.fromTo(
-        "#path-fall-line",
-        { strokeDashoffset: lenFall },
-        { strokeDashoffset: 0, duration: 0.45, ease: "power2.out" },
-        0.95
-      );
-      tl.fromTo(
-        "#path-fall-arrow",
-        { strokeDashoffset: lenArrow },
-        { strokeDashoffset: 0, duration: 0.35, ease: "power2.out" },
-        1.30
+        "#growth-badge",
+        { scale: 0, opacity: 0, y: -15 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.45, ease: "power3.out" },
+        1.7
       );
 
-      // Label 1: ĐIỆN THOẠI, XE, MÁY TÍNH (atMs: 241070 -> t = 1.37s)
+      // Shot 1 Overlay Label at 2.22s (251920ms rel 0)
       tl.fromTo(
-        "#label-1",
-        { opacity: 0, x: -30 },
-        { opacity: 1, x: 0, duration: 0.5, ease: "power3.out" },
-        1.37
+        "#label-s27-1",
+        { scale: 0.9, opacity: 0, y: 30 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.5, ease: "power3.out" },
+        2.22
       );
 
-      // Punch phrase 1: TIÊU SẢN HAO MÒN (atMs: 242130 -> t = 2.43s)
+      // ================= SHOT S27-2 ANIMATION (5.1s - 10.0s) =================
+      // Card 2 entrance at 5.15s (cut transition into pan-right motion)
       tl.fromTo(
-        "#punch-1",
-        { opacity: 0, y: 24, scale: 0.92 },
-        { opacity: 1, y: 0, scale: 1.0, duration: 0.55, ease: "power3.out" },
-        2.43
+        "#card-2",
+        { x: 130, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.65, ease: "power3.out" },
+        5.15
       );
 
-      // Outro Phase 1: Fade out mượt mà trước khi clip Phase 1 kết thúc ở 5.1s
+      // Camera pan-right motion on image img-11 in Shot 2
       tl.fromTo(
-        "#phase-1-content",
-        { opacity: 1, y: 0 },
-        { opacity: 0, y: -20, duration: 0.4, ease: "power2.in" },
-        4.35
+        "#img-s2",
+        { x: 0 },
+        { x: -160, duration: 4.9, ease: "none" },
+        5.1
       );
 
-      // 6. CHUYỂN TRẠNG THÁI SPLIT HEADER (5.2s -> 5.5s)
-      tl.fromTo(
-        "#tab-tieusan",
-        { borderColor: "#FF6A1A", backgroundColor: "#141414" },
-        { borderColor: "rgba(255, 255, 255, 0.2)", backgroundColor: "rgba(20, 20, 20, 0.92)", duration: 0.35, ease: "power2.out" },
-        5.2
-      );
-      tl.fromTo(
-        "#tab-phongthu",
-        { borderColor: "rgba(255, 255, 255, 0.2)", backgroundColor: "rgba(20, 20, 20, 0.92)" },
-        { borderColor: "#FF6A1A", backgroundColor: "#141414", duration: 0.35, ease: "power2.out" },
-        5.35
-      );
+      // Volatile sine wave trace
+      if (sinePath) {
+        tl.fromTo(
+          sinePath,
+          { strokeDashoffset: sineLen },
+          { strokeDashoffset: 0, duration: 1.8, ease: "power1.inOut" },
+          5.4
+        );
+      }
 
-      // 7. PHASE 2: TÀI SẢN PHÒNG THỦ (từ 6.61s đến 10.0s)
+      // Volatility callout badges
       tl.fromTo(
-        "#phase-2-content",
-        { opacity: 0 },
-        { opacity: 1, duration: 0.3, ease: "power2.out" },
-        6.61
-      );
-      // Icon check xuất hiện & tự vẽ nét tickmark cam
-      tl.fromTo(
-        "#icon-check-wrap",
+        "#peak-badge",
         { scale: 0, opacity: 0 },
-        { scale: 1, opacity: 1, duration: 0.45, ease: "power3.out" },
-        6.61
+        { scale: 1, opacity: 1, duration: 0.4, ease: "power3.out" },
+        6.7
       );
       tl.fromTo(
-        "#path-check-mark",
-        { strokeDashoffset: lenCheck },
-        { strokeDashoffset: 0, duration: 0.5, ease: "power2.out" },
-        6.75
+        "#valley-badge",
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.4, ease: "power3.out" },
+        7.3
       );
 
-      // Label 2: MUA VÀNG CHỐNG LẠM PHÁT (atMs: 247020 -> t = 7.32s)
+      // Punch phrase overlay "ĐẦU TƯ MẠO HIỂM" at 8.48s (258180ms rel 0)
       tl.fromTo(
-        "#label-2",
-        { opacity: 0, x: -30 },
-        { opacity: 1, x: 0, duration: 0.5, ease: "power3.out" },
-        7.32
+        "#overlay-s27-2",
+        { scale: 0.94, opacity: 0, y: 30 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.45, ease: "power3.out" },
+        8.48
       );
 
-      // Punch phrase 2: TÀI SẢN PHÒNG THỦ (atMs: 248100 -> t = 8.40s)
+      // Warning icon pop at 8.98s (258680ms rel 0)
       tl.fromTo(
-        "#punch-2",
-        { opacity: 0, y: 24, scale: 0.92 },
-        { opacity: 1, y: 0, scale: 1.0, duration: 0.55, ease: "power3.out" },
-        8.40
+        "#icon-warning",
+        { scale: 0, rotation: -25, opacity: 0 },
+        { scale: 1, rotation: 0, opacity: 1, duration: 0.45, ease: "power3.out" },
+        8.98
       );
 
-      // 8. ĐĂNG KÝ DUY NHẤT VÀO WINDOW.__TIMELINES VỚI ID "scene-s27"
+      // Register timeline for seekable HyperFrames engine
+      window.__timelines = window.__timelines || {};
       window.__timelines["scene-s27"] = tl;
     </script>
   

@@ -1,298 +1,524 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
   <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF-8" />
   </head>
   <body>
     <template>
-      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap">
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
       <style>
-      * { box-sizing: border-box; }
-      html, body {
-        margin: 0; padding: 0; width: 100%; height: 100%;
-        overflow: hidden; background: #E7E3D9;
+      /* hf-safe-colors (tất định từ style-tokens.json) */
+      .hf-text-ink { color: #141414; }
+      .hf-text-light { color: #F7F4EC; }
+      .hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+      .hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+      .hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+      .hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #E7E3D9;
         font-family: "Be Vietnam Pro", sans-serif;
-        color: #141414; -webkit-font-smoothing: antialiased;
+        overflow: hidden;
       }
       #root {
-        position: relative; width: 100%; height: 100%;
-        overflow: hidden; background: #E7E3D9;
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: #E7E3D9;
       }
-      .clip { position: absolute; inset: 0; }
-      #camera-rig {
-        position: absolute; inset: 0;
-        transform-origin: 50% 45%; will-change: transform;
-      }
-      .bg-photo {
-        position: absolute; inset: 0; width: 100%; height: 100%;
-        object-fit: cover; opacity: 0.35;
-        filter: grayscale(90%) contrast(125%);
-        mix-blend-mode: multiply; pointer-events: none;
-      }
-      .grid-overlay {
-        position: absolute; inset: 0; background-size: 84px 84px;
-        background-image:
-          linear-gradient(to right, rgba(20, 20, 20, 0.22) 1.5px, transparent 1.5px),
-          linear-gradient(to bottom, rgba(20, 20, 20, 0.22) 1.5px, transparent 1.5px);
+
+      /* Base layout for timed visual clips: z-index 10 to always sit above video background */
+      .clip {
+        position: absolute;
+        inset: 0;
+        z-index: 10;
         pointer-events: none;
       }
-      .grain-overlay {
-        position: absolute; inset: 0; opacity: 0.18;
-        mix-blend-mode: multiply; pointer-events: none;
-        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+
+      /* Untimed video wrapper: handles spiral entrance and camera zoom-in at z-index 0 */
+      #video-wrapper {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+        z-index: 0;
+        transform-origin: 50% 50%;
       }
-      .brand-bottom-bar {
-        position: absolute; bottom: 0; left: 0; right: 0;
-        height: 14px; background: #FF6A1A; z-index: 100;
+      #vid-10-player {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
       }
-      .safe-container {
-        position: absolute; inset: 0;
-        padding: 170px 50px 390px 50px;
-        display: flex; flex-direction: column; justify-content: flex-start; gap: 28px;
+
+      /* Signature Vox orange bottom bar */
+      #brand-bottom-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 12px;
+        background-color: #FF6A1A;
+        z-index: 100;
       }
-      .header-badge {
-        display: inline-flex; align-items: center; gap: 12px;
-        align-self: flex-start; background: #141414; color: #F7F4EC;
-        padding: 10px 22px; font-weight: 900; font-size: 26px;
-        letter-spacing: 2px; text-transform: uppercase; border-radius: 4px;
-        box-shadow: 4px 4px 0 #FF6A1A;
+
+      /* Top Flow HUD: Circular tax-evasion paradox */
+      #flow-container {
+        position: absolute;
+        top: 180px;
+        left: 50px;
+        right: 50px;
+        height: auto;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 14px;
       }
-      .header-badge .tag-dot {
-        width: 12px; height: 12px; border-radius: 50%; background: #FF6A1A;
-      }
-      .diagram-card {
-        position: relative; width: 100%; height: 860px;
-        background: #F5F0E4; border: 4px solid #141414;
-        box-shadow: 14px 14px 0 #141414; border-radius: 6px;
-        padding: 24px; display: flex; flex-direction: column;
-      }
-      .card-topbar {
-        display: flex; justify-content: space-between; align-items: center;
-        border-bottom: 2px dashed rgba(20, 20, 20, 0.4); padding-bottom: 12px;
-      }
-      .card-title {
-        font-size: 30px; font-weight: 900; color: #141414; text-transform: uppercase;
-      }
-      .card-status {
-        background: #FF6A1A; color: #141414; font-size: 22px; font-weight: 900;
-        padding: 4px 14px; border-radius: 3px; border: 2px solid #141414;
-      }
-      .diagram-stage {
-        position: relative; width: 100%; flex: 1; overflow: hidden;
-      }
-      .fish-mountain-base {
-        position: absolute; left: 20px; bottom: 20px;
-        width: 490px; height: 430px; transform-origin: bottom center;
-      }
-      .fish-mountain-cut {
-        position: absolute; right: 30px; bottom: 30px;
-        width: 320px; height: 300px; transform-origin: center;
-      }
-      .cut-line-svg {
-        position: absolute; inset: 0; width: 100%; height: 100%;
-        pointer-events: none;
-      }
-      .tax-scissors-wrap {
-        position: absolute; right: 180px; top: 190px;
-        width: 220px; height: 220px; transform-origin: 110px 110px;
-        pointer-events: none;
-      }
-      .alarm-stamp {
-        position: absolute; right: 40px; bottom: 40px;
-        background: #141414; border: 4px solid #FF6A1A; color: #F7F4EC;
-        font-size: 30px; font-weight: 900; letter-spacing: 2px;
-        padding: 12px 20px; border-radius: 6px; text-transform: uppercase;
-        box-shadow: 6px 6px 0 rgba(255, 106, 26, 0.4); transform-origin: center;
-        z-index: 20;
-      }
-      .overlay-badge {
-        position: absolute; top: 20px;
-        background: #141414; border: 3px solid #141414;
-        border-left: 10px solid #FF6A1A; padding: 12px 20px;
-        display: flex; align-items: center; gap: 14px;
-        box-shadow: 6px 6px 0 rgba(20,20,20,0.25);
-        border-radius: 4px; z-index: 15;
-      }
-      .overlay-badge .label-text {
-        font-size: 26px; font-weight: 900; color: #F7F4EC; letter-spacing: 1px;
-      }
-      #overlay-profit { left: 20px; }
-      #overlay-tax-claim { right: 20px; }
-      .punch-phrase-card {
-        width: 100%; background: #141414; border: 4px solid #FF6A1A;
-        border-radius: 6px; padding: 26px 20px; text-align: center;
-        box-shadow: 12px 12px 0 #FF6A1A; transform-origin: center bottom;
-      }
-      .punch-phrase-text {
-        font-size: 60px; font-weight: 900; line-height: 1.25;
-        color: #F7F4EC; text-transform: uppercase; margin: 0;
-      }
-      .punch-subtag {
-        display: inline-block; margin-top: 10px; background: #FF6A1A;
-        color: #141414; font-size: 22px; font-weight: 900;
-        padding: 4px 16px; border-radius: 4px; letter-spacing: 2px;
+
+      .header-pill {
+        display: inline-flex;
+        align-items: center;
+        padding: 8px 24px;
+        background-color: #FF6A1A;
+        color: #141414;
+        font-size: 22px;
+        font-weight: 900;
+        letter-spacing: 1.5px;
         text-transform: uppercase;
+        border-radius: 4px;
+        box-shadow: 4px 4px 0px #141414;
+      }
+
+      .flow-card {
+        width: 100%;
+        height: auto;
+        background-color: #141414;
+        border: 3px solid #141414;
+        border-radius: 10px;
+        padding: 20px 22px;
+        box-shadow: 6px 6px 0px #FF6A1A;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+
+      .flow-title {
+        color: #F7F4EC;
+        font-size: 30px;
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin: 0;
+        text-align: center;
+      }
+
+      .flow-steps {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 6px;
+        padding: 2px 0;
+      }
+
+      .flow-node {
+        flex: 1;
+        height: auto;
+        background-color: #141414;
+        border: 2px solid #FF6A1A;
+        border-radius: 6px;
+        padding: 10px 6px;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+        transform-origin: 50% 50%;
+      }
+
+      .flow-node-title {
+        color: #F7F4EC;
+        font-size: 19px;
+        font-weight: 900;
+        text-transform: uppercase;
+        line-height: 1.2;
+      }
+
+      .flow-node-badge {
+        background-color: #FF6A1A;
+        color: #141414;
+        font-size: 15px;
+        font-weight: 900;
+        padding: 3px 8px;
+        border-radius: 4px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        line-height: 1.2;
+      }
+
+      .flow-arrow-svg {
+        width: 40px;
+        height: 24px;
+        flex-shrink: 0;
+      }
+
+      .flow-loop-track {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        background-color: #141414;
+        border: 2px solid #FF6A1A;
+        padding: 8px 16px;
+        border-radius: 6px;
+      }
+
+      .flow-loop-text {
+        color: #F7F4EC;
+        font-size: 18px;
+        font-weight: 900;
+        letter-spacing: 0.5px;
+      }
+
+      /* Overlay 1: Label ("GIÚP CHÍNH BẢN THÂN") */
+      #label-card-wrap {
+        position: absolute;
+        top: 1040px;
+        left: 60px;
+        right: 60px;
+        height: auto;
+        display: flex;
+        justify-content: center;
+      }
+
+      .label-card {
+        width: 100%;
+        height: auto;
+        background-color: #141414;
+        border: 3px solid #141414;
+        border-radius: 8px;
+        padding: 24px 32px;
+        box-shadow: 6px 6px 0px #FF6A1A;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .tag-mini {
+        align-self: flex-start;
+        background-color: #FF6A1A;
+        color: #141414;
+        font-size: 18px;
+        font-weight: 900;
+        padding: 4px 12px;
+        border-radius: 4px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+
+      .label-headline {
+        color: #F7F4EC;
+        font-size: 56px;
+        font-weight: 900;
+        text-transform: uppercase;
+        line-height: 1.15;
+        letter-spacing: -0.5px;
+        margin: 0;
+      }
+
+      .label-sub {
+        color: #FF6A1A;
+        font-size: 24px;
+        font-weight: 900;
+        letter-spacing: 0.5px;
+        margin: 0;
+      }
+
+      /* Overlay 2: Punch Phrase ("TỰ TÀI TRỢ CHO MÌNH") */
+      #punch-card-wrap {
+        position: absolute;
+        top: 960px;
+        left: 50px;
+        right: 50px;
+        height: auto;
+        display: flex;
+        justify-content: center;
+      }
+
+      .punch-card {
+        width: 100%;
+        height: auto;
+        background-color: #141414;
+        border: 4px solid #FF6A1A;
+        border-radius: 10px;
+        padding: 30px 28px;
+        box-shadow: 8px 8px 0px #141414;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .stamp-badge {
+        position: absolute;
+        right: 28px;
+        top: 24px;
+        background-color: #FF6A1A;
+        color: #141414;
+        border: 3px solid #141414;
+        padding: 6px 14px;
+        font-size: 26px;
+        font-weight: 900;
+        text-transform: uppercase;
+        border-radius: 6px;
+        letter-spacing: 1px;
+        transform-origin: 50% 50%;
+      }
+
+      .punch-tag {
+        align-self: flex-start;
+        background-color: #FF6A1A;
+        color: #141414;
+        font-size: 20px;
+        font-weight: 900;
+        padding: 6px 14px;
+        border-radius: 4px;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+      }
+
+      .punch-headline {
+        color: #F7F4EC;
+        font-size: 60px;
+        font-weight: 900;
+        text-transform: uppercase;
+        line-height: 1.12;
+        letter-spacing: -0.5px;
+        margin: 0;
+      }
+
+      .punch-footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background-color: #FF6A1A;
+        color: #141414;
+        padding: 12px 18px;
+        border-radius: 6px;
+      }
+
+      .punch-footer-text {
+        color: #141414;
+        font-size: 22px;
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
       }
     </style>
 
-    <div data-hf-id="hf-wyfg" id="root" data-composition-id="scene-s08" data-width="1080" data-height="1920" data-duration="7.04">
-      <section data-hf-id="hf-sa5z" id="scene-s08" class="clip" data-start="0" data-duration="7.04">
-        <div data-hf-id="hf-iu6l" id="camera-rig">
-          <img data-hf-id="hf-mys5" class="bg-photo" src="assets/img-14-paper-cutout-shady-forest-deal.jpeg" alt="Background">
-          <div data-hf-id="hf-gycn" class="grid-overlay"></div>
-          <div data-hf-id="hf-k01a" class="grain-overlay"></div>
+    <div
+      id="root"
+      data-composition-id="scene-s08"
+      data-start="0"
+      data-width="1080"
+      data-height="1920"
+      data-duration="8.46"
+    >
+      <!-- Background Video: untimed wrapper for camera movement (zoom-in / spiral) at z-index 0 -->
+      <div id="video-wrapper">
+        <video
+          id="vid-10-player"
+          src="assets/vid-10-charity-fund-tax-evasion.mp4"
+          muted
+          playsinline
+          data-start="0"
+          data-duration="8.46"
+          data-media-start="0"
+        ></video>
+      </div>
 
-          <div data-hf-id="hf-6h8d" class="safe-container">
-            <div data-hf-id="hf-hqob" id="header-tag" class="header-badge">
-              <span data-hf-id="hf-o6x9" class="tag-dot"></span>
-              <span data-hf-id="hf-6p3m">HỒ SƠ TÀI CHÍNH // MAFIA BÁNH</span>
-            </div>
+      <!-- Signature Vox bottom accent line -->
+      <div id="brand-bottom-bar"></div>
 
-            <div data-hf-id="hf-xp4y" id="diagram-card" class="diagram-card">
-              <div data-hf-id="hf-f6tz" class="card-topbar">
-                <span data-hf-id="hf-k2vj" class="card-title">KHO TÍCH LŨY CÁ</span>
-                <span data-hf-id="hf-ddu3" class="card-status">DOANH THU ĐỈNH ĐIỂM</span>
+      <!-- Overlay HUD: Context & Circular Tax Loop (active from t=0.6 to end, z-index 10) -->
+      <div id="clip-context" class="clip" data-start="0.6" data-duration="7.86">
+        <div id="flow-container">
+          <div id="flow-kicker" class="header-pill">VÒNG LẶP NÚP BÓNG TỪ THIỆN</div>
+
+          <div id="flow-main-card" class="flow-card">
+            <h2 class="flow-title">CHU TRÌNH "MIỄN THUẾ 0%"</h2>
+
+            <div class="flow-steps">
+              <!-- Step 1 -->
+              <div id="node-1" class="flow-node">
+                <div class="flow-node-title">TIỀN CỦA MÌNH</div>
+                <div class="flow-node-badge">ĐÓNG VÀO QUỸ</div>
               </div>
 
-              <div data-hf-id="hf-cmdm" class="diagram-stage">
-                <!-- NÚI CÁ MAFIA CHÍNH -->
-                <svg data-hf-id="hf-hhrc" id="fish-mountain-base" class="fish-mountain-base" viewBox="0 0 490 430" fill="none">
-                  <polygon data-hf-id="hf-6610" points="30,410 220,60 450,410" fill="#E7E3D9" stroke="#141414" stroke-width="5" stroke-linejoin="round" />
-                  <g data-hf-id="hf-hl4f" stroke="#141414" stroke-width="3" stroke-linecap="round">
-                    <line data-hf-id="hf-0hde" x1="70" y1="360" x2="410" y2="360" stroke-dasharray="10 8" />
-                    <line data-hf-id="hf-0ymu" x1="110" y1="290" x2="370" y2="290" stroke-dasharray="10 8" />
-                    <line data-hf-id="hf-dh4u" x1="150" y1="210" x2="330" y2="210" stroke-dasharray="10 8" />
-                  </g>
-                  <g data-hf-id="hf-97px" fill="#141414">
-                    <path data-hf-id="hf-wig9" d="M 110 340 Q 140 325 170 340 Q 140 355 110 340 Z M 100 335 L 115 340 L 100 345 Z" />
-                    <path data-hf-id="hf-s8md" d="M 210 340 Q 240 325 270 340 Q 240 355 210 340 Z M 200 335 L 215 340 L 200 345 Z" />
-                    <path data-hf-id="hf-n6w1" d="M 310 340 Q 340 325 370 340 Q 340 355 310 340 Z M 300 335 L 315 340 L 300 345 Z" />
-                    <path data-hf-id="hf-bfgo" d="M 160 270 Q 190 255 220 270 Q 190 285 160 270 Z M 150 265 L 165 270 L 150 275 Z" />
-                    <path data-hf-id="hf-vlny" d="M 260 270 Q 290 255 320 270 Q 290 285 260 270 Z M 250 265 L 265 270 L 250 275 Z" />
-                    <path data-hf-id="hf-2gka" d="M 205 180 Q 235 165 265 180 Q 235 195 205 180 Z M 195 175 L 210 180 L 195 185 Z" />
-                  </g>
-                  <rect data-hf-id="hf-k32e" x="60" y="375" width="210" height="32" fill="#141414" rx="4" />
-                  <text data-hf-id="hf-pyfm" x="165" y="397" fill="#F7F4EC" font-size="18" font-weight="900" text-anchor="middle" font-family="'Be Vietnam Pro', sans-serif">10.000 CON CÁ</text>
-                </svg>
+              <!-- Connecting Arrow 1 -->
+              <svg class="flow-arrow-svg" viewBox="0 0 48 28">
+                <path
+                  id="flow-arr-1"
+                  d="M 4 14 L 38 14 M 28 6 L 38 14 L 28 22"
+                  fill="none"
+                  stroke="#FF6A1A"
+                  stroke-width="4"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  pathLength="100"
+                  stroke-dasharray="100"
+                  stroke-dashoffset="100"
+                />
+              </svg>
 
-                <!-- PHẦN GÓC NÚI CÁ BỊ XÉN -->
-                <svg data-hf-id="hf-9sqq" id="fish-mountain-cut" class="fish-mountain-cut" viewBox="0 0 320 300" fill="none">
-                  <polygon data-hf-id="hf-6i06" points="20,260 170,30 290,260" fill="#FF6A1A" stroke="#141414" stroke-width="5" stroke-linejoin="round" />
-                  <g data-hf-id="hf-iidl" fill="#141414">
-                    <path data-hf-id="hf-2189" d="M 80 190 Q 110 175 140 190 Q 110 205 80 190 Z M 70 185 L 85 190 L 70 195 Z" />
-                    <path data-hf-id="hf-gmtd" d="M 170 190 Q 200 175 230 190 Q 200 205 170 190 Z M 160 185 L 175 190 L 160 195 Z" />
-                  </g>
-                  <g data-hf-id="hf-q4i0" stroke="#141414" stroke-width="4">
-                    <line data-hf-id="hf-a7wj" x1="50" y1="230" x2="250" y2="80" />
-                    <line data-hf-id="hf-r38u" x1="90" y1="250" x2="270" y2="120" />
-                  </g>
-                </svg>
+              <!-- Step 2 -->
+              <div id="node-2" class="flow-node">
+                <div class="flow-node-title">QUỸ TỪ THIỆN</div>
+                <div class="flow-node-badge">MIỄN THUẾ 0%</div>
+              </div>
 
-                <!-- ĐƯỜNG CẮT NÉT ĐỨT -->
-                <svg data-hf-id="hf-niad" class="cut-line-svg" viewBox="0 0 900 600">
-                  <path data-hf-id="hf-n11y" id="tax-cut-path" d="M 500 60 L 440 260 L 760 410" fill="none" stroke="#FF6A1A" stroke-width="7" stroke-linecap="round" />
-                </svg>
+              <!-- Connecting Arrow 2 -->
+              <svg class="flow-arrow-svg" viewBox="0 0 48 28">
+                <path
+                  id="flow-arr-2"
+                  d="M 4 14 L 38 14 M 28 6 L 38 14 L 28 22"
+                  fill="none"
+                  stroke="#FF6A1A"
+                  stroke-width="4"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  pathLength="100"
+                  stroke-dasharray="100"
+                  stroke-dashoffset="100"
+                />
+              </svg>
 
-                <!-- LƯỠI KÉO THUẾ -->
-                <div data-hf-id="hf-kdk0" id="tax-scissors" class="tax-scissors-wrap" data-layout-allow-overflow="true">
-                  <svg data-hf-id="hf-k36e" viewBox="0 0 220 220" width="220" height="220" fill="none">
-                    <path data-hf-id="hf-lacq" d="M 40 180 C 20 180 20 150 45 150 C 65 150 85 160 110 110 L 180 40 L 170 30 L 95 100 Z" fill="#141414" />
-                    <circle data-hf-id="hf-baj4" cx="40" cy="165" r="10" fill="#F5F0E4" stroke="#141414" stroke-width="3" />
-                    <path data-hf-id="hf-kxnt" d="M 180 180 C 200 180 200 150 175 150 C 155 150 135 160 110 110 L 40 40 L 50 30 L 125 100 Z" fill="#141414" />
-                    <circle data-hf-id="hf-cxj7" cx="180" cy="165" r="10" fill="#F5F0E4" stroke="#141414" stroke-width="3" />
-                    <circle data-hf-id="hf-u1sz" cx="110" cy="110" r="10" fill="#FF6A1A" stroke="#141414" stroke-width="3" />
-                  </svg>
-                </div>
-
-                <!-- OVERLAY 1: TIỀN / LỢI NHUẬN KHỦNG (0.97s - 2.4s) -->
-                <div data-hf-id="hf-0vif" id="overlay-profit" class="overlay-badge">
-                  <svg data-hf-id="hf-vqq2" viewBox="0 0 40 40" width="40" height="40" fill="none">
-                    <circle data-hf-id="hf-jkqv" cx="20" cy="20" r="18" fill="#FF6A1A" stroke="#F7F4EC" stroke-width="2.5" />
-                    <path data-hf-id="hf-1a9g" d="M 20 8 L 20 32 M 14 13 C 14 10 26 8 26 15 C 26 22 14 18 14 25 C 14 32 26 30 26 27" stroke="#141414" stroke-width="3.5" stroke-linecap="round" />
-                  </svg>
-                  <span data-hf-id="hf-ha3x" id="profit-text" class="label-text">LỢI NHUẬN KHỦNG</span>
-                </div>
-
-                <!-- OVERLAY 2: TRÁT THUẾ / CƠ QUAN THUẾ ĐÒI NỘP (2.57s) -->
-                <div data-hf-id="hf-mcuj" id="overlay-tax-claim" class="overlay-badge">
-                  <svg data-hf-id="hf-vcum" viewBox="0 0 40 40" width="40" height="40" fill="none">
-                    <rect data-hf-id="hf-da4e" x="7" y="3" width="26" height="34" rx="2" fill="#F7F4EC" stroke="#141414" stroke-width="2.5" />
-                    <line data-hf-id="hf-ny3r" x1="12" y1="11" x2="28" y2="11" stroke="#141414" stroke-width="2.5" stroke-linecap="round" />
-                    <line data-hf-id="hf-0a6r" x1="12" y1="18" x2="28" y2="18" stroke="#141414" stroke-width="2.5" stroke-linecap="round" />
-                    <circle data-hf-id="hf-sd0r" cx="25" cy="26" r="5" fill="#FF6A1A" stroke="#141414" stroke-width="1.5" />
-                  </svg>
-                  <span data-hf-id="hf-6bst" id="tax-claim-text" class="label-text">CƠ QUAN THUẾ ĐÒI NỘP</span>
-                </div>
-
-                <!-- CON DẤU NỘP THUẾ -->
-                <div data-hf-id="hf-6o45" id="alarm-stamp" class="alarm-stamp">
-                  TRÁT: NỘP THUẾ (-35%)
-                </div>
+              <!-- Step 3 -->
+              <div id="node-3" class="flow-node">
+                <div class="flow-node-title">TÚI MAFIA</div>
+                <div class="flow-node-badge">RÚT VỀ VÍ</div>
               </div>
             </div>
 
-            <!-- PUNCH PHRASE (4.97s -> 7.04s) -->
-            <div data-hf-id="hf-tt8o" id="punch-card" class="punch-phrase-card">
-              <h1 data-hf-id="hf-5561" class="punch-phrase-text">NGUY CƠ MẤT VỐN CÁ</h1>
-              <div data-hf-id="hf-52l8" class="punch-subtag">THÂM HỤT NGUỒN DỰ TRỮ CÁ</div>
+            <!-- Bottom loop feedback note -->
+            <div id="flow-loop-bar" class="flow-loop-track">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <path d="M4 12 A8 8 0 1 1 20 12 M20 12 L16 8 M20 12 L16 16" stroke="#FF6A1A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              <span class="flow-loop-text">TIỀN CHẠY MỘT VÒNG RỒI VỀ LẠI VÍ CÁ NHÂN</span>
             </div>
           </div>
         </div>
-        <div data-hf-id="hf-v6l5" class="brand-bottom-bar"></div>
-      </section>
+      </div>
+
+      <!-- Overlay 1 (Label): GIÚP CHÍNH BẢN THÂN (at 2.49s, duration 2.40s, z-index 10) -->
+      <div id="clip-label-1" class="clip" data-start="2.49" data-duration="2.40">
+        <div id="label-card-wrap">
+          <div id="label-card" class="label-card">
+            <div class="tag-mini">THỰC CHẤT ĐẰNG SAU</div>
+            <h1 class="label-headline">GIÚP CHÍNH BẢN THÂN</h1>
+            <p class="label-sub">KHÔNG HỀ DÀNH CHO MÈO NGHÈO</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Overlay 2 (Punch-phrase): TỰ TÀI TRỢ CHO MÌNH (at 5.12s, duration 3.34s, z-index 10) -->
+      <div id="clip-punch-phrase" class="clip" data-start="5.12" data-duration="3.34">
+        <div id="punch-card-wrap">
+          <div id="punch-card" class="punch-card">
+            <div id="stamp-tax" class="stamp-badge">0% THUẾ</div>
+            <div class="punch-tag">NGHỊCH LÝ TỪ THIỆN</div>
+            <h1 class="punch-headline">TỰ TÀI TRỢ CHO MÌNH</h1>
+            <div class="punch-footer">
+              <span class="punch-footer-text">TRỐN THUẾ + LẤY TIẾNG HÀO PHÓNG</span>
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="12" r="10" stroke="#141414" stroke-width="2.5"/>
+                <path d="M7 12l3 3 7-7" stroke="#141414" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
+    <!-- GSAP Master Timeline Construction -->
     <script>
       const tl = gsap.timeline({ paused: true });
 
-      const cutPath = document.getElementById("tax-cut-path");
-      if (cutPath) {
-        const pathLen = cutPath.getTotalLength();
-        cutPath.style.strokeDasharray = pathLen + " " + pathLen;
-        cutPath.style.strokeDashoffset = pathLen;
-      }
-
-      // 1. CÚ MÁY ZOOM-THROUGH (CẮT CỨNG TỪ SCALE 1.18 -> ZOOM-OUT CHẬM)
+      // 1. Video Entrance ("spiral") & Camera Motion ("zoom-in")
       tl.fromTo(
-        "#camera-rig",
-        { scale: 1.18 },
-        { scale: 1.04, duration: 0.45, ease: "power3.out" },
+        "#video-wrapper",
+        { scale: 1.25, rotation: -8, opacity: 0 },
+        { scale: 1.0, rotation: 0, opacity: 1, duration: 0.8, ease: "power3.out" },
         0
       );
-      tl.to("#camera-rig", { scale: 1.0, duration: 6.59, ease: "none" }, 0.45);
+      tl.to(
+        "#video-wrapper",
+        { scale: 1.08, duration: 7.66, ease: "sine.out" },
+        0.8
+      );
 
-      // 2. HEADER & DIAGRAM CARD VÀO CẢNH
-      tl.fromTo("#header-tag", { y: -25, opacity: 0 }, { y: 0, opacity: 1, duration: 0.35, ease: "power3.out" }, 0.15);
-      tl.fromTo("#diagram-card", { y: 40, opacity: 0 }, { y: 0, opacity: 1, duration: 0.5, ease: "power3.out" }, 0.25);
-      tl.fromTo("#fish-mountain-base", { scaleY: 0, opacity: 0 }, { scaleY: 1, opacity: 1, duration: 0.55, ease: "power3.out" }, 0.4);
+      // 2. Flow Diagram HUD Appearance (starts t=0.6)
+      tl.fromTo(
+        "#flow-kicker",
+        { y: -30, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.2, ease: "power3.out" },
+        0.6
+      );
+      tl.fromTo(
+        "#flow-main-card",
+        { y: -30, opacity: 0, scale: 0.96 },
+        { y: 0, opacity: 1, scale: 1, duration: 0.2, ease: "power3.out" },
+        0.62
+      );
 
-      // 3. OVERLAY 1: TIỀN & LỢI NHUẬN KHỦNG (0.97s & 1.48s, THOÁT LÚC 2.4s)
-      tl.fromTo("#overlay-profit", { scale: 0, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.4, ease: "power3.out" }, 0.97);
-      tl.fromTo("#profit-text", { opacity: 0, x: -10 }, { opacity: 1, x: 0, duration: 0.35, ease: "power3.out" }, 1.48);
-      tl.to("#overlay-profit", { opacity: 0, y: -15, duration: 0.2 }, 2.4);
+      // Connecting Arrows progressive draw
+      tl.to(
+        "#flow-arr-1",
+        { strokeDashoffset: 0, duration: 0.35, ease: "power2.out" },
+        0.9
+      );
+      tl.to(
+        "#flow-arr-2",
+        { strokeDashoffset: 0, duration: 0.35, ease: "power2.out" },
+        1.3
+      );
 
-      // 4. OVERLAY 2: TRÁT THUẾ (2.57s & 3.05s)
-      tl.fromTo("#overlay-tax-claim", { scale: 0, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.4, ease: "power3.out" }, 2.57);
-      tl.fromTo("#tax-claim-text", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.35, ease: "power3.out" }, 3.05);
+      // 3. Overlay 1: Label ("GIÚP CHÍNH BẢN THÂN") at t=2.49s
+      tl.fromTo(
+        "#label-card",
+        { scale: 0.88, opacity: 0, y: 30 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.25, ease: "power3.out" },
+        2.49
+      );
+      // Exit fade-out before unmount
+      tl.to(
+        "#label-card",
+        { opacity: 0, y: -15, duration: 0.2, ease: "power2.in" },
+        4.68
+      );
 
-      // 5. LƯỠI KÉO THUẾ TIẾN VÀO & CẮT NÚI CÁ (3.25s)
-      tl.fromTo("#tax-scissors", { x: 100, y: -40, opacity: 0, rotation: 25 }, { x: 0, y: 0, opacity: 1, rotation: -10, duration: 0.45, ease: "power3.out" }, 3.25);
-      tl.to("#tax-scissors", { rotation: -20, scale: 1.08, duration: 0.15, yoyo: true, repeat: 1, ease: "power2.inOut" }, 3.55);
+      // 4. Overlay 2: Punch Phrase ("TỰ TÀI TRỢ CHO MÌNH") at t=5.12s
+      tl.fromTo(
+        "#punch-card",
+        { scale: 0.88, opacity: 0, rotation: -2, y: 30 },
+        { scale: 1, opacity: 1, rotation: 0, y: 0, duration: 0.25, ease: "power3.out" },
+        5.12
+      );
+      // Stamp badge hits with punchy physical landing
+      tl.fromTo(
+        "#stamp-tax",
+        { scale: 1.8, opacity: 0, rotation: 16 },
+        { scale: 1, opacity: 1, rotation: -5, duration: 0.25, ease: "power3.out" },
+        5.38
+      );
 
-      // 6. ĐƯỜNG CẮT RẠCH & PHẦN CÁ BỊ XÉN TÁCH LÌA
-      if (cutPath) {
-        tl.to("#tax-cut-path", { strokeDashoffset: 0, duration: 0.35, ease: "power2.out" }, 3.6);
-      }
-      tl.fromTo("#fish-mountain-cut", { x: 0, y: 0, opacity: 0 }, { x: 30, y: 20, opacity: 1, duration: 0.4, ease: "power3.out" }, 3.8);
-
-      // 7. CON DẤU NỘP THUẾ ĐÓNG XUỐNG & NHẤP NHÁY BÁO ĐỘNG (4.15s)
-      tl.fromTo("#alarm-stamp", { scale: 0.4, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.3, ease: "power4.out" }, 4.15);
-      tl.to("#alarm-stamp", { boxShadow: "0 0 20px #FF6A1A", duration: 0.18, yoyo: true, repeat: 3 }, 4.45);
-
-      // 8. PUNCH PHRASE "NGUY CƠ MẤT VỐN CÁ" (4.97s -> 7.04s)
-      tl.fromTo("#punch-card", { scale: 0.9, y: 35, opacity: 0 }, { scale: 1, y: 0, opacity: 1, duration: 0.5, ease: "power4.out" }, 4.97);
-
-      window.__timelines = window.__timelines || {};
+      // Register timeline on window.__timelines with composition ID "scene-s08"
       window.__timelines["scene-s08"] = tl;
     </script>
   

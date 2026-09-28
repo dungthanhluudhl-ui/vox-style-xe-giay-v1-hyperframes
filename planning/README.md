@@ -196,6 +196,25 @@ Từ bước 5 trở đi cần **cả 2 nhánh đã xong** (Stage 5 đọc cả 
 - [x] **Gotcha mới: `completion-manifest.json` có `ffprobeOk: false`** (video 453.700s vs audio gốc 460.523s, lệch 6.823s) — đã điều tra bằng `ffmpeg silencedetect` xác nhận đây là 7.16s khoảng lặng THẬT ở cuối audio gốc (sau câu thoại cuối), không phải nội dung bị mất. Người dùng đã xem cảnh báo và xác nhận chấp nhận. **Bài học tổng quát**: `ffprobeOk` so sánh naive với độ dài file audio gốc, không tính trường hợp audio có đuôi lặng dài — không tự động coi `ffprobeOk: false` là lỗi thật, luôn dùng `ffmpeg silencedetect` kiểm tra trước khi kết luận (xem chi tiết `pipeline/videos/cach-hoat-dong-cua-kinh-te-meo/run-log.md`).
 - [x] **Người dùng đã xem cảnh báo duration và xác nhận chấp nhận bản render hiện tại (2026-09-24).**
 
+**Dựng lại từ Stage 5 (2026-09-28) — người dùng yêu cầu viết lại scene plan/shotlist/codegen/render do
+bản cũ có lỗi, ghi đè trực tiếp lên các file/thư mục hiện có (không tạo bản song song). Tái sử dụng
+nguyên Stage 1-3 (`--transcript-from=skip --media-from=skip`) — script/audio/captions/manifest giữ
+nguyên, chỉ đổi từ Stage 5 trở đi:**
+- [x] Scene Plan viết lại — **50 scene** (trước 51), dùng lại đúng 41 asset đã phân tích.
+- [x] Shotlist viết lại — 81 shot/50 scene (trước 52 shot/51 scene). Xoá file thừa
+  `compositions/scene-s51.html` của bản cũ (không còn trong plan mới).
+- [x] Dựng lại composition qua nhánh HyperFrames — chạy song song 50 scene (concurrency=10): 45/50
+  PASS ngay lần đầu. 5 scene FAIL nội dung thật, sửa bằng `--issue-file` (chạy song song 5 lệnh
+  1-scene riêng, đúng quy tắc không batch):
+  - S12: lớp `.shot2-spotlight-vignette` phủ gradient tối lên ảnh, trái quyết định giữ nguyên màu ảnh của Style DNA — PASS sau 2 lần.
+  - S14: nhãn "CÔNG TY BÌNH PHONG: HOẠT ĐỘNG" trái ý chính (doanh nghiệp ma không hoạt động thực) — PASS lần 1.
+  - S18: ảnh đặt trong khung nhỏ có bóng đổ thay vì làm nền toàn khung — PASS lần 1.
+  - S39: ảnh đặt trong khung nhỏ (2 shot) + thêm số liệu bịa "CỔ TỨC Q3"/tỷ lệ 72/28 không có trong shotlist — PASS lần 1.
+  - S40: card tính toán suy diễn sai 10%/ngày thành 365%/năm + `.vignette-overlay` phủ tối ảnh — PASS sau 3 lần.
+  - 50/50 scene PASS, ráp `index.html` — 453.7s.
+- [x] Stage 7b integration check PASS (2026-09-28) — 50/50 scene, audio, caption-track, `hyperframes check` ok=true (243 mốc/81 shot).
+- [x] Render bản đầy đủ (2026-09-28) — `out/cach-hoat-dong-cua-kinh-te-meo-full.mp4`, 453.700s, 1080×1920 h264/aac, 722.5MB, render mất ~31 phút. `ffprobeOk: false` tái xuất hiện (453.700s vs audio gốc 460.523s, lệch 6.823s) — **đúng gotcha đã biết và đã điều tra ở bản dựng trước** (khoảng lặng thật ở cuối audio gốc, không phải mất nội dung, xem dòng ghi chú phía trên) — audio nguồn không đổi giữa 2 lần dựng nên không cần điều tra lại. **Chưa được người dùng xem/xác nhận bản dựng lại này.**
+
 ### 8 video dựng 24–25/09 (mục tóm tắt bổ sung 2026-09-26 — số liệu lấy tất định từ `completion-manifest.json` + dòng render trong `run-log.md` từng video; chi tiết đầy đủ trong run-log)
 | Video | Scene | Thời lượng | Render | Thời gian render | Kích thước |
 |---|---|---|---|---|---|

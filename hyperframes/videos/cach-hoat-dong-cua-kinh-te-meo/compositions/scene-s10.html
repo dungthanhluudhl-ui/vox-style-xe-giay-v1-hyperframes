@@ -1,471 +1,1038 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
   <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF-8" />
   </head>
   <body>
     <template>
       <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap">
       <style>
-      * {
-        box-sizing: border-box;
-      }
-      body {
-        margin: 0;
-        padding: 0;
-        background: #0b0f14;
-        color: #141414;
-        font-family: "Be Vietnam Pro", sans-serif;
-        overflow: hidden;
-        -webkit-font-smoothing: antialiased;
-      }
-      #root {
-        position: relative;
-        width: 100%;
-        height: 100%;
-        overflow: hidden;
-        background-color: #e7e3d9;
-      }
+/* hf-safe-colors (tất định từ style-tokens.json) */
+.hf-text-ink { color: #141414; }
+.hf-text-light { color: #F7F4EC; }
+.hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+.hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+.hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+.hf-plate-paper { color: #141414; background-color: #F5F0E4; }
 
-      /* Quy ước clip của HyperFrames */
-      .clip {
-        position: absolute;
-        inset: 0;
-      }
+    /* RESET & BASE */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
-      /* Nền Spotlight + Paper Texture */
-      .bg-paper {
-        position: absolute;
-        inset: 0;
-        background-color: #e7e3d9;
-        z-index: 1;
-      }
-      .bg-grid {
-        position: absolute;
-        inset: 0;
-        background-image: 
-          linear-gradient(rgba(20, 20, 20, 0.15) 1.5px, transparent 1.5px),
-          linear-gradient(90deg, rgba(20, 20, 20, 0.15) 1.5px, transparent 1.5px);
-        background-size: 84px 84px;
-        z-index: 2;
-        opacity: 0.8;
-      }
-      .bg-spotlight {
-        position: absolute;
-        inset: 0;
-        background: radial-gradient(circle at 50% 42%, rgba(20, 20, 20, 0.05) 25%, rgba(20, 20, 20, 0.72) 85%);
-        mix-blend-mode: multiply;
-        z-index: 3;
-      }
-      .bg-grain {
-        position: absolute;
-        inset: 0;
-        background-image: radial-gradient(rgba(20, 20, 20, 0.22) 1px, transparent 1px);
-        background-size: 4px 4px;
-        opacity: 0.18;
-        mix-blend-mode: multiply;
-        z-index: 4;
-      }
+    body {
+      background-color: #E7E3D9;
+      color: #141414;
+      font-family: "Be Vietnam Pro", sans-serif;
+      overflow: hidden;
+      width: 1080px;
+      height: 1920px;
+      -webkit-font-smoothing: antialiased;
+    }
 
-      /* Header hồ sơ điều tra */
-      .dossier-header {
-        position: absolute;
-        top: 175px;
-        left: 60px;
-        right: 60px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        z-index: 20;
-        will-change: transform, opacity;
-      }
-      .dossier-tag {
-        display: inline-flex;
-        align-items: center;
-        background: #141414;
-        color: #f7f4ec;
-        padding: 8px 18px;
-        border-radius: 6px;
-        font-size: 20px;
-        font-weight: 900;
-        letter-spacing: 1.5px;
-        border-left: 6px solid #ff6a1a;
-      }
-      .dossier-status {
-        font-size: 19px;
-        font-weight: 700;
-        color: #141414;
-        background: #f5f0e4;
-        padding: 8px 18px;
-        border-radius: 6px;
-        border: 1.5px solid rgba(20, 20, 20, 0.35);
-        letter-spacing: 0.5px;
-      }
+    /* COMPOSITION ROOT */
+    #root {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #E7E3D9;
+      background-image:
+        linear-gradient(to right, rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px),
+        linear-gradient(to bottom, rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px);
+      background-size: 84px 84px;
+    }
 
-      /* Camera Stage & Video Viewport */
-      .camera-stage {
-        position: absolute;
-        inset: 0;
-        z-index: 10;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        will-change: transform, opacity;
-      }
-      .video-viewport {
-        position: absolute;
-        top: 235px;
-        left: 60px;
-        width: 960px;
-        height: 1235px;
-        border-radius: 20px;
-        overflow: hidden;
-        box-shadow: 0 25px 60px rgba(0, 0, 0, 0.45), 0 0 0 3px #141414;
-        background: #141414;
-      }
-      .hero-video {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        display: block;
-        will-change: transform;
-      }
-      .video-film-tint {
-        position: absolute;
-        inset: 0;
-        background: linear-gradient(180deg, rgba(20, 20, 20, 0.2) 0%, transparent 40%, rgba(20, 20, 20, 0.6) 100%);
-        pointer-events: none;
-      }
+    /* TIMED ELEMENT CLIP CONVENTION */
+    .clip {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+    }
 
-      /* Badges & Callout Cards */
-      .badge-card {
-        position: absolute;
-        display: inline-flex;
-        align-items: center;
-        gap: 16px;
-        background: #141414;
-        padding: 16px 26px;
-        border-radius: 12px;
-        border-left: 8px solid #ff6a1a;
-        box-shadow: 0 16px 36px rgba(0, 0, 0, 0.45);
-        z-index: 30;
-        will-change: transform, opacity;
-      }
-      .badge-right {
-        border-left: none;
-        border-right: 8px solid #ff6a1a;
-      }
-      .badge-num {
-        font-size: 20px;
-        font-weight: 900;
-        color: #ff6a1a;
-        letter-spacing: 1px;
-      }
-      .badge-tag {
-        font-size: 18px;
-        font-weight: 900;
-        color: #ff6a1a;
-        letter-spacing: 1px;
-      }
-      .badge-text {
-        font-size: 34px;
-        font-weight: 900;
-        color: #f7f4ec;
-        line-height: 1.2;
-        letter-spacing: 0.5px;
-      }
+    .camera-layer {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
 
-      /* Vị trí badge 1 & badge 2 */
-      #badge-1 {
-        top: 290px;
-        left: 90px;
-      }
-      #badge-2 {
-        top: 410px;
-        right: 90px;
-      }
+    /* WCAG-SAFE PRE-CALCULATED CLASSES */
+    .hf-text-ink { color: #141414; }
+    .hf-text-light { color: #F7F4EC; }
+    .hf-hl-orange { background-color: #FF6A1A; color: #141414; }
+    .hf-plate-ink { background-color: #141414; color: #F7F4EC; }
+    .hf-plate-ink-orange { background-color: #141414; color: #FF6A1A; }
+    .hf-plate-paper { background-color: #F5F0E4; color: #141414; }
 
-      /* Nhóm icon checkmark & nhãn TIÊU TIỀN HỢP THỨC */
-      .result-badge-group {
-        position: absolute;
-        top: 530px;
-        left: 90px;
-        display: flex;
-        align-items: center;
-        gap: 18px;
-        z-index: 30;
-        will-change: transform, opacity;
-      }
-      .icon-circle {
-        width: 82px;
-        height: 82px;
-        border-radius: 50%;
-        background: #141414;
-        border: 4px solid #ff6a1a;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        box-shadow: 0 12px 28px rgba(0, 0, 0, 0.45);
-        flex-shrink: 0;
-        will-change: transform, opacity;
-      }
-      .check-svg {
-        width: 48px;
-        height: 48px;
-      }
-      .badge-inline {
-        position: static;
-      }
+    /* SIGNATURE BOTTOM ORANGE BAR */
+    .bottom-orange-bar {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 14px;
+      background-color: #FF6A1A;
+      z-index: 9999;
+    }
 
-      /* Punch Phrase: TRỐN THUẾ HỢP PHÁP */
-      .punch-container {
-        position: absolute;
-        bottom: 470px;
-        left: 80px;
-        right: 80px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        z-index: 40;
-        will-change: transform, opacity;
-      }
-      .punch-card {
-        width: 100%;
-        background: #141414;
-        border: 4px solid #ff6a1a;
-        border-radius: 18px;
-        padding: 28px 36px;
-        box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6);
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-        position: relative;
-        overflow: hidden;
-      }
-      .punch-eyebrow {
-        font-size: 22px;
-        font-weight: 700;
-        color: #ff6a1a;
-        letter-spacing: 2px;
-        text-transform: uppercase;
-      }
-      .punch-title {
-        font-size: 66px;
-        font-weight: 900;
-        color: #f7f4ec;
-        line-height: 1.15;
-        margin: 0;
-        letter-spacing: -0.5px;
-      }
-      .punch-stamp {
-        position: absolute;
-        right: 28px;
-        top: 24px;
-        border: 3px dashed #ff6a1a;
-        color: #ff6a1a;
-        font-size: 20px;
-        font-weight: 900;
-        padding: 6px 14px;
-        border-radius: 8px;
-        letter-spacing: 1px;
-        will-change: transform, opacity;
-      }
+    /* PAPER TAPE CORNERS */
+    .tape-corner {
+      position: absolute;
+      width: 56px;
+      height: 22px;
+      background: rgba(220, 212, 196, 0.9);
+      border: 1px dashed rgba(20, 20, 20, 0.35);
+      z-index: 20;
+      pointer-events: none;
+    }
+    .tape-tl { top: -8px; left: -8px; transform: rotate(-35deg); }
+    .tape-tr { top: -8px; right: -8px; transform: rotate(35deg); }
+    .tape-bl { bottom: -8px; left: -8px; transform: rotate(35deg); }
+    .tape-br { bottom: -8px; right: -8px; transform: rotate(-35deg); }
 
-      /* Thanh cam signature mép dưới */
-      .bottom-brand-bar {
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        width: 100%;
-        height: 12px;
-        background-color: #ff6a1a;
-        z-index: 100;
-      }
-    </style>
+    /* =========================================================
+       SHOT 1 LAYOUT: MAP SPLIT (RỪNG NHÀ VS RỪNG LÁNG GIỀNG)
+       ========================================================= */
+    .s1-kicker-wrap {
+      position: absolute;
+      top: 170px;
+      left: 60px;
+      display: flex;
+      gap: 12px;
+      z-index: 10;
+    }
 
-    <div data-hf-id="hf-8p03" id="root" data-composition-id="scene-s10" data-start="0" data-width="1080" data-height="1920" data-duration="12">
-      <!-- Background Layers tĩnh -->
-      <div data-hf-id="hf-xez5" class="bg-paper" data-layout-ignore="true"></div>
-      <div data-hf-id="hf-6h8b" class="bg-grid" data-layout-ignore="true"></div>
-      <div data-hf-id="hf-bdnz" class="bg-spotlight" data-layout-ignore="true"></div>
-      <div data-hf-id="hf-7etm" class="bg-grain" data-layout-ignore="true"></div>
+    .kicker-badge {
+      font-size: 20px;
+      font-weight: 900;
+      padding: 6px 16px;
+      border: 2px solid #141414;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
 
-      <!-- Header hồ sơ tài liệu điều tra -->
-      <div data-hf-id="hf-2cg6" class="dossier-header" id="dossier-header">
-        <div data-hf-id="hf-4rqw" class="dossier-tag">
-          <span data-hf-id="hf-bs0w">HỒ SƠ: S10-TAX</span>
+    .kicker-date {
+      font-size: 20px;
+      font-weight: 700;
+      padding: 6px 16px;
+      border: 2px solid #141414;
+      text-transform: uppercase;
+    }
+
+    .s1-header-card {
+      position: absolute;
+      top: 226px;
+      left: 60px;
+      width: 960px;
+      padding: 20px 28px;
+      border: 3px solid #141414;
+      box-shadow: 8px 8px 0 #141414;
+      z-index: 10;
+    }
+
+    .s1-header-title {
+      font-size: 44px;
+      font-weight: 900;
+      line-height: 1.2;
+      color: #F7F4EC;
+      text-transform: uppercase;
+      letter-spacing: -0.5px;
+    }
+
+    .s1-header-sub {
+      margin-top: 6px;
+      font-size: 20px;
+      font-weight: 700;
+      color: #FF6A1A;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .s1-map-board {
+      position: absolute;
+      top: 350px;
+      left: 60px;
+      width: 960px;
+      height: 780px;
+      background-color: #F5F0E4;
+      border: 3px solid #141414;
+      box-shadow: 12px 12px 0 #141414;
+      display: grid;
+      grid-template-columns: 430px 100px 430px;
+      padding: 24px;
+      z-index: 5;
+    }
+
+    /* LEFT ZONE: RỪNG NHÀ */
+    .zone-col {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .zone-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid #141414;
+    }
+
+    .zone-pill {
+      font-size: 16px;
+      font-weight: 900;
+      padding: 4px 10px;
+      border: 2px solid #141414;
+      text-transform: uppercase;
+    }
+
+    .zone-name {
+      font-size: 26px;
+      font-weight: 900;
+      color: #141414;
+      text-transform: uppercase;
+    }
+
+    .map-card {
+      background: #E7E3D9;
+      border: 2px solid #141414;
+      padding: 12px 16px;
+      display: flex;
+      gap: 14px;
+      align-items: center;
+      box-shadow: 4px 4px 0 #141414;
+    }
+
+    .card-icon-box {
+      width: 60px;
+      height: 60px;
+      background: #141414;
+      border: 2px solid #141414;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .card-content {
+      flex: 1;
+    }
+
+    .card-tag {
+      font-size: 13px;
+      font-weight: 900;
+      display: inline-block;
+      padding: 2px 8px;
+      background: #141414;
+      color: #F7F4EC;
+      margin-bottom: 3px;
+      text-transform: uppercase;
+    }
+
+    .card-tag-bad {
+      background: #FF6A1A;
+      color: #141414;
+    }
+
+    .card-title {
+      font-size: 22px;
+      font-weight: 900;
+      color: #141414;
+      line-height: 1.2;
+    }
+
+    .card-metric {
+      font-size: 16px;
+      font-weight: 900;
+      color: #141414;
+      margin-top: 2px;
+    }
+
+    .card-desc {
+      font-size: 15px;
+      font-weight: 700;
+      color: #141414;
+      margin-top: 2px;
+    }
+
+    /* CENTER BORDER DIVIDER */
+    .border-divider {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    .divider-line-svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    .border-pill-badge {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) rotate(-90deg);
+      white-space: nowrap;
+      padding: 6px 14px;
+      border: 2px solid #141414;
+      font-size: 15px;
+      font-weight: 900;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    /* RIGHT ZONE: RỪNG LÁNG GIỀNG */
+    .target-zone-box {
+      flex: 1;
+      border: 2px dashed #141414;
+      background: #E7E3D9;
+      position: relative;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      overflow: hidden;
+    }
+
+    .topo-bg-svg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0.35;
+      pointer-events: none;
+    }
+
+    .target-badge-top {
+      align-self: flex-start;
+      font-size: 16px;
+      font-weight: 900;
+      padding: 4px 12px;
+      border: 2px solid #141414;
+      text-transform: uppercase;
+      z-index: 2;
+    }
+
+    .target-card-inner {
+      background: #141414;
+      border: 2px solid #141414;
+      padding: 18px;
+      box-shadow: 6px 6px 0 #141414;
+      z-index: 2;
+    }
+
+    .target-title {
+      font-size: 26px;
+      font-weight: 900;
+      color: #F7F4EC;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .target-bullet {
+      font-size: 16px;
+      font-weight: 700;
+      color: #E7E3D9;
+      margin-top: 6px;
+      line-height: 1.3;
+    }
+
+    /* SHOT 1 OVERLAY STAMP (atMs: 92140 / rel: 5.44s) */
+    .s1-alert-stamp {
+      position: absolute;
+      top: 770px;
+      left: 80px;
+      width: 440px;
+      z-index: 30;
+    }
+
+    .stamp-inner {
+      border: 4px solid #FF6A1A;
+      box-shadow: 8px 8px 0 #141414;
+      padding: 16px 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    .stamp-accent {
+      font-size: 15px;
+      font-weight: 900;
+      display: inline-block;
+      padding: 4px 12px;
+      border: 2px solid #141414;
+      text-transform: uppercase;
+      line-height: 1.2;
+    }
+
+    .stamp-main {
+      font-size: 32px;
+      font-weight: 900;
+      color: #F7F4EC;
+      text-transform: uppercase;
+      letter-spacing: -0.5px;
+      line-height: 1.25;
+    }
+
+    /* =========================================================
+       SHOT 2 LAYOUT: BORDER EXPEDITION & DESTINATION PIN
+       ========================================================= */
+    .s2-tracker-bar {
+      position: absolute;
+      top: 170px;
+      left: 60px;
+      width: 960px;
+      display: flex;
+      gap: 12px;
+      z-index: 10;
+    }
+
+    .s2-tracker-badge {
+      font-size: 20px;
+      font-weight: 900;
+      padding: 6px 18px;
+      border: 2px solid #141414;
+      text-transform: uppercase;
+    }
+
+    .s2-tracker-sub {
+      font-size: 20px;
+      font-weight: 700;
+      padding: 6px 20px;
+      border: 2px solid #141414;
+      text-transform: uppercase;
+      flex: 1;
+    }
+
+    /* PUNCH PHRASE (atMs: 95700 / 9.0s) */
+    .s2-punch-container {
+      position: absolute;
+      top: 232px;
+      left: 60px;
+      width: 960px;
+      z-index: 25;
+    }
+
+    .punch-box {
+      border: 4px solid #FF6A1A;
+      box-shadow: 10px 10px 0 #141414;
+      padding: 18px 28px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .punch-label {
+      display: inline-block;
+      font-size: 16px;
+      font-weight: 900;
+      padding: 4px 14px;
+      border: 2px solid #141414;
+      text-transform: uppercase;
+    }
+
+    .punch-text {
+      font-size: 52px;
+      font-weight: 900;
+      color: #F7F4EC;
+      text-transform: uppercase;
+      letter-spacing: -0.5px;
+      line-height: 1.2;
+    }
+
+    /* EXPEDITION MAP BOARD */
+    .s2-map-canvas {
+      position: absolute;
+      top: 410px;
+      left: 60px;
+      width: 960px;
+      height: 800px;
+      background-color: #F5F0E4;
+      border: 3px solid #141414;
+      box-shadow: 12px 12px 0 #141414;
+      overflow: hidden;
+      z-index: 5;
+    }
+
+    /* WEST REGION */
+    .s2-west-label {
+      position: absolute;
+      top: 24px;
+      left: 24px;
+      font-size: 22px;
+      font-weight: 900;
+      padding: 6px 14px;
+      border: 2px solid #141414;
+      z-index: 10;
+    }
+
+    /* EAST REGION */
+    .s2-east-label {
+      position: absolute;
+      top: 24px;
+      right: 24px;
+      font-size: 22px;
+      font-weight: 900;
+      padding: 6px 16px;
+      border: 2px solid #141414;
+      z-index: 10;
+    }
+
+    /* BORDER LINE AXIS */
+    .s2-border-axis {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 310px;
+      width: 4px;
+      border-left: 4px dashed #FF6A1A;
+      z-index: 6;
+    }
+
+    /* BORDER TAG: PLACED SAFELY AT THE UPPER SECTION AWAY FROM PAWS */
+    .s2-border-tag {
+      position: absolute;
+      top: 76px;
+      left: 235px;
+      font-size: 14px;
+      font-weight: 900;
+      padding: 5px 12px;
+      border: 2px solid #141414;
+      text-transform: uppercase;
+      z-index: 10;
+      letter-spacing: 0.5px;
+    }
+
+    /* ORIGIN MARKER */
+    .s2-origin-box {
+      position: absolute;
+      top: 410px;
+      left: 40px;
+      background: #E7E3D9;
+      border: 2px solid #141414;
+      padding: 10px 14px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 4px 4px 0 #141414;
+      z-index: 10;
+    }
+
+    .origin-title {
+      font-size: 14px;
+      font-weight: 900;
+      color: #141414;
+      text-transform: uppercase;
+    }
+
+    /* TRAVEL PATH SVG */
+    .travel-path-svg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 8;
+      pointer-events: none;
+    }
+
+    /* PAW TRAIL STEPS */
+    .paw-step {
+      position: absolute;
+      width: 42px;
+      height: 42px;
+      background: #141414;
+      border: 2px solid #FF6A1A;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      color: #F7F4EC;
+      box-shadow: 2px 2px 0 #141414;
+      z-index: 15;
+    }
+    .paw-1 { top: 390px; left: 370px; }
+    .paw-2 { top: 360px; left: 510px; }
+    .paw-3 { top: 340px; left: 650px; }
+
+    /* DESTINATION PIN SPOT (atMs: 96820 / 10.12s) */
+    .s2-dest-spot {
+      position: absolute;
+      top: 290px;
+      left: 760px;
+      width: 140px;
+      height: 160px;
+      z-index: 15;
+    }
+
+    .sonar-ring {
+      position: absolute;
+      top: 40px;
+      left: 65px;
+      width: 80px;
+      height: 80px;
+      margin-top: -40px;
+      margin-left: -40px;
+      border: 3px solid #FF6A1A;
+      border-radius: 50%;
+      pointer-events: none;
+      opacity: 0;
+    }
+
+    .pin-marker {
+      position: absolute;
+      top: 10px;
+      left: 40px;
+      width: 52px;
+      height: 65px;
+      z-index: 16;
+      transform-origin: 26px 60px;
+    }
+
+    .pin-caption {
+      position: absolute;
+      top: 88px;
+      left: -20px;
+      white-space: nowrap;
+      padding: 6px 14px;
+      border: 2px solid #141414;
+      box-shadow: 4px 4px 0 #141414;
+      z-index: 18;
+    }
+
+    .caption-text {
+      font-size: 16px;
+      font-weight: 900;
+      color: #F7F4EC;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* FOOTER CHIPS */
+    .s2-map-footer {
+      position: absolute;
+      bottom: 20px;
+      left: 24px;
+      right: 24px;
+      display: flex;
+      justify-content: space-between;
+      z-index: 10;
+    }
+
+    .footer-chip {
+      font-size: 15px;
+      font-weight: 900;
+      padding: 6px 14px;
+      border: 2px solid #141414;
+      text-transform: uppercase;
+    }
+  </style>
+
+  <!-- COMPOSITION ROOT: Portrait 1080x1920 @30fps, 12 seconds -->
+  <div id="root" data-composition-id="scene-s10" data-width="1080" data-height="1920" data-duration="12">
+
+    <!-- =========================================================
+         SHOT 1: BẢN ĐỒ PHÂN CHIA (0s - 6.8s)
+         ========================================================= -->
+    <section id="shot-1" class="clip" data-start="0" data-duration="6.8" data-track-index="0">
+      <div id="s1-camera" class="camera-layer">
+        
+        <!-- Kicker category -->
+        <div class="s1-kicker-wrap">
+          <div class="kicker-badge hf-hl-orange">HỒ SƠ ĐỊA BÀN</div>
+          <div class="kicker-date hf-plate-ink">SƠ ĐỒ 01</div>
         </div>
-        <div data-hf-id="hf-ksh1" class="dossier-status">QUỸ TỪ THIỆN // MIỄN THUẾ 0%</div>
-      </div>
 
-      <!-- Camera Rig chứa Video chính (8s phát + 4s freeze zoom xì gà mèo tài phiệt) -->
-      <div data-hf-id="hf-5gty" class="camera-stage" id="camera-stage">
-        <div data-hf-id="hf-2ef2" class="video-viewport" id="video-viewport">
-          <video data-hf-id="hf-ediv" id="vid-10" class="hero-video" src="assets/vid-10-charity-fund-tax-evasion.mp4" muted playsinline preload="auto" data-start="0" data-duration="12" data-media-start="0"></video>
-          <div data-hf-id="hf-pj76" class="video-film-tint"></div>
+        <!-- Main Headline Plate -->
+        <div class="s1-header-card hf-plate-ink">
+          <div class="s1-header-title">BẢN ĐỒ THỊ TRƯỜNG PATE</div>
+          <div class="s1-header-sub">ĐỐI CHIẾU: RỪNG NHÀ VS LÁNG GIỀNG</div>
         </div>
-      </div>
 
-      <!-- OVERLAY 1: TỰ TRẢ LƯƠNG GIÁM ĐỐC -->
-      <div data-hf-id="hf-uhb9" class="badge-card" id="badge-1">
-        <span data-hf-id="hf-wzzm" class="badge-num">01</span>
-        <span data-hf-id="hf-z6jx" class="badge-text">TỰ TRẢ LƯƠNG GIÁM ĐỐC</span>
-      </div>
+        <!-- Split Map Board -->
+        <div class="s1-map-board">
+          <div class="tape-corner tape-tl"></div>
+          <div class="tape-corner tape-tr"></div>
+          <div class="tape-corner tape-bl"></div>
+          <div class="tape-corner tape-br"></div>
 
-      <!-- OVERLAY 2: SIÊU XE & VĂN PHÒNG -->
-      <div data-hf-id="hf-gljq" class="badge-card badge-right" id="badge-2">
-        <span data-hf-id="hf-jnwv" class="badge-text">SIÊU XE &amp; VĂN PHÒNG</span>
-        <span data-hf-id="hf-xean" class="badge-num">02</span>
-      </div>
+          <!-- Left Column: Rừng Nhà (Problem State) -->
+          <div class="zone-col zone-left">
+            <div class="zone-header">
+              <span class="zone-pill hf-plate-ink">HIỆN TẠI</span>
+              <span class="zone-name">RỪNG NHÀ</span>
+            </div>
 
-      <!-- OVERLAY 3 & 4: Icon checkmark & TIÊU TIỀN HỢP THỨC -->
-      <div data-hf-id="hf-btmc" class="result-badge-group" id="badge-group-3">
-        <div data-hf-id="hf-tro5" class="icon-circle" id="check-icon-circle">
-          <svg data-hf-id="hf-kl57" class="check-svg" viewBox="0 0 60 60" fill="none">
-            <path data-hf-id="hf-2r58" id="check-path" d="M 14 32 L 26 44 L 46 18" stroke="#FF6A1A" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" />
+            <!-- Card 1: Mafia Cat's Fish Wealth -->
+            <div class="map-card s1-card-fish">
+              <div class="card-icon-box">
+                <svg width="42" height="42" viewBox="0 0 46 46" fill="none">
+                  <path d="M 6 23 C 14 13 32 13 40 23 C 32 33 14 33 6 23 Z" stroke="#FF6A1A" stroke-width="3" fill="none" />
+                  <path d="M 40 23 L 44 15 L 44 31 Z" fill="#FF6A1A" />
+                  <line x1="20" y1="17" x2="20" y2="29" stroke="#E7E3D9" stroke-width="2" />
+                  <line x1="26" y1="17" x2="26" y2="29" stroke="#E7E3D9" stroke-width="2" />
+                  <circle cx="12" cy="21" r="2.5" fill="#FF6A1A" />
+                </svg>
+              </div>
+              <div class="card-content">
+                <div class="card-tag">THẾ MẠNH</div>
+                <div class="card-title">DƯ THỪA CÁ</div>
+                <div class="card-desc">CẦN ĐỔI PATE</div>
+              </div>
+            </div>
+
+            <!-- Card 2: Expensive & Bad Pate -->
+            <div class="map-card s1-card-pate">
+              <div class="card-icon-box">
+                <svg width="42" height="42" viewBox="0 0 46 46" fill="none">
+                  <rect x="8" y="14" width="30" height="22" rx="3" stroke="#FF6A1A" stroke-width="3" fill="none" />
+                  <ellipse cx="23" cy="14" rx="15" ry="5" stroke="#FF6A1A" stroke-width="2.5" fill="#141414" />
+                  <path d="M 16 23 L 30 27 M 30 23 L 16 27" stroke="#E7E3D9" stroke-width="3" stroke-linecap="round" />
+                </svg>
+              </div>
+              <div class="card-content">
+                <div class="card-tag card-tag-bad">VẤN ĐỀ 01</div>
+                <div class="card-title">PATE DỞ TỆ</div>
+                <div class="card-metric">GIÁ CAO NGẤT</div>
+              </div>
+            </div>
+
+            <!-- Card 3: Grumpy Seller -->
+            <div class="map-card s1-card-seller">
+              <div class="card-icon-box">
+                <svg width="42" height="42" viewBox="0 0 46 46" fill="none">
+                  <circle cx="23" cy="23" r="16" stroke="#FF6A1A" stroke-width="3" fill="none" />
+                  <circle cx="17" cy="20" r="2.5" fill="#E7E3D9" />
+                  <circle cx="29" cy="20" r="2.5" fill="#E7E3D9" />
+                  <path d="M 16 30 C 20 26 26 26 30 30" stroke="#FF6A1A" stroke-width="3" stroke-linecap="round" />
+                </svg>
+              </div>
+              <div class="card-content">
+                <div class="card-tag card-tag-bad">VẤN ĐỀ 02</div>
+                <div class="card-title">BÁN HÀNG XẤU TÍNH</div>
+                <div class="card-desc">ĐỘC QUYỀN ĐỊA BÀN</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Center Boundary -->
+          <div class="border-divider">
+            <svg class="divider-line-svg" viewBox="0 0 40 700" preserveAspectRatio="none">
+              <line x1="20" y1="0" x2="20" y2="700" stroke="#FF6A1A" stroke-width="4" stroke-dasharray="14 10" />
+            </svg>
+            <div class="border-pill-badge hf-plate-ink">RANH GIỚI RỪNG</div>
+          </div>
+
+          <!-- Right Column: Rừng Láng Giềng (Target Opportunity) -->
+          <div class="zone-col zone-right">
+            <div class="zone-header">
+              <span class="zone-pill hf-hl-orange">MỤC TIÊU</span>
+              <span class="zone-name">RỪNG BÊN CẠNH</span>
+            </div>
+
+            <div class="target-zone-box">
+              <svg class="topo-bg-svg" viewBox="0 0 380 500">
+                <path d="M 20 50 Q 180 80 340 30 Q 300 200 360 400" stroke="#141414" stroke-width="2" fill="none" stroke-dasharray="6 6" />
+                <path d="M 50 120 Q 220 160 310 110" stroke="#141414" stroke-width="2" fill="none" stroke-dasharray="6 6" />
+                <path d="M 30 260 Q 190 280 340 230" stroke="#141414" stroke-width="2" fill="none" stroke-dasharray="6 6" />
+                <path d="M 60 380 Q 200 420 330 350" stroke="#141414" stroke-width="2" fill="none" stroke-dasharray="6 6" />
+              </svg>
+
+              <div class="target-badge-top hf-hl-orange">VÙNG TIỀM NĂNG</div>
+
+              <div class="target-card-inner">
+                <div class="target-title">NGUỒN HÀNG MỚI</div>
+                <div class="target-bullet">• THỊ TRƯỜNG MỞ RỘNG</div>
+                <div class="target-bullet">• CƠ HỘI ĐỔI PATE NGON</div>
+                <div class="target-bullet">• PHÁ THẾ ĐỘC QUYỀN</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Overlay Label Stamp (Shotlist: PATE ĐẮT & KÉM VỊ @ 92140ms / rel: 5.44s) -->
+        <div id="s1-label-overlay" class="s1-alert-stamp">
+          <div class="stamp-inner hf-plate-ink">
+            <div class="stamp-accent hf-hl-orange">THỰC TRẠNG NGUỒN CUNG</div>
+            <div class="stamp-main">PATE ĐẮT & KÉM VỊ</div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- =========================================================
+         SHOT 2: VƯỢT BIÊN KHẢO SÁT (6.8s - 12.0s)
+         ========================================================= -->
+    <section id="shot-2" class="clip" data-start="6.8" data-duration="5.2" data-track-index="0">
+      <div id="s2-camera" class="camera-layer">
+        
+        <!-- Tracker Status Bar -->
+        <div class="s2-tracker-bar">
+          <div class="s2-tracker-badge hf-hl-orange">CHIẾN DỊCH</div>
+          <div class="s2-tracker-sub hf-plate-ink">MÈO MAFIA MỞ RỘNG ĐỊA BÀN</div>
+        </div>
+
+        <!-- Punch Phrase Overlay (Shotlist: KHẢO SÁT VÙNG BIÊN @ 95700ms / rel: 9.0s) -->
+        <div id="s2-punch-card" class="s2-punch-container">
+          <div class="punch-box hf-plate-ink">
+            <div class="punch-label hf-hl-orange">QUYẾT ĐỊNH ĐỘT PHÁ</div>
+            <h1 class="punch-text">KHẢO SÁT VÙNG BIÊN</h1>
+          </div>
+        </div>
+
+        <!-- Interactive Journey Map -->
+        <div class="s2-map-canvas">
+          <div class="tape-corner tape-tl"></div>
+          <div class="tape-corner tape-tr"></div>
+          <div class="tape-corner tape-bl"></div>
+          <div class="tape-corner tape-br"></div>
+
+          <!-- Zone Badges -->
+          <div class="s2-west-label hf-plate-ink">RỪNG NHÀ</div>
+          <div class="s2-east-label hf-hl-orange">RỪNG BÊN CẠNH</div>
+
+          <!-- Border Divider Axis -->
+          <div class="s2-border-axis"></div>
+          <div class="s2-border-tag hf-plate-ink">ĐƯỜNG BIÊN GIỚI</div>
+
+          <!-- Departure Origin Box -->
+          <div class="s2-origin-box">
+            <svg width="36" height="36" viewBox="0 0 40 40">
+              <circle cx="20" cy="20" r="16" fill="#141414" stroke="#FF6A1A" stroke-width="2" />
+              <polygon points="20,10 24,18 32,20 26,26 28,34 20,29 12,34 14,26 8,20 16,18" fill="#FF6A1A" />
+            </svg>
+            <div class="origin-title">XUẤT PHÁT</div>
+          </div>
+
+          <!-- Travel Path Vector -->
+          <svg class="travel-path-svg" viewBox="0 0 960 800">
+            <!-- Background Guide Track -->
+            <path d="M 120 460 C 220 460, 270 425, 370 410 C 470 395, 590 375, 780 360" 
+                  fill="none" stroke="rgba(20, 20, 20, 0.22)" stroke-width="8" stroke-dasharray="14 10" />
+            <!-- Active Animated Track -->
+            <path id="s2-travel-path" 
+                  d="M 120 460 C 220 460, 270 425, 370 410 C 470 395, 590 375, 780 360" 
+                  fill="none" stroke="#FF6A1A" stroke-width="10" stroke-linecap="round" />
           </svg>
+
+          <!-- Stepping Paws Along Route -->
+          <div id="s2-paw-1" class="paw-step paw-1">🐾</div>
+          <div id="s2-paw-2" class="paw-step paw-2">🐾</div>
+          <div id="s2-paw-3" class="paw-step paw-3">🐾</div>
+
+          <!-- Destination Target & Pin (Shotlist: icon pin @ 96820ms / rel: 10.12s) -->
+          <div id="s2-dest-spot" class="s2-dest-spot">
+            <div id="s2-sonar-1" class="sonar-ring"></div>
+            <div id="s2-sonar-2" class="sonar-ring"></div>
+            
+            <!-- Standard Vox pin icon vocabulary -->
+            <div id="s2-pin-icon" class="pin-marker">
+              <svg width="52" height="65" viewBox="0 0 60 75" fill="none">
+                <path d="M 30 5 C 16.2 5 5 16.2 5 30 C 5 48 30 70 30 70 C 30 70 55 48 55 30 C 55 16.2 43.8 5 30 5 Z" 
+                      fill="#FF6A1A" stroke="#141414" stroke-width="4" stroke-linejoin="round" />
+                <circle cx="30" cy="30" r="10" fill="#141414" />
+                <circle cx="30" cy="30" r="4" fill="#F7F4EC" />
+              </svg>
+            </div>
+
+            <div id="s2-pin-label" class="pin-caption hf-plate-ink">
+              <span class="caption-text">TIỆM PATE MỤC TIÊU</span>
+            </div>
+          </div>
+
+          <!-- Footer Metadata Strip -->
+          <div class="s2-map-footer">
+            <div class="footer-chip hf-plate-ink">HÀNH TRÌNH TÌM NGUỒN CUNG MỚI</div>
+            <div class="footer-chip hf-hl-orange">VƯỢT BIÊN AN TOÀN</div>
+          </div>
         </div>
-        <div data-hf-id="hf-rbj7" class="badge-card badge-inline" id="badge-4">
-          <span data-hf-id="hf-qual" class="badge-tag">HỢP LỆ</span>
-          <span data-hf-id="hf-xa2s" class="badge-text">TIÊU TIỀN HỢP THỨC</span>
-        </div>
+
       </div>
+    </section>
 
-      <!-- OVERLAY 5: PUNCH PHRASE "TRỐN THUẾ HỢP PHÁP" -->
-      <div data-hf-id="hf-u646" class="punch-container" id="punch-container" data-layout-allow-caption-zone="true">
-        <div data-hf-id="hf-nzw6" class="punch-card" id="punch-card">
-          <div data-hf-id="hf-atyo" class="punch-eyebrow">ĐỊNH NGHĨA PHÁP LÝ</div>
-          <h1 data-hf-id="hf-s8ol" class="punch-title">TRỐN THUẾ HỢP PHÁP</h1>
-          <div data-hf-id="hf-yscf" class="punch-stamp" id="punch-stamp">HỢP HIẾN</div>
-        </div>
-      </div>
+    <!-- Bottom Brand Signature Line -->
+    <div class="bottom-orange-bar"></div>
+  </div>
 
-      <!-- Thanh màu cam signature mép dưới -->
-      <div data-hf-id="hf-5prc" class="bottom-brand-bar" data-layout-ignore="true"></div>
-    </div>
+  <!-- =========================================================
+       DETERMINISTIC GSAP TIMELINE SCRIPT
+       ========================================================= -->
+  <script>
+    // Initialize travel path dash pattern strictly before build
+    const travelPathEl = document.getElementById("s2-travel-path");
+    const travelLen = travelPathEl && travelPathEl.getTotalLength ? Math.ceil(travelPathEl.getTotalLength()) : 740;
+    if (travelPathEl) {
+      travelPathEl.style.strokeDasharray = travelLen + "px";
+      travelPathEl.style.strokeDashoffset = travelLen + "px";
+    }
 
-    <script>
-      // Đăng ký đúng 1 paused timeline cho composition "scene-s10"
-      window.__timelines = window.__timelines || {};
-      const tl = gsap.timeline({ paused: true });
+    // Set initial seek states for Shot 1 and Shot 2 elements
+    gsap.set("#s1-label-overlay", { opacity: 0 });
+    gsap.set("#s2-punch-card", { opacity: 0 });
+    gsap.set("#s2-paw-1", { opacity: 0 });
+    gsap.set("#s2-paw-2", { opacity: 0 });
+    gsap.set("#s2-paw-3", { opacity: 0 });
+    gsap.set("#s2-pin-icon", { opacity: 0 });
+    gsap.set("#s2-pin-label", { opacity: 0 });
 
-      // Chuẩn bị stroke cho icon checkmark vẽ tay
-      const checkPath = document.getElementById("check-path");
-      if (checkPath) {
-        const len = Math.ceil(checkPath.getTotalLength() || 60);
-        checkPath.style.strokeDasharray = len + "";
-        checkPath.style.strokeDashoffset = len + "";
-      }
+    // Single paused timeline registered on window.__timelines["scene-s10"]
+    const tl = gsap.timeline({ paused: true });
 
-      // Khởi tạo trạng thái ban đầu của các lớp overlay
-      tl.set(["#badge-1", "#badge-2", "#badge-group-3", "#punch-container"], {
-        autoAlpha: 0
-      }, 0);
+    /* ---------------------------------------------------------
+       SHOT 1 TIMELINE (0.0s - 6.8s)
+       --------------------------------------------------------- */
+    // Transition in: zoom-through entrance
+    tl.fromTo("#s1-camera",
+      { scale: 1.15, opacity: 0 },
+      { scale: 1.0, opacity: 1, duration: 0.8, ease: "power3.out" },
+      0.0
+    );
 
-      // 1. Entrance "rise" cho toàn cảnh và camera zoom phase 1 (0s - 8s)
-      tl.fromTo(
-        "#camera-stage",
-        { y: 60, opacity: 0 },
-        { y: 0, opacity: 1, duration: 0.7, ease: "power3.out" },
-        0
-      );
-      tl.fromTo(
-        "#dossier-header",
-        { y: -20, opacity: 0 },
-        { y: 0, opacity: 1, duration: 0.5, ease: "power3.out" },
-        0.2
-      );
+    // Header and UI reveal
+    tl.fromTo(".s1-kicker-wrap",
+      { opacity: 0, scale: 0.95 },
+      { opacity: 1, scale: 1.0, duration: 0.45, ease: "power2.out" },
+      0.2
+    );
+    tl.fromTo(".s1-header-card",
+      { opacity: 0, scale: 0.96 },
+      { opacity: 1, scale: 1.0, duration: 0.55, ease: "power3.out" },
+      0.35
+    );
 
-      // Ken Burns zoom nhẹ trong 8s đầu của clip video
-      tl.fromTo(
-        "#vid-10",
-        { scale: 1.0 },
-        { scale: 1.06, duration: 8.0, ease: "none" },
-        0
-      );
+    // Map board unfolds
+    tl.fromTo(".s1-map-board",
+      { scale: 0.94, opacity: 0 },
+      { scale: 1.0, opacity: 1, duration: 0.65, ease: "power3.out" },
+      0.5
+    );
 
-      // Phase 2: 4s cuối freeze frame, camera zoom sâu vào xì gà mèo tài phiệt (8s - 12s)
-      tl.to(
-        "#vid-10",
-        { scale: 1.28, transformOrigin: "52% 40%", duration: 4.0, ease: "power2.out" },
-        8.0
-      );
+    // Stagger entrance of Left problem cards
+    tl.fromTo(".zone-left .map-card",
+      { x: -35, opacity: 0 },
+      { x: 0, opacity: 1, duration: 0.5, stagger: 0.14, ease: "power3.out" },
+      0.75
+    );
 
-      // 2. Overlay 1: "TỰ TRẢ LƯƠNG GIÁM ĐỐC" (t = 1.95s đến 4.15s)
-      tl.fromTo(
-        "#badge-1",
-        { autoAlpha: 0, x: -50 },
-        { autoAlpha: 1, x: 0, duration: 0.45, ease: "power3.out" },
-        1.95
-      );
-      tl.to(
-        "#badge-1",
-        { autoAlpha: 0, y: -20, duration: 0.3, ease: "power2.in" },
-        3.85
-      );
+    // Boundary divider springs up
+    tl.fromTo(".border-divider",
+      { scaleY: 0, opacity: 0 },
+      { scaleY: 1, opacity: 1, duration: 0.6, ease: "power2.out", transformOrigin: "top center" },
+      0.9
+    );
 
-      // 3. Overlay 2: "SIÊU XE & VĂN PHÒNG" (t = 4.5s đến 6.9s)
-      tl.fromTo(
-        "#badge-2",
-        { autoAlpha: 0, x: 50 },
-        { autoAlpha: 1, x: 0, duration: 0.45, ease: "power3.out" },
-        4.5
-      );
-      tl.to(
-        "#badge-2",
-        { autoAlpha: 0, y: -20, duration: 0.3, ease: "power2.in" },
-        6.6
-      );
+    // Right territory opportunity unfolds
+    tl.fromTo(".zone-right",
+      { x: 35, opacity: 0 },
+      { x: 0, opacity: 1, duration: 0.55, ease: "power3.out" },
+      1.1
+    );
 
-      // 4. Overlay 3 & 4: Icon checkmark + "TIÊU TIỀN HỢP THỨC" (t = 7.8s đến 10.1s)
-      tl.fromTo(
-        "#badge-group-3",
-        { autoAlpha: 0 },
-        { autoAlpha: 1, duration: 0.1 },
-        7.8
-      );
-      tl.fromTo(
-        "#check-icon-circle",
-        { scale: 0, autoAlpha: 0 },
-        { scale: 1, autoAlpha: 1, duration: 0.4, ease: "power3.out" },
-        7.8
-      );
-      tl.fromTo(
-        "#check-path",
-        { strokeDashoffset: 60 },
-        { strokeDashoffset: 0, duration: 0.4, ease: "power2.out" },
-        8.0
-      );
-      tl.fromTo(
-        "#badge-4",
-        { autoAlpha: 0, x: -30 },
-        { autoAlpha: 1, x: 0, duration: 0.4, ease: "power3.out" },
-        8.5
-      );
-      tl.to(
-        "#badge-group-3",
-        { autoAlpha: 0, y: -20, duration: 0.3, ease: "power2.in" },
-        9.85
-      );
+    // Camera Motion: Subtle slow zoom-in on the problem area
+    tl.to("#s1-camera",
+      { scale: 1.05, duration: 5.3, ease: "sine.inOut" },
+      1.5
+    );
 
-      // 5. Overlay 5: Punch Phrase "TRỐN THUẾ HỢP PHÁP" (t = 10.2s đến 12.0s)
-      tl.fromTo(
-        "#punch-container",
-        { autoAlpha: 0, y: 30, scale: 0.94 },
-        { autoAlpha: 1, y: 0, scale: 1, duration: 0.5, ease: "power3.out" },
-        10.2
-      );
-      tl.fromTo(
-        "#punch-stamp",
-        { autoAlpha: 0, scale: 1.5, rotation: 12 },
-        { autoAlpha: 1, scale: 1, rotation: -8, duration: 0.35, ease: "power2.out" },
-        10.55
-      );
+    // Overlay Label (Shotlist atMs: 92140ms -> rel: 5.44s): "PATE ĐẮT & KÉM VỊ"
+    // Using clean spring pop-entrance without rotation to prevent AABB bounding box collision
+    tl.fromTo("#s1-label-overlay",
+      { scale: 0.85, opacity: 0 },
+      { scale: 1.0, opacity: 1, duration: 0.45, ease: "power3.out" },
+      5.44
+    );
 
-      // Gắn timeline vào registry HyperFrames
-      window.__timelines["scene-s10"] = tl;
-    </script>
-  
+    /* ---------------------------------------------------------
+       SHOT 2 TIMELINE (6.8s - 12.0s)
+       --------------------------------------------------------- */
+    // Transition in: Cut cleanly at 6.8s
+    tl.fromTo(".s2-tracker-bar",
+      { opacity: 0, scale: 0.96 },
+      { opacity: 1, scale: 1.0, duration: 0.45, ease: "power2.out" },
+      6.85
+    );
+    tl.fromTo(".s2-map-canvas",
+      { scale: 0.95, opacity: 0 },
+      { scale: 1.0, opacity: 1, duration: 0.6, ease: "power3.out" },
+      6.9
+    );
+
+    // Camera motion: continuous pan-right feeling across expedition board
+    tl.fromTo("#s2-camera",
+      { x: 30 },
+      { x: -25, duration: 5.2, ease: "none" },
+      6.8
+    );
+
+    // Travel path progressively self-drawing across the border
+    tl.fromTo("#s2-travel-path",
+      { strokeDashoffset: travelLen },
+      { strokeDashoffset: 0, duration: 1.8, ease: "power2.out" },
+      7.1
+    );
+
+    // Paw prints pop sequentially along the path
+    tl.fromTo("#s2-paw-1",
+      { scale: 0, opacity: 0 },
+      { scale: 1, opacity: 1, duration: 0.35, ease: "power3.out" },
+      7.5
+    );
+    tl.fromTo("#s2-paw-2",
+      { scale: 0, opacity: 0 },
+      { scale: 1, opacity: 1, duration: 0.35, ease: "power3.out" },
+      8.1
+    );
+    tl.fromTo("#s2-paw-3",
+      { scale: 0, opacity: 0 },
+      { scale: 1, opacity: 1, duration: 0.35, ease: "power3.out" },
+      8.7
+    );
+
+    // Punch Phrase Overlay (Shotlist atMs: 95700ms -> rel: 9.0s): "KHẢO SÁT VÙNG BIÊN"
+    tl.fromTo("#s2-punch-card",
+      { scale: 0.92, opacity: 0 },
+      { scale: 1.0, opacity: 1, duration: 0.45, ease: "power3.out" },
+      9.0
+    );
+
+    // Pin Drop Overlay (Shotlist atMs: 96820ms -> rel: 10.12s): "pin" icon
+    tl.fromTo("#s2-pin-icon",
+      { y: -65, opacity: 0, scale: 0.6 },
+      { y: 0, opacity: 1, scale: 1.0, duration: 0.45, ease: "power3.out" },
+      10.12
+    );
+    tl.fromTo("#s2-pin-label",
+      { y: 12, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.35, ease: "power2.out" },
+      10.35
+    );
+
+    // Sonar radar rings radiating from pin
+    tl.fromTo("#s2-sonar-1",
+      { scale: 0.2, opacity: 0.85 },
+      { scale: 2.2, opacity: 0, duration: 1.1, ease: "power2.out" },
+      10.3
+    );
+    tl.fromTo("#s2-sonar-2",
+      { scale: 0.2, opacity: 0.85 },
+      { scale: 2.2, opacity: 0, duration: 1.1, ease: "power2.out" },
+      10.55
+    );
+
+    // Final registration on window.__timelines
+    window.__timelines["scene-s10"] = tl;
+  </script>
+
     </template>
   </body>
 </html>

@@ -1,983 +1,431 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
   <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF-8" />
   </head>
   <body>
     <template>
-      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap">
+      <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap"
+    />
       <style>
-    *, *::before, *::after {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    body {
-      margin: 0;
-      background-color: #E7E3D9;
-      color: #141414;
-      font-family: "Be Vietnam Pro", sans-serif;
-      overflow: hidden;
-      -webkit-font-smoothing: antialiased;
-    }
-
-    #root {
-      position: relative;
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      background-color: #E7E3D9;
-    }
-
-    .clip {
-      position: absolute;
-      inset: 0;
-    }
-
-    /* NỀN CHART: LƯỚI 84PX + GRAIN + 4 VẠCH NGANG + TICK MARKS */
-    .bg-grid {
-      position: absolute;
-      inset: 0;
-      background-image:
-        linear-gradient(rgba(20, 20, 20, 0.12) 1.5px, transparent 1.5px),
-        linear-gradient(90deg, rgba(20, 20, 20, 0.12) 1.5px, transparent 1.5px);
-      background-size: 84px 84px;
-      pointer-events: none;
-    }
-
-    .bg-grain {
-      position: absolute;
-      inset: 0;
-      opacity: 0.18;
-      mix-blend-mode: multiply;
-      pointer-events: none;
-      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-    }
-
-    .chart-ruled-line {
-      position: absolute;
-      left: 0;
-      right: 0;
-      height: 2px;
-      background: rgba(20, 20, 20, 0.22);
-      pointer-events: none;
-    }
-
-    .chart-tick-mark {
-      position: absolute;
-      left: 0;
-      width: 16px;
-      height: 6px;
-      background: #FF6A1A;
-      pointer-events: none;
-    }
-
-    #bottom-brand-bar {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      height: 10px;
-      background: #FF6A1A;
-      z-index: 100;
-    }
-
-    #camera-rig {
-      position: absolute;
-      inset: 0;
-      will-change: transform, opacity;
-      transform-origin: 540px 960px;
-    }
-
-    /* TOP META BAR */
-    .top-meta-bar {
-      position: absolute;
-      top: 165px;
-      left: 60px;
-      right: 60px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding-bottom: 8px;
-      border-bottom: 2px solid rgba(20, 20, 20, 0.2);
-      font-size: 13px;
-      font-weight: 700;
-      letter-spacing: 2px;
-      color: #141414;
-    }
-
-    .meta-tag {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .meta-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: #FF6A1A;
-    }
-
-    /* OVERLAYS BANNER */
-    .header-banner {
-      position: absolute;
-      top: 205px;
-      left: 60px;
-      width: 960px;
-      height: 82px;
-      display: flex;
-      align-items: center;
-      padding: 0 24px;
-      gap: 18px;
-      will-change: transform, opacity;
-      z-index: 20;
-    }
-
-    #header-banner-1 {
-      background: #141414;
-      border-left: 8px solid #FF6A1A;
-      box-shadow: 6px 6px 0px rgba(20, 20, 20, 0.25);
-    }
-
-    #banner-text-1 {
-      font-size: 32px;
-      font-weight: 900;
-      letter-spacing: 2px;
-      color: #F7F4EC;
-      text-transform: uppercase;
-    }
-
-    #header-banner-2 {
-      background: #FF6A1A;
-      border: 3px solid #141414;
-      box-shadow: 6px 6px 0px #141414;
-    }
-
-    #banner-text-2 {
-      font-size: 32px;
-      font-weight: 900;
-      letter-spacing: 2px;
-      color: #141414;
-      text-transform: uppercase;
-    }
-
-    .banner-icon-slot {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 44px;
-      height: 44px;
-      flex-shrink: 0;
-    }
-
-    /* SECTION 1: MAP MẠNG LƯỚI TUYẾN BUÔN LẬU */
-    #map-section {
-      position: absolute;
-      top: 305px;
-      left: 60px;
-      width: 960px;
-      height: 475px;
-      background: #F5F0E4;
-      border: 3px solid #141414;
-      box-shadow: 8px 8px 0px #141414;
-      overflow: hidden;
-    }
-
-    .section-title-bar {
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 36px;
-      background: #141414;
-      color: #F7F4EC;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 16px;
-      font-size: 13px;
-      font-weight: 700;
-      letter-spacing: 1.5px;
-      z-index: 5;
-    }
-
-    #map-svg-canvas {
-      position: absolute;
-      top: 36px;
-      left: 0;
-      width: 954px;
-      height: 435px;
-    }
-
-    .map-route-line {
-      fill: none;
-      stroke: #FF6A1A;
-      stroke-width: 4.5;
-      stroke-linecap: round;
-      stroke-linejoin: round;
-    }
-
-    .map-route-orbit {
-      fill: none;
-      stroke: rgba(20, 20, 20, 0.2);
-      stroke-width: 2;
-      stroke-dasharray: 6 6;
-    }
-
-    .map-node {
-      position: absolute;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      will-change: transform, opacity;
-      z-index: 10;
-    }
-
-    #node-center {
-      left: 400px;
-      top: 175px;
-      width: 160px;
-      height: 110px;
-    }
-
-    .hub-badge {
-      background: #141414;
-      border: 3px solid #FF6A1A;
-      box-shadow: 4px 4px 0px rgba(255, 106, 26, 0.5);
-      border-radius: 8px;
-      padding: 6px 14px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 2px;
-    }
-
-    .hub-name {
-      font-size: 13px;
-      font-weight: 900;
-      color: #F7F4EC;
-      letter-spacing: 1px;
-      white-space: nowrap;
-    }
-
-    .hub-tag {
-      font-size: 10px;
-      font-weight: 700;
-      color: #FF6A1A;
-      letter-spacing: 1.5px;
-    }
-
-    .sub-node-badge {
-      background: #141414;
-      border: 2px solid #141414;
-      box-shadow: 3px 3px 0px rgba(20, 20, 20, 0.35);
-      padding: 6px 12px;
-      border-radius: 6px;
-      text-align: center;
-      white-space: nowrap;
-    }
-
-    .sub-node-title {
-      font-size: 12px;
-      font-weight: 900;
-      color: #F7F4EC;
-      letter-spacing: 0.5px;
-    }
-
-    .sub-node-stat {
-      font-size: 11px;
-      font-weight: 900;
-      color: #FF6A1A;
-      margin-top: 1px;
-    }
-
-    #node-north { left: 55px;  top: 55px;  width: 165px; }
-    #node-east  { left: 735px; top: 55px;  width: 165px; }
-    #node-west  { left: 55px;  top: 315px; width: 165px; }
-    #node-south { left: 735px; top: 315px; width: 165px; }
-
-    .cargo-tag {
-      position: absolute;
-      background: #141414;
-      color: #FF6A1A;
-      font-size: 11px;
-      font-weight: 900;
-      padding: 3px 8px;
-      border-radius: 4px;
-      letter-spacing: 0.8px;
-      will-change: transform, opacity;
-      pointer-events: none;
-      z-index: 8;
-    }
-
-    #cargo-tag-1 { left: 240px; top: 120px; }
-    #cargo-tag-2 { left: 585px; top: 120px; }
-    #cargo-tag-3 { left: 240px; top: 275px; }
-    #cargo-tag-4 { left: 585px; top: 275px; }
-
-    #live-fish-counter-box {
-      position: absolute;
-      left: 360px;
-      bottom: 12px;
-      width: 240px;
-      background: #141414;
-      border-top: 3px solid #FF6A1A;
-      padding: 6px 12px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      z-index: 12;
-    }
-
-    .counter-label {
-      font-size: 10px;
-      font-weight: 700;
-      color: #E7E3D9;
-      letter-spacing: 1.5px;
-    }
-
-    .counter-value {
-      font-size: 18px;
-      font-weight: 900;
-      color: #FF6A1A;
-      letter-spacing: 1px;
-    }
-
-    /* SECTION 2: DATA CHART TÀI SẢN */
-    #chart-section {
-      position: absolute;
-      top: 800px;
-      left: 60px;
-      width: 960px;
-      height: 520px;
-      background: #F5F0E4;
-      border: 3px solid #141414;
-      box-shadow: 8px 8px 0px #141414;
-      overflow: hidden;
-    }
-
-    .chart-inner {
-      position: absolute;
-      top: 36px;
-      left: 0;
-      right: 0;
-      bottom: 0;
-    }
-
-    .chart-grid-guides {
-      position: absolute;
-      top: 45px;
-      left: 75px;
-      right: 25px;
-      bottom: 95px;
-      pointer-events: none;
-    }
-
-    .chart-guide-line {
-      position: absolute;
-      left: 0;
-      right: 0;
-      height: 1px;
-      border-top: 1px dashed rgba(20, 20, 20, 0.22);
-    }
-
-    .y-axis-labels {
-      position: absolute;
-      top: 38px;
-      left: 15px;
-      bottom: 95px;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      font-size: 11px;
-      font-weight: 700;
-      color: #141414;
-      text-align: right;
-      width: 50px;
-      pointer-events: none;
-    }
-
-    .bars-container {
-      position: absolute;
-      left: 85px;
-      right: 25px;
-      bottom: 25px;
-      height: 390px;
-      display: flex;
-      align-items: flex-end;
-      justify-content: space-around;
-      gap: 20px;
-    }
-
-    .bar-column {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      height: 100%;
-      justify-content: flex-end;
-      position: relative;
-    }
-
-    .bar-fill {
-      width: 100%;
-      max-width: 130px;
-      border-radius: 4px 4px 0 0;
-      transform-origin: bottom center;
-      will-change: transform;
-    }
-
-    #bar-1 {
-      height: 38px;
-      background: rgba(20, 20, 20, 0.3);
-      border: 2px solid #141414;
-    }
-
-    #bar-2 {
-      height: 75px;
-      background: rgba(20, 20, 20, 0.5);
-      border: 2px solid #141414;
-    }
-
-    #bar-3 {
-      height: 140px;
-      background: rgba(20, 20, 20, 0.75);
-      border: 2px solid #141414;
-    }
-
-    #bar-4 {
-      height: 275px;
-      background: #FF6A1A;
-      border: 3px solid #141414;
-      box-shadow: 4px 0px 0px #141414;
-    }
-
-    .bar-title {
-      margin-top: 10px;
-      font-size: 13px;
-      font-weight: 900;
-      color: #141414;
-      text-align: center;
-      letter-spacing: 0.5px;
-      line-height: 1.2;
-    }
-
-    /* BADGE TIÊU ĐỀ MÈO MAFIA NỀN TỐI ĐẢM BẢO CONTRAST WCAG AA */
-    .mafia-pill {
-      display: inline-block;
-      background: #141414;
-      color: #F7F4EC;
-      padding: 3px 8px;
-      border-radius: 4px;
-      border: 1.5px solid #FF6A1A;
-      letter-spacing: 0.5px;
-    }
-
-    .bar-stat-pill {
-      margin-top: 3px;
-      font-size: 11px;
-      font-weight: 900;
-      color: #F7F4EC;
-      background: #141414;
-      padding: 2px 6px;
-      border-radius: 3px;
-    }
-
-    .bar-stat-pill-mafia {
-      margin-top: 3px;
-      font-size: 11px;
-      font-weight: 900;
-      color: #FF6A1A;
-      background: #141414;
-      padding: 2px 6px;
-      border-radius: 3px;
-      border: 1px solid #FF6A1A;
-    }
-
-    #mafia-crown-badge {
-      position: absolute;
-      top: 5px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 3px;
-      will-change: transform, opacity;
-      white-space: nowrap;
-      z-index: 10;
-    }
-
-    .crown-pill {
-      background: #141414;
-      color: #F7F4EC;
-      font-size: 11px;
-      font-weight: 900;
-      padding: 4px 10px;
-      border-radius: 4px;
-      border: 2px solid #FF6A1A;
-      letter-spacing: 1px;
-    }
-
-    /* PUNCH PHRASE CARD */
-    #punch-phrase-card {
-      position: absolute;
-      top: 1345px;
-      left: 60px;
-      width: 960px;
-      height: 160px;
-      background: #141414;
-      border: 4px solid #FF6A1A;
-      box-shadow: 10px 10px 0px rgba(255, 106, 26, 0.45);
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      padding: 0 36px;
-      will-change: transform, opacity;
-      z-index: 30;
-    }
-
-    .punch-prefix {
-      font-size: 13px;
-      font-weight: 700;
-      color: #FF6A1A;
-      letter-spacing: 3px;
-      text-transform: uppercase;
-      margin-bottom: 4px;
-    }
-
-    .punch-headline {
-      font-size: 54px;
-      font-weight: 900;
-      color: #F7F4EC;
-      letter-spacing: 2px;
-      line-height: 1.1;
-      text-transform: uppercase;
-    }
-
-    .punch-subtext {
-      font-size: 15px;
-      font-weight: 700;
-      color: #E7E3D9;
-      letter-spacing: 1.5px;
-      margin-top: 6px;
-    }
-  </style>
-
-  <div data-hf-id="hf-ywsm" id="root" data-composition-id="scene-s19" data-start="0" data-width="1080" data-height="1920" data-duration="9">
-    <div data-hf-id="hf-8nhn" id="scene-s19" class="clip" data-start="0" data-duration="9">
-      <!-- Nền phong cách Chart: Lưới, Grain, 4 vạch ngang và tick mark cam -->
-      <div data-hf-id="hf-yqqm" class="bg-grid"></div>
-      <div data-hf-id="hf-ae6v" class="bg-grain"></div>
-
-      <div data-hf-id="hf-ysi9" class="chart-ruled-line" style="top: 384px;"></div>
-      <div data-hf-id="hf-f8fv" class="chart-tick-mark" style="top: 382px;"></div>
-
-      <div data-hf-id="hf-kaw7" class="chart-ruled-line" style="top: 768px;"></div>
-      <div data-hf-id="hf-we99" class="chart-tick-mark" style="top: 766px;"></div>
-
-      <div data-hf-id="hf-bzdv" class="chart-ruled-line" style="top: 1152px;"></div>
-      <div data-hf-id="hf-vm0d" class="chart-tick-mark" style="top: 1150px;"></div>
-
-      <div data-hf-id="hf-nylh" class="chart-ruled-line" style="top: 1536px;"></div>
-      <div data-hf-id="hf-fmaj" class="chart-tick-mark" style="top: 1534px;"></div>
-
-      <!-- Camera Rig chuyển động toàn cảnh -->
-      <div data-hf-id="hf-iu6l" id="camera-rig">
-        <div data-hf-id="hf-io2l" class="top-meta-bar">
-          <div data-hf-id="hf-u1x4" class="meta-tag">
-            <span data-hf-id="hf-y6kw" class="meta-dot"></span>
-            <span data-hf-id="hf-y7ni">CHỈ SỐ THỐNG TRỊ THỊ TRƯỜNG</span>
+/* hf-safe-colors (tất định từ style-tokens.json) */
+.hf-text-ink { color: #141414; }
+.hf-text-light { color: #F7F4EC; }
+.hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+.hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+.hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+.hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #e7e3d9;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      /* Root composition */
+      #root {
+        position: relative;
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+        background-color: #e7e3d9;
+        background-image: linear-gradient(
+            rgba(20, 20, 20, 0.22) 1.5px,
+            transparent 1.5px
+          ),
+          linear-gradient(90deg, rgba(20, 20, 20, 0.22) 1.5px, transparent 1.5px);
+        background-size: 84px 84px;
+      }
+
+      /* Quy ước clip: tuyệt đối không đặt width/height cứng */
+      .clip {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+      }
+
+      /* Lớp an toàn WCAG nền mực đặc chữ sáng */
+      .hf-plate-ink {
+        background-color: #141414;
+        color: #f7f4ec;
+      }
+
+      /* Lớp an toàn WCAG nền cam chữ mực */
+      .hf-hl-orange {
+        background-color: #ff6a1a;
+        color: #141414;
+      }
+
+      /* Video wrapper cho Shot 1 (không có data-start để không vi phạm quy tắc lồng video) */
+      #vid-wrapper {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+        z-index: 10;
+        transform-origin: center center;
+      }
+
+      #vid-s19 {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      /* Khung nhãn & tem Shot 1 */
+      .shot1-overlay-container {
+        position: absolute;
+        top: 240px;
+        left: 60px;
+        right: 60px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 14px;
+        z-index: 40;
+      }
+
+      .stamp-badge {
+        padding: 8px 24px;
+        font-size: 26px;
+        font-weight: 900;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        border-radius: 4px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+      }
+
+      .shot1-card {
+        padding: 24px 36px;
+        border-radius: 12px;
+        border-left: 8px solid #ff6a1a;
+        box-shadow: 0 16px 36px rgba(0, 0, 0, 0.45);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+      }
+
+      .shot1-title {
+        margin: 0;
+        font-size: 58px;
+        font-weight: 900;
+        line-height: 1.25;
+        letter-spacing: -0.5px;
+        color: #ff6a1a;
+      }
+
+      .shot1-sub {
+        margin: 8px 0 0 0;
+        font-size: 30px;
+        font-weight: 700;
+        line-height: 1.3;
+        color: #f7f4ec;
+      }
+
+      /* Shot 2 Visual Container */
+      #shot2-visual {
+        z-index: 20;
+      }
+
+      .shot2-img-wrap {
+        position: absolute;
+        inset: 0;
+        transform-origin: center center;
+      }
+
+      .shot2-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      /* Diagram overlay thể hiện xé nhỏ đất rừng */
+      #diagram-overlay {
+        z-index: 30;
+      }
+
+      .diagram-grid-box {
+        position: absolute;
+        top: 660px;
+        left: 80px;
+        right: 80px;
+        height: 520px;
+        border: 3px dashed #ff6a1a;
+        background-color: rgba(20, 20, 20, 0.88);
+        border-radius: 16px;
+        padding: 24px;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        grid-template-rows: repeat(2, 1fr);
+        gap: 16px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+      }
+
+      .plot-cell {
+        background-color: #141414;
+        border: 2px solid rgba(255, 106, 26, 0.6);
+        border-radius: 8px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        padding: 12px;
+        text-align: center;
+      }
+
+      .plot-id {
+        font-size: 24px;
+        font-weight: 700;
+        color: #f7f4ec;
+        margin-bottom: 6px;
+      }
+
+      .plot-price {
+        font-size: 34px;
+        font-weight: 900;
+        color: #ff6a1a;
+      }
+
+      /* Shot 2 Punch-phrase Overlay */
+      #punch-overlay {
+        z-index: 50;
+      }
+
+      .punch-phrase-container {
+        position: absolute;
+        top: 260px;
+        left: 60px;
+        right: 60px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .punch-card {
+        padding: 28px 44px;
+        border-radius: 14px;
+        box-shadow: 0 24px 50px rgba(0, 0, 0, 0.6);
+        border: 3px solid #ff6a1a;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: 12px;
+      }
+
+      .punch-pre {
+        margin: 0;
+        font-size: 40px;
+        font-weight: 700;
+        color: #f7f4ec;
+        letter-spacing: 1px;
+      }
+
+      .punch-highlight-box {
+        padding: 10px 32px;
+        border-radius: 8px;
+      }
+
+      .punch-main {
+        margin: 0;
+        font-size: 68px;
+        font-weight: 900;
+        line-height: 1.2;
+        letter-spacing: -1px;
+        color: #141414;
+      }
+
+      /* Thanh nhận diện thương hiệu Vox cố định đáy khung hình */
+      .bottom-orange-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 14px;
+        background-color: #ff6a1a;
+        z-index: 100;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s19"
+      data-width="1080"
+      data-height="1920"
+      data-duration="9"
+    >
+      <!-- SHOT 1: Video A-roll (Cat cutting map) -->
+      <!-- Thẻ video KHÔNG nằm trong timed element mang data-start, đúng hợp đồng -->
+      <div id="vid-wrapper">
+        <video
+          id="vid-s19"
+          src="assets/vid-06-mafia-cat-land-grab.mp4"
+          muted
+          playsinline
+          data-start="0"
+          data-duration="4.48"
+          data-media-start="0"
+        ></video>
+      </div>
+
+      <!-- SHOT 1: Overlay Label (MUA LẠI ĐẤT HOANG) -->
+      <div
+        id="shot1-overlay"
+        class="clip"
+        data-start="2.68"
+        data-duration="1.8"
+      >
+        <div class="shot1-overlay-container" id="shot1-label-card">
+          <div class="stamp-badge hf-hl-orange">HỒ SƠ: THÂU TÓM</div>
+          <div class="shot1-card hf-plate-ink">
+            <h2 class="shot1-title">MUA LẠI ĐẤT HOANG</h2>
+            <p class="shot1-sub">Giá rẻ mạt từ khu rừng hoang sơ</p>
           </div>
-          <div data-hf-id="hf-92tr">BÁO CÁO ĐẾ CHẾ MAFIA // S19</div>
-        </div>
-
-        <!-- OVERLAY 1: PIN ICON + BÀNH TRƯỚNG ĐA RỪNG (0.9s - 3.7s) -->
-        <div data-hf-id="hf-s91s" id="header-banner-1" class="header-banner">
-          <div data-hf-id="hf-pnst" class="banner-icon-slot">
-            <svg data-hf-id="hf-mbn2" viewBox="0 0 48 48" width="40" height="40">
-              <path data-hf-id="hf-8cnl" id="pin-path" d="M 24 6 C 16 6 10 12 10 20 C 10 30 24 42 24 42 C 24 42 38 30 38 20 C 38 12 32 6 24 6 Z" fill="none" stroke="#FF6A1A" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" />
-              <circle data-hf-id="hf-p8i8" id="pin-dot" cx="24" cy="20" r="4.5" fill="#FF6A1A" />
-            </svg>
-          </div>
-          <div data-hf-id="hf-2cdn" id="banner-text-1">BÀNH TRƯỚNG ĐA RỪNG</div>
-        </div>
-
-        <!-- OVERLAY 2: RISE ICON + GIÀU NHẤT KHU RỪNG (4.58s - 7.3s) -->
-        <div data-hf-id="hf-0wxn" id="header-banner-2" class="header-banner">
-          <div data-hf-id="hf-l3o1" class="banner-icon-slot">
-            <svg data-hf-id="hf-jbzm" viewBox="0 0 48 48" width="40" height="40">
-              <path data-hf-id="hf-nvm9" id="rise-axis" d="M 6 40 L 42 40" fill="none" stroke="#141414" stroke-width="3.5" stroke-linecap="round" />
-              <path data-hf-id="hf-9m17" id="rise-arrow" d="M 8 32 L 18 22 L 27 28 L 38 12" fill="none" stroke="#141414" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" />
-              <path data-hf-id="hf-qjou" id="rise-head" d="M 28 12 L 38 12 L 38 22" fill="none" stroke="#141414" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
-            </svg>
-          </div>
-          <div data-hf-id="hf-l354" id="banner-text-2">GIÀU NHẤT KHU RỪNG</div>
-        </div>
-
-        <!-- SECTION 1: MAP MẠNG LƯỚI TUYẾN BUÔN LẬU -->
-        <div data-hf-id="hf-mmob" id="map-section">
-          <div data-hf-id="hf-y7co" class="section-title-bar">
-            <span data-hf-id="hf-9q7n">BẢN ĐỒ CHIẾN LƯỢC MẠNG LƯỚI LIÊN RỪNG</span>
-            <span data-hf-id="hf-sbxa">MÃ: MF-NET-2025</span>
-          </div>
-
-          <svg data-hf-id="hf-nkx5" id="map-svg-canvas" viewBox="0 0 954 435">
-            <path data-hf-id="hf-ge6o" id="route-orbit-1" class="map-route-orbit" d="M 140 105 Q 477 45 815 110" />
-            <path data-hf-id="hf-d8bx" id="route-orbit-2" class="map-route-orbit" d="M 140 370 Q 477 410 815 370" />
-            <path data-hf-id="hf-okcm" id="route-north" class="map-route-line" d="M 480 230 Q 300 150 140 105" />
-            <path data-hf-id="hf-7h8p" id="route-east" class="map-route-line" d="M 480 230 Q 660 155 815 110" />
-            <path data-hf-id="hf-m45j" id="route-west" class="map-route-line" d="M 480 230 Q 290 320 140 370" />
-            <path data-hf-id="hf-m48a" id="route-south" class="map-route-line" d="M 480 230 Q 670 320 815 370" />
-          </svg>
-
-          <!-- Node Trung tâm Mafia -->
-          <div data-hf-id="hf-k4h5" id="node-center" class="map-node">
-            <div data-hf-id="hf-9oq7" class="hub-badge">
-              <svg data-hf-id="hf-okdc" viewBox="0 0 44 28" width="36" height="23">
-                <path data-hf-id="hf-mw0i" d="M 6 20 L 11 4 L 18 14 L 26 14 L 33 4 L 38 20 C 40 26 36 28 22 28 C 8 28 4 26 6 20 Z" fill="#FF6A1A" />
-                <path data-hf-id="hf-okvo" d="M 11 18 L 19 18 L 18 23 L 12 23 Z M 25 18 L 33 18 L 32 23 L 26 23 Z" fill="#141414" />
-              </svg>
-              <div data-hf-id="hf-i5db" class="hub-name">RỪNG TRUNG TÂM</div>
-              <div data-hf-id="hf-2t7n" class="hub-tag">TỔNG KHO MAFIA</div>
-            </div>
-          </div>
-
-          <!-- Các Node Rừng Vệ Tinh -->
-          <div data-hf-id="hf-d0pn" id="node-north" class="map-node">
-            <div data-hf-id="hf-rkc9" class="sub-node-badge">
-              <div data-hf-id="hf-5zjn" class="sub-node-title">RỪNG BẮC BĂNG</div>
-              <div data-hf-id="hf-y2mc" class="sub-node-stat">THỊ PHẦN: 78%</div>
-            </div>
-          </div>
-
-          <div data-hf-id="hf-cf0d" id="node-east" class="map-node">
-            <div data-hf-id="hf-cc5p" class="sub-node-badge">
-              <div data-hf-id="hf-tqhg" class="sub-node-title">RỪNG ĐÔNG NAM</div>
-              <div data-hf-id="hf-l9z4" class="sub-node-stat">THỊ PHẦN: 85%</div>
-            </div>
-          </div>
-
-          <div data-hf-id="hf-lp6f" id="node-west" class="map-node">
-            <div data-hf-id="hf-dj2s" class="sub-node-badge">
-              <div data-hf-id="hf-npux" class="sub-node-title">RỪNG TÂY NGÀN</div>
-              <div data-hf-id="hf-ntdm" class="sub-node-stat">THỊ PHẦN: 72%</div>
-            </div>
-          </div>
-
-          <div data-hf-id="hf-gzpl" id="node-south" class="map-node">
-            <div data-hf-id="hf-d4rr" class="sub-node-badge">
-              <div data-hf-id="hf-ghf3" class="sub-node-title">RỪNG HẢI ĐẢO</div>
-              <div data-hf-id="hf-5qcb" class="sub-node-stat">THỊ PHẦN: 91%</div>
-            </div>
-          </div>
-
-          <!-- Cargo tags -->
-          <div data-hf-id="hf-2jm2" id="cargo-tag-1" class="cargo-tag">+45.000 CÁ</div>
-          <div data-hf-id="hf-dzd6" id="cargo-tag-2" class="cargo-tag">+68.000 CÁ</div>
-          <div data-hf-id="hf-p2hy" id="cargo-tag-3" class="cargo-tag">+32.000 CÁ</div>
-          <div data-hf-id="hf-gln5" id="cargo-tag-4" class="cargo-tag">+54.000 CÁ</div>
-
-          <!-- Hộp đếm lượng cá -->
-          <div data-hf-id="hf-403x" id="live-fish-counter-box">
-            <span data-hf-id="hf-jaa2" class="counter-label">TỔNG LƯỢNG CÁ ĐIỀU PHỐI</span>
-            <span data-hf-id="hf-tpsh" id="fish-counter-val" class="counter-value">12.000 CÁ</span>
-          </div>
-        </div>
-
-        <!-- SECTION 2: DATA CHART TĂNG TRƯỞNG TÀI SẢN -->
-        <div data-hf-id="hf-q6y9" id="chart-section">
-          <div data-hf-id="hf-m2ds" class="section-title-bar">
-            <span data-hf-id="hf-o12o">PHÂN BỔ SẢN LƯỢNG CÁ TOÀN VÙNG // TỶ TRỌNG KIỂM SOÁT</span>
-            <span data-hf-id="hf-c17y">CHỈ SỐ: GINI-FISH 0.94</span>
-          </div>
-
-          <div data-hf-id="hf-jja3" class="chart-inner">
-            <div data-hf-id="hf-nw47" class="y-axis-labels">
-              <span data-hf-id="hf-scck">400K</span>
-              <span data-hf-id="hf-g6k7">300K</span>
-              <span data-hf-id="hf-d7gu">200K</span>
-              <span data-hf-id="hf-11oh">100K</span>
-              <span data-hf-id="hf-i6df">0</span>
-            </div>
-
-            <div data-hf-id="hf-gus1" class="chart-grid-guides">
-              <div data-hf-id="hf-66bb" class="chart-guide-line" style="top: 0%;"></div>
-              <div data-hf-id="hf-noau" class="chart-guide-line" style="top: 25%;"></div>
-              <div data-hf-id="hf-7poi" class="chart-guide-line" style="top: 50%;"></div>
-              <div data-hf-id="hf-rpqh" class="chart-guide-line" style="top: 75%;"></div>
-              <div data-hf-id="hf-6m2q" class="chart-guide-line" style="top: 100%;"></div>
-            </div>
-
-            <div data-hf-id="hf-5lds" class="bars-container">
-              <div data-hf-id="hf-x0gm" class="bar-column">
-                <div data-hf-id="hf-mxtq" id="bar-1" class="bar-fill"></div>
-                <div data-hf-id="hf-ia57" class="bar-title">HỘ TỰ DO</div>
-                <div data-hf-id="hf-1f4f" class="bar-stat-pill">120 CÁ (2%)</div>
-              </div>
-
-              <div data-hf-id="hf-0goq" class="bar-column">
-                <div data-hf-id="hf-izpp" id="bar-2" class="bar-fill"></div>
-                <div data-hf-id="hf-65c4" class="bar-title">TIỂU THƯƠNG</div>
-                <div data-hf-id="hf-5gx7" class="bar-stat-pill">850 CÁ (6%)</div>
-              </div>
-
-              <div data-hf-id="hf-0uzr" class="bar-column">
-                <div data-hf-id="hf-i81w" id="bar-3" class="bar-fill"></div>
-                <div data-hf-id="hf-2qsx" class="bar-title">LÃNH CHÚA</div>
-                <div data-hf-id="hf-gbd7" class="bar-stat-pill">2.400 CÁ (12%)</div>
-              </div>
-
-              <div data-hf-id="hf-19as" class="bar-column">
-                <div data-hf-id="hf-ebox" id="mafia-crown-badge">
-                  <div data-hf-id="hf-8pem" class="crown-pill">👑 ĐỘC CHIẾM 80% THỊ PHẦN</div>
-                </div>
-                <div data-hf-id="hf-5pjf" id="bar-4" class="bar-fill"></div>
-                <div data-hf-id="hf-aj02" class="bar-title">
-                  <span data-hf-id="hf-5921" class="mafia-pill">MÈO MAFIA</span>
-                </div>
-                <div data-hf-id="hf-bqr5" class="bar-stat-pill-mafia">380.000+ CÁ</div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- OVERLAY 3: PUNCH PHRASE "LÒNG THAM VÔ ĐỘ" (7.4s - 9.0s) -->
-        <div data-hf-id="hf-yppy" id="punch-phrase-card">
-          <div data-hf-id="hf-noqe" class="punch-prefix">[ ĐỘNG CƠ CỐT LÕI // KẾT LUẬN ]</div>
-          <div data-hf-id="hf-j8xk" class="punch-headline">LÒNG THAM VÔ ĐỘ</div>
-          <div data-hf-id="hf-wjfs" class="punch-subtext">MỤC TIÊU TIẾP THEO: ĐỘC CHIẾM 100% TOÀN BỘ NGUỒN CÁ</div>
         </div>
       </div>
 
-      <!-- Dải cam đáy thương hiệu -->
-      <div data-hf-id="hf-v7lk" id="bottom-brand-bar"></div>
+      <!-- SHOT 2: Image B-roll (Mafia phân lô đất rừng) -->
+      <section
+        id="shot2-visual"
+        class="clip"
+        data-start="4.48"
+        data-duration="4.52"
+      >
+        <div class="shot2-img-wrap" id="shot2-media-wrap">
+          <img
+            class="shot2-img"
+            src="assets/img-15-illegal-forest-land-grab.jpeg"
+            alt="Mafia mèo phân lô bán nền đất rừng"
+          />
+        </div>
+      </section>
+
+      <!-- SHOT 2: Diagram minh họa phân lô nhỏ -->
+      <div
+        id="diagram-overlay"
+        class="clip"
+        data-start="4.8"
+        data-duration="4.2"
+      >
+        <div class="diagram-grid-box" id="diagram-box">
+          <div class="plot-cell">
+            <span class="plot-id">LÔ R-01</span>
+            <span class="plot-price">GẤP 3X</span>
+          </div>
+          <div class="plot-cell">
+            <span class="plot-id">LÔ R-02</span>
+            <span class="plot-price">GẤP 5X</span>
+          </div>
+          <div class="plot-cell">
+            <span class="plot-id">LÔ R-03</span>
+            <span class="plot-price">GẤP 4X</span>
+          </div>
+          <div class="plot-cell">
+            <span class="plot-id">LÔ VIP 04</span>
+            <span class="plot-price">GẤP 8X</span>
+          </div>
+          <div class="plot-cell">
+            <span class="plot-id">LÔ VIP 05</span>
+            <span class="plot-price">GẤP 10X</span>
+          </div>
+          <div class="plot-cell">
+            <span class="plot-id">LÔ VIP 06</span>
+            <span class="plot-price">GẤP 12X</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- SHOT 2: Punch Phrase Overlay (BÁN LẠI ĂN CHÊNH LỆCH) -->
+      <div
+        id="punch-overlay"
+        class="clip"
+        data-start="6.74"
+        data-duration="2.26"
+      >
+        <div class="punch-phrase-container" id="punch-card-wrapper">
+          <div class="punch-card hf-plate-ink">
+            <span class="punch-pre">CHIA NHỎ ĐẤT ĐỂ</span>
+            <div class="punch-highlight-box hf-hl-orange">
+              <h1 class="punch-main">BÁN LẠI ĂN CHÊNH LỆCH</h1>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Thanh cam đặc trưng dưới mép khung hình -->
+      <div class="bottom-orange-bar"></div>
     </div>
-  </div>
 
-  <script>
-    const tl = gsap.timeline({ paused: true });
+    <script>
+      // Timeline gốc paused: bắt buộc cho Seek runtime của HyperFrames
+      const tl = gsap.timeline({ paused: true });
 
-    // 1. Chuyển động Camera Rig
-    tl.fromTo(
-      "#camera-rig",
-      { scale: 0.92, opacity: 0 },
-      { scale: 1.0, opacity: 1, duration: 0.7, ease: "power3.out" },
-      0
-    );
-
-    tl.to(
-      "#camera-rig",
-      { scale: 0.96, duration: 8.3, ease: "sine.out" },
-      0.7
-    );
-
-    // 2. Setup nét vẽ SVG
-    const routeNorth = document.querySelector("#route-north");
-    const routeEast = document.querySelector("#route-east");
-    const routeWest = document.querySelector("#route-west");
-    const routeSouth = document.querySelector("#route-south");
-    const routeList = [routeNorth, routeEast, routeWest, routeSouth];
-
-    routeList.forEach(function (el) {
-      if (el) {
-        const len = el.getTotalLength() || 500;
-        el.style.strokeDasharray = len;
-        el.style.strokeDashoffset = len;
-      }
-    });
-
-    const pinPath = document.querySelector("#pin-path");
-    if (pinPath) {
-      const len = pinPath.getTotalLength() || 130;
-      pinPath.style.strokeDasharray = len;
-      pinPath.style.strokeDashoffset = len;
-    }
-
-    const riseArrow = document.querySelector("#rise-arrow");
-    if (riseArrow) {
-      const len = riseArrow.getTotalLength() || 90;
-      riseArrow.style.strokeDasharray = len;
-      riseArrow.style.strokeDashoffset = len;
-    }
-
-    const riseHead = document.querySelector("#rise-head");
-    if (riseHead) {
-      const len = riseHead.getTotalLength() || 40;
-      riseHead.style.strokeDasharray = len;
-      riseHead.style.strokeDashoffset = len;
-    }
-
-    // Node Trung tâm Mafia
-    tl.fromTo(
-      "#node-center",
-      { scale: 0, opacity: 0 },
-      { scale: 1, opacity: 1, duration: 0.55, ease: "power3.out" },
-      0.2
-    );
-
-    // Các tuyến buôn lậu tỏa ra
-    routeList.forEach(function (el, index) {
-      if (el) {
-        const len = el.getTotalLength() || 500;
-        tl.fromTo(
-          el,
-          { strokeDashoffset: len },
-          { strokeDashoffset: 0, duration: 1.0, ease: "power2.out" },
-          0.4 + index * 0.16
-        );
-      }
-    });
-
-    // Các Node vệ tinh
-    const satelliteNodes = ["#node-north", "#node-east", "#node-west", "#node-south"];
-    satelliteNodes.forEach(function (nodeId, index) {
+      // SHOT 1 CHOREOGRAPHY (0.0s -> 4.48s)
+      // Entrance: unfold hiệu ứng mở bản đồ
       tl.fromTo(
-        nodeId,
-        { scale: 0, opacity: 0, y: 12 },
-        { scale: 1, opacity: 1, y: 0, duration: 0.45, ease: "power3.out" },
-        0.85 + index * 0.14
+        "#vid-wrapper",
+        { scale: 0.94, y: -24, opacity: 0.4 },
+        { scale: 1.0, y: 0, opacity: 1, duration: 0.7, ease: "power2.out" },
+        0
       );
-    });
 
-    // Cargo tags
-    const cargoTags = ["#cargo-tag-1", "#cargo-tag-2", "#cargo-tag-3", "#cargo-tag-4"];
-    cargoTags.forEach(function (tagId, index) {
+      // Camera pan-left nhẹ nhàng suốt shot 1
       tl.fromTo(
-        tagId,
-        { scale: 0, opacity: 0 },
-        { scale: 1, opacity: 1, duration: 0.35, ease: "power3.out" },
-        1.1 + index * 0.1
+        "#vid-s19",
+        { x: 30, scale: 1.05 },
+        { x: -30, scale: 1.05, duration: 4.48, ease: "none" },
+        0
       );
-    });
 
-    // 3. OVERLAY 1: PIN ICON & LABEL BÀNH TRƯỚNG ĐA RỪNG (0.9s - 3.7s)
-    tl.fromTo(
-      "#header-banner-1",
-      { opacity: 0, y: -20 },
-      { opacity: 1, y: 0, duration: 0.4, ease: "power3.out" },
-      0.9
-    );
-
-    if (pinPath) {
-      const lenPin = pinPath.getTotalLength() || 130;
+      // Label Shot 1 xuất hiện tại t = 2.68s
       tl.fromTo(
-        pinPath,
-        { strokeDashoffset: lenPin },
-        { strokeDashoffset: 0, duration: 0.5, ease: "power2.out" },
-        0.95
+        "#shot1-label-card",
+        { scale: 0.86, y: -24, opacity: 0 },
+        { scale: 1.0, y: 0, opacity: 1, duration: 0.45, ease: "power3.out" },
+        2.68
       );
-    }
 
-    tl.fromTo(
-      "#pin-dot",
-      { scale: 0, transformOrigin: "24px 20px" },
-      { scale: 1, duration: 0.25, ease: "power3.out" },
-      1.15
-    );
-
-    tl.fromTo(
-      "#banner-text-1",
-      { opacity: 0, x: -16 },
-      { opacity: 1, x: 0, duration: 0.4, ease: "power3.out" },
-      1.3
-    );
-
-    tl.to(
-      "#header-banner-1",
-      { opacity: 0, y: -15, duration: 0.3, ease: "power2.in" },
-      3.7
-    );
-
-    // 4. DATA CHART TÀI SẢN
-    tl.fromTo("#bar-1", { scaleY: 0 }, { scaleY: 1, duration: 0.45, ease: "power3.out" }, 3.5);
-    tl.fromTo("#bar-2", { scaleY: 0 }, { scaleY: 1, duration: 0.5, ease: "power3.out" }, 3.65);
-    tl.fromTo("#bar-3", { scaleY: 0 }, { scaleY: 1, duration: 0.55, ease: "power3.out" }, 3.8);
-
-    tl.fromTo(
-      "#bar-4",
-      { scaleY: 0 },
-      { scaleY: 1, duration: 1.2, ease: "power3.out" },
-      4.2
-    );
-
-    tl.fromTo(
-      "#mafia-crown-badge",
-      { scale: 0, opacity: 0, y: 20 },
-      { scale: 1, opacity: 1, y: 0, duration: 0.5, ease: "power3.out" },
-      4.8
-    );
-
-    // Bộ đếm cá tăng từ 12.000 lên 380.000 cá
-    const fishCounter = { count: 12000 };
-    const counterEl = document.getElementById("fish-counter-val");
-    tl.to(
-      fishCounter,
-      {
-        count: 380000,
-        duration: 3.3,
-        ease: "power2.out",
-        onUpdate: function () {
-          if (counterEl) {
-            counterEl.innerText = Math.floor(fishCounter.count).toLocaleString("vi-VN") + " CÁ";
-          }
-        }
-      },
-      4.2
-    );
-
-    // 5. OVERLAY 2: RISE ICON & LABEL GIÀU NHẤT KHU RỪNG (4.58s - 7.3s)
-    tl.fromTo(
-      "#header-banner-2",
-      { opacity: 0, y: -20 },
-      { opacity: 1, y: 0, duration: 0.4, ease: "power3.out" },
-      4.58
-    );
-
-    if (riseArrow && riseHead) {
-      const lenArrow = riseArrow.getTotalLength() || 90;
-      const lenHead = riseHead.getTotalLength() || 40;
+      // SHOT 2 CHOREOGRAPHY (4.48s -> 9.00s)
+      // Transition cut: sang ảnh img-15, zoom-in liên tục
       tl.fromTo(
-        riseArrow,
-        { strokeDashoffset: lenArrow },
-        { strokeDashoffset: 0, duration: 0.55, ease: "power2.out" },
-        4.65
+        "#shot2-media-wrap",
+        { scale: 1.0 },
+        { scale: 1.12, duration: 4.52, ease: "none" },
+        4.48
       );
+
+      // Diagram chia lô xuất hiện dạng pop-in có trật tự
       tl.fromTo(
-        riseHead,
-        { strokeDashoffset: lenHead },
-        { strokeDashoffset: 0, duration: 0.3, ease: "power2.out" },
-        5.05
+        "#diagram-box",
+        { scale: 0.88, opacity: 0, y: 30 },
+        { scale: 1.0, opacity: 1, y: 0, duration: 0.5, ease: "power3.out" },
+        4.85
       );
-    }
 
-    tl.fromTo(
-      "#banner-text-2",
-      { opacity: 0, x: -16 },
-      { opacity: 1, x: 0, duration: 0.4, ease: "power3.out" },
-      5.61
-    );
+      // Punch Phrase Shot 2 xuất hiện tại t = 6.74s
+      tl.fromTo(
+        "#punch-card-wrapper",
+        { scale: 0.85, y: -30, opacity: 0 },
+        { scale: 1.0, y: 0, opacity: 1, duration: 0.48, ease: "power3.out" },
+        6.74
+      );
 
-    tl.to(
-      "#header-banner-2",
-      { opacity: 0, y: -15, duration: 0.3, ease: "power2.in" },
-      7.3
-    );
-
-    // 6. OVERLAY 3: PUNCH PHRASE "LÒNG THAM VÔ ĐỘ" (7.4s - 9.0s)
-    tl.fromTo(
-      "#punch-phrase-card",
-      { scale: 0.94, opacity: 0, y: 20 },
-      { scale: 1, opacity: 1, y: 0, duration: 0.45, ease: "power3.out" },
-      7.4
-    );
-
-    // Đăng ký timeline paused vào window.__timelines
-    window.__timelines = window.__timelines || {};
-    window.__timelines["scene-s19"] = tl;
-  </script>
-
+      // Đăng ký timeline cho HyperFrames seek
+      window.__timelines = window.__timelines || {};
+      window.__timelines["scene-s19"] = tl;
+    </script>
+  
     </template>
   </body>
 </html>
