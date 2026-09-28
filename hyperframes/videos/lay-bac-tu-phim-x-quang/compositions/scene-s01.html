@@ -1,0 +1,448 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+      /* hf-safe-colors (tất định từ style-tokens.json) */
+      .hf-text-ink { color: #141414; }
+      .hf-text-light { color: #F7F4EC; }
+      .hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+      .hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+      .hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+      .hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+      *, *::before, *::after {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        width: 100vw;
+        height: 100vh;
+        overflow: hidden;
+        background-color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        color: #141414;
+        -webkit-font-smoothing: antialiased;
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+
+      /* Quy ước clip của HyperFrames */
+      .clip {
+        position: absolute;
+        inset: 0;
+      }
+
+      /* Thanh cam nhận diện thương hiệu cố định mép đáy */
+      #bottom-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 14px;
+        background-color: #FF6A1A;
+        z-index: 100;
+      }
+
+      /* Nền toàn khung (full-bleed background) theo Style DNA */
+      .media-container {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+        background-color: #141414;
+        transform-origin: 50% 50%;
+        will-change: transform, opacity;
+      }
+
+      .full-bleed-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+        transform-origin: 50% 40%;
+        will-change: transform;
+      }
+
+      /* Shot 2: Căn chỉnh ảnh dư lề để pan-right mượt mà không hở viền */
+      .shot2-img-pan {
+        width: 116%;
+        height: 116%;
+        position: absolute;
+        top: -8%;
+        left: -8%;
+        object-fit: cover;
+        transform-origin: 50% 50%;
+        will-change: transform;
+      }
+
+      /* Shot 1: Overlay nhãn câu hỏi + Icon question (nằm trong safeZone [160-1390]) */
+      .shot1-overlay-badge {
+        position: absolute;
+        bottom: 580px;
+        left: 60px;
+        right: 60px;
+        background-color: #141414;
+        border: 4px solid #FF6A1A;
+        border-radius: 18px;
+        padding: 22px 26px;
+        display: flex;
+        align-items: center;
+        gap: 22px;
+        box-shadow: 12px 12px 0px rgba(0, 0, 0, 0.75);
+        z-index: 10;
+        transform-origin: 50% 100%;
+        will-change: transform, opacity;
+      }
+
+      .icon-circle {
+        width: 76px;
+        height: 76px;
+        border-radius: 50%;
+        background-color: #FF6A1A;
+        display: grid;
+        place-items: center;
+        flex-shrink: 0;
+      }
+
+      .badge-content {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+      .badge-kicker {
+        color: #FF6A1A;
+        font-size: 19px;
+        font-weight: 900;
+        letter-spacing: 2px;
+      }
+      .badge-heading {
+        color: #F7F4EC;
+        font-size: 42px;
+        font-weight: 900;
+        line-height: 1.15;
+        letter-spacing: -0.5px;
+        margin: 0;
+      }
+
+      /* Shot 2: Diagram Marker "LỚP TRÁNG BẠC" */
+      .diagram-callout {
+        position: absolute;
+        top: 360px;
+        left: 60px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        z-index: 12;
+      }
+
+      .callout-dot {
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        background-color: #FF6A1A;
+        border: 3px solid #141414;
+        box-shadow: 0 0 0 4px #FF6A1A;
+        flex-shrink: 0;
+        transform-origin: 50% 50%;
+        will-change: transform;
+      }
+
+      .callout-svg {
+        width: 110px;
+        height: 36px;
+        overflow: visible;
+        flex-shrink: 0;
+      }
+
+      .callout-card {
+        background-color: #141414;
+        border: 3px solid #FF6A1A;
+        border-radius: 12px;
+        padding: 12px 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        box-shadow: 8px 8px 0px rgba(0, 0, 0, 0.75);
+        transform-origin: 0% 50%;
+        will-change: transform, opacity;
+      }
+
+      .callout-tag {
+        color: #FF6A1A;
+        font-size: 17px;
+        font-weight: 900;
+        letter-spacing: 2px;
+      }
+      .callout-label {
+        color: #F7F4EC;
+        font-size: 32px;
+        font-weight: 900;
+        letter-spacing: -0.5px;
+      }
+
+      /* Shot 2: Inventory Badge "4 KG PHẾ LIỆU" */
+      .inventory-badge {
+        position: absolute;
+        bottom: 580px;
+        left: 60px;
+        right: 60px;
+        background-color: #141414;
+        border: 4px solid #141414;
+        border-radius: 18px;
+        padding: 20px 26px;
+        display: flex;
+        align-items: center;
+        gap: 22px;
+        box-shadow: 12px 12px 0px rgba(0, 0, 0, 0.75);
+        z-index: 10;
+        transform-origin: 50% 100%;
+        will-change: transform, opacity;
+      }
+
+      .inv-tag-orange {
+        background-color: #FF6A1A;
+        color: #141414;
+        font-size: 36px;
+        font-weight: 900;
+        padding: 8px 18px;
+        border-radius: 8px;
+        letter-spacing: -0.5px;
+        flex-shrink: 0;
+      }
+
+      .inv-text-col {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+      .inv-sub {
+        color: #FF6A1A;
+        font-size: 18px;
+        font-weight: 900;
+        letter-spacing: 2px;
+      }
+      .inv-main {
+        color: #F7F4EC;
+        font-size: 40px;
+        font-weight: 900;
+        letter-spacing: -0.5px;
+        line-height: 1.15;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s01"
+      data-start="0"
+      data-width="1080"
+      data-height="1920"
+      data-duration="7.36"
+    >
+      <!-- SHOT 1: 0ms -> 3120ms (0s -> 3.12s) -->
+      <section id="shot-1" class="clip" data-start="0" data-duration="3.12">
+        <!-- Nền toàn khung giữ nguyên phong cách màu của ảnh AI Flow -->
+        <div id="shot1-media-wrap" class="media-container">
+          <img
+            id="shot1-img"
+            class="full-bleed-img"
+            src="assets/img-05-xray-film-silver-bar.jpg"
+            alt="Minh họa 4 kg phim X-quang và thỏi kim loại quý"
+          />
+        </div>
+
+        <!-- Overlay: Label & Question Icon (atMs: 1350) -->
+        <div id="shot1-badge" class="shot1-overlay-badge">
+          <div class="icon-circle">
+            <svg width="44" height="44" viewBox="0 0 48 48">
+              <path
+                id="shot1-q-path"
+                d="M 16 16 C 16 9 32 9 32 18 C 32 25 24 26 24 33"
+                fill="none"
+                stroke="#141414"
+                stroke-width="5.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <circle
+                id="shot1-q-dot"
+                cx="24"
+                cy="40"
+                r="3.5"
+                fill="#141414"
+              />
+            </svg>
+          </div>
+          <div class="badge-content">
+            <span class="badge-kicker">NGHI VẤN ĐỊNH LƯỢNG //</span>
+            <h1 class="badge-heading">GIÁ TRỊ ẨN GIẤU?</h1>
+          </div>
+        </div>
+      </section>
+
+      <!-- SHOT 2: 3120ms -> 7360ms (3.12s -> 7.36s) -->
+      <section id="shot-2" class="clip" data-start="3.12" data-duration="4.24">
+        <!-- Nền toàn khung giữ nguyên phong cách màu của ảnh AI Flow -->
+        <div id="shot2-media-wrap" class="media-container">
+          <img
+            id="shot2-img"
+            class="full-bleed-img shot2-img-pan"
+            src="assets/img-07-xray-evidence-mystery-metal.jpg"
+            alt="Cận cảnh bề mặt tráng phủ của phim X-quang"
+          />
+        </div>
+
+        <!-- Diagram Marker: LỚP TRÁNG BẠC (atMs: 4210) -->
+        <div id="shot2-callout" class="diagram-callout">
+          <div id="callout-dot" class="callout-dot"></div>
+          <svg class="callout-svg" viewBox="0 0 110 36">
+            <path
+              id="callout-line-path"
+              d="M 6 18 L 45 18 L 104 18"
+              fill="none"
+              stroke="#FF6A1A"
+              stroke-width="4.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+          <div id="callout-card" class="callout-card">
+            <span class="callout-tag">VỊ TRÍ THU HỒI</span>
+            <span class="callout-label">LỚP TRÁNG BẠC</span>
+          </div>
+        </div>
+
+        <!-- Label: 4 KG PHẾ LIỆU (atMs: 5250) -->
+        <div id="shot2-weight" class="inventory-badge">
+          <div class="inv-tag-orange">4 KG</div>
+          <div class="inv-text-col">
+            <span class="inv-sub">MẪU KHẢO SÁT //</span>
+            <span class="inv-main">4 KG PHẾ LIỆU</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Thanh cam đáy cố định -->
+      <div id="bottom-bar"></div>
+    </div>
+
+    <script>
+      // Thiết lập đo độ dài nét vẽ SVG trước khi chạy timeline
+      const qPath = document.getElementById("shot1-q-path");
+      const qLen = qPath ? Math.ceil(qPath.getTotalLength() || 60) : 60;
+      if (qPath) {
+        qPath.style.strokeDasharray = qLen;
+        qPath.style.strokeDashoffset = qLen;
+      }
+
+      const linePath = document.getElementById("callout-line-path");
+      const lineLen = linePath ? Math.ceil(linePath.getTotalLength() || 110) : 110;
+      if (linePath) {
+        linePath.style.strokeDasharray = lineLen;
+        linePath.style.strokeDashoffset = lineLen;
+      }
+
+      // Timeline GSAP bắt buộc duy nhất và paused: true
+      const tl = gsap.timeline({ paused: true });
+
+      /* =========================================================
+         SHOT 1: t = 0.00s -> 3.12s
+         ========================================================= */
+      // Punch entrance dứt khoát toàn khung mở đầu
+      tl.fromTo(
+        "#shot1-media-wrap",
+        { scale: 1.08, opacity: 0 },
+        { scale: 1.0, opacity: 1, duration: 0.45, ease: "power3.out" },
+        0.05
+      );
+
+      // Ken Burns zoom-in nhẹ từ 1.0x lên 1.06x hướng vào thỏi kim loại và dấu hỏi
+      tl.fromTo(
+        "#shot1-img",
+        { scale: 1.0 },
+        { scale: 1.06, duration: 3.12, ease: "none" },
+        0
+      );
+
+      // Overlay Shot 1 xuất hiện tại atMs: 1350 (t = 1.35s)
+      tl.fromTo(
+        "#shot1-badge",
+        { y: 50, opacity: 0, scale: 0.92 },
+        { y: 0, opacity: 1, scale: 1, duration: 0.45, ease: "power3.out" },
+        1.35
+      );
+
+      // Nét vẽ tự-vẽ-dần của biểu tượng dấu hỏi (question icon)
+      if (qPath) {
+        tl.fromTo(
+          qPath,
+          { strokeDashoffset: qLen },
+          { strokeDashoffset: 0, duration: 0.4, ease: "power2.out" },
+          1.45
+        );
+      }
+      tl.fromTo(
+        "#shot1-q-dot",
+        { scale: 0, transformOrigin: "50% 50%" },
+        { scale: 1, duration: 0.2, ease: "power3.out" },
+        1.80
+      );
+
+      /* =========================================================
+         SHOT 2: t = 3.12s -> 7.36s (Transition In: cut)
+         ========================================================= */
+      // Ken Burns pan-right chậm kết hợp zoom nhẹ
+      tl.fromTo(
+        "#shot2-img",
+        { x: -40, scale: 1.0 },
+        { x: 40, scale: 1.04, duration: 4.24, ease: "none" },
+        3.12
+      );
+
+      // Diagram Marker "LỚP TRÁNG BẠC" tại atMs: 4210 (t = 4.21s)
+      tl.fromTo(
+        "#callout-dot",
+        { scale: 0, transformOrigin: "50% 50%" },
+        { scale: 1, duration: 0.25, ease: "power3.out" },
+        4.21
+      );
+
+      if (linePath) {
+        tl.fromTo(
+          linePath,
+          { strokeDashoffset: lineLen },
+          { strokeDashoffset: 0, duration: 0.35, ease: "power2.out" },
+          4.25
+        );
+      }
+
+      tl.fromTo(
+        "#callout-card",
+        { x: -20, opacity: 0, scale: 0.88 },
+        { x: 0, opacity: 1, scale: 1, duration: 0.4, ease: "power3.out" },
+        4.42
+      );
+
+      // Label "4 KG PHẾ LIỆU" tại atMs: 5250 (t = 5.25s)
+      tl.fromTo(
+        "#shot2-weight",
+        { y: 40, opacity: 0, scale: 0.94 },
+        { y: 0, opacity: 1, scale: 1, duration: 0.45, ease: "power3.out" },
+        5.25
+      );
+
+      // Đăng ký timeline cho HyperFrames seek
+      window.__timelines["scene-s01"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

@@ -1,0 +1,441 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+      /* hf-safe-colors (tất định từ style-tokens.json) */
+      .hf-text-ink { color: #141414; }
+      .hf-text-light { color: #F7F4EC; }
+      .hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+      .hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+      .hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+      .hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #E7E3D9;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      /* Base composition container */
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: #E7E3D9;
+      }
+
+      /* Mandatory clip convention: inset 0 layout */
+      .clip {
+        position: absolute;
+        inset: 0;
+      }
+
+      /* Full-frame 9:16 background photo container */
+      .hero-full-wrap {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+        transform-origin: center center;
+        will-change: transform;
+      }
+
+      .hero-full-img {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+        transform-origin: center center;
+        will-change: transform;
+      }
+
+      /* Chart Background Variant: 4 ruled horizontal lines + orange left ticks */
+      .bg-chart-layer {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        z-index: 6;
+      }
+      .chart-line {
+        position: absolute;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background-color: rgba(20, 20, 20, 0.32);
+      }
+      .chart-tick {
+        position: absolute;
+        left: 0;
+        width: 28px;
+        height: 6px;
+        background-color: #FF6A1A;
+      }
+
+      /* Persistent Brand Signature: Bottom orange bar */
+      .brand-bottom-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 16px;
+        background-color: #FF6A1A;
+        z-index: 100;
+      }
+
+      /* Category Paper Tape (Top safe zone Y >= 160px) */
+      .category-tape {
+        position: absolute;
+        top: 176px;
+        left: 50px;
+        padding: 10px 24px;
+        background-color: #141414;
+        color: #F7F4EC;
+        font-size: 24px;
+        font-weight: 900;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        border: 2px solid #141414;
+        box-shadow: 6px 6px 0px #FF6A1A;
+        z-index: 20;
+      }
+
+      /* Secondary Context Label */
+      .context-pill {
+        position: absolute;
+        top: 176px;
+        right: 50px;
+        padding: 10px 22px;
+        background-color: #FF6A1A;
+        color: #141414;
+        font-size: 24px;
+        font-weight: 900;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        border: 2px solid #141414;
+        box-shadow: 6px 6px 0px #141414;
+        z-index: 20;
+      }
+
+      /* Punch Phrase Cards (Safe Zone Y: 1180px, well within usable band [160, 1390]) */
+      .punch-card {
+        position: absolute;
+        top: 1180px;
+        left: 50px;
+        right: 50px;
+        background-color: #141414;
+        border: 4px solid #141414;
+        box-shadow: 10px 10px 0px #FF6A1A;
+        padding: 22px 30px;
+        display: flex;
+        align-items: center;
+        gap: 26px;
+        z-index: 30;
+      }
+
+      .punch-icon-box {
+        flex-shrink: 0;
+        width: 100px;
+        height: 100px;
+        background-color: #FF6A1A;
+        border: 3px solid #141414;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .punch-icon-box svg {
+        width: 64px;
+        height: 64px;
+      }
+
+      .punch-text-group {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 6px;
+      }
+
+      .punch-sub-label {
+        font-size: 22px;
+        font-weight: 700;
+        color: #FF6A1A;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+      }
+
+      .punch-main-phrase {
+        margin: 0;
+        font-size: 54px;
+        font-weight: 900;
+        line-height: 1.22;
+        color: #F7F4EC;
+        letter-spacing: -0.5px;
+        white-space: nowrap;
+      }
+
+      .punch-highlight {
+        color: #FF6A1A;
+      }
+
+      /* SVG Icon paths for progressive drawing animation */
+      .draw-path {
+        fill: none;
+        stroke: #141414;
+        stroke-width: 4.5;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s06"
+      data-start="0"
+      data-width="1080"
+      data-height="1920"
+      data-duration="8.56"
+    >
+      <!-- Background Chart Layer (4 horizontal lines at 20%, 40%, 60%, 80% + orange left ticks) -->
+      <div class="bg-chart-layer">
+        <div class="chart-line" style="top: 20%;"></div>
+        <div class="chart-tick" style="top: calc(20% - 2px);"></div>
+
+        <div class="chart-line" style="top: 40%;"></div>
+        <div class="chart-tick" style="top: calc(40% - 2px);"></div>
+
+        <div class="chart-line" style="top: 60%;"></div>
+        <div class="chart-tick" style="top: calc(60% - 2px);"></div>
+
+        <div class="chart-line" style="top: 80%;"></div>
+        <div class="chart-tick" style="top: calc(80% - 2px);"></div>
+      </div>
+
+      <!-- ========================================== -->
+      <!-- SHOT 1: S06-1 (40800ms - 45400ms -> 0s - 4.6s) -->
+      <!-- ========================================== -->
+      <section
+        id="shot-1"
+        class="clip"
+        data-start="0"
+        data-duration="4.6"
+        style="z-index: 10;"
+      >
+        <!-- Full-frame 9:16 background photo with Ken Burns zoom-in -->
+        <div id="shot1-img-wrap" class="hero-full-wrap" data-layout-allow-overflow="true">
+          <img
+            id="shot1-img"
+            class="hero-full-img"
+            src="assets/img-12-forensic-expert-measuring-scale.jpg"
+            alt="Cân điện tử đo 12.8 gam bạc"
+            data-layout-allow-overflow="true"
+          />
+        </div>
+
+        <!-- Category Paper Tape & Context Pill -->
+        <div id="shot1-tape" class="category-tape hf-plate-ink" style="opacity: 0;">
+          ĐỊNH LƯỢNG MẪU VẬT
+        </div>
+        <div id="shot1-pill" class="context-pill hf-hl-orange" style="opacity: 0;">
+          4 KG PHIM CŨ
+        </div>
+
+        <!-- Overlays: Punch-phrase & Scale Icon (appears at t=2.49s, hold 2.11s) -->
+        <div id="shot1-punch" class="punch-card hf-plate-ink" style="opacity: 0;">
+          <div class="punch-icon-box">
+            <!-- Scale Icon (Vocabulary) -->
+            <svg id="icon-scale" viewBox="0 0 64 64">
+              <!-- Base & pillar -->
+              <path class="draw-path" d="M 18 56 L 46 56" />
+              <path class="draw-path" d="M 32 56 L 32 14" />
+              <!-- Horizontal balance beam -->
+              <path class="draw-path" d="M 14 18 L 50 18" />
+              <!-- Left pan -->
+              <path class="draw-path" d="M 14 18 L 8 36 L 24 36 Z" />
+              <!-- Right pan -->
+              <path class="draw-path" d="M 50 18 L 42 36 L 58 36 Z" />
+            </svg>
+          </div>
+          <div class="punch-text-group">
+            <span class="punch-sub-label">THỰC NGHIỆM THU HỒI</span>
+            <h2 class="punch-main-phrase hf-text-light">
+              KẾT QUẢ: <span class="punch-highlight">12.8G BẠC</span>
+            </h2>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================================== -->
+      <!-- SHOT 2: S06-2 (45400ms - 49360ms -> 4.6s - 8.56s) -->
+      <!-- ========================================== -->
+      <section
+        id="shot-2"
+        class="clip"
+        data-start="4.6"
+        data-duration="3.96"
+        style="z-index: 20;"
+      >
+        <!-- Full-frame 9:16 background photo with Ken Burns zoom-out -->
+        <div id="shot2-img-wrap" class="hero-full-wrap" data-layout-allow-overflow="true">
+          <img
+            id="shot2-img"
+            class="hero-full-img"
+            src="assets/img-02-xray-film-silver-warehouse.jpg"
+            alt="Kho pallet 1 tấn phim X-quang"
+            data-layout-allow-overflow="true"
+          />
+        </div>
+
+        <!-- Category Paper Tape & Context Pill -->
+        <div id="shot2-tape" class="category-tape hf-plate-ink" style="opacity: 0;">
+          BÀI TOÁN QUY MÔ
+        </div>
+        <div id="shot2-pill" class="context-pill hf-hl-orange" style="opacity: 0;">
+          KHO CÔNG NGHIỆP
+        </div>
+
+        <!-- Overlays: Punch-phrase & Question Icon (appears at t=5.58s -> rel 0.98s into shot 2) -->
+        <div id="shot2-punch" class="punch-card hf-plate-ink" style="opacity: 0;">
+          <div class="punch-icon-box">
+            <!-- Question Icon (Vocabulary) -->
+            <svg id="icon-question" viewBox="0 0 64 64">
+              <path class="draw-path" d="M 22 24 C 22 14, 42 14, 42 24 C 42 32, 32 34, 32 42" />
+              <path class="draw-path" d="M 32 50 L 32 52" style="stroke-width: 6;" />
+            </svg>
+          </div>
+          <div class="punch-text-group">
+            <span class="punch-sub-label">DỰ ĐOÁN KẾT QUẢ</span>
+            <h2 class="punch-main-phrase hf-text-light">
+              1 TẤN = <span class="punch-highlight">? KG BẠC</span>
+            </h2>
+          </div>
+        </div>
+      </section>
+
+      <!-- Fixed Signature Bottom Orange Strip -->
+      <div class="brand-bottom-bar"></div>
+    </div>
+
+    <!-- Animation Orchestration -->
+    <script>
+      // Prepare SVG path drawing lengths
+      document.querySelectorAll(".draw-path").forEach((p) => {
+        const len = p.getTotalLength();
+        p.style.strokeDasharray = String(Math.ceil(len) + 1);
+        p.style.strokeDashoffset = String(Math.ceil(len) + 1);
+      });
+
+      // Master seekable GSAP timeline
+      const tl = gsap.timeline({ paused: true });
+
+      // ----------------------------------------------------
+      // SHOT 1 TIMELINE (t = 0.0s to 4.6s)
+      // TransitionIn: STRIKE (heavy physical impact landing)
+      // ----------------------------------------------------
+      // 1. Strike arrival for Hero Full-Frame Wrapper
+      tl.fromTo(
+        "#shot1-img-wrap",
+        { scale: 1.12, opacity: 0 },
+        { scale: 1.0, opacity: 1, duration: 0.38, ease: "power4.out" },
+        0.0
+      );
+
+      // Ken Burns: decisive continuous zoom-in focusing onto the scale (1.0x -> 1.06x)
+      tl.fromTo(
+        "#shot1-img",
+        { scale: 1.0 },
+        { scale: 1.06, duration: 4.6, ease: "none" },
+        0.0
+      );
+
+      // Label pop-in
+      tl.fromTo(
+        "#shot1-tape",
+        { x: -36, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.35, ease: "power3.out" },
+        0.25
+      );
+      tl.fromTo(
+        "#shot1-pill",
+        { x: 36, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.35, ease: "power3.out" },
+        0.32
+      );
+
+      // Shot 1 Overlay Punch-phrase (atMs: 43290 -> scene time 2.49s)
+      tl.fromTo(
+        "#shot1-punch",
+        { scale: 0.9, y: 24, opacity: 0 },
+        { scale: 1.0, y: 0, opacity: 1, duration: 0.42, ease: "power3.out" },
+        2.49
+      );
+
+      // Self-drawing scale icon paths
+      tl.to(
+        "#icon-scale .draw-path",
+        { strokeDashoffset: 0, duration: 0.65, ease: "power2.out", stagger: 0.08 },
+        2.58
+      );
+
+      // ----------------------------------------------------
+      // SHOT 2 TIMELINE (t = 4.6s to 8.56s)
+      // TransitionIn: CUT (direct switch to large-scale warehouse)
+      // ----------------------------------------------------
+      // Ken Burns: expansive zoom-out (1.06x -> 1.0x) showing full pallet warehouse
+      tl.fromTo(
+        "#shot2-img",
+        { scale: 1.06 },
+        { scale: 1.0, duration: 3.96, ease: "none" },
+        4.6
+      );
+
+      // Labels entrance for Shot 2
+      tl.fromTo(
+        "#shot2-tape",
+        { x: -36, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.35, ease: "power3.out" },
+        4.70
+      );
+      tl.fromTo(
+        "#shot2-pill",
+        { x: 36, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.35, ease: "power3.out" },
+        4.78
+      );
+
+      // Shot 2 Overlay Punch-phrase (atMs: 46380 -> scene time 5.58s)
+      tl.fromTo(
+        "#shot2-punch",
+        { scale: 0.9, y: 24, opacity: 0 },
+        { scale: 1.0, y: 0, opacity: 1, duration: 0.42, ease: "power3.out" },
+        5.58
+      );
+
+      // Self-drawing question mark icon path
+      tl.to(
+        "#icon-question .draw-path",
+        { strokeDashoffset: 0, duration: 0.7, ease: "power2.out", stagger: 0.12 },
+        5.68
+      );
+
+      // Register timeline on HyperFrames global registry
+      window.__timelines = window.__timelines || {};
+      window.__timelines["scene-s06"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

@@ -482,6 +482,18 @@ nhau), phần lệch offset 10px của `.shadow-layer` có thể lộ ra ngoài 
 để xem `.shadow-layer` lộ ra ở đâu, rồi cân nhắc giảm offset hoặc dùng `clip-path`/mask thay vì
 2 SVG chồng lệch.
 
+**Race condition thật khác ở bước bootstrap project chung (video "lay-bac-tu-phim-x-quang",
+2026-09-28):** khi N scene cùng chạy song song lần đầu (chưa scene nào bootstrap `hyperframes.json`
+trước), guard `!fs.existsSync(hyperframes.json)` đúng cho cả N process cùng lúc — mỗi process tự
+scaffold ở thư mục tạm riêng (đã fix tên tmp unique từ trước) rồi copy sang đích chung. Bug MỚI: bước
+đọc/ghi lại `meta.json` (đổi field `name` thành slug) không có bảo vệ — 1 process đọc trúng lúc
+process khác đang ghi dở file này, `JSON.parse` trúng nội dung rỗng/dở dang → `SyntaxError: Unexpected
+end of JSON input`, crash cả scene dù bootstrap thực chất đã thành công (5/6 scene khác PASS bình
+thường). Đã sửa `scripts/07-codegen.hf.router.mjs`: bọc đoạn đọc/ghi `meta.json` trong try/catch, bỏ
+qua an toàn khi lỗi (field `meta.name` chỉ cosmetic, không dùng ở đâu khác trong pipeline — đã grep
+xác nhận). Cách phục hồi khi gặp lại: chỉ cần chạy lại đúng scene lỗi (`--scenes=SNN`), vì lần chạy
+lại `hyperframes.json` đã tồn tại nên không còn đi qua nhánh bootstrap/race này nữa.
+
 ## 7. Preview & QA
 **QUAN TRỌNG (làm rõ 2026-09-22 sau khi Claude hiểu nhầm và tự ý làm sai — xem bài học bên dưới):
 đây KHÔNG PHẢI bước bắt buộc chạy tự động cho mọi video.** Sau khi Stage 6 xong và

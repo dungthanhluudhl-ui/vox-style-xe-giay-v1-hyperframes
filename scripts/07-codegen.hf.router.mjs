@@ -117,9 +117,19 @@ if (!fs.existsSync(path.join(vp.hfProjectDir, "hyperframes.json"))) {
   fs.rmSync(tmpDir, { recursive: true, force: true });
   const metaPath = path.join(vp.hfProjectDir, "meta.json");
   if (fs.existsSync(metaPath)) {
-    const meta = JSON.parse(fs.readFileSync(metaPath, "utf8"));
-    meta.name = slug;
-    fs.writeFileSync(metaPath, JSON.stringify(meta, null, 2), "utf8");
+    // Race condition thật (video "lay-bac-tu-phim-x-quang", 2026-09-28): nhiều scene cùng bootstrap
+    // project chung lần đầu (guard !exists(hyperframes.json) đúng cho cả N process cùng lúc) — 1
+    // process có thể đọc trúng meta.json khi process khác đang ghi dở (cpSync/writeFileSync không
+    // atomic giữa các process), JSON.parse trúng nội dung rỗng/dở dang -> crash cả scene dù bootstrap
+    // thực chất đã thành công. meta.name chỉ là field cosmetic (không dùng ở đâu khác trong pipeline,
+    // xem planning/responsibility-matrix.md mục 6) — bỏ qua an toàn thay vì làm fail cả scene.
+    try {
+      const meta = JSON.parse(fs.readFileSync(metaPath, "utf8"));
+      meta.name = slug;
+      fs.writeFileSync(metaPath, JSON.stringify(meta, null, 2), "utf8");
+    } catch (e) {
+      console.warn(`  ⚠ Bỏ qua cập nhật meta.json (đọc trúng lúc process khác đang bootstrap song song, không ảnh hưởng render/check): ${e.message}`);
+    }
   }
 
   // Lỗi thật đã xảy ra (video "ban-an-35-phan-1", 2026-09-23): CLAUDE.md/AGENTS.md do `hyperframes

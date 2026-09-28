@@ -239,6 +239,17 @@ quét từng video: `planning/incident-log.md`.
 - [x] Stage 7b integration check PASS (2026-09-27) — 11/11 scene, audio, caption-track, `hyperframes check` ok=true.
 - [x] Render bản đầy đủ (2026-09-27) — `out/doi-dau-xe-tang-checkpoint-charlie-full.mp4`, **85.533s** (khớp audio thật 85.653s), 1080×1920 h264/aac, 87.5MB. `completion-manifest.json` xác nhận mọi field `*Ok=true`. **Chưa được người dùng xem/xác nhận.**
 
+### Video "lay-bac-tu-phim-x-quang" (giải phẫu công nghệ thu hồi bạc từ phim X-quang, 49.4s, 6 scene/12 shot)
+- [x] Nhận script + audio (2026-09-28) từ `Vox style 3.1_test/.../Có Thể Lấy Bạc Từ Phim X-quang` — không có media nguồn sẵn.
+- [x] Transcribe (whisper.cpp CUDA) + align với script gốc qua 9router (2026-09-28) — 218/218 từ khớp script gốc, audio thật 49.575s.
+- [x] Tạo media qua Google Flow (Stage 2b, 2026-09-28) — account `flow-02` theo yêu cầu người dùng (account `default` hết credit video). **Bất thường thật CHƯA rõ nguyên nhân gốc**: Giai đoạn 2 (tạo chuyển động) báo "hoàn thành thành công" nhưng file zip tải về **0 video, chỉ 13 ảnh** (11 prompt gốc, không rõ tại sao dư 2). Không có thông báo blocked/quota rõ ràng nào được agent phát hiện. Người dùng xác nhận chấp nhận bản chỉ dùng ảnh tĩnh thay vì tốn thêm credit điều tra/thử lại account khác — xem chi tiết đầy đủ trong `pipeline/videos/lay-bac-tu-phim-x-quang/run-log.md`. **Cần theo dõi nếu tái diễn ở video sau dùng flow-02**: có thể là dấu hiệu account này cũng đã cạn hạn mức tạo video mà UI Flow không báo đủ rõ để agent nhận diện.
+- [x] Phân tích + chuẩn hoá tên media qua 9router[vision] (2026-09-28) — 13/13 ảnh (0 video).
+- [x] Scene Plan (2026-09-28) — 6 scene, dùng ảnh tĩnh (không có clip chuyển động).
+- [x] Shotlist (2026-09-28) — 12 shot/6 scene.
+- [x] Dựng composition qua nhánh HyperFrames (2026-09-28) — 5/6 scene PASS ngay lần đầu (song song). **1 bug race condition thật phát hiện + sửa** trong `scripts/07-codegen.hf.router.mjs`: khi N scene cùng bootstrap project HyperFrames chung lần đầu, bước đọc/ghi lại `meta.json` không có bảo vệ — 1 process (S03) đọc trúng lúc process khác đang ghi dở, `JSON.parse` trúng nội dung rỗng → crash cả scene dù bootstrap thực chất đã thành công. Đã sửa bằng try/catch an toàn (field `meta.name` chỉ cosmetic, đã grep xác nhận không dùng ở đâu khác trong pipeline) — xem `planning/responsibility-matrix.md` mục 6. S03 PASS ngay lần chạy lại đầu tiên sau khi sửa.
+- [x] Stage 7b integration check PASS (2026-09-28) — 6/6 scene, audio, caption-track, `hyperframes check` ok=true (36 mốc/12 shot).
+- [x] Render bản đầy đủ (2026-09-28) — `out/lay-bac-tu-phim-x-quang-full.mp4`, **49.367s** (khớp audio thật 49.575s), 1080×1920 h264/aac, 47.4MB. `completion-manifest.json` xác nhận mọi field `*Ok=true`. **Chưa được người dùng xem/xác nhận.**
+
 ## Archive: pipeline Remotion cũ (4 video đầu, `archive/remotion-legacy/`)
 
 Giữ lại đúng nguyên trạng để tham khảo/sửa lỗi cho 4 video archive — KHÔNG áp dụng cho video mới.
