@@ -1,0 +1,610 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+    /* hf-safe-colors (tất định từ style-tokens.json) */
+    .hf-text-ink { color: #141414; }
+    .hf-text-light { color: #F7F4EC; }
+    .hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+    .hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+    .hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+    .hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+    /* Reset & Viewport Contract */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      margin: 0;
+      padding: 0;
+      width: 1080px;
+      height: 1920px;
+      background-color: #F5F0E4;
+      font-family: "Be Vietnam Pro", sans-serif;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Khung Root HyperFrames */
+    #root {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #F5F0E4; /* variant: card - phẳng không lưới */
+    }
+
+    /* Safe full-frame clip container */
+    .clip {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+    }
+
+    /* Thanh cam nhận diện thương hiệu cố định mép đáy */
+    .bottom-brand-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 1080px;
+      height: 16px;
+      background-color: #FF6A1A;
+      z-index: 100;
+    }
+
+    /* Khối nội dung chính nằm trọn trong Safe Zone Y [160, 1390] */
+    .scene-content {
+      position: absolute;
+      top: 170px;
+      left: 48px;
+      width: 984px;
+      height: 1200px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      z-index: 10;
+    }
+
+    /* Nhãn Category phân tích */
+    .category-tag-wrap {
+      margin-bottom: 20px;
+    }
+    .category-tag {
+      display: inline-block;
+      background-color: #FF6A1A;
+      color: #141414;
+      font-size: 22px;
+      font-weight: 900;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      padding: 8px 26px;
+      border-radius: 6px;
+    }
+
+    /* Punch-Phrase Banner (Overlay 1 - KHÔNG PHẢI BỘC PHÁT) */
+    .punch-banner-wrap {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      margin-bottom: 30px;
+      height: 88px;
+    }
+    .punch-banner {
+      background-color: #141414;
+      padding: 16px 44px;
+      border-radius: 12px;
+      border: 3px solid #FF6A1A;
+      box-shadow: 0 12px 28px rgba(20, 20, 20, 0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .punch-text {
+      color: #FF6A1A;
+      font-size: 42px;
+      font-weight: 900;
+      letter-spacing: 1.5px;
+      line-height: 1.2;
+      text-align: center;
+      text-transform: uppercase;
+    }
+
+    /* Split Screen Grid (2 cột so sánh đối lập) */
+    .split-container {
+      width: 100%;
+      height: 980px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 32px;
+      perspective: 1400px;
+      position: relative;
+    }
+
+    /* Card cơ bản cho mỗi cột */
+    .split-card {
+      position: relative;
+      border-radius: 18px;
+      padding: 28px 24px;
+      display: flex;
+      flex-direction: column;
+      transform-style: preserve-3d;
+      will-change: transform;
+    }
+
+    /* Cột Trái: Xung đột bộc phát (Nền giấy sáng, viền mực) */
+    #col-spontaneous {
+      background-color: #E7E3D9;
+      border: 3px solid #141414;
+      box-shadow: 0 10px 24px rgba(20, 20, 20, 0.08);
+    }
+
+    /* Cột Phải: Chuẩn bị trước (Nền mực tối, viền cam) */
+    #col-premeditated {
+      background-color: #141414;
+      border: 3px solid #FF6A1A;
+      box-shadow: 0 16px 36px rgba(20, 20, 20, 0.3);
+    }
+
+    /* Header của mỗi cột */
+    .card-header {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      padding-bottom: 16px;
+      border-bottom: 2px dashed rgba(20, 20, 20, 0.25);
+    }
+    #col-premeditated .card-header {
+      border-bottom: 2px dashed rgba(255, 106, 26, 0.35);
+    }
+
+    .badge-sub {
+      font-size: 18px;
+      font-weight: 900;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      padding: 6px 16px;
+      border-radius: 6px;
+      margin-bottom: 10px;
+    }
+    #col-spontaneous .badge-sub {
+      background-color: #141414;
+      color: #F7F4EC;
+    }
+    #col-premeditated .badge-sub {
+      background-color: #FF6A1A;
+      color: #141414;
+    }
+
+    .card-title {
+      font-size: 32px;
+      font-weight: 900;
+      line-height: 1.25;
+      text-transform: uppercase;
+    }
+    #col-spontaneous .card-title {
+      color: #141414;
+    }
+    #col-premeditated .card-title {
+      color: #F7F4EC;
+    }
+
+    /* Khu vực Stamp / Status Banner riêng biệt trong luồng khối, không đè lên text */
+    .stamp-slot {
+      height: 96px;
+      margin: 18px 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Stamp BAN (Overlay 2 - Cột trái) */
+    .ban-stamp-card {
+      width: 100%;
+      height: 84px;
+      background-color: #141414;
+      border-radius: 12px;
+      border: 3px solid #FF6A1A;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      padding: 0 16px;
+    }
+    .ban-svg {
+      width: 48px;
+      height: 48px;
+      flex-shrink: 0;
+    }
+    .ban-text {
+      color: #FF6A1A;
+      font-size: 28px;
+      font-weight: 900;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    /* Stamp Confirm (Cột phải) */
+    .confirm-stamp-card {
+      width: 100%;
+      height: 84px;
+      background-color: #1e1e1e;
+      border-radius: 12px;
+      border: 2px solid #FF6A1A;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      padding: 0 16px;
+      transition: all 0.3s ease;
+    }
+    .confirm-svg {
+      width: 42px;
+      height: 42px;
+      flex-shrink: 0;
+    }
+    .confirm-text {
+      color: #FF6A1A;
+      font-size: 24px;
+      font-weight: 900;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    /* Diagram Nodes & Arrows */
+    .diagram-flow {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      margin-top: 6px;
+    }
+
+    .diagram-node {
+      width: 100%;
+      border-radius: 12px;
+      padding: 16px 14px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    #col-spontaneous .diagram-node {
+      background-color: #F5F0E4;
+      border: 2px solid #141414;
+    }
+    #col-premeditated .diagram-node {
+      background-color: #1e1e1e;
+      border: 2px solid #FF6A1A;
+    }
+
+    .node-headline {
+      font-size: 23px;
+      font-weight: 900;
+    }
+    #col-spontaneous .node-headline {
+      color: #141414;
+    }
+    #col-premeditated .node-headline {
+      color: #FF6A1A;
+    }
+
+    .node-desc {
+      font-size: 18px;
+      font-weight: 700;
+    }
+    #col-spontaneous .node-desc {
+      color: #141414;
+    }
+    #col-premeditated .node-desc {
+      color: #F7F4EC;
+    }
+
+    /* Mũi tên connector SVG */
+    .flow-arrow {
+      width: 28px;
+      height: 30px;
+    }
+
+    /* Footer Card Summary / Badge */
+    .card-footer {
+      margin-top: auto;
+      padding-top: 18px;
+      text-align: center;
+    }
+    .footer-badge {
+      display: inline-block;
+      font-size: 20px;
+      font-weight: 900;
+      padding: 10px 20px;
+      border-radius: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    #col-spontaneous .footer-badge {
+      background-color: transparent;
+      color: #141414;
+      border: 2px solid #141414;
+    }
+    #col-premeditated .footer-badge {
+      background-color: #FF6A1A;
+      color: #141414;
+    }
+  </style>
+
+  <div
+    id="root"
+    data-composition-id="scene-s14"
+    data-width="1080"
+    data-height="1920"
+    data-duration="6.08"
+  >
+    <!-- Scene Clip chứa toàn bộ nội dung đồ họa của Shot S14-1 -->
+    <div id="shot-s14" class="clip" data-start="0" data-duration="6.08">
+      
+      <!-- Content Container trong Safe Zone -->
+      <div class="scene-content">
+        
+        <!-- Category Tag -->
+        <div class="category-tag-wrap">
+          <div id="category-tag" class="category-tag">PHÂN TÍCH BẢN CHẤT</div>
+        </div>
+
+        <!-- Punch-Phrase Banner (Overlay 1: KHÔNG PHẢI BỘC PHÁT) -->
+        <div class="punch-banner-wrap">
+          <div id="punch-banner" class="punch-banner">
+            <h1 class="punch-text">KHÔNG PHẢI BỘC PHÁT</h1>
+          </div>
+        </div>
+
+        <!-- Split Screen: Đối chiếu 2 tính chất hành vi đúng theo shotlist -->
+        <div class="split-container">
+          
+          <!-- Cột Trái: Xung đột bộc phát (bị bác bỏ ở t=3.36s) -->
+          <div id="col-spontaneous" class="split-card">
+            <div class="card-header">
+              <span class="badge-sub">ĐỐI CHIẾU 01</span>
+              <h2 class="card-title">XUNG ĐỘT<br>BỘC PHÁT</h2>
+            </div>
+
+            <!-- Vị trí dành riêng cho Stamp BAN (Overlay 2) trong luồng layout -->
+            <div class="stamp-slot">
+              <div id="ban-stamp-box" class="ban-stamp-card">
+                <!-- Icon ban chuẩn Vox Style: stroke cam trên nền mực đặc -->
+                <svg class="ban-svg" viewBox="0 0 60 60" fill="none">
+                  <circle id="ban-circle" cx="30" cy="30" r="23" stroke="#FF6A1A" stroke-width="5" />
+                  <line id="ban-slash" x1="13" y1="13" x2="47" y2="47" stroke="#FF6A1A" stroke-width="5" stroke-linecap="round" />
+                </svg>
+                <span class="ban-text">BÁC BỎ</span>
+              </div>
+            </div>
+            
+            <div class="diagram-flow">
+              <div class="diagram-node">
+                <span class="node-headline">Lời qua tiếng lại</span>
+                <span class="node-desc">Cãi vã nhất thời</span>
+              </div>
+              
+              <!-- Mũi tên connector mực -->
+              <svg class="flow-arrow" viewBox="0 0 24 28" fill="none">
+                <path d="M12 2V22M12 22L4 14M12 22L20 14" stroke="#141414" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              
+              <div class="diagram-node">
+                <span class="node-headline">Tiện tay vớ đồ</span>
+                <span class="node-desc">Hành động ngẫu nhiên</span>
+              </div>
+            </div>
+
+            <div class="card-footer">
+              <span class="footer-badge">Không có dự liệu</span>
+            </div>
+          </div>
+
+          <!-- Cột Phải: Hành vi chuẩn bị trước (Nổi bật, xác định bản chất) -->
+          <div id="col-premeditated" class="split-card">
+            <div class="card-header">
+              <span class="badge-sub">ĐỐI CHIẾU 02</span>
+              <h2 class="card-title">CHUẨN BỊ<br>TỪ TRƯỚC</h2>
+            </div>
+
+            <!-- Vị trí dành riêng cho Stamp Xác Nhận -->
+            <div class="stamp-slot">
+              <div id="confirm-stamp-box" class="confirm-stamp-card">
+                <!-- Icon check xác thực -->
+                <svg class="confirm-svg" viewBox="0 0 60 60" fill="none">
+                  <circle id="confirm-circle" cx="30" cy="30" r="23" stroke="#FF6A1A" stroke-width="4" />
+                  <path id="confirm-check" d="M18 30L26 38L42 22" stroke="#FF6A1A" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span id="confirm-text" class="confirm-text">XÁC ĐỊNH BẢN CHẤT</span>
+              </div>
+            </div>
+            
+            <div class="diagram-flow">
+              <div class="diagram-node">
+                <span class="node-headline">Có sự chuẩn bị</span>
+                <span class="node-desc">Không phải ngẫu nhiên</span>
+              </div>
+              
+              <!-- Mũi tên connector cam -->
+              <svg class="flow-arrow" viewBox="0 0 24 28" fill="none">
+                <path d="M12 2V22M12 22L4 14M12 22L20 14" stroke="#FF6A1A" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              
+              <div class="diagram-node">
+                <span class="node-headline">Tính toán trước</span>
+                <span class="node-desc">Hành vi có chủ đích</span>
+              </div>
+            </div>
+
+            <div class="card-footer">
+              <span id="badge-confirm" class="footer-badge">Hành vi chủ động</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Dải cam cố định đáy khung hình chuẩn thương hiệu -->
+    <div class="bottom-brand-bar"></div>
+  </div>
+
+  <script>
+    // Khởi tạo Timeline Paused chính theo đúng hợp đồng HyperFrames
+    const tl = gsap.timeline({ paused: true });
+
+    // Thiết lập trạng thái ban đầu để an toàn tuyệt đối khi seek
+    gsap.set("#category-tag", { opacity: 0, y: -24 });
+    gsap.set("#punch-banner", { opacity: 0, scale: 0.85, y: -16 });
+    gsap.set("#col-spontaneous", { opacity: 0, rotationY: -75, transformOrigin: "right center" });
+    gsap.set("#col-premeditated", { opacity: 0, rotationY: 75, transformOrigin: "left center" });
+    gsap.set("#ban-stamp-box", { opacity: 0, scale: 0, transformOrigin: "center center" });
+    gsap.set("#confirm-stamp-box", { opacity: 0.5 });
+
+    // Path stroke setup cho icon BAN
+    const banCircle = document.getElementById("ban-circle");
+    const banSlash = document.getElementById("ban-slash");
+    if (banCircle && banSlash) {
+      const circleLen = banCircle.getTotalLength();
+      const slashLen = banSlash.getTotalLength();
+      banCircle.style.strokeDasharray = circleLen;
+      banCircle.style.strokeDashoffset = circleLen;
+      banSlash.style.strokeDasharray = slashLen;
+      banSlash.style.strokeDashoffset = slashLen;
+    }
+
+    // --- PHASE 1: TRANSITION IN (FLIP LẬT MẶT PHÂN TÍCH) ---
+    // t = 0.15s -> 0.85s: Category Tag & 2 Thẻ Split lật mở vào khung hình
+    tl.to("#category-tag", {
+      opacity: 1,
+      y: 0,
+      duration: 0.45,
+      ease: "power3.out"
+    }, 0.15);
+
+    tl.to("#col-spontaneous", {
+      opacity: 1,
+      rotationY: 0,
+      duration: 0.65,
+      ease: "power3.out"
+    }, 0.25);
+
+    tl.to("#col-premeditated", {
+      opacity: 1,
+      rotationY: 0,
+      duration: 0.65,
+      ease: "power3.out"
+    }, 0.38);
+
+    // --- PHASE 2: OVERLAY 1 (LABEL "KHÔNG PHẢI BỘC PHÁT" tại t = 0.99s) ---
+    // startMs: 103290 -> offset = (103290 - 102300)/1000 = 0.99s
+    tl.to("#punch-banner", {
+      opacity: 1,
+      scale: 1,
+      y: 0,
+      duration: 0.5,
+      ease: "power3.out"
+    }, 0.99);
+
+    // Điểm nhấn rung nhẹ nhịp điệu (breathing) giữ chuyển động sống động
+    tl.to("#col-spontaneous", {
+      y: -5,
+      duration: 1.1,
+      ease: "sine.inOut",
+      yoyo: true,
+      repeat: 1
+    }, 1.6);
+
+    tl.to("#col-premeditated", {
+      y: -5,
+      duration: 1.1,
+      ease: "sine.inOut",
+      yoyo: true,
+      repeat: 1
+    }, 1.75);
+
+    // --- PHASE 3: OVERLAY 2 (ICON "BAN" TẠI t = 3.36s) ---
+    // startMs: 105660 -> offset = (105660 - 102300)/1000 = 3.36s
+    // Stamp BAN xuất hiện tại ô riêng biệt của cột bên trái
+    tl.to("#ban-stamp-box", {
+      opacity: 1,
+      scale: 1,
+      duration: 0.45,
+      ease: "power3.out"
+    }, 3.36);
+
+    // Tự vẽ nét tròn và đường chéo cấm của icon BAN
+    if (banCircle && banSlash) {
+      tl.to("#ban-circle", {
+        strokeDashoffset: 0,
+        duration: 0.35,
+        ease: "power2.out"
+      }, 3.42);
+
+      tl.to("#ban-slash", {
+        strokeDashoffset: 0,
+        duration: 0.25,
+        ease: "power2.out"
+      }, 3.65);
+    }
+
+    // Cột bên trái: giữ nguyên opacity 1 (tránh lỗi contrast), scale nhẹ 0.97 để lép vế
+    tl.to("#col-spontaneous", {
+      scale: 0.97,
+      duration: 0.5,
+      ease: "power2.out"
+    }, 3.4);
+
+    // Cột bên phải nổi bật sắc nét: scale 1.03, viền và bóng cam rực rỡ
+    tl.to("#col-premeditated", {
+      scale: 1.03,
+      boxShadow: "0 20px 48px rgba(255, 106, 26, 0.4)",
+      duration: 0.55,
+      ease: "power3.out"
+    }, 3.45);
+
+    // Bật sáng Stamp xác nhận cột bên phải
+    tl.to("#confirm-stamp-box", {
+      opacity: 1,
+      backgroundColor: "#FF6A1A",
+      duration: 0.4,
+      ease: "power2.out"
+    }, 3.5);
+
+    tl.to("#confirm-text", {
+      color: "#141414",
+      duration: 0.3,
+      ease: "none"
+    }, 3.5);
+
+    tl.to(["#confirm-circle", "#confirm-check"], {
+      stroke: "#141414",
+      duration: 0.3,
+      ease: "none"
+    }, 3.5);
+
+    // --- PHASE 4: SETTLE & HOLD FRAME (Đọc kịp thông điệp đến hết scene 6.08s) ---
+    tl.to("#punch-banner", {
+      boxShadow: "0 16px 36px rgba(255, 106, 26, 0.35)",
+      duration: 0.8,
+      ease: "sine.inOut"
+    }, 4.4);
+
+    // Đăng ký timeline duy nhất trên registry toàn cục của HyperFrames
+    window.__timelines = window.__timelines || {};
+    window.__timelines["scene-s14"] = tl;
+  </script>
+
+    </template>
+  </body>
+</html>

@@ -1,0 +1,575 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap"
+    />
+      <style>
+      /* hf-safe-colors (tất định từ style-tokens.json) */
+      .hf-text-ink { color: #141414; }
+      .hf-text-light { color: #F7F4EC; }
+      .hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+      .hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+      .hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+      .hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #e7e3d9;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      #root {
+        position: relative;
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+      }
+
+      .clip {
+        position: absolute;
+        inset: 0;
+      }
+
+      /* ================= BACKGROUND: SPOTLIGHT VARIANT ================= */
+      .bg-spotlight {
+        position: absolute;
+        inset: 0;
+        background-color: #e7e3d9;
+        background-image:
+          radial-gradient(circle at 50% 45%, rgba(231, 227, 217, 0) 35%, rgba(20, 20, 20, 0.28) 100%),
+          linear-gradient(to right, rgba(20, 20, 20, 0.12) 1.5px, transparent 1.5px),
+          linear-gradient(to bottom, rgba(20, 20, 20, 0.12) 1.5px, transparent 1.5px);
+        background-size: 100% 100%, 84px 84px, 84px 84px;
+        z-index: 1;
+      }
+
+      /* Signature bottom orange accent bar (cố định theo Style DNA) */
+      .bottom-accent-bar {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 14px;
+        background: #ff6a1a;
+        z-index: 100;
+      }
+
+      /* Camera frame for smooth spiral entrance and subtle zoom-out */
+      #camera-frame {
+        position: absolute;
+        inset: 0;
+        transform-origin: 50% 45%;
+        will-change: transform, opacity;
+        z-index: 2;
+      }
+
+      /* Layout grid restricted strictly inside safe band Y: [160, 1390] */
+      .layout-container {
+        position: absolute;
+        left: 60px;
+        top: 0;
+        width: 960px;
+        height: 1920px;
+        pointer-events: none;
+      }
+
+      /* ================= BASE PANELS: ARCHITECTURAL SPLIT STRUCTURE ================= */
+      /* PANEL 1: Origin Zone (Top Frame) */
+      #panel-origin {
+        position: absolute;
+        left: 0;
+        top: 180px;
+        width: 960px;
+        height: 280px;
+        background: #f5f0e4;
+        border: 2px solid rgba(20, 20, 20, 0.32);
+        border-radius: 8px;
+        box-shadow: 0 6px 18px rgba(20, 20, 20, 0.08);
+      }
+
+      /* PANEL 2: Target / Impact Zone (Bottom Frame) */
+      #panel-target {
+        position: absolute;
+        left: 0;
+        top: 760px;
+        width: 960px;
+        height: 560px;
+        background: #f5f0e4;
+        border: 3px solid #141414;
+        border-radius: 8px;
+        box-shadow: 0 10px 24px rgba(20, 20, 20, 0.12);
+      }
+
+      /* Technical architectural markers for diagram language */
+      .corner-marker {
+        position: absolute;
+        width: 14px;
+        height: 14px;
+        border: 2px solid rgba(20, 20, 20, 0.4);
+      }
+      .cm-tl { top: 10px; left: 10px; border-right: none; border-bottom: none; }
+      .cm-tr { top: 10px; right: 10px; border-left: none; border-bottom: none; }
+      .cm-bl { bottom: 10px; left: 10px; border-right: none; border-top: none; }
+      .cm-br { bottom: 10px; right: 10px; border-left: none; border-top: none; }
+
+      .technical-grid-line {
+        position: absolute;
+        left: 24px;
+        right: 24px;
+        height: 1px;
+        border-top: 1px dashed rgba(20, 20, 20, 0.2);
+      }
+
+      /* ================= OVERLAY 1: DIAGRAM "NGHỊCH LÝ ĐỐI NGHỊCH" ================= */
+      #header-wrap {
+        position: absolute;
+        left: 0;
+        top: 220px;
+        width: 960px;
+      }
+
+      #header-box {
+        position: relative;
+        background: #141414;
+        padding: 26px 36px;
+        border-radius: 8px;
+        border-left: 12px solid #ff6a1a;
+        box-shadow: 0 12px 28px rgba(20, 20, 20, 0.2);
+      }
+
+      .header-title {
+        margin: 0;
+        color: #f7f4ec;
+        font-size: 56px;
+        font-weight: 900;
+        line-height: 1.15;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+      }
+
+      #header-accent-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 5px;
+        background: #ff6a1a;
+        transform-origin: left center;
+      }
+
+      /* ================= OVERLAY 2: LABEL "CƠN GIẬN TRÚT SAI" & TRAJECTORY ARC ================= */
+      #diagram-zone {
+        position: absolute;
+        left: 0;
+        top: 480px;
+        width: 960px;
+        height: 260px;
+      }
+
+      #arc-svg {
+        position: absolute;
+        inset: 0;
+        overflow: visible;
+      }
+
+      #badge-wrapper {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        pointer-events: none;
+      }
+
+      #badge-misdirected {
+        background: #ff6a1a;
+        color: #141414;
+        font-size: 32px;
+        font-weight: 900;
+        padding: 14px 34px;
+        border-radius: 6px;
+        border: 2px solid #141414;
+        box-shadow: 0 8px 20px rgba(20, 20, 20, 0.18);
+        white-space: nowrap;
+        text-transform: uppercase;
+        display: inline-flex;
+        align-items: center;
+        gap: 16px;
+        z-index: 5;
+        transform-origin: center center;
+      }
+
+      .badge-arrow {
+        font-size: 26px;
+      }
+
+      /* ================= OVERLAY 3: ICON "PERSON" ================= */
+      #person-card-wrap {
+        position: absolute;
+        left: 0;
+        top: 760px;
+        width: 960px;
+        height: 560px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      #icon-person-card {
+        width: 240px;
+        height: 240px;
+        border-radius: 50%;
+        background: #141414;
+        border: 5px solid #ff6a1a;
+        display: grid;
+        place-items: center;
+        box-shadow: 0 14px 32px rgba(20, 20, 20, 0.25);
+        transform-origin: center center;
+      }
+
+      #person-svg {
+        display: block;
+      }
+
+      /* ================= OVERLAY 4: LABEL "HOÀN TOÀN VÔ CAN" ================= */
+      #stamp-card-wrap {
+        position: absolute;
+        left: 0;
+        top: 760px;
+        width: 960px;
+        height: 560px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      #stamp-innocent {
+        width: 900px;
+        background: #141414;
+        border: 5px solid #ff6a1a;
+        border-radius: 8px;
+        padding: 48px 36px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 18px;
+        box-shadow: 0 16px 36px rgba(20, 20, 20, 0.3);
+        transform-origin: center center;
+      }
+
+      .stamp-main {
+        color: #f7f4ec;
+        font-size: 64px;
+        font-weight: 900;
+        line-height: 1.15;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        text-align: center;
+      }
+
+      .stamp-accent-bar {
+        width: 140px;
+        height: 6px;
+        background: #ff6a1a;
+        border-radius: 3px;
+        transform-origin: center center;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s37"
+      data-width="1080"
+      data-height="1920"
+      data-duration="10.8"
+    >
+      <!-- Background spotlight texture -->
+      <div class="bg-spotlight"></div>
+
+      <!-- Signature bottom orange accent bar -->
+      <div class="bottom-accent-bar"></div>
+
+      <!-- Main Animated Camera Frame -->
+      <div id="camera-frame">
+        <!-- BASE SCENE: Split-screen architectural structure (Panels) -->
+        <div id="base-scene" class="clip" data-start="0" data-duration="10.8">
+          <div class="layout-container">
+            <!-- PANEL 1: Origin Zone -->
+            <div id="panel-origin">
+              <div class="corner-marker cm-tl"></div>
+              <div class="corner-marker cm-tr"></div>
+              <div class="corner-marker cm-bl"></div>
+              <div class="corner-marker cm-br"></div>
+              <div class="technical-grid-line" style="top: 36px"></div>
+              <div class="technical-grid-line" style="bottom: 36px"></div>
+            </div>
+
+            <!-- PANEL 2: Target / Impact Zone -->
+            <div id="panel-target">
+              <div class="corner-marker cm-tl"></div>
+              <div class="corner-marker cm-tr"></div>
+              <div class="corner-marker cm-bl"></div>
+              <div class="corner-marker cm-br"></div>
+              <div class="technical-grid-line" style="top: 48px"></div>
+              <div class="technical-grid-line" style="bottom: 48px"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- OVERLAY 1: Diagram "NGHỊCH LÝ ĐỐI NGHỊCH" (atMs: 291360 -> rel 1.06s, holdMs: 5000 -> dur 5s) -->
+        <div id="clip-header" class="clip" data-start="1.06" data-duration="5">
+          <div class="layout-container">
+            <div id="header-wrap">
+              <div id="header-box">
+                <h1 class="header-title">Nghịch lý đối nghịch</h1>
+                <div id="header-accent-bar"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- OVERLAY 2: Label "CƠN GIẬN TRÚT SAI" & Trajectory Arc (atMs: 293340 -> rel 3.04s, holdMs: 2500 -> dur 2.5s) -->
+        <div id="clip-misdirected" class="clip" data-start="3.04" data-duration="2.5">
+          <div class="layout-container">
+            <div id="diagram-zone">
+              <svg id="arc-svg" viewBox="0 0 960 260">
+                <defs>
+                  <marker
+                    id="arrow-head"
+                    markerWidth="10"
+                    markerHeight="10"
+                    refX="6"
+                    refY="5"
+                    orient="auto"
+                  >
+                    <path d="M 0 1 L 9 5 L 0 9 z" fill="#FF6A1A" />
+                  </marker>
+                </defs>
+                <!-- Background guide track -->
+                <path
+                  d="M 220 20 C 220 140, 740 80, 740 240"
+                  stroke="rgba(20, 20, 20, 0.15)"
+                  stroke-width="5"
+                  fill="none"
+                  stroke-linecap="round"
+                />
+                <!-- Active animated paradox trajectory -->
+                <path
+                  id="anger-arc"
+                  d="M 220 20 C 220 140, 740 80, 740 240"
+                  stroke="#FF6A1A"
+                  stroke-width="7"
+                  fill="none"
+                  stroke-linecap="round"
+                  marker-end="url(#arrow-head)"
+                />
+              </svg>
+
+              <div id="badge-wrapper">
+                <div id="badge-misdirected">
+                  <span class="badge-arrow">➔</span>
+                  <span>Cơn giận trút sai</span>
+                  <span class="badge-arrow">➔</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- OVERLAY 3: Icon "person" (atMs: 297110 -> rel 6.81s, holdMs: 2000 -> dur 2s) -->
+        <div id="clip-person-icon" class="clip" data-start="6.81" data-duration="2">
+          <div class="layout-container">
+            <div id="person-card-wrap">
+              <div id="icon-person-card">
+                <svg id="person-svg" viewBox="0 0 100 100" width="130" height="130" fill="none">
+                  <circle
+                    id="person-head"
+                    cx="50"
+                    cy="32"
+                    r="16"
+                    stroke="#F7F4EC"
+                    stroke-width="7"
+                    stroke-linecap="round"
+                  />
+                  <path
+                    id="person-body"
+                    d="M 20 84 C 20 58, 34 50, 50 50 C 66 50, 80 58, 80 84"
+                    stroke="#F7F4EC"
+                    stroke-width="7"
+                    stroke-linecap="round"
+                  />
+                </svg>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- OVERLAY 4: Label "HOÀN TOÀN VÔ CAN" (atMs: 299160 -> rel 8.86s, holdMs: 2400 -> dur 1.94s to scene end) -->
+        <div id="clip-stamp-innocent" class="clip" data-start="8.86" data-duration="1.94">
+          <div class="layout-container">
+            <div id="stamp-card-wrap">
+              <div id="stamp-innocent">
+                <div class="stamp-main">Hoàn toàn vô can</div>
+                <div class="stamp-accent-bar"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Prepare SVG path dash lengths for deterministic progressive drawing
+      const arcPath = document.getElementById("anger-arc");
+      const arcLen = arcPath.getTotalLength();
+      arcPath.style.strokeDasharray = arcLen;
+      arcPath.style.strokeDashoffset = arcLen;
+
+      const pHead = document.getElementById("person-head");
+      const pBody = document.getElementById("person-body");
+      const headLen = pHead.getTotalLength();
+      const bodyLen = pBody.getTotalLength();
+      pHead.style.strokeDasharray = headLen;
+      pHead.style.strokeDashoffset = headLen;
+      pBody.style.strokeDasharray = bodyLen;
+      pBody.style.strokeDashoffset = bodyLen;
+
+      // Single paused master timeline
+      const tl = gsap.timeline({ paused: true });
+
+      // 1. Entrance transition: "spiral" (rotation + scale settle) + camera zoom-out
+      tl.fromTo(
+        "#camera-frame",
+        { scale: 1.14, rotation: 3.5, opacity: 0 },
+        { scale: 1.04, rotation: 0, opacity: 1, duration: 0.9, ease: "power3.out" },
+        0,
+      );
+
+      // Camera motion: continuous subtle zoom-out throughout scene
+      tl.to(
+        "#camera-frame",
+        { scale: 1.0, duration: 9.9, ease: "sine.out" },
+        0.9,
+      );
+
+      // 2. Base Panels entrance
+      tl.fromTo(
+        "#panel-origin",
+        { y: -20, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.6, ease: "power3.out" },
+        0.3,
+      );
+      tl.fromTo(
+        "#panel-target",
+        { y: 20, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.6, ease: "power3.out" },
+        0.4,
+      );
+
+      // 3. OVERLAY 1: "NGHỊCH LÝ ĐỐI NGHỊCH" (data-start: 1.06, data-duration: 5)
+      tl.fromTo(
+        "#header-wrap",
+        { y: -30, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.55, ease: "power3.out" },
+        1.06,
+      );
+      tl.fromTo(
+        "#header-accent-bar",
+        { scaleX: 0 },
+        { scaleX: 1, duration: 0.5, ease: "power2.out" },
+        1.3,
+      );
+      tl.to(
+        "#header-wrap",
+        { opacity: 0, y: -15, duration: 0.35, ease: "power2.in" },
+        5.7,
+      );
+
+      // 4. OVERLAY 2: "CƠN GIẬN TRÚT SAI" & Trajectory (data-start: 3.04, data-duration: 2.5)
+      tl.fromTo(
+        "#anger-arc",
+        { strokeDashoffset: arcLen },
+        { strokeDashoffset: 0, duration: 0.7, ease: "power2.out" },
+        3.04,
+      );
+      tl.fromTo(
+        "#badge-misdirected",
+        { scale: 0.4, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.45, ease: "power3.out" },
+        3.15,
+      );
+      tl.to(
+        "#badge-misdirected",
+        { scale: 0.85, opacity: 0, duration: 0.25, ease: "power2.in" },
+        5.25,
+      );
+      tl.to(
+        "#anger-arc",
+        { opacity: 0, duration: 0.25, ease: "power2.in" },
+        5.25,
+      );
+
+      // 5. OVERLAY 3: Icon "person" (data-start: 6.81, data-duration: 2)
+      tl.fromTo(
+        "#icon-person-card",
+        { scale: 0.75, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.4, ease: "power3.out" },
+        6.81,
+      );
+      tl.fromTo(
+        "#person-head",
+        { strokeDashoffset: headLen },
+        { strokeDashoffset: 0, duration: 0.45, ease: "power2.out" },
+        7.0,
+      );
+      tl.fromTo(
+        "#person-body",
+        { strokeDashoffset: bodyLen },
+        { strokeDashoffset: 0, duration: 0.55, ease: "power2.out" },
+        7.15,
+      );
+      tl.to(
+        "#icon-person-card",
+        { opacity: 0, scale: 0.85, duration: 0.25, ease: "power2.in" },
+        8.55,
+      );
+
+      // 6. OVERLAY 4: Label "HOÀN TOÀN VÔ CAN" (data-start: 8.86, data-duration: 1.94)
+      tl.fromTo(
+        "#stamp-innocent",
+        { scale: 1.25, opacity: 0, rotation: -3 },
+        { scale: 1, opacity: 1, rotation: 0, duration: 0.45, ease: "power3.out" },
+        8.86,
+      );
+      tl.fromTo(
+        ".stamp-accent-bar",
+        { scaleX: 0 },
+        { scaleX: 1, duration: 0.4, ease: "power2.out" },
+        9.15,
+      );
+
+      // Register timeline strictly on window.__timelines["scene-s37"]
+      window.__timelines = window.__timelines || {};
+      window.__timelines["scene-s37"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

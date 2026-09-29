@@ -1,0 +1,544 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+/* hf-safe-colors (tất định từ style-tokens.json) */
+.hf-text-ink { color: #141414; }
+.hf-text-light { color: #F7F4EC; }
+.hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+.hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+.hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+.hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        width: 1080px;
+        height: 1920px;
+        background-color: #e7e3d9;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: #e7e3d9;
+        background-image:
+          linear-gradient(to right, rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px),
+          linear-gradient(to bottom, rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px);
+        background-size: 84px 84px;
+      }
+
+      .clip {
+        position: absolute;
+        inset: 0;
+      }
+
+      /* Camera Zoom-out container */
+      .camera-viewport {
+        position: absolute;
+        inset: 0;
+        transform-origin: 540px 800px;
+        will-change: transform;
+      }
+
+      /* Fixed branding bottom accent bar */
+      .bottom-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 14px;
+        background-color: #ff6a1a;
+        z-index: 50;
+      }
+
+      /* Header area */
+      .header-box {
+        position: absolute;
+        top: 180px;
+        left: 60px;
+        right: 60px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        z-index: 20;
+      }
+
+      .punch-phrase-plate {
+        background-color: #141414;
+        padding: 16px 36px;
+        border-radius: 4px;
+        box-shadow: 6px 6px 0px rgba(255, 106, 26, 0.9);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .punch-phrase-text {
+        color: #f7f4ec;
+        font-size: 54px;
+        font-weight: 900;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        line-height: 1.2;
+        margin: 0;
+      }
+
+      .sub-question {
+        margin-top: 18px;
+        background-color: #f5f0e4;
+        border: 2px solid #141414;
+        padding: 8px 24px;
+        font-size: 26px;
+        font-weight: 700;
+        color: #141414;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+      }
+
+      /* Split layout container */
+      .split-stage {
+        position: absolute;
+        top: 380px;
+        left: 60px;
+        right: 60px;
+        height: 940px;
+        display: flex;
+        justify-content: space-between;
+        perspective: 1200px;
+        z-index: 10;
+      }
+
+      /* Column cards */
+      .split-col {
+        position: relative;
+        width: 460px;
+        height: 940px;
+        background-color: #f5f0e4;
+        border: 3.5px solid #141414;
+        box-shadow: 10px 10px 0px #141414;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 32px 24px;
+        transform-style: preserve-3d;
+        will-change: transform, opacity;
+      }
+
+      .col-badge {
+        position: absolute;
+        top: -24px;
+        background-color: #141414;
+        color: #f7f4ec;
+        font-size: 22px;
+        font-weight: 900;
+        padding: 6px 20px;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        border: 2px solid #ff6a1a;
+      }
+
+      .visual-canvas {
+        margin-top: 40px;
+        width: 380px;
+        height: 380px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+      }
+
+      .svg-graphic {
+        width: 340px;
+        height: 340px;
+        overflow: visible;
+      }
+
+      .draw-path {
+        fill: none;
+        stroke: #141414;
+        stroke-width: 6;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
+      .accent-path {
+        fill: none;
+        stroke: #ff6a1a;
+        stroke-width: 6;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
+      .sub-icon-box {
+        margin-top: 15px;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .meta-tag {
+        font-size: 26px;
+        font-weight: 700;
+        color: #141414;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border-bottom: 2px dashed #141414;
+        padding-bottom: 4px;
+      }
+
+      /* Primary labels requested in shotlist */
+      .label-plate {
+        margin-top: 24px;
+        background-color: #ff6a1a;
+        border: 3px solid #141414;
+        padding: 16px 24px;
+        width: 100%;
+        text-align: center;
+        box-shadow: 4px 4px 0px #141414;
+        transform-origin: 50% 50%;
+        will-change: transform, opacity;
+      }
+
+      .label-title {
+        margin: 0;
+        font-size: 34px;
+        font-weight: 900;
+        color: #141414;
+        text-transform: uppercase;
+        line-height: 1.25;
+        letter-spacing: 0.5px;
+      }
+
+      /* Comparison separator badge */
+      .versus-divider {
+        position: absolute;
+        left: 50%;
+        top: 48%;
+        transform: translate(-50%, -50%);
+        width: 68px;
+        height: 68px;
+        border-radius: 50%;
+        background-color: #141414;
+        border: 3px solid #ff6a1a;
+        color: #f7f4ec;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        font-weight: 900;
+        z-index: 15;
+        box-shadow: 0px 4px 12px rgba(20, 20, 20, 0.25);
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s30"
+      data-start="0"
+      data-width="1080"
+      data-height="1920"
+      data-duration="9.1"
+    >
+      <!-- Fixed bottom brand strip -->
+      <div class="bottom-bar"></div>
+
+      <!-- Main Scene Clip -->
+      <div class="clip" data-start="0" data-duration="9.1">
+        <div class="camera-viewport" id="camera-viewport">
+          <!-- Top Header: Punch Phrase -->
+          <div class="header-box" id="header-box">
+            <div class="punch-phrase-plate" id="punch-plate">
+              <h1 class="punch-phrase-text">BÀI HỌC VỤ ÁN</h1>
+            </div>
+            <div class="sub-question" id="sub-question">VỤ ÁN CÓ GÌ ĐÁNG NÓI?</div>
+          </div>
+
+          <!-- Split Screen Stage -->
+          <div class="split-stage">
+            <!-- Left Side: Chậm vài phút vì kẹt xe -->
+            <div class="split-col" id="col-left">
+              <div class="col-badge">TÌNH HUỐNG 1</div>
+
+              <div class="visual-canvas">
+                <svg class="svg-graphic" viewBox="0 0 200 200">
+                  <!-- Clock circle outline -->
+                  <circle id="clock-left-circle" class="draw-path" cx="100" cy="100" r="74" />
+                  <!-- Clock ticks -->
+                  <line class="draw-path" x1="100" y1="36" x2="100" y2="46" />
+                  <line class="draw-path" x1="100" y1="154" x2="100" y2="164" />
+                  <line class="draw-path" x1="36" y1="100" x2="46" y2="100" />
+                  <line class="draw-path" x1="154" y1="100" x2="164" y2="100" />
+                  <!-- Clock hands: subtle waiting delay -->
+                  <line id="hour-left" class="draw-path" x1="100" y1="100" x2="100" y2="62" />
+                  <line id="minute-left" class="accent-path" x1="100" y1="100" x2="136" y2="100" />
+                  <circle cx="100" cy="100" r="6" fill="#141414" />
+                  <!-- Traffic jam / obstruction wave below clock -->
+                  <path id="traffic-barrier" class="accent-path" d="M 50 162 L 75 142 L 100 162 L 125 142 L 150 162" />
+                </svg>
+              </div>
+
+              <div class="sub-icon-box">
+                <div class="meta-tag">ÙN TẮC GIAO THÔNG</div>
+              </div>
+
+              <!-- Label: CHẬM VÀI PHÚT (atMs: 270600 = 4.4s) -->
+              <div class="label-plate" id="label-left">
+                <h2 class="label-title">CHẬM VÀI PHÚT</h2>
+              </div>
+            </div>
+
+            <!-- Central VS Badge -->
+            <div class="versus-divider" id="vs-divider">VS</div>
+
+            <!-- Right Side: Vài phút dừng xe giải thích -->
+            <div class="split-col" id="col-right">
+              <div class="col-badge">TÌNH HUỐNG 2</div>
+
+              <div class="visual-canvas">
+                <svg class="svg-graphic" viewBox="0 0 200 200">
+                  <!-- Whistle / Stop signal emblem -->
+                  <circle id="signal-right-circle" class="draw-path" cx="100" cy="100" r="74" />
+                  <!-- Stop hand gesture symbol inside -->
+                  <path id="hand-palm" class="draw-path" d="M 80 135 L 80 82 Q 80 72 88 72 Q 96 72 96 82 L 96 135" />
+                  <path id="hand-fingers" class="draw-path" d="M 96 82 Q 96 68 104 68 Q 112 68 112 82 L 112 135" />
+                  <path id="hand-pinky" class="draw-path" d="M 112 88 Q 112 76 120 76 Q 128 76 128 88 L 128 135" />
+                  <!-- Accent dialogue lines for "giải thích" -->
+                  <path id="dialogue-arc-1" class="accent-path" d="M 142 66 Q 158 84 158 106" />
+                  <path id="dialogue-arc-2" class="accent-path" d="M 154 54 Q 176 80 176 112" />
+                  <!-- Base bar -->
+                  <line class="draw-path" x1="68" y1="145" x2="132" y2="145" />
+                </svg>
+              </div>
+
+              <div class="sub-icon-box">
+                <div class="meta-tag">HIỆU LỆNH DỪNG XE</div>
+              </div>
+
+              <!-- Label: VÀI PHÚT GIẢI THÍCH (atMs: 273330 = 7.13s) -->
+              <div class="label-plate" id="label-right">
+                <h2 class="label-title">VÀI PHÚT GIẢI THÍCH</h2>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Prepare SVG path lengths for clean progressive draw
+      document.querySelectorAll(".draw-path, .accent-path").forEach(function (path) {
+        if (typeof path.getTotalLength === "function") {
+          const len = path.getTotalLength();
+          path.style.strokeDasharray = len + " " + len;
+          path.style.strokeDashoffset = len;
+        }
+      });
+
+      // Master paused timeline registered to window.__timelines["scene-s30"]
+      const tl = gsap.timeline({ paused: true });
+
+      // 1. Initial State Setup
+      tl.set("#camera-viewport", { scale: 1.05 });
+      tl.set("#punch-plate", { scale: 0.85, opacity: 0, y: -20 });
+      tl.set("#sub-question", { opacity: 0, y: 15 });
+      tl.set("#col-left", { rotationY: -80, opacity: 0, transformOrigin: "left center" });
+      tl.set("#col-right", { rotationY: 80, opacity: 0, transformOrigin: "right center" });
+      tl.set("#vs-divider", { scale: 0, opacity: 0 });
+      tl.set("#label-left", { scale: 0.8, opacity: 0, y: 20 });
+      tl.set("#label-right", { scale: 0.8, opacity: 0, y: 20 });
+
+      // 2. Camera Motion: Gradual zoom-out over the entire 9.1s duration
+      tl.to("#camera-viewport", { scale: 1.0, duration: 9.1, ease: "sine.out" }, 0);
+
+      // 3. Entrance: 3D Flip Open of the two Split Columns (transitionIn: flip)
+      tl.to(
+        "#col-left",
+        {
+          rotationY: 0,
+          opacity: 1,
+          duration: 0.75,
+          ease: "power3.out",
+        },
+        0.1,
+      );
+
+      tl.to(
+        "#col-right",
+        {
+          rotationY: 0,
+          opacity: 1,
+          duration: 0.75,
+          ease: "power3.out",
+        },
+        0.25,
+      );
+
+      // VS badge appears between the two
+      tl.to(
+        "#vs-divider",
+        {
+          scale: 1,
+          opacity: 1,
+          duration: 0.45,
+          ease: "power3.out",
+        },
+        0.55,
+      );
+
+      // 4. Punch Phrase entrance: "BÀI HỌC VỤ ÁN" at atMs: 267000 (t = 0.8s)
+      tl.to(
+        "#punch-plate",
+        {
+          scale: 1,
+          opacity: 1,
+          y: 0,
+          duration: 0.55,
+          ease: "power3.out",
+        },
+        0.8,
+      );
+
+      tl.to(
+        "#sub-question",
+        {
+          opacity: 1,
+          y: 0,
+          duration: 0.45,
+          ease: "power2.out",
+        },
+        1.1,
+      );
+
+      // 5. Progressive SVG stroke reveal for left graphic
+      tl.to(
+        "#clock-left-circle",
+        {
+          strokeDashoffset: 0,
+          duration: 0.7,
+          ease: "power2.out",
+        },
+        1.0,
+      );
+
+      tl.to(
+        "#hour-left, #minute-left, #traffic-barrier",
+        {
+          strokeDashoffset: 0,
+          duration: 0.65,
+          ease: "power2.out",
+          stagger: 0.15,
+        },
+        1.4,
+      );
+
+      // Clock hand gentle idle tick/rotation (deterministic finite animation)
+      tl.to(
+        "#minute-left",
+        {
+          rotation: 30,
+          transformOrigin: "100px 100px",
+          duration: 2.0,
+          ease: "power1.inOut",
+        },
+        2.2,
+      );
+
+      // 6. Progressive SVG stroke reveal for right graphic
+      tl.to(
+        "#signal-right-circle",
+        {
+          strokeDashoffset: 0,
+          duration: 0.7,
+          ease: "power2.out",
+        },
+        2.5,
+      );
+
+      tl.to(
+        "#hand-palm, #hand-fingers, #hand-pinky, #dialogue-arc-1, #dialogue-arc-2",
+        {
+          strokeDashoffset: 0,
+          duration: 0.75,
+          ease: "power2.out",
+          stagger: 0.12,
+        },
+        2.9,
+      );
+
+      // 7. Label 1: "CHẬM VÀI PHÚT" at atMs: 270600 (t = 4.4s)
+      tl.to(
+        "#label-left",
+        {
+          scale: 1,
+          opacity: 1,
+          y: 0,
+          duration: 0.5,
+          ease: "power3.out",
+        },
+        4.4,
+      );
+
+      // Subtle pulse to emphasize consequence
+      tl.to(
+        "#label-left",
+        {
+          scale: 1.04,
+          duration: 0.25,
+          yoyo: true,
+          repeat: 1,
+          ease: "power1.inOut",
+        },
+        5.2,
+      );
+
+      // 8. Label 2: "VÀI PHÚT GIẢI THÍCH" at atMs: 273330 (t = 7.13s)
+      tl.to(
+        "#label-right",
+        {
+          scale: 1,
+          opacity: 1,
+          y: 0,
+          duration: 0.5,
+          ease: "power3.out",
+        },
+        7.13,
+      );
+
+      // Subtle pulse to complete the comparison
+      tl.to(
+        "#label-right",
+        {
+          scale: 1.04,
+          duration: 0.25,
+          yoyo: true,
+          repeat: 1,
+          ease: "power1.inOut",
+        },
+        7.8,
+      );
+
+      // Register timeline
+      window.__timelines = window.__timelines || {};
+      window.__timelines["scene-s30"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

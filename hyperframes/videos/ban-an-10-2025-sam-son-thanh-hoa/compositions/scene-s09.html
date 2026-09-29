@@ -1,0 +1,527 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap"
+    />
+      <style>
+/* hf-safe-colors (tất định từ style-tokens.json) */
+.hf-text-ink { color: #141414; }
+.hf-text-light { color: #F7F4EC; }
+.hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+.hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+.hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+.hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #e7e3d9;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: #e7e3d9;
+      }
+
+      /* Quy ước clip HyperFrames: inset:0 không gán width/height cứng */
+      .clip {
+        position: absolute;
+        inset: 0;
+      }
+
+      /* Lưới nền 84px chuẩn Vox-style DNA */
+      .grid-layer {
+        position: absolute;
+        inset: 0;
+        background-image:
+          linear-gradient(to right, rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px),
+          linear-gradient(to bottom, rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px);
+        background-size: 84px 84px;
+        pointer-events: none;
+      }
+
+      /* Khung camera motion (strike + zoom-in) */
+      .camera-rig {
+        position: absolute;
+        inset: 0;
+        transform-origin: 54% 46%;
+        will-change: transform;
+      }
+
+      /* Ảnh nền toàn khung 1080x1920 theo visual-language background-photo */
+      .hero-photo {
+        position: absolute;
+        inset: 0;
+        width: 1080px;
+        height: 1920px;
+        object-fit: cover;
+        display: block;
+      }
+
+      /* Thanh cam nhận diện thương hiệu cố định mép đáy */
+      .bottom-brand-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 12px;
+        background-color: #ff6a1a;
+        z-index: 90;
+      }
+
+      /* Lớp overlay đồ họa kỹ thuật (Diagram SVG) */
+      .diagram-svg {
+        position: absolute;
+        inset: 0;
+        width: 1080px;
+        height: 1920px;
+        pointer-events: none;
+        z-index: 20;
+      }
+
+      /* Bộ màu chuẩn WCAG từ style-tokens.json */
+      .hf-text-ink { color: #141414; }
+      .hf-text-light { color: #f7f4ec; }
+      .hf-hl-orange { background-color: #ff6a1a; color: #141414; }
+      .hf-plate-ink { background-color: #141414; color: #f7f4ec; }
+      .hf-plate-ink-orange { background-color: #141414; color: #ff6a1a; }
+      .hf-plate-paper { background-color: #e7e3d9; color: #141414; }
+
+      /* Bố cục an toàn cho vùng hiển thị thông tin (Safe Zone Y: 160px - 1390px) */
+      .safe-top-zone {
+        position: absolute;
+        top: 200px;
+        left: 60px;
+        right: 60px;
+        display: flex;
+        justify-content: flex-start;
+        align-items: center;
+        pointer-events: none;
+        z-index: 30;
+      }
+
+      .safe-bottom-zone {
+        position: absolute;
+        bottom: 550px; /* Nằm an toàn trên ranh giới caption 530px */
+        left: 60px;
+        right: 60px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        pointer-events: none;
+        z-index: 30;
+      }
+
+      /* Thẻ thông tin Label 1 */
+      .badge-container {
+        display: inline-flex;
+        align-items: center;
+        gap: 16px;
+        padding: 16px 28px;
+        background-color: #141414;
+        border-left: 8px solid #ff6a1a;
+        box-shadow: 0 16px 36px rgba(0, 0, 0, 0.45);
+        opacity: 0;
+      }
+
+      .badge-pill {
+        font-size: 24px;
+        font-weight: 900;
+        padding: 6px 14px;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+      }
+
+      .badge-title {
+        font-size: 44px;
+        font-weight: 900;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        color: #f7f4ec;
+      }
+
+      /* Thẻ Punch-phrase 2: ĐẨY MẠNH VÀO VAI */
+      .punch-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        background-color: #141414;
+        padding: 24px 44px;
+        border: 3px solid #ff6a1a;
+        box-shadow: 0 20px 48px rgba(0, 0, 0, 0.55);
+        opacity: 0;
+        max-width: 960px;
+      }
+
+      .punch-label {
+        font-size: 24px;
+        font-weight: 900;
+        letter-spacing: 2px;
+        padding: 6px 16px;
+        margin-bottom: 14px;
+        text-transform: uppercase;
+      }
+
+      .punch-main-text {
+        font-size: 68px;
+        font-weight: 900;
+        line-height: 1.25;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        text-align: center;
+        color: #f7f4ec;
+      }
+
+      /* Thẻ Label 3: TẨU THOÁT KHỎI CHỐT */
+      .escape-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        background-color: #141414;
+        padding: 22px 38px;
+        border-bottom: 8px solid #ff6a1a;
+        box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+        opacity: 0;
+      }
+
+      .escape-tag {
+        font-size: 22px;
+        font-weight: 900;
+        padding: 4px 14px;
+        letter-spacing: 1.8px;
+        margin-bottom: 10px;
+        text-transform: uppercase;
+      }
+
+      .escape-title {
+        font-size: 56px;
+        font-weight: 900;
+        letter-spacing: 0.8px;
+        text-transform: uppercase;
+        color: #f7f4ec;
+      }
+    </style>
+
+    <!-- Composition Root: thời lượng 9.48s theo đúng Shotlist S09 (78160ms - 87640ms) -->
+    <div
+      id="root"
+      data-composition-id="scene-s09"
+      data-width="1080"
+      data-height="1920"
+      data-duration="9.48"
+    >
+      <!-- Lưới nền Vox Style -->
+      <div class="grid-layer"></div>
+
+      <!-- Shot S09-1: Hình ảnh chính + Chuyển động camera Strike + Zoom-in -->
+      <div
+        id="shot-s09-1"
+        class="clip"
+        data-start="0"
+        data-duration="9.48"
+        data-track-index="0"
+      >
+        <div id="camera-rig" class="camera-rig">
+          <img
+            id="hero-img"
+            class="hero-photo"
+            src="assets/img-06-suspect-resisting-police-officer.jpg"
+            alt="Hiện trường xô xát cản trở thi hành công vụ"
+          />
+        </div>
+      </div>
+
+      <!-- Diagram Layer: Mũi tên lực và điểm va chạm xô đẩy vào vai -->
+      <div
+        id="diagram-clip"
+        class="clip"
+        data-start="5.5"
+        data-duration="2.6"
+        data-track-index="1"
+      >
+        <svg class="diagram-svg" viewBox="0 0 1080 1920">
+          <defs>
+            <marker
+              id="arrow-head"
+              markerWidth="14"
+              markerHeight="14"
+              refX="10"
+              refY="7"
+              orient="auto"
+            >
+              <polygon points="0 0, 14 7, 0 14" fill="#FF6A1A" />
+            </marker>
+          </defs>
+
+          <!-- Tọa độ va chạm tại vùng vai chiến sĩ công an: (560, 920) -->
+          <g id="impact-group">
+            <!-- Vòng xung lực phản xạ (shockwaves) -->
+            <circle
+              id="shock-ring-1"
+              cx="560"
+              cy="920"
+              r="24"
+              fill="none"
+              stroke="#FF6A1A"
+              stroke-width="5"
+              opacity="0"
+            />
+            <circle
+              id="shock-ring-2"
+              cx="560"
+              cy="920"
+              r="24"
+              fill="none"
+              stroke="#141414"
+              stroke-width="3"
+              opacity="0"
+            />
+
+            <!-- Mũi tên lực đậm nét từ vị trí tay nghi phạm đâm thẳng vào vai -->
+            <path
+              id="shove-vector-bg"
+              d="M 330 1010 L 545 925"
+              fill="none"
+              stroke="#141414"
+              stroke-width="18"
+              stroke-linecap="round"
+              opacity="0"
+            />
+            <path
+              id="shove-vector"
+              d="M 330 1010 L 545 925"
+              fill="none"
+              stroke="#FF6A1A"
+              stroke-width="10"
+              stroke-linecap="round"
+              marker-end="url(#arrow-head)"
+              opacity="0"
+            />
+
+            <!-- Tâm ngắm đo đạc tại điểm va chạm -->
+            <circle
+              id="impact-center"
+              cx="560"
+              cy="920"
+              r="10"
+              fill="#FF6A1A"
+              stroke="#141414"
+              stroke-width="3"
+              opacity="0"
+            />
+          </g>
+        </svg>
+      </div>
+
+      <!-- Overlay 1: HIỆU LỆNH LẦN HAI (atMs: 78790 -> t=0.63s, holdMs: 2000 -> dur=2.0s) -->
+      <div
+        id="clip-overlay-1"
+        class="clip"
+        data-start="0.63"
+        data-duration="2.0"
+        data-track-index="2"
+      >
+        <div class="safe-top-zone">
+          <div id="badge-card" class="badge-container hf-plate-ink">
+            <span class="badge-pill hf-hl-orange">CÔNG VỤ</span>
+            <span class="badge-title">HIỆU LỆNH LẦN HAI</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Overlay 2: Punch Phrase ĐẨY MẠNH VÀO VAI (atMs: 84070 -> t=5.91s, holdMs: 2000 -> dur=2.0s) -->
+      <div
+        id="clip-overlay-2"
+        class="clip"
+        data-start="5.91"
+        data-duration="2.0"
+        data-track-index="3"
+      >
+        <div class="safe-bottom-zone">
+          <div id="punch-card" class="punch-container hf-plate-ink">
+            <span class="punch-label hf-hl-orange">HÀNH VI CHỐNG ĐỐI</span>
+            <h1 class="punch-main-text">ĐẨY MẠNH VÀO VAI</h1>
+          </div>
+        </div>
+      </div>
+
+      <!-- Overlay 3: TẨU THOÁT KHỎI CHỐT (atMs: 86400 -> t=8.24s, holdMs: 1800 -> dur=1.24s đến hết scene) -->
+      <div
+        id="clip-overlay-3"
+        class="clip"
+        data-start="8.24"
+        data-duration="1.24"
+        data-track-index="4"
+      >
+        <div class="safe-bottom-zone">
+          <div id="escape-card" class="escape-container hf-plate-ink">
+            <span class="escape-tag hf-hl-orange">MỤC ĐÍCH</span>
+            <h2 class="escape-title">TẨU THOÁT KHỎI CHỐT</h2>
+          </div>
+        </div>
+      </div>
+
+      <!-- Thanh cam thương hiệu cố định mép dưới -->
+      <div class="bottom-brand-bar"></div>
+    </div>
+
+    <!-- Animation Runtime: Đăng ký timeline GSAP paused tất định -->
+    <script>
+      const tl = gsap.timeline({ paused: true });
+
+      // Thiết lập độ dài nét vẽ cho mũi tên lực
+      const shoveVector = document.getElementById("shove-vector");
+      const shoveVectorBg = document.getElementById("shove-vector-bg");
+      let vectorLength = 230;
+      if (shoveVector && typeof shoveVector.getTotalLength === "function") {
+        vectorLength = shoveVector.getTotalLength();
+      }
+      if (shoveVector) {
+        shoveVector.style.strokeDasharray = vectorLength;
+        shoveVector.style.strokeDashoffset = vectorLength;
+      }
+      if (shoveVectorBg) {
+        shoveVectorBg.style.strokeDasharray = vectorLength;
+        shoveVectorBg.style.strokeDashoffset = vectorLength;
+      }
+
+      // ==========================================
+      // 1. CAMERA CHOREOGRAPHY (STRIKE + ZOOM-IN)
+      // ==========================================
+      // Strike Entrance: Rơi mạnh xuống với độ giật nảy lúc tiếp đất (t = 0.0s -> 0.44s)
+      tl.fromTo(
+        "#camera-rig",
+        { scale: 1.18, y: -45, opacity: 0.8 },
+        { scale: 1.0, y: 0, opacity: 1, duration: 0.28, ease: "power4.in" },
+        0
+      );
+      // Chấn động giật nảy lúc va chạm mặt đất (discrete keyframes không dùng relative value)
+      tl.to("#camera-rig", { x: -8, y: 14, duration: 0.05, ease: "none" }, 0.28);
+      tl.to("#camera-rig", { x: 7, y: -9, duration: 0.05, ease: "none" }, 0.33);
+      tl.to("#camera-rig", { x: -3, y: 4, duration: 0.05, ease: "none" }, 0.38);
+      tl.to("#camera-rig", { x: 0, y: 0, duration: 0.05, ease: "none" }, 0.43);
+
+      // Zoom chậm vào điểm xô đẩy xuyên suốt cảnh (t = 0.48s -> 9.48s)
+      tl.to(
+        "#camera-rig",
+        { scale: 1.1, x: -28, y: -20, duration: 9.0, ease: "sine.inOut" },
+        0.48
+      );
+
+      // Cú giật rung máy thứ hai mô phỏng cú đẩy mạnh vào vai ở t = 5.91s
+      tl.to("#camera-rig", { x: -38, y: -12, duration: 0.06, ease: "power2.out" }, 5.91);
+      tl.to("#camera-rig", { x: -22, y: -24, duration: 0.08, ease: "power1.inOut" }, 5.97);
+      tl.to("#camera-rig", { x: -28, y: -20, duration: 0.12, ease: "power2.out" }, 6.05);
+
+      // ==========================================
+      // 2. OVERLAY 1: "HIỆU LỆNH LẦN HAI" (t = 0.63s -> 2.63s)
+      // ==========================================
+      tl.fromTo(
+        "#badge-card",
+        { x: -50, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.4, ease: "power3.out" },
+        0.63
+      );
+      tl.to(
+        "#badge-card",
+        { x: -25, opacity: 0, duration: 0.3, ease: "power2.in" },
+        2.3
+      );
+
+      // ==========================================
+      // 3. DIAGRAM & OVERLAY 2: "ĐẨY MẠNH VÀO VAI" (t = 5.91s -> 7.91s)
+      // ==========================================
+      // Mũi tên lực phóng nhanh tới điểm tiếp xúc vai
+      tl.set("#shove-vector-bg", { opacity: 1 }, 5.85);
+      tl.set("#shove-vector", { opacity: 1 }, 5.85);
+      tl.to(
+        "#shove-vector-bg",
+        { strokeDashoffset: 0, duration: 0.32, ease: "power3.out" },
+        5.85
+      );
+      tl.to(
+        "#shove-vector",
+        { strokeDashoffset: 0, duration: 0.32, ease: "power3.out" },
+        5.85
+      );
+
+      // Tâm điểm va chạm bật sáng
+      tl.fromTo(
+        "#impact-center",
+        { scale: 0, opacity: 0, transformOrigin: "560px 920px" },
+        { scale: 1, opacity: 1, duration: 0.2, ease: "power4.out" },
+        6.0
+      );
+
+      // Vòng tròn xung lực lan tỏa (Shockwaves)
+      tl.fromTo(
+        "#shock-ring-1",
+        { r: 16, opacity: 1 },
+        { r: 95, opacity: 0, duration: 0.55, ease: "power2.out" },
+        6.02
+      );
+      tl.fromTo(
+        "#shock-ring-2",
+        { r: 24, opacity: 1 },
+        { r: 130, opacity: 0, duration: 0.65, ease: "power2.out" },
+        6.12
+      );
+
+      // Thu gọn đồ họa diagram trước khi hết shot
+      tl.to(
+        ["#shove-vector", "#shove-vector-bg", "#impact-center"],
+        { opacity: 0, duration: 0.25, ease: "power1.in" },
+        7.5
+      );
+
+      // Thẻ Punch-phrase giáng xuống mạnh mẽ theo nhịp va chạm
+      tl.fromTo(
+        "#punch-card",
+        { scale: 0.88, y: 35, opacity: 0 },
+        { scale: 1, y: 0, opacity: 1, duration: 0.36, ease: "power4.out" },
+        5.91
+      );
+      tl.to(
+        "#punch-card",
+        { y: 20, opacity: 0, duration: 0.28, ease: "power2.in" },
+        7.58
+      );
+
+      // ==========================================
+      // 4. OVERLAY 3: "TẨU THOÁT KHỎI CHỐT" (t = 8.24s -> 9.48s)
+      // ==========================================
+      tl.fromTo(
+        "#escape-card",
+        { scale: 0.92, y: 30, opacity: 0 },
+        { scale: 1, y: 0, opacity: 1, duration: 0.35, ease: "power3.out" },
+        8.24
+      );
+      // Giữ chắc chắn thẻ thông tin đến hết thời lượng scene
+
+      // BẮT BUỘC: Đăng ký timeline paused vào window.__timelines["scene-s09"]
+      window.__timelines["scene-s09"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

@@ -1,0 +1,461 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+/* hf-safe-colors (tất định từ style-tokens.json) */
+.hf-text-ink { color: #141414; }
+.hf-text-light { color: #F7F4EC; }
+.hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+.hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+.hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+.hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background: #F5F0E4;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: #F5F0E4;
+      }
+      .clip {
+        position: absolute;
+        inset: 0;
+      }
+
+      /* Lớp nền ảnh tập hồ sơ toàn khung */
+      #bg-photo-wrapper {
+        position: absolute;
+        inset: -60px;
+        overflow: hidden;
+      }
+      #bg-photo-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center 30%;
+        display: block;
+      }
+
+      /* Thanh cam nhận diện cố định ở mép đáy */
+      #brand-bottom-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 12px;
+        background: #FF6A1A;
+        z-index: 80;
+      }
+
+      /* Header hồ sơ vụ án ở góc trên */
+      #case-header-plate {
+        position: absolute;
+        top: 180px;
+        left: 60px;
+        z-index: 40;
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        background: #141414;
+        padding: 12px 24px;
+        border-radius: 8px;
+        border-left: 6px solid #FF6A1A;
+      }
+      #case-header-plate .header-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: #FF6A1A;
+      }
+      #case-header-plate .header-text {
+        color: #F7F4EC;
+        font-size: 22px;
+        font-weight: 700;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+      }
+
+      /* Container căn giữa cho các thẻ nội dung */
+      .overlay-center-layer {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0 60px;
+        pointer-events: none;
+      }
+
+      /* Card Overlay 1: BẢO T1 (2007) */
+      #card-suspect {
+        width: 100%;
+        max-width: 960px;
+        background: #141414;
+        border-radius: 18px;
+        padding: 44px 48px;
+        border-left: 12px solid #FF6A1A;
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+      }
+      .badge-orange-solid {
+        align-self: flex-start;
+        background: #FF6A1A;
+        color: #141414;
+        font-size: 22px;
+        font-weight: 900;
+        padding: 8px 20px;
+        border-radius: 6px;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+      }
+      .title-suspect {
+        margin: 0;
+        color: #F7F4EC;
+        font-size: 72px;
+        font-weight: 900;
+        line-height: 1.2;
+        letter-spacing: -0.5px;
+      }
+      .sub-suspect {
+        margin: 0;
+        color: #FF6A1A;
+        font-size: 32px;
+        font-weight: 700;
+        line-height: 1.34;
+        letter-spacing: 0.5px;
+      }
+
+      /* Card Overlay 2: Icon doc tự vẽ + Trích lục */
+      #card-doc {
+        width: 100%;
+        max-width: 960px;
+        background: #141414;
+        border-radius: 18px;
+        padding: 40px 48px;
+        display: flex;
+        align-items: center;
+        gap: 36px;
+        border: 2px solid rgba(247, 244, 236, 0.15);
+      }
+      .doc-icon-box {
+        flex-shrink: 0;
+        width: 110px;
+        height: 110px;
+        background: #1F1F1F;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .doc-icon-svg {
+        display: block;
+      }
+      .doc-info-col {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .badge-doc-tag {
+        align-self: flex-start;
+        background: #FF6A1A;
+        color: #141414;
+        font-size: 20px;
+        font-weight: 900;
+        padding: 6px 16px;
+        border-radius: 6px;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+      }
+      .title-doc-extract {
+        margin: 0;
+        color: #F7F4EC;
+        font-size: 56px;
+        font-weight: 900;
+        line-height: 1.25;
+      }
+      .desc-doc-extract {
+        margin: 0;
+        color: #F7F4EC;
+        font-size: 26px;
+        font-weight: 700;
+        line-height: 1.34;
+      }
+
+      /* Card Overlay 3: Punch-phrase TẠM GỌI: MINH */
+      #card-minh-punch {
+        width: 100%;
+        max-width: 960px;
+        background: #FF6A1A;
+        border-radius: 20px;
+        padding: 48px 52px;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+      .badge-ink-on-orange {
+        align-self: flex-start;
+        background: #141414;
+        color: #F7F4EC;
+        font-size: 24px;
+        font-weight: 900;
+        padding: 8px 22px;
+        border-radius: 6px;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+      }
+      .punch-headline {
+        margin: 0;
+        color: #141414;
+        font-size: 78px;
+        font-weight: 900;
+        line-height: 1.15;
+        letter-spacing: -1px;
+        text-transform: uppercase;
+      }
+      .punch-sub {
+        margin: 0;
+        color: #141414;
+        font-size: 32px;
+        font-weight: 700;
+        line-height: 1.3;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s06"
+      data-width="1080"
+      data-height="1920"
+      data-duration="10.74"
+    >
+      <!-- Shot 1: Tập hồ sơ vụ án phủ toàn khung, camera pan chậm -->
+      <section id="shot-case-bg" class="clip" data-start="0" data-duration="10.74">
+        <div id="bg-photo-wrapper">
+          <img
+            id="bg-photo-img"
+            src="assets/img-01-case-file-suspect-officer-profile.jpg"
+            alt="Hồ sơ vụ án"
+          />
+        </div>
+        <div id="case-header-plate">
+          <div class="header-dot"></div>
+          <div class="header-text">HỒ SƠ VỤ ÁN</div>
+        </div>
+      </section>
+
+      <!-- Overlay 1: BẢO T1 (2007) [2.39s -> 5.19s] -->
+      <section id="overlay-label-suspect" class="clip" data-start="2.39" data-duration="2.8">
+        <div class="overlay-center-layer">
+          <div id="card-suspect">
+            <div class="badge-orange-solid">ĐỐI TƯỢNG VỊ THÀNH NIÊN</div>
+            <h1 class="title-suspect">BẢO T1 (2007)</h1>
+            <p class="sub-suspect">TRÍCH LỤC LÝ LỊCH VỤ ÁN</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Overlay 2: Icon doc tự vẽ + Trích lục [5.31s -> 7.51s] -->
+      <section id="overlay-icon-doc" class="clip" data-start="5.31" data-duration="2.2">
+        <div class="overlay-center-layer">
+          <div id="card-doc">
+            <div class="doc-icon-box">
+              <svg class="doc-icon-svg" viewBox="0 0 90 90" width="84" height="84">
+                <path
+                  id="path-doc-outline"
+                  class="doc-stroke"
+                  d="M 22 14 L 56 14 L 72 30 L 72 76 L 22 76 Z"
+                  fill="none"
+                  stroke="#FF6A1A"
+                  stroke-width="6"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+                <path
+                  id="path-doc-corner"
+                  class="doc-stroke"
+                  d="M 56 14 L 56 30 L 72 30"
+                  fill="none"
+                  stroke="#FF6A1A"
+                  stroke-width="6"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+                <path
+                  id="path-doc-line1"
+                  class="doc-stroke"
+                  d="M 34 44 L 60 44"
+                  fill="none"
+                  stroke="#F7F4EC"
+                  stroke-width="5"
+                  stroke-linecap="round"
+                />
+                <path
+                  id="path-doc-line2"
+                  class="doc-stroke"
+                  d="M 34 54 L 60 54"
+                  fill="none"
+                  stroke="#F7F4EC"
+                  stroke-width="5"
+                  stroke-linecap="round"
+                />
+                <path
+                  id="path-doc-line3"
+                  class="doc-stroke"
+                  d="M 34 64 L 50 64"
+                  fill="none"
+                  stroke="#F7F4EC"
+                  stroke-width="5"
+                  stroke-linecap="round"
+                />
+              </svg>
+            </div>
+            <div class="doc-info-col">
+              <div class="badge-doc-tag">HỒ SƠ NGHIỆP VỤ</div>
+              <h2 class="title-doc-extract">TRÍCH LỤC LÝ LỊCH</h2>
+              <p class="desc-doc-extract">ĐỐI CHIẾU THÔNG TIN NHÂN THÂN</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Overlay 3: Punch-phrase TẠM GỌI: MINH [9.49s -> 10.74s] -->
+      <section id="overlay-punch-minh" class="clip" data-start="9.49" data-duration="1.25">
+        <div class="overlay-center-layer">
+          <div id="card-minh-punch">
+            <div class="badge-ink-on-orange">QUY ƯỚC TÊN GỌI</div>
+            <h1 class="punch-headline">TẠM GỌI: MINH</h1>
+            <p class="punch-sub">THAY CHO MÃ SẢN PHẨM T1</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Thanh cam thương hiệu ở đáy màn hình -->
+      <div id="brand-bottom-bar"></div>
+    </div>
+
+    <script>
+      // 1. Chuẩn bị hiệu ứng tự vẽ SVG cho icon tài liệu (SVG Path Draw)
+      const docStrokes = document.querySelectorAll(".doc-stroke");
+      docStrokes.forEach((stroke) => {
+        const length = stroke.getTotalLength();
+        stroke.style.strokeDasharray = length;
+        stroke.style.strokeDashoffset = length;
+      });
+
+      // 2. Khởi tạo Master Timeline paused theo chuẩn HyperFrames
+      const tl = gsap.timeline({ paused: true });
+
+      // Camera motion: pan-left chậm rãi trên tập hồ sơ nền
+      tl.fromTo(
+        "#bg-photo-wrapper",
+        { x: 35, scale: 1.05 },
+        { x: -35, scale: 1.10, duration: 10.74, ease: "none" },
+        0
+      );
+
+      // Transition-in: peel nhẹ mở đầu hồ sơ
+      tl.fromTo(
+        "#shot-case-bg",
+        { opacity: 0, scale: 0.98 },
+        { opacity: 1, scale: 1, duration: 0.6, ease: "power2.out" },
+        0
+      );
+
+      // Header tag hồ sơ xuất hiện
+      tl.fromTo(
+        "#case-header-plate",
+        { opacity: 0, y: -24 },
+        { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" },
+        0.3
+      );
+
+      // --- OVERLAY 1: BẢO T1 (2007) ---
+      // Entrance tại 2.39s (41790ms)
+      tl.fromTo(
+        "#card-suspect",
+        { opacity: 0, y: 30, scale: 0.96 },
+        { opacity: 1, y: 0, scale: 1, duration: 0.45, ease: "power3.out" },
+        2.39
+      );
+      // Exit nhẹ nhàng trước khi kết thúc slot 2.8s
+      tl.to(
+        "#card-suspect",
+        { opacity: 0, y: -18, duration: 0.25, ease: "power2.in" },
+        4.85
+      );
+
+      // --- OVERLAY 2: ICON DOC + TRÍCH LỤC ---
+      // Entrance tại 5.31s (44710ms)
+      tl.fromTo(
+        "#card-doc",
+        { opacity: 0, y: 30, scale: 0.96 },
+        { opacity: 1, y: 0, scale: 1, duration: 0.4, ease: "power3.out" },
+        5.31
+      );
+      // Tự vẽ các đường nét icon doc
+      tl.to(
+        "#path-doc-outline",
+        { strokeDashoffset: 0, duration: 0.45, ease: "power2.out" },
+        5.4
+      );
+      tl.to(
+        "#path-doc-corner",
+        { strokeDashoffset: 0, duration: 0.25, ease: "power2.out" },
+        5.65
+      );
+      tl.to(
+        "#path-doc-line1",
+        { strokeDashoffset: 0, duration: 0.25, ease: "power2.out" },
+        5.75
+      );
+      tl.to(
+        "#path-doc-line2",
+        { strokeDashoffset: 0, duration: 0.25, ease: "power2.out" },
+        5.85
+      );
+      tl.to(
+        "#path-doc-line3",
+        { strokeDashoffset: 0, duration: 0.25, ease: "power2.out" },
+        5.95
+      );
+      // Exit trước khi kết thúc slot 2.2s
+      tl.to(
+        "#card-doc",
+        { opacity: 0, y: -18, duration: 0.25, ease: "power2.in" },
+        7.20
+      );
+
+      // --- OVERLAY 3: PUNCH-PHRASE "TẠM GỌI: MINH" ---
+      // Entrance dứt khoát tại 9.49s (48890ms)
+      tl.fromTo(
+        "#card-minh-punch",
+        { opacity: 0, scale: 0.88, y: 24 },
+        { opacity: 1, scale: 1, y: 0, duration: 0.42, ease: "power4.out" },
+        9.49
+      );
+
+      // 3. Đăng ký timeline cho HyperFrames seek
+      window.__timelines = window.__timelines || {};
+      window.__timelines["scene-s06"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

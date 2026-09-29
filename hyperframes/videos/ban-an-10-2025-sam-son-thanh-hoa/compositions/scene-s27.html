@@ -1,0 +1,686 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap"
+    />
+      <style>
+/* hf-safe-colors (tất định từ style-tokens.json) */
+.hf-text-ink { color: #141414; }
+.hf-text-light { color: #F7F4EC; }
+.hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+.hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+.hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+.hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        padding: 0;
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+        background-color: #e7e3d9;
+        font-family: "Be Vietnam Pro", sans-serif;
+        color: #141414;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+
+      /* Quy ước clip HyperFrames: inset: 0 */
+      .clip {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+      }
+
+      /* Background wrapper & photo */
+      #bg-wrapper {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+        transform-origin: 50% 50%;
+        will-change: transform;
+      }
+
+      #bg-photo {
+        position: absolute;
+        inset: 0;
+        width: 1080px;
+        height: 1920px;
+        object-fit: cover;
+        transform-origin: 50% 32%; /* Hướng zoom vào thanh chắn barie gãy */
+        will-change: transform;
+      }
+
+      /* Background variant: spotlight vignette */
+      .spotlight-vignette {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background: radial-gradient(
+          circle at 50% 35%,
+          rgba(20, 20, 20, 0.05) 25%,
+          rgba(20, 20, 20, 0.6) 85%,
+          rgba(20, 20, 20, 0.8) 100%
+        );
+        z-index: 2;
+      }
+
+      /* Lưới tọa độ Vox Grid Overlay */
+      .vox-grid {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background-image: linear-gradient(rgba(20, 20, 20, 0.15) 1.5px, transparent 1.5px),
+          linear-gradient(90deg, rgba(20, 20, 20, 0.15) 1.5px, transparent 1.5px);
+        background-size: 84px 84px;
+        z-index: 3;
+      }
+
+      /* Dải cam thương hiệu ở đáy khung hình */
+      .bottom-brand-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 1080px;
+        height: 12px;
+        background-color: #ff6a1a;
+        z-index: 100;
+      }
+
+      /* Shatter entrance overlay shards */
+      #shatter-container {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        z-index: 50;
+      }
+
+      .shatter-shard {
+        position: absolute;
+        inset: 0;
+        background-color: #e7e3d9;
+        will-change: transform, opacity;
+      }
+
+      .shard-1 {
+        clip-path: polygon(0 0, 60% 0, 45% 42%, 0 35%);
+        background-color: #f5f0e4;
+      }
+      .shard-2 {
+        clip-path: polygon(60% 0, 100% 0, 100% 45%, 45% 42%);
+        background-color: #e7e3d9;
+      }
+      .shard-3 {
+        clip-path: polygon(0 35%, 45% 42%, 38% 70%, 0 65%);
+        background-color: #141414;
+      }
+      .shard-4 {
+        clip-path: polygon(45% 42%, 100% 45%, 100% 72%, 58% 68%);
+        background-color: #f5f0e4;
+      }
+      .shard-5 {
+        clip-path: polygon(0 65%, 38% 70%, 52% 100%, 0 100%);
+        background-color: #e7e3d9;
+      }
+      .shard-6 {
+        clip-path: polygon(38% 70%, 100% 72%, 100% 100%, 52% 100%);
+        background-color: #141414;
+      }
+
+      /* Style classes an toàn theo hợp đồng tương phản WCAG */
+      .hf-text-ink {
+        color: #141414;
+      }
+      .hf-text-light {
+        color: #f7f4ec;
+      }
+      .hf-hl-orange {
+        background-color: #ff6a1a;
+        color: #141414;
+      }
+      .hf-plate-ink {
+        background-color: #141414;
+        color: #f7f4ec;
+      }
+      .hf-plate-ink-orange {
+        background-color: #141414;
+        color: #ff6a1a;
+      }
+      .hf-plate-paper {
+        background-color: #e7e3d9;
+        color: #141414;
+      }
+
+      /* Overlay 1: Label "NGẠI KHOẢN PHẠT TIỀN" */
+      #label-penalty-wrapper {
+        position: absolute;
+        top: 220px;
+        left: 60px;
+        z-index: 20;
+        opacity: 0;
+        will-change: transform, opacity;
+      }
+
+      .label-plate {
+        background-color: #141414;
+        border-left: 8px solid #ff6a1a;
+        padding: 16px 28px;
+        box-shadow: 0 14px 28px rgba(0, 0, 0, 0.4);
+      }
+
+      .label-sub {
+        font-size: 20px;
+        font-weight: 900;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        color: #ff6a1a;
+        margin-bottom: 4px;
+      }
+
+      .label-main-text {
+        font-size: 40px;
+        font-weight: 900;
+        line-height: 1.2;
+        color: #f7f4ec;
+        margin: 0;
+        letter-spacing: 0.5px;
+      }
+
+      /* Diagram Layer: SVG dóng kỹ thuật */
+      #diagram-svg {
+        position: absolute;
+        inset: 0;
+        width: 1080px;
+        height: 1920px;
+        pointer-events: none;
+        z-index: 15;
+      }
+
+      .diagram-stroke {
+        fill: none;
+        stroke: #ff6a1a;
+        stroke-width: 4;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
+      .diagram-guide-dash {
+        fill: none;
+        stroke: rgba(247, 244, 236, 0.4);
+        stroke-width: 2;
+        stroke-dasharray: 6 6;
+      }
+
+      .diagram-point {
+        fill: #ff6a1a;
+        stroke: #141414;
+        stroke-width: 3;
+      }
+
+      /* Diagram Card: Phân tích phép ẩn dụ đối lập */
+      #diagram-card {
+        position: absolute;
+        top: 680px;
+        left: 60px;
+        width: 960px;
+        z-index: 25;
+        background-color: #141414;
+        border: 2px solid #ff6a1a;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+        padding: 32px 36px;
+        opacity: 0;
+        will-change: transform, opacity;
+      }
+
+      .diag-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1.5px solid rgba(255, 106, 26, 0.35);
+        padding-bottom: 16px;
+        margin-bottom: 24px;
+      }
+
+      .diag-header-badge {
+        background-color: #ff6a1a;
+        color: #141414;
+        font-size: 20px;
+        font-weight: 900;
+        padding: 6px 14px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+
+      .diag-header-caption {
+        color: #f7f4ec;
+        font-size: 20px;
+        font-weight: 700;
+        letter-spacing: 1px;
+      }
+
+      .diag-columns {
+        display: flex;
+        align-items: stretch;
+        justify-content: space-between;
+        gap: 20px;
+      }
+
+      .diag-col {
+        flex: 1;
+        background: #1e1e1e;
+        border: 1px solid rgba(247, 244, 236, 0.15);
+        padding: 20px 24px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+
+      .diag-col-left {
+        border-left: 5px solid #ff6a1a;
+      }
+
+      .diag-col-right {
+        border-left: 5px solid #ff6a1a;
+      }
+
+      .diag-col-tag {
+        font-size: 18px;
+        font-weight: 700;
+        color: #ff6a1a;
+        margin-bottom: 8px;
+        text-transform: uppercase;
+      }
+
+      .diag-col-title {
+        font-size: 28px;
+        font-weight: 900;
+        color: #f7f4ec;
+        margin: 0 0 16px 0;
+        line-height: 1.25;
+      }
+
+      .diag-bar-track {
+        width: 100%;
+        height: 12px;
+        background-color: rgba(247, 244, 236, 0.15);
+        overflow: hidden;
+        margin-bottom: 12px;
+      }
+
+      .diag-bar-fill {
+        height: 100%;
+        background-color: #ff6a1a;
+        transform-origin: 0% 50%;
+      }
+
+      .diag-col-desc {
+        font-size: 19px;
+        font-weight: 700;
+        color: #e7e3d9;
+        margin: 0;
+      }
+
+      .diag-divider-vs {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0 8px;
+      }
+
+      .vs-badge {
+        width: 52px;
+        height: 52px;
+        border-radius: 50%;
+        background-color: #ff6a1a;
+        color: #141414;
+        display: grid;
+        place-items: center;
+        font-size: 22px;
+        font-weight: 900;
+        box-shadow: 0 0 16px rgba(255, 106, 26, 0.4);
+      }
+
+      .diag-footer-tag {
+        margin-top: 22px;
+        display: inline-block;
+        background-color: rgba(255, 106, 26, 0.15);
+        border: 1px dashed #ff6a1a;
+        color: #f7f4ec;
+        font-size: 19px;
+        font-weight: 700;
+        padding: 10px 18px;
+      }
+
+      /* Overlay 2: Punch-phrase "PHÁ CỔNG BÃI ĐỖ" */
+      #punch-card {
+        position: absolute;
+        top: 1120px;
+        left: 60px;
+        width: 960px;
+        z-index: 30;
+        background-color: #141414;
+        border: 3px solid #ff6a1a;
+        box-shadow: 0 24px 50px rgba(0, 0, 0, 0.7);
+        padding: 28px 36px;
+        opacity: 0;
+        transform-origin: 50% 50%;
+        will-change: transform, opacity;
+      }
+
+      .punch-badge-top {
+        display: inline-block;
+        background-color: #ff6a1a;
+        color: #141414;
+        font-size: 22px;
+        font-weight: 900;
+        padding: 6px 18px;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        margin-bottom: 12px;
+        transform-origin: 0% 50%;
+      }
+
+      .punch-main-phrase {
+        font-size: 64px;
+        font-weight: 900;
+        line-height: 1.18;
+        color: #f7f4ec;
+        margin: 0;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+      }
+    </style>
+
+    <!-- Root composition: 1080x1920, duration 10.4s (startMs: 245840, endMs: 256240) -->
+    <div
+      id="root"
+      data-composition-id="scene-s27"
+      data-width="1080"
+      data-height="1920"
+      data-duration="10.4"
+    >
+      <!-- Single Visual Clip cho shot S27-1 -->
+      <section id="shot-s27" class="clip" data-start="0" data-duration="10.4">
+        <!-- Background Wrapper & Photo -->
+        <div id="bg-wrapper">
+          <img
+            id="bg-photo"
+            src="assets/img-15-suspect-violation-penalty-barrier.jpg"
+            alt="Thanh chắn barie và đối tượng vi phạm"
+          />
+        </div>
+
+        <!-- Spotlight vignette cho tâm lý căng thẳng/cảnh báo -->
+        <div class="spotlight-vignette"></div>
+
+        <!-- Vox Grid Texture -->
+        <div class="vox-grid"></div>
+
+        <!-- Shatter Entrance Overlay -->
+        <div id="shatter-container">
+          <div class="shatter-shard shard-1" id="shard-1"></div>
+          <div class="shatter-shard shard-2" id="shard-2"></div>
+          <div class="shatter-shard shard-3" id="shard-3"></div>
+          <div class="shatter-shard shard-4" id="shard-4"></div>
+          <div class="shatter-shard shard-5" id="shard-5"></div>
+          <div class="shatter-shard shard-6" id="shard-6"></div>
+        </div>
+
+        <!-- Overlay 1: Label "NGẠI KHOẢN PHẠT TIỀN" (at 1.64s -> hold 2.2s) -->
+        <div id="label-penalty-wrapper">
+          <div class="label-plate">
+            <div class="label-sub">TÂM LÝ VI PHẠM</div>
+            <h2 class="label-main-text">NGẠI KHOẢN PHẠT TIỀN</h2>
+          </div>
+        </div>
+
+        <!-- Technical Diagram SVG Lines -->
+        <svg id="diagram-svg" viewBox="0 0 1080 1920">
+          <!-- Đường dóng từ thanh chắn barie gãy xuống khối phân tích -->
+          <path id="diag-path-1" class="diagram-stroke" d="M 540 360 L 540 560 L 320 560 L 320 680" />
+          <path id="diag-path-2" class="diagram-stroke" d="M 540 560 L 760 560 L 760 680" />
+          <!-- Điểm neo kỹ thuật -->
+          <circle id="diag-point-origin" class="diagram-point" cx="540" cy="360" r="8" />
+          <circle id="diag-point-l" class="diagram-point" cx="320" cy="680" r="6" />
+          <circle id="diag-point-r" class="diagram-point" cx="760" cy="680" r="6" />
+        </svg>
+
+        <!-- Diagram Card: So sánh phép ẩn dụ đối lập -->
+        <div id="diagram-card">
+          <div class="diag-header">
+            <div class="diag-header-badge">QUAN HỆ ĐỐI LẬP</div>
+            <div class="diag-header-caption">PHÉP ẨN DỤ HÀNH VI</div>
+          </div>
+          <div class="diag-columns">
+            <!-- Cột trái: Khoản phạt vụn vặt -->
+            <div class="diag-col diag-col-left" id="diag-col-left">
+              <div>
+                <div class="diag-col-tag">CHI PHÍ TRỐN TRÁNH</div>
+                <h3 class="diag-col-title">VÉ GỬI XE / PHẠT NHỎ</h3>
+              </div>
+              <div>
+                <div class="diag-bar-track">
+                  <div class="diag-bar-fill" id="bar-small" style="width: 25%;"></div>
+                </div>
+                <p class="diag-col-desc">Tổn thất không đáng kể</p>
+              </div>
+            </div>
+
+            <!-- VS Badge -->
+            <div class="diag-divider-vs">
+              <div class="vs-badge" id="diag-vs">VS</div>
+            </div>
+
+            <!-- Cột phải: Hậu quả phá hoại lớn -->
+            <div class="diag-col diag-col-right" id="diag-col-right">
+              <div>
+                <div class="diag-col-tag">HẬU QUẢ PHÁT SINH</div>
+                <h3 class="diag-col-title">PHÁ HỎNG TÀI SẢN</h3>
+              </div>
+              <div>
+                <div class="diag-bar-track">
+                  <div class="diag-bar-fill" id="bar-large" style="width: 100%;"></div>
+                </div>
+                <p class="diag-col-desc">Đối mặt trách nhiệm nặng</p>
+              </div>
+            </div>
+          </div>
+          <div class="diag-footer-tag" id="diag-tag">
+            → DÙNG SỨC ĐỐI ĐẦU ĐỔI LẠI TRÁCH NHIỆM NẶNG NỀ
+          </div>
+        </div>
+
+        <!-- Overlay 2: Punch-phrase "PHÁ CỔNG BÃI ĐỖ" (at 9.03s -> 10.4s) -->
+        <div id="punch-card">
+          <div class="punch-badge-top" id="punch-badge">HÀNH ĐỘNG LIỀU LĨNH</div>
+          <h1 class="punch-main-phrase">PHÁ CỔNG BÃI ĐỖ</h1>
+        </div>
+
+        <!-- Dải cam đáy khung hình (Vox Signature Bar) -->
+        <div class="bottom-brand-bar"></div>
+      </section>
+    </div>
+
+    <!-- GSAP Seekable Timeline Script -->
+    <script>
+      // 1. Khởi tạo timeline paused bắt buộc theo chuẩn HyperFrames
+      const tl = gsap.timeline({ paused: true });
+
+      // 2. Setup SVG Dash patterns cho technical lines
+      const p1 = document.getElementById("diag-path-1");
+      const p2 = document.getElementById("diag-path-2");
+      if (p1 && p2) {
+        const len1 = p1.getTotalLength();
+        p1.style.strokeDasharray = len1 + "";
+        p1.style.strokeDashoffset = len1 + "";
+
+        const len2 = p2.getTotalLength();
+        p2.style.strokeDasharray = len2 + "";
+        p2.style.strokeDashoffset = len2 + "";
+      }
+
+      // 3. Camera motion: zoom-in chậm từ 1.0x lên 1.07x hướng vào barie gãy trong suốt 10.4s
+      tl.fromTo(
+        "#bg-photo",
+        { scale: 1.0 },
+        { scale: 1.07, duration: 10.4, ease: "none" },
+        0
+      );
+
+      // 4. Shatter Entrance (0.0s -> 0.75s)
+      // Các mảnh vỡ giấy văng ra 4 phía hé lộ ảnh nền
+      tl.fromTo(
+        "#bg-wrapper",
+        { scale: 1.05, rotation: 0.6 },
+        { scale: 1.0, rotation: 0, duration: 0.6, ease: "power2.out" },
+        0
+      );
+
+      tl.to("#shard-1", { x: -420, y: -450, rotation: -22, opacity: 0, duration: 0.7, ease: "power3.out" }, 0.04);
+      tl.to("#shard-2", { x: 420, y: -450, rotation: 18, opacity: 0, duration: 0.7, ease: "power3.out" }, 0.06);
+      tl.to("#shard-3", { x: -500, y: 30, rotation: -14, opacity: 0, duration: 0.65, ease: "power3.out" }, 0.05);
+      tl.to("#shard-4", { x: 500, y: 30, rotation: 16, opacity: 0, duration: 0.65, ease: "power3.out" }, 0.07);
+      tl.to("#shard-5", { x: -380, y: 480, rotation: -18, opacity: 0, duration: 0.7, ease: "power3.out" }, 0.06);
+      tl.to("#shard-6", { x: 380, y: 480, rotation: 20, opacity: 0, duration: 0.7, ease: "power3.out" }, 0.08);
+
+      // 5. Overlay 1: Label "NGẠI KHOẢN PHẠT TIỀN" (atMs: 247480 -> 1.64s, holdMs: 2200 -> 3.84s)
+      tl.fromTo(
+        "#label-penalty-wrapper",
+        { x: -60, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.45, ease: "power3.out" },
+        1.64
+      );
+
+      // Label exit tại 3.54s (trước khi kết thúc slot 3.84s)
+      tl.to(
+        "#label-penalty-wrapper",
+        { x: -30, opacity: 0, duration: 0.3, ease: "power2.in" },
+        3.54
+      );
+
+      // 6. Diagram Layer (4.0s -> 8.5s) - Đáp ứng visualLanguages: ["background-photo", "diagram"]
+      // Đường dóng SVG vẽ từ điểm gãy barie
+      tl.fromTo(
+        "#diag-point-origin",
+        { scale: 0, opacity: 0, transformOrigin: "50% 50%" },
+        { scale: 1, opacity: 1, duration: 0.3, ease: "back.out(1.5)" },
+        4.0
+      );
+
+      tl.to(
+        "#diag-path-1",
+        { strokeDashoffset: 0, duration: 0.55, ease: "power2.out" },
+        4.1
+      );
+      tl.to(
+        "#diag-path-2",
+        { strokeDashoffset: 0, duration: 0.5, ease: "power2.out" },
+        4.35
+      );
+
+      tl.fromTo(
+        ["#diag-point-l", "#diag-point-r"],
+        { scale: 0, opacity: 0, transformOrigin: "50% 50%" },
+        { scale: 1, opacity: 1, duration: 0.25, stagger: 0.1, ease: "power2.out" },
+        4.6
+      );
+
+      // Card phân tích quan hệ đối lập xuất hiện
+      tl.fromTo(
+        "#diagram-card",
+        { y: 40, opacity: 0, scale: 0.96 },
+        { y: 0, opacity: 1, scale: 1, duration: 0.5, ease: "power3.out" },
+        4.3
+      );
+
+      // Nội dung so sánh trong card
+      tl.fromTo(
+        "#diag-col-left",
+        { opacity: 0, y: 16 },
+        { opacity: 1, y: 0, duration: 0.4, ease: "power2.out" },
+        4.6
+      );
+
+      tl.fromTo(
+        "#bar-small",
+        { scaleX: 0 },
+        { scaleX: 1, duration: 0.45, ease: "power3.out" },
+        4.8
+      );
+
+      tl.fromTo(
+        "#diag-vs",
+        { scale: 0, opacity: 0, transformOrigin: "50% 50%" },
+        { scale: 1, opacity: 1, duration: 0.35, ease: "power3.out" },
+        5.0
+      );
+
+      tl.fromTo(
+        "#diag-col-right",
+        { opacity: 0, y: 16 },
+        { opacity: 1, y: 0, duration: 0.4, ease: "power2.out" },
+        5.2
+      );
+
+      tl.fromTo(
+        "#bar-large",
+        { scaleX: 0 },
+        { scaleX: 1, duration: 0.5, ease: "power3.out" },
+        5.4
+      );
+
+      tl.fromTo(
+        "#diag-tag",
+        { opacity: 0, y: 12 },
+        { opacity: 1, y: 0, duration: 0.35, ease: "power2.out" },
+        5.7
+      );
+
+      // Diagram Layer Exit tại 8.4s để nhường toàn bộ tiêu điểm cho Punch-phrase
+      tl.to(
+        ["#diagram-card", "#diagram-svg"],
+        { opacity: 0, y: -20, duration: 0.45, ease: "power2.in" },
+        8.4
+      );
+
+      // 7. Overlay 2: Punch-phrase "PHÁ CỔNG BÃI ĐỖ" (atMs: 254870 -> 9.03s, hold đến hết scene 10.4s)
+      tl.fromTo(
+        "#punch-card",
+        { scale: 0.85, opacity: 0, y: 35 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.45, ease: "power3.out" },
+        9.03
+      );
+
+      tl.fromTo(
+        "#punch-badge",
+        { scaleX: 0 },
+        { scaleX: 1, duration: 0.35, ease: "power3.out" },
+        9.2
+      );
+
+      // 8. Đăng ký timeline gốc vào window.__timelines["scene-s27"]
+      window.__timelines = window.__timelines || {};
+      window.__timelines["scene-s27"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

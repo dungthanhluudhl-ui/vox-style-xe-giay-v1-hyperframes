@@ -1,0 +1,577 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap">
+      <style>
+    /* hf-safe-colors (tất định từ style-tokens.json) */
+    .hf-text-ink { color: #141414; }
+    .hf-text-light { color: #F7F4EC; }
+    .hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+    .hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+    .hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+    .hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: #E7E3D9;
+      color: #141414;
+      font-family: "Be Vietnam Pro", sans-serif;
+      overflow: hidden;
+      width: 1080px;
+      height: 1920px;
+    }
+
+    #root {
+      position: relative;
+      width: 1080px;
+      height: 1920px;
+      overflow: hidden;
+      background-color: #E7E3D9;
+      perspective: 1200px;
+    }
+
+    /* Quy ước .clip của HyperFrames */
+    .clip {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    /* Spotlight background: radial vignette + subtle grid lines */
+    .spotlight-bg {
+      position: absolute;
+      inset: 0;
+      background-color: #E7E3D9;
+      background-image: 
+        radial-gradient(circle at 50% 46%, rgba(20, 20, 20, 0) 25%, rgba(20, 20, 20, 0.28) 100%),
+        linear-gradient(to right, rgba(20, 20, 20, 0.08) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(20, 20, 20, 0.08) 1px, transparent 1px);
+      background-size: 100% 100%, 84px 84px, 84px 84px;
+      z-index: 1;
+    }
+
+    /* Fixed brand bottom bar */
+    .brand-bottom-bar {
+      position: absolute;
+      inset: auto 0 0 0;
+      height: 12px;
+      background-color: #FF6A1A;
+      z-index: 100;
+    }
+
+    /* Dossier Paper Card (Legal Case File) */
+    .dossier-wrapper {
+      position: absolute;
+      top: 200px;
+      left: 60px;
+      width: 960px;
+      height: 1140px;
+      transform-origin: 50% 0%;
+      z-index: 10;
+    }
+
+    /* Collage solid offset shadow */
+    .dossier-shadow {
+      position: absolute;
+      inset: 0;
+      background-color: #141414;
+      transform: translate(14px, 16px);
+      border-radius: 4px;
+    }
+
+    .dossier-card {
+      position: absolute;
+      inset: 0;
+      background-color: #F5F0E4;
+      border: 3px solid #141414;
+      border-radius: 4px;
+      padding: 44px 48px;
+      display: flex;
+      flex-direction: column;
+      box-shadow: inset 0 0 40px rgba(20, 20, 20, 0.03);
+    }
+
+    /* Dossier Header */
+    .dossier-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 24px;
+      border-bottom: 2px solid #141414;
+    }
+
+    .header-badge {
+      display: inline-flex;
+      align-items: center;
+      background-color: #141414;
+      color: #F7F4EC;
+      padding: 8px 18px;
+      font-size: 22px;
+      font-weight: 900;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      border-radius: 2px;
+    }
+
+    .header-meta {
+      font-size: 20px;
+      font-weight: 700;
+      color: #141414;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .header-meta-dot {
+      width: 10px;
+      height: 10px;
+      background-color: #FF6A1A;
+      display: inline-block;
+      border-radius: 50%;
+    }
+
+    /* Dossier Sections Container */
+    .sections-container {
+      margin-top: 36px;
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
+      position: relative;
+    }
+
+    /* Section Item */
+    .section-block {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .section-label-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .section-index-tag {
+      font-size: 19px;
+      font-weight: 900;
+      color: #141414;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    /* Slot container (Frame waiting for legal stamp) */
+    .slot-frame {
+      position: relative;
+      height: 310px;
+      border: 2px dashed rgba(20, 20, 20, 0.35);
+      border-radius: 4px;
+      background-color: rgba(20, 20, 20, 0.02);
+      overflow: visible;
+    }
+
+    /* STAMP 1: PHẠM TỘI CHƯA ĐẠT (Punch-phrase) */
+    .stamp-punch {
+      position: absolute;
+      inset: -4px -6px;
+      background-color: #FF6A1A;
+      border: 4px solid #141414;
+      border-radius: 4px;
+      box-shadow: 10px 12px 0px #141414;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 24px 32px;
+      transform-origin: 50% 50%;
+      z-index: 20;
+      opacity: 0;
+    }
+
+    .stamp-title {
+      font-size: 64px;
+      font-weight: 900;
+      line-height: 1.15;
+      color: #141414;
+      text-transform: uppercase;
+      letter-spacing: -0.5px;
+      text-align: center;
+    }
+
+    /* STAMP 2: TÍNH CHẤT CÔN ĐỒ (Label) */
+    .stamp-aggravated {
+      position: absolute;
+      inset: -4px -6px;
+      background-color: #141414;
+      border: 4px solid #141414;
+      border-radius: 4px;
+      box-shadow: 10px 12px 0px #FF6A1A;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 24px 32px;
+      transform-origin: 50% 50%;
+      z-index: 25;
+      opacity: 0;
+    }
+
+    .aggravated-title-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 28px;
+    }
+
+    .aggravated-title {
+      font-size: 58px;
+      font-weight: 900;
+      line-height: 1.15;
+      color: #F7F4EC;
+      text-transform: uppercase;
+      letter-spacing: -0.5px;
+      text-align: center;
+    }
+
+    /* Warning Icon container */
+    .warning-icon-badge {
+      width: 68px;
+      height: 68px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transform-origin: 50% 50%;
+      opacity: 0;
+    }
+
+    .warning-svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Technical diagram bracket annotation linking both factors */
+    .bracket-svg {
+      position: absolute;
+      right: -32px;
+      top: 50px;
+      width: 28px;
+      height: 680px;
+      overflow: visible;
+      z-index: 15;
+    }
+
+    /* Footer verification bar */
+    .dossier-footer {
+      margin-top: auto;
+      padding-top: 22px;
+      border-top: 2px solid #141414;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .footer-stamp-text {
+      font-size: 18px;
+      font-weight: 700;
+      color: #141414;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+    }
+
+    .footer-barcodes {
+      display: flex;
+      gap: 4px;
+      align-items: center;
+      height: 24px;
+    }
+
+    .bar {
+      background-color: #141414;
+      height: 100%;
+    }
+  </style>
+
+  <div
+    id="root"
+    data-composition-id="scene-s29"
+    data-start="0"
+    data-width="1080"
+    data-height="1920"
+    data-duration="5.92"
+  >
+    <!-- Spotlight background layer -->
+    <div class="spotlight-bg"></div>
+
+    <!-- Main Visual Scene Clip -->
+    <section class="clip" data-start="0" data-duration="5.92">
+      <!-- Fixed brand signature bar at bottom -->
+      <div class="brand-bottom-bar"></div>
+
+      <!-- Dossier Legal Case File Wrapper (Enters with Peel) -->
+      <div class="dossier-wrapper" id="dossierWrapper">
+        <div class="dossier-shadow"></div>
+        <div class="dossier-card" id="dossierCard">
+          
+          <!-- Dossier Header -->
+          <div class="dossier-header">
+            <div class="header-badge">HỒ SƠ ĐỊNH KHUNG</div>
+            <div class="header-meta">
+              <span class="header-meta-dot"></span>
+              ĐỊNH KHUNG HÀNH VI
+            </div>
+          </div>
+
+          <!-- Factors Section Container -->
+          <div class="sections-container">
+            <!-- Factor 01 -->
+            <div class="section-block">
+              <div class="section-label-row">
+                <span class="section-index-tag">YẾU TỐ 01</span>
+              </div>
+              <div class="slot-frame" id="slotFrame1">
+                <!-- STAMP 1 (Punch-phrase, atMs: 230740 = 0.84s) -->
+                <div class="stamp-punch" id="stampPunch">
+                  <div class="stamp-title">PHẠM TỘI CHƯA ĐẠT</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Factor 02 -->
+            <div class="section-block">
+              <div class="section-label-row">
+                <span class="section-index-tag">YẾU TỐ 02</span>
+              </div>
+              <div class="slot-frame" id="slotFrame2">
+                <!-- STAMP 2 (Label, atMs: 234500 = 4.60s) -->
+                <div class="stamp-aggravated" id="stampAggravated">
+                  <div class="aggravated-title-row">
+                    <div class="aggravated-title">TÍNH CHẤT CÔN ĐỒ</div>
+                    
+                    <!-- Warning Icon (atMs: 235270 = 5.37s) -->
+                    <div class="warning-icon-badge" id="warningBadge">
+                      <svg class="warning-svg" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <polygon
+                          points="32,6 58,54 6,54"
+                          fill="#FF6A1A"
+                          stroke="#F7F4EC"
+                          stroke-width="3.5"
+                          stroke-linejoin="round"
+                        />
+                        <line
+                          x1="32"
+                          y1="20"
+                          x2="32"
+                          y2="36"
+                          stroke="#141414"
+                          stroke-width="5"
+                          stroke-linecap="round"
+                        />
+                        <circle
+                          cx="32"
+                          cy="45"
+                          r="2.8"
+                          fill="#141414"
+                        />
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Technical bracket linking both legal conditions -->
+            <svg class="bracket-svg" viewBox="0 0 28 680" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path
+                id="bracketPath"
+                d="M2 10 H20 V340 H26 H20 V670 H2"
+                stroke="#141414"
+                stroke-width="3"
+                stroke-linecap="square"
+              />
+            </svg>
+          </div>
+
+          <!-- Footer verification bar -->
+          <div class="dossier-footer">
+            <div class="footer-stamp-text">VĂN BẢN ĐỊNH KHUNG TỐ TỤNG</div>
+            <div class="footer-barcodes">
+              <div class="bar" style="width: 4px;"></div>
+              <div class="bar" style="width: 2px;"></div>
+              <div class="bar" style="width: 6px;"></div>
+              <div class="bar" style="width: 3px;"></div>
+              <div class="bar" style="width: 8px;"></div>
+              <div class="bar" style="width: 2px;"></div>
+              <div class="bar" style="width: 5px;"></div>
+              <div class="bar" style="width: 3px;"></div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    // Khởi tạo timeline HyperFrames bắt buộc (paused: true)
+    window.__timelines = window.__timelines || {};
+    const tl = gsap.timeline({ paused: true });
+
+    // Initial setup: SVG stroke preparation
+    const bracket = document.getElementById("bracketPath");
+    const bracketLen = bracket.getTotalLength();
+    bracket.style.strokeDasharray = bracketLen + "px";
+    bracket.style.strokeDashoffset = bracketLen + "px";
+
+    // 1. ENTRANCE: "peel" (0.0s - 0.72s)
+    // Document curls & folds into view with physical weight
+    tl.fromTo(
+      "#dossierWrapper",
+      {
+        rotationX: 24,
+        rotationY: -6,
+        y: -120,
+        scale: 0.92,
+        opacity: 0
+      },
+      {
+        rotationX: 0,
+        rotationY: 0,
+        y: 0,
+        scale: 1,
+        opacity: 1,
+        duration: 0.72,
+        ease: "power3.out"
+      },
+      0.0
+    );
+
+    // Subtle continuous ambient sway for documentary realism
+    tl.to(
+      "#dossierWrapper",
+      {
+        rotationZ: 0.4,
+        y: 6,
+        duration: 5.2,
+        ease: "sine.inOut"
+      },
+      0.72
+    );
+
+    // 2. STAMP 1: "PHẠM TỘI CHƯA ĐẠT" (Punch-phrase)
+    // Cue: atMs 230740 - 229900 = 840ms (0.84s)
+    // Rubber stamp slams down onto Slot 1
+    tl.fromTo(
+      "#stampPunch",
+      {
+        scale: 2.1,
+        rotation: -9,
+        opacity: 0
+      },
+      {
+        scale: 1,
+        rotation: -2,
+        opacity: 1,
+        duration: 0.28,
+        ease: "power4.in",
+        immediateRender: false
+      },
+      0.84
+    );
+
+    // Physical impact feedback: document jolts on stamp slam
+    tl.fromTo(
+      "#dossierCard",
+      { y: 0 },
+      { y: 8, duration: 0.08, ease: "power2.out" },
+      1.12
+    );
+    tl.to(
+      "#dossierCard",
+      { y: 0, duration: 0.2, ease: "power2.out" },
+      1.20
+    );
+
+    // 3. MID-BEAT GRAPHIC EVENT: Legal bracket traces down to link the factors (2.6s - 3.4s)
+    // Eliminates dead-air (>3s rule) while guiding viewer's eye to factor 2
+    tl.to(
+      "#bracketPath",
+      {
+        strokeDashoffset: 0,
+        duration: 0.8,
+        ease: "power2.out"
+      },
+      2.60
+    );
+
+    // 4. STAMP 2: "TÍNH CHẤT CÔN ĐỒ" (Label)
+    // Cue: atMs 234500 - 229900 = 4600ms (4.60s)
+    // Authoritative black stamp slams down to lock aggravating circumstance
+    tl.fromTo(
+      "#stampAggravated",
+      {
+        scale: 2.0,
+        rotation: 7,
+        opacity: 0
+      },
+      {
+        scale: 1,
+        rotation: 1.5,
+        opacity: 1,
+        duration: 0.26,
+        ease: "power4.in",
+        immediateRender: false
+      },
+      4.60
+    );
+
+    // Second impact recoil
+    tl.fromTo(
+      "#dossierCard",
+      { y: 0 },
+      { y: 6, duration: 0.07, ease: "power2.out" },
+      4.86
+    );
+    tl.to(
+      "#dossierCard",
+      { y: 0, duration: 0.18, ease: "power2.out" },
+      4.93
+    );
+
+    // 5. ICON: "warning"
+    // Cue: atMs 235270 - 229900 = 5370ms (5.37s)
+    // Warning icon pops and settles with emphasis (smooth long-tail settle)
+    tl.fromTo(
+      "#warningBadge",
+      {
+        scale: 0,
+        rotation: -20,
+        opacity: 0
+      },
+      {
+        scale: 1,
+        rotation: 0,
+        opacity: 1,
+        duration: 0.32,
+        ease: "power3.out",
+        immediateRender: false
+      },
+      5.37
+    );
+
+    // Đăng ký timeline cho HyperFrames seek renderer
+    window.__timelines["scene-s29"] = tl;
+  </script>
+
+    </template>
+  </body>
+</html>

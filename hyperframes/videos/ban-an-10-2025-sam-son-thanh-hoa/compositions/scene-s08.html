@@ -1,0 +1,456 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap">
+      <style>
+    /* hf-safe-colors (tất định từ style-tokens.json) */
+    .hf-text-ink { color: #141414; }
+    .hf-text-light { color: #F7F4EC; }
+    .hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+    .hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+    .hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+    .hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #141414;
+      font-family: "Be Vietnam Pro", sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    #root {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #141414;
+    }
+
+    /* Standard HyperFrames clip layout */
+    .clip {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+    }
+
+    /* Camera viewport and zoom container */
+    .camera-stage {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      transform-origin: 50% 48%;
+      will-change: transform;
+    }
+
+    /* Background full-bleed photo - giữ nguyên màu gốc theo Style DNA */
+    .bg-image {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center 42%;
+      display: block;
+    }
+
+    /* Shatter entrance transition FX */
+    .shatter-overlay {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 40;
+    }
+
+    .shatter-flash {
+      position: absolute;
+      inset: 0;
+      background-color: #E7E3D9;
+      opacity: 0;
+    }
+
+    .shatter-svg {
+      position: absolute;
+      inset: 0;
+      width: 1080px;
+      height: 1920px;
+    }
+
+    .shatter-line {
+      stroke: #FF6A1A;
+      stroke-width: 5;
+      opacity: 0;
+    }
+
+    /* Top persistent flow status bar */
+    .top-nav-bar {
+      position: absolute;
+      top: 176px;
+      left: 60px;
+      right: 60px;
+      height: 56px;
+      background-color: #141414;
+      border-radius: 8px;
+      border-left: 6px solid #FF6A1A;
+      display: flex;
+      align-items: center;
+      padding: 0 20px;
+      gap: 16px;
+      z-index: 20;
+    }
+
+    .flow-badge {
+      font-weight: 900;
+      font-size: 20px;
+      color: #141414;
+      background-color: #FF6A1A;
+      padding: 4px 12px;
+      border-radius: 4px;
+      letter-spacing: 0.5px;
+      white-space: nowrap;
+    }
+
+    .flow-divider {
+      width: 2px;
+      height: 24px;
+      background-color: rgba(247, 244, 236, 0.25);
+    }
+
+    .flow-context {
+      font-weight: 700;
+      font-size: 22px;
+      color: #F7F4EC;
+      letter-spacing: 0.5px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Overlay card containers */
+    .card-container {
+      position: absolute;
+      top: 256px;
+      left: 60px;
+      right: 60px;
+      height: auto;
+      background-color: #141414;
+      border-radius: 16px;
+      padding: 32px 36px;
+      border-left: 8px solid #FF6A1A;
+      z-index: 25;
+    }
+
+    .card-tag-wrapper {
+      display: flex;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+
+    .card-tag {
+      font-weight: 900;
+      font-size: 20px;
+      color: #141414;
+      background-color: #FF6A1A;
+      padding: 4px 12px;
+      border-radius: 4px;
+      white-space: nowrap;
+      letter-spacing: 0.5px;
+    }
+
+    .card-title {
+      margin: 0;
+      font-weight: 900;
+      font-size: 54px;
+      line-height: 1.25;
+      color: #F7F4EC;
+      letter-spacing: -0.5px;
+    }
+
+    /* Punch phrase card overrides */
+    .punch-card {
+      border-left: 10px solid #FF6A1A;
+      padding: 36px 40px;
+    }
+
+    .punch-title {
+      margin: 0;
+      font-weight: 900;
+      font-size: 68px;
+      line-height: 1.22;
+      color: #F7F4EC;
+      letter-spacing: -0.5px;
+    }
+
+    /* Tactical confrontation focus reticle */
+    .tactical-reticle {
+      position: absolute;
+      top: 740px;
+      left: 240px;
+      width: 600px;
+      height: 460px;
+      pointer-events: none;
+      z-index: 22;
+    }
+
+    .reticle-bracket {
+      position: absolute;
+      width: 40px;
+      height: 40px;
+      border-color: #FF6A1A;
+      border-style: solid;
+    }
+
+    .top-l { top: 0; left: 0; border-width: 4px 0 0 4px; }
+    .top-r { top: 0; right: 0; border-width: 4px 4px 0 0; }
+    .bot-l { bottom: 0; left: 0; border-width: 0 0 4px 4px; }
+    .bot-r { bottom: 0; right: 0; border-width: 0 4px 4px 0; }
+
+    .reticle-center-cross {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 24px;
+      height: 24px;
+      margin-top: -12px;
+      margin-left: -12px;
+    }
+
+    .reticle-center-cross::before {
+      content: '';
+      position: absolute;
+      top: 11px;
+      left: 0;
+      width: 24px;
+      height: 2px;
+      background-color: #FF6A1A;
+    }
+
+    .reticle-center-cross::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 11px;
+      width: 2px;
+      height: 24px;
+      background-color: #FF6A1A;
+    }
+
+    .reticle-badge-wrapper {
+      position: absolute;
+      bottom: -46px;
+      left: 0;
+      right: 0;
+      display: flex;
+      justify-content: center;
+    }
+
+    .reticle-badge {
+      background-color: #141414;
+      color: #FF6A1A;
+      font-weight: 700;
+      font-size: 20px;
+      padding: 4px 18px;
+      border-radius: 4px;
+      border: 1px solid #FF6A1A;
+      white-space: nowrap;
+    }
+
+    /* Fixed brand bottom bar signature */
+    .bottom-brand-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 14px;
+      background-color: #FF6A1A;
+      z-index: 100;
+    }
+  </style>
+
+  <div
+    id="root"
+    data-composition-id="scene-s08"
+    data-start="0"
+    data-width="1080"
+    data-height="1920"
+    data-duration="10.76"
+  >
+    <!-- Base Shot Clip: Camera Zoom & Background Photo (0.00s - 10.76s) -->
+    <section id="scene-shot" class="clip" data-start="0" data-duration="10.76">
+      <div id="camera-stage" class="camera-stage" data-layout-allow-overflow="true">
+        <img
+          id="hero-img"
+          class="bg-image"
+          src="assets/img-05-confronting-police-officer-alley.jpg"
+          alt="Confrontation in alley"
+        >
+      </div>
+
+      <!-- Shatter Entrance Transition Elements -->
+      <div id="shatter-fx" class="shatter-overlay" data-layout-allow-overflow="true">
+        <div id="shatter-flash" class="shatter-flash"></div>
+        <svg class="shatter-svg" viewBox="0 0 1080 1920" preserveAspectRatio="none">
+          <line id="s-line-1" class="shatter-line" x1="-100" y1="260" x2="1180" y2="760" />
+          <line id="s-line-2" class="shatter-line" x1="1180" y1="480" x2="-100" y2="1240" />
+          <line id="s-line-3" class="shatter-line" x1="240" y1="-80" x2="840" y2="2000" />
+        </svg>
+      </div>
+
+      <!-- Top Persistent Flow Status -->
+      <div id="top-nav" class="top-nav-bar">
+        <div class="flow-badge">DIỄN BIẾN</div>
+        <div class="flow-divider"></div>
+        <div class="flow-context">TỪ KIỂM TRA HÀNH CHÍNH ĐẾN XÔ XÁT ĐỐI ĐẦU</div>
+      </div>
+
+      <!-- Fixed Signature Bottom Bar -->
+      <div class="bottom-brand-bar"></div>
+    </section>
+
+    <!-- Overlay 1: Lỗi hành chính ban đầu (2.25s - 4.65s) -->
+    <section id="overlay-1" class="clip" data-start="2.25" data-duration="2.4">
+      <div id="card-1" class="card-container">
+        <div class="card-tag-wrapper">
+          <span class="card-tag">GIAI ĐOẠN 01</span>
+        </div>
+        <h2 class="card-title">LỖI HÀNH CHÍNH BAN ĐẦU</h2>
+      </div>
+    </section>
+
+    <!-- Overlay 2: Chống đối xử lý (5.15s - 7.55s) -->
+    <section id="overlay-2" class="clip" data-start="5.15" data-duration="2.4">
+      <div id="card-2" class="card-container">
+        <div class="card-tag-wrapper">
+          <span class="card-tag">GIAI ĐOẠN 02</span>
+        </div>
+        <h2 class="card-title">CHỐNG ĐỐI XỬ LÝ</h2>
+      </div>
+    </section>
+
+    <!-- Overlay 3: Túm cổ áo xô đẩy (7.69s - 10.76s) -->
+    <section id="overlay-3" class="clip" data-start="7.69" data-duration="3.07">
+      <div id="card-3" class="card-container punch-card">
+        <div class="card-tag-wrapper">
+          <span class="card-tag">BƯỚC NGOẶT</span>
+        </div>
+        <h1 class="punch-title">TÚM CỔ ÁO XÔ ĐẨY</h1>
+      </div>
+
+      <!-- Tactical confrontation focus reticle -->
+      <div id="reticle-3" class="tactical-reticle" data-layout-allow-overflow="true">
+        <div class="reticle-bracket top-l"></div>
+        <div class="reticle-bracket top-r"></div>
+        <div class="reticle-bracket bot-l"></div>
+        <div class="reticle-bracket bot-r"></div>
+        <div class="reticle-center-cross"></div>
+        <div class="reticle-badge-wrapper">
+          <div class="reticle-badge">ĐIỂM XUNG ĐỘT</div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const tl = gsap.timeline({ paused: true });
+
+    /* 1. Shatter entrance impact (0.00s - 0.45s) */
+    tl.fromTo("#shatter-flash",
+      { opacity: 0.75 },
+      { opacity: 0, duration: 0.35, ease: "power2.out" },
+      0
+    );
+
+    tl.fromTo("#s-line-1",
+      { opacity: 0.95 },
+      { opacity: 0, duration: 0.4, ease: "power3.out" },
+      0.02
+    );
+
+    tl.fromTo("#s-line-2",
+      { opacity: 0.95 },
+      { opacity: 0, duration: 0.4, ease: "power3.out" },
+      0.06
+    );
+
+    tl.fromTo("#s-line-3",
+      { opacity: 0.95 },
+      { opacity: 0, duration: 0.42, ease: "power3.out" },
+      0.1
+    );
+
+    /* 2. Camera motion: impact settle then continuous zoom into collar grab */
+    tl.fromTo("#camera-stage",
+      { scale: 1.05 },
+      { scale: 1.0, duration: 0.45, ease: "power3.out" },
+      0
+    );
+
+    tl.to("#camera-stage",
+      { scale: 1.08, duration: 10.31, ease: "sine.inOut" },
+      0.45
+    );
+
+    /* 3. Top flow status nav reveal */
+    tl.fromTo("#top-nav",
+      { y: -24, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.48, ease: "power3.out" },
+      0.3
+    );
+
+    /* 4. Overlay 1: Lỗi hành chính ban đầu (2.25s) */
+    tl.fromTo("#card-1",
+      { y: -28, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.4, ease: "power3.out" },
+      2.25
+    );
+
+    tl.to("#card-1",
+      { y: -16, opacity: 0, duration: 0.3, ease: "power2.in" },
+      4.3
+    );
+
+    /* 5. Overlay 2: Chống đối xử lý (5.15s) */
+    tl.fromTo("#card-2",
+      { y: -28, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.4, ease: "power3.out" },
+      5.15
+    );
+
+    tl.to("#card-2",
+      { y: -16, opacity: 0, duration: 0.3, ease: "power2.in" },
+      7.2
+    );
+
+    /* 6. Overlay 3: Túm cổ áo xô đẩy - Climax punch phrase (7.69s) */
+    tl.fromTo("#card-3",
+      { scale: 0.94, opacity: 0 },
+      { scale: 1.0, opacity: 1, duration: 0.45, ease: "power3.out" },
+      7.69
+    );
+
+    tl.fromTo("#reticle-3",
+      { scale: 1.22, opacity: 0 },
+      { scale: 1.0, opacity: 1, duration: 0.42, ease: "power3.out" },
+      7.82
+    );
+
+    /* Deterministic seek registration */
+    window.__timelines = window.__timelines || {};
+    window.__timelines["scene-s08"] = tl;
+  </script>
+
+    </template>
+  </body>
+</html>

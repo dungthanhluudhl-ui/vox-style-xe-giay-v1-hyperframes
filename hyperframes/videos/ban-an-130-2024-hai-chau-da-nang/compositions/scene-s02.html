@@ -1,0 +1,574 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap"
+    />
+      <style>
+      /* hf-safe-colors (tất định từ style-tokens.json) */
+      .hf-text-ink { color: #141414; }
+      .hf-text-light { color: #F7F4EC; }
+      .hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+      .hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+      .hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+      .hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #e7e3d9;
+        color: #141414;
+        font-family: "Be Vietnam Pro", -apple-system, BlinkMacSystemFont, sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+
+      .clip {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+      }
+
+      .overlay-clip {
+        pointer-events: none;
+      }
+
+      /* Camera rig & Background Photo */
+      .camera-rig {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+      }
+
+      #bg-photo {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 1360px;
+        height: 1920px;
+        object-fit: cover;
+        display: block;
+      }
+
+      /* Subtle grid overlay (Vox DNA background variant: grid) */
+      .grid-layer {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background-size: 84px 84px;
+        background-image:
+          linear-gradient(to right, rgba(20, 20, 20, 0.22) 1.5px, transparent 1.5px),
+          linear-gradient(to bottom, rgba(20, 20, 20, 0.22) 1.5px, transparent 1.5px);
+        z-index: 5;
+      }
+
+      /* Fixed bottom orange bar (Vox DNA brand signature) */
+      .brand-bottom-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 1080px;
+        height: 12px;
+        background-color: #ff6a1a;
+        z-index: 80;
+      }
+
+      /* Trajectory annotation SVG */
+      .trajectory-svg {
+        position: absolute;
+        inset: 0;
+        width: 1080px;
+        height: 1920px;
+        pointer-events: none;
+        z-index: 10;
+      }
+
+      /* Editorial Cards (Overlay 1 & 2) */
+      .editorial-card {
+        position: absolute;
+        top: 220px;
+        left: 60px;
+        max-width: 960px;
+        background-color: #141414;
+        border-left: 10px solid #ff6a1a;
+        padding: 24px 34px;
+        border-radius: 6px;
+        z-index: 25;
+      }
+
+      .card-kicker {
+        color: #ff6a1a;
+        font-size: 24px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 8px;
+      }
+
+      .card-headline {
+        color: #f7f4ec;
+        font-size: 64px;
+        font-weight: 900;
+        line-height: 1.15;
+        letter-spacing: -0.5px;
+        margin: 0;
+        text-transform: uppercase;
+      }
+
+      /* Overlay 3: Warning Icon & Callout */
+      .warning-callout {
+        position: absolute;
+        top: 610px;
+        left: 70px;
+        background-color: #141414;
+        border: 3px solid #ff6a1a;
+        border-radius: 8px;
+        padding: 20px 28px;
+        display: inline-flex;
+        align-items: center;
+        gap: 22px;
+        z-index: 30;
+      }
+
+      .warning-icon-box {
+        width: 74px;
+        height: 74px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+
+      .warning-text-group {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      .warning-tag {
+        color: #ff6a1a;
+        font-size: 22px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+
+      .warning-title {
+        color: #f7f4ec;
+        font-size: 40px;
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        line-height: 1.2;
+      }
+
+      /* Overlay 4: Punch Phrase Card */
+      .punch-phrase-card {
+        position: absolute;
+        top: 1100px;
+        left: 60px;
+        right: 60px;
+        background-color: #141414;
+        border-left: 12px solid #ff6a1a;
+        padding: 34px 38px;
+        border-radius: 8px;
+        z-index: 40;
+      }
+
+      .punch-kicker-row {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 12px;
+      }
+
+      .punch-badge {
+        background-color: #ff6a1a;
+        color: #141414;
+        font-size: 22px;
+        font-weight: 900;
+        padding: 6px 14px;
+        border-radius: 4px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .punch-phrase-title {
+        color: #f7f4ec;
+        font-size: 74px;
+        font-weight: 900;
+        line-height: 1.14;
+        margin: 0;
+        text-transform: uppercase;
+        letter-spacing: -1px;
+      }
+
+      .punch-footer-bar {
+        height: 5px;
+        background-color: #ff6a1a;
+        margin-top: 20px;
+        width: 100%;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s02"
+      data-width="1080"
+      data-height="1920"
+      data-duration="9.64"
+    >
+      <!-- Background Scene Clip (0.00s - 9.64s) -->
+      <section
+        id="bg-scene"
+        class="clip"
+        data-start="0"
+        data-duration="9.64"
+        data-track-index="0"
+      >
+        <div class="camera-rig" id="camera-rig">
+          <img
+            id="bg-photo"
+            src="assets/img-12-danang-night-traffic-crowd.jpg"
+            alt="Đà Nẵng night traffic crowd"
+          />
+        </div>
+
+        <div class="grid-layer" aria-hidden="true"></div>
+
+        <!-- Trajectory U-turn SVG Layer (Annotated language) -->
+        <svg
+          class="trajectory-svg"
+          viewBox="0 0 1080 1920"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <defs>
+            <marker
+              id="arrow-head"
+              markerWidth="12"
+              markerHeight="12"
+              refX="8"
+              refY="6"
+              orient="auto"
+            >
+              <path d="M 0 1 L 10 6 L 0 11 Z" fill="#FF6A1A" />
+            </marker>
+          </defs>
+
+          <!-- Median Divider Reference Line -->
+          <line
+            id="median-line"
+            x1="260"
+            y1="640"
+            x2="260"
+            y2="1240"
+            stroke="#141414"
+            stroke-width="12"
+            stroke-linecap="round"
+          />
+          <line
+            x1="260"
+            y1="640"
+            x2="260"
+            y2="1240"
+            stroke="#E7E3D9"
+            stroke-width="6"
+            stroke-dasharray="24 16"
+            stroke-linecap="round"
+          />
+
+          <!-- Background shadow path for crisp contrast against photo -->
+          <path
+            id="traj-shadow"
+            d="M 580 1140 C 530 1010, 420 920, 310 870 C 230 830, 160 880, 180 970 C 196 1040, 270 1060, 370 1020"
+            stroke="#141414"
+            stroke-width="16"
+            stroke-linecap="round"
+          />
+
+          <!-- Animated U-turn trajectory path -->
+          <path
+            id="traj-path"
+            d="M 580 1140 C 530 1010, 420 920, 310 870 C 230 830, 160 880, 180 970 C 196 1040, 270 1060, 370 1020"
+            stroke="#FF6A1A"
+            stroke-width="8"
+            stroke-linecap="round"
+            marker-end="url(#arrow-head)"
+          />
+
+          <!-- Violation Apex Ping Circle -->
+          <circle
+            id="traj-apex-ring"
+            cx="210"
+            cy="870"
+            r="28"
+            stroke="#FF6A1A"
+            stroke-width="4"
+            fill="none"
+          />
+          <circle
+            id="traj-apex-dot"
+            cx="210"
+            cy="870"
+            r="10"
+            fill="#FF6A1A"
+          />
+        </svg>
+
+        <div class="brand-bottom-bar"></div>
+      </section>
+
+      <!-- Overlay 1: TỐI 13/07/2024 (0.49s - 3.09s, hold 2.60s) -->
+      <section
+        id="clip-overlay-1"
+        class="clip overlay-clip"
+        data-start="0.49"
+        data-duration="2.60"
+        data-track-index="1"
+      >
+        <div class="editorial-card" id="date-card">
+          <div class="card-kicker">MỐC THỜI GIAN</div>
+          <h2 class="card-headline">TỐI 13/07/2024</h2>
+        </div>
+      </section>
+
+      <!-- Overlay 2: BỊ CÁO 16 TUỔI (3.11s - 5.81s, hold 2.70s) -->
+      <section
+        id="clip-overlay-2"
+        class="clip overlay-clip"
+        data-start="3.11"
+        data-duration="2.70"
+        data-track-index="1"
+      >
+        <div class="editorial-card" id="suspect-card">
+          <div class="card-kicker">ĐỐI TƯỢNG ĐIỀU KHIỂN</div>
+          <h2 class="card-headline">BỊ CÁO 16 TUỔI</h2>
+        </div>
+      </section>
+
+      <!-- Overlay 3: Icon Warning (5.89s - 7.69s, hold 1.80s) -->
+      <section
+        id="clip-overlay-3"
+        class="clip overlay-clip"
+        data-start="5.89"
+        data-duration="1.80"
+        data-track-index="2"
+      >
+        <div class="warning-callout" id="warning-callout">
+          <div class="warning-icon-box">
+            <svg
+              viewBox="0 0 100 100"
+              width="74"
+              height="74"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <!-- Self-drawing warning triangle -->
+              <path
+                id="warn-tri"
+                d="M 50 14 L 88 82 L 12 82 Z"
+                stroke="#FF6A1A"
+                stroke-width="8"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <path
+                id="warn-line"
+                d="M 50 36 L 50 58"
+                stroke="#FF6A1A"
+                stroke-width="8"
+                stroke-linecap="round"
+              />
+              <circle id="warn-dot" cx="50" cy="72" r="4.5" fill="#FF6A1A" />
+            </svg>
+          </div>
+          <div class="warning-text-group">
+            <div class="warning-tag">HÀNH VI NGUY HIỂM</div>
+            <div class="warning-title">QUAY ĐẦU GIỮA PHỐ</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Overlay 4: Punch-phrase CÚ QUAY ĐẦU XE (7.32s - 9.52s, hold 2.20s) -->
+      <section
+        id="clip-overlay-4"
+        class="clip overlay-clip"
+        data-start="7.32"
+        data-duration="2.20"
+        data-track-index="3"
+      >
+        <div class="punch-phrase-card" id="punch-card">
+          <div class="punch-kicker-row">
+            <span class="punch-badge">BƯỚC NGOẶT</span>
+          </div>
+          <h1 class="punch-phrase-title">CÚ QUAY ĐẦU XE</h1>
+          <div class="punch-footer-bar" id="punch-bar"></div>
+        </div>
+      </section>
+    </div>
+
+    <script>
+      const tl = gsap.timeline({ paused: true });
+
+      // Setup SVG stroke lengths deterministically
+      const trajPath = document.getElementById("traj-path");
+      const trajShadow = document.getElementById("traj-shadow");
+      if (trajPath && trajShadow) {
+        const trajLen = trajPath.getTotalLength();
+        trajPath.style.strokeDasharray = trajLen;
+        trajPath.style.strokeDashoffset = trajLen;
+        trajShadow.style.strokeDasharray = trajLen;
+        trajShadow.style.strokeDashoffset = trajLen;
+      }
+
+      const warnTri = document.getElementById("warn-tri");
+      const warnLine = document.getElementById("warn-line");
+      if (warnTri && warnLine) {
+        const triLen = warnTri.getTotalLength();
+        warnTri.style.strokeDasharray = triLen;
+        warnTri.style.strokeDashoffset = triLen;
+
+        const lineLen = warnLine.getTotalLength();
+        warnLine.style.strokeDasharray = lineLen;
+        warnLine.style.strokeDashoffset = lineLen;
+      }
+
+      // Initial visual states for child elements (deterministic fromTo)
+      gsap.set("#traj-apex-ring", { scale: 0, transformOrigin: "center center", opacity: 0 });
+      gsap.set("#traj-apex-dot", { scale: 0, transformOrigin: "center center", opacity: 0 });
+
+      // 1. Camera Rig Entrance (TransitionIn: rise) & Pan-Right Motion
+      tl.fromTo(
+        "#camera-rig",
+        { y: 80, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.75, ease: "power3.out" },
+        0
+      );
+
+      // Pan right: Image moves left from 0 to -240px across 9.64s
+      tl.fromTo(
+        "#bg-photo",
+        { x: 0 },
+        { x: -240, duration: 9.64, ease: "none" },
+        0
+      );
+
+      // 2. Overlay 1: TỐI 13/07/2024 (0.49s - 3.09s)
+      tl.fromTo(
+        "#date-card",
+        { y: 40, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.5, ease: "power3.out" },
+        0.49
+      );
+      tl.to(
+        "#date-card",
+        { y: -24, opacity: 0, duration: 0.28, ease: "power2.in" },
+        2.78
+      );
+
+      // 3. Overlay 2: BỊ CÁO 16 TUỔI (3.11s - 5.81s)
+      tl.fromTo(
+        "#suspect-card",
+        { y: 40, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.5, ease: "power3.out" },
+        3.11
+      );
+
+      // 4. Annotated Language: Trajectory Path Draw (3.40s - 5.00s)
+      if (trajPath && trajShadow) {
+        tl.to(trajShadow, { strokeDashoffset: 0, duration: 1.5, ease: "power2.out" }, 3.4);
+        tl.to(trajPath, { strokeDashoffset: 0, duration: 1.5, ease: "power2.out" }, 3.4);
+      }
+
+      // Trajectory apex ping
+      tl.fromTo(
+        "#traj-apex-ring",
+        { scale: 0, opacity: 0 },
+        { scale: 1.4, opacity: 0.9, duration: 0.45, ease: "power2.out" },
+        4.85
+      );
+      tl.fromTo(
+        "#traj-apex-dot",
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.35, ease: "back.out(1.5)" },
+        4.95
+      );
+
+      // Exit Overlay 2 and Trajectory Ping before Overlay 3
+      tl.to(
+        "#suspect-card",
+        { y: -24, opacity: 0, duration: 0.28, ease: "power2.in" },
+        5.48
+      );
+      tl.to(
+        ["#traj-apex-ring", "#traj-apex-dot"],
+        { opacity: 0, duration: 0.25, ease: "power1.out" },
+        5.65
+      );
+
+      // 5. Overlay 3: Warning Icon & Callout (5.89s - 7.69s)
+      tl.fromTo(
+        "#warning-callout",
+        { scale: 0.75, opacity: 0, y: 20 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.42, ease: "power3.out" },
+        5.89
+      );
+
+      if (warnTri && warnLine) {
+        tl.to(warnTri, { strokeDashoffset: 0, duration: 0.45, ease: "power2.out" }, 5.95);
+        tl.to(warnLine, { strokeDashoffset: 0, duration: 0.25, ease: "power2.out" }, 6.2);
+        tl.fromTo("#warn-dot", { scale: 0 }, { scale: 1, duration: 0.2, ease: "power2.out" }, 6.35);
+      }
+
+      tl.to(
+        "#warning-callout",
+        { opacity: 0, scale: 0.94, duration: 0.25, ease: "power2.in" },
+        7.42
+      );
+
+      // 6. Overlay 4: Punch-phrase CÚ QUAY ĐẦU XE (7.32s - 9.52s)
+      tl.fromTo(
+        "#punch-card",
+        { y: 50, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.52, ease: "power3.out" },
+        7.32
+      );
+      tl.fromTo(
+        "#punch-bar",
+        { scaleX: 0 },
+        { scaleX: 1, duration: 0.6, ease: "power2.out", transformOrigin: "left center" },
+        7.58
+      );
+
+      // Smooth outro hold until 9.25s then fade before scene boundary
+      tl.to(
+        "#punch-card",
+        { y: -20, opacity: 0, duration: 0.26, ease: "power2.in" },
+        9.24
+      );
+
+      // Register root timeline on window.__timelines
+      window.__timelines = window.__timelines || {};
+      window.__timelines["scene-s02"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

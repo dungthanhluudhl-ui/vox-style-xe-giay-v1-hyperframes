@@ -1,0 +1,671 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap">
+      <style>
+    /* hf-safe-colors (chuẩn WCAG AAA / AA từ style-tokens.json) */
+    .hf-text-ink { color: #141414; }
+    .hf-text-light { color: #F7F4EC; }
+    .hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+    .hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+    .hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+    .hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #E7E3D9;
+      color: #141414;
+      font-family: "Be Vietnam Pro", sans-serif;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    #root {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #E7E3D9;
+      background-image:
+        linear-gradient(rgba(20, 20, 20, 0.18) 1.5px, transparent 1.5px),
+        linear-gradient(90deg, rgba(20, 20, 20, 0.18) 1.5px, transparent 1.5px);
+      background-size: 84px 84px;
+    }
+
+    /* Container clip toàn màn hình tiêu chuẩn của HyperFrames */
+    .clip {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    /* Camera rig hỗ trợ zoom-in mượt mà theo shotlist */
+    #camera-rig {
+      position: absolute;
+      inset: 0;
+      transform-origin: 50% 45%;
+      will-change: transform;
+    }
+
+    /* Thanh cam thương hiệu cố định mép đáy */
+    #bottom-accent-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 14px;
+      background-color: #FF6A1A;
+      z-index: 100;
+    }
+
+    /* Header thông tin bối cảnh an toàn (Y: 170px -> 220px) */
+    #header-bar {
+      position: absolute;
+      top: 170px;
+      left: 50px;
+      right: 50px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 20;
+    }
+
+    .badge-capsule {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 22px;
+      background-color: #141414;
+      border-radius: 999px;
+      box-shadow: 4px 4px 0 #FF6A1A;
+    }
+
+    .badge-dot {
+      width: 12px;
+      height: 12px;
+      background-color: #FF6A1A;
+      border-radius: 50%;
+    }
+
+    .badge-text {
+      font-size: 22px;
+      font-weight: 900;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: #F7F4EC;
+    }
+
+    .header-subtext {
+      font-size: 22px;
+      font-weight: 700;
+      color: #141414;
+      background-color: #F5F0E4;
+      padding: 10px 20px;
+      border: 2px solid #141414;
+      border-radius: 8px;
+    }
+
+    /* =========================================================
+       KHỐI 1: VI PHẠM KỸ THUẬT (0.0s -> 4.2s)
+       Định vị cụ thể tại Y: 250px -> 540px (hoàn toàn ngoài caption zone)
+       ========================================================= */
+    #tech-card {
+      position: absolute;
+      top: 250px;
+      left: 50px;
+      right: 50px;
+      background-color: #F5F0E4;
+      border: 3.5px solid #141414;
+      border-radius: 18px;
+      padding: 22px 26px;
+      box-shadow: 8px 8px 0 #141414;
+      transform-origin: 50% 50%;
+      will-change: transform, opacity;
+      z-index: 10;
+    }
+
+    .card-top-tag {
+      display: inline-block;
+      padding: 6px 16px;
+      font-size: 20px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      background-color: #141414;
+      color: #F7F4EC;
+      border-radius: 6px;
+      margin-bottom: 16px;
+    }
+
+    .tech-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+    }
+
+    .tech-item {
+      background-color: #E7E3D9;
+      border: 2px dashed #141414;
+      border-radius: 12px;
+      padding: 16px 14px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      text-align: center;
+    }
+
+    .tech-icon-wrap {
+      width: 90px;
+      height: 80px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .tech-title {
+      font-size: 24px;
+      font-weight: 900;
+      color: #141414;
+      line-height: 1.2;
+    }
+
+    .tech-desc {
+      font-size: 18px;
+      font-weight: 700;
+      color: #141414;
+    }
+
+    /* Vạch gạch chéo loại trừ vi phạm kỹ thuật */
+    #strike-overlay {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      border-radius: 18px;
+      overflow: hidden;
+    }
+
+    .strike-line {
+      position: absolute;
+      top: 50%;
+      left: -5%;
+      width: 110%;
+      height: 12px;
+      background-color: #FF6A1A;
+      transform-origin: 50% 50%;
+      opacity: 0;
+      box-shadow: 0 0 0 2px #141414;
+    }
+
+    #strike-line-1 {
+      transform: translateY(-50%) rotate(-10deg);
+    }
+    #strike-line-2 {
+      transform: translateY(-50%) rotate(10deg);
+    }
+
+    /* =========================================================
+       OVERLAY 1: "KHÔNG DO XE HAY MŨ" (4.2s -> 6.4s)
+       Xuất hiện thay thế ngay tại vị trí Y: 270px -> 460px
+       ========================================================= */
+    #overlay-1-plate {
+      position: absolute;
+      top: 270px;
+      left: 50px;
+      right: 50px;
+      background-color: #141414;
+      border: 3.5px solid #141414;
+      border-radius: 18px;
+      padding: 24px 30px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      box-shadow: 8px 8px 0 #FF6A1A;
+      transform-origin: 50% 50%;
+      z-index: 15;
+    }
+
+    .overlay-1-tag {
+      padding: 8px 16px;
+      background-color: #FF6A1A;
+      color: #141414;
+      font-size: 20px;
+      font-weight: 900;
+      border-radius: 6px;
+      white-space: nowrap;
+      text-transform: uppercase;
+    }
+
+    .overlay-1-text {
+      font-size: 38px;
+      font-weight: 900;
+      color: #F7F4EC;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      line-height: 1.2;
+    }
+
+    /* =========================================================
+       KHỐI 2: TRỌNG TÂM PHẢN ỨNG / THÁI ĐỘ CHỐNG ĐỐI (Xuyên suốt scene)
+       Định vị cố định tại Y: 570px -> 890px
+       ========================================================= */
+    #focus-card {
+      position: absolute;
+      top: 570px;
+      left: 50px;
+      right: 50px;
+      background-color: #F5F0E4;
+      border: 4px solid #141414;
+      border-radius: 20px;
+      padding: 24px 28px;
+      box-shadow: 10px 10px 0 #FF6A1A;
+      transform-origin: 50% 50%;
+      will-change: transform;
+      z-index: 10;
+    }
+
+    .focus-header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 18px;
+    }
+
+    .focus-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 18px;
+      background-color: #FF6A1A;
+      color: #141414;
+      font-size: 20px;
+      font-weight: 900;
+      text-transform: uppercase;
+      border-radius: 6px;
+      border: 2px solid #141414;
+    }
+
+    .focus-radar-box {
+      position: relative;
+      background-color: #141414;
+      border-radius: 14px;
+      padding: 22px;
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      overflow: hidden;
+    }
+
+    .radar-visual {
+      position: relative;
+      width: 130px;
+      height: 130px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .radar-svg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    .radar-center-icon {
+      position: relative;
+      z-index: 2;
+    }
+
+    .focus-text-block {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .focus-main-label {
+      font-size: 36px;
+      font-weight: 900;
+      color: #F7F4EC;
+      line-height: 1.2;
+      text-transform: uppercase;
+    }
+
+    .focus-sub-label {
+      font-size: 20px;
+      font-weight: 700;
+      color: #FF6A1A;
+      line-height: 1.3;
+    }
+
+    /* =========================================================
+       OVERLAY 2: PUNCH-PHRASE "DO CÁCH PHẢN ỨNG" (7.01s -> 9.17s)
+       Định vị an toàn tại Y: 940px -> 1180px
+       Cách caption band (> 530px từ đáy): 1920 - 1180 = 740px (TUYỆT ĐỐI AN TOÀN)
+       ========================================================= */
+    #punch-plate {
+      position: absolute;
+      top: 940px;
+      left: 50px;
+      right: 50px;
+      background-color: #141414;
+      border: 4px solid #FF6A1A;
+      border-radius: 20px;
+      padding: 26px 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      box-shadow: 10px 10px 0 #141414;
+      transform-origin: 50% 50%;
+      z-index: 25;
+    }
+
+    .punch-header-bar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .punch-tag {
+      padding: 6px 14px;
+      background-color: #FF6A1A;
+      color: #141414;
+      font-size: 19px;
+      font-weight: 900;
+      border-radius: 4px;
+      text-transform: uppercase;
+    }
+
+    .punch-title-text {
+      font-size: 64px;
+      font-weight: 900;
+      color: #F7F4EC;
+      line-height: 1.15;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .punch-detail-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding-top: 10px;
+      border-top: 2px solid rgba(247, 244, 236, 0.2);
+    }
+
+    .punch-detail-text {
+      font-size: 22px;
+      font-weight: 700;
+      color: #FF6A1A;
+      letter-spacing: 0.5px;
+    }
+  </style>
+
+  <div id="root"
+       data-composition-id="scene-s26"
+       data-width="1080"
+       data-height="1920"
+       data-duration="9.17"
+       data-start="0">
+
+    <!-- Thanh cam thương hiệu cố định mép đáy -->
+    <div id="bottom-accent-bar"></div>
+
+    <!-- Khung chính hỗ trợ zoom camera -->
+    <div id="camera-rig">
+
+      <!-- Header thông tin bối cảnh -->
+      <header id="header-bar">
+        <div class="badge-capsule">
+          <div class="badge-dot"></div>
+          <span class="badge-text">ĐIỀU TRA • BẢN CHẤT VỤ ÁN</span>
+        </div>
+        <div class="header-subtext">CUỘC KIỂM TRA TỐI HÔM ĐÓ</div>
+      </header>
+
+      <!-- Clip 1: Vi phạm kỹ thuật (0.0s -> 4.2s, gạch chéo và fade out lúc 3.8s) -->
+      <section class="clip" id="clip-tech" data-start="0" data-duration="4.2">
+        <div id="tech-card" aria-label="Vi phạm kỹ thuật ban đầu">
+          <div class="card-top-tag">LỖI VI PHẠM BAN ĐẦU</div>
+          <div class="tech-grid">
+            <div class="tech-item" id="tech-item-sh">
+              <div class="tech-icon-wrap">
+                <!-- SVG Xe Máy SH phẳng phong cách minh hoạ kỹ thuật -->
+                <svg width="84" height="68" viewBox="0 0 100 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="22" cy="58" r="16" stroke="#141414" stroke-width="6"/>
+                  <circle cx="78" cy="58" r="16" stroke="#141414" stroke-width="6"/>
+                  <circle cx="22" cy="58" r="6" fill="#141414"/>
+                  <circle cx="78" cy="58" r="6" fill="#141414"/>
+                  <path d="M22 58 L42 50 L56 50 L70 34 L78 58" stroke="#141414" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M42 50 L48 30 L66 30" stroke="#141414" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M66 30 L74 20 L62 18" stroke="#141414" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M74 24 L82 24" stroke="#FF6A1A" stroke-width="5" stroke-linecap="round"/>
+                </svg>
+              </div>
+              <div class="tech-title">XE TAY GA SH</div>
+              <div class="tech-desc">PHƯƠNG TIỆN LƯU THÔNG</div>
+            </div>
+
+            <div class="tech-item" id="tech-item-helmet">
+              <div class="tech-icon-wrap">
+                <!-- SVG Mũ bảo hiểm cách điệu phẳng -->
+                <svg width="78" height="68" viewBox="0 0 90 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 48 C12 24, 30 14, 52 14 C74 14, 82 30, 82 48 C82 54, 76 56, 70 56 L18 56 C14 56, 12 52, 12 48 Z" stroke="#141414" stroke-width="6" stroke-linejoin="round"/>
+                  <path d="M20 56 L28 70 L42 70" stroke="#141414" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M30 24 C44 24, 64 30, 72 40" stroke="#FF6A1A" stroke-width="6" stroke-linecap="round"/>
+                </svg>
+              </div>
+              <div class="tech-title">KHÔNG ĐỘI MŨ</div>
+              <div class="tech-desc">LỖI KỸ THUẬT GIAO THÔNG</div>
+            </div>
+          </div>
+
+          <!-- Lớp gạch chéo loại trừ nguyên nhân -->
+          <div id="strike-overlay">
+            <div class="strike-line" id="strike-line-1"></div>
+            <div class="strike-line" id="strike-line-2"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Clip 2: Overlay 1 - "KHÔNG DO XE HAY MŨ" (4.2s -> 6.4s) -->
+      <section class="clip" id="clip-overlay-1" data-start="4.2" data-duration="2.2">
+        <div id="overlay-1-plate" class="hf-plate-ink">
+          <div class="overlay-1-tag">LOẠI TRỪ NGUYÊN NHÂN</div>
+          <div class="overlay-1-text">KHÔNG DO XE HAY MŨ</div>
+        </div>
+      </section>
+
+      <!-- Khối cố định xuyên suốt: Trọng tâm phản ứng (Thái độ chống đối) -->
+      <section class="clip" id="clip-focus" data-start="0" data-duration="9.17">
+        <div id="focus-card" aria-label="Nguồn cơn thực sự của bi kịch">
+          <div class="focus-header-row">
+            <div class="focus-badge">NGUỒN CƠN THỰC SỰ CỦA BI KỊCH</div>
+            <svg width="34" height="34" viewBox="0 0 24 24" fill="none">
+              <path d="M12 3 L2 21 L22 21 Z" stroke="#FF6A1A" stroke-width="2.5" stroke-linejoin="round"/>
+              <path d="M12 9 L12 14" stroke="#FF6A1A" stroke-width="2.5" stroke-linecap="round"/>
+              <circle cx="12" cy="18" r="1.5" fill="#FF6A1A"/>
+            </svg>
+          </div>
+
+          <div class="focus-radar-box">
+            <div class="radar-visual">
+              <svg class="radar-svg" viewBox="0 0 140 140" fill="none">
+                <circle class="radar-ring" cx="70" cy="70" r="60" stroke="#FF6A1A" stroke-width="2" stroke-dasharray="6 6"/>
+                <circle class="radar-ring" cx="70" cy="70" r="42" stroke="rgba(247,244,236,0.3)" stroke-width="1.5"/>
+                <circle class="radar-ring" cx="70" cy="70" r="24" stroke="#FF6A1A" stroke-width="2"/>
+                <line x1="70" y1="6" x2="70" y2="134" stroke="rgba(255,106,26,0.4)" stroke-width="1.5"/>
+                <line x1="6" y1="70" x2="134" y2="70" stroke="rgba(255,106,26,0.4)" stroke-width="1.5"/>
+              </svg>
+              <div class="radar-center-icon">
+                <svg width="42" height="42" viewBox="0 0 24 24" fill="none">
+                  <path d="M12 2L2 22h20L12 2z" fill="#FF6A1A"/>
+                  <path d="M12 9v5" stroke="#141414" stroke-width="2.5" stroke-linecap="round"/>
+                  <circle cx="12" cy="17.5" r="1.5" fill="#141414"/>
+                </svg>
+              </div>
+            </div>
+
+            <div class="focus-text-block">
+              <div class="focus-main-label">THÁI ĐỘ CHỐNG ĐỐI</div>
+              <div class="focus-sub-label">KHÔNG CHẤP HÀNH HIỆU LỆNH DỪNG XE</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Clip 3: Overlay 2 - Punch phrase "DO CÁCH PHẢN ỨNG" (7.01s -> 9.17s) -->
+      <section class="clip" id="clip-overlay-2" data-start="7.01" data-duration="2.16">
+        <div id="punch-plate" class="hf-plate-ink">
+          <div class="punch-header-bar">
+            <span class="punch-tag">BẢN CHẤT VẤN ĐỀ</span>
+          </div>
+          <h1 class="punch-title-text">DO CÁCH PHẢN ỨNG</h1>
+          <div class="punch-detail-row">
+            <span class="punch-detail-text">HÀNH VI KHI BỊ YÊU CẦU DỪNG LẠI</span>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+
+  <script>
+    // Đăng ký timeline paused cho HyperFrames seek runtime
+    const tl = gsap.timeline({ paused: true });
+    window.__timelines = window.__timelines || {};
+    window.__timelines["scene-s26"] = tl;
+
+    // =========================================================
+    // BEAT 1: Thiết lập ban đầu (0.0s -> 3.6s)
+    // =========================================================
+    tl.fromTo(
+      "#camera-rig",
+      { scale: 0.94, opacity: 0 },
+      { scale: 1.0, opacity: 1, duration: 0.65, ease: "power3.out" },
+      0.05
+    );
+
+    tl.fromTo(
+      "#header-bar",
+      { y: -25, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.5, ease: "power3.out" },
+      0.15
+    );
+
+    tl.fromTo(
+      "#tech-card",
+      { y: 30, opacity: 0, scale: 0.92 },
+      { y: 0, opacity: 1, scale: 1.0, duration: 0.6, ease: "power3.out" },
+      0.3
+    );
+
+    tl.fromTo(
+      "#focus-card",
+      { y: 35, opacity: 0, scale: 0.92 },
+      { y: 0, opacity: 1, scale: 1.0, duration: 0.6, ease: "power3.out" },
+      0.55
+    );
+
+    // Xoay nhẹ vòng radar mô phỏng tiêu điểm quét
+    tl.fromTo(
+      ".radar-ring",
+      { rotation: 0 },
+      { rotation: 80, duration: 8.6, ease: "none" },
+      0.5
+    );
+
+    // =========================================================
+    // BEAT 2: Gạch chéo và fade out vi phạm kỹ thuật (3.65s -> 4.2s)
+    // "thứ khiến câu chuyện trở nên đáng nói không phải chiếc xe SH hay việc không đội mũ bảo hiểm..."
+    // =========================================================
+    tl.fromTo(
+      "#strike-line-1",
+      { opacity: 0, scaleX: 0 },
+      { opacity: 1, scaleX: 1, duration: 0.3, ease: "power3.out" },
+      3.65
+    );
+
+    tl.fromTo(
+      "#strike-line-2",
+      { opacity: 0, scaleX: 0 },
+      { opacity: 1, scaleX: 1, duration: 0.3, ease: "power3.out" },
+      3.78
+    );
+
+    // Fade out hoàn toàn về opacity: 0 trước khi clip kết thúc, tránh lỗi tương phản
+    tl.to(
+      "#tech-card",
+      { scale: 0.86, opacity: 0, duration: 0.32, ease: "power2.in" },
+      3.88
+    );
+
+    // Overlay 1 xuất hiện dứt khoát tại 4.20s thay thế vị trí vừa gạch bỏ
+    tl.fromTo(
+      "#overlay-1-plate",
+      { y: 25, opacity: 0, scale: 0.92 },
+      { y: 0, opacity: 1, scale: 1.0, duration: 0.45, ease: "power3.out" },
+      4.2
+    );
+
+    // Thu dọn Overlay 1 trước khi kết thúc slot (6.05s -> 6.35s)
+    tl.to(
+      "#overlay-1-plate",
+      { y: -20, opacity: 0, duration: 0.3, ease: "power2.in" },
+      6.05
+    );
+
+    // =========================================================
+    // BEAT 3: Phóng đại tâm điểm vào thái độ chống đối (6.4s -> 9.17s)
+    // "...mà là cách Tuấn phản ứng khi bị yêu cầu dừng lại."
+    // =========================================================
+    tl.to(
+      "#focus-card",
+      {
+        scale: 1.04,
+        borderColor: "#FF6A1A",
+        boxShadow: "14px 14px 0 #141414",
+        duration: 0.55,
+        ease: "power3.out"
+      },
+      6.4
+    );
+
+    tl.to(
+      "#camera-rig",
+      { scale: 1.03, duration: 2.7, ease: "power1.out" },
+      6.45
+    );
+
+    // Overlay 2 (Punch-phrase) xuất hiện dứt khoát tại mốc 7.01s
+    tl.fromTo(
+      "#punch-plate",
+      { scale: 0.85, opacity: 0, y: 30 },
+      { scale: 1.0, opacity: 1, y: 0, duration: 0.55, ease: "power3.out" },
+      7.01
+    );
+
+    tl.fromTo(
+      ".punch-tag",
+      { scale: 0 },
+      { scale: 1, duration: 0.3, ease: "power3.out" },
+      7.15
+    );
+  </script>
+
+    </template>
+  </body>
+</html>

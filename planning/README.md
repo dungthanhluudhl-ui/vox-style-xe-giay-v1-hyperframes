@@ -310,6 +310,22 @@ quét từng video: `planning/incident-log.md`.
 - [x] Stage 7b integration check PASS (2026-09-29) — 31/31 scene, audio, caption-track, `hyperframes check` ok=true (93 mốc/31 shot).
 - [x] Render bản đầy đủ (2026-09-29) — `out/ban-an-16-hoa-chuoi-kon-tum-full.mp4`, **252.900s** (khớp audio thật 253.224s), 1080×1920 h264/aac, 280.8MB, render mất 652.9s. `completion-manifest.json` xác nhận mọi field `*Ok=true` (kể cả `ffprobeOk`). **Chưa được người dùng xem/xác nhận.**
 
+### Video "ban-an-19-yen-bai" (bản án giết người chưa đạt từ mâu thuẫn cha con lan sang người phụ nữ vô can, Yên Bái 2024, 317.9s, 39 scene/39 shot — lần đầu áp dụng rule mới "không bịa số liệu/chi tiết ngoài shotlist")
+- [x] Nhận script + audio (2026-09-29) từ `Vox style 3.1_test/.../input audio + transcript/Bản án 19 2024 yên bái/Kich_ban_Yen_Bai_Ban_an_19_2024_LONG_DNA` — không có media nguồn sẵn. Audio nguồn dạng `.wav` (317.920s), convert sang `narration.mp3` bằng ffmpeg giữ nguyên duration.
+- [x] **Trước khi chạy Stage 7, chủ động thêm 1 rule tổng quát mới vào `KNOWN_GOTCHAS_HF`** (`scripts/07-codegen.hf.router.mjs`): cấm generator tự bịa thêm số liệu/tên riêng/trích dẫn cụ thể KHÔNG có trong overlay của shotlist, dù đúng thực tế khách quan — rút ra từ việc đã gặp đúng pattern này 3 lần ở các video khác nhau (kinh-te-meo "CỔ TỨC Q3" bịa, `ban-an-16-hoa-chuoi-kon-tum` S21 "61%/CHƯA ĐỦ" và S04 "Điều 123 vs Điều 134" bịa).
+- [x] Transcribe (whisper.cpp CUDA) + align với script gốc qua 9router (2026-09-29) — 1219/1219 từ khớp 100% script gốc, timestamp cuối 317.900s khớp audio thật.
+- [x] Tạo ảnh qua Google Flow (Stage 2b, 2026-09-29, account `default`, `--images-only`) — 19 ảnh, 0 video, đúng khổ dọc 768×1376. 56 câu → 19 ảnh (~2.9 câu/ảnh, đúng mật độ mới).
+- [x] Phân tích + chuẩn hoá tên media qua 9router[vision] (2026-09-29) — 19/19 ảnh.
+- [x] Scene Plan (2026-09-29) — 39 scene, nội dung khớp đúng tình tiết bản án (5% thương tích, 13 năm 6 tháng tù, Án lệ 47/2021/AL, tiền án đã xóa nhưng vẫn xét nhân thân...). Shotlist (2026-09-29) — 39 shot/39 scene.
+- [x] Dựng composition qua nhánh HyperFrames (2026-09-29) — chạy thẳng 39 scene song song (concurrency=10): 32/39 PASS ngay lần đầu, 7 scene cần Claude can thiệp:
+  - **3/7 scene đúng gotcha bịa nội dung vừa thêm rule** (S20, S27, S37): dù đã có rule trong prompt, generator vẫn tự thêm số liệu "5%" (S20), tên "TUẤN" kèm quy kết (S27), tên "Bà Hương" kèm khẳng định tình tiết (S37) — cả 3 shot này shotlist CHỦ Ý giữ overlay trừu tượng (không lặp lại chi tiết đã dùng ở scene khác). Xác nhận rule hoạt động đúng vai trò AN TOÀN LƯỚI: dù không ngăn được generator 100%, reviewer vẫn bắt đúng cả 3 lần — sửa bằng `--issue-file` PASS ngay lần 1.
+  - **S03, S13**: lỗi kỹ thuật thật — ảnh/overlay chính thiếu `data-start`/`data-duration` (chỉ điều khiển bằng GSAP, không khai báo timing chuẩn HyperFrames) — sửa PASS (S07 2-3 lần thử qua fallback model, S13 2 lần).
+  - **S07**: dùng sai ký tự dấu gạch ngang (em dash "—" thay vì "-" theo đúng shotlist) + thêm 2 cụm chữ ngoài shotlist — sửa PASS lần 1.
+  - **S33**: `#spotlight-vignette` phủ tối ảnh nền bằng code, trái Style DNA giữ nguyên màu ảnh — sửa PASS lần 1.
+  - Quá trình sửa xác nhận cơ chế fallback model (đã vá ở video trước) hoạt động đúng trong sản xuất thật: S03/S33 tự chuyển sang reviewer dự phòng `cx/gpt-6-luna`, S20 tự chuyển sang generator dự phòng `cx/gpt-6-sol` — không cần Claude can thiệp thủ công.
+- [x] Stage 7b integration check PASS (2026-09-29) — 39/39 scene, audio, caption-track, `hyperframes check` ok=true (117 mốc/39 shot).
+- [x] Render bản đầy đủ (2026-09-29) — `out/ban-an-19-yen-bai-full.mp4`, **317.900s** (khớp gần như tuyệt đối audio thật 317.920s), 1080×1920 h264/aac, 293.9MB, render mất 789.7s. `completion-manifest.json` xác nhận mọi field `*Ok=true`. **Chưa được người dùng xem/xác nhận.**
+
 ## Archive: pipeline Remotion cũ (4 video đầu, `archive/remotion-legacy/`)
 
 Giữ lại đúng nguyên trạng để tham khảo/sửa lỗi cho 4 video archive — KHÔNG áp dụng cho video mới.

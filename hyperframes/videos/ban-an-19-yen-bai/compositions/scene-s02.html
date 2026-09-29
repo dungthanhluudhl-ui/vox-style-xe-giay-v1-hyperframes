@@ -1,0 +1,641 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap"
+    />
+      <style>
+      /* hf-safe-colors (tất định từ style-tokens.json) */
+      .hf-text-ink { color: #141414; }
+      .hf-text-light { color: #F7F4EC; }
+      .hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+      .hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+      .hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+      .hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        width: 1080px;
+        height: 1920px;
+        background-color: #0b0f14;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        font-family: "Be Vietnam Pro", sans-serif;
+      }
+      .clip {
+        position: absolute;
+        inset: 0;
+      }
+
+      /* Style DNA tokens */
+      .hf-hl-orange {
+        background-color: #ff6a1a;
+        color: #141414;
+        display: inline-block;
+        font-weight: 900;
+        border-radius: 4px;
+        padding: 6px 18px;
+      }
+
+      /* Camera rig & background */
+      #camera-rig {
+        position: absolute;
+        inset: -50px;
+        width: calc(100% + 100px);
+        height: calc(100% + 100px);
+        transform-origin: center center;
+        will-change: transform;
+      }
+      #bg-img {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center 30%;
+      }
+
+      /* Chart lines variant overlay */
+      .chart-grid-svg {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+      }
+
+      /* Safe layout containers */
+      .content-layer {
+        position: absolute;
+        top: 180px;
+        left: 60px;
+        right: 60px;
+        bottom: 530px;
+        pointer-events: none;
+      }
+
+      /* Top case tag */
+      #case-tag {
+        position: absolute;
+        top: 0;
+        left: 0;
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 22px;
+        border-left: 6px solid #ff6a1a;
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.6);
+        border-radius: 2px;
+        will-change: transform, opacity;
+      }
+      .tag-label {
+        font-size: 26px;
+        font-weight: 900;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        color: #f7f4ec;
+      }
+
+      /* Overlay 1: Thương tích 5% */
+      #injury-card {
+        position: absolute;
+        top: 120px;
+        left: 0;
+        right: 0;
+        padding: 32px 36px;
+        border-radius: 6px;
+        box-shadow: 0 20px 48px rgba(0, 0, 0, 0.7);
+        border: 2px solid rgba(255, 106, 26, 0.35);
+        will-change: transform, opacity;
+      }
+      .card-header-row {
+        display: flex;
+        justify-content: flex-start;
+        align-items: center;
+        margin-bottom: 12px;
+      }
+      .card-category {
+        font-size: 26px;
+        font-weight: 700;
+        color: #ff6a1a;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+      }
+      .injury-main-row {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        margin-bottom: 20px;
+      }
+      .injury-title {
+        font-size: 54px;
+        font-weight: 900;
+        line-height: 1.2;
+        color: #f7f4ec;
+        text-transform: uppercase;
+        margin: 0;
+      }
+      .injury-stat {
+        font-size: 110px;
+        font-weight: 900;
+        line-height: 1;
+        color: #ff6a1a;
+        margin-left: 20px;
+      }
+      /* Comparison micro bar */
+      .meter-wrap {
+        width: 100%;
+        background-color: #242424;
+        height: 22px;
+        border-radius: 4px;
+        position: relative;
+        overflow: hidden;
+      }
+      #meter-fill {
+        position: absolute;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        width: 0%;
+        background-color: #ff6a1a;
+        border-radius: 4px;
+      }
+
+      /* Contrast connector */
+      #contrast-line-wrap {
+        position: absolute;
+        top: 450px;
+        left: 0;
+        right: 0;
+        height: 70px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        will-change: transform, opacity;
+      }
+      .contrast-pill {
+        background-color: #ff6a1a;
+        color: #141414;
+        padding: 8px 26px;
+        font-size: 24px;
+        font-weight: 900;
+        letter-spacing: 2px;
+        border-radius: 30px;
+        text-transform: uppercase;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+      }
+
+      /* Overlay 2: 13 Năm 6 Tháng & Icon Scale */
+      #sentence-card {
+        position: absolute;
+        top: 540px;
+        left: 0;
+        right: 0;
+        padding: 38px 36px;
+        border-radius: 6px;
+        box-shadow: 0 24px 60px rgba(0, 0, 0, 0.85);
+        border: 3px solid #ff6a1a;
+        will-change: transform, opacity;
+      }
+      .sentence-top-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 12px;
+      }
+      .sentence-header-left {
+        flex: 1;
+      }
+      .sentence-category {
+        font-size: 28px;
+        font-weight: 700;
+        color: #ff6a1a;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        margin-bottom: 6px;
+      }
+      .sentence-title {
+        font-size: 68px;
+        font-weight: 900;
+        line-height: 1.15;
+        color: #f7f4ec;
+        text-transform: uppercase;
+        margin: 0;
+      }
+      .sentence-icon-box {
+        width: 110px;
+        height: 110px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #1e1e1e;
+        border-radius: 8px;
+        border: 2px solid rgba(255, 106, 26, 0.4);
+        margin-left: 20px;
+        flex-shrink: 0;
+      }
+      .sentence-badge-row {
+        display: flex;
+        align-items: center;
+        margin-top: 24px;
+        padding-top: 20px;
+        border-top: 1px solid rgba(247, 244, 236, 0.15);
+      }
+      .sentence-tag-text {
+        font-size: 28px;
+        font-weight: 900;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+      }
+
+      /* Permanent Bottom Orange Bar */
+      .bottom-orange-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 14px;
+        background-color: #ff6a1a;
+        z-index: 999;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s02"
+      data-start="0"
+      data-width="1080"
+      data-height="1920"
+      data-duration="10.08"
+    >
+      <!-- Visual Clip 1: Background Media & Camera Motion (Full Shot) -->
+      <section
+        id="shot-bg-clip"
+        class="clip"
+        data-start="0"
+        data-duration="10.08"
+      >
+        <div id="camera-rig">
+          <img
+            id="bg-img"
+            src="assets/img-11-defendant-courtroom-prison-sentence.jpg"
+            alt="Defendant in courtroom"
+          />
+
+          <!-- Chart grid lines: variant 'chart' from Style DNA -->
+          <svg
+            class="chart-grid-svg"
+            viewBox="0 0 1080 1920"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <!-- 4 horizontal chart lines at 20%, 40%, 60%, 80% -->
+            <line
+              x1="0"
+              y1="384"
+              x2="1080"
+              y2="384"
+              stroke="rgba(20,20,20,0.32)"
+              stroke-width="2"
+            />
+            <line
+              x1="0"
+              y1="768"
+              x2="1080"
+              y2="768"
+              stroke="rgba(20,20,20,0.32)"
+              stroke-width="2"
+            />
+            <line
+              x1="0"
+              y1="1152"
+              x2="1080"
+              y2="1152"
+              stroke="rgba(20,20,20,0.32)"
+              stroke-width="2"
+            />
+            <line
+              x1="0"
+              y1="1536"
+              x2="1080"
+              y2="1536"
+              stroke="rgba(20,20,20,0.32)"
+              stroke-width="2"
+            />
+
+            <!-- Left edge orange ticks -->
+            <line
+              x1="0"
+              y1="384"
+              x2="28"
+              y2="384"
+              stroke="#FF6A1A"
+              stroke-width="6"
+            />
+            <line
+              x1="0"
+              y1="768"
+              x2="28"
+              y2="768"
+              stroke="#FF6A1A"
+              stroke-width="6"
+            />
+            <line
+              x1="0"
+              y1="1152"
+              x2="28"
+              y2="1152"
+              stroke="#FF6A1A"
+              stroke-width="6"
+            />
+            <line
+              x1="0"
+              y1="1536"
+              x2="28"
+              y2="1536"
+              stroke="#FF6A1A"
+              stroke-width="6"
+            />
+          </svg>
+        </div>
+      </section>
+
+      <!-- Content Layout Layer -->
+      <section
+        id="shot-overlays-clip"
+        class="clip"
+        data-start="0"
+        data-duration="10.08"
+      >
+        <div class="content-layer">
+          <!-- Lead Case Tag -->
+          <div id="case-tag" class="hf-plate-ink">
+            <span class="tag-label">ĐỐI NGHỊCH PHÁP LÝ</span>
+          </div>
+
+          <!-- Overlay 1: THƯƠNG TÍCH 5% (atMs: 13400 -> 3.06s relative) -->
+          <div id="injury-card" class="hf-plate-ink">
+            <div class="card-header-row">
+              <span class="card-category">HẬU QUẢ GIÁM ĐỊNH</span>
+            </div>
+            <div class="injury-main-row">
+              <h2 class="injury-title">THƯƠNG TÍCH</h2>
+              <span id="injury-num" class="injury-stat">5%</span>
+            </div>
+            <div class="meter-wrap">
+              <div id="meter-fill"></div>
+            </div>
+          </div>
+
+          <!-- Visual Contrast Indicator -->
+          <div id="contrast-line-wrap">
+            <span class="contrast-pill">ĐỐI NGHỊCH CỰC ĐẠI</span>
+          </div>
+
+          <!-- Overlay 2: 13 NĂM 6 THÁNG & Scale Icon (atMs: 17740 -> 7.40s relative) -->
+          <div id="sentence-card" class="hf-plate-ink">
+            <div class="sentence-top-row">
+              <div class="sentence-header-left">
+                <div class="sentence-category">HÌNH PHẠT TUYÊN ÁN</div>
+                <h1 class="sentence-title">13 NĂM 6 THÁNG</h1>
+              </div>
+              <!-- Overlay 3: Icon "scale" (Cán cân công lý) -->
+              <div class="sentence-icon-box">
+                <svg
+                  id="scale-icon"
+                  width="76"
+                  height="76"
+                  viewBox="0 0 100 100"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <!-- Base & pillar -->
+                  <line
+                    class="scale-path"
+                    x1="50"
+                    y1="16"
+                    x2="50"
+                    y2="84"
+                    stroke="#FF6A1A"
+                    stroke-width="5"
+                    stroke-linecap="round"
+                  />
+                  <line
+                    class="scale-path"
+                    x1="28"
+                    y1="84"
+                    x2="72"
+                    y2="84"
+                    stroke="#FF6A1A"
+                    stroke-width="5"
+                    stroke-linecap="round"
+                  />
+                  <!-- Cross beam -->
+                  <line
+                    class="scale-path"
+                    x1="18"
+                    y1="30"
+                    x2="82"
+                    y2="30"
+                    stroke="#F7F4EC"
+                    stroke-width="5"
+                    stroke-linecap="round"
+                  />
+                  <!-- Left pan strings & plate -->
+                  <path
+                    class="scale-path"
+                    d="M 18 30 L 10 54 L 28 54 Z"
+                    fill="none"
+                    stroke="#F7F4EC"
+                    stroke-width="3"
+                    stroke-linejoin="round"
+                  />
+                  <path
+                    class="scale-path"
+                    d="M 8 54 Q 19 62 30 54"
+                    fill="none"
+                    stroke="#FF6A1A"
+                    stroke-width="4"
+                    stroke-linecap="round"
+                  />
+                  <!-- Right pan strings & plate -->
+                  <path
+                    class="scale-path"
+                    d="M 82 30 L 72 54 L 90 54 Z"
+                    fill="none"
+                    stroke="#F7F4EC"
+                    stroke-width="3"
+                    stroke-linejoin="round"
+                  />
+                  <path
+                    class="scale-path"
+                    d="M 70 54 Q 81 62 92 54"
+                    fill="none"
+                    stroke="#FF6A1A"
+                    stroke-width="4"
+                    stroke-linecap="round"
+                  />
+                </svg>
+              </div>
+            </div>
+            <div class="sentence-badge-row">
+              <span id="verdict-tag" class="hf-hl-orange sentence-tag-text"
+                >BẢN ÁN TÙ NGHIÊM KHẮC</span
+              >
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Signature Orange Bottom Bar -->
+      <div class="bottom-orange-bar"></div>
+    </div>
+
+    <script>
+      // Setup progressive SVG stroke paths for Justice Scale icon
+      const scalePaths = document.querySelectorAll(".scale-path");
+      scalePaths.forEach((path) => {
+        const len = path.getTotalLength ? path.getTotalLength() : 100;
+        path.style.strokeDasharray = len + 1;
+        path.style.strokeDashoffset = len + 1;
+      });
+
+      // Master paused timeline
+      const tl = gsap.timeline({ paused: true });
+
+      // 1. Initial State
+      tl.set("#camera-rig", { scale: 1.14, x: -20, y: 30 });
+      tl.set("#case-tag", { opacity: 0, y: -24 });
+      tl.set("#injury-card", { opacity: 0, scale: 0.88, y: 35 });
+      tl.set("#contrast-line-wrap", { opacity: 0, scale: 0.7 });
+      tl.set("#sentence-card", { opacity: 0, scale: 1.22, y: -45 });
+      tl.set("#verdict-tag", { opacity: 0, x: -30 });
+
+      // 2. Transition-in "strike" impact at t=0
+      tl.to(
+        "#camera-rig",
+        {
+          scale: 1.05,
+          duration: 0.5,
+          ease: "power4.out",
+        },
+        0,
+      );
+
+      // Camera motion: slow pan-up and pan-right across full scene (10.08s)
+      tl.to(
+        "#camera-rig",
+        {
+          y: -25,
+          x: 25,
+          duration: 10.08,
+          ease: "none",
+        },
+        0,
+      );
+
+      // 3. Establish Case Tag
+      tl.to(
+        "#case-tag",
+        {
+          opacity: 1,
+          y: 0,
+          duration: 0.45,
+          ease: "power3.out",
+        },
+        0.5,
+      );
+
+      // 4. Overlay 1: THƯƠNG TÍCH 5% (atMs: 13400 -> relative 3.06s)
+      tl.to(
+        "#injury-card",
+        {
+          opacity: 1,
+          scale: 1,
+          y: 0,
+          duration: 0.55,
+          ease: "power3.out",
+        },
+        3.06,
+      );
+
+      // Micro data bar expands to 5%
+      tl.to(
+        "#meter-fill",
+        {
+          width: "5%",
+          duration: 0.65,
+          ease: "power2.out",
+        },
+        3.25,
+      );
+
+      // 5. Contrast Indicator Appears
+      tl.to(
+        "#contrast-line-wrap",
+        {
+          opacity: 1,
+          scale: 1,
+          duration: 0.45,
+          ease: "power3.out",
+        },
+        5.8,
+      );
+
+      // 6. Overlay 2: 13 NĂM 6 THÁNG - Heavy Judicial Strike (atMs: 17740 -> relative 7.40s)
+      tl.to(
+        "#sentence-card",
+        {
+          opacity: 1,
+          scale: 1,
+          y: 0,
+          duration: 0.48,
+          ease: "power4.out",
+        },
+        7.4,
+      );
+
+      // Verdict badge slide-in
+      tl.to(
+        "#verdict-tag",
+        {
+          opacity: 1,
+          x: 0,
+          duration: 0.35,
+          ease: "power3.out",
+        },
+        7.7,
+      );
+
+      // 7. Overlay 3: Justice Scale Icon self-drawing (atMs: 18910 -> relative 8.57s)
+      tl.to(
+        ".scale-path",
+        {
+          strokeDashoffset: 0,
+          duration: 0.65,
+          stagger: 0.08,
+          ease: "power2.out",
+        },
+        8.57,
+      );
+
+      // Register timeline strictly to window.__timelines["scene-s02"]
+      window.__timelines["scene-s02"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

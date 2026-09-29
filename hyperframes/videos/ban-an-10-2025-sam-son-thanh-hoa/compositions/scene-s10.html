@@ -1,0 +1,366 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+      /* hf-safe-colors (tất định từ style-tokens.json) */
+      .hf-text-ink { color: #141414; }
+      .hf-text-light { color: #F7F4EC; }
+      .hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+      .hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+      .hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+      .hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+      *, *::before, *::after {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #141414;
+        color: #F7F4EC;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+      }
+      #root {
+        position: relative;
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+        background-color: #141414;
+      }
+
+      /* Quy ước clip: tuyệt đối không set width/height cứng */
+      .clip {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+      }
+
+      /* Lớp unfold bao bọc nội dung chuyển động */
+      #unfold-layer {
+        position: absolute;
+        inset: 0;
+        transform-origin: 50% 20%;
+        will-change: transform, opacity;
+      }
+
+      /* Asset ảnh nền chính: phủ toàn bộ khung 1080x1920, giữ nguyên màu gốc */
+      .bg-photo-container {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+      }
+      #bg-photo {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        will-change: transform;
+      }
+
+      /* Thanh cam nhận diện cố định ở mép dưới khung hình */
+      .bottom-brand-bar {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 12px;
+        background-color: #FF6A1A;
+        z-index: 99;
+      }
+
+      /* Overlay 1: Nhãn Công Vụ */
+      .duty-wrapper {
+        position: absolute;
+        top: 240px;
+        left: 60px;
+        right: 60px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        z-index: 10;
+      }
+      .duty-beacon-strip {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 12px;
+        padding: 6px 18px;
+        background-color: #141414;
+        border: 2px solid #FF6A1A;
+        border-bottom: none;
+      }
+      .beacon-dot {
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        display: inline-block;
+        background-color: #FF6A1A;
+      }
+      .beacon-label {
+        font-size: 20px;
+        font-weight: 900;
+        color: #FF6A1A;
+        letter-spacing: 3px;
+        text-transform: uppercase;
+      }
+      .duty-card {
+        background-color: #141414;
+        border-left: 10px solid #FF6A1A;
+        border-top: 2px solid #FF6A1A;
+        border-right: 2px solid #FF6A1A;
+        border-bottom: 2px solid #FF6A1A;
+        padding: 24px 38px;
+        max-width: 960px;
+      }
+      .duty-card h2 {
+        margin: 0;
+        font-size: 52px;
+        font-weight: 900;
+        line-height: 1.25;
+        color: #F7F4EC;
+        letter-spacing: 1.5px;
+        text-align: center;
+        text-transform: uppercase;
+      }
+
+      /* Overlay 2: Split Lằn Ranh Đỏ + Punch Phrase */
+      .punch-wrapper {
+        position: absolute;
+        top: 760px;
+        left: 50px;
+        right: 50px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        z-index: 20;
+      }
+
+      /* Đồ họa lằn ranh (Split barrier) */
+      .barrier-line {
+        width: 100%;
+        height: 6px;
+        background-color: #FF6A1A;
+        transform-origin: 50% 50%;
+        margin-bottom: 24px;
+      }
+
+      /* Dải sọc cảnh báo hazard */
+      .hazard-banner {
+        width: 100%;
+        height: 20px;
+        background: repeating-linear-gradient(
+          -45deg,
+          #FF6A1A,
+          #FF6A1A 18px,
+          #141414 18px,
+          #141414 36px
+        );
+        border: 2px solid #141414;
+      }
+
+      /* Khối Punch-phrase chính */
+      .punch-plate {
+        width: 100%;
+        background-color: #141414;
+        border-left: 14px solid #FF6A1A;
+        border-right: 4px solid #FF6A1A;
+        padding: 34px 30px;
+        text-align: center;
+      }
+      .punch-plate h1 {
+        margin: 0;
+        font-size: 74px;
+        font-weight: 900;
+        line-height: 1.18;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        color: #F7F4EC;
+      }
+      .punch-highlight {
+        color: #FF6A1A;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s10"
+      data-start="0"
+      data-width="1080"
+      data-height="1920"
+      data-duration="5.32"
+    >
+      <!-- Layer chính chịu hiệu ứng Unfold của scene -->
+      <div id="unfold-layer">
+        <!-- Shot 1: Asset ảnh nền chính phủ toàn bộ khung 1080x1920 nguyên bản -->
+        <section id="shot-1-bg" class="clip" data-start="0" data-duration="5.32">
+          <div class="bg-photo-container">
+            <img
+              id="bg-photo"
+              src="assets/img-11-police-roadblock-suspect-escape.jpg"
+              alt="Chốt chặn công an kiểm soát tuần tra đêm"
+            />
+          </div>
+        </section>
+
+        <!-- Overlay 1: Label ĐANG THỰC HIỆN CÔNG VỤ (atMs: 88050 -> 0.41s) -->
+        <div id="clip-overlay-duty" class="clip" data-start="0.41" data-duration="2.29">
+          <div class="duty-wrapper" id="duty-box">
+            <div class="duty-beacon-strip">
+              <span class="beacon-dot" id="beacon-1"></span>
+              <span class="beacon-dot" id="beacon-2"></span>
+              <span class="beacon-label">CÔNG VỤ</span>
+            </div>
+            <div class="duty-card">
+              <h2>ĐANG THỰC HIỆN CÔNG VỤ</h2>
+            </div>
+          </div>
+        </div>
+
+        <!-- Overlay 2: Split lằn ranh + Punch-phrase VƯỢT LẰN RANH ĐỎ (atMs: 91070 -> 3.43s) -->
+        <div id="clip-overlay-punch" class="clip" data-start="2.70" data-duration="2.62">
+          <div class="punch-wrapper" id="punch-group">
+            <div class="barrier-line" id="barrier-line"></div>
+            <div class="hazard-banner" id="hazard-top"></div>
+            <div class="punch-plate" id="punch-card">
+              <h1>
+                <span class="punch-highlight">VƯỢT LẰN RANH</span> ĐỎ
+              </h1>
+            </div>
+            <div class="hazard-banner" id="hazard-bottom"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Dải viền cam cố định mép đáy đặc trưng của Vox Style DNA -->
+      <div class="bottom-brand-bar"></div>
+    </div>
+
+    <script>
+      const tl = gsap.timeline({ paused: true });
+
+      // 1. Entrance animation: Unfold (mở nhẹ trục X + phóng vào tỷ lệ 1)
+      tl.fromTo(
+        "#unfold-layer",
+        {
+          transformPerspective: 1200,
+          rotateX: 20,
+          scale: 0.95,
+          opacity: 0,
+        },
+        {
+          rotateX: 0,
+          scale: 1,
+          opacity: 1,
+          duration: 0.65,
+          ease: "power3.out",
+        },
+        0
+      );
+
+      // 2. Camera motion: Pan chậm trục dọc từ trên xuống dưới bao quát khung cảnh
+      tl.fromTo(
+        "#bg-photo",
+        {
+          y: -45,
+          scale: 1.08,
+        },
+        {
+          y: 45,
+          scale: 1.08,
+          duration: 5.32,
+          ease: "none",
+        },
+        0
+      );
+
+      // 3. Overlay 1: Nhãn "ĐANG THỰC HIỆN CÔNG VỤ" (atMs: 88050 -> 0.41s)
+      tl.fromTo(
+        "#duty-box",
+        {
+          y: -50,
+          opacity: 0,
+        },
+        {
+          y: 0,
+          opacity: 1,
+          duration: 0.45,
+          ease: "power3.out",
+        },
+        0.41
+      );
+
+      // Đèn tín hiệu nhấp nháy tuần tra dùng màu cam thương hiệu
+      tl.fromTo(
+        "#beacon-1",
+        { opacity: 0.25 },
+        { opacity: 1, duration: 0.22, repeat: 7, yoyo: true, ease: "steps(1)" },
+        0.45
+      );
+      tl.fromTo(
+        "#beacon-2",
+        { opacity: 1 },
+        { opacity: 0.25, duration: 0.22, repeat: 7, yoyo: true, ease: "steps(1)" },
+        0.45
+      );
+
+      // Overlay 1 rút lui êm ái trước khi clip kết thúc (giữ đúng ~1.5s hold)
+      tl.to(
+        "#duty-box",
+        {
+          y: -25,
+          opacity: 0,
+          duration: 0.35,
+          ease: "power2.in",
+        },
+        2.35
+      );
+
+      // 4. Đường Lằn Ranh (Split barrier) vẽ ra trước làm nền chuyển đổi khái niệm
+      tl.fromTo(
+        "#barrier-line",
+        {
+          scaleX: 0,
+          opacity: 0,
+        },
+        {
+          scaleX: 1,
+          opacity: 1,
+          duration: 0.55,
+          ease: "power3.out",
+        },
+        2.75
+      );
+
+      // 5. Overlay 2: Punch-phrase "VƯỢT LẰN RANH ĐỎ" (atMs: 91070 -> 3.43s)
+      tl.fromTo(
+        ["#hazard-top", "#punch-card", "#hazard-bottom"],
+        {
+          scale: 1.18,
+          y: -30,
+          opacity: 0,
+        },
+        {
+          scale: 1,
+          y: 0,
+          opacity: 1,
+          duration: 0.38,
+          stagger: 0.04,
+          ease: "power4.out",
+        },
+        3.43
+      );
+
+      // Đăng ký timeline cho HyperFrames seek runtime
+      window.__timelines["scene-s10"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

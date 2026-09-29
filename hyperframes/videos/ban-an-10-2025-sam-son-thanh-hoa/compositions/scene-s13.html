@@ -1,0 +1,516 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+      /* hf-safe-colors (tất định từ style-tokens.json) */
+      .hf-text-ink { color: #141414; }
+      .hf-text-light { color: #F7F4EC; }
+      .hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+      .hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+      .hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+      .hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+      *, *::before, *::after {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #E7E3D9;
+        color: #141414;
+        font-family: 'Be Vietnam Pro', sans-serif;
+        overflow: hidden;
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: #E7E3D9;
+      }
+      .clip {
+        position: absolute;
+        inset: 0;
+      }
+
+      /* Lưới kỹ thuật phong cách Vox */
+      .bg-grid {
+        position: absolute;
+        inset: 0;
+        background-image: 
+          linear-gradient(to right, rgba(20, 20, 20, 0.14) 1.5px, transparent 1.5px),
+          linear-gradient(to bottom, rgba(20, 20, 20, 0.14) 1.5px, transparent 1.5px);
+        background-size: 84px 84px;
+        pointer-events: none;
+      }
+
+      /* Biến thể Spotlight: radial vignette tối ở các góc */
+      .bg-spotlight {
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(circle at 50% 50%, rgba(231, 227, 217, 0) 35%, rgba(20, 20, 20, 0.32) 100%);
+        pointer-events: none;
+      }
+
+      /* Thanh cam nhận diện cố định ở mép dưới */
+      .bottom-accent-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 16px;
+        background-color: #FF6A1A;
+        z-index: 100;
+      }
+
+      /* Vùng an toàn khả dụng Y: [160, 1390] */
+      #diagram-stage {
+        position: absolute;
+        inset: 0;
+        transform-origin: 50% 45%;
+      }
+
+      /* Header khu vực trên (Y: 170 - 290) */
+      .header-wrap {
+        position: absolute;
+        top: 170px;
+        left: 60px;
+        right: 60px;
+      }
+      .badge-category {
+        display: inline-block;
+        padding: 8px 18px;
+        background-color: #141414;
+        color: #F7F4EC;
+        font-size: 20px;
+        font-weight: 700;
+        border-radius: 6px;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+      }
+      .headline-main {
+        margin: 14px 0 0 0;
+        font-size: 42px;
+        font-weight: 900;
+        line-height: 1.25;
+        color: #141414;
+        text-transform: uppercase;
+      }
+
+      /* BẬC 1: Xuất phát phạt tiền hành chính (Y: 310 - 490) */
+      .step-card-1 {
+        position: absolute;
+        top: 310px;
+        left: 60px;
+        width: 780px;
+        height: 180px;
+        background-color: #F5F0E4;
+        border: 4px solid #141414;
+        border-radius: 12px;
+        padding: 22px 28px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        box-shadow: 8px 8px 0px #141414;
+      }
+      .step-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .tag-step-1 {
+        display: inline-block;
+        padding: 6px 14px;
+        background-color: #141414;
+        color: #F7F4EC;
+        font-size: 18px;
+        font-weight: 700;
+        border-radius: 4px;
+        letter-spacing: 1px;
+      }
+      .overlay-title-1 {
+        margin: 0;
+        font-size: 34px;
+        font-weight: 900;
+        line-height: 1.25;
+        color: #141414;
+        text-transform: uppercase;
+      }
+      .step-desc-1 {
+        margin: 0;
+        font-size: 22px;
+        font-weight: 700;
+        color: #141414;
+      }
+
+      /* BẬC 2: Leo thang chống đối (Y: 610 - 790) */
+      .step-card-2 {
+        position: absolute;
+        top: 610px;
+        left: 240px;
+        width: 780px;
+        height: 180px;
+        background-color: #141414;
+        border: 4px solid #FF6A1A;
+        border-radius: 12px;
+        padding: 22px 28px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        box-shadow: 8px 8px 0px rgba(255, 106, 26, 0.4);
+      }
+      .tag-step-2 {
+        display: inline-block;
+        padding: 6px 14px;
+        background-color: #FF6A1A;
+        color: #141414;
+        font-size: 18px;
+        font-weight: 900;
+        border-radius: 4px;
+        letter-spacing: 1px;
+      }
+      .overlay-title-2 {
+        margin: 0;
+        font-size: 36px;
+        font-weight: 900;
+        line-height: 1.25;
+        color: #F7F4EC;
+        text-transform: uppercase;
+      }
+      .step-desc-2 {
+        margin: 0;
+        font-size: 22px;
+        font-weight: 700;
+        color: #F7F4EC;
+      }
+
+      /* BẬC 3: Hố sâu hình sự (Y: 920 - 1260) */
+      .step-card-3 {
+        position: absolute;
+        top: 920px;
+        left: 60px;
+        width: 960px;
+        height: 340px;
+        background-color: #141414;
+        border: 4px solid #FF6A1A;
+        border-radius: 16px;
+        padding: 28px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        box-shadow: 12px 12px 0px #FF6A1A;
+      }
+      .step-3-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .tag-step-3 {
+        display: inline-block;
+        padding: 8px 18px;
+        background-color: #FF6A1A;
+        color: #141414;
+        font-size: 20px;
+        font-weight: 900;
+        border-radius: 6px;
+        letter-spacing: 1px;
+      }
+      .punch-phrase-box {
+        background-color: #FF6A1A;
+        color: #141414;
+        padding: 20px 24px;
+        border-radius: 10px;
+        text-align: center;
+        transform-origin: 50% 50%;
+      }
+      .punch-phrase-text {
+        margin: 0;
+        font-size: 52px;
+        font-weight: 900;
+        line-height: 1.15;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        color: #141414;
+      }
+      .step-3-bottom {
+        display: flex;
+        justify-content: flex-start;
+        align-items: center;
+      }
+      .step-desc-3 {
+        margin: 0;
+        font-size: 24px;
+        font-weight: 700;
+        color: #F7F4EC;
+        line-height: 1.4;
+      }
+
+      /* Mũi tên và đường trượt kết nối */
+      .slope-label-1 {
+        position: absolute;
+        top: 520px;
+        left: 470px;
+        background-color: #FF6A1A;
+        color: #141414;
+        font-size: 18px;
+        font-weight: 900;
+        padding: 6px 14px;
+        border-radius: 4px;
+        z-index: 10;
+        box-shadow: 3px 3px 0px #141414;
+      }
+      .slope-label-2 {
+        position: absolute;
+        top: 820px;
+        left: 480px;
+        background-color: #141414;
+        color: #FF6A1A;
+        border: 2px solid #FF6A1A;
+        font-size: 18px;
+        font-weight: 900;
+        padding: 6px 14px;
+        border-radius: 4px;
+        z-index: 10;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s13"
+      data-width="1080"
+      data-height="1920"
+      data-duration="8.44"
+      data-start="0"
+    >
+      <section id="scene-s13" class="clip" data-start="0" data-duration="8.44">
+        <!-- Nền đồ họa -->
+        <div class="bg-grid"></div>
+        <div class="bg-spotlight"></div>
+
+        <!-- Khung tổng có transition xoay spiral -->
+        <div id="diagram-stage">
+          <!-- Phần tiêu đề trên -->
+          <div id="header-group" class="header-wrap">
+            <span class="badge-category">Phân tích pháp lý</span>
+            <h1 class="headline-main">Sơ đồ chuyển hóa hành vi</h1>
+          </div>
+
+          <!-- BẬC 1: Phạt tiền hành chính -->
+          <div id="step-1" class="step-card-1">
+            <div class="step-header">
+              <span class="tag-step-1">GIAI ĐOẠN 01</span>
+              <!-- SVG Icon xe máy phong cách Vox -->
+              <svg viewBox="0 0 100 60" width="80" height="48">
+                <circle cx="25" cy="42" r="14" stroke="#141414" stroke-width="4" fill="none" />
+                <circle cx="75" cy="42" r="14" stroke="#141414" stroke-width="4" fill="none" />
+                <path d="M 25 42 L 46 42 L 58 20 L 75 42 M 46 42 L 52 26 L 68 14" stroke="#141414" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+              </svg>
+            </div>
+            <h2 id="label-1" class="overlay-title-1">BAN ĐẦU: LỖI GIAO THÔNG</h2>
+            <p class="step-desc-1">Phạt tiền hành chính</p>
+          </div>
+
+          <!-- Mũi tên trượt dốc 1 -->
+          <svg style="position: absolute; top: 480px; left: 390px; width: 220px; height: 140px; pointer-events: none; z-index: 5;" viewBox="0 0 220 140">
+            <defs>
+              <marker id="arrow1" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                <path d="M 0 1 L 10 5 L 0 9 z" fill="#141414" />
+              </marker>
+            </defs>
+            <path id="slope-line-1" d="M 30 15 C 30 75, 175 75, 175 125" fill="none" stroke="#141414" stroke-width="5" stroke-dasharray="8 6" marker-end="url(#arrow1)" />
+          </svg>
+          <div id="slope-tag-1" class="slope-label-1">CỐ TÌNH BỎ CHẠY</div>
+
+          <!-- BẬC 2: Leo thang chống đối -->
+          <div id="step-2" class="step-card-2">
+            <div class="step-header">
+              <span class="tag-step-2">GIAI ĐOẠN 02</span>
+              <!-- SVG Icon cảnh báo dừng xe -->
+              <svg viewBox="0 0 70 60" width="60" height="50">
+                <path d="M 35 8 L 62 52 L 8 52 Z" stroke="#FF6A1A" stroke-width="4" fill="none" stroke-linejoin="round" />
+                <line x1="35" y1="22" x2="35" y2="36" stroke="#FF6A1A" stroke-width="4" stroke-linecap="round" />
+                <circle cx="35" cy="44" r="2.5" fill="#FF6A1A" />
+              </svg>
+            </div>
+            <h2 id="label-2" class="overlay-title-2">KHÔNG CHỊU DỪNG LẠI</h2>
+            <p class="step-desc-2">Không chấp hành hiệu lệnh • Bỏ chạy</p>
+          </div>
+
+          <!-- Mũi tên trượt dốc 2 -->
+          <svg style="position: absolute; top: 780px; left: 460px; width: 220px; height: 130px; pointer-events: none; z-index: 5;" viewBox="0 0 220 130">
+            <defs>
+              <marker id="arrow2" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                <path d="M 0 1 L 10 5 L 0 9 z" fill="#FF6A1A" />
+              </marker>
+            </defs>
+            <path id="slope-line-2" d="M 140 15 C 140 70, 45 65, 45 115" fill="none" stroke="#FF6A1A" stroke-width="6" marker-end="url(#arrow2)" />
+          </svg>
+          <div id="slope-tag-2" class="slope-label-2">TRƯỢT DỐC PHÁP LÝ</div>
+
+          <!-- BẬC 3: Hố sâu hình sự -->
+          <div id="step-3" class="step-card-3">
+            <div class="step-3-top">
+              <span class="tag-step-3">GIAI ĐOẠN 03</span>
+              <!-- SVG Icon Còng số 8 -->
+              <svg id="handcuffs-svg" viewBox="0 0 150 60" width="130" height="52">
+                <circle id="cuff-l" cx="38" cy="30" r="22" stroke="#FF6A1A" stroke-width="5" fill="none" />
+                <circle id="cuff-r" cx="112" cy="30" r="22" stroke="#FF6A1A" stroke-width="5" fill="none" />
+                <line x1="60" y1="30" x2="90" y2="30" stroke="#FF6A1A" stroke-width="5" stroke-linecap="round" />
+                <circle cx="38" cy="30" r="10" stroke="#141414" stroke-width="3" fill="#FF6A1A" />
+                <circle cx="112" cy="30" r="10" stroke="#141414" stroke-width="3" fill="#FF6A1A" />
+              </svg>
+            </div>
+
+            <!-- Punch-phrase tâm điểm -->
+            <div id="punch-box" class="punch-phrase-box">
+              <h2 class="punch-phrase-text">TỰ HÓA THÀNH HÌNH SỰ</h2>
+            </div>
+
+            <div class="step-3-bottom">
+              <p class="step-desc-3">Chuyển hóa bản chất • Biến thành tội danh hình sự</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Dải cam đáy thương hiệu -->
+        <div class="bottom-accent-bar"></div>
+      </section>
+    </div>
+
+    <script>
+      // Khởi tạo GSAP Timeline chính (bắt buộc paused: true)
+      const tl = gsap.timeline({ paused: true });
+
+      // Chuẩn bị đường vẽ SVG (stroke-dashoffset)
+      const slope1 = document.getElementById("slope-line-1");
+      if (slope1) {
+        const len1 = slope1.getTotalLength();
+        slope1.style.strokeDasharray = len1;
+        slope1.style.strokeDashoffset = len1;
+      }
+
+      const slope2 = document.getElementById("slope-line-2");
+      if (slope2) {
+        const len2 = slope2.getTotalLength();
+        slope2.style.strokeDasharray = len2;
+        slope2.style.strokeDashoffset = len2;
+      }
+
+      // 0.0s - 0.9s: Hiệu ứng vào cảnh spiral (xoay nhẹ và bung nở)
+      tl.fromTo(
+        "#diagram-stage",
+        { scale: 0.88, rotation: -3.5, opacity: 0 },
+        { scale: 1, rotation: 0, opacity: 1, duration: 0.9, ease: "power3.out" },
+        0
+      );
+
+      // Header trượt xuống
+      tl.fromTo(
+        "#header-group",
+        { y: -30, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.6, ease: "power2.out" },
+        0.2
+      );
+
+      // 0.8s - 1.6s: BẬC 1 xuất hiện
+      tl.fromTo(
+        "#step-1",
+        { x: -70, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.6, ease: "power3.out" },
+        0.8
+      );
+
+      // OVERLAY 1: "BAN ĐẦU: LỖI GIAO THÔNG" xuất hiện đúng 1.6s
+      tl.fromTo(
+        "#label-1",
+        { scale: 0.9, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.45, ease: "power3.out" },
+        1.6
+      );
+
+      // 3.2s - 4.0s: Mũi tên dốc trượt 1 bắt đầu vẽ và rơi xuống
+      tl.fromTo(
+        "#slope-tag-1",
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.35, ease: "power3.out" },
+        3.2
+      );
+      tl.to(
+        "#slope-line-1",
+        { strokeDashoffset: 0, duration: 0.7, ease: "power2.out" },
+        3.3
+      );
+
+      // BẬC 2 trượt vào vị trí
+      tl.fromTo(
+        "#step-2",
+        { x: 80, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.6, ease: "power3.out" },
+        3.9
+      );
+
+      // OVERLAY 2: "KHÔNG CHỊU DỪNG LẠI" xuất hiện đúng 4.46s
+      tl.fromTo(
+        "#label-2",
+        { scale: 0.9, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.45, ease: "power3.out" },
+        4.46
+      );
+
+      // 5.8s - 6.6s: Mũi tên rơi xuống vực thẳm 2
+      tl.fromTo(
+        "#slope-tag-2",
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.35, ease: "power3.out" },
+        5.8
+      );
+      tl.to(
+        "#slope-line-2",
+        { strokeDashoffset: 0, duration: 0.65, ease: "power2.in" },
+        5.9
+      );
+
+      // BẬC 3 (Hố sâu hình sự) dập mạnh từ dưới lên
+      tl.fromTo(
+        "#step-3",
+        { y: 60, scale: 0.95, opacity: 0 },
+        { y: 0, scale: 1, opacity: 1, duration: 0.65, ease: "power3.out" },
+        6.5
+      );
+
+      // Còng số 8 khép lại
+      tl.fromTo(
+        "#handcuffs-svg",
+        { scale: 0.4, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.4, ease: "power3.out" },
+        6.8
+      );
+
+      // OVERLAY 3: PUNCH-PHRASE "TỰ HÓA THÀNH HÌNH SỰ" dập mạnh đúng 7.13s
+      tl.fromTo(
+        "#punch-box",
+        { scale: 1.25, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.4, ease: "power4.out" },
+        7.13
+      );
+
+      // Dòng mô tả bản chất xuất hiện theo sau
+      tl.fromTo(
+        ".step-desc-3",
+        { opacity: 0, y: 12 },
+        { opacity: 1, y: 0, duration: 0.4, ease: "power2.out" },
+        7.4
+      );
+
+      // Đăng ký timeline cho HyperFrames seek runtime
+      window.__timelines["scene-s13"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

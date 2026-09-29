@@ -1,0 +1,568 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+      /* hf-safe-colors (tất định từ style-tokens.json) */
+      .hf-text-ink { color: #141414; }
+      .hf-text-light { color: #F7F4EC; }
+      .hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+      .hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+      .hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+      .hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+      * {
+        box-sizing: border-box;
+      }
+      body, html {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: #E7E3D9;
+        font-family: "Be Vietnam Pro", sans-serif;
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: #E7E3D9;
+        background-image:
+          linear-gradient(rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px),
+          linear-gradient(90deg, rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px);
+        background-size: 84px 84px;
+        perspective: 1400px;
+      }
+      .clip {
+        position: absolute;
+        inset: 0;
+      }
+
+      /* Camera motion container */
+      #camera {
+        transform-origin: 50% 48%;
+      }
+
+      /* Top header category plate */
+      #top-header {
+        position: absolute;
+        top: 176px;
+        left: 60px;
+        right: 60px;
+        height: 56px;
+        background-color: #141414;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 24px;
+        box-shadow: 0 6px 14px rgba(20, 20, 20, 0.16);
+        z-index: 20;
+      }
+      .top-header-title {
+        font-size: 20px;
+        font-weight: 900;
+        color: #F7F4EC;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+      }
+      .top-header-tag {
+        font-size: 15px;
+        font-weight: 900;
+        color: #141414;
+        background-color: #FF6A1A;
+        padding: 5px 12px;
+        border-radius: 4px;
+        letter-spacing: 1px;
+      }
+
+      /* Document 3D wrapper */
+      #doc-wrapper {
+        position: absolute;
+        top: 252px;
+        left: 60px;
+        right: 60px;
+        height: 1060px;
+        perspective: 1400px;
+        z-index: 10;
+      }
+
+      /* Document paper card */
+      #doc-card {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        background-color: #F5F0E4;
+        border: 3.5px solid #141414;
+        border-radius: 8px;
+        box-shadow: 12px 14px 0px #141414;
+        padding: 38px 44px 34px 44px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        transform-origin: 50% 50%;
+        will-change: transform, opacity;
+      }
+
+      /* Document Header */
+      .doc-header-block {
+        text-align: center;
+        padding-bottom: 16px;
+        border-bottom: 2.5px solid #141414;
+      }
+      .doc-pre-title {
+        font-size: 16px;
+        font-weight: 900;
+        color: #141414;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        margin-bottom: 6px;
+      }
+      .doc-main-title {
+        font-size: 38px;
+        font-weight: 900;
+        color: #141414;
+        letter-spacing: 0.5px;
+        line-height: 1.2;
+        margin: 0;
+      }
+      .doc-sub-title {
+        font-size: 17px;
+        font-weight: 700;
+        color: #141414;
+        margin-top: 6px;
+      }
+
+      /* Info grid row */
+      .doc-info-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+        padding: 12px 20px;
+        background-color: #E7E3D9;
+        border: 2px solid #141414;
+        border-radius: 4px;
+      }
+      .info-cell-label {
+        font-size: 13px;
+        font-weight: 900;
+        color: #141414;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        margin-bottom: 4px;
+      }
+      .info-cell-value {
+        font-size: 19px;
+        font-weight: 900;
+        color: #141414;
+      }
+
+      /* Timeline visual diagram inside document */
+      .timeline-section {
+        margin-top: 4px;
+      }
+      .section-badge {
+        display: inline-block;
+        font-size: 13px;
+        font-weight: 900;
+        color: #F7F4EC;
+        background-color: #141414;
+        padding: 4px 12px;
+        border-radius: 3px;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        margin-bottom: 12px;
+      }
+      .timeline-track-container {
+        position: relative;
+        padding: 6px 12px;
+      }
+      .timeline-base-line {
+        position: absolute;
+        top: 26px;
+        left: 40px;
+        right: 40px;
+        height: 4px;
+        background-color: rgba(20, 20, 20, 0.25);
+        z-index: 1;
+      }
+      #timeline-progress-bar {
+        position: absolute;
+        top: 26px;
+        left: 40px;
+        right: 40px;
+        height: 4px;
+        background-color: #141414;
+        transform-origin: 0% 50%;
+        z-index: 2;
+      }
+      .timeline-nodes-grid {
+        position: relative;
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        z-index: 3;
+      }
+      .timeline-node {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+      }
+      .node-circle {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background-color: #F5F0E4;
+        border: 3px solid #141414;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        font-weight: 900;
+        color: #141414;
+        margin-bottom: 8px;
+      }
+      .node-circle.current {
+        background-color: #FF6A1A;
+        color: #141414;
+        border-color: #141414;
+      }
+      .node-label {
+        font-size: 15px;
+        font-weight: 900;
+        color: #141414;
+        line-height: 1.3;
+      }
+      .node-subtext {
+        font-size: 12px;
+        font-weight: 700;
+        color: #141414;
+        margin-top: 3px;
+      }
+
+      /* Criminal record previous entry box */
+      .record-box {
+        position: relative;
+        padding: 16px 22px;
+        background-color: #E7E3D9;
+        border: 2px dashed #141414;
+        border-radius: 6px;
+      }
+      .record-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+      }
+      .record-title {
+        font-size: 16px;
+        font-weight: 900;
+        color: #141414;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      .record-tag {
+        font-size: 13px;
+        font-weight: 900;
+        background-color: #141414;
+        color: #F7F4EC;
+        padding: 3px 8px;
+        border-radius: 3px;
+      }
+      .record-desc {
+        font-size: 16px;
+        font-weight: 700;
+        color: #141414;
+        line-height: 1.45;
+        margin: 0;
+      }
+
+      /* Stamp slot for Overlay 1: Stamp 'TIỀN ÁN ĐƯỢC XÓA' (atMs: 255220 / 2.20s) */
+      .stamp-slot {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 104px;
+      }
+      #stamp-box {
+        background-color: #FF6A1A;
+        border: 4.5px solid #141414;
+        padding: 14px 44px;
+        box-shadow: 8px 8px 0px #141414;
+        text-align: center;
+        transform-origin: 50% 50%;
+        will-change: transform, opacity;
+      }
+      .stamp-text {
+        font-size: 40px;
+        font-weight: 900;
+        color: #141414;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        display: block;
+        line-height: 1.15;
+      }
+
+      /* Overlay 2: Check icon & verification plate (atMs: 257440 / 4.42s) */
+      #verify-badge {
+        height: 78px;
+        background-color: #141414;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        padding: 0 22px;
+        box-shadow: 0 6px 14px rgba(20, 20, 20, 0.2);
+        z-index: 20;
+      }
+      .check-circle {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background-color: #141414;
+        border: 3.5px solid #FF6A1A;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 18px;
+        flex-shrink: 0;
+      }
+      .verify-text-group {
+        display: flex;
+        flex-direction: column;
+      }
+      .verify-title {
+        font-size: 13px;
+        font-weight: 900;
+        color: #FF6A1A;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+      }
+      .verify-subtitle {
+        font-size: 21px;
+        font-weight: 900;
+        color: #F7F4EC;
+        letter-spacing: 0.5px;
+      }
+
+      /* Fixed bottom orange signature bar */
+      .bottom-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 10px;
+        background-color: #FF6A1A;
+        z-index: 100;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s32"
+      data-start="0"
+      data-width="1080"
+      data-height="1920"
+      data-duration="5.12"
+    >
+      <!-- Camera container for slow, subtle zoom-in -->
+      <section id="camera" class="clip" data-start="0" data-duration="5.12">
+        <!-- Top header category plate -->
+        <div id="top-header" class="doc-anim-item">
+          <div class="top-header-title">HỒ SƠ TƯ PHÁP • ĐIỀU KIỆN XÉT XỬ</div>
+          <div class="top-header-tag">QUY ĐỊNH PHÁP LUẬT</div>
+        </div>
+
+        <!-- Document 3D flip card wrapper -->
+        <div id="doc-wrapper">
+          <div id="doc-card">
+            <!-- Document Header -->
+            <div class="doc-header-block doc-anim-item">
+              <div class="doc-pre-title">TRÍCH LỤC HỒ SƠ TƯ PHÁP</div>
+              <h1 class="doc-main-title">TÌNH TRẠNG ÁN TÍCH</h1>
+              <div class="doc-sub-title">ĐÁNH GIÁ NHÂN THÂN TẠI THỜI ĐIỂM XÉT XỬ</div>
+            </div>
+
+            <!-- Subject information row -->
+            <div class="doc-info-row doc-anim-item">
+              <div>
+                <div class="info-cell-label">HỒ SƠ ĐỐI TƯỢNG</div>
+                <div class="info-cell-value">LỊCH SỬ TƯ PHÁP</div>
+              </div>
+              <div>
+                <div class="info-cell-label">TÌNH TRẠNG ÁN TÍCH</div>
+                <div class="info-cell-value">ĐÃ ĐƯỢC XÓA ÁN</div>
+              </div>
+            </div>
+
+            <!-- Timeline sequence of the legal conviction history -->
+            <div class="timeline-section doc-anim-item">
+              <div class="section-badge">TIẾN TRÌNH ÁN TÍCH THEO PHÁP LUẬT</div>
+              <div class="timeline-track-container">
+                <div class="timeline-base-line"></div>
+                <div id="timeline-progress-bar"></div>
+                <div class="timeline-nodes-grid">
+                  <div class="timeline-node">
+                    <div class="node-circle">01</div>
+                    <div class="node-label">BẢN ÁN CŨ</div>
+                    <div class="node-subtext">LỊCH SỬ ÁN TÍCH</div>
+                  </div>
+                  <div class="timeline-node">
+                    <div class="node-circle">02</div>
+                    <div class="node-label">THỜI HẠN LUẬT ĐỊNH</div>
+                    <div class="node-subtext">QUY TRÌNH XÓA ÁN</div>
+                  </div>
+                  <div class="timeline-node">
+                    <div class="node-circle current">03</div>
+                    <div class="node-label">THỜI ĐIỂM XÉT XỬ</div>
+                    <div class="node-subtext">TIỀN ÁN ĐƯỢC XÓA</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Previous conviction record box -->
+            <div class="record-box doc-anim-item">
+              <div class="record-header">
+                <span class="record-title">LỊCH SỬ TIỀN ÁN TRƯỚC ĐÂY</span>
+                <span class="record-tag">DỮ LIỆU TƯ PHÁP</span>
+              </div>
+              <p class="record-desc">
+                Ghi nhận các bản án trước đây trong hồ sơ tư pháp được xem xét xóa án theo quy định của pháp luật.
+              </p>
+            </div>
+
+            <!-- Overlay 1 (Shotlist Label: TIỀN ÁN ĐƯỢC XÓA, atMs: 255220 / 2.20s) -->
+            <div class="stamp-slot">
+              <div id="stamp-box" data-layout-allow-overflow="true" data-layout-allow-overlap="true">
+                <span class="stamp-text">TIỀN ÁN ĐƯỢC XÓA</span>
+              </div>
+            </div>
+
+            <!-- Overlay 2 (Shotlist Icon: check, atMs: 257440 / 4.42s) -->
+            <div id="verify-badge">
+              <div class="check-circle">
+                <svg width="32" height="32" viewBox="0 0 34 34">
+                  <path
+                    id="check-path"
+                    d="M 8 18 L 14 24 L 26 10"
+                    fill="none"
+                    stroke="#FF6A1A"
+                    stroke-width="4.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </div>
+              <div class="verify-text-group">
+                <span class="verify-title">QUY ĐỊNH PHÁP LUẬT</span>
+                <span class="verify-subtitle">XÁC NHẬN: TIỀN ÁN ĐÃ ĐƯỢC XÓA</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Signature bottom orange strip -->
+      <div class="bottom-bar"></div>
+    </div>
+
+    <script>
+      // Prepare SVG path dash for stroke drawing
+      const checkPath = document.querySelector("#check-path");
+      let pathLen = 30;
+      if (checkPath) {
+        pathLen = checkPath.getTotalLength();
+        checkPath.style.strokeDasharray = String(pathLen);
+        checkPath.style.strokeDashoffset = String(pathLen);
+      }
+
+      // Initial state of timeline elements
+      gsap.set("#stamp-box", { opacity: 0, scale: 2.2, rotation: -14 });
+      gsap.set("#verify-badge", { opacity: 0, y: 22 });
+      gsap.set("#timeline-progress-bar", { scaleX: 0 });
+      gsap.set(".timeline-node", { scale: 0.8, opacity: 0 });
+
+      // Build single paused timeline
+      const tl = gsap.timeline({ paused: true });
+
+      // 1. Camera subtle continuous zoom-in across 5.12s
+      tl.fromTo(
+        "#camera",
+        { scale: 1 },
+        { scale: 1.045, duration: 5.12, ease: "sine.inOut" },
+        0
+      );
+
+      // 2. Top category header entrance
+      tl.fromTo(
+        "#top-header",
+        { y: -26, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.45, ease: "power3.out" },
+        0.05
+      );
+
+      // 3. Document 3D flip-in transition
+      tl.fromTo(
+        "#doc-card",
+        { rotationY: -76, opacity: 0, scale: 0.88 },
+        { rotationY: 0, opacity: 1, scale: 1, duration: 0.75, ease: "power3.out" },
+        0.12
+      );
+
+      // 4. Staggered reveal of document content
+      tl.fromTo(
+        ".doc-anim-item",
+        { y: 16, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.42, stagger: 0.07, ease: "power2.out" },
+        0.45
+      );
+
+      // 5. Timeline drawing progress
+      tl.to(
+        "#timeline-progress-bar",
+        { scaleX: 1, duration: 0.62, ease: "power2.out" },
+        0.82
+      );
+      tl.to(
+        ".timeline-node",
+        { scale: 1, opacity: 1, duration: 0.35, stagger: 0.1, ease: "power3.out" },
+        0.90
+      );
+
+      // 6. Overlay 1: Stamp 'TIỀN ÁN ĐƯỢC XÓA' (atMs: 255220 -> t = 2.20s)
+      tl.fromTo(
+        "#stamp-box",
+        { scale: 2.2, opacity: 0, rotation: -14 },
+        { scale: 1, opacity: 1, rotation: -3, duration: 0.34, ease: "power4.out" },
+        2.20
+      );
+
+      // 7. Overlay 2: Check icon & verification badge (atMs: 257440 -> t = 4.42s)
+      tl.fromTo(
+        "#verify-badge",
+        { y: 22, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.32, ease: "power3.out" },
+        4.42
+      );
+
+      // Animate check path drawing
+      tl.fromTo(
+        "#check-path",
+        { strokeDashoffset: pathLen },
+        { strokeDashoffset: 0, duration: 0.34, ease: "power2.out" },
+        4.48
+      );
+
+      // Register timeline on window.__timelines with root composition id
+      window.__timelines["scene-s32"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

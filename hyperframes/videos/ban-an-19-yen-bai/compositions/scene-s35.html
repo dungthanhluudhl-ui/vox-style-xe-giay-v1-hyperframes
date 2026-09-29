@@ -1,0 +1,809 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap">
+      <style>
+    /* hf-safe-colors (tất định từ style-tokens.json) */
+    .hf-text-ink { color: #141414; }
+    .hf-text-light { color: #F7F4EC; }
+    .hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+    .hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+    .hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+    .hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #E7E3D9;
+      color: #141414;
+      font-family: "Be Vietnam Pro", sans-serif;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    #root {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #E7E3D9;
+      background-image:
+        linear-gradient(rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px),
+        linear-gradient(90deg, rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px);
+      background-size: 84px 84px;
+      background-position: -1.5px -1.5px;
+    }
+
+    .clip {
+      position: absolute;
+      inset: 0;
+    }
+
+    /* Fixed bottom signature bar */
+    .bottom-orange-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 10px;
+      background-color: #FF6A1A;
+      z-index: 99;
+    }
+
+    /* Camera rig for slow documentary pan */
+    #camera-rig {
+      position: absolute;
+      inset: 0;
+    }
+
+    #scene-container {
+      position: absolute;
+      inset: 0;
+    }
+
+    /* Top metadata bar */
+    .top-meta-bar {
+      position: absolute;
+      top: 170px;
+      left: 60px;
+      right: 60px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 10;
+    }
+
+    .meta-tag {
+      background-color: #141414;
+      color: #F7F4EC;
+      font-size: 18px;
+      font-weight: 900;
+      letter-spacing: 1.5px;
+      padding: 6px 16px;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .meta-tag-dot {
+      width: 8px;
+      height: 8px;
+      background-color: #FF6A1A;
+      border-radius: 50%;
+    }
+
+    .meta-sub {
+      background-color: #F5F0E4;
+      border: 2px solid #141414;
+      color: #141414;
+      font-size: 16px;
+      font-weight: 700;
+      padding: 6px 14px;
+      letter-spacing: 0.5px;
+    }
+
+    /* Overlay 1: CÂN NHẮC TOÀN DIỆN */
+    #overlay-label {
+      position: absolute;
+      top: 236px;
+      left: 60px;
+      right: 60px;
+      height: 84px;
+      background-color: #141414;
+      border-left: 10px solid #FF6A1A;
+      box-shadow: 0 12px 0 rgba(20, 20, 20, 0.25);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 28px;
+      z-index: 20;
+    }
+
+    .overlay-title-group {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .overlay-kicker {
+      color: #FF6A1A;
+      font-size: 14px;
+      font-weight: 900;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      margin-bottom: 2px;
+    }
+
+    .overlay-main-text {
+      color: #F7F4EC;
+      font-size: 34px;
+      font-weight: 900;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .overlay-status-pill {
+      background-color: #FF6A1A;
+      color: #141414;
+      font-size: 16px;
+      font-weight: 900;
+      padding: 8px 16px;
+      letter-spacing: 0.5px;
+    }
+
+    /* Justice Scale Rig */
+    #scale-rig {
+      position: absolute;
+      top: 360px;
+      left: 50px;
+      right: 50px;
+      height: 810px;
+    }
+
+    /* Central Fulcrum & Pillar */
+    .pillar-structure {
+      position: absolute;
+      top: 70px;
+      left: 490px;
+      width: 0;
+      height: 570px;
+      pointer-events: none;
+    }
+
+    .pillar-body {
+      position: absolute;
+      top: 0;
+      left: -22px;
+      width: 44px;
+      height: 550px;
+      background-color: #141414;
+      border-left: 3px solid rgba(255, 255, 255, 0.15);
+      border-right: 3px solid rgba(0, 0, 0, 0.4);
+    }
+
+    .pillar-line {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      width: 4px;
+      height: 510px;
+      background-color: #FF6A1A;
+    }
+
+    .pillar-pedestal {
+      position: absolute;
+      top: 550px;
+      left: -130px;
+      width: 260px;
+      height: 38px;
+      background-color: #141414;
+      border: 3px solid #141414;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 8px 0 rgba(20, 20, 20, 0.2);
+    }
+
+    .pedestal-text {
+      color: #F7F4EC;
+      font-size: 15px;
+      font-weight: 900;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    .fulcrum-pin {
+      position: absolute;
+      top: -16px;
+      left: -16px;
+      width: 32px;
+      height: 32px;
+      background-color: #141414;
+      border: 4px solid #FF6A1A;
+      border-radius: 50%;
+      z-index: 5;
+    }
+
+    /* Crossbeam */
+    #scale-beam {
+      position: absolute;
+      top: 62px;
+      left: 220px;
+      width: 540px;
+      height: 16px;
+      background-color: #141414;
+      transform-origin: 270px 8px;
+      z-index: 4;
+      box-shadow: 0 4px 8px rgba(20, 20, 20, 0.2);
+    }
+
+    .beam-ring-left, .beam-ring-right {
+      position: absolute;
+      top: -7px;
+      width: 30px;
+      height: 30px;
+      border: 4px solid #141414;
+      border-radius: 50%;
+      background-color: #E7E3D9;
+    }
+
+    .beam-ring-left { left: -10px; }
+    .beam-ring-right { right: -10px; }
+
+    /* Left & Right Pan Assemblies */
+    #left-pan-wrap {
+      position: absolute;
+      top: 70px;
+      left: 5px;
+      width: 430px;
+      z-index: 3;
+    }
+
+    #right-pan-wrap {
+      position: absolute;
+      top: 70px;
+      left: 545px;
+      width: 430px;
+      z-index: 3;
+    }
+
+    /* Hanging Chains (SVG) */
+    .pan-chains {
+      display: block;
+      width: 430px;
+      height: 56px;
+    }
+
+    /* Pan Tray Cards */
+    .pan-card {
+      background-color: #F5F0E4;
+      border: 3px solid #141414;
+      padding: 16px;
+      box-shadow: 0 10px 0 rgba(20, 20, 20, 0.2);
+      position: relative;
+    }
+
+    .pan-header {
+      background-color: #141414;
+      color: #F7F4EC;
+      padding: 8px 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .pan-header-title {
+      font-size: 20px;
+      font-weight: 900;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    .pan-header-side {
+      font-size: 13px;
+      font-weight: 900;
+      background-color: #FF6A1A;
+      color: #141414;
+      padding: 2px 8px;
+      letter-spacing: 0.5px;
+    }
+
+    .pan-items-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .item-card {
+      background-color: #E7E3D9;
+      border: 2px solid #141414;
+      padding: 12px 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .item-info {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .item-title {
+      font-size: 18px;
+      font-weight: 900;
+      color: #141414;
+      line-height: 1.25;
+    }
+
+    .item-desc {
+      font-size: 13px;
+      font-weight: 700;
+      color: #141414;
+      margin-top: 2px;
+    }
+
+    .item-pill {
+      background-color: #141414;
+      color: #F7F4EC;
+      font-size: 12px;
+      font-weight: 900;
+      padding: 4px 8px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    /* Acknowledged Stamp (Left Pan) */
+    #left-acknowledged-stamp {
+      margin-top: 12px;
+      background-color: #E7E3D9;
+      border: 2px dashed #141414;
+      padding: 8px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .stamp-text {
+      color: #141414;
+      font-size: 13px;
+      font-weight: 900;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    /* Heavy Weight Item that drops into Right Pan */
+    #heavy-weight {
+      background-color: #141414;
+      border: 3px solid #FF6A1A;
+      padding: 12px 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 6px 0 rgba(20, 20, 20, 0.3);
+    }
+
+    .heavy-title {
+      font-size: 18px;
+      font-weight: 900;
+      color: #F7F4EC;
+      line-height: 1.2;
+    }
+
+    .heavy-sub {
+      font-size: 13px;
+      font-weight: 700;
+      color: #FF6A1A;
+      margin-top: 2px;
+    }
+
+    .heavy-badge {
+      background-color: #FF6A1A;
+      color: #141414;
+      font-size: 13px;
+      font-weight: 900;
+      padding: 6px 10px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    /* Comparison Axis Label (Middle indicator) */
+    .axis-label {
+      position: absolute;
+      top: 676px;
+      left: 100px;
+      right: 100px;
+      background-color: #141414;
+      color: #F7F4EC;
+      padding: 8px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 4px solid #FF6A1A;
+      z-index: 2;
+    }
+
+    .axis-label-left {
+      color: #E7E3D9;
+      font-size: 14px;
+      font-weight: 900;
+      letter-spacing: 1px;
+    }
+
+    .axis-label-center {
+      color: #FF6A1A;
+      font-size: 16px;
+      font-weight: 900;
+      letter-spacing: 1.5px;
+    }
+
+    .axis-label-right {
+      color: #FF6A1A;
+      font-size: 14px;
+      font-weight: 900;
+      letter-spacing: 1px;
+    }
+
+    /* Overlay 2 & 3: Punch Phrase & Warning Icon */
+    #punch-overlay {
+      position: absolute;
+      top: 1200px;
+      left: 60px;
+      right: 60px;
+      height: 140px;
+      background-color: #141414;
+      border: 4px solid #FF6A1A;
+      box-shadow: 0 16px 0 rgba(20, 20, 20, 0.3);
+      display: flex;
+      align-items: center;
+      padding: 0 28px;
+      gap: 24px;
+      z-index: 25;
+    }
+
+    #warning-badge {
+      width: 80px;
+      height: 80px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .punch-content {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .punch-kicker {
+      color: #FF6A1A;
+      font-size: 16px;
+      font-weight: 900;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    .punch-headline {
+      color: #F7F4EC;
+      font-size: 50px;
+      font-weight: 900;
+      letter-spacing: 1.5px;
+      line-height: 1.1;
+      text-transform: uppercase;
+    }
+  </style>
+
+  <div
+    id="root"
+    data-composition-id="scene-s35"
+    data-start="0"
+    data-width="1080"
+    data-height="1920"
+    data-duration="7.04"
+  >
+    <section id="scene-s35" class="clip" data-start="0" data-duration="7.04">
+      <div id="camera-rig">
+        <div id="scene-container">
+
+          <!-- Top metadata bar -->
+          <div class="top-meta-bar">
+            <div class="meta-tag">
+              <span class="meta-tag-dot"></span>
+              <span>HỘI ĐỒNG XÉT XỬ</span>
+            </div>
+            <div class="meta-sub">CÂN NHẮC LƯỢNG HÌNH</div>
+          </div>
+
+          <!-- Overlay 1 (atMs: 274020 = 0.92s, holdMs: 2400) -->
+          <div id="overlay-label">
+            <div class="overlay-title-group">
+              <span class="overlay-kicker">QUÁ TRÌNH NGHỊ ÁN</span>
+              <span class="overlay-main-text">CÂN NHẮC TOÀN DIỆN</span>
+            </div>
+            <div class="overlay-status-pill">ĐỐI CHIẾU</div>
+          </div>
+
+          <!-- Justice Scale Rig -->
+          <div id="scale-rig">
+
+            <!-- Center Pillar & Base -->
+            <div class="pillar-structure">
+              <div class="pillar-body">
+                <div class="pillar-line"></div>
+              </div>
+              <div class="pillar-pedestal">
+                <span class="pedestal-text">CÔNG LÝ & PHÁP LUẬT</span>
+              </div>
+              <div class="fulcrum-pin"></div>
+            </div>
+
+            <!-- Rotating Crossbeam -->
+            <div id="scale-beam">
+              <div class="beam-ring-left"></div>
+              <div class="beam-ring-right"></div>
+            </div>
+
+            <!-- Left Pan: Tình tiết giảm nhẹ -->
+            <div id="left-pan-wrap">
+              <svg class="pan-chains" viewBox="0 0 430 56">
+                <circle cx="215" cy="8" r="7" fill="#E7E3D9" stroke="#141414" stroke-width="3"/>
+                <line x1="215" y1="15" x2="30" y2="56" stroke="#141414" stroke-width="3" stroke-linecap="round"/>
+                <line x1="215" y1="15" x2="400" y2="56" stroke="#141414" stroke-width="3" stroke-linecap="round"/>
+              </svg>
+
+              <div class="pan-card">
+                <div class="pan-header">
+                  <span class="pan-header-title">TÌNH TIẾT GIẢM NHẸ</span>
+                  <span class="pan-header-side">KHOAN HỒNG</span>
+                </div>
+
+                <div class="pan-items-list">
+                  <div class="item-card left-item">
+                    <div class="item-info">
+                      <span class="item-title">Tình tiết giảm nhẹ</span>
+                      <span class="item-desc">Được xem xét trong vụ án</span>
+                    </div>
+                    <span class="item-pill">XEM XÉT</span>
+                  </div>
+
+                  <div class="item-card left-item">
+                    <div class="item-info">
+                      <span class="item-title">Cân nhắc lượng hình</span>
+                      <span class="item-desc">Tòa án đối chiếu quy định</span>
+                    </div>
+                    <span class="item-pill">ĐỐI CHIẾU</span>
+                  </div>
+                </div>
+
+                <!-- Acknowledgement Badge -->
+                <div id="left-acknowledged-stamp">
+                  <span class="stamp-text">✓ TÒA CÂN NHẮC TOÀN DIỆN</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Right Pan: Tính chất hành vi -->
+            <div id="right-pan-wrap">
+              <svg class="pan-chains" viewBox="0 0 430 56">
+                <circle cx="215" cy="8" r="7" fill="#E7E3D9" stroke="#141414" stroke-width="3"/>
+                <line x1="215" y1="15" x2="30" y2="56" stroke="#141414" stroke-width="3" stroke-linecap="round"/>
+                <line x1="215" y1="15" x2="400" y2="56" stroke="#141414" stroke-width="3" stroke-linecap="round"/>
+              </svg>
+
+              <div class="pan-card">
+                <div class="pan-header">
+                  <span class="pan-header-title">TÍNH CHẤT HÀNH VI</span>
+                  <span class="pan-header-side">NGHIÊM TRỊ</span>
+                </div>
+
+                <div class="pan-items-list">
+                  <div class="item-card right-item">
+                    <div class="item-info">
+                      <span class="item-title">Hành vi tấn công</span>
+                      <span class="item-desc">Mức độ và tính chất hành vi</span>
+                    </div>
+                    <span class="item-pill">ĐÁNH GIÁ</span>
+                  </div>
+
+                  <!-- Heavy Weight that drops in at reversal -->
+                  <div id="heavy-weight">
+                    <div class="item-info">
+                      <span class="heavy-title">Tính chất đặc biệt nguy hiểm</span>
+                      <span class="heavy-sub">Áp đảo tình tiết giảm nhẹ</span>
+                    </div>
+                    <span class="heavy-badge">KẾT LUẬN</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Axis Baseline Label -->
+            <div class="axis-label">
+              <span class="axis-label-left">KHOAN HỒNG</span>
+              <span class="axis-label-center">⚖ CÁN CÂN CÔNG LÝ</span>
+              <span class="axis-label-right">RĂN ĐE</span>
+            </div>
+
+          </div>
+
+          <!-- Overlay 2 (Punch Phrase, atMs: 278990 = 5.89s) & Overlay 3 (Warning Icon, atMs: 279590 = 6.49s) -->
+          <div id="punch-overlay">
+            <div id="warning-badge">
+              <svg id="warning-svg" viewBox="0 0 80 80" width="80" height="80">
+                <path id="warning-triangle" d="M 40 8 L 74 68 L 6 68 Z" fill="none" stroke="#FF6A1A" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"/>
+                <line id="warning-line" x1="40" y1="28" x2="40" y2="48" stroke="#FF6A1A" stroke-width="5" stroke-linecap="round"/>
+                <circle id="warning-dot" cx="40" cy="59" r="3" fill="#FF6A1A"/>
+              </svg>
+            </div>
+            <div class="punch-content">
+              <span class="punch-kicker">ĐÁNH GIÁ CỦA HỘI ĐỒNG XÉT XỬ</span>
+              <span class="punch-headline">ĐẶC BIỆT NGUY HIỂM</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+      <div class="bottom-orange-bar"></div>
+    </section>
+  </div>
+
+  <script>
+    // Progressive SVG path draw setup for warning icon
+    const tri = document.getElementById("warning-triangle");
+    const triLen = tri.getTotalLength();
+    tri.style.strokeDasharray = triLen;
+    tri.style.strokeDashoffset = triLen;
+
+    const line = document.getElementById("warning-line");
+    const lineLen = line.getTotalLength();
+    line.style.strokeDasharray = lineLen;
+    line.style.strokeDashoffset = lineLen;
+
+    const tl = gsap.timeline({ paused: true });
+
+    // 0.00s: Subtle documentary camera pan-right
+    tl.fromTo("#camera-rig",
+      { x: -6 },
+      { x: 6, duration: 7.04, ease: "none" },
+      0
+    );
+
+    // 0.00s: Transition in - rise
+    tl.fromTo("#scene-container",
+      { y: 40, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.7, ease: "power3.out" },
+      0
+    );
+
+    // 0.15s: Pillar and beam setup
+    tl.fromTo(".pillar-body",
+      { scaleY: 0, transformOrigin: "bottom center" },
+      { scaleY: 1, duration: 0.55, ease: "power3.out" },
+      0.15
+    );
+    tl.fromTo("#scale-beam",
+      { scaleX: 0, opacity: 0 },
+      { scaleX: 1, opacity: 1, duration: 0.5, ease: "power3.out" },
+      0.35
+    );
+
+    // 0.45s: Pans drop down
+    tl.fromTo("#left-pan-wrap",
+      { y: -30, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.5, ease: "power3.out" },
+      0.45
+    );
+    tl.fromTo("#right-pan-wrap",
+      { y: -30, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.5, ease: "power3.out" },
+      0.5
+    );
+
+    // Initial state: hide heavy weight and overlays
+    tl.set("#heavy-weight", { opacity: 0 }, 0);
+    tl.set("#punch-overlay", { opacity: 0, y: 30 }, 0);
+    tl.set("#warning-badge", { opacity: 0 }, 0);
+
+    // 0.92s: Overlay 1 - "CÂN NHẮC TOÀN DIỆN" (atMs: 274020, holdMs: 2400)
+    tl.fromTo("#overlay-label",
+      { y: -20, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.5, ease: "power3.out" },
+      0.92
+    );
+
+    // 1.25s: Mitigating items populate left pan
+    tl.fromTo(".left-item",
+      { y: 16, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.4, stagger: 0.12, ease: "power2.out" },
+      1.25
+    );
+    tl.fromTo("#left-acknowledged-stamp",
+      { scale: 0.9, opacity: 0 },
+      { scale: 1, opacity: 1, duration: 0.35, ease: "power3.out" },
+      1.65
+    );
+
+    // 1.95s: Scale tilts slightly left (-4.5 deg) as mitigating factors are weighed
+    tl.to("#scale-beam", { rotation: -4.5, duration: 0.7, ease: "power2.out" }, 1.95);
+    tl.to("#left-pan-wrap", { y: 21, duration: 0.7, ease: "power2.out" }, 1.95);
+    tl.to("#right-pan-wrap", { y: -21, duration: 0.7, ease: "power2.out" }, 1.95);
+
+    // 2.35s: Severity item appears on right pan
+    tl.fromTo(".right-item",
+      { y: 16, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.4, ease: "power2.out" },
+      2.35
+    );
+
+    // 3.32s: Overlay 1 exits cleanly at hold end (0.92 + 2.4s = 3.32s)
+    tl.to("#overlay-label",
+      { opacity: 0, duration: 0.3, ease: "power2.in" },
+      3.32
+    );
+
+    // 4.10s: Scale pivots back to level as the reversal approaches
+    tl.to("#scale-beam", { rotation: 0, duration: 0.45, ease: "power2.inOut" }, 4.1);
+    tl.to("#left-pan-wrap", { y: 0, duration: 0.45, ease: "power2.inOut" }, 4.1);
+    tl.to("#right-pan-wrap", { y: 0, duration: 0.45, ease: "power2.inOut" }, 4.1);
+
+    // 4.55s: The Heavy Weight item drops into right pan
+    tl.fromTo("#heavy-weight",
+      { y: -40, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.35, ease: "power3.in" },
+      4.55
+    );
+
+    // 4.90s: SEVERE REVERSAL SLAM! Right pan plunges (+76px), left pan rises (-76px)
+    tl.to("#scale-beam", { rotation: 15, duration: 0.65, ease: "power4.out" }, 4.9);
+    tl.to("#left-pan-wrap", { y: -76, duration: 0.65, ease: "power4.out" }, 4.9);
+    tl.to("#right-pan-wrap", { y: 76, duration: 0.65, ease: "power4.out" }, 4.9);
+
+    // 5.89s: Overlay 2 - Punch Phrase "ĐẶC BIỆT NGUY HIỂM" (atMs: 278990)
+    tl.fromTo("#punch-overlay",
+      { y: 30, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.45, ease: "power3.out" },
+      5.89
+    );
+
+    // 6.49s: Overlay 3 - Warning Icon self-draws progressively (atMs: 279590)
+    tl.fromTo("#warning-badge",
+      { opacity: 0 },
+      { opacity: 1, duration: 0.1 },
+      6.49
+    );
+    tl.to("#warning-triangle",
+      { strokeDashoffset: 0, duration: 0.35, ease: "power2.out" },
+      6.49
+    );
+    tl.to("#warning-line",
+      { strokeDashoffset: 0, duration: 0.2, ease: "power2.out" },
+      6.65
+    );
+    tl.fromTo("#warning-dot",
+      { scale: 0, opacity: 0, transformOrigin: "40px 59px" },
+      { scale: 1, opacity: 1, duration: 0.15, ease: "power3.out" },
+      6.75
+    );
+
+    window.__timelines["scene-s35"] = tl;
+  </script>
+
+    </template>
+  </body>
+</html>

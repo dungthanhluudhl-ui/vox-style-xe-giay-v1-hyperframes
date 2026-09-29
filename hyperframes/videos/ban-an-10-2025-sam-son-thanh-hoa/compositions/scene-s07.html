@@ -1,0 +1,566 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+/* hf-safe-colors (tất định từ style-tokens.json) */
+.hf-text-ink { color: #141414; }
+.hf-text-light { color: #F7F4EC; }
+.hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+.hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+.hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+.hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: #E7E3D9;
+      color: #141414;
+      font-family: "Be Vietnam Pro", sans-serif;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    #root {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #E7E3D9;
+    }
+
+    .clip {
+      position: absolute;
+      inset: 0;
+    }
+
+    /* Camera rig & photo */
+    #camera-rig {
+      position: absolute;
+      inset: 0;
+      transform-origin: 50% 45%;
+      will-change: transform, opacity;
+    }
+
+    .photo-layer {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+    }
+
+    #bg-photo {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center 32%;
+      will-change: transform;
+    }
+
+    /* Scrim overlays to ensure readable contrast */
+    .scrim-top {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 380px;
+      background: linear-gradient(180deg, rgba(20,20,20,0.65) 0%, rgba(20,20,20,0.2) 65%, transparent 100%);
+      pointer-events: none;
+    }
+
+    .scrim-bottom {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 520px;
+      background: linear-gradient(0deg, rgba(20,20,20,0.72) 0%, rgba(20,20,20,0.3) 60%, transparent 100%);
+      pointer-events: none;
+    }
+
+    /* Permanent bottom signature bar */
+    #bottom-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 12px;
+      background-color: #FF6A1A;
+      z-index: 100;
+    }
+
+    /* Top Dossier Header (Safe zone >= 160px) */
+    .header-container {
+      position: absolute;
+      top: 170px;
+      left: 60px;
+      right: 60px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 30;
+    }
+
+    .dossier-pill {
+      display: inline-flex;
+      align-items: center;
+      background-color: #141414;
+      border-radius: 8px;
+      padding: 10px 18px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+    }
+
+    .dossier-pill .tag-mark {
+      width: 10px;
+      height: 10px;
+      background-color: #FF6A1A;
+      border-radius: 2px;
+      margin-right: 12px;
+    }
+
+    .dossier-pill .tag-text {
+      color: #F7F4EC;
+      font-size: 24px;
+      font-weight: 900;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+    }
+
+    .badge-status {
+      background-color: #FF6A1A;
+      color: #141414;
+      font-size: 22px;
+      font-weight: 900;
+      padding: 10px 20px;
+      border-radius: 8px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    /* SVG Annotation Layer */
+    .annotation-svg {
+      position: absolute;
+      inset: 0;
+      width: 1080px;
+      height: 1920px;
+      pointer-events: none;
+      z-index: 20;
+    }
+
+    .anim-draw {
+      fill: none;
+      stroke: #FF6A1A;
+      stroke-width: 4;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    /* Annotation 1: MẶC SẮC PHỤC CHUẨN */
+    .callout-uniform {
+      position: absolute;
+      top: 520px;
+      left: 60px;
+      z-index: 35;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      will-change: transform, opacity;
+    }
+
+    /* Annotation 2: XUẤT TRÌNH THẺ NGÀNH */
+    .callout-badge {
+      position: absolute;
+      top: 410px;
+      right: 60px;
+      z-index: 35;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      will-change: transform, opacity;
+    }
+
+    /* Solid Plate Card Styles */
+    .evidence-card {
+      background-color: #141414;
+      border-radius: 12px;
+      padding: 18px 24px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.45);
+      border-left: 6px solid #FF6A1A;
+    }
+
+    .evidence-card.right-aligned {
+      border-left: none;
+      border-right: 6px solid #FF6A1A;
+      text-align: right;
+    }
+
+    .card-header-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .card-header-row.right-aligned {
+      justify-content: flex-end;
+    }
+
+    .tag-category {
+      background-color: #FF6A1A;
+      color: #141414;
+      font-size: 18px;
+      font-weight: 900;
+      padding: 4px 10px;
+      border-radius: 4px;
+      letter-spacing: 0.5px;
+    }
+
+    .card-title {
+      color: #F7F4EC;
+      font-size: 38px;
+      font-weight: 900;
+      line-height: 1.25;
+      letter-spacing: 0.5px;
+    }
+
+    /* Reticle Targets */
+    .reticle-box {
+      position: absolute;
+      pointer-events: none;
+      z-index: 25;
+      will-change: transform, opacity;
+    }
+
+    .reticle-circle {
+      width: 44px;
+      height: 44px;
+      border: 3px solid #FF6A1A;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: rgba(20,20,20,0.6);
+    }
+
+    .reticle-dot {
+      width: 12px;
+      height: 12px;
+      background-color: #FF6A1A;
+      border-radius: 50%;
+    }
+
+    .reticle-bracket {
+      width: 140px;
+      height: 150px;
+      border: 3px dashed #FF6A1A;
+      border-radius: 12px;
+      background-color: rgba(255, 106, 26, 0.12);
+    }
+
+    /* Overlay 3: Punch Phrase (YÊU CẦU TẮP LỀ) */
+    .punch-wrapper {
+      position: absolute;
+      left: 60px;
+      right: 60px;
+      bottom: 580px; /* Securely above safeZone.bottom (530px) */
+      z-index: 40;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      will-change: transform, opacity;
+    }
+
+    .punch-plate {
+      width: 100%;
+      background-color: #141414;
+      border-radius: 20px;
+      padding: 30px 36px;
+      box-shadow: 0 16px 40px rgba(0,0,0,0.65);
+      border-top: 8px solid #FF6A1A;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+
+    .punch-top-meta {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .action-badge {
+      background-color: #FF6A1A;
+      color: #141414;
+      font-size: 22px;
+      font-weight: 900;
+      padding: 6px 18px;
+      border-radius: 6px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .punch-headline {
+      color: #F7F4EC;
+      font-size: 68px;
+      font-weight: 900;
+      line-height: 1.2;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .punch-underline {
+      width: 100%;
+      height: 8px;
+      background-color: #FF6A1A;
+      margin-top: 18px;
+      transform-origin: 50% 50%;
+    }
+
+    /* Direction Indicator (45-degree arrow) */
+    .arrow-container {
+      position: absolute;
+      top: -50px;
+      right: 40px;
+      width: 84px;
+      height: 84px;
+      background-color: #FF6A1A;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.45);
+      will-change: transform, opacity;
+    }
+
+    .arrow-icon {
+      width: 44px;
+      height: 44px;
+      fill: #141414;
+    }
+  </style>
+
+  <div
+    id="root"
+    data-composition-id="scene-s07"
+    data-start="0"
+    data-width="1080"
+    data-height="1920"
+    data-duration="9.79"
+  >
+    <!-- Scene Main Clip -->
+    <section id="scene-s07" class="clip" data-start="0" data-duration="9.79">
+      
+      <!-- Camera Rig with 3D Flip entrance -->
+      <div id="camera-rig">
+        <div class="photo-layer">
+          <img
+            id="bg-photo"
+            src="assets/img-10-police-officer-showing-badge.jpg"
+            alt="Chiến sĩ công an giơ thẻ ngành kiểm tra"
+          />
+        </div>
+
+        <div class="scrim-top"></div>
+        <div class="scrim-bottom"></div>
+
+        <!-- SVG Annotations -->
+        <svg class="annotation-svg" viewBox="0 0 1080 1920">
+          <!-- Line to uniform: from card to chest area -->
+          <path id="path-uniform" class="anim-draw" d="M 430 600 L 490 690" />
+          <!-- Line to badge: from card to badge area -->
+          <path id="path-badge" class="anim-draw" d="M 640 490 L 590 560" />
+        </svg>
+
+        <!-- Reticle Target 1: Chest Uniform -->
+        <div id="reticle-uniform" class="reticle-box" style="top: 670px; left: 470px;">
+          <div class="reticle-circle">
+            <div class="reticle-dot"></div>
+          </div>
+        </div>
+
+        <!-- Reticle Target 2: Police ID Badge -->
+        <div id="reticle-badge" class="reticle-box" style="top: 500px; left: 520px;">
+          <div class="reticle-bracket"></div>
+        </div>
+      </div>
+
+      <!-- Top Dossier Header -->
+      <div id="dossier-header" class="header-container">
+        <div class="dossier-pill">
+          <div class="tag-mark"></div>
+          <div class="tag-text">QUY TRÌNH KIỂM TRA</div>
+        </div>
+        <div class="badge-status">ĐÚNG QUY CHUẨN</div>
+      </div>
+
+      <!-- Callout 1 (atMs: 62030 -> 4.42s) -->
+      <div id="callout-uniform" class="callout-uniform">
+        <div class="evidence-card">
+          <div class="card-header-row">
+            <span class="tag-category">QUY CHUẨN</span>
+          </div>
+          <h2 class="card-title">MẶC SẮC PHỤC CHUẨN</h2>
+        </div>
+      </div>
+
+      <!-- Callout 2 (atMs: 63180 -> 5.57s) -->
+      <div id="callout-badge" class="callout-badge">
+        <div class="evidence-card right-aligned">
+          <div class="card-header-row right-aligned">
+            <span class="tag-category">QUY CHUẨN</span>
+          </div>
+          <h2 class="card-title">XUẤT TRÌNH THẺ NGÀNH</h2>
+        </div>
+      </div>
+
+      <!-- Punch Phrase 3 (atMs: 65310 -> 7.70s) -->
+      <div id="punch-container" class="punch-wrapper">
+        <div id="arrow-director" class="arrow-container">
+          <!-- 45 degree roadside arrow indicator -->
+          <svg class="arrow-icon" viewBox="0 0 24 24">
+            <path d="M5 19L19 5M19 5H9M19 5V15" stroke="#141414" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+          </svg>
+        </div>
+
+        <div class="punch-plate">
+          <div class="punch-top-meta">
+            <span class="action-badge">HIỆU LỆNH KIỂM TRA</span>
+          </div>
+          <h1 class="punch-headline">YÊU CẦU TẮP LỀ</h1>
+          <div id="punch-line" class="punch-underline"></div>
+        </div>
+      </div>
+
+      <!-- Bottom Brand Signature Stripe -->
+      <div id="bottom-bar"></div>
+    </section>
+  </div>
+
+  <script>
+    // Progressive SVG Path Setup
+    const pathUniform = document.getElementById("path-uniform");
+    const pathBadge = document.getElementById("path-badge");
+
+    const lenUniform = pathUniform.getTotalLength();
+    pathUniform.style.strokeDasharray = lenUniform;
+    pathUniform.style.strokeDashoffset = lenUniform;
+
+    const lenBadge = pathBadge.getTotalLength();
+    pathBadge.style.strokeDasharray = lenBadge;
+    pathBadge.style.strokeDashoffset = lenBadge;
+
+    // Single Master Paused Timeline for Seek-Safe Deterministic Render
+    const tl = gsap.timeline({ paused: true });
+
+    // 1. Scene Entrance (Flip transition) & Camera Pan (0.00s -> 9.79s)
+    tl.fromTo(
+      "#camera-rig",
+      { rotationY: 22, transformPerspective: 1200, scale: 0.93, opacity: 0 },
+      { rotationY: 0, scale: 1, opacity: 1, duration: 0.75, ease: "power3.out" },
+      0.0
+    );
+
+    // Continuous Pan-Left & Gentle Zoom into Police Badge (9.79s)
+    tl.fromTo(
+      "#bg-photo",
+      { scale: 1.0, x: 25 },
+      { scale: 1.045, x: -35, duration: 9.79, ease: "none" },
+      0.0
+    );
+
+    // Top Dossier Header Entrance
+    tl.fromTo(
+      "#dossier-header",
+      { y: -30, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.55, ease: "power3.out" },
+      0.35
+    );
+
+    // Initial State of Overlays (All explicit in timeline)
+    gsap.set("#reticle-uniform", { scale: 0, opacity: 0 });
+    gsap.set("#callout-uniform", { x: -30, opacity: 0 });
+
+    gsap.set("#reticle-badge", { scale: 1.3, opacity: 0 });
+    gsap.set("#callout-badge", { x: 30, opacity: 0 });
+
+    gsap.set("#arrow-director", { scale: 0, opacity: 0, rotation: -35 });
+    gsap.set("#punch-container", { scale: 0.9, y: 35, opacity: 0 });
+    gsap.set("#punch-line", { scaleX: 0 });
+
+    // 2. Overlay 1: "MẶC SẮC PHỤC CHUẨN" (atMs: 62030 -> 4.42s)
+    tl.fromTo(
+      "#reticle-uniform",
+      { scale: 0, opacity: 0 },
+      { scale: 1, opacity: 1, duration: 0.35, ease: "power3.out" },
+      4.42
+    );
+    tl.to(
+      "#path-uniform",
+      { strokeDashoffset: 0, duration: 0.3, ease: "power2.out" },
+      4.52
+    );
+    tl.fromTo(
+      "#callout-uniform",
+      { x: -30, opacity: 0 },
+      { x: 0, opacity: 1, duration: 0.45, ease: "power3.out" },
+      4.60
+    );
+
+    // 3. Overlay 2: "XUẤT TRÌNH THẺ NGÀNH" (atMs: 63180 -> 5.57s)
+    tl.fromTo(
+      "#reticle-badge",
+      { scale: 1.3, opacity: 0 },
+      { scale: 1, opacity: 1, duration: 0.35, ease: "power3.out" },
+      5.57
+    );
+    tl.to(
+      "#path-badge",
+      { strokeDashoffset: 0, duration: 0.3, ease: "power2.out" },
+      5.68
+    );
+    tl.fromTo(
+      "#callout-badge",
+      { x: 30, opacity: 0 },
+      { x: 0, opacity: 1, duration: 0.45, ease: "power3.out" },
+      5.76
+    );
+
+    // 4. Overlay 3: Punch Phrase "YÊU CẦU TẮP LỀ" (atMs: 65310 -> 7.70s)
+    tl.fromTo(
+      "#arrow-director",
+      { scale: 0, opacity: 0, rotation: -35 },
+      { scale: 1, opacity: 1, rotation: 0, duration: 0.4, ease: "power3.out" },
+      7.70
+    );
+    tl.fromTo(
+      "#punch-container",
+      { scale: 0.9, y: 35, opacity: 0 },
+      { scale: 1, y: 0, opacity: 1, duration: 0.5, ease: "power3.out" },
+      7.78
+    );
+    tl.fromTo(
+      "#punch-line",
+      { scaleX: 0 },
+      { scaleX: 1, duration: 0.45, ease: "power2.out" },
+      7.95
+    );
+
+    // Register paused timeline with HyperFrames runtime
+    window.__timelines = window.__timelines || {};
+    window.__timelines["scene-s07"] = tl;
+  </script>
+
+    </template>
+  </body>
+</html>

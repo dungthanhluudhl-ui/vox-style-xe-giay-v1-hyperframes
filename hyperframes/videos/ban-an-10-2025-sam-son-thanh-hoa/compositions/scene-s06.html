@@ -1,0 +1,560 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+      /* hf-safe-colors (chuẩn WCAG AA từ style-tokens.json) */
+      .hf-text-ink { color: #141414; }
+      .hf-text-light { color: #F7F4EC; }
+      .hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+      .hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+      .hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+      .hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background: #F5F0E4;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: #F5F0E4;
+      }
+      .clip {
+        position: absolute;
+        inset: 0;
+      }
+
+      /* Thanh cam nhận diện thương hiệu cố định mép đáy */
+      #bottom-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 12px;
+        background: #FF6A1A;
+        z-index: 100;
+      }
+
+      /* Khối chứa Overlay Header tuần tự */
+      #overlay-container {
+        position: absolute;
+        top: 180px;
+        left: 60px;
+        width: 960px;
+        height: 130px;
+        pointer-events: none;
+        z-index: 30;
+      }
+      .overlay-slot {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+      }
+
+      /* Badge pill (Overlay 1 & 3) */
+      .badge-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 16px;
+        padding: 16px 36px;
+        border-radius: 40px;
+        background: #141414;
+        box-shadow: 0 10px 30px rgba(20, 20, 20, 0.18);
+      }
+      .badge-pill .pill-dot {
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: #FF6A1A;
+      }
+      .badge-pill .pill-text {
+        font-size: 30px;
+        font-weight: 900;
+        color: #F7F4EC;
+        letter-spacing: 0.5px;
+      }
+
+      /* Punch box (Overlay 2) */
+      .punch-box {
+        display: inline-flex;
+        align-items: center;
+        gap: 18px;
+        padding: 16px 36px;
+        border-radius: 16px;
+        background: #141414;
+        box-shadow: 0 14px 40px rgba(20, 20, 20, 0.22);
+      }
+      .punch-box .punch-prefix {
+        font-size: 42px;
+        font-weight: 900;
+        color: #F7F4EC;
+        letter-spacing: 0.5px;
+      }
+      .punch-box .punch-tag {
+        padding: 6px 20px;
+        border-radius: 8px;
+        font-size: 44px;
+        font-weight: 900;
+        background: #FF6A1A;
+        color: #141414;
+        letter-spacing: 0.5px;
+      }
+
+      /* Trang án văn trích lục (Document sheet mockup - thuần đồ họa minh họa) */
+      #document-sheet {
+        position: absolute;
+        top: 340px;
+        left: 70px;
+        width: 940px;
+        height: 1040px;
+        background: #FDFBF7;
+        border: 2px solid rgba(20, 20, 20, 0.25);
+        border-radius: 12px;
+        box-shadow: 0 20px 50px rgba(20, 20, 20, 0.08);
+        padding: 44px 50px;
+        z-index: 10;
+        transform-origin: 50% 100%;
+        will-change: transform, opacity;
+      }
+
+      /* Kẹp ghim trang hồ sơ ở góc trên trái */
+      .sheet-staple {
+        position: absolute;
+        top: 14px;
+        left: 20px;
+        width: 32px;
+        height: 9px;
+        background: rgba(20, 20, 20, 0.5);
+        border-radius: 2px;
+        transform: rotate(-35deg);
+      }
+
+      /* Skeleton lines (thanh mô phỏng văn bản pháp lý thuần đồ họa) */
+      .skeleton-line {
+        background: rgba(20, 20, 20, 0.16);
+        border-radius: 4px;
+      }
+
+      /* Đầu trang hành chính */
+      .doc-header-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 2px solid rgba(20, 20, 20, 0.15);
+        padding-bottom: 20px;
+      }
+      .doc-header-bars-left {
+        width: 280px;
+      }
+      .doc-header-seal {
+        width: 60px;
+        height: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .doc-header-bars-right {
+        width: 280px;
+      }
+      .motto-divider {
+        width: 140px;
+        height: 2px;
+        background: #141414;
+        margin-top: 8px;
+        margin-left: auto;
+      }
+
+      /* Tiêu đề án văn mô phỏng */
+      .doc-title-block {
+        margin: 28px 0 20px 0;
+      }
+
+      .doc-rule {
+        height: 4px;
+        border-top: 2px solid #141414;
+        border-bottom: 1px solid rgba(20, 20, 20, 0.25);
+        margin: 20px 0 24px 0;
+      }
+
+      /* Khối trích lục danh tính */
+      .redaction-section {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        margin: 24px 0;
+      }
+      .redaction-row {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: #F8F6F0;
+        border: 2px solid rgba(20, 20, 20, 0.15);
+        border-radius: 8px;
+        padding: 18px 24px;
+        transition: border-color 0.3s ease;
+      }
+      .redaction-left {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
+      .tag-marker {
+        width: 8px;
+        height: 44px;
+        background: #FF6A1A;
+        border-radius: 4px;
+      }
+      .meta-lines {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .field-container {
+        position: relative;
+        display: inline-block;
+        overflow: hidden;
+        border-radius: 4px;
+      }
+      .field-placeholder {
+        width: 360px;
+        height: 28px;
+        background: rgba(20, 20, 20, 0.1);
+        border-radius: 4px;
+      }
+      .censor-bar {
+        position: absolute;
+        inset: 0;
+        background: #141414;
+        border-radius: 4px;
+        transform-origin: 0% 50%;
+        will-change: transform;
+        z-index: 2;
+      }
+      .redaction-right {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 6px;
+      }
+      .status-tag {
+        width: 70px;
+        height: 18px;
+        background: rgba(20, 20, 20, 0.2);
+        border-radius: 4px;
+      }
+
+      /* Chân trang án văn: Ghi chú & Con dấu cam thuần đồ họa */
+      .doc-footer-row {
+        position: absolute;
+        bottom: 34px;
+        left: 50px;
+        right: 50px;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+      }
+      .doc-footer-notes {
+        max-width: 520px;
+      }
+      .court-stamp {
+        width: 130px;
+        height: 130px;
+        transform-origin: 50% 50%;
+        will-change: transform, opacity;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s06"
+      data-width="1080"
+      data-height="1920"
+      data-duration="10.85"
+      data-start="0"
+    >
+      <section id="shot-s06-1" class="clip" data-start="0" data-duration="10.85">
+        <!-- Khối chứa 3 overlay tuần tự theo đúng shotlist -->
+        <div id="overlay-container">
+          <!-- Overlay 1: label "MÃ HÓA DANH TÍNH" (0.35s - 2.55s, hold 2.2s) -->
+          <div id="overlay-1" class="overlay-slot">
+            <div class="badge-pill hf-plate-ink">
+              <span class="pill-dot"></span>
+              <span class="pill-text hf-text-light">MÃ HÓA DANH TÍNH</span>
+            </div>
+          </div>
+
+          <!-- Overlay 2: punch-phrase "QUY ƯỚC: TUẤN & NGỌC" (3.90s - 6.30s, hold 2.4s) -->
+          <div id="overlay-2" class="overlay-slot">
+            <div class="punch-box hf-plate-ink">
+              <span class="punch-prefix hf-text-light">QUY ƯỚC:</span>
+              <span class="punch-tag hf-hl-orange">TUẤN &amp; NGỌC</span>
+            </div>
+          </div>
+
+          <!-- Overlay 3: label "TÊN GIẢ ĐỊNH DẪN CHUYỆN" (7.15s - 9.65s, hold 2.5s) -->
+          <div id="overlay-3" class="overlay-slot">
+            <div class="badge-pill hf-plate-ink">
+              <span class="pill-dot"></span>
+              <span class="pill-text hf-text-light">TÊN GIẢ ĐỊNH DẪN CHUYỆN</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Trang trích lục án văn (mô phỏng thuần túy bằng đồ họa/placeholder skeleton) -->
+        <div id="document-sheet">
+          <div class="sheet-staple"></div>
+
+          <!-- Đầu trang hành chính mô phỏng -->
+          <div class="doc-header-row">
+            <div class="doc-header-bars-left">
+              <div class="skeleton-line" style="width: 180px; height: 16px;"></div>
+              <div class="skeleton-line" style="width: 130px; height: 12px; margin-top: 8px;"></div>
+            </div>
+            <div class="doc-header-seal">
+              <svg width="44" height="44" viewBox="0 0 44 44" fill="none">
+                <circle cx="22" cy="22" r="20" stroke="#141414" stroke-width="2" />
+                <circle cx="22" cy="22" r="16" stroke="#141414" stroke-width="1" stroke-dasharray="3 2" />
+                <path d="M 22 10 L 22 34 M 14 15 L 30 15 M 14 15 L 10 24 M 14 15 L 18 24 M 30 15 L 26 24 M 30 15 L 34 24" stroke="#141414" stroke-width="2" stroke-linecap="round" />
+                <path d="M 9 24 Q 14 27 19 24 Z M 25 24 Q 30 27 35 24 Z" fill="#141414" />
+                <circle cx="22" cy="10" r="2" fill="#141414" />
+                <path d="M 17 34 L 27 34" stroke="#141414" stroke-width="2.5" stroke-linecap="round" />
+              </svg>
+            </div>
+            <div class="doc-header-bars-right">
+              <div class="skeleton-line" style="width: 200px; height: 16px; margin-left: auto;"></div>
+              <div class="skeleton-line" style="width: 150px; height: 12px; margin-top: 8px; margin-left: auto;"></div>
+              <div class="motto-divider"></div>
+            </div>
+          </div>
+
+          <!-- Tiêu đề văn bản mô phỏng -->
+          <div class="doc-title-block">
+            <div class="skeleton-line" style="width: 460px; height: 32px; margin: 0 auto; background: #141414; border-radius: 6px;"></div>
+            <div class="skeleton-line" style="width: 280px; height: 14px; margin: 12px auto 0 auto; background: rgba(20,20,20,0.3); border-radius: 4px;"></div>
+          </div>
+
+          <div class="doc-rule"></div>
+
+          <!-- Đoạn mở đầu mô phỏng -->
+          <div class="doc-paragraph">
+            <div class="skeleton-line" style="width: 100%; height: 14px;"></div>
+            <div class="skeleton-line" style="width: 92%; height: 14px; margin-top: 10px;"></div>
+            <div class="skeleton-line" style="width: 78%; height: 14px; margin-top: 10px;"></div>
+          </div>
+
+          <!-- Khối danh tính mã hóa (thanh đen che lên placeholder) -->
+          <div class="redaction-section">
+            <!-- Mục danh tính 1 -->
+            <div class="redaction-row" id="row-1">
+              <div class="redaction-left">
+                <div class="tag-marker"></div>
+                <div class="meta-lines">
+                  <div class="skeleton-line" style="width: 160px; height: 12px;"></div>
+                  <div class="field-container">
+                    <div class="field-placeholder"></div>
+                    <div id="censor-1" class="censor-bar"></div>
+                  </div>
+                  <div class="skeleton-line" style="width: 240px; height: 10px; margin-top: 8px;"></div>
+                </div>
+              </div>
+              <div class="redaction-right">
+                <div class="status-tag"></div>
+                <div class="skeleton-line" style="width: 110px; height: 12px; margin-top: 6px;"></div>
+              </div>
+            </div>
+
+            <!-- Mục danh tính 2 -->
+            <div class="redaction-row" id="row-2">
+              <div class="redaction-left">
+                <div class="tag-marker"></div>
+                <div class="meta-lines">
+                  <div class="skeleton-line" style="width: 180px; height: 12px;"></div>
+                  <div class="field-container">
+                    <div class="field-placeholder" style="width: 320px;"></div>
+                    <div id="censor-2" class="censor-bar"></div>
+                  </div>
+                  <div class="skeleton-line" style="width: 220px; height: 10px; margin-top: 8px;"></div>
+                </div>
+              </div>
+              <div class="redaction-right">
+                <div class="status-tag"></div>
+                <div class="skeleton-line" style="width: 110px; height: 12px; margin-top: 6px;"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Đoạn diễn giải kết thúc mô phỏng -->
+          <div class="doc-paragraph" style="margin-top: 24px;">
+            <div class="skeleton-line" style="width: 96%; height: 14px;"></div>
+            <div class="skeleton-line" style="width: 86%; height: 14px; margin-top: 10px;"></div>
+            <div class="skeleton-line" style="width: 60%; height: 14px; margin-top: 10px;"></div>
+          </div>
+
+          <!-- Chân trang án văn: Ghi chú & Con dấu cam thuần hình học -->
+          <div class="doc-footer-row">
+            <div class="doc-footer-notes">
+              <div class="skeleton-line" style="width: 260px; height: 12px;"></div>
+              <div class="skeleton-line" style="width: 360px; height: 10px; margin-top: 8px;"></div>
+              <div class="skeleton-line" style="width: 300px; height: 10px; margin-top: 8px;"></div>
+            </div>
+
+            <!-- Con dấu toà án cam đặc, hình học thuần túy KHÔNG chứa text bịa (WCAG 6.4:1) -->
+            <div id="court-stamp" class="court-stamp">
+              <svg width="130" height="130" viewBox="0 0 130 130">
+                <circle cx="65" cy="65" r="62" fill="#FF6A1A" stroke="#141414" stroke-width="3" />
+                <circle cx="65" cy="65" r="54" fill="none" stroke="#141414" stroke-width="1.5" stroke-dasharray="5 3" />
+                <polygon points="65,30 67,36 73,36 68,40 70,46 65,42 60,46 62,40 57,36 63,36" fill="#141414" />
+                <path d="M 65 48 L 65 84 M 53 55 L 77 55 M 53 55 L 48 68 M 53 55 L 58 68 M 77 55 L 72 68 M 77 55 L 82 68" stroke="#141414" stroke-width="2.5" stroke-linecap="round" />
+                <path d="M 46 68 Q 53 72 60 68 Z M 70 68 Q 77 72 84 68 Z" fill="#141414" />
+                <path d="M 58 84 L 72 84" stroke="#141414" stroke-width="3" stroke-linecap="round" />
+                <circle cx="65" cy="48" r="3" fill="#141414" />
+                <line x1="42" y1="94" x2="88" y2="94" stroke="#141414" stroke-width="2" />
+                <line x1="48" y1="99" x2="82" y2="99" stroke="#141414" stroke-width="1.5" />
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <!-- Dải cam cố định ở mép dưới canvas -->
+        <div id="bottom-bar"></div>
+      </section>
+    </div>
+
+    <script>
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true });
+
+      // Trạng thái ban đầu tĩnh
+      gsap.set("#censor-1, #censor-2", { scaleX: 0 });
+      gsap.set("#court-stamp", { opacity: 0, scale: 2.2, rotation: 35 });
+
+      // 0.10s: Trang trích lục án văn mở xuống theo hiệu ứng peel
+      tl.fromTo(
+        "#document-sheet",
+        {
+          opacity: 0,
+          y: 75,
+          scale: 0.94,
+          rotationX: 14,
+          transformPerspective: 1200,
+          transformOrigin: "50% 100%",
+        },
+        {
+          opacity: 1,
+          y: 0,
+          scale: 1,
+          rotationX: 0,
+          duration: 0.8,
+          ease: "power3.out",
+        },
+        0.10
+      );
+
+      // 0.35s: Overlay 1 "MÃ HÓA DANH TÍNH" xuất hiện (hold 2.2s -> kết thúc ở 2.55s)
+      tl.fromTo(
+        "#overlay-1",
+        { opacity: 0, y: 24 },
+        { opacity: 1, y: 0, duration: 0.35, ease: "power3.out" },
+        0.35
+      );
+
+      // 1.05s: Thanh đen mã hóa quét qua che dòng tên 1
+      tl.fromTo(
+        "#censor-1",
+        { scaleX: 0 },
+        { scaleX: 1, duration: 0.35, ease: "power2.out" },
+        1.05
+      );
+
+      // 1.45s: Thanh đen mã hóa quét qua che dòng tên 2
+      tl.fromTo(
+        "#censor-2",
+        { scaleX: 0 },
+        { scaleX: 1, duration: 0.35, ease: "power2.out" },
+        1.45
+      );
+
+      // 1.80s: Con dấu cam toà án đóng xuống góc trang
+      tl.fromTo(
+        "#court-stamp",
+        { opacity: 0, scale: 2.2, rotation: 35 },
+        { opacity: 1, scale: 1, rotation: -8, duration: 0.45, ease: "power3.out" },
+        1.80
+      );
+
+      // 2.55s: Overlay 1 mờ dần kết thúc thời gian hiển thị (hold 2.2s)
+      tl.to(
+        "#overlay-1",
+        { opacity: 0, y: -16, duration: 0.30, ease: "power2.in" },
+        2.55
+      );
+
+      // 3.90s: Overlay 2 (Punch Phrase) "QUY ƯỚC: TUẤN & NGỌC" xuất hiện (hold 2.4s -> kết thúc ở 6.30s)
+      tl.fromTo(
+        "#overlay-2",
+        { opacity: 0, scale: 0.92, y: 20 },
+        { opacity: 1, scale: 1, y: 0, duration: 0.45, ease: "power3.out" },
+        3.90
+      );
+
+      // Viền cam nhấn mạnh 2 mục danh tính đồng bộ cùng punch phrase
+      tl.to(
+        ".redaction-row",
+        { borderColor: "#FF6A1A", duration: 0.4, stagger: 0.15, ease: "power2.out" },
+        4.10
+      );
+
+      // 6.30s: Overlay 2 mờ dần kết thúc thời gian hiển thị (hold 2.4s)
+      tl.to(
+        "#overlay-2",
+        { opacity: 0, y: -16, duration: 0.30, ease: "power2.in" },
+        6.30
+      );
+
+      // Trả lại viền trung tính
+      tl.to(
+        ".redaction-row",
+        { borderColor: "rgba(20, 20, 20, 0.15)", duration: 0.4, ease: "power2.out" },
+        6.40
+      );
+
+      // 7.15s: Overlay 3 "TÊN GIẢ ĐỊNH DẪN CHUYỆN" xuất hiện (hold 2.5s -> kết thúc ở 9.65s)
+      tl.fromTo(
+        "#overlay-3",
+        { opacity: 0, y: 24 },
+        { opacity: 1, y: 0, duration: 0.40, ease: "power3.out" },
+        7.15
+      );
+
+      // 9.65s: Overlay 3 mờ dần kết thúc thời gian hiển thị (hold 2.5s, không giữ đến hết scene)
+      tl.to(
+        "#overlay-3",
+        { opacity: 0, y: -16, duration: 0.35, ease: "power2.in" },
+        9.65
+      );
+
+      window.__timelines["scene-s06"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

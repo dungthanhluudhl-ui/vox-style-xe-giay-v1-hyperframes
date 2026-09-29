@@ -1,0 +1,485 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap">
+      <style>
+/* hf-safe-colors (tất định từ style-tokens.json) */
+.hf-text-ink { color: #141414; }
+.hf-text-light { color: #F7F4EC; }
+.hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+.hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+.hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+.hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: #E7E3D9;
+      color: #141414;
+      font-family: "Be Vietnam Pro", sans-serif;
+      width: 1080px;
+      height: 1920px;
+      overflow: hidden;
+    }
+
+    #root {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #E7E3D9;
+    }
+
+    .clip {
+      position: absolute;
+      inset: 0;
+    }
+
+    /* Background Grid (84px cell, 1.5px stroke) */
+    .bg-grid {
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(to right, rgba(20, 20, 20, 0.22) 1.5px, transparent 1.5px),
+        linear-gradient(to bottom, rgba(20, 20, 20, 0.22) 1.5px, transparent 1.5px);
+      background-size: 84px 84px;
+      pointer-events: none;
+    }
+
+    /* Fixed Vox Brand Bar at Canvas Bottom */
+    .brand-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 14px;
+      background-color: #FF6A1A;
+      z-index: 90;
+    }
+
+    /* Header Zone (Top Safe Zone >= 160px) */
+    #scene-header {
+      position: absolute;
+      top: 175px;
+      left: 70px;
+      width: 940px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      z-index: 10;
+    }
+
+    .badge-cat {
+      background-color: #FF6A1A;
+      color: #141414;
+      font-size: 22px;
+      font-weight: 900;
+      padding: 8px 18px;
+      border-radius: 4px;
+      border: 2px solid #141414;
+      letter-spacing: 0.5px;
+    }
+
+    .header-sub {
+      color: #141414;
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      opacity: 0.85;
+    }
+
+    /* Dossier Container (Bounded inside Y: 270px -> 1350px, Safe Zone bottom <= 1390px) */
+    #dossier-wrap {
+      position: absolute;
+      top: 270px;
+      left: 70px;
+      width: 940px;
+      height: 1080px;
+      z-index: 20;
+    }
+
+    #dossier-card {
+      width: 100%;
+      height: 100%;
+      background-color: #F5F0E4;
+      border: 3.5px solid #141414;
+      border-radius: 8px;
+      padding: 30px 36px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      box-shadow: 0 16px 36px rgba(20, 20, 20, 0.08);
+      transform-origin: 50% 50%;
+    }
+
+    /* Dossier Header Info */
+    .dossier-meta-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 2px dashed rgba(20, 20, 20, 0.35);
+      padding-bottom: 16px;
+    }
+
+    .meta-case-id {
+      font-size: 24px;
+      font-weight: 900;
+      color: #141414;
+      letter-spacing: 0.5px;
+    }
+
+    .meta-stage {
+      font-size: 19px;
+      font-weight: 700;
+      color: #141414;
+      opacity: 0.75;
+    }
+
+    /* List Slots for Stamps */
+    .stamps-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 22px;
+      margin-top: 14px;
+      margin-bottom: 14px;
+    }
+
+    .stamp-slot {
+      position: relative;
+      background-color: rgba(20, 20, 20, 0.03);
+      border: 1.5px dashed rgba(20, 20, 20, 0.25);
+      border-radius: 6px;
+      padding: 12px 16px 14px 16px;
+    }
+
+    .slot-label {
+      font-size: 15px;
+      font-weight: 700;
+      color: #141414;
+      opacity: 0.55;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-bottom: 8px;
+    }
+
+    /* Physical Rubber Stamp Styling */
+    .stamp-box {
+      border-radius: 6px;
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transform-origin: 50% 50%;
+      will-change: transform, opacity;
+    }
+
+    /* Stamp 1: Orange plate, ink text */
+    .stamp-orange {
+      background-color: #FF6A1A;
+      border: 4px solid #141414;
+      color: #141414;
+    }
+
+    /* Stamp 2: Ink plate, light & orange text */
+    .stamp-ink {
+      background-color: #141414;
+      border: 4px solid #FF6A1A;
+      color: #F7F4EC;
+    }
+
+    /* Stamp 3: High impact punch phrase stamp */
+    .stamp-punch {
+      background-color: #FF6A1A;
+      border: 5px solid #141414;
+      padding: 20px 24px;
+    }
+
+    .stamp-left {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+    }
+
+    .stamp-icon-wrap {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .stamp-texts {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .stamp-sub {
+      font-size: 17px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    .stamp-title {
+      font-size: 38px;
+      font-weight: 900;
+      line-height: 1.18;
+      letter-spacing: -0.5px;
+    }
+
+    .stamp-title-punch {
+      font-size: 42px;
+      font-weight: 900;
+      line-height: 1.15;
+      letter-spacing: -0.5px;
+    }
+
+    .stamp-badge {
+      font-size: 18px;
+      font-weight: 900;
+      padding: 8px 16px;
+      border-radius: 4px;
+      letter-spacing: 0.5px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .badge-dark {
+      background-color: #141414;
+      color: #F7F4EC;
+      border: 2px solid #141414;
+    }
+
+    .badge-orange {
+      background-color: #FF6A1A;
+      color: #141414;
+      border: 2px solid #FF6A1A;
+    }
+
+    .badge-punch {
+      background-color: #141414;
+      color: #FF6A1A;
+      border: 2px solid #141414;
+      font-size: 20px;
+      padding: 10px 18px;
+    }
+
+    /* Dossier Footer / Validation Area */
+    .dossier-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-top: 2px dashed rgba(20, 20, 20, 0.35);
+      padding-top: 16px;
+    }
+
+    .footer-seal {
+      border: 2px solid rgba(20, 20, 20, 0.45);
+      padding: 6px 14px;
+      border-radius: 4px;
+      font-size: 17px;
+      font-weight: 700;
+      color: #141414;
+      opacity: 0.75;
+      letter-spacing: 0.5px;
+    }
+
+    .footer-auth {
+      font-size: 18px;
+      font-weight: 900;
+      color: #141414;
+      letter-spacing: 1px;
+    }
+  </style>
+
+  <div
+    id="root"
+    data-composition-id="scene-s20"
+    data-start="0"
+    data-width="1080"
+    data-height="1920"
+    data-duration="6.88"
+  >
+    <!-- Visual Shot Clip S20-1 -->
+    <div id="shot-s20" class="clip" data-start="0" data-duration="6.88">
+      
+      <!-- Background Grid -->
+      <div class="bg-grid"></div>
+
+      <!-- Scene Header (Context) -->
+      <header id="scene-header">
+        <div class="badge-cat">TÌNH TIẾT GIẢM NHẸ</div>
+        <div class="header-sub">HỒ SƠ XÉT XỬ</div>
+      </header>
+
+      <!-- Dossier Document Wrapper -->
+      <main id="dossier-wrap">
+        <article id="dossier-card">
+          
+          <!-- Dossier Top Meta -->
+          <div class="dossier-meta-row">
+            <span class="meta-case-id">HỒ SƠ BỊ CÁO</span>
+            <span class="meta-stage">QUÁ TRÌNH ĐIỀU TRA &amp; PHIÊN TÒA</span>
+          </div>
+
+          <!-- 3 Mitigating Factor Stamps -->
+          <div class="stamps-stack">
+            
+            <!-- Slot 1: Thành khẩn khai báo -->
+            <div class="stamp-slot">
+              <div class="slot-label">01 • THÁI ĐỘ KHAI BÁO</div>
+              <div id="stamp-1" class="stamp-box stamp-orange">
+                <div class="stamp-left">
+                  <div class="stamp-icon-wrap">
+                    <svg width="42" height="42" viewBox="0 0 42 42" fill="none">
+                      <circle cx="21" cy="21" r="18" stroke="#141414" stroke-width="3"/>
+                      <path d="M13 21L19 27L29 15" stroke="#141414" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </div>
+                  <div class="stamp-texts">
+                    <span class="stamp-sub" style="color: #141414;">TÌNH TIẾT GIẢM NHẸ</span>
+                    <h2 class="stamp-title" style="color: #141414;">THÀNH KHẨN KHAI BÁO</h2>
+                  </div>
+                </div>
+                <div class="stamp-badge badge-dark">XÁC MINH</div>
+              </div>
+            </div>
+
+            <!-- Slot 2: Ăn năn hối cải -->
+            <div class="stamp-slot">
+              <div class="slot-label">02 • THÁI ĐỘ NHẬN THỨC</div>
+              <div id="stamp-2" class="stamp-box stamp-ink">
+                <div class="stamp-left">
+                  <div class="stamp-icon-wrap">
+                    <svg width="42" height="42" viewBox="0 0 42 42" fill="none">
+                      <circle cx="21" cy="21" r="18" stroke="#FF6A1A" stroke-width="3"/>
+                      <path d="M13 21L19 27L29 15" stroke="#FF6A1A" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </div>
+                  <div class="stamp-texts">
+                    <span class="stamp-sub" style="color: #FF6A1A;">TÌNH TIẾT GIẢM NHẸ</span>
+                    <h2 class="stamp-title" style="color: #F7F4EC;">ĂN NĂN HỐI CẢI</h2>
+                  </div>
+                </div>
+                <div class="stamp-badge badge-orange">GHI NHẬN</div>
+              </div>
+            </div>
+
+            <!-- Slot 3: Lần đầu ít nghiêm trọng (Punch Phrase) -->
+            <div class="stamp-slot">
+              <div class="slot-label">03 • MỨC ĐỘ &amp; TÍNH CHẤT PHẠM TỘI</div>
+              <div id="stamp-3" class="stamp-box stamp-punch">
+                <div class="stamp-left">
+                  <div class="stamp-icon-wrap">
+                    <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+                      <rect x="7" y="7" width="34" height="34" rx="6" stroke="#141414" stroke-width="3.5"/>
+                      <path d="M15 24L22 31L33 17" stroke="#141414" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </div>
+                  <div class="stamp-texts">
+                    <span class="stamp-sub" style="color: #141414;">KẾT LUẬN TẠI TÒA</span>
+                    <h1 class="stamp-title-punch" style="color: #141414;">LẦN ĐẦU ÍT NGHIÊM TRỌNG</h1>
+                  </div>
+                </div>
+                <div class="stamp-badge badge-punch">ÁP DỤNG</div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Dossier Footer Validation -->
+          <footer class="dossier-footer">
+            <div class="footer-seal">CHỨNG THỰC TẠI PHIÊN TÒA</div>
+            <div class="footer-auth">HỘI ĐỒNG XÉT XỬ</div>
+          </footer>
+
+        </article>
+      </main>
+
+      <!-- Signature Orange Bar -->
+      <div class="brand-bar"></div>
+
+    </div>
+  </div>
+
+  <script>
+    // HyperFrames Seek-Safe Deterministic Animation Setup
+    window.__timelines = window.__timelines || {};
+    const tl = gsap.timeline({ paused: true });
+
+    // Initial setup for stamps and elements to ensure accurate t=0 state
+    gsap.set("#stamp-1", { opacity: 0, scale: 1.35, rotation: 6 });
+    gsap.set("#stamp-2", { opacity: 0, scale: 1.35, rotation: -6 });
+    gsap.set("#stamp-3", { opacity: 0, scale: 1.45, rotation: 5 });
+
+    // 1. Entrance: Dossier rises into frame (transitionIn: rise)
+    tl.fromTo(
+      "#dossier-wrap",
+      { y: 120, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.65, ease: "power3.out" },
+      0.1
+    );
+
+    tl.fromTo(
+      "#scene-header",
+      { y: -30, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.5, ease: "power2.out" },
+      0.15
+    );
+
+    // 2. Camera Motion: Subtle continuous zoom-in throughout shot
+    tl.fromTo(
+      "#dossier-card",
+      { scale: 0.985 },
+      { scale: 1.025, duration: 6.88, ease: "none" },
+      0
+    );
+
+    // 3. Stamp 1: "THÀNH KHẨN KHAI BÁO" slams onto dossier at t = 1.79s (190110ms)
+    tl.fromTo(
+      "#stamp-1",
+      { scale: 1.35, opacity: 0, rotation: 6 },
+      { scale: 1.0, opacity: 1, rotation: -1.5, duration: 0.28, ease: "power4.out" },
+      1.79
+    );
+
+    // 4. Stamp 2: "ĂN NĂN HỐI CẢI" slams onto dossier at t = 3.02s (191340ms)
+    tl.fromTo(
+      "#stamp-2",
+      { scale: 1.35, opacity: 0, rotation: -6 },
+      { scale: 1.0, opacity: 1, rotation: 1.2, duration: 0.28, ease: "power4.out" },
+      3.02
+    );
+
+    // 5. Stamp 3: "LẦN ĐẦU ÍT NGHIÊM TRỌNG" (punch phrase) slams onto dossier at t = 4.32s (192640ms)
+    tl.fromTo(
+      "#stamp-3",
+      { scale: 1.45, opacity: 0, rotation: 5 },
+      { scale: 1.0, opacity: 1, rotation: -1.0, duration: 0.32, ease: "power4.out" },
+      4.32
+    );
+
+    // 6. Footer validation pulse
+    tl.fromTo(
+      ".dossier-footer",
+      { opacity: 0.4 },
+      { opacity: 1, duration: 0.4, ease: "power2.out" },
+      4.85
+    );
+
+    // Register root timeline to HyperFrames runtime
+    window.__timelines["scene-s20"] = tl;
+  </script>
+
+    </template>
+  </body>
+</html>

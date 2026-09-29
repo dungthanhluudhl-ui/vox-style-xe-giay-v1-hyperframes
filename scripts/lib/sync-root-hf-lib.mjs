@@ -75,7 +75,9 @@ export function syncRootHf(slug, root = process.cwd()) {
     ? new Set(
         fs
           .readdirSync(vp.hfCompositionsDir)
-          .filter((f) => /^scene-s\d+\.html$/i.test(f))
+          // scene ID có thể có hậu tố chữ cái khi 1 scene plan gốc bị tách thành scene con
+          // (vd "S17a"/"S17b"/"S17c") — regex phải chấp nhận hậu tố đó, không chỉ số thuần.
+          .filter((f) => /^scene-s\d+[a-z]*\.html$/i.test(f))
           .map((f) => f.replace(/^scene-/i, "").replace(/\.html$/i, "").toLowerCase()),
       )
     : new Set();

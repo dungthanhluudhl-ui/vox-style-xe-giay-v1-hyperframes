@@ -1,0 +1,593 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap">
+      <style>
+    /* hf-safe-colors (tất định từ style-tokens.json) */
+    .hf-text-ink { color: #141414; }
+    .hf-text-light { color: #F7F4EC; }
+    .hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+    .hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+    .hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+    .hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: #E7E3D9;
+      color: #141414;
+      font-family: "Be Vietnam Pro", sans-serif;
+      overflow: hidden;
+      width: 1080px;
+      height: 1920px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    #root {
+      position: relative;
+      width: 1080px;
+      height: 1920px;
+      overflow: hidden;
+      background: #E7E3D9;
+    }
+
+    .clip {
+      position: absolute;
+      inset: 0;
+    }
+
+    /* Persistent Vox bottom brand bar */
+    #persistent-bottom-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 14px;
+      background: #FF6A1A;
+      z-index: 1000;
+    }
+
+    /* Chart Background Variant: 4 ruled lines at 20, 40, 60, 80% with orange ticks (No text to avoid layout overlap) */
+    .chart-background {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .chart-line {
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: rgba(20, 20, 20, 0.22);
+    }
+
+    .chart-tick {
+      width: 32px;
+      height: 6px;
+      background: #FF6A1A;
+    }
+
+    /* Camera rig & scene content */
+    #camera-rig {
+      position: absolute;
+      inset: 0;
+      transform-origin: 540px 720px;
+      z-index: 10;
+    }
+
+    #scene-content {
+      position: absolute;
+      inset: 0;
+      transform-origin: 540px 680px;
+    }
+
+    /* Header Section (Y: 170px -> 340px) */
+    #header-block {
+      position: absolute;
+      top: 170px;
+      left: 50px;
+      right: 50px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .header-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      font-weight: 900;
+      letter-spacing: 1.5px;
+      background: #F5F0E4;
+      padding: 6px 16px;
+      border: 2px solid #141414;
+      border-radius: 4px;
+      margin-bottom: 12px;
+    }
+
+    .tag-dot {
+      width: 8px;
+      height: 8px;
+      background: #FF6A1A;
+      border-radius: 50%;
+    }
+
+    .main-title {
+      font-size: 42px;
+      font-weight: 900;
+      line-height: 1.2;
+      margin-bottom: 8px;
+      max-width: 960px;
+    }
+
+    .sub-title {
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: 1px;
+    }
+
+    /* Scale Diagram Area (Y: 360px -> 880px) */
+    #scale-wrapper {
+      position: absolute;
+      top: 360px;
+      left: 0;
+      right: 0;
+      height: 520px;
+    }
+
+    /* Fulcrum Base & Post */
+    #fulcrum-post {
+      position: absolute;
+      left: 533px;
+      top: 100px;
+      width: 14px;
+      height: 340px;
+      background: #141414;
+      border-radius: 4px;
+    }
+
+    #fulcrum-base {
+      position: absolute;
+      left: 400px;
+      top: 436px;
+      width: 280px;
+      height: 16px;
+      background: #141414;
+      border-radius: 4px;
+    }
+
+    #fulcrum-apex {
+      position: absolute;
+      left: 522px;
+      top: 82px;
+      width: 36px;
+      height: 36px;
+      background: #FF6A1A;
+      border: 3px solid #141414;
+      border-radius: 50%;
+      z-index: 30;
+      display: grid;
+      place-items: center;
+    }
+
+    .fulcrum-pin {
+      width: 10px;
+      height: 10px;
+      background: #141414;
+      border-radius: 50%;
+    }
+
+    /* Dynamic Crossbeam */
+    #scale-beam {
+      position: absolute;
+      left: 190px;
+      top: 94px;
+      width: 700px;
+      height: 12px;
+      background: #141414;
+      border-radius: 6px;
+      transform-origin: 350px 6px;
+      z-index: 25;
+    }
+
+    /* Pan Assemblies */
+    .pan-assembly {
+      position: absolute;
+      top: 6px;
+      width: 280px;
+      height: 320px;
+      transform-origin: 140px 0px;
+    }
+
+    #left-pan-hanger {
+      left: -20px;
+    }
+
+    #right-pan-hanger {
+      left: 440px;
+    }
+
+    .pan-cables-svg {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 280px;
+      height: 120px;
+      pointer-events: none;
+    }
+
+    .pan-tray-base {
+      position: absolute;
+      left: 20px;
+      top: 118px;
+      width: 240px;
+      height: 8px;
+      background: #141414;
+      border-radius: 4px;
+    }
+
+    .pan-card {
+      position: absolute;
+      left: 20px;
+      top: 130px;
+      width: 240px;
+      background: #F5F0E4;
+      border: 3px solid #141414;
+      border-radius: 8px;
+      box-shadow: 4px 4px 0px #141414;
+      padding: 14px 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+
+    .card-header-label {
+      font-size: 14px;
+      font-weight: 900;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    /* Shotlist Overlay 1: Stamp Badge */
+    #badge-punishment {
+      font-size: 20px;
+      font-weight: 900;
+      letter-spacing: 1px;
+      padding: 8px 14px;
+      border: 2px solid #141414;
+      border-radius: 4px;
+      box-shadow: 2px 2px 0px #141414;
+      text-transform: uppercase;
+      transform: rotate(-2deg);
+      margin-bottom: 8px;
+    }
+
+    .card-footer-note {
+      font-size: 12px;
+      font-weight: 700;
+      line-height: 1.25;
+    }
+
+    /* Right Factors */
+    .factor-pill {
+      width: 100%;
+      font-size: 13px;
+      font-weight: 900;
+      padding: 6px 4px;
+      border: 1.5px solid #141414;
+      border-radius: 4px;
+      background: #E7E3D9;
+      color: #141414;
+      text-transform: uppercase;
+      box-shadow: 2px 2px 0px #141414;
+      margin-top: 6px;
+    }
+
+    .factor-lead {
+      background: #141414;
+      color: #F7F4EC;
+      border: 1.5px solid #FF6A1A;
+    }
+
+    /* Lower Section: Resolution & Punch Phrase (Y: 940px -> 1340px) */
+    #resolution-card {
+      position: absolute;
+      left: 60px;
+      right: 60px;
+      top: 940px;
+      height: 400px;
+      border-radius: 14px;
+      border: 3px solid #141414;
+      box-shadow: 0 16px 36px rgba(20, 20, 20, 0.28);
+      padding: 28px 36px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      z-index: 50;
+      opacity: 0;
+    }
+
+    .res-top-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .res-badge {
+      font-size: 15px;
+      font-weight: 900;
+      letter-spacing: 1.5px;
+      padding: 6px 14px;
+      border-radius: 4px;
+      border: 1.5px solid #141414;
+      text-transform: uppercase;
+    }
+
+    #scale-icon-wrap {
+      width: 56px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .punch-container {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .punch-eyebrow {
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    /* Shotlist Overlay 3: Punch Phrase */
+    .punch-phrase-text {
+      font-size: 64px;
+      font-weight: 900;
+      line-height: 1.15;
+      letter-spacing: 2px;
+      color: #FF6A1A;
+      text-transform: uppercase;
+    }
+
+    .punch-desc {
+      font-size: 20px;
+      font-weight: 700;
+      line-height: 1.35;
+      max-width: 900px;
+    }
+  </style>
+
+  <div id="root" data-composition-id="scene-s24" data-start="0" data-width="1080" data-height="1920" data-duration="10">
+    <section id="scene-s24" class="clip" data-start="0" data-duration="10">
+
+      <!-- Chart Background: ruled lines at 20, 40, 60, 80% with orange tick marks -->
+      <div class="chart-background">
+        <div class="chart-line" style="top: 384px;"><div class="chart-tick"></div></div>
+        <div class="chart-line" style="top: 768px;"><div class="chart-tick"></div></div>
+        <div class="chart-line" style="top: 1152px;"><div class="chart-tick"></div></div>
+        <div class="chart-line" style="top: 1536px;"><div class="chart-tick"></div></div>
+      </div>
+
+      <!-- Camera Rig for slow zoom-in -->
+      <div id="camera-rig">
+        <div id="scene-content">
+
+          <!-- Header Section -->
+          <div id="header-block">
+            <div class="header-tag">
+              <span class="tag-dot"></span>
+              <span class="hf-text-ink">ĐỊNH HƯỚNG TƯ PHÁP NGƯỜI DƯỚI 18 TUỔI</span>
+            </div>
+            <h1 class="main-title hf-text-ink">CÁN CÂN TƯ PHÁP NGƯỜI CHƯA THÀNH NIÊN</h1>
+            <div class="sub-title hf-text-ink">CÂN BẰNG TÍNH NGHIÊM MINH VÀ TÍNH NHÂN ĐẠO</div>
+          </div>
+
+          <!-- Hero Diagram: The Judicial Scale -->
+          <div id="scale-wrapper">
+            <!-- Fulcrum Stand -->
+            <div id="fulcrum-base"></div>
+            <div id="fulcrum-post"></div>
+            <div id="fulcrum-apex">
+              <div class="fulcrum-pin"></div>
+            </div>
+
+            <!-- Dynamic Beam -->
+            <div id="scale-beam">
+              <!-- Left Pan Assembly (Accountability) -->
+              <div id="left-pan-hanger" class="pan-assembly">
+                <svg class="pan-cables-svg" viewBox="0 0 280 120">
+                  <line x1="140" y1="0" x2="30" y2="118" stroke="#141414" stroke-width="2.5" stroke-dasharray="5 3" />
+                  <line x1="140" y1="0" x2="250" y2="118" stroke="#141414" stroke-width="2.5" stroke-dasharray="5 3" />
+                </svg>
+                <div class="pan-tray-base"></div>
+                <div id="left-pan-card" class="pan-card">
+                  <span class="card-header-label hf-text-ink">TRÁCH NHIỆM HÌNH SỰ</span>
+                  <!-- Shotlist Overlay 1: Label -->
+                  <div id="badge-punishment" class="hf-hl-orange">VẪN BỊ XỬ LÝ</div>
+                  <span class="card-footer-note hf-text-ink">Không mặc định miễn trừ</span>
+                </div>
+              </div>
+
+              <!-- Right Pan Assembly (Education & Reformation) -->
+              <div id="right-pan-hanger" class="pan-assembly">
+                <svg class="pan-cables-svg" viewBox="0 0 280 120">
+                  <line x1="140" y1="0" x2="30" y2="118" stroke="#141414" stroke-width="2.5" stroke-dasharray="5 3" />
+                  <line x1="140" y1="0" x2="250" y2="118" stroke="#141414" stroke-width="2.5" stroke-dasharray="5 3" />
+                </svg>
+                <div class="pan-tray-base"></div>
+                <div id="right-pan-card" class="pan-card">
+                  <span class="card-header-label hf-text-ink">TIÊU CHÍ CÂN NHẮC</span>
+                  <div id="factor-1" class="factor-pill">ĐỘ TUỔI & TÂM LÝ</div>
+                  <div id="factor-2" class="factor-pill">KHẢ NĂNG GIÁO DỤC</div>
+                  <div id="factor-3" class="factor-pill factor-lead">HƯỚNG THIỆN PHỤC HỒI</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Lower Featured Section: Resolution Card -->
+          <div id="resolution-card" class="hf-plate-ink">
+            <div class="res-top-row">
+              <div class="res-badge hf-hl-orange">TRIẾT LÝ TƯ PHÁP NHÂN VĂN</div>
+              
+              <!-- Shotlist Overlay 2: Icon scale -->
+              <div id="scale-icon-wrap">
+                <svg id="scale-icon-svg" viewBox="0 0 100 100" width="56" height="56">
+                  <line class="draw-path" x1="20" y1="88" x2="80" y2="88" stroke="#FF6A1A" stroke-width="4" stroke-linecap="round"/>
+                  <line class="draw-path" x1="50" y1="20" x2="50" y2="88" stroke="#FF6A1A" stroke-width="4" stroke-linecap="round"/>
+                  <line class="draw-path" x1="18" y1="36" x2="82" y2="44" stroke="#FF6A1A" stroke-width="4" stroke-linecap="round"/>
+                  <path class="draw-path" d="M 18 36 L 8 62 L 34 62 Z" fill="none" stroke="#FF6A1A" stroke-width="3" stroke-linejoin="round"/>
+                  <path class="draw-path" d="M 82 44 L 66 74 L 94 74 Z" fill="none" stroke="#FF6A1A" stroke-width="3" stroke-linejoin="round"/>
+                  <circle cx="50" cy="20" r="5" fill="#FF6A1A"/>
+                </svg>
+              </div>
+            </div>
+
+            <div class="punch-container">
+              <div class="punch-eyebrow hf-text-light">MỤC TIÊU ƯU TIÊN HÀNG ĐẦU</div>
+              <!-- Shotlist Overlay 3: Punch Phrase -->
+              <h2 id="punch-title" class="punch-phrase-text">CƠ HỘI SỬA SAI</h2>
+            </div>
+
+            <p id="punch-desc" class="punch-desc hf-text-light">
+              Hình phạt kết hợp chặt chẽ với giáo dục, cải tạo và mở ra lộ trình làm lại cuộc đời cho người chưa thành niên.
+            </p>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Persistent Brand Bottom Bar -->
+      <div id="persistent-bottom-bar"></div>
+    </section>
+  </div>
+
+  <script>
+    // 1. Initialize Paused GSAP Master Timeline
+    const tl = gsap.timeline({ paused: true });
+
+    // 2. Prepare SVG Icon Path Draw
+    document.querySelectorAll("#scale-icon-svg .draw-path").forEach((p) => {
+      const len = p.getTotalLength ? p.getTotalLength() : 120;
+      p.style.strokeDasharray = len + "px";
+      p.style.strokeDashoffset = len + "px";
+    });
+
+    // 3. Camera slow zoom-in across 10 seconds
+    tl.to("#camera-rig", {
+      scale: 1.05,
+      duration: 10.0,
+      ease: "none"
+    }, 0);
+
+    // 4. Entrance animation: grow
+    tl.fromTo("#scene-content",
+      { scale: 0.95, opacity: 0 },
+      { scale: 1, opacity: 1, duration: 0.6, ease: "power3.out" },
+      0
+    );
+
+    // Header reveal
+    tl.fromTo("#header-block",
+      { y: -20, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.5, ease: "power3.out" },
+      0.1
+    );
+
+    // Scale structure entrance
+    tl.fromTo("#scale-wrapper",
+      { opacity: 0, y: 20 },
+      { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" },
+      0.2
+    );
+
+    // 5. SHOTLIST OVERLAY 1: Label "VẪN BỊ XỬ LÝ" at 0.83s
+    tl.fromTo("#badge-punishment",
+      { scale: 1.8, opacity: 0, rotation: 6 },
+      { scale: 1, opacity: 1, rotation: -2, duration: 0.45, ease: "power3.out" },
+      0.83
+    );
+
+    // Left pan dips slightly to reflect initial accountability enforcement
+    tl.to("#scale-beam", { rotation: -4.5, duration: 0.6, ease: "power2.out" }, 1.0);
+    tl.to("#left-pan-hanger", { rotation: 4.5, duration: 0.6, ease: "power2.out" }, 1.0);
+    tl.to("#right-pan-hanger", { rotation: 4.5, duration: 0.6, ease: "power2.out" }, 1.0);
+
+    // 6. Right side factors arrive progressively
+    tl.fromTo("#factor-1",
+      { scale: 0, opacity: 0 },
+      { scale: 1, opacity: 1, duration: 0.4, ease: "power3.out" },
+      4.2
+    );
+
+    tl.fromTo("#factor-2",
+      { scale: 0, opacity: 0 },
+      { scale: 1, opacity: 1, duration: 0.4, ease: "power3.out" },
+      4.9
+    );
+
+    tl.fromTo("#factor-3",
+      { scale: 0, opacity: 0 },
+      { scale: 1, opacity: 1, duration: 0.4, ease: "power3.out" },
+      5.6
+    );
+
+    // 7. Visual Relationship Shift: The scale tilts decisively toward reformation & education
+    tl.to("#scale-beam", { rotation: 8.5, duration: 1.4, ease: "power3.inOut" }, 6.2);
+    tl.to("#left-pan-hanger", { rotation: -8.5, duration: 1.4, ease: "power3.inOut" }, 6.2);
+    tl.to("#right-pan-hanger", { rotation: -8.5, duration: 1.4, ease: "power3.inOut" }, 6.2);
+
+    // 8. Lower Resolution Card entrance (t = 7.6s)
+    tl.fromTo("#resolution-card",
+      { y: 30, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.5, ease: "power3.out" },
+      7.6
+    );
+
+    // 9. SHOTLIST OVERLAY 2: Icon "scale" drawing at 8.29s
+    tl.to("#scale-icon-svg .draw-path", {
+      strokeDashoffset: 0,
+      duration: 0.5,
+      stagger: 0.06,
+      ease: "power2.out"
+    }, 8.29);
+
+    // 10. SHOTLIST OVERLAY 3: Punch Phrase "CƠ HỘI SỬA SAI" arrives with high impact
+    tl.fromTo("#punch-title",
+      { scale: 0.9, opacity: 0, y: 15 },
+      { scale: 1, opacity: 1, y: 0, duration: 0.45, ease: "power3.out" },
+      8.8
+    );
+
+    tl.fromTo("#punch-desc",
+      { opacity: 0, y: 10 },
+      { opacity: 1, y: 0, duration: 0.4, ease: "power2.out" },
+      9.1
+    );
+
+    // 11. Register composition timeline on window.__timelines
+    window.__timelines["scene-s24"] = tl;
+  </script>
+
+    </template>
+  </body>
+</html>

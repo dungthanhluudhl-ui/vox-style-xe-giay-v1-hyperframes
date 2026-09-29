@@ -1,0 +1,506 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap"
+    />
+      <style>
+      /* hf-safe-colors (tất định từ style-tokens.json) */
+      .hf-text-ink { color: #141414; }
+      .hf-text-light { color: #F7F4EC; }
+      .hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+      .hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+      .hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+      .hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #f5f0e4;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: #f5f0e4;
+      }
+
+      .clip {
+        position: absolute;
+        inset: 0;
+      }
+
+      /* Thanh cam signature cố định đáy màn hình theo DNA */
+      .signature-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 18px;
+        background-color: #ff6a1a;
+        z-index: 50;
+      }
+
+      /* Khung an toàn nội dung (y: 160px -> 1380px) */
+      .content-stage {
+        position: absolute;
+        top: 170px;
+        left: 60px;
+        right: 60px;
+        bottom: 540px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        z-index: 10;
+      }
+
+      /* 1. Header / Tagline */
+      .meta-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 24px;
+        background-color: #141414;
+        color: #f7f4ec;
+        font-size: 24px;
+        font-weight: 900;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        border-radius: 4px;
+        transform-origin: center top;
+        will-change: transform, opacity;
+      }
+
+      .meta-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background-color: #ff6a1a;
+      }
+
+      /* 2. Quote / Nguyên lý cốt lõi */
+      .quote-container {
+        margin-top: 36px;
+        width: 100%;
+        padding: 30px 36px;
+        background-color: #e7e3d9;
+        border-left: 8px solid #141414;
+        border-radius: 2px;
+        transform-origin: center top;
+        will-change: transform, opacity;
+      }
+
+      .quote-lead {
+        margin: 0 0 10px 0;
+        font-size: 26px;
+        font-weight: 700;
+        color: #141414;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+
+      .quote-text {
+        margin: 0;
+        font-size: 38px;
+        font-weight: 900;
+        line-height: 1.34;
+        color: #141414;
+      }
+
+      .quote-text .hl-word {
+        background-color: #ff6a1a;
+        color: #141414;
+        padding: 2px 10px;
+        border-radius: 4px;
+        display: inline-block;
+      }
+
+      /* 3. Split Comparison (Khối so sánh 2 mặt) */
+      .split-container {
+        margin-top: 38px;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        position: relative;
+      }
+
+      .card-item {
+        width: 100%;
+        border-radius: 12px;
+        padding: 28px 32px;
+        border: 2px solid #141414;
+        transform-origin: center top;
+        will-change: transform, opacity;
+      }
+
+      .card-a {
+        background-color: #f7f4ec;
+      }
+
+      .card-b {
+        background-color: #141414;
+        color: #f7f4ec;
+        border-color: #141414;
+      }
+
+      .card-header-line {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+      }
+
+      .card-tag {
+        font-size: 20px;
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+      }
+
+      .card-a .card-tag {
+        color: #141414;
+      }
+
+      .card-b .card-tag {
+        color: #ff6a1a;
+      }
+
+      .card-status-badge {
+        font-size: 19px;
+        font-weight: 900;
+        padding: 4px 12px;
+        border-radius: 4px;
+      }
+
+      .card-a .card-status-badge {
+        background-color: #141414;
+        color: #f7f4ec;
+      }
+
+      .card-b .card-status-badge {
+        background-color: #ff6a1a;
+        color: #141414;
+      }
+
+      .card-title {
+        margin: 0 0 10px 0;
+        font-size: 42px;
+        font-weight: 900;
+        letter-spacing: 0.5px;
+      }
+
+      .card-desc {
+        margin: 0;
+        font-size: 25px;
+        font-weight: 700;
+        line-height: 1.38;
+      }
+
+      .card-a .card-desc {
+        color: #141414;
+      }
+
+      .card-b .card-desc {
+        color: #f7f4ec;
+      }
+
+      /* Ký hiệu phân cách so sánh (căn bằng margin âm, tránh xung đột transform với GSAP) */
+      .split-divider {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        margin-top: -34px;
+        margin-left: -34px;
+        width: 68px;
+        height: 68px;
+        border-radius: 50%;
+        background-color: #ff6a1a;
+        color: #141414;
+        display: grid;
+        place-items: center;
+        font-size: 40px;
+        font-weight: 900;
+        border: 4px solid #f5f0e4;
+        box-shadow: 0 4px 14px rgba(20, 20, 20, 0.18);
+        z-index: 5;
+        transform-origin: center center;
+        will-change: transform, opacity;
+      }
+
+      /* 4. Overlay Punch Label ("XÓA ÁN ≠ NHÂN THÂN") */
+      .punch-label-plate {
+        margin-top: 36px;
+        width: 100%;
+        background-color: #ff6a1a;
+        color: #141414;
+        border: 3px solid #141414;
+        border-radius: 8px;
+        padding: 22px 20px;
+        text-align: center;
+        transform-origin: center center;
+        box-shadow: 6px 6px 0px #141414;
+        will-change: transform, opacity;
+      }
+
+      .punch-label-text {
+        margin: 0;
+        font-size: 50px;
+        font-weight: 900;
+        letter-spacing: 2px;
+        line-height: 1.1;
+      }
+
+      /* 5. Cán cân công lý (Scale Icon) & Subtext */
+      .scale-section {
+        margin-top: 32px;
+        display: flex;
+        align-items: center;
+        gap: 28px;
+        padding: 16px 28px;
+        background-color: #f7f4ec;
+        border: 2px solid #141414;
+        border-radius: 8px;
+        transform-origin: center bottom;
+        will-change: transform, opacity;
+      }
+
+      .scale-svg {
+        width: 90px;
+        height: 90px;
+        flex-shrink: 0;
+      }
+
+      .scale-svg path,
+      .scale-svg line {
+        fill: none;
+        stroke: #141414;
+        stroke-width: 4;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
+      .scale-info {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+      }
+
+      .scale-title {
+        margin: 0 0 4px 0;
+        font-size: 28px;
+        font-weight: 900;
+        color: #141414;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+      }
+
+      .scale-note {
+        margin: 0;
+        font-size: 22px;
+        font-weight: 700;
+        color: #141414;
+        opacity: 0.9;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s34"
+      data-width="1080"
+      data-height="1920"
+      data-duration="6.48"
+    >
+      <!-- Shot S34-1: Phân tách nguyên tắc pháp lý và nhân thân -->
+      <section id="shot-s34-1" class="clip" data-start="0" data-duration="6.48">
+        <div class="content-stage">
+          <!-- Tag định vị nguyên tắc xét xử -->
+          <div id="meta-tag" class="meta-tag">
+            <span class="meta-dot"></span>
+            <span>NGUYÊN TẮC ĐỊNH TỘI &amp; LƯỢNG HÌNH</span>
+          </div>
+
+          <!-- Trích dẫn định nghĩa cốt lõi -->
+          <div id="quote-card" class="quote-container">
+            <p class="quote-lead">Quy định và thực tiễn</p>
+            <h1 class="quote-text">
+              Được xóa án tích <span class="hl-word">không đồng nghĩa</span> với việc lịch sử vi phạm
+              bị bỏ qua.
+            </h1>
+          </div>
+
+          <!-- Khối split so sánh rành mạch -->
+          <div class="split-container">
+            <!-- Vế 1: Pháp lý -->
+            <div id="card-legal" class="card-item card-a">
+              <div class="card-header-line">
+                <span class="card-tag">VỀ MẶT PHÁP LÝ</span>
+                <span class="card-status-badge">ĐÃ ĐƯỢC XÓA</span>
+              </div>
+              <h2 class="card-title">XÓA ÁN TÍCH</h2>
+              <p class="card-desc">
+                Hết thời hạn luật định, quyền công dân được khôi phục đầy đủ.
+              </p>
+            </div>
+
+            <!-- Ký hiệu không đồng nhất -->
+            <div id="split-diff" class="split-divider">≠</div>
+
+            <!-- Vế 2: Đánh giá nhân thân -->
+            <div id="card-person" class="card-item card-b">
+              <div class="card-header-line">
+                <span class="card-tag">VỀ MẶT THỰC TẾ XÉT XỬ</span>
+                <span class="card-status-badge">VẪN XEM XÉT</span>
+              </div>
+              <h2 class="card-title">ĐÁNH GIÁ NHÂN THÂN</h2>
+              <p class="card-desc">
+                Toàn bộ quá trình chấp hành pháp luật trong đời vẫn được HĐXX đánh giá.
+              </p>
+            </div>
+          </div>
+
+          <!-- Overlay 1: Label dán tem nổi bật (atMs 268080 = 1.46s) -->
+          <div id="punch-plate" class="punch-label-plate">
+            <h3 class="punch-label-text">XÓA ÁN ≠ NHÂN THÂN</h3>
+          </div>
+
+          <!-- Overlay 2: Cán cân công lý (atMs 271660 = 5.04s) -->
+          <div id="scale-badge" class="scale-section">
+            <svg class="scale-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+              <!-- Trục đứng & chân đế -->
+              <line class="draw-path" x1="50" y1="18" x2="50" y2="84" />
+              <line class="draw-path" x1="30" y1="84" x2="70" y2="84" />
+              <!-- Cán ngang -->
+              <line class="draw-path" x1="20" y1="28" x2="80" y2="28" />
+              <!-- Đĩa trái -->
+              <line class="draw-path" x1="20" y1="28" x2="10" y2="56" />
+              <line class="draw-path" x1="20" y1="28" x2="30" y2="56" />
+              <path class="draw-path" d="M 8 56 Q 20 70 32 56 Z" />
+              <!-- Đĩa phải -->
+              <line class="draw-path" x1="80" y1="28" x2="70" y2="56" />
+              <line class="draw-path" x1="80" y1="28" x2="90" y2="56" />
+              <path class="draw-path" d="M 68 56 Q 80 70 92 56 Z" />
+            </svg>
+            <div class="scale-info">
+              <p class="scale-title">CÂN NHẮC TOÀN DIỆN</p>
+              <p class="scale-note">Hội đồng xét xử lượng hình chuẩn xác</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Signature bar đáy khung hình -->
+      <div class="signature-bar"></div>
+    </div>
+
+    <script>
+      // Khởi tạo GSAP timeline chính, paused = true theo hợp đồng HyperFrames
+      const tl = gsap.timeline({ paused: true });
+
+      // Chuẩn bị đường vẽ SVG cho icon cán cân
+      const drawPaths = document.querySelectorAll(".draw-path");
+      drawPaths.forEach((path) => {
+        let len = 100;
+        if (typeof path.getTotalLength === "function") {
+          len = path.getTotalLength();
+        } else if (path.tagName.toLowerCase() === "line") {
+          const x1 = parseFloat(path.getAttribute("x1"));
+          const y1 = parseFloat(path.getAttribute("y1"));
+          const x2 = parseFloat(path.getAttribute("x2"));
+          const y2 = parseFloat(path.getAttribute("y2"));
+          len = Math.hypot(x2 - x1, y2 - y1);
+        }
+        path.style.strokeDasharray = len + 1;
+        path.style.strokeDashoffset = len + 1;
+      });
+
+      // 1. Giai đoạn 0.0s - 1.2s: Unfold toàn cảnh (Header, Quote, Split Cards)
+      tl.fromTo(
+        "#meta-tag",
+        { scaleY: 0, opacity: 0 },
+        { scaleY: 1, opacity: 1, duration: 0.45, ease: "power3.out" },
+        0.1
+      );
+
+      tl.fromTo(
+        "#quote-card",
+        { scaleY: 0, opacity: 0 },
+        { scaleY: 1, opacity: 1, duration: 0.55, ease: "power3.out" },
+        0.3
+      );
+
+      tl.fromTo(
+        "#card-legal",
+        { y: -30, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.5, ease: "power3.out" },
+        0.55
+      );
+
+      tl.fromTo(
+        "#card-person",
+        { y: 30, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.5, ease: "power3.out" },
+        0.75
+      );
+
+      tl.fromTo(
+        "#split-diff",
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.4, ease: "power3.out" },
+        0.95
+      );
+
+      // 2. Giai đoạn 1.46s (tương ứng atMs: 268080 trong kịch bản):
+      // Overlay Punch Label: "XÓA ÁN ≠ NHÂN THÂN" xuất hiện dứt khoát
+      tl.fromTo(
+        "#punch-plate",
+        { scale: 0.85, opacity: 0, y: 20 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.45, ease: "power3.out" },
+        1.46
+      );
+
+      // 3. Giai đoạn 5.04s (tương ứng atMs: 271660 trong kịch bản):
+      // Icon Cán cân (scale) tự vẽ nét và xuất hiện nhãn "CÂN NHẮC TOÀN DIỆN"
+      tl.fromTo(
+        "#scale-badge",
+        { y: 24, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.35, ease: "power3.out" },
+        5.04
+      );
+
+      tl.to(
+        ".draw-path",
+        {
+          strokeDashoffset: 0,
+          duration: 0.65,
+          stagger: 0.04,
+          ease: "power2.out",
+        },
+        5.15
+      );
+
+      // Đăng ký timeline cho HyperFrames
+      window.__timelines = window.__timelines || {};
+      window.__timelines["scene-s34"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

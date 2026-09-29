@@ -1,0 +1,366 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+/* hf-safe-colors (tất định từ style-tokens.json) */
+.hf-text-ink { color: #141414; }
+.hf-text-light { color: #F7F4EC; }
+.hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+.hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+.hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+.hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #141414;
+        color: #f7f4ec;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+      #root {
+        position: relative;
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+        background-color: #141414;
+      }
+
+      /* Định nghĩa chuẩn clip inset: 0 */
+      .clip {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+      }
+
+      /* Wrapper camera 2 tầng chống xung đột tween */
+      #camera-zoom-pan {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        transform-origin: 50% 50%;
+        will-change: transform;
+      }
+      #camera-strike {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        transform-origin: 50% 45%;
+        will-change: transform;
+      }
+
+      /* Ảnh chính full-bleed nguyên màu gốc, không áp filter hay vignette phủ */
+      #hero-image {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+
+      /* Thanh cam nhận diện thương hiệu cố định mép dưới */
+      #brand-bottom-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 12px;
+        background-color: #ff6a1a;
+        z-index: 100;
+      }
+
+      /* --- Overlay 1: Annotated Leader Line & Card --- */
+      #knife-pointer-svg {
+        position: absolute;
+        inset: 0;
+        width: 1080px;
+        height: 1920px;
+        pointer-events: none;
+        z-index: 20;
+      }
+      #knife-pointer-line {
+        fill: none;
+        stroke: #ff6a1a;
+        stroke-width: 4;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+      #knife-pointer-dot {
+        fill: #ff6a1a;
+        stroke: #141414;
+        stroke-width: 3;
+        transform-box: fill-box;
+        transform-origin: center;
+      }
+
+      #knife-annotation-card {
+        position: absolute;
+        top: 360px;
+        left: 80px;
+        width: 580px;
+        background-color: #141414;
+        border-left: 8px solid #ff6a1a;
+        border-radius: 12px;
+        padding: 24px 32px;
+        z-index: 25;
+        box-shadow: 0 16px 36px rgba(0, 0, 0, 0.6);
+        will-change: transform, opacity;
+      }
+      .card-tag {
+        font-size: 22px;
+        font-weight: 700;
+        color: #ff6a1a;
+        letter-spacing: 2px;
+        margin-bottom: 8px;
+        text-transform: uppercase;
+      }
+      .card-title {
+        font-size: 46px;
+        font-weight: 900;
+        line-height: 1.25;
+        color: #f7f4ec;
+        margin: 0;
+        text-transform: uppercase;
+      }
+
+      /* --- Overlay 2: BỎ QUA CAN NGĂN --- */
+      #ignore-card {
+        position: absolute;
+        top: 1100px;
+        left: 80px;
+        width: 620px;
+        background-color: #141414;
+        border: 3px solid #ff6a1a;
+        border-radius: 14px;
+        padding: 24px 32px;
+        z-index: 30;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.7);
+        will-change: transform, opacity;
+      }
+      .ignore-tag {
+        font-size: 20px;
+        font-weight: 700;
+        color: #ff6a1a;
+        letter-spacing: 2px;
+        margin-bottom: 6px;
+        text-transform: uppercase;
+      }
+      .ignore-title {
+        font-size: 50px;
+        font-weight: 900;
+        line-height: 1.2;
+        color: #f7f4ec;
+        margin: 0;
+        text-transform: uppercase;
+      }
+
+      /* --- Overlay 3: Icon BAN (Vòng tròn gạch chéo tự vẽ) --- */
+      #ban-icon-container {
+        position: absolute;
+        top: 1115px;
+        left: 740px;
+        width: 140px;
+        height: 140px;
+        background-color: #141414;
+        border: 3px solid #ff6a1a;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 35;
+        box-shadow: 0 16px 36px rgba(0, 0, 0, 0.6);
+        will-change: transform, opacity;
+      }
+      #ban-svg {
+        width: 100px;
+        height: 100px;
+      }
+      #ban-circle {
+        fill: none;
+        stroke: #ff6a1a;
+        stroke-width: 8;
+        transform-origin: 50px 50px;
+        transform: rotate(-90deg);
+      }
+      #ban-slash {
+        fill: none;
+        stroke: #ff6a1a;
+        stroke-width: 8;
+        stroke-linecap: round;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s12"
+      data-start="0"
+      data-width="1080"
+      data-height="1920"
+      data-duration="10.48"
+    >
+      <!-- SHOT S12-1: Background photo với Ken Burns và Transition Strike -->
+      <section id="scene-bg" class="clip" data-start="0" data-duration="10.48">
+        <div id="camera-zoom-pan">
+          <div id="camera-strike">
+            <img
+              id="hero-image"
+              src="assets/img-08-angry-man-knife-confrontation.jpg"
+              alt="Hiện trường lấy dao bầu"
+            />
+          </div>
+        </div>
+      </section>
+
+      <!-- OVERLAY 1: DAO BẦU MŨI NHỌN (Annotated indicator) -->
+      <section id="overlay-knife" class="clip" data-start="2.82" data-duration="2.40">
+        <svg id="knife-pointer-svg" viewBox="0 0 1080 1920">
+          <path id="knife-pointer-line" d="M 380 520 L 480 660 L 560 760" />
+          <circle id="knife-pointer-dot" cx="560" cy="760" r="10" />
+        </svg>
+        <div id="knife-annotation-card">
+          <div class="card-tag">HUNG KHÍ NGUY HIỂM</div>
+          <h2 class="card-title">DAO BẦU MŨI NHỌN</h2>
+        </div>
+      </section>
+
+      <!-- OVERLAY 2: BỎ QUA CAN NGĂN -->
+      <section id="overlay-ignore" class="clip" data-start="8.82" data-duration="1.66">
+        <div id="ignore-card">
+          <div class="ignore-tag">HÀNH VI BỘT PHÁT</div>
+          <h2 class="ignore-title">BỎ QUA CAN NGĂN</h2>
+        </div>
+      </section>
+
+      <!-- OVERLAY 3: ICON BAN (Biểu tượng ngăn chặn bị phớt lờ) -->
+      <section id="overlay-ban-icon" class="clip" data-start="9.60" data-duration="0.88">
+        <div id="ban-icon-container">
+          <svg id="ban-svg" viewBox="0 0 100 100">
+            <circle id="ban-circle" cx="50" cy="50" r="38" />
+            <line id="ban-slash" x1="23" y1="23" x2="77" y2="77" />
+          </svg>
+        </div>
+      </section>
+
+      <!-- Chữ ký thương hiệu đáy khung hình -->
+      <div id="brand-bottom-bar"></div>
+    </div>
+
+    <script>
+      // 1. Đo lường hình học SVG cho hiệu ứng stroke-draw
+      const pointerLine = document.getElementById("knife-pointer-line");
+      let lineLen = 350;
+      if (pointerLine) {
+        lineLen = pointerLine.getTotalLength();
+        pointerLine.style.strokeDasharray = lineLen;
+        pointerLine.style.strokeDashoffset = lineLen;
+      }
+
+      const banCircle = document.getElementById("ban-circle");
+      let circleLen = 240;
+      if (banCircle) {
+        circleLen = banCircle.getTotalLength();
+        banCircle.style.strokeDasharray = circleLen;
+        banCircle.style.strokeDashoffset = circleLen;
+      }
+
+      const banSlash = document.getElementById("ban-slash");
+      let slashLen = 80;
+      if (banSlash) {
+        slashLen = banSlash.getTotalLength();
+        banSlash.style.strokeDasharray = slashLen;
+        banSlash.style.strokeDashoffset = slashLen;
+      }
+
+      // 2. Tạo duy nhất 1 timeline gốc PAUSED và gán vào window.__timelines["scene-s12"]
+      const tl = gsap.timeline({ paused: true });
+
+      // PHASE 1: TRANSITION IN "STRIKE" (Đòn giáng mạnh ban đầu từ 0s -> 0.28s)
+      tl.fromTo(
+        "#camera-strike",
+        { scale: 1.25, y: -60, rotation: 1.5 },
+        { scale: 1.0, y: 0, rotation: 0, duration: 0.26, ease: "power4.in" },
+        0
+      );
+      // Rung chấn phản hồi sau cú giáng (0.26s -> 0.42s)
+      tl.to("#camera-strike", { y: 10, duration: 0.08, ease: "power1.out" }, 0.26);
+      tl.to("#camera-strike", { y: 0, duration: 0.08, ease: "power1.in" }, 0.34);
+
+      // PHASE 2: CAMERA MOTION KEN BURNS (Zoom-in từ 1.0x lên 1.06x + Pan-left làm rõ lưỡi dao)
+      tl.fromTo(
+        "#camera-zoom-pan",
+        { scale: 1.0, x: 0 },
+        { scale: 1.06, x: -45, duration: 10.18, ease: "power1.out" },
+        0.3
+      );
+
+      // PHASE 3: OVERLAY 1 - "DAO BẦU MŨI NHỌN" (2.82s -> 5.22s)
+      tl.fromTo(
+        "#knife-pointer-line",
+        { strokeDashoffset: lineLen },
+        { strokeDashoffset: 0, duration: 0.45, ease: "power2.out" },
+        2.82
+      );
+      tl.fromTo(
+        "#knife-pointer-dot",
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.22, ease: "power3.out" },
+        3.15
+      );
+      tl.fromTo(
+        "#knife-annotation-card",
+        { x: -50, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.42, ease: "power3.out" },
+        2.98
+      );
+      // Outro nhẹ trước khi clip hết thời gian (4.98s -> 5.22s)
+      tl.to("#knife-annotation-card", { x: -20, opacity: 0, duration: 0.22, ease: "power2.in" }, 4.98);
+      tl.to("#knife-pointer-svg", { opacity: 0, duration: 0.22, ease: "power2.in" }, 4.98);
+
+      // PHASE 4: OVERLAY 2 - "BỎ QUA CAN NGĂN" (8.82s -> 10.48s)
+      tl.fromTo(
+        "#ignore-card",
+        { y: 35, scale: 0.9, opacity: 0 },
+        { y: 0, scale: 1.0, opacity: 1, duration: 0.38, ease: "power3.out" },
+        8.82
+      );
+
+      // PHASE 5: OVERLAY 3 - ICON BAN (9.60s -> 10.48s)
+      tl.fromTo(
+        "#ban-icon-container",
+        { scale: 0, opacity: 0, rotation: -45 },
+        { scale: 1, opacity: 1, rotation: 0, duration: 0.32, ease: "power3.out" },
+        9.6
+      );
+      tl.fromTo(
+        "#ban-circle",
+        { strokeDashoffset: circleLen },
+        { strokeDashoffset: 0, duration: 0.38, ease: "power2.out" },
+        9.65
+      );
+      tl.fromTo(
+        "#ban-slash",
+        { strokeDashoffset: slashLen },
+        { strokeDashoffset: 0, duration: 0.22, ease: "power2.out" },
+        9.85
+      );
+
+      // 3. Đăng ký timeline cho HyperFrames seek
+      window.__timelines = window.__timelines || {};
+      window.__timelines["scene-s12"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

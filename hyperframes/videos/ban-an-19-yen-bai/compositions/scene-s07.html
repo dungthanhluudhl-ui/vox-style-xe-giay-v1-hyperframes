@@ -1,0 +1,449 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+    /* hf-safe-colors (tất định từ style-tokens.json) */
+    .hf-text-ink { color: #141414; }
+    .hf-text-light { color: #F7F4EC; }
+    .hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+    .hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+    .hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+    .hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      background: #E7E3D9;
+      color: #141414;
+      font-family: "Be Vietnam Pro", sans-serif;
+      overflow: hidden;
+    }
+    #root {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #E7E3D9;
+    }
+    .clip {
+      position: absolute;
+      inset: 0;
+    }
+
+    /* Lớp nền hồ sơ chính: phủ toàn bộ khung 1080x1920 */
+    .bg-container {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+    }
+    .bg-image {
+      position: absolute;
+      inset: -5% -5%;
+      width: 110%;
+      height: 110%;
+      object-fit: cover;
+      transform-origin: center center;
+    }
+
+    /* Hiệu ứng lớp bìa hồ sơ lật mở (Peel) */
+    .peel-wrapper {
+      position: absolute;
+      inset: 0;
+      background: #F5F0E4;
+      z-index: 40;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      transform-origin: 0% 50%;
+      box-shadow: 20px 0 50px rgba(20, 20, 20, 0.4);
+    }
+    .peel-stamp {
+      border: 4px solid #141414;
+      padding: 24px 48px;
+      text-align: center;
+      background: #E7E3D9;
+    }
+    .peel-stamp-title {
+      font-size: 42px;
+      font-weight: 900;
+      color: #141414;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+    }
+    .peel-stamp-sub {
+      margin-top: 8px;
+      font-size: 24px;
+      font-weight: 700;
+      color: #141414;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    /* Thanh cam nhận diện Vox cố định dưới đáy */
+    #bottom-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 12px;
+      background: #FF6A1A;
+      z-index: 100;
+    }
+
+    /* Lưới kẻ phong cách Vox */
+    .grid-lines {
+      position: absolute;
+      inset: 0;
+      background-image: 
+        linear-gradient(to right, rgba(20, 20, 20, 0.08) 1.5px, transparent 1.5px),
+        linear-gradient(to bottom, rgba(20, 20, 20, 0.08) 1.5px, transparent 1.5px);
+      background-size: 84px 84px;
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    /* Khung chứa các overlay chính của scene */
+    .overlay-stage {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      padding-top: 360px;
+      z-index: 20;
+      pointer-events: none;
+    }
+
+    .doc-card {
+      width: 920px;
+      background: #141414;
+      border-radius: 8px;
+      padding: 44px 40px;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+      border: 2px solid rgba(255, 255, 255, 0.1);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .badge-orange {
+      background: #FF6A1A;
+      color: #141414;
+      font-size: 28px;
+      font-weight: 900;
+      padding: 8px 24px;
+      border-radius: 4px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 24px;
+      display: inline-block;
+    }
+
+    .card-title-light {
+      color: #F7F4EC;
+      font-size: 60px;
+      font-weight: 900;
+      line-height: 1.25;
+      text-align: center;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    /* Khối ký hiệu mã hóa cần thay thế */
+    .encoded-list {
+      margin-top: 36px;
+      width: 100%;
+      display: flex;
+      gap: 24px;
+      justify-content: center;
+    }
+
+    .encoded-box {
+      flex: 1;
+      background: #F5F0E4;
+      border-radius: 6px;
+      padding: 24px 20px;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      overflow: hidden;
+    }
+
+    .encoded-role {
+      font-size: 22px;
+      font-weight: 700;
+      color: #141414;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      margin-bottom: 8px;
+    }
+
+    .encoded-name {
+      font-size: 42px;
+      font-weight: 900;
+      color: #141414;
+      letter-spacing: 2px;
+      position: relative;
+      text-transform: uppercase;
+    }
+
+    /* Vạch cam gạch ngang ký hiệu mã hóa */
+    .strike-line {
+      position: absolute;
+      top: 58%;
+      left: 8%;
+      width: 84%;
+      height: 8px;
+      background: #FF6A1A;
+      border-radius: 4px;
+      transform-origin: left center;
+      transform: scaleX(0);
+    }
+
+    /* Overlay 2: Thẻ quy ước rõ ràng TUẤN (CON) - ÔNG TÀI (BỐ) */
+    .resolved-wrapper {
+      width: 960px;
+      background: #141414;
+      border-radius: 8px;
+      padding: 48px 40px;
+      box-shadow: 0 28px 70px rgba(0, 0, 0, 0.55);
+      border: 2px solid rgba(255, 106, 26, 0.4);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .resolved-grid {
+      display: flex;
+      width: 100%;
+      gap: 28px;
+    }
+
+    .person-card {
+      flex: 1;
+      background: #F5F0E4;
+      border-radius: 6px;
+      padding: 32px 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      border-top: 8px solid #FF6A1A;
+    }
+
+    .person-tag {
+      background: #141414;
+      color: #FF6A1A;
+      font-size: 24px;
+      font-weight: 900;
+      padding: 6px 20px;
+      border-radius: 4px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+
+    .person-name {
+      font-size: 64px;
+      font-weight: 900;
+      color: #141414;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      text-align: center;
+    }
+
+    .diagram-summary-bar {
+      margin-top: 34px;
+      width: 100%;
+      background: #FF6A1A;
+      border-radius: 4px;
+      padding: 16px 24px;
+      text-align: center;
+      transform-origin: center center;
+    }
+
+    .diagram-summary-text {
+      color: #141414;
+      font-size: 32px;
+      font-weight: 900;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+  </style>
+
+  <div
+    id="root"
+    data-composition-id="scene-s07"
+    data-start="0"
+    data-width="1080"
+    data-height="1920"
+    data-duration="7.6"
+  >
+    <!-- Background Image và Pan Camera (Shot S07-1) -->
+    <div id="bg-shot" class="clip" data-start="0" data-duration="7.6">
+      <div class="bg-container">
+        <img
+          id="hero-bg"
+          class="bg-image"
+          src="assets/img-02-case-file-suspects-board.jpg"
+          alt="Bảng hồ sơ vụ án"
+        />
+      </div>
+      <div class="grid-lines"></div>
+    </div>
+
+    <!-- Peel Transition Cover (Bóc lớp bìa hồ sơ ở đầu scene) -->
+    <div id="peel-clip" class="clip" data-start="0" data-duration="1.2">
+      <div id="peel-card" class="peel-wrapper" data-layout-allow-overflow="true">
+        <div class="peel-stamp">
+          <div id="peel-title" class="peel-stamp-title">HỒ SƠ VỤ ÁN</div>
+          <div id="peel-sub" class="peel-stamp-sub">QUY ƯỚC TÊN GỌI</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Shotlist Overlay 1: Label QUY ƯỚC TÊN GỌI (atMs: 48590 -> t=0.77s, holdMs: 2600 -> đến t=3.37s) -->
+    <div id="overlay-label" class="clip overlay-stage" data-start="0.77" data-duration="2.6">
+      <div id="card-encoded" class="doc-card">
+        <div id="badge-encoded" class="badge-orange">HỒ SƠ VỤ ÁN</div>
+        <div id="title-encoded" class="card-title-light">QUY ƯỚC TÊN GỌI</div>
+        
+        <div class="encoded-list" data-layout-allow-occlusion="true">
+          <div id="enc-box-1" class="encoded-box" data-layout-allow-occlusion="true">
+            <div id="enc-role-1" class="encoded-role">NGƯỜI CON</div>
+            <div id="enc-name-1" class="encoded-name" data-layout-allow-occlusion="true">[ TÊN MÃ HÓA ]</div>
+            <div id="strike-1" class="strike-line" data-layout-allow-occlusion="true"></div>
+          </div>
+          <div id="enc-box-2" class="encoded-box" data-layout-allow-occlusion="true">
+            <div id="enc-role-2" class="encoded-role">NGƯỜI BỐ</div>
+            <div id="enc-name-2" class="encoded-name" data-layout-allow-occlusion="true">[ TÊN MÃ HÓA ]</div>
+            <div id="strike-2" class="strike-line" data-layout-allow-occlusion="true"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Shotlist Overlay 2: Diagram TUẤN (CON) - ÔNG TÀI (BỐ) (atMs: 51420 -> t=3.6s, holdMs: 3500 -> đến hết scene) -->
+    <div id="overlay-diagram" class="clip overlay-stage" data-start="3.6" data-duration="4.0">
+      <div id="card-resolved" class="resolved-wrapper">
+        <div class="resolved-grid">
+          <!-- Thẻ Con -->
+          <div id="item-tuan" class="person-card">
+            <div id="tag-tuan" class="person-tag">NGƯỜI CON</div>
+            <div id="name-tuan" class="person-name">TUẤN</div>
+          </div>
+
+          <!-- Thẻ Bố -->
+          <div id="item-tai" class="person-card">
+            <div id="tag-tai" class="person-tag">NGƯỜI BỐ</div>
+            <div id="name-tai" class="person-name">ÔNG TÀI</div>
+          </div>
+        </div>
+
+        <div id="summary-bar" class="diagram-summary-bar">
+          <div id="summary-text" class="diagram-summary-text">TUẤN (CON) - ÔNG TÀI (BỐ)</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Thanh cam cố định mép dưới theo chuẩn Vox DNA -->
+    <div id="bottom-bar"></div>
+  </div>
+
+  <script>
+    // Khởi tạo GSAP timeline tất định, seek-safe theo chuẩn HyperFrames
+    const tl = gsap.timeline({ paused: true });
+
+    // 1. Camera Motion: Pan nhẹ sang phải và zoom tinh tế trên ảnh nền hồ sơ
+    tl.fromTo(
+      "#hero-bg",
+      { scale: 1.02, x: 25, y: -10 },
+      { scale: 1.08, x: -35, y: 15, duration: 7.6, ease: "none" },
+      0
+    );
+
+    // 2. Transition In: Hiệu ứng Peel (Lật bóc lớp bìa hồ sơ mở ra bảng điều tra)
+    tl.fromTo(
+      "#peel-card",
+      { xPercent: 0, rotation: 0, opacity: 1 },
+      { xPercent: -105, rotation: -4, opacity: 0.95, duration: 0.75, ease: "power2.inOut" },
+      0.1
+    );
+
+    // 3. Overlay 1 (t = 0.77s): Xuất hiện thẻ QUY ƯỚC TÊN GỌI & hai ký hiệu mã hóa
+    tl.fromTo(
+      "#card-encoded",
+      { y: 40, opacity: 0, scale: 0.96 },
+      { y: 0, opacity: 1, scale: 1, duration: 0.5, ease: "power3.out" },
+      0.82
+    );
+
+    // Vạch cam gạch chéo ký hiệu mã hóa thay thế
+    tl.fromTo(
+      "#strike-1",
+      { scaleX: 0 },
+      { scaleX: 1, duration: 0.35, ease: "power2.inOut" },
+      1.6
+    );
+    tl.fromTo(
+      "#strike-2",
+      { scaleX: 0 },
+      { scaleX: 1, duration: 0.35, ease: "power2.inOut" },
+      1.8
+    );
+
+    // Thu thẻ mã hóa trước khi kết thúc slot overlay 1
+    tl.to(
+      "#card-encoded",
+      { opacity: 0, y: -20, scale: 0.98, duration: 0.35, ease: "power2.in" },
+      3.0
+    );
+
+    // 4. Overlay 2 (t = 3.6s): Xuất hiện thẻ quy ước rõ ràng TUẤN (CON) - ÔNG TÀI (BỐ)
+    tl.fromTo(
+      "#card-resolved",
+      { y: 45, opacity: 0, scale: 0.94 },
+      { y: 0, opacity: 1, scale: 1, duration: 0.55, ease: "power3.out" },
+      3.65
+    );
+
+    // Hai thẻ nhân vật lần lượt đáp vào
+    tl.fromTo(
+      "#item-tuan",
+      { y: 30, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.45, ease: "power3.out" },
+      3.85
+    );
+    tl.fromTo(
+      "#item-tai",
+      { y: 30, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.45, ease: "power3.out" },
+      4.05
+    );
+
+    // Thanh tóm tắt cam xuất hiện chốt lại quan hệ diagram theo shotlist
+    tl.fromTo(
+      "#summary-bar",
+      { scaleX: 0.85, opacity: 0 },
+      { scaleX: 1, opacity: 1, duration: 0.45, ease: "power3.out" },
+      4.3
+    );
+
+    // Đăng ký timeline cho HyperFrames
+    window.__timelines = window.__timelines || {};
+    window.__timelines["scene-s07"] = tl;
+  </script>
+
+    </template>
+  </body>
+</html>

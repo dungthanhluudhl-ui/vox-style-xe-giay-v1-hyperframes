@@ -1,0 +1,369 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+      /* hf-safe-colors (tất định từ style-tokens.json) */
+      .hf-text-ink { color: #141414; }
+      .hf-text-light { color: #F7F4EC; }
+      .hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+      .hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+      .hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+      .hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #E7E3D9;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+      .clip {
+        position: absolute;
+        inset: 0;
+      }
+
+      /* Lớp nền phong cách chart với các đường kẻ ngang và vạch chia tỷ lệ cam */
+      .chart-bg-grid {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        z-index: 1;
+      }
+      .chart-line {
+        position: absolute;
+        left: 40px;
+        right: 40px;
+        height: 1.5px;
+        background-color: rgba(20, 20, 20, 0.28);
+      }
+      .chart-tick {
+        position: absolute;
+        left: 32px;
+        width: 16px;
+        height: 3px;
+        background-color: #FF6A1A;
+      }
+
+      /* Container ảnh tư liệu chính (background-photo bao phủ toàn khung) */
+      .photo-viewport {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+        transform-origin: 50% 60%;
+        will-change: transform;
+      }
+      .photo-asset {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transform-origin: 50% 60%;
+        will-change: transform, opacity;
+      }
+
+      /* Thanh cam thương hiệu cố định mép đáy */
+      .brand-bottom-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 12px;
+        background-color: #FF6A1A;
+        z-index: 100;
+      }
+
+      /* Bảng thông báo sơ đồ giám định thương tích (Overlay diagram đúng text shotlist) */
+      .diagram-card {
+        position: absolute;
+        top: 240px;
+        left: 60px;
+        right: 60px;
+        background-color: #141414;
+        border-radius: 18px;
+        border-left: 8px solid #FF6A1A;
+        padding: 34px 42px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        box-shadow: 0 16px 36px rgba(0, 0, 0, 0.4);
+      }
+      .diagram-kicker {
+        color: #FF6A1A;
+        font-size: 22px;
+        font-weight: 700;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        margin: 0;
+      }
+      .diagram-headline {
+        color: #F7F4EC;
+        font-size: 50px;
+        font-weight: 900;
+        line-height: 1.25;
+        letter-spacing: 1px;
+        margin: 0;
+      }
+
+      /* Thẻ thông báo tỷ lệ thương tích (Punch-phrase + Icon doc) */
+      .verdict-card {
+        position: absolute;
+        top: 680px;
+        left: 60px;
+        right: 60px;
+        background-color: #141414;
+        border-radius: 20px;
+        border: 4px solid #FF6A1A;
+        padding: 38px 42px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        box-shadow: 0 20px 48px rgba(0, 0, 0, 0.5);
+      }
+      .verdict-header {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 16px;
+        margin-bottom: 24px;
+      }
+      .doc-icon-svg {
+        width: 64px;
+        height: 76px;
+      }
+      .verdict-subtitle {
+        color: #F7F4EC;
+        font-size: 28px;
+        font-weight: 700;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        margin: 0;
+      }
+      .stamp-block {
+        background-color: #FF6A1A;
+        border-radius: 12px;
+        padding: 14px 44px;
+        display: inline-block;
+        transform-origin: 50% 50%;
+      }
+      .stamp-text {
+        color: #141414;
+        font-size: 78px;
+        font-weight: 900;
+        line-height: 1.15;
+        letter-spacing: 2px;
+        display: block;
+        margin: 0;
+      }
+      .verdict-footnote {
+        color: #E7E3D9;
+        font-size: 22px;
+        font-weight: 700;
+        margin-top: 22px;
+        letter-spacing: 1px;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s19"
+      data-width="1080"
+      data-height="1920"
+      data-duration="7.44"
+    >
+      <!-- Lớp nền phong cách chart: các đường gióng ngang và tick cam -->
+      <div id="chart-grid" class="chart-bg-grid">
+        <div class="chart-line" style="top: 20%;"></div>
+        <div class="chart-tick" style="top: calc(20% - 1px);"></div>
+        <div class="chart-line" style="top: 40%;"></div>
+        <div class="chart-tick" style="top: calc(40% - 1px);"></div>
+        <div class="chart-line" style="top: 60%;"></div>
+        <div class="chart-tick" style="top: calc(60% - 1px);"></div>
+        <div class="chart-line" style="top: 80%;"></div>
+        <div class="chart-tick" style="top: calc(80% - 1px);"></div>
+      </div>
+
+      <!-- Clip 1: Hồ sơ bệnh án toàn màn hình (Background-photo + Ken Burns Zoom) -->
+      <div id="shot-bg" class="clip" data-start="0" data-duration="7.44" style="z-index: 2;">
+        <div id="photo-viewport" class="photo-viewport">
+          <img
+            id="medical-doc-photo"
+            class="photo-asset"
+            src="assets/img-12-injury-rate-medical-document.jpg"
+            alt="Hồ sơ bệnh án giám định thương tật"
+          />
+        </div>
+      </div>
+
+      <!-- Clip 2: Lớp đồ họa xác nhận 3 vết thương thực tế theo shotlist -->
+      <div id="diagram-overlay" class="clip" data-start="2.17" data-duration="2.7" style="z-index: 20;">
+        <div id="diagram-card-box" class="diagram-card">
+          <p id="diagram-kicker" class="diagram-kicker">BIÊN BẢN GIÁM ĐỊNH PHÁP Y</p>
+          <h2 id="diagram-headline" class="diagram-headline">3 VẾT THƯƠNG THỰC TẾ</h2>
+        </div>
+      </div>
+
+      <!-- Clip 3: Con dấu và kết luận tỷ lệ tổn thương cơ thể 5% kèm biểu tượng tài liệu -->
+      <div id="punch-overlay" class="clip" data-start="5.00" data-duration="2.44" style="z-index: 30;">
+        <div id="punch-card-box" class="verdict-card">
+          <div class="verdict-header">
+            <!-- Biểu tượng doc tự vẽ dần bằng SVG path -->
+            <svg id="doc-icon-svg" class="doc-icon-svg" viewBox="0 0 70 85" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path
+                id="doc-outline"
+                class="draw-path"
+                d="M 10 6 L 46 6 L 62 22 L 62 78 L 10 78 Z"
+                stroke="#FF6A1A"
+                stroke-width="5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <path
+                id="doc-fold"
+                class="draw-path"
+                d="M 46 6 L 46 22 L 62 22"
+                stroke="#FF6A1A"
+                stroke-width="4"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <path
+                id="doc-line-1"
+                class="draw-path"
+                d="M 22 38 L 50 38"
+                stroke="#F7F4EC"
+                stroke-width="4"
+                stroke-linecap="round"
+              />
+              <path
+                id="doc-line-2"
+                class="draw-path"
+                d="M 22 52 L 50 52"
+                stroke="#F7F4EC"
+                stroke-width="4"
+                stroke-linecap="round"
+              />
+              <path
+                id="doc-line-3"
+                class="draw-path"
+                d="M 22 66 L 40 66"
+                stroke="#FF6A1A"
+                stroke-width="4"
+                stroke-linecap="round"
+              />
+            </svg>
+            <p id="verdict-subtitle" class="verdict-subtitle">KẾT LUẬN TỔN THƯƠNG</p>
+          </div>
+
+          <div id="stamp-badge" class="stamp-block">
+            <h1 id="stamp-text" class="stamp-text">TỶ LỆ: 5%</h1>
+          </div>
+
+          <div id="verdict-footnote" class="verdict-footnote">TỔNG TỶ LỆ TỔN THƯƠNG CƠ THỂ</div>
+        </div>
+      </div>
+
+      <!-- Dải cam nhận diện thương hiệu cố định mép đáy -->
+      <div id="brand-bottom-bar" class="brand-bottom-bar"></div>
+    </div>
+
+    <script>
+      // Khởi tạo đo đạc chính xác chiều dài hình học các nét vẽ SVG của icon doc
+      const lenOutline = Math.ceil(document.getElementById("doc-outline").getTotalLength());
+      const lenFold = Math.ceil(document.getElementById("doc-fold").getTotalLength());
+      const lenLine1 = Math.ceil(document.getElementById("doc-line-1").getTotalLength());
+      const lenLine2 = Math.ceil(document.getElementById("doc-line-2").getTotalLength());
+      const lenLine3 = Math.ceil(document.getElementById("doc-line-3").getTotalLength());
+
+      document.getElementById("doc-outline").style.strokeDasharray = lenOutline;
+      document.getElementById("doc-outline").style.strokeDashoffset = lenOutline;
+      document.getElementById("doc-fold").style.strokeDasharray = lenFold;
+      document.getElementById("doc-fold").style.strokeDashoffset = lenFold;
+      document.getElementById("doc-line-1").style.strokeDasharray = lenLine1;
+      document.getElementById("doc-line-1").style.strokeDashoffset = lenLine1;
+      document.getElementById("doc-line-2").style.strokeDasharray = lenLine2;
+      document.getElementById("doc-line-2").style.strokeDashoffset = lenLine2;
+      document.getElementById("doc-line-3").style.strokeDasharray = lenLine3;
+      document.getElementById("doc-line-3").style.strokeDashoffset = lenLine3;
+
+      // Tạo timeline tổng duy nhất, ở trạng thái paused
+      const tl = gsap.timeline({ paused: true });
+
+      // 1. Vào cảnh: hiệu ứng 'grow' mở rộng ảnh hồ sơ bệnh án (0.0s -> 0.7s)
+      tl.fromTo(
+        "#medical-doc-photo",
+        { scale: 0.94, opacity: 0 },
+        { scale: 1.0, opacity: 1, duration: 0.7, ease: "power3.out" },
+        0
+      );
+
+      // 2. Chuyển động Ken Burns zoom-in chậm dần đều từ 1.0x lên 1.06x trên khung nhìn ảnh
+      tl.fromTo(
+        "#photo-viewport",
+        { scale: 1.0 },
+        { scale: 1.06, duration: 7.44, ease: "sine.out" },
+        0
+      );
+
+      // 3. Diagram xuất hiện (2.17s): Thẻ chú thích 3 vết thương trượt nhẹ xuống
+      tl.fromTo(
+        "#diagram-card-box",
+        { y: -30, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.5, ease: "power3.out" },
+        2.17
+      );
+
+      // Diagram mờ dần ra trước khi clip kết thúc (4.55s -> 4.80s)
+      tl.fromTo(
+        "#diagram-card-box",
+        { y: 0, opacity: 1 },
+        { y: -20, opacity: 0, duration: 0.25, ease: "power2.in", immediateRender: false },
+        4.55
+      );
+
+      // 4. Punch-phrase xuất hiện (5.00s): Thẻ kết luận đóng xuống vững chắc
+      tl.fromTo(
+        "#punch-card-box",
+        { scale: 0.88, opacity: 0, y: 24 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.55, ease: "power3.out" },
+        5.00
+      );
+
+      // Đóng dấu cam nổi bật tỷ lệ 5%
+      tl.fromTo(
+        "#stamp-badge",
+        { scale: 1.15, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.35, ease: "power3.out" },
+        5.25
+      );
+
+      // 5. Icon doc vẽ nét dần (5.54s)
+      tl.fromTo("#doc-outline", { strokeDashoffset: lenOutline }, { strokeDashoffset: 0, duration: 0.45, ease: "power2.out" }, 5.54);
+      tl.fromTo("#doc-fold", { strokeDashoffset: lenFold }, { strokeDashoffset: 0, duration: 0.25, ease: "power2.out" }, 5.75);
+      tl.fromTo("#doc-line-1", { strokeDashoffset: lenLine1 }, { strokeDashoffset: 0, duration: 0.2, ease: "power2.out" }, 5.85);
+      tl.fromTo("#doc-line-2", { strokeDashoffset: lenLine2 }, { strokeDashoffset: 0, duration: 0.2, ease: "power2.out" }, 5.95);
+      tl.fromTo("#doc-line-3", { strokeDashoffset: lenLine3 }, { strokeDashoffset: 0, duration: 0.2, ease: "power2.out" }, 6.05);
+
+      // Đăng ký timeline chính lên window.__timelines
+      window.__timelines["scene-s19"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

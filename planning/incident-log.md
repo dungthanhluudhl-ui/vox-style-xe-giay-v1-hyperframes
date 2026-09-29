@@ -843,3 +843,49 @@ CỐT LÕI của Style DNA — độc lập chặn fast capture ở hầu hết 
 thời gian "fast capture" thật sự cho video này vì không có cách đạt capture mode đó mà không đổi thẩm mỹ.
 Đề xuất: KHÔNG theo hướng cấm thuộc tính trong prompt; nếu muốn tối ưu render tốc độ, cân nhắc hướng khác
 (vd giảm `--workers`/độ phân giải preview khi lặp, hoặc chấp nhận `screenshot` là mặc định cho style này).
+
+---
+
+### Fix tận gốc — LLM tự đặt sai định dạng scene id ("S010/S011..." và "S17a/S17b/S17c") (2026-09-30)
+
+**Phát hiện khi:** 2 sự cố độc lập ở Stage 5 (`scripts/05-scene-plan.router.mjs`), cả hai do LLM tự gán
+field `id` của scene theo ý riêng thay vì đúng định dạng `S` + 2 chữ số:
+1. Video `ban-an-14-2024-phan-1`: 1 lần gọi full scene-plan bình thường (không dùng `--from=`), LLM sinh
+   `S01..S09` rồi ghép chuỗi thay vì zero-pad ở mốc 10 → `S010, S011, ... S021` (xác nhận qua
+   scene-plan.json/shotlist.json/compositions trên đĩa). Không gây lỗi chức năng (không chỗ nào parse/sort
+   theo id — toàn pipeline dùng thứ tự mảng + so khớp chuỗi chính xác) nhưng sai định dạng, rủi ro tiềm ẩn.
+2. Video `ban-an-10-2025-sam-son-thanh-hoa`: LLM tách 1 beat lời thoại thành 3 sub-scene
+   `S17a/S17b/S17c`. Regex cũ thuần số `/^scene-s\d+\.html$/i` trong `scripts/lib/sync-root-hf-lib.mjs`
+   không khớp 3 file này → bị âm thầm loại khỏi index.html ráp cuối (đã hotfix ngay trong ngày bằng
+   `/^scene-s\d+[a-z]*\.html$/i`, GIỮ NGUYÊN fix này cho video cũ đã có filename dạng chữ cái).
+
+**Nguyên nhân gốc:** `05-scene-plan.router.mjs` chưa bao giờ kiểm tra/chuẩn hoá field `id` do LLM trả về —
+ghi thẳng vào scene-plan.json (nguồn duy nhất mọi stage sau đọc `.id` như chuỗi đối chiếu chính xác).
+Thêm nữa, prompt chế độ `--from=` có bug tự chỉ dẫn sai định dạng (`S0${keptScenes.length}`) — với
+`keptScenes.length >= 9` câu này LÀ chỉ dẫn literal ra `S010`. Sự cố #1 xảy ra ở lần gọi full-plan (không
+qua `--from=`), nghĩa là LLM tự phát sinh lỗi này ngay cả khi prompt không sai → phải chặn ở cả 2 lớp.
+
+**Đã sửa:**
+1. `scripts/05-scene-plan.router.mjs`: sau khi nhận `newScenes`, GHI ĐÈ tất định field `id` theo vị trí
+   mảng (`S` + số thứ tự zero-pad 2 chữ số, tiếp nối từ `keptScenes.length`), bỏ hoàn toàn `id` LLM tự đặt.
+   CHỈ áp dụng scene MỚI; `keptScenes` (chế độ `--from=`) giữ nguyên id cũ để không phá tên file
+   `compositions/scene-sXXX.html` đã render.
+2. Sửa chuỗi prompt bug ở chế độ `--from=` dùng đúng `String(n).padStart(2,"0")`.
+3. Thêm đoạn "QUY TẮC ĐẶT ID SCENE" vào system prompt: tuần tự theo mảng, zero-pad, cấm ghép `"S0"+n`, cấm
+   hậu tố chữ cái để tách sub-scene (phòng thủ kép — code đã ghi đè id nhưng output model vẫn nên nhất quán).
+4. `scripts/run-stages-1-6.mjs`: nâng gate kiểm tra id sau Stage 6 từ "chuỗi không rỗng" thành khớp
+   `/^S\d{2,}$/` — nếu bao giờ fail nghĩa là cơ chế chuẩn hoá ở Stage 5 có bug/bị bỏ qua (vd sửa tay
+   scene-plan.json), fail ngay với thông báo trỏ thẳng file liên quan thay vì để lỗi trôi xuống Stage 7.
+
+**Không đụng:** regex đọc filename ở `sync-root-hf-lib.mjs` (giữ làm lớp phòng thủ cho video cũ);
+`scene-plan.json`/`compositions/` của các video đã render trước bản sửa (chỉ ảnh hưởng lần chạy Stage 5
+mới trở đi — đổi lại id cũ đòi hỏi đổi tên cả file composition, rủi ro cao hơn lợi ích); Stage 6/7 không
+cần sửa (đã xác nhận qua đọc code: chỉ dùng `.id` như chuỗi đối chiếu chính xác hoặc thứ tự mảng).
+
+**Đã kiểm chứng (2026-09-30):** `node --check` cả 2 file sạch; unit test cô lập logic canonicalize (4 case:
+21 scene id LLM ghép sai, sub-scene `S17a/b/c` → `S17/S18/S19`, `--from=` với `keptScenes.length=9` + id rác/rỗng,
+120 scene → `S100` không bị cắt) đều ra đúng `S01, S02, ...`; regex gate khớp `S01/S10/S100/S010`, loại
+`S17a/S1/s01/S`. Quét mọi `planning/videos/*/scene-plan.json` hiện có: chỉ `ban-an-10-2025-sam-son-thanh-hoa`
+(`S17a/b/c`) không đạt gate mới — gate chỉ chạy trong `run-stages-1-6.mjs` nên không ảnh hưởng video đã render.
+**CHƯA chạy Stage 5 thật với model thật** sau bản sửa — xác nhận ở lần dựng video kế tiếp (kiểm `scene-plan.json`
+toàn `S01, S02, ...`).

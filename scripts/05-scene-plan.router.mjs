@@ -82,9 +82,19 @@ QUY TẮC NGƯỠNG NHỊP ĐỘ — ÁP DỤNG ĐỒNG THỜI VỚI QUY TẮC �
 LƯU Ý: theo quyết định dự án hiện tại, ảnh (type="image") chỉ dùng làm ẢNH NỀN (background-photo), KHÔNG áp dụng xử lý cutout (grayscale+bóng cam) — dù mô tả có ghi "cutout style" (đó là style của chính ảnh AI tạo sẵn, không phải chỉ định phải xử lý cutout thêm). Nguồn: STYLE_DNA.md §2 "Ngoại lệ chính thức".
 ${
   fromSceneId
-    ? `\nCHẾ ĐỘ SINH LẠI MỘT PHẦN: các scene sau ĐÃ CHỐT, KHÔNG được sửa/viết lại, KHÔNG đưa vào output — chỉ dùng để biết asset nào đã dùng rồi (không gán lại cho scene mới) và để nối tiếp đúng văn phong/id:\n${JSON.stringify(keptScenes, null, 2)}\nNhiệm vụ của bạn CHỈ là tạo các scene MỚI bắt đầu từ mốc ${regenFromMs}ms cho đến hết audio (${totalDurationMs}ms), đánh số id tiếp theo (nếu scene cuối giữ nguyên là S0${keptScenes.length}, scene mới bắt đầu từ S0${keptScenes.length + 1}). Output CHỈ gồm các scene MỚI này, không lặp lại scene đã chốt ở trên.\n`
+    ? `\nCHẾ ĐỘ SINH LẠI MỘT PHẦN: các scene sau ĐÃ CHỐT, KHÔNG được sửa/viết lại, KHÔNG đưa vào output — chỉ dùng để biết asset nào đã dùng rồi (không gán lại cho scene mới) và để nối tiếp đúng văn phong/id:\n${JSON.stringify(keptScenes, null, 2)}\nNhiệm vụ của bạn CHỈ là tạo các scene MỚI bắt đầu từ mốc ${regenFromMs}ms cho đến hết audio (${totalDurationMs}ms), đánh số id tiếp theo dạng S+2 chữ số (nếu scene cuối giữ nguyên là S${String(keptScenes.length).padStart(2, "0")}, scene mới bắt đầu từ S${String(keptScenes.length + 1).padStart(2, "0")}). Output CHỈ gồm các scene MỚI này, không lặp lại scene đã chốt ở trên.\n`
     : ""
 }
+QUY TẮC ĐẶT ID SCENE — TẤT ĐỊNH, KHÔNG ĐƯỢC TỰ SÁNG TẠO:
+- id PHẢI là "S" + đúng 2 chữ số trở lên, đánh số TUẦN TỰ theo đúng thứ tự xuất hiện trong mảng "scenes" (scene đầu tiên trong output này là S01, kế tiếp S02, ...).${
+  fromSceneId
+    ? ` Ở chế độ sinh lại một phần này, scene đầu tiên bạn trả về PHẢI là S${String(keptScenes.length + 1).padStart(2, "0")}, tăng dần đúng 1 đơn vị mỗi scene sau đó.`
+    : ""
+}
+- TUYỆT ĐỐI KHÔNG ghép chuỗi kiểu "S0" + số (sẽ ra "S010", "S011" sai) — luôn zero-pad đúng 2 chữ số trở lên (từ scene thứ 100 trở đi viết đủ "S100", KHÔNG rút gọn).
+- TUYỆT ĐỐI KHÔNG thêm hậu tố chữ cái để tách 1 beat thành nhiều scene con (KHÔNG dùng "S17a"/"S17b"/"S17c") — mỗi scene con vẫn phải có id số tuần tự bình thường của riêng nó (S17, S18, S19...).
+- LƯU Ý: pipeline có bước hậu-xử lý ghi đè id theo vị trí mảng bất kể bạn viết gì, nhưng vẫn phải tuân thủ đúng quy tắc trên để id trong output nhất quán, tránh nhầm lẫn khi bạn tự tham chiếu id giữa các scene trong cùng lần trả lời.
+
 Trả về DUY NHẤT một JSON object đúng schema:
 {
   "scenes": [
@@ -150,6 +160,16 @@ if (!Array.isArray(newScenes) || newScenes.length === 0) {
   console.error("Cảnh báo: 'scenes' không phải array hợp lệ hoặc rỗng.");
   process.exit(1);
 }
+
+// Chuẩn hoá id TẤT ĐỊNH theo vị trí mảng — KHÔNG tin id do LLM tự đặt (đã từng sinh sai
+// "S010/S011..." khi ghép chuỗi thay vì zero-pad, và từng tự tách 1 beat thành "S17a/S17b/S17c").
+// Ghi đè hoàn toàn field "id", không cố "dọn"/parse chuỗi cũ. CHỈ áp dụng cho scene MỚI —
+// keptScenes (chế độ --from=) giữ nguyên id cũ để không phá tên file
+// compositions/scene-sXXX.html đã render trước đó cho các scene đã chốt.
+newScenes.forEach((s, i) => {
+  s.id = `S${String(keptScenes.length + i + 1).padStart(2, "0")}`;
+});
+
 const scenes = [...keptScenes, ...newScenes];
 
 // Ghi JSON (nguồn dữ liệu chính cho bước Shotlist/code-gen sau)

@@ -1,0 +1,640 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+      /* hf-safe-colors (tất định từ style-tokens.json) */
+      .hf-text-ink { color: #141414; }
+      .hf-text-light { color: #F7F4EC; }
+      .hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+      .hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+      .hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+      .hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+      :root {
+        --bg-paper: #e7e3d9;
+        --bg-card: #f5f0e4;
+        --ink: #141414;
+        --orange: #ff6a1a;
+        --grid-line: rgba(20, 20, 20, 0.32);
+        --text-light: #f7f4ec;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        padding: 0;
+        background: var(--bg-paper);
+        color: var(--ink);
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+
+      .clip {
+        position: absolute;
+        inset: 0;
+      }
+
+      /* Nền Chart theo Style DNA: 4 vạch ngang đậm tại 20%, 40%, 60%, 80% + vạch cam lề trái */
+      .chart-bg {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+      }
+
+      .chart-line {
+        position: absolute;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: var(--grid-line);
+      }
+
+      .chart-line::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: -4px;
+        width: 24px;
+        height: 10px;
+        background: var(--orange);
+      }
+
+      .line-1 { top: 20%; }
+      .line-2 { top: 40%; }
+      .line-3 { top: 60%; }
+      .line-4 { top: 80%; }
+
+      /* Lưới dọc phụ trợ phong cách hồ sơ điều tra */
+      .chart-grid-v {
+        position: absolute;
+        inset: 0;
+        background-image: repeating-linear-gradient(
+          to right,
+          rgba(20, 20, 20, 0.05) 0px,
+          rgba(20, 20, 20, 0.05) 1px,
+          transparent 1px,
+          transparent 84px
+        );
+      }
+
+      /* Thanh cam đáy cố định nhận diện thương hiệu */
+      .bottom-orange-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 16px;
+        background: var(--orange);
+        z-index: 99;
+      }
+
+      /* Khung chứa nội dung nằm trọn trong Safe Zone [160, 1390] */
+      .content-wrapper {
+        position: absolute;
+        top: 180px;
+        left: 50px;
+        right: 50px;
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+      }
+
+      /* Section 1: Thử thách (Overlay 1) */
+      .probation-section {
+        background: var(--bg-card);
+        border: 3.5px solid var(--ink);
+        border-radius: 6px;
+        padding: 22px 26px;
+        box-shadow: 8px 8px 0px var(--ink);
+      }
+
+      .dossier-tag {
+        display: inline-block;
+        background: var(--orange);
+        color: var(--ink);
+        font-weight: 900;
+        font-size: 18px;
+        padding: 5px 12px;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        margin-bottom: 10px;
+      }
+
+      .probation-title {
+        font-size: 46px;
+        font-weight: 900;
+        line-height: 1.15;
+        color: var(--ink);
+        text-transform: uppercase;
+        margin: 0 0 14px 0;
+      }
+
+      .timeline-track {
+        position: relative;
+        height: 32px;
+        background: var(--ink);
+        border: 2px solid var(--ink);
+        border-radius: 4px;
+        overflow: hidden;
+      }
+
+      .timeline-fill {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        background: var(--orange);
+        transform: scaleX(0);
+        transform-origin: left center;
+      }
+
+      .timeline-labels {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 8px;
+        font-size: 14px;
+        font-weight: 900;
+        color: var(--ink);
+        text-transform: uppercase;
+      }
+
+      /* Section 2: Bộ đếm 2 nấc vi phạm & Punch Phrase (Overlay 2) */
+      .violation-section {
+        position: relative;
+        background: var(--bg-card);
+        border: 3.5px solid var(--ink);
+        border-radius: 6px;
+        padding: 22px 24px;
+        box-shadow: 8px 8px 0px var(--ink);
+      }
+
+      .section-label {
+        font-size: 21px;
+        font-weight: 900;
+        color: var(--ink);
+        text-transform: uppercase;
+        letter-spacing: 1.2px;
+        margin-bottom: 16px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .section-label::before {
+        content: "";
+        display: inline-block;
+        width: 10px;
+        height: 22px;
+        background: var(--orange);
+      }
+
+      .counter-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 18px;
+      }
+
+      .tier-card {
+        border: 3px solid var(--ink);
+        background: var(--bg-paper);
+        padding: 16px 14px;
+        border-radius: 4px;
+        position: relative;
+        min-height: 160px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+
+      .tier-badge {
+        font-size: 16px;
+        font-weight: 900;
+        background: var(--ink);
+        color: var(--text-light);
+        padding: 4px 10px;
+        display: inline-block;
+        align-self: flex-start;
+      }
+
+      .tier-level {
+        font-size: 38px;
+        font-weight: 900;
+        line-height: 1.05;
+        margin: 8px 0;
+        color: var(--ink);
+      }
+
+      .tier-status {
+        font-size: 17px;
+        font-weight: 900;
+        padding: 7px 10px;
+        border-radius: 2px;
+        text-transform: uppercase;
+        border: 2px solid var(--ink);
+        background: transparent;
+        color: var(--ink);
+        text-align: center;
+      }
+
+      /* Punch-phrase Banner: "VI PHẠM TỪ 2 LẦN" */
+      .punch-banner {
+        margin-top: 18px;
+        background: var(--ink);
+        border: 4px solid var(--orange);
+        padding: 14px 20px;
+        text-align: center;
+        box-shadow: 6px 6px 0px var(--ink);
+      }
+
+      .punch-text {
+        color: var(--orange);
+        font-size: 54px;
+        font-weight: 900;
+        line-height: 1.1;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        margin: 0;
+      }
+
+      /* Section 3: Chế tài buồng giam & Con dấu (Overlay 3) */
+      .consequence-section {
+        position: relative;
+        background: var(--bg-card);
+        border: 3.5px solid var(--ink);
+        border-radius: 6px;
+        padding: 22px 24px;
+        box-shadow: 8px 8px 0px var(--ink);
+      }
+
+      .cell-viewport {
+        position: relative;
+        height: 260px;
+        background: var(--ink);
+        border: 3px solid var(--ink);
+        border-radius: 4px;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      /* Cánh cửa song sắt trại giam hạ từ trên xuống */
+      .jail-bars-gate {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        justify-content: space-evenly;
+        align-items: stretch;
+        padding: 0 16px;
+        pointer-events: none;
+        z-index: 10;
+        background: rgba(20, 20, 20, 0.2);
+      }
+
+      .jail-bar {
+        width: 20px;
+        height: 100%;
+        background: linear-gradient(to right, #000000, #262626 50%, #000000);
+        box-shadow: inset 1px 0 0 rgba(255, 255, 255, 0.15), 3px 0 5px rgba(0, 0, 0, 0.6);
+      }
+
+      .jail-beam {
+        position: absolute;
+        left: 0;
+        right: 0;
+        height: 22px;
+        background: var(--ink);
+        border-top: 1px solid rgba(255, 255, 255, 0.15);
+        border-bottom: 1px solid rgba(0, 0, 0, 0.6);
+      }
+
+      .beam-top { top: 24px; }
+      .beam-mid { top: 120px; }
+      .beam-bottom { bottom: 24px; }
+
+      /* Then chốt khóa kim loại cam trượt ngang qua song sắt */
+      .lock-bolt {
+        position: absolute;
+        left: 16px;
+        top: 105px;
+        width: 140px;
+        height: 52px;
+        background: var(--orange);
+        border: 3.5px solid var(--ink);
+        z-index: 15;
+        box-shadow: 4px 4px 0px rgba(0, 0, 0, 0.6);
+      }
+
+      /* Stamp: "BUỘC THI HÀNH TÙ GIAM" dập xuống trên cùng */
+      .jail-stamp {
+        position: absolute;
+        z-index: 20;
+        background: var(--ink);
+        border: 5px solid var(--orange);
+        padding: 16px 28px;
+        text-align: center;
+        box-shadow: 10px 10px 0px rgba(0, 0, 0, 0.7);
+      }
+
+      .jail-stamp-text {
+        color: var(--text-light);
+        font-size: 46px;
+        font-weight: 900;
+        line-height: 1.15;
+        text-transform: uppercase;
+        margin: 0;
+      }
+
+      .jail-stamp-sub {
+        color: var(--orange);
+        font-size: 20px;
+        font-weight: 900;
+        letter-spacing: 2px;
+        margin-top: 4px;
+        text-transform: uppercase;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s25"
+      data-start="0"
+      data-width="1080"
+      data-height="1920"
+      data-duration="8.03"
+    >
+      <!-- Background Chart Lines & Vertical Grid -->
+      <div class="chart-bg">
+        <div class="chart-grid-v"></div>
+        <div class="chart-line line-1"></div>
+        <div class="chart-line line-2"></div>
+        <div class="chart-line line-3"></div>
+        <div class="chart-line line-4"></div>
+      </div>
+
+      <!-- Main Clip Container -->
+      <section class="clip" data-start="0" data-duration="8.03">
+        <div class="content-wrapper">
+          <!-- 1. Header & Thời gian thử thách (Overlay 1) -->
+          <div class="probation-section" id="probation-card">
+            <span class="dossier-tag">CHẾ ĐỊNH PHÁP LÝ</span>
+            <h1 class="probation-title" id="title-overlay-1">TRONG THỜI GIAN THỬ THÁCH</h1>
+            <div class="timeline-track">
+              <div class="timeline-fill" id="timeline-bar"></div>
+            </div>
+            <div class="timeline-labels">
+              <span>BẮT ĐẦU</span>
+              <span>GIÁM SÁT NGHĨA VỤ ĐỊA PHƯƠNG</span>
+              <span>KẾT THÚC</span>
+            </div>
+          </div>
+
+          <!-- 2. Sơ đồ vi phạm 2 nấc & Punch Phrase (Overlay 2) -->
+          <div class="violation-section" id="violation-card">
+            <div class="section-label">HỆ THỐNG CẢNH BÁO VI PHẠM NGHĨA VỤ</div>
+            <div class="counter-grid">
+              <!-- Nấc 1: Cảnh cáo -->
+              <div class="tier-card" id="tier-1">
+                <span class="tier-badge" id="tier-1-badge">NẤC 1</span>
+                <div class="tier-level" id="tier-1-level">LẦN 1</div>
+                <div class="tier-status" id="tier-1-status">CẢNH CÁO</div>
+              </div>
+
+              <!-- Nấc 2: Báo động chế tài -->
+              <div class="tier-card" id="tier-2">
+                <span class="tier-badge" id="tier-2-badge">NẤC 2</span>
+                <div class="tier-level" id="tier-2-level">LẦN 2</div>
+                <div class="tier-status" id="tier-2-status">CHẾ TÀI</div>
+              </div>
+            </div>
+
+            <!-- Punch-phrase banner -->
+            <div class="punch-banner" id="punch-card">
+              <h2 class="punch-text" id="punch-overlay-2">VI PHẠM TỪ 2 LẦN</h2>
+            </div>
+          </div>
+
+          <!-- 3. Chế tài buồng giam & Stamp chấp hành tù giam (Overlay 3) -->
+          <div class="consequence-section" id="consequence-card">
+            <div class="section-label">HẬU QUẢ PHÁP LÝ TRỰC TIẾP</div>
+            <div class="cell-viewport">
+              <!-- Cánh cửa song sắt trại giam -->
+              <div class="jail-bars-gate" id="jail-gate">
+                <div class="jail-beam beam-top"></div>
+                <div class="jail-beam beam-mid"></div>
+                <div class="jail-beam beam-bottom"></div>
+                <div class="jail-bar"></div>
+                <div class="jail-bar"></div>
+                <div class="jail-bar"></div>
+                <div class="jail-bar"></div>
+                <div class="jail-bar"></div>
+                <div class="jail-bar"></div>
+                <div class="jail-bar"></div>
+                <div class="jail-bar"></div>
+              </div>
+
+              <!-- Then chốt khóa kim loại -->
+              <div class="lock-bolt" id="lock-bolt"></div>
+
+              <!-- Con dấu sập xuống trên cùng -->
+              <div class="jail-stamp" id="jail-stamp">
+                <h3 class="jail-stamp-text" id="stamp-overlay-3">BUỘC THI HÀNH TÙ GIAM</h3>
+                <div class="jail-stamp-sub">HỦY HƯỞNG ÁN TREO</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Thanh cam đáy cố định nhận diện thương hiệu -->
+      <div class="bottom-orange-bar"></div>
+    </div>
+
+    <script>
+      // Single paused master timeline for HyperFrames seekable deterministic rendering
+      const tl = gsap.timeline({ paused: true });
+
+      // Thiết lập trạng thái ban đầu tường minh
+      tl.set("#probation-card", { opacity: 0, y: 30 });
+      tl.set("#timeline-bar", { scaleX: 0 });
+      tl.set("#violation-card", { opacity: 0, y: 30 });
+      tl.set("#tier-1", { opacity: 0, scale: 0.85 });
+      tl.set("#tier-2", { opacity: 0, scale: 0.85 });
+      tl.set("#punch-card", { opacity: 0, scale: 0.7 });
+      tl.set("#consequence-card", { opacity: 0, y: 30 });
+      tl.set("#jail-gate", { y: -300 });
+      tl.set("#lock-bolt", { x: -200 });
+      tl.set("#jail-stamp", { opacity: 0, scale: 1.7, rotation: -3 });
+
+      // ==========================================
+      // GIAI ĐOẠN 1: Overlay 1 - TRONG THỜI GIAN THỬ THÁCH (atMs: 228940 -> t = 0.30s)
+      // ==========================================
+      tl.to("#probation-card", {
+        opacity: 1,
+        y: 0,
+        duration: 0.5,
+        ease: "power3.out"
+      }, 0.3);
+
+      tl.to("#timeline-bar", {
+        scaleX: 1,
+        duration: 1.4,
+        ease: "power2.inOut"
+      }, 0.45);
+
+      // Section vi phạm xuất hiện
+      tl.to("#violation-card", {
+        opacity: 1,
+        y: 0,
+        duration: 0.45,
+        ease: "power3.out"
+      }, 0.7);
+
+      // Nấc 1: Cảnh cáo nghĩa vụ
+      tl.to("#tier-1", {
+        opacity: 1,
+        scale: 1,
+        duration: 0.4,
+        ease: "power3.out"
+      }, 1.0);
+
+      // Kích hoạt màu cảnh báo Nấc 1
+      tl.to("#tier-1", {
+        backgroundColor: "#f5f0e4",
+        duration: 0.2
+      }, 1.25);
+      tl.to("#tier-1-status", {
+        backgroundColor: "#FF6A1A",
+        color: "#141414",
+        borderColor: "#FF6A1A",
+        duration: 0.2
+      }, 1.25);
+
+      // ==========================================
+      // GIAI ĐOẠN 2: Overlay 2 - VI PHẠM TỪ 2 LẦN (atMs: 231120 -> t = 2.48s)
+      // ==========================================
+      // Nấc 2 bật sáng
+      tl.to("#tier-2", {
+        opacity: 1,
+        scale: 1,
+        duration: 0.35,
+        ease: "power3.out"
+      }, 2.2);
+
+      // Báo động nguy hiểm Nấc 2
+      tl.to("#tier-2", {
+        backgroundColor: "#141414",
+        borderColor: "#FF6A1A",
+        duration: 0.2
+      }, 2.4);
+      tl.to("#tier-2-badge", {
+        backgroundColor: "#FF6A1A",
+        color: "#141414",
+        duration: 0.2
+      }, 2.4);
+      tl.to("#tier-2-level", {
+        color: "#FF6A1A",
+        duration: 0.2
+      }, 2.4);
+      tl.to("#tier-2-status", {
+        backgroundColor: "#FF6A1A",
+        color: "#141414",
+        borderColor: "#FF6A1A",
+        duration: 0.2
+      }, 2.4);
+
+      // Punch-phrase: "VI PHẠM TỪ 2 LẦN" dập mạnh
+      tl.to("#punch-card", {
+        opacity: 1,
+        scale: 1,
+        duration: 0.45,
+        ease: "power4.out"
+      }, 2.48);
+
+      // Rung cảnh báo nhẹ
+      tl.to("#violation-card", {
+        x: -8,
+        duration: 0.06,
+        yoyo: true,
+        repeat: 3,
+        ease: "none"
+      }, 2.52);
+
+      tl.to("#violation-card", {
+        x: 0,
+        duration: 0.05
+      }, 2.76);
+
+      // ==========================================
+      // GIAI ĐOẠN 3: Overlay 3 - BUỘC THI HÀNH TÙ GIAM (atMs: 233640 -> t = 5.00s)
+      // ==========================================
+      tl.to("#consequence-card", {
+        opacity: 1,
+        y: 0,
+        duration: 0.35,
+        ease: "power3.out"
+      }, 4.7);
+
+      // Cánh cửa song sắt sập mạnh từ trên xuống lúc t = 5.0s
+      tl.to("#jail-gate", {
+        y: 0,
+        duration: 0.38,
+        ease: "power4.in"
+      }, 5.0);
+
+      // Rung va đập kim loại
+      tl.to("#consequence-card", {
+        y: 6,
+        duration: 0.06,
+        yoyo: true,
+        repeat: 2,
+        ease: "none"
+      }, 5.38);
+
+      tl.to("#consequence-card", {
+        y: 0,
+        duration: 0.06
+      }, 5.52);
+
+      // Then chốt khóa trượt ngang kịch qua song sắt
+      tl.to("#lock-bolt", {
+        x: 0,
+        duration: 0.25,
+        ease: "power3.out"
+      }, 5.38);
+
+      // Con dấu dập xuống trên cùng: "BUỘC THI HÀNH TÙ GIAM"
+      tl.to("#jail-stamp", {
+        opacity: 1,
+        scale: 1,
+        rotation: -3,
+        duration: 0.35,
+        ease: "power3.out"
+      }, 5.55);
+
+      // Gắn timeline vào window.__timelines
+      window.__timelines = window.__timelines || {};
+      window.__timelines["scene-s25"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

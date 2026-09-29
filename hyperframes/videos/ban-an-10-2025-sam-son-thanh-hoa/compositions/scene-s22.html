@@ -1,0 +1,730 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap"
+    />
+      <style>
+/* hf-safe-colors (tất định từ style-tokens.json) */
+.hf-text-ink { color: #141414; }
+.hf-text-light { color: #F7F4EC; }
+.hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+.hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+.hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+.hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #e7e3d9;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+
+      /* Quy ước bắt buộc: .clip dùng inset: 0, KHÔNG hardcode width/height cố định */
+      .clip {
+        position: absolute;
+        inset: 0;
+      }
+
+      /* Nền lưới 84px chuẩn Vox Style DNA */
+      .scene-grid-bg {
+        position: absolute;
+        inset: 0;
+        background-color: #e7e3d9;
+        background-image:
+          linear-gradient(to right, rgba(20, 20, 20, 0.2) 1.5px, transparent 1.5px),
+          linear-gradient(to bottom, rgba(20, 20, 20, 0.2) 1.5px, transparent 1.5px);
+        background-size: 84px 84px;
+        pointer-events: none;
+      }
+
+      /* Dấu chữ ký thị giác: thanh cam cố định mép đáy */
+      .bottom-brand-bar {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 14px;
+        background-color: #ff6a1a;
+        z-index: 50;
+      }
+
+      /* Các class màu an toàn chuẩn WCAG */
+      .hf-text-ink {
+        color: #141414;
+      }
+      .hf-text-light {
+        color: #f7f4ec;
+      }
+      .hf-hl-orange {
+        background-color: #ff6a1a;
+        color: #141414;
+      }
+      .hf-plate-ink {
+        background-color: #141414;
+        color: #f7f4ec;
+      }
+      .hf-plate-ink-orange {
+        background-color: #141414;
+        color: #ff6a1a;
+      }
+      .hf-plate-paper {
+        background-color: #f5f0e4;
+        color: #141414;
+      }
+
+      /* Bố cục dải nội dung hữu dụng: safe zone Y [160, 1390] */
+      .diagram-stage {
+        position: absolute;
+        inset: 0;
+        padding: 180px 60px 530px 60px;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+      }
+
+      /* Technical header */
+      .editorial-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 24px;
+      }
+
+      .editorial-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 14px;
+        background-color: #141414;
+        color: #f7f4ec;
+        font-size: 20px;
+        font-weight: 700;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+      }
+
+      .editorial-marker {
+        width: 10px;
+        height: 10px;
+        background-color: #ff6a1a;
+        display: inline-block;
+      }
+
+      .section-index {
+        font-size: 20px;
+        font-weight: 700;
+        color: #141414;
+        letter-spacing: 1px;
+      }
+
+      /* Card trên: Cổng trại giam (môi trường cách ly) */
+      .module-card {
+        background-color: #f5f0e4;
+        border: 2px solid #141414;
+        box-shadow: 6px 6px 0 rgba(20, 20, 20, 0.9);
+        position: relative;
+        will-change: transform, opacity;
+      }
+
+      .prison-card {
+        height: 310px;
+        padding: 24px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+
+      .card-header-line {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .card-title {
+        font-size: 22px;
+        font-weight: 700;
+        color: #141414;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .status-pill {
+        display: inline-flex;
+        align-items: center;
+        padding: 4px 12px;
+        font-size: 16px;
+        font-weight: 900;
+        border-radius: 4px;
+      }
+
+      .prison-diagram-body {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+        height: 200px;
+      }
+
+      .prison-gate-graphic {
+        width: 220px;
+        height: 190px;
+        flex-shrink: 0;
+      }
+
+      /* Overlay 1: Label CHƯA CẦN CÁCH LY */
+      .overlay-label-container {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: flex-start;
+      }
+
+      .label-badge {
+        background-color: #141414;
+        color: #f7f4ec;
+        padding: 16px 24px;
+        border-left: 6px solid #ff6a1a;
+        width: 100%;
+      }
+
+      .label-kicker {
+        font-size: 16px;
+        font-weight: 700;
+        color: #ff6a1a;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 6px;
+        display: block;
+      }
+
+      .label-text-large {
+        font-size: 38px;
+        font-weight: 900;
+        line-height: 1.25;
+        color: #f7f4ec;
+        margin: 0;
+      }
+
+      /* Flow vector trung gian: Mũi tên uốn cong chuyển giao đối tượng */
+      .flow-connector-zone {
+        height: 330px;
+        position: relative;
+        margin: 10px 0;
+      }
+
+      .flow-svg-canvas {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        overflow: visible;
+      }
+
+      .flow-info-chip {
+        position: absolute;
+        top: 42%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background-color: #f5f0e4;
+        border: 2px solid #141414;
+        box-shadow: 4px 4px 0 #141414;
+        padding: 10px 20px;
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        z-index: 10;
+        will-change: transform, opacity;
+      }
+
+      .chip-arrow {
+        width: 24px;
+        height: 24px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #141414;
+        color: #f7f4ec;
+        border-radius: 50%;
+        font-weight: 900;
+        font-size: 14px;
+      }
+
+      .chip-text {
+        font-size: 20px;
+        font-weight: 700;
+        color: #141414;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      /* Card dưới: Trụ sở địa phương + Vòng tròn bảo hộ */
+      .community-card {
+        height: 480px;
+        padding: 24px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+
+      .community-visual-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        height: 240px;
+        position: relative;
+      }
+
+      .community-svg-zone {
+        width: 100%;
+        height: 100%;
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .sphere-svg-canvas {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        overflow: visible;
+      }
+
+      /* Badges bảo hộ xung quanh */
+      .sphere-badge-group {
+        position: absolute;
+        width: 100%;
+        display: flex;
+        justify-content: space-around;
+        padding: 0 40px;
+        z-index: 5;
+      }
+
+      .sphere-pill {
+        background-color: #141414;
+        color: #f7f4ec;
+        padding: 8px 18px;
+        font-size: 20px;
+        font-weight: 900;
+        border: 2px solid #ff6a1a;
+        letter-spacing: 1px;
+      }
+
+      /* Overlay 2: Punch phrase ĐỊA PHƯƠNG GIÁM SÁT */
+      .punch-banner-container {
+        width: 100%;
+        margin-top: 10px;
+        will-change: transform, opacity;
+      }
+
+      .punch-plate {
+        background-color: #141414;
+        padding: 20px 24px;
+        border-top: 6px solid #ff6a1a;
+        box-shadow: 4px 4px 0 rgba(20, 20, 20, 0.3);
+      }
+
+      .punch-phrase-text {
+        font-size: 56px;
+        font-weight: 900;
+        color: #f7f4ec;
+        margin: 0;
+        line-height: 1.15;
+        letter-spacing: -0.5px;
+        text-transform: uppercase;
+      }
+
+      .punch-sub-strip {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-top: 10px;
+      }
+
+      .punch-sub-badge {
+        background-color: #ff6a1a;
+        color: #141414;
+        padding: 4px 12px;
+        font-size: 16px;
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .punch-sub-caption {
+        font-size: 18px;
+        font-weight: 700;
+        color: #f7f4ec;
+        letter-spacing: 0.5px;
+      }
+    </style>
+
+    <!-- Composition Root: Độc lập, không có template wrapper, thời lượng 6.72s (205680ms -> 212400ms) -->
+    <div
+      id="root"
+      data-composition-id="scene-s22"
+      data-width="1080"
+      data-height="1920"
+      data-duration="6.72"
+    >
+      <!-- Clip Scene chính -->
+      <section id="scene-s22" class="clip" data-start="0" data-duration="6.72">
+        <!-- Nền giấy ngà + lưới kỹ thuật 84px -->
+        <div class="scene-grid-bg"></div>
+
+        <!-- Sân khấu đồ họa kiến trúc theo cấu trúc Diagram / Flow -->
+        <div class="diagram-stage">
+          <!-- Thanh tiêu đề chỉ dẫn cơ chế pháp lý -->
+          <div class="editorial-header">
+            <div class="editorial-tag">
+              <span class="editorial-marker"></span>
+              <span>CƠ CHẾ THI HÀNH ÁN TREO</span>
+            </div>
+            <div class="section-index">S22 // CỘNG ĐỒNG</div>
+          </div>
+
+          <!-- MODULE 1 (TRÊN): Cổng trại giam khép lại nhưng không khóa -->
+          <div id="module-prison" class="module-card prison-card">
+            <div class="card-header-line">
+              <span class="card-title">MÔI TRƯỜNG CÁCH LY TẬP TRUNG</span>
+              <span id="badge-unlocked" class="status-pill hf-hl-orange">KHÔNG KHÓA CỨNG</span>
+            </div>
+
+            <div class="prison-diagram-body">
+              <!-- Bản vẽ kỹ thuật cổng sắt khép hờ -->
+              <svg
+                class="prison-gate-graphic"
+                viewBox="0 0 220 180"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <!-- Khung cổng bên ngoài -->
+                <rect x="10" y="10" width="200" height="160" stroke="#141414" stroke-width="4" />
+                <line x1="10" y1="35" x2="210" y2="35" stroke="#141414" stroke-width="3" />
+
+                <!-- Cánh cổng trái (đóng cố định) -->
+                <g id="gate-left-panel">
+                  <rect
+                    x="20"
+                    y="45"
+                    width="80"
+                    height="115"
+                    stroke="#141414"
+                    stroke-width="3"
+                    fill="#F5F0E4"
+                  />
+                  <line x1="36" y1="45" x2="36" y2="160" stroke="#141414" stroke-width="2.5" />
+                  <line x1="52" y1="45" x2="52" y2="160" stroke="#141414" stroke-width="2.5" />
+                  <line x1="68" y1="45" x2="68" y2="160" stroke="#141414" stroke-width="2.5" />
+                  <line x1="84" y1="45" x2="84" y2="160" stroke="#141414" stroke-width="2.5" />
+                </g>
+
+                <!-- Cánh cổng phải (xoay mở hờ 26 độ) -->
+                <g id="gate-right-panel" style="transform-origin: 190px 45px">
+                  <rect
+                    x="110"
+                    y="45"
+                    width="80"
+                    height="115"
+                    stroke="#141414"
+                    stroke-width="3"
+                    fill="#F5F0E4"
+                  />
+                  <line x1="126" y1="45" x2="126" y2="160" stroke="#141414" stroke-width="2.5" />
+                  <line x1="142" y1="45" x2="142" y2="160" stroke="#141414" stroke-width="2.5" />
+                  <line x1="158" y1="45" x2="158" y2="160" stroke="#141414" stroke-width="2.5" />
+                  <line x1="174" y1="45" x2="174" y2="160" stroke="#141414" stroke-width="2.5" />
+                </g>
+
+                <!-- Ký hiệu bản lề & chốt hở -->
+                <circle cx="190" cy="50" r="5" fill="#FF6A1A" />
+                <circle cx="190" cy="155" r="5" fill="#FF6A1A" />
+                <circle cx="106" cy="102" r="4" fill="#FF6A1A" />
+              </svg>
+
+              <!-- OVERLAY 1: Label CHƯA CẦN CÁCH LY (atMs: 207380 -> 1.7s) -->
+              <div id="overlay-label-1" class="overlay-label-container">
+                <div class="label-badge">
+                  <span class="label-kicker">QUAN ĐIỂM HỘI ĐỒNG XÉT XỬ</span>
+                  <h2 class="label-text-large">CHƯA CẦN CÁCH LY</h2>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- MODULE 2 (GIỮA): Mũi tên giám sát uốn cong dẫn đối tượng về địa phương -->
+          <div class="flow-connector-zone">
+            <svg
+              class="flow-svg-canvas"
+              viewBox="0 0 960 330"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <!-- Đường ray tham chiếu mờ -->
+              <path
+                d="M 480 0 C 660 70, 720 180, 480 230 C 340 265, 380 300, 480 330"
+                stroke="rgba(20,20,20,0.22)"
+                stroke-width="2"
+                stroke-dasharray="6 6"
+              />
+
+              <!-- Mũi tên chính thức màu cam đậm uốn cong -->
+              <path
+                id="transfer-path"
+                d="M 480 0 C 660 70, 720 180, 480 230 C 340 265, 380 300, 480 330"
+                stroke="#FF6A1A"
+                stroke-width="6"
+                stroke-linecap="round"
+              />
+
+              <!-- Đầu mũi tên dẫn về trụ sở -->
+              <polygon
+                id="path-arrow-head"
+                points="480,330 468,306 492,306"
+                fill="#FF6A1A"
+              />
+
+              <!-- Điểm neo đối tượng chuyển dịch dọc đường cong -->
+              <g id="transfer-marker">
+                <circle cx="480" cy="230" r="16" fill="#141414" />
+                <circle cx="480" cy="230" r="8" fill="#FF6A1A" />
+              </g>
+            </svg>
+
+            <!-- Thẻ chỉ dẫn luồng điều chuyển -->
+            <div id="transfer-tag" class="flow-info-chip">
+              <span class="chip-arrow">↓</span>
+              <span class="chip-text">GIAO VỀ CƠ SỞ ĐỊA PHƯƠNG</span>
+            </div>
+          </div>
+
+          <!-- MODULE 3 (DƯỚI): Trụ sở chính quyền + Vòng tròn bảo hộ 'Giám sát & Giáo dục' -->
+          <div id="module-community" class="module-card community-card">
+            <div class="card-header-line">
+              <span class="card-title">ỦY BAN NHÂN DÂN & CÔNG AN ĐỊA PHƯƠNG</span>
+              <span class="status-pill hf-plate-ink">TIẾP NHẬN BÀN GIAO</span>
+            </div>
+
+            <!-- Vùng hình ảnh: Trụ sở + Vòng tròn bảo hộ kép -->
+            <div class="community-visual-row">
+              <div class="community-svg-zone">
+                <svg
+                  class="sphere-svg-canvas"
+                  viewBox="0 0 912 240"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <!-- Vòng bảo hộ ngoài (cam dashed) -->
+                  <circle
+                    id="protect-ring-outer"
+                    cx="456"
+                    cy="120"
+                    r="105"
+                    stroke="#FF6A1A"
+                    stroke-width="3.5"
+                    stroke-dasharray="10 8"
+                  />
+                  <!-- Vòng bảo hộ trong (mực đặc) -->
+                  <circle
+                    id="protect-ring-inner"
+                    cx="456"
+                    cy="120"
+                    r="80"
+                    stroke="#141414"
+                    stroke-width="2.5"
+                  />
+
+                  <!-- Biểu tượng kiến trúc trụ sở chính quyền địa phương (Vox diagram) -->
+                  <g id="community-facade" transform="translate(406, 68)">
+                    <!-- Mái tam giác trụ sở -->
+                    <polygon points="50,0 0,26 100,26" fill="#141414" />
+                    <!-- Trán tường -->
+                    <rect x="8" y="26" width="84" height="6" fill="#FF6A1A" />
+                    <!-- Các cột trụ đại diện cơ quan hành chính -->
+                    <rect x="14" y="32" width="10" height="42" fill="#141414" />
+                    <rect x="36" y="32" width="10" height="42" fill="#141414" />
+                    <rect x="54" y="32" width="10" height="42" fill="#141414" />
+                    <rect x="76" y="32" width="10" height="42" fill="#141414" />
+                    <!-- Bậc tam cấp -->
+                    <rect x="4" y="74" width="92" height="6" fill="#141414" />
+                    <rect x="0" y="80" width="100" height="8" fill="#141414" />
+                  </g>
+                </svg>
+
+                <!-- Hai cánh nhãn chức năng của vòng bảo hộ -->
+                <div class="sphere-badge-group">
+                  <div class="sphere-pill">1. GIÁM SÁT</div>
+                  <div class="sphere-pill">2. GIÁO DỤC</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- OVERLAY 2: Punch-phrase ĐỊA PHƯƠNG GIÁM SÁT (atMs: 210510 -> 4.83s) -->
+            <div id="overlay-punch" class="punch-banner-container">
+              <div class="punch-plate">
+                <h1 class="punch-phrase-text">ĐỊA PHƯƠNG GIÁM SÁT</h1>
+                <div class="punch-sub-strip">
+                  <span class="punch-sub-badge">BIỆN PHÁP NHÂN ĐẠO</span>
+                  <span class="punch-sub-caption">TẠO CƠ HỘI CẢI TẠO TẠI CỘNG ĐỒNG</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Dải cam đáy thương hiệu cố định -->
+        <div class="bottom-brand-bar"></div>
+      </section>
+    </div>
+
+    <!-- Script Animation GSAP Seekable -->
+    <script>
+      // Khởi tạo timeline paused bắt buộc theo chuẩn HyperFrames
+      const tl = gsap.timeline({ paused: true });
+
+      // Thiết lập vẽ đường path SVG uốn cong bằng strokeDashoffset thực tế
+      const transferPath = document.getElementById("transfer-path");
+      if (transferPath) {
+        const pathLen = transferPath.getTotalLength() || 680;
+        transferPath.style.strokeDasharray = pathLen;
+        transferPath.style.strokeDashoffset = pathLen;
+      }
+
+      // 1. BEAT 1: ENTRANCE "UNFOLD" (0.0s -> 1.5s)
+      // Card môi trường cách ly mở gập ra từ phía trên
+      tl.fromTo(
+        "#module-prison",
+        { y: -50, scaleY: 0.85, opacity: 0, transformOrigin: "50% 0%" },
+        { y: 0, scaleY: 1, opacity: 1, duration: 0.7, ease: "power3.out" },
+        0.2,
+      );
+
+      // Cánh cổng sắt bên phải xoay mở hờ (thể hiện "cánh cổng khép lại nhưng không khóa")
+      tl.fromTo(
+        "#gate-right-panel",
+        { rotation: 0 },
+        { rotation: 26, duration: 0.8, ease: "power2.out" },
+        0.8,
+      );
+
+      // Huy hiệu "KHÔNG KHÓA CỨNG" xuất hiện
+      tl.fromTo(
+        "#badge-unlocked",
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.4, ease: "power3.out" },
+        1.1,
+      );
+
+      // 2. BEAT 2: OVERLAY 1 "CHƯA CẦN CÁCH LY" (1.7s = 207380ms)
+      tl.fromTo(
+        "#overlay-label-1",
+        { x: 30, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.5, ease: "power3.out" },
+        1.7,
+      );
+
+      // 3. BEAT 3: THE FLOW VECTOR (2.4s -> 3.6s)
+      // Mũi tên uốn cong vẽ dần từ cổng xuống địa phương
+      if (transferPath) {
+        const pathLen = transferPath.getTotalLength() || 680;
+        tl.fromTo(
+          transferPath,
+          { strokeDashoffset: pathLen },
+          { strokeDashoffset: 0, duration: 1.0, ease: "power2.inOut" },
+          2.4,
+        );
+      }
+
+      // Đầu mũi tên và điểm neo đối tượng xuất hiện theo hành trình
+      tl.fromTo(
+        "#path-arrow-head",
+        { scale: 0, opacity: 0, transformOrigin: "480px 330px" },
+        { scale: 1, opacity: 1, duration: 0.3, ease: "power3.out" },
+        3.2,
+      );
+
+      tl.fromTo(
+        "#transfer-marker",
+        { scale: 0, opacity: 0, transformOrigin: "480px 230px" },
+        { scale: 1, opacity: 1, duration: 0.4, ease: "power3.out" },
+        2.7,
+      );
+
+      tl.fromTo(
+        "#transfer-tag",
+        { y: -15, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.4, ease: "power3.out" },
+        2.9,
+      );
+
+      // 4. BEAT 4: TRỤ SỞ ĐỊA PHƯƠNG & VÒNG TRÒN BẢO HỘ (3.4s -> 4.7s)
+      // Khối địa phương mở gập vào vị trí
+      tl.fromTo(
+        "#module-community",
+        { y: 50, scaleY: 0.9, opacity: 0, transformOrigin: "50% 100%" },
+        { y: 0, scaleY: 1, opacity: 1, duration: 0.7, ease: "power3.out" },
+        3.4,
+      );
+
+      // Hai vòng bảo hộ đồng tâm mở rộng bao bọc trụ sở
+      tl.fromTo(
+        "#protect-ring-outer",
+        { scale: 0.3, opacity: 0, transformOrigin: "456px 120px" },
+        { scale: 1, opacity: 1, duration: 0.7, ease: "power3.out" },
+        3.8,
+      );
+
+      tl.fromTo(
+        "#protect-ring-inner",
+        { scale: 0.3, opacity: 0, transformOrigin: "456px 120px" },
+        { scale: 1, opacity: 1, duration: 0.6, ease: "power3.out" },
+        4.0,
+      );
+
+      // Cặp nhãn "GIÁM SÁT & GIÁO DỤC" hạ cánh
+      tl.fromTo(
+        ".sphere-pill",
+        { y: 15, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.4, stagger: 0.15, ease: "power3.out" },
+        4.3,
+      );
+
+      // 5. BEAT 5: OVERLAY 2 PUNCH PHRASE "ĐỊA PHƯƠNG GIÁM SÁT" (4.83s = 210510ms)
+      tl.fromTo(
+        "#overlay-punch",
+        { y: 35, opacity: 0, scale: 0.97 },
+        { y: 0, opacity: 1, scale: 1, duration: 0.55, ease: "power3.out" },
+        4.83,
+      );
+
+      // Đăng ký timeline gốc duy nhất vào registry của HyperFrames
+      window.__timelines["scene-s22"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

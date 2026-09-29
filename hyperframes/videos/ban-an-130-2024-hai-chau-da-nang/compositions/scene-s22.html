@@ -1,0 +1,617 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+      /* hf-safe-colors (tất định từ style-tokens.json) */
+      .hf-text-ink { color: #141414; }
+      .hf-text-light { color: #F7F4EC; }
+      .hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+      .hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+      .hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+      .hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background: #E7E3D9;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+      .clip {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+      }
+
+      /* Background Chart Lines & Ticks (Style DNA: chart variant) */
+      .chart-bg-layer {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+      }
+      .grid-pattern {
+        position: absolute;
+        inset: 0;
+        background-size: 84px 84px;
+        background-image:
+          linear-gradient(to right, rgba(20, 20, 20, 0.05) 1px, transparent 1px),
+          linear-gradient(to bottom, rgba(20, 20, 20, 0.05) 1px, transparent 1px);
+      }
+      .chart-rule {
+        position: absolute;
+        left: 0;
+        width: 1080px;
+        height: 2px;
+        background: rgba(20, 20, 20, 0.2);
+      }
+      .chart-tick {
+        position: absolute;
+        left: 0;
+        width: 28px;
+        height: 6px;
+        background: #FF6A1A;
+      }
+
+      /* Camera Zoom Rig */
+      #camera-rig {
+        position: absolute;
+        inset: 0;
+        transform-origin: 540px 520px;
+        will-change: transform;
+      }
+
+      /* Bottom Brand Signature Bar */
+      #bottom-brand-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 1080px;
+        height: 14px;
+        background: #FF6A1A;
+        z-index: 100;
+      }
+
+      /* Header Block */
+      #header-block {
+        position: absolute;
+        top: 170px;
+        left: 80px;
+        right: 80px;
+        will-change: transform, opacity;
+      }
+      .header-badge {
+        display: inline-block;
+        background: #141414;
+        color: #FF6A1A;
+        font-size: 18px;
+        font-weight: 900;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        padding: 6px 14px;
+        border-radius: 4px;
+        margin-bottom: 12px;
+      }
+      .header-title {
+        font-size: 54px;
+        font-weight: 900;
+        line-height: 1.15;
+        color: #141414;
+        text-transform: uppercase;
+        margin: 0 0 6px 0;
+        letter-spacing: -0.5px;
+      }
+      .header-desc {
+        font-size: 24px;
+        font-weight: 700;
+        color: #141414;
+        margin: 0;
+        opacity: 0.85;
+      }
+
+      /* Ruler Assembly */
+      #ruler-container {
+        position: absolute;
+        inset: 0;
+      }
+
+      /* Vertical Ruler Axis */
+      .ruler-axis {
+        position: absolute;
+        left: 280px;
+        top: 360px;
+        width: 4px;
+        height: 564px;
+        background: #141414;
+        transform-origin: 50% 0%;
+      }
+
+      /* Under-18 Shaded Zone Track */
+      .under-18-track-zone {
+        position: absolute;
+        left: 277px;
+        top: 416px;
+        width: 10px;
+        height: 508px;
+        background: rgba(20, 20, 20, 0.1);
+      }
+
+      /* Active Fill Bar climbing up to age 16 */
+      #track-fill {
+        position: absolute;
+        left: 277px;
+        top: 472px;
+        width: 10px;
+        height: 448px;
+        background: #141414;
+        transform-origin: 50% 100%;
+        will-change: transform;
+      }
+
+      /* Ruler Tick Marks (placed to the left of the axis) */
+      .ruler-mark {
+        position: absolute;
+        height: 3px;
+        background: #141414;
+        transform-origin: 100% 50%;
+        will-change: transform, opacity;
+      }
+      .ruler-mark.major {
+        left: 254px;
+        width: 26px;
+        background: #141414;
+      }
+      .ruler-mark.minor {
+        left: 266px;
+        width: 14px;
+        height: 2px;
+        background: rgba(20, 20, 20, 0.45);
+      }
+
+      /* Ruler Labels (strictly to the left of ticks, no occlusion possible) */
+      .ruler-label {
+        position: absolute;
+        left: 150px;
+        width: 90px;
+        font-size: 24px;
+        font-weight: 900;
+        color: #141414;
+        line-height: 1;
+        text-align: right;
+        transform: translateY(-50%);
+      }
+      .ruler-label.active-16 {
+        color: #141414;
+        font-size: 32px;
+      }
+      .ruler-label.active-18 {
+        color: #FF6A1A;
+        font-size: 30px;
+        background: #141414;
+        padding: 4px 8px;
+        border-radius: 4px;
+      }
+
+      /* 18-Year Threshold Barrier Line */
+      #barrier-line {
+        position: absolute;
+        left: 280px;
+        top: 416px;
+        width: 700px;
+        height: 6px;
+        background: #FF6A1A;
+        transform-origin: 0% 50%;
+        will-change: transform;
+      }
+      #barrier-badge {
+        position: absolute;
+        left: 470px;
+        top: 366px;
+        background: #FF6A1A;
+        color: #141414;
+        padding: 6px 16px;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        border: 2px solid #141414;
+        box-shadow: 4px 4px 0px #141414;
+        will-change: transform, opacity;
+      }
+      .barrier-badge-text-primary {
+        font-size: 20px;
+        font-weight: 900;
+        letter-spacing: 1px;
+      }
+      .barrier-badge-text-sec {
+        font-size: 15px;
+        font-weight: 900;
+        background: #141414;
+        color: #FF6A1A;
+        padding: 2px 8px;
+        border-radius: 2px;
+      }
+
+      /* Zone Callout below 18 */
+      #under-18-callout {
+        position: absolute;
+        left: 470px;
+        top: 428px;
+        background: #141414;
+        color: #FF6A1A;
+        padding: 6px 14px;
+        border-radius: 4px;
+        font-size: 15px;
+        font-weight: 900;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        will-change: transform, opacity;
+      }
+
+      /* Needle Assembly (placed to the right of the ruler axis) */
+      #needle-assembly {
+        position: absolute;
+        left: 280px;
+        top: 472px;
+        will-change: transform;
+      }
+      .needle-pointer {
+        position: absolute;
+        left: 0;
+        top: -10px;
+        width: 0;
+        height: 0;
+        border-top: 10px solid transparent;
+        border-bottom: 10px solid transparent;
+        border-right: 18px solid #141414;
+      }
+      .needle-readout {
+        position: absolute;
+        left: 24px;
+        top: -24px;
+        background: #141414;
+        color: #F7F4EC;
+        padding: 6px 16px;
+        border-radius: 6px;
+        white-space: nowrap;
+        border: 2px solid #FF6A1A;
+        box-shadow: 4px 4px 0px rgba(20, 20, 20, 0.4);
+      }
+      .needle-readout-num {
+        font-size: 32px;
+        font-weight: 900;
+        color: #FF6A1A;
+      }
+      .needle-readout-unit {
+        font-size: 18px;
+        font-weight: 700;
+        color: #F7F4EC;
+        margin-left: 4px;
+      }
+
+      /* Overlay 1: ĐỘ TUỔI: 16 (Card on the right side) */
+      #overlay-age-card {
+        position: absolute;
+        left: 470px;
+        top: 480px;
+        width: 480px;
+        background: #141414;
+        border: 3px solid #FF6A1A;
+        border-radius: 8px;
+        padding: 14px 22px;
+        box-shadow: 6px 6px 0px rgba(20, 20, 20, 0.35);
+        will-change: transform, opacity;
+      }
+      .age-card-sub {
+        font-size: 15px;
+        font-weight: 900;
+        color: #FF6A1A;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        margin-bottom: 4px;
+      }
+      .age-card-main {
+        font-size: 40px;
+        font-weight: 900;
+        color: #F7F4EC;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        line-height: 1;
+      }
+
+      /* Overlay 2: CHƯA THÀNH NIÊN (Punch Phrase placed safely above caption safe zone) */
+      #overlay-punch-card {
+        position: absolute;
+        left: 80px;
+        top: 1020px;
+        width: 920px;
+        background: #FF6A1A;
+        border: 4px solid #141414;
+        border-radius: 12px;
+        box-shadow: 8px 8px 0px #141414;
+        padding: 20px 24px;
+        text-align: center;
+        will-change: transform, opacity;
+      }
+      .punch-tag {
+        font-size: 18px;
+        font-weight: 900;
+        color: #141414;
+        letter-spacing: 2.5px;
+        text-transform: uppercase;
+        margin-bottom: 6px;
+        opacity: 0.9;
+      }
+      .punch-hero {
+        font-size: 56px;
+        font-weight: 900;
+        color: #141414;
+        letter-spacing: 3px;
+        text-transform: uppercase;
+        line-height: 1.15;
+        margin: 0;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s22"
+      data-start="0"
+      data-width="1080"
+      data-height="1920"
+      data-duration="6.04"
+    >
+      <!-- Base Chart Background Layer -->
+      <div class="chart-bg-layer">
+        <div class="grid-pattern"></div>
+        <!-- 4 horizontal chart ruled lines at 20%, 40%, 60%, 80% height -->
+        <div class="chart-rule" style="top: 384px;"></div>
+        <div class="chart-tick" style="top: 382px;"></div>
+        <div class="chart-rule" style="top: 768px;"></div>
+        <div class="chart-tick" style="top: 766px;"></div>
+        <div class="chart-rule" style="top: 1152px;"></div>
+        <div class="chart-tick" style="top: 1150px;"></div>
+        <div class="chart-rule" style="top: 1536px;"></div>
+        <div class="chart-tick" style="top: 1534px;"></div>
+      </div>
+
+      <!-- Main Visual Scene Container -->
+      <section id="scene-s22" class="clip" data-start="0" data-duration="6.04" data-track-index="0">
+        <!-- Camera Zoom Rig -->
+        <div id="camera-rig">
+          <!-- Header Area -->
+          <div id="header-block">
+            <div class="header-badge">CHI TIẾT MẤU CHỐT</div>
+            <h1 class="header-title">THƯỚC ĐO ĐỘ TUỔI</h1>
+            <p class="header-desc">HÀNH VI KHI MỚI 16 TUỔI</p>
+          </div>
+
+          <!-- Ruler Assembly -->
+          <div id="ruler-container">
+            <!-- Axis lines -->
+            <div class="ruler-axis"></div>
+            <div class="under-18-track-zone"></div>
+            <div id="track-fill"></div>
+
+            <!-- Ticks & Age Labels from 0 to 20 -->
+            <!-- 20 -->
+            <div class="ruler-mark major" style="top: 360px;"></div>
+            <div class="ruler-label" style="top: 360px;">20</div>
+            <!-- 19 -->
+            <div class="ruler-mark minor" style="top: 388px;"></div>
+            <!-- 18 (Threshold Barrier) -->
+            <div class="ruler-mark major" style="top: 416px; background: #FF6A1A; height: 5px;"></div>
+            <div class="ruler-label active-18" style="top: 416px;">18</div>
+            <!-- 17 -->
+            <div class="ruler-mark minor" style="top: 444px;"></div>
+            <!-- 16 (Target) -->
+            <div class="ruler-mark major" style="top: 472px; height: 4px;"></div>
+            <div class="ruler-label active-16" style="top: 472px;">16</div>
+            <!-- 15 -->
+            <div class="ruler-mark minor" style="top: 500px;"></div>
+            <!-- 14 -->
+            <div class="ruler-mark major" style="top: 528px;"></div>
+            <div class="ruler-label" style="top: 528px;">14</div>
+            <!-- 13 -->
+            <div class="ruler-mark minor" style="top: 556px;"></div>
+            <!-- 12 -->
+            <div class="ruler-mark major" style="top: 584px;"></div>
+            <div class="ruler-label" style="top: 584px;">12</div>
+            <!-- 11 -->
+            <div class="ruler-mark minor" style="top: 612px;"></div>
+            <!-- 10 -->
+            <div class="ruler-mark major" style="top: 640px;"></div>
+            <div class="ruler-label" style="top: 640px;">10</div>
+            <!-- 9 -->
+            <div class="ruler-mark minor" style="top: 668px;"></div>
+            <!-- 8 -->
+            <div class="ruler-mark major" style="top: 696px;"></div>
+            <div class="ruler-label" style="top: 696px;">8</div>
+            <!-- 7 -->
+            <div class="ruler-mark minor" style="top: 724px;"></div>
+            <!-- 6 -->
+            <div class="ruler-mark major" style="top: 752px;"></div>
+            <div class="ruler-label" style="top: 752px;">6</div>
+            <!-- 5 -->
+            <div class="ruler-mark minor" style="top: 780px;"></div>
+            <!-- 4 -->
+            <div class="ruler-mark major" style="top: 808px;"></div>
+            <div class="ruler-label" style="top: 808px;">4</div>
+            <!-- 3 -->
+            <div class="ruler-mark minor" style="top: 836px;"></div>
+            <!-- 2 -->
+            <div class="ruler-mark major" style="top: 864px;"></div>
+            <div class="ruler-label" style="top: 864px;">2</div>
+            <!-- 1 -->
+            <div class="ruler-mark minor" style="top: 892px;"></div>
+            <!-- 0 -->
+            <div class="ruler-mark major" style="top: 920px;"></div>
+            <div class="ruler-label" style="top: 920px;">0</div>
+
+            <!-- 18 Barrier Line & Badge -->
+            <div id="barrier-line"></div>
+            <div id="barrier-badge">
+              <span class="barrier-badge-text-primary">18 TUỔI</span>
+              <span class="barrier-badge-text-sec">NGƯỠNG THÀNH NIÊN</span>
+            </div>
+
+            <!-- Zone Callout below 18 -->
+            <div id="under-18-callout">
+              <span>▼ DƯỚI 18 TUỔI</span>
+            </div>
+
+            <!-- Pointer / Needle Indicator Assembly -->
+            <div id="needle-assembly">
+              <div class="needle-pointer"></div>
+              <div class="needle-readout">
+                <span id="needle-num" class="needle-readout-num">0</span>
+                <span class="needle-readout-unit">TUỔI</span>
+              </div>
+            </div>
+
+            <!-- Overlay 1: ĐỘ TUỔI: 16 -->
+            <div id="overlay-age-card">
+              <div class="age-card-sub">THỜI ĐIỂM HÀNH VI</div>
+              <div class="age-card-main">ĐỘ TUỔI: 16</div>
+            </div>
+
+            <!-- Overlay 2: CHƯA THÀNH NIÊN (Punch Phrase) -->
+            <div id="overlay-punch-card">
+              <div class="punch-tag">CHÍNH SÁCH XỬ LÝ ĐẶC THÙ</div>
+              <h2 class="punch-hero">CHƯA THÀNH NIÊN</h2>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Signature Orange Bar at Bottom Edge -->
+      <div id="bottom-brand-bar"></div>
+    </div>
+
+    <!-- GSAP Seekable Timeline Script -->
+    <script>
+      const tl = gsap.timeline({ paused: true });
+
+      // Phase 1: Entrance (transitionIn: rise)
+      tl.fromTo(
+        "#header-block",
+        { y: -24, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.65, ease: "power3.out" },
+        0.1
+      );
+
+      tl.fromTo(
+        ".ruler-axis",
+        { scaleY: 0, opacity: 0 },
+        { scaleY: 1, opacity: 1, duration: 0.6, ease: "power2.out" },
+        0.2
+      );
+
+      tl.fromTo(
+        ".ruler-mark",
+        { scaleX: 0, opacity: 0 },
+        { scaleX: 1, opacity: 1, duration: 0.45, stagger: 0.02, ease: "power2.out" },
+        0.25
+      );
+
+      tl.fromTo(
+        ".ruler-label",
+        { opacity: 0, x: -10 },
+        { opacity: 1, x: 0, duration: 0.45, stagger: 0.02, ease: "power2.out" },
+        0.3
+      );
+
+      // Phase 2: Age 18 Barrier Line Sweeps Across
+      tl.fromTo(
+        "#barrier-line",
+        { scaleX: 0 },
+        { scaleX: 1, duration: 0.65, ease: "power3.out" },
+        0.45
+      );
+
+      tl.fromTo(
+        "#barrier-badge",
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.5, ease: "power3.out" },
+        0.75
+      );
+
+      // Phase 3: Age Needle Climbs from 0 (offset 448px) to 16 (offset 0)
+      tl.fromTo(
+        "#needle-assembly",
+        { y: 448 },
+        { y: 0, duration: 1.8, ease: "power2.out" },
+        0.7
+      );
+
+      tl.fromTo(
+        "#track-fill",
+        { scaleY: 0 },
+        { scaleY: 1, duration: 1.8, ease: "power2.out" },
+        0.7
+      );
+
+      tl.to(
+        "#needle-num",
+        { innerText: 16, snap: { innerText: 1 }, duration: 1.8, ease: "power2.out" },
+        0.7
+      );
+
+      // Phase 4: Camera Motion (Continuous Documentary Zoom-in)
+      tl.fromTo(
+        "#camera-rig",
+        { scale: 1.0 },
+        { scale: 1.08, duration: 4.4, ease: "sine.inOut" },
+        1.2
+      );
+
+      // Phase 5: Zone Under-18 Marker
+      tl.fromTo(
+        "#under-18-callout",
+        { opacity: 0, x: -20 },
+        { opacity: 1, x: 0, duration: 0.5, ease: "power3.out" },
+        2.6
+      );
+
+      // Phase 6: Overlay 1 - "ĐỘ TUỔI: 16" (atMs: 200880 -> 3.68s)
+      tl.fromTo(
+        "#overlay-age-card",
+        { scale: 0.8, opacity: 0, x: -20 },
+        { scale: 1, opacity: 1, x: 0, duration: 0.45, ease: "power3.out" },
+        3.68
+      );
+
+      // Phase 7: Overlay 2 - "CHƯA THÀNH NIÊN" (atMs: 202180 -> 4.98s)
+      tl.fromTo(
+        "#overlay-punch-card",
+        { scale: 0.88, opacity: 0, y: 15 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.4, ease: "power4.out" },
+        4.98
+      );
+
+      // Register Paused Master Timeline on HyperFrames Registry
+      window.__timelines = window.__timelines || {};
+      window.__timelines["scene-s22"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

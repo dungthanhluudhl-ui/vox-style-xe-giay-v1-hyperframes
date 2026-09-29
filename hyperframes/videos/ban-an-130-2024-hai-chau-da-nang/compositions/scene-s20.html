@@ -1,0 +1,576 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap"
+    />
+      <style>
+/* hf-safe-colors (tất định từ style-tokens.json) */
+.hf-text-ink { color: #141414; }
+.hf-text-light { color: #F7F4EC; }
+.hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+.hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+.hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+.hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+      /* Safe color classes theo token */
+      .hf-text-ink { color: #141414; }
+      .hf-text-light { color: #F7F4EC; }
+      .hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+      .hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+      .hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+      .hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+        background-color: #e7e3d9;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+      .clip {
+        position: absolute;
+        inset: 0;
+      }
+
+      /* Background & Spotlight */
+      .bg-layer {
+        position: absolute;
+        inset: 0;
+        background-color: #e7e3d9;
+        background-image:
+          linear-gradient(rgba(20, 20, 20, 0.12) 1.5px, transparent 1.5px),
+          linear-gradient(90deg, rgba(20, 20, 20, 0.12) 1.5px, transparent 1.5px);
+        background-size: 84px 84px;
+      }
+      .spotlight-vignette {
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(
+          circle at 50% 46%,
+          rgba(231, 227, 217, 0) 35%,
+          rgba(195, 188, 172, 0.5) 70%,
+          rgba(20, 20, 20, 0.28) 100%
+        );
+        pointer-events: none;
+      }
+
+      /* Camera motion wrapper */
+      #scene-camera {
+        position: absolute;
+        inset: 0;
+        transform-origin: 50% 48%;
+      }
+
+      /* Top Header (Safe zone Y >= 160) */
+      .header-container {
+        position: absolute;
+        top: 170px;
+        left: 50px;
+        width: 980px;
+      }
+      .category-pill {
+        display: inline-block;
+        padding: 6px 16px;
+        background-color: #141414;
+        color: #ff6a1a;
+        font-weight: 900;
+        font-size: 22px;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        border-radius: 4px;
+      }
+      .header-title {
+        margin: 14px 0 0 0;
+        font-size: 46px;
+        font-weight: 900;
+        line-height: 1.22;
+        color: #141414;
+        text-transform: uppercase;
+      }
+
+      /* Split Layout (Two Columns) */
+      .split-grid {
+        position: absolute;
+        top: 320px;
+        left: 50px;
+        width: 980px;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
+      }
+
+      .card {
+        border-radius: 18px;
+        padding: 28px 24px;
+        box-shadow: 0 16px 36px rgba(20, 20, 20, 0.1);
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+      }
+
+      /* Left Column: Cố ý chống đối */
+      .card-left {
+        background-color: #ff6a1a;
+        color: #141414;
+        border: 4px solid #141414;
+      }
+      .tag-left {
+        display: inline-block;
+        align-self: flex-start;
+        padding: 6px 12px;
+        background-color: #141414;
+        color: #f7f4ec;
+        font-weight: 900;
+        font-size: 18px;
+        border-radius: 6px;
+        letter-spacing: 1px;
+      }
+      .col-heading-left {
+        margin: 18px 0 12px 0;
+        font-size: 38px;
+        font-weight: 900;
+        line-height: 1.18;
+        color: #141414;
+      }
+      .left-action-box {
+        margin: 14px 0 18px 0;
+        padding: 16px 18px;
+        background-color: #141414;
+        border-radius: 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+      .action-badge {
+        font-size: 17px;
+        font-weight: 900;
+        color: #ff6a1a;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+      }
+      .action-sub {
+        font-size: 22px;
+        font-weight: 900;
+        color: #f7f4ec;
+        line-height: 1.3;
+      }
+      .col-desc-left {
+        margin: 0;
+        font-size: 24px;
+        font-weight: 700;
+        line-height: 1.4;
+        color: #141414;
+      }
+      .status-pill-left {
+        margin-top: 24px;
+        align-self: flex-start;
+        padding: 8px 16px;
+        background-color: #141414;
+        color: #ff6a1a;
+        font-weight: 900;
+        font-size: 20px;
+        border-radius: 8px;
+      }
+
+      /* Right Column: Cố ý gây thương tích (Bác bỏ) */
+      .card-right {
+        background-color: #141414;
+        color: #f7f4ec;
+        border: 4px solid #141414;
+      }
+      .tag-right {
+        display: inline-block;
+        align-self: flex-start;
+        padding: 6px 12px;
+        background-color: #f5f0e4;
+        color: #141414;
+        font-weight: 900;
+        font-size: 18px;
+        border-radius: 6px;
+        letter-spacing: 1px;
+      }
+      .col-heading-right {
+        margin: 18px 0 12px 0;
+        font-size: 38px;
+        font-weight: 900;
+        line-height: 1.18;
+        color: #f7f4ec;
+      }
+
+      /* BAN visual in normal flow - never overlaps text */
+      .ban-visual-area {
+        margin: 10px 0 14px 0;
+        height: 84px;
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 16px;
+      }
+      .ban-svg-wrap {
+        width: 76px;
+        height: 76px;
+        flex-shrink: 0;
+      }
+      .ban-stamp-badge {
+        padding: 8px 18px;
+        background-color: #ff6a1a;
+        color: #141414;
+        font-size: 24px;
+        font-weight: 900;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        border-radius: 6px;
+        border: 3px solid #141414;
+        transform-origin: 50% 50%;
+      }
+      .col-desc-right {
+        margin: 0;
+        font-size: 24px;
+        font-weight: 700;
+        line-height: 1.4;
+        color: #e7e3d9;
+      }
+      .status-pill-right {
+        margin-top: 24px;
+        align-self: flex-start;
+        padding: 8px 16px;
+        background-color: #262626;
+        color: #f7f4ec;
+        font-weight: 900;
+        font-size: 20px;
+        border-radius: 8px;
+        border: 1px solid #444;
+      }
+
+      /* Center Inequality Badge */
+      .vs-sign {
+        position: absolute;
+        top: 480px;
+        left: 508px;
+        width: 64px;
+        height: 64px;
+        background-color: #141414;
+        color: #ff6a1a;
+        font-size: 38px;
+        font-weight: 900;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        border: 4px solid #e7e3d9;
+        box-shadow: 0 8px 24px rgba(20, 20, 20, 0.25);
+        z-index: 10;
+      }
+
+      /* Overlay Label: KHÔNG ĐÁNH ĐỒNG */
+      .label-banner {
+        position: absolute;
+        top: 865px;
+        left: 50px;
+        width: 980px;
+        background-color: #141414;
+        border-left: 10px solid #ff6a1a;
+        border-radius: 14px;
+        padding: 22px 28px;
+        box-shadow: 0 14px 32px rgba(20, 20, 20, 0.15);
+      }
+      .label-banner-text {
+        margin: 0;
+        font-size: 34px;
+        font-weight: 900;
+        color: #ff6a1a;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+      }
+      .label-banner-sub {
+        margin: 8px 0 0 0;
+        font-size: 24px;
+        font-weight: 700;
+        color: #f7f4ec;
+        line-height: 1.35;
+      }
+
+      /* Overlay Punch-Phrase: CẢN TRỞ LÀ TRỌNG TÂM */
+      .punch-phrase-container {
+        position: absolute;
+        top: 1030px;
+        left: 50px;
+        width: 980px;
+        background-color: #141414;
+        border: 3px solid #ff6a1a;
+        border-radius: 18px;
+        padding: 28px 32px;
+        box-shadow: 0 20px 48px rgba(20, 20, 20, 0.24);
+      }
+      .punch-phrase-tag {
+        display: inline-block;
+        padding: 6px 14px;
+        background-color: #ff6a1a;
+        color: #141414;
+        font-size: 20px;
+        font-weight: 900;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        border-radius: 6px;
+      }
+      .punch-phrase-main {
+        margin: 16px 0 10px 0;
+        font-size: 56px;
+        font-weight: 900;
+        line-height: 1.22;
+        color: #f7f4ec;
+        text-transform: uppercase;
+      }
+      .punch-phrase-sub {
+        margin: 0;
+        font-size: 26px;
+        font-weight: 700;
+        color: #ff6a1a;
+        line-height: 1.35;
+      }
+
+      /* Bottom Brand Bar (Style DNA signature) */
+      .bottom-brand-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 12px;
+        background-color: #ff6a1a;
+        z-index: 999;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s20"
+      data-start="0"
+      data-width="1080"
+      data-height="1920"
+      data-duration="11.92"
+    >
+      <section id="scene-s20" class="clip" data-start="0" data-duration="11.92">
+        <!-- Background -->
+        <div class="bg-layer"></div>
+        <div class="spotlight-vignette"></div>
+
+        <!-- Camera Container -->
+        <div id="scene-camera">
+          <!-- Header -->
+          <div id="header-block" class="header-container">
+            <span class="category-pill">PHÂN TÍCH PHÁP LÝ</span>
+            <h1 class="header-title">ĐỐI CHỨNG Ý CHÍ & TỘI DANH</h1>
+          </div>
+
+          <!-- Split Columns -->
+          <div class="split-grid">
+            <!-- Left Column: Cố ý chống đối -->
+            <div id="col-left" class="card card-left">
+              <span class="tag-left">HÀNH VI THỰC TẾ</span>
+              <h2 class="col-heading-left">CỐ Ý CHỐNG ĐỐI</h2>
+
+              <div class="left-action-box">
+                <span class="action-badge">BẢN CHẤT CÔNG VỤ</span>
+                <span class="action-sub">Tông xe vượt chốt kiểm soát</span>
+              </div>
+
+              <p class="col-desc-left">
+                Không chấp hành hiệu lệnh, cố ý tông xe để giải thoát và vượt chốt kiểm soát.
+              </p>
+              <span class="status-pill-left">TRỌNG TÂM TRUY CỨU</span>
+            </div>
+
+            <!-- Right Column: Cố ý gây thương tích (Bác bỏ) -->
+            <div id="col-right" class="card card-right">
+              <span class="tag-right">CÁO BUỘC SUY ĐOÁN</span>
+              <h2 class="col-heading-right">CỐ Ý THƯƠNG TÍCH</h2>
+
+              <!-- Ban Visual Box: Flow-based layout prevents overlap -->
+              <div id="ban-visual-area" class="ban-visual-area">
+                <div class="ban-svg-wrap">
+                  <svg viewBox="0 0 100 100" width="100%" height="100%">
+                    <circle
+                      id="ban-circle"
+                      cx="50"
+                      cy="50"
+                      r="38"
+                      fill="none"
+                      stroke="#FF6A1A"
+                      stroke-width="9"
+                    />
+                    <line
+                      id="ban-slash"
+                      x1="23"
+                      y1="23"
+                      x2="77"
+                      y2="77"
+                      stroke="#FF6A1A"
+                      stroke-width="9"
+                      stroke-linecap="round"
+                    />
+                  </svg>
+                </div>
+                <div id="ban-stamp" class="ban-stamp-badge">BÁC BỎ</div>
+              </div>
+
+              <p class="col-desc-right">
+                Không có căn cứ quy kết bị cáo có ý chí chủ quan mong muốn gây thương tật.
+              </p>
+              <span class="status-pill-right">KHÔNG CÓ CĂN CỨ</span>
+            </div>
+          </div>
+
+          <!-- Inequality Sign Badge -->
+          <div id="vs-badge" class="vs-sign">≠</div>
+
+          <!-- Overlay Label 1: KHÔNG ĐÁNH ĐỒNG -->
+          <div id="label-banner" class="label-banner">
+            <h3 class="label-banner-text">KHÔNG ĐÁNH ĐỒNG</h3>
+            <p class="label-banner-sub">
+              Hành vi chống người thi hành công vụ không đồng nhất với cố ý gây thương tích.
+            </p>
+          </div>
+
+          <!-- Overlay Punch-Phrase 2: CẢN TRỞ LÀ TRỌNG TÂM -->
+          <div id="punch-card" class="punch-phrase-container">
+            <span id="punch-tag" class="punch-phrase-tag">KẾT LUẬN CỦA BẢN ÁN</span>
+            <div class="punch-phrase-main">CẢN TRỞ LÀ TRỌNG TÂM</div>
+            <p class="punch-phrase-sub">
+              Tội danh xác định đúng bản chất hành vi cản trở người thi hành công vụ.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Fixed Brand Bottom Bar -->
+      <div class="bottom-brand-bar"></div>
+    </div>
+
+    <script>
+      const tl = gsap.timeline({ paused: true });
+
+      // SVG path length setup for Ban Icon
+      const banCircle = document.getElementById("ban-circle");
+      const banSlash = document.getElementById("ban-slash");
+      const circleLen = banCircle.getTotalLength();
+      const slashLen = banSlash.getTotalLength();
+
+      banCircle.style.strokeDasharray = circleLen;
+      banCircle.style.strokeDashoffset = circleLen;
+      banSlash.style.strokeDasharray = slashLen;
+      banSlash.style.strokeDashoffset = slashLen;
+
+      // 1. Subtle camera zoom-out throughout scene
+      tl.fromTo(
+        "#scene-camera",
+        { scale: 1.05 },
+        { scale: 1.0, duration: 11.92, ease: "none" },
+        0
+      );
+
+      // 2. Initial Entrance (Punch arrival at T = 0.1s - 0.6s)
+      tl.fromTo(
+        "#header-block",
+        { y: -30, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.5, ease: "power3.out" },
+        0.1
+      );
+
+      tl.fromTo(
+        "#col-left",
+        { scale: 0.86, opacity: 0, x: -25 },
+        { scale: 1, opacity: 1, x: 0, duration: 0.6, ease: "power3.out" },
+        0.25
+      );
+
+      tl.fromTo(
+        "#col-right",
+        { scale: 0.86, opacity: 0, x: 25 },
+        { scale: 1, opacity: 1, x: 0, duration: 0.6, ease: "power3.out" },
+        0.38
+      );
+
+      tl.fromTo(
+        "#vs-badge",
+        { scale: 0, opacity: 0, rotation: -90 },
+        { scale: 1, opacity: 1, rotation: 0, duration: 0.5, ease: "power3.out" },
+        0.58
+      );
+
+      // Hide overlays initially
+      tl.set("#ban-visual-area", { opacity: 0 }, 0);
+      tl.set("#label-banner", { opacity: 0 }, 0);
+      tl.set("#punch-card", { opacity: 0 }, 0);
+
+      // 3. Overlay Icon BAN (T = 1.27s / 180550ms)
+      tl.set("#ban-visual-area", { opacity: 1 }, 1.27);
+      tl.fromTo(
+        banCircle,
+        { strokeDashoffset: circleLen },
+        { strokeDashoffset: 0, duration: 0.4, ease: "power2.out" },
+        1.27
+      );
+      tl.fromTo(
+        banSlash,
+        { strokeDashoffset: slashLen },
+        { strokeDashoffset: 0, duration: 0.35, ease: "power2.out" },
+        1.45
+      );
+      tl.fromTo(
+        "#ban-stamp",
+        { scale: 0, opacity: 0, rotation: 12 },
+        { scale: 1, opacity: 1, rotation: -5, duration: 0.4, ease: "power3.out" },
+        1.55
+      );
+      tl.to(
+        "#col-right",
+        { x: 6, duration: 0.04, yoyo: true, repeat: 3, ease: "power1.inOut" },
+        1.6
+      );
+
+      // 4. Overlay Label: KHÔNG ĐÁNH ĐỒNG (T = 6.18s / 185460ms)
+      tl.fromTo(
+        "#label-banner",
+        { y: 30, opacity: 0, scale: 0.96 },
+        { y: 0, opacity: 1, scale: 1, duration: 0.55, ease: "power3.out" },
+        6.18
+      );
+
+      // 5. Overlay Punch-Phrase: CẢN TRỞ LÀ TRỌNG TÂM (T = 9.98s / 189260ms)
+      tl.fromTo(
+        "#punch-card",
+        { y: 35, opacity: 0, scale: 0.94 },
+        { y: 0, opacity: 1, scale: 1, duration: 0.6, ease: "power3.out" },
+        9.98
+      );
+      tl.fromTo(
+        "#punch-tag",
+        { scale: 0.8, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.3, ease: "power2.out" },
+        10.15
+      );
+
+      window.__timelines["scene-s20"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

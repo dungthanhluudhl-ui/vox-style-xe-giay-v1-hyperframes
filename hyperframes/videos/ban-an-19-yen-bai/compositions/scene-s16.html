@@ -1,0 +1,412 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap">
+      <style>
+    /* hf-safe-colors (tất định từ style-tokens.json) */
+    .hf-text-ink { color: #141414; }
+    .hf-text-light { color: #F7F4EC; }
+    .hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+    .hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+    .hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+    .hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: #E7E3D9;
+      color: #141414;
+      font-family: "Be Vietnam Pro", sans-serif;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    #root {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    /* Quy ước bắt buộc: .clip inset: 0 */
+    .clip {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    /* Background image layer */
+    .camera-rig {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      transform-origin: 50% 50%;
+      will-change: transform;
+    }
+
+    .hero-photo {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    /* Tactical Diagram Overlays (Corner Viewfinders & Grid markers) */
+    .hud-layer {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    .corner-bracket {
+      position: absolute;
+      width: 48px;
+      height: 48px;
+      border-color: #FF6A1A;
+      border-style: solid;
+      border-width: 0;
+      opacity: 0.9;
+    }
+
+    .corner-top-left {
+      top: 180px;
+      left: 60px;
+      border-top-width: 4px;
+      border-left-width: 4px;
+    }
+
+    .corner-top-right {
+      top: 180px;
+      right: 60px;
+      border-top-width: 4px;
+      border-right-width: 4px;
+    }
+
+    .corner-bottom-left {
+      bottom: 540px;
+      left: 60px;
+      border-bottom-width: 4px;
+      border-left-width: 4px;
+    }
+
+    .corner-bottom-right {
+      bottom: 540px;
+      right: 60px;
+      border-bottom-width: 4px;
+      border-right-width: 4px;
+    }
+
+    .grid-ruler-line {
+      position: absolute;
+      left: 60px;
+      right: 60px;
+      height: 1px;
+      background: rgba(255, 106, 26, 0.4);
+    }
+
+    /* Overlay 1: Tag card "TRUY ĐUỔI VÀO NHÀ" */
+    #overlay-1-container {
+      position: absolute;
+      top: 240px;
+      left: 60px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 10px;
+      z-index: 30;
+      pointer-events: auto;
+    }
+
+    .tag-header {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      font-size: 22px;
+      font-weight: 900;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      border-radius: 4px;
+    }
+
+    .punch-plate {
+      padding: 16px 28px;
+      border-left: 10px solid #FF6A1A;
+      border-radius: 4px;
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.4);
+    }
+
+    .punch-text {
+      font-size: 58px;
+      font-weight: 900;
+      line-height: 1.2;
+      letter-spacing: -0.5px;
+      text-transform: uppercase;
+      display: block;
+    }
+
+    /* Overlay 2: Icon "fall" (self-drawing diagrammatic icon) */
+    #overlay-2-container {
+      position: absolute;
+      top: 660px;
+      left: 60px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      z-index: 30;
+      pointer-events: auto;
+    }
+
+    .icon-plate {
+      width: 140px;
+      height: 140px;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 3px solid #FF6A1A;
+      box-shadow: 0 16px 32px rgba(0, 0, 0, 0.45);
+      flex-shrink: 0;
+    }
+
+    .icon-svg {
+      width: 90px;
+      height: 90px;
+    }
+
+    .fall-stroke {
+      fill: none;
+      stroke: #FF6A1A;
+      stroke-width: 6;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .icon-meta {
+      padding: 16px 24px;
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
+    }
+
+    .icon-meta-title {
+      font-size: 20px;
+      font-weight: 900;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .icon-meta-desc {
+      font-size: 32px;
+      font-weight: 900;
+      line-height: 1.25;
+      text-transform: uppercase;
+    }
+
+    /* Overlay 3: Punch Tag "CHỐNG CỰ TUYỆT VỌNG" */
+    #overlay-3-container {
+      position: absolute;
+      top: 1100px;
+      left: 60px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 10px;
+      z-index: 30;
+      pointer-events: auto;
+    }
+
+    .badge-accent {
+      display: inline-block;
+      padding: 6px 14px;
+      font-size: 22px;
+      font-weight: 900;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      border-radius: 4px;
+    }
+
+    /* Signature Vox bottom orange bar */
+    #vox-bottom-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 12px;
+      background: #FF6A1A;
+      z-index: 100;
+    }
+  </style>
+
+  <div id="root" data-composition-id="scene-s16" data-width="1080" data-height="1920" data-duration="10.28">
+    
+    <!-- SHOT S16-1: Background photo + camera motion -->
+    <section id="shot-main-bg" class="clip" data-start="0" data-duration="10.28">
+      <div id="camera-rig" class="camera-rig">
+        <img class="hero-photo" src="assets/img-09-man-knife-threat-cutout.jpg" alt="Hiện trường truy đuổi">
+      </div>
+
+      <!-- Tactical HUD / Diagrammatic Grid Overlay -->
+      <div class="hud-layer" id="hud-layer">
+        <div class="corner-bracket corner-top-left"></div>
+        <div class="corner-bracket corner-top-right"></div>
+        <div class="corner-bracket corner-bottom-left"></div>
+        <div class="corner-bracket corner-bottom-right"></div>
+        <div class="grid-ruler-line" style="top: 180px;"></div>
+        <div class="grid-ruler-line" style="bottom: 540px;"></div>
+      </div>
+    </section>
+
+    <!-- OVERLAY 1: Label "TRUY ĐUỔI VÀO NHÀ" (atMs: 122360 -> rel: 3.34s, hold: 2.20s) -->
+    <section id="clip-overlay-1" class="clip" data-start="3.34" data-duration="2.20">
+      <div id="overlay-1-container">
+        <div class="tag-header hf-hl-orange">DIỄN BIẾN HIỆN TRƯỜNG</div>
+        <div class="punch-plate hf-plate-ink">
+          <span class="punch-text hf-text-light">TRUY ĐUỔI VÀO NHÀ</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- OVERLAY 2: Icon "fall" (atMs: 124370 -> rel: 5.35s, hold: 1.80s) -->
+    <section id="clip-overlay-2" class="clip" data-start="5.35" data-duration="1.80">
+      <div id="overlay-2-container">
+        <div class="icon-plate hf-plate-ink">
+          <svg class="icon-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <!-- Pictogram of person stumbling backward with falling motion trail -->
+            <!-- Head -->
+            <circle class="fall-stroke" cx="62" cy="24" r="10" />
+            <!-- Torso tilting back -->
+            <line class="fall-stroke" x1="58" y1="34" x2="42" y2="60" />
+            <!-- Left leg kicking up -->
+            <polyline class="fall-stroke" points="42,60 22,72 12,68" />
+            <!-- Right leg stumbling -->
+            <polyline class="fall-stroke" points="42,60 36,80 50,92" />
+            <!-- Defensive arms outstretched -->
+            <polyline class="fall-stroke" points="52,42 76,36 84,48" />
+            <!-- Falling trajectory vector -->
+            <path class="fall-stroke" d="M 18,28 Q 48,12 78,28" style="stroke-width: 4;" />
+          </svg>
+        </div>
+        <div class="icon-meta hf-plate-ink">
+          <div class="icon-meta-title" style="color: #FF6A1A;">TÌNH TIẾT XẢY RA</div>
+          <div class="icon-meta-desc hf-text-light">VƯỚNG BÀN GHẾ • LÙI BƯỚC</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- OVERLAY 3: Label "CHỐNG CỰ TUYỆT VỌNG" (atMs: 128220 -> rel: 9.20s, hold: 1.08s đến hết scene) -->
+    <section id="clip-overlay-3" class="clip" data-start="9.20" data-duration="1.08">
+      <div id="overlay-3-container">
+        <div class="badge-accent hf-hl-orange">PHÒNG VỆ KHẨN CẤP</div>
+        <div class="punch-plate hf-plate-ink">
+          <span class="punch-text hf-text-light">CHỐNG CỰ TUYỆT VỌNG</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Thanh cam cố định nhận diện thương hiệu Vox -->
+    <div id="vox-bottom-bar"></div>
+
+  </div>
+
+  <script>
+    // Chuẩn bị stroke-dasharray & stroke-dashoffset cho SVG Icon "fall"
+    const fallStrokes = document.querySelectorAll(".fall-stroke");
+    fallStrokes.forEach((p) => {
+      if (typeof p.getTotalLength === "function") {
+        const len = p.getTotalLength();
+        p.style.strokeDasharray = len + 2;
+        p.style.strokeDashoffset = len + 2;
+      }
+    });
+
+    // Khởi tạo Timeline GSAP đã pause theo hợp đồng HyperFrames
+    const tl = gsap.timeline({ paused: true });
+
+    // 1. TRANSITION IN: "punch" đập mạnh vào góc dồn ép ở t = 0 (giữ nguyên màu sắc gốc của asset)
+    tl.fromTo(
+      "#camera-rig",
+      { scale: 1.15 },
+      { scale: 1.0, duration: 0.45, ease: "power4.out" },
+      0
+    );
+
+    // Camera motion: pan-right nhẹ và zoom-in chậm từ 1.0x lên 1.05x theo hướng dồn ép
+    tl.to(
+      "#camera-rig",
+      { scale: 1.05, x: -45, duration: 9.83, ease: "sine.out" },
+      0.45
+    );
+
+    // Subtle HUD fade-in
+    tl.fromTo(
+      "#hud-layer",
+      { opacity: 0 },
+      { opacity: 1, duration: 0.6, ease: "power2.out" },
+      0.2
+    );
+
+    // 2. OVERLAY 1: "TRUY ĐUỔI VÀO NHÀ" (start: 3.34s, duration: 2.20s -> ends: 5.54s)
+    tl.fromTo(
+      "#overlay-1-container",
+      { x: -50, opacity: 0 },
+      { x: 0, opacity: 1, duration: 0.4, ease: "power3.out" },
+      3.34
+    );
+    tl.to(
+      "#overlay-1-container",
+      { x: -30, opacity: 0, duration: 0.25, ease: "power2.in" },
+      5.25
+    );
+
+    // 3. OVERLAY 2: Icon "fall" (start: 5.35s, duration: 1.80s -> ends: 7.15s)
+    tl.fromTo(
+      "#overlay-2-container",
+      { scale: 0.85, opacity: 0 },
+      { scale: 1.0, opacity: 1, duration: 0.35, ease: "power3.out" },
+      5.35
+    );
+
+    // Self-drawing paths của icon "fall"
+    tl.to(
+      ".fall-stroke",
+      { strokeDashoffset: 0, duration: 0.65, ease: "power2.out", stagger: 0.08 },
+      5.45
+    );
+
+    tl.to(
+      "#overlay-2-container",
+      { scale: 0.95, opacity: 0, duration: 0.25, ease: "power2.in" },
+      6.85
+    );
+
+    // 4. OVERLAY 3: "CHỐNG CỰ TUYỆT VỌNG" (start: 9.20s, duration: 1.08s)
+    tl.fromTo(
+      "#overlay-3-container",
+      { y: 35, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.35, ease: "power3.out" },
+      9.20
+    );
+
+    // Đăng ký timeline duy nhất vào HyperFrames runtime
+    window.__timelines = window.__timelines || {};
+    window.__timelines["scene-s16"] = tl;
+  </script>
+
+    </template>
+  </body>
+</html>

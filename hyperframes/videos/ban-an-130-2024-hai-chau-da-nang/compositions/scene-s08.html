@@ -1,0 +1,903 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap"
+    />
+      <style>
+      /* hf-safe-colors (tất định từ style-tokens.json) */
+      .hf-text-ink { color: #141414; }
+      .hf-text-light { color: #F7F4EC; }
+      .hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+      .hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+      .hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+      .hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #e7e3d9;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+      #root {
+        position: relative;
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+      }
+      .clip {
+        position: absolute;
+        inset: 0;
+      }
+      .bg-grid {
+        position: absolute;
+        inset: 0;
+        background-color: #e7e3d9;
+        background-image:
+          linear-gradient(rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px),
+          linear-gradient(90deg, rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px);
+        background-size: 84px 84px;
+        background-position: -1px -1px;
+      }
+      .bottom-accent-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 12px;
+        background-color: #ff6a1a;
+        z-index: 100;
+      }
+
+      /* Header plate */
+      #header-card {
+        position: absolute;
+        top: 175px;
+        left: 60px;
+        width: 960px;
+        background-color: #141414;
+        border-top: 5px solid #ff6a1a;
+        padding: 24px 28px;
+        z-index: 20;
+      }
+      .header-meta {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 10px;
+      }
+      .header-badge {
+        background-color: #ff6a1a;
+        color: #141414;
+        font-size: 16px;
+        font-weight: 900;
+        padding: 4px 12px;
+        border-radius: 2px;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+      }
+      .header-time {
+        color: #f7f4ec;
+        font-size: 17px;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+      }
+      .header-title {
+        color: #f7f4ec;
+        font-size: 44px;
+        font-weight: 900;
+        line-height: 1.25;
+        margin: 0 0 6px 0;
+        text-transform: uppercase;
+      }
+      .header-desc {
+        color: #e7e3d9;
+        font-size: 19px;
+        font-weight: 700;
+        margin: 0;
+        letter-spacing: 0.2px;
+      }
+
+      /* Map stage container */
+      #map-container {
+        position: absolute;
+        top: 365px;
+        left: 60px;
+        width: 960px;
+        height: 960px;
+        background-color: #f5f0e4;
+        border: 3px solid #141414;
+        overflow: hidden;
+        z-index: 10;
+      }
+      #camera-stage {
+        position: absolute;
+        inset: 0;
+        transform-origin: 550px 520px;
+      }
+      .map-svg {
+        position: absolute;
+        inset: 0;
+        width: 960px;
+        height: 960px;
+      }
+
+      /* Street label plates */
+      .street-label-plate {
+        position: absolute;
+        background-color: #141414;
+        color: #f7f4ec;
+        font-size: 15px;
+        font-weight: 900;
+        padding: 4px 8px;
+        border-radius: 2px;
+        white-space: nowrap;
+        pointer-events: none;
+      }
+
+      /* Overlays & Callout Badges */
+      .callout-badge {
+        position: absolute;
+        background-color: #141414;
+        border: 2px solid #141414;
+        padding: 10px 16px;
+        border-radius: 3px;
+        z-index: 30;
+      }
+      .callout-badge.accent-orange {
+        border-color: #ff6a1a;
+      }
+      .callout-tag {
+        display: inline-block;
+        background-color: #ff6a1a;
+        color: #141414;
+        font-size: 13px;
+        font-weight: 900;
+        padding: 3px 8px;
+        border-radius: 2px;
+        margin-bottom: 5px;
+        text-transform: uppercase;
+      }
+      .callout-heading {
+        color: #f7f4ec;
+        font-size: 24px;
+        font-weight: 900;
+        line-height: 1.2;
+        margin: 0;
+      }
+      .callout-sub {
+        color: #e7e3d9;
+        font-size: 16px;
+        font-weight: 700;
+        margin: 4px 0 0 0;
+      }
+
+      /* Pin card */
+      #badge-festival {
+        position: absolute;
+        top: 285px;
+        left: 620px;
+        background-color: #141414;
+        border: 2px solid #ff6a1a;
+        padding: 10px 14px;
+        border-radius: 3px;
+        z-index: 30;
+      }
+
+      /* Traffic Congestion Alert Plate */
+      #badge-traffic-alert {
+        position: absolute;
+        top: 345px;
+        left: 140px;
+        background-color: #141414;
+        border-left: 5px solid #ff6a1a;
+        padding: 8px 14px;
+        border-radius: 2px;
+        z-index: 25;
+      }
+
+      /* Legend status bar */
+      #legend-bar {
+        position: absolute;
+        top: 1335px;
+        left: 60px;
+        width: 960px;
+        height: 52px;
+        background-color: #141414;
+        display: flex;
+        align-items: center;
+        justify-content: space-around;
+        padding: 0 16px;
+        z-index: 20;
+      }
+      .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: #f7f4ec;
+        font-size: 16px;
+        font-weight: 700;
+      }
+      .legend-indicator {
+        width: 14px;
+        height: 14px;
+        border-radius: 2px;
+        background-color: #ff6a1a;
+      }
+      .legend-indicator.circle {
+        border-radius: 50%;
+      }
+      .legend-indicator.ring {
+        background-color: transparent;
+        border: 3px solid #ff6a1a;
+        border-radius: 50%;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s08"
+      data-width="1080"
+      data-height="1920"
+      data-duration="13.77"
+    >
+      <!-- Background Paper Grid -->
+      <div class="bg-grid"></div>
+
+      <!-- Main Visual Clip for Shot S08-1 -->
+      <section id="scene-s08" class="clip" data-start="0" data-duration="13.77">
+        <!-- Top Header Card -->
+        <div id="header-card">
+          <div class="header-meta">
+            <span class="header-badge">HẢI CHÂU • ĐÀ NẴNG</span>
+            <span class="header-time">ĐÊM LỄ HỘI PHÁO HOA</span>
+          </div>
+          <h1 class="header-title">SƠ ĐỒ PHÂN LUỒNG & TRẬT TỰ</h1>
+          <p class="header-desc">ĐIỀU TIẾT GIAO THÔNG • BỐ TRÍ CỨU HỘ & PCCC ỨNG TRỰC</p>
+        </div>
+
+        <!-- Central Map Stage -->
+        <div id="map-container">
+          <div id="camera-stage">
+            <svg class="map-svg" viewBox="0 0 960 960" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <!-- River diagonal hatch pattern -->
+                <pattern
+                  id="river-hatch"
+                  width="16"
+                  height="16"
+                  patternTransform="rotate(45 0 0)"
+                  patternUnits="userSpaceOnUse"
+                >
+                  <line x1="0" y1="0" x2="0" y2="16" stroke="rgba(20,20,20,0.18)" stroke-width="2" />
+                </pattern>
+                <!-- Congestion stripe pattern -->
+                <pattern
+                  id="traffic-stripes"
+                  width="12"
+                  height="12"
+                  patternTransform="rotate(45 0 0)"
+                  patternUnits="userSpaceOnUse"
+                >
+                  <line x1="0" y1="0" x2="0" y2="12" stroke="#ff6a1a" stroke-width="4" />
+                </pattern>
+              </defs>
+
+              <!-- Han River (Sông Hàn) -->
+              <path
+                d="M 680,0 Q 730,300 700,600 T 730,960 L 960,960 L 960,0 Z"
+                fill="#e2ddd1"
+                stroke="#141414"
+                stroke-width="2.5"
+              />
+              <path
+                d="M 680,0 Q 730,300 700,600 T 730,960 L 960,960 L 960,0 Z"
+                fill="url(#river-hatch)"
+              />
+
+              <!-- Bridges across Han River -->
+              <!-- Cầu Sông Hàn -->
+              <rect
+                x="650"
+                y="242"
+                width="280"
+                height="20"
+                fill="#141414"
+                stroke="#f5f0e4"
+                stroke-width="1.5"
+              />
+              <!-- Cầu Rồng -->
+              <rect
+                x="660"
+                y="570"
+                width="270"
+                height="24"
+                fill="#141414"
+                stroke="#f5f0e4"
+                stroke-width="1.5"
+              />
+              <!-- Cầu Trần Thị Lý -->
+              <rect
+                x="690"
+                y="850"
+                width="240"
+                height="22"
+                fill="#141414"
+                stroke="#f5f0e4"
+                stroke-width="1.5"
+              />
+
+              <!-- Bridge text labels in ink -->
+              <text x="770" y="235" fill="#141414" font-size="14" font-weight="900" letter-spacing="1">
+                CẦU SÔNG HÀN
+              </text>
+              <text x="770" y="562" fill="#141414" font-size="14" font-weight="900" letter-spacing="1">
+                CẦU RỒNG
+              </text>
+              <text x="770" y="842" fill="#141414" font-size="14" font-weight="900" letter-spacing="1">
+                CẦU TRẦN THỊ LÝ
+              </text>
+
+              <!-- Han River vertical watermark text -->
+              <text
+                x="880"
+                y="420"
+                fill="#141414"
+                opacity="0.35"
+                font-size="32"
+                font-weight="900"
+                letter-spacing="14"
+                writing-mode="vertical-rl"
+              >
+                SÔNG HÀN
+              </text>
+
+              <!-- Urban Road Network (Hai Chau Street Grid) -->
+              <!-- Secondary city blocks -->
+              <g stroke="rgba(20,20,20,0.22)" stroke-width="1.5" fill="none">
+                <line x1="60" y1="170" x2="620" y2="170" />
+                <line x1="60" y1="330" x2="620" y2="330" />
+                <line x1="60" y1="490" x2="620" y2="490" />
+                <line x1="60" y1="720" x2="620" y2="720" />
+                <line x1="200" y1="60" x2="200" y2="920" />
+                <line x1="320" y1="60" x2="320" y2="920" />
+                <line x1="440" y1="60" x2="440" y2="920" />
+              </g>
+
+              <!-- Primary Thoroughfares (drawing paths) -->
+              <!-- East-West Crossways -->
+              <path
+                id="road-leduan"
+                class="road-draw"
+                d="M 50,252 L 670,252"
+                stroke="#141414"
+                stroke-width="16"
+                stroke-linecap="square"
+                fill="none"
+              />
+              <path
+                d="M 50,252 L 670,252"
+                stroke="#f5f0e4"
+                stroke-width="2"
+                stroke-dasharray="8 8"
+                fill="none"
+              />
+
+              <path
+                id="road-hungvuong"
+                class="road-draw"
+                d="M 50,410 L 620,410"
+                stroke="#141414"
+                stroke-width="14"
+                stroke-linecap="square"
+                fill="none"
+              />
+
+              <path
+                id="road-nguyenvanlinh"
+                class="road-draw"
+                d="M 50,582 L 680,582"
+                stroke="#141414"
+                stroke-width="20"
+                stroke-linecap="square"
+                fill="none"
+              />
+              <path
+                d="M 50,582 L 680,582"
+                stroke="#ff6a1a"
+                stroke-width="3"
+                stroke-dasharray="10 8"
+                fill="none"
+              />
+
+              <path
+                id="road-duytan"
+                class="road-draw"
+                d="M 50,860 L 700,860"
+                stroke="#141414"
+                stroke-width="16"
+                stroke-linecap="square"
+                fill="none"
+              />
+
+              <!-- North-South Arterials -->
+              <path
+                id="road-bachdang"
+                class="road-draw"
+                d="M 620,50 L 620,930"
+                stroke="#141414"
+                stroke-width="20"
+                stroke-linecap="square"
+                fill="none"
+              />
+              <path
+                d="M 620,50 L 620,930"
+                stroke="#ff6a1a"
+                stroke-width="3"
+                stroke-dasharray="10 8"
+                fill="none"
+              />
+
+              <path
+                id="road-tranphu"
+                class="road-draw"
+                d="M 510,50 L 510,930"
+                stroke="#141414"
+                stroke-width="16"
+                stroke-linecap="square"
+                fill="none"
+              />
+              <path
+                d="M 510,50 L 510,930"
+                stroke="#f5f0e4"
+                stroke-width="2"
+                stroke-dasharray="8 8"
+                fill="none"
+              />
+
+              <path
+                id="road-phanchautrinh"
+                class="road-draw"
+                d="M 380,80 L 380,930"
+                stroke="#141414"
+                stroke-width="14"
+                stroke-linecap="square"
+                fill="none"
+              />
+
+              <path
+                id="road-hoangdieu"
+                class="road-draw"
+                d="M 260,110 L 260,930"
+                stroke="#141414"
+                stroke-width="14"
+                stroke-linecap="square"
+                fill="none"
+              />
+
+              <!-- Congestion Zone Highlight (Bạch Đằng / Nguyễn Văn Linh corridor) -->
+              <path
+                id="congestion-track"
+                d="M 620,320 L 620,700 M 340,582 L 640,582"
+                stroke="#ff6a1a"
+                stroke-width="12"
+                stroke-linecap="round"
+                opacity="0.8"
+                fill="none"
+              />
+
+              <!-- Directional flow arrows along Bạch Đằng -->
+              <g id="flow-arrows" opacity="0" fill="#141414">
+                <polygon points="620,380 612,395 628,395" />
+                <polygon points="620,440 612,455 628,455" />
+                <polygon points="620,530 612,545 628,545" />
+                <polygon points="620,650 612,665 628,665" />
+              </g>
+
+              <!-- OVERLAY 2: Festival PIN Location (x=770, y=365) -->
+              <g id="festival-group" opacity="0">
+                <!-- Concentric pulse rings -->
+                <circle
+                  id="ring-festival"
+                  cx="770"
+                  cy="365"
+                  r="35"
+                  stroke="#ff6a1a"
+                  stroke-width="3"
+                  fill="none"
+                />
+                <!-- Ground landing spot -->
+                <ellipse cx="770" cy="385" rx="14" ry="6" fill="#141414" />
+                <!-- SVG PIN Icon -->
+                <g id="pin-festival" transform="translate(754, 335)">
+                  <path
+                    d="M 16,0 C 7.2,0 0,7.2 0,16 C 0,27 16,46 16,46 C 16,46 32,27 32,16 C 32,7.2 24.8,0 16,0 Z"
+                    fill="#ff6a1a"
+                    stroke="#141414"
+                    stroke-width="3"
+                  />
+                  <circle cx="16" cy="15" r="6" fill="#141414" />
+                </g>
+              </g>
+
+              <!-- OVERLAY 1: Honda Vario Target Vehicle Marker (x=620, y=470) -->
+              <g id="target-vario-group" opacity="0">
+                <!-- Ping beacon ring -->
+                <circle
+                  id="ping-vario"
+                  cx="620"
+                  cy="470"
+                  r="24"
+                  stroke="#ff6a1a"
+                  stroke-width="3"
+                  fill="none"
+                />
+                <!-- Core vehicle dot -->
+                <circle
+                  id="marker-vario"
+                  cx="620"
+                  cy="470"
+                  r="13"
+                  fill="#ff6a1a"
+                  stroke="#141414"
+                  stroke-width="3.5"
+                />
+                <!-- Callout pointer line -->
+                <line
+                  id="line-vario"
+                  x1="385"
+                  y1="465"
+                  x2="603"
+                  y2="470"
+                  stroke="#141414"
+                  stroke-width="2.5"
+                  stroke-dasharray="4 4"
+                />
+              </g>
+
+              <!-- OVERLAY 3: Chốt điều tiết giao thông (x=510, y=582) -->
+              <g id="checkpoint-group" opacity="0">
+                <!-- Radar sweep ring -->
+                <circle
+                  id="sweep-chot"
+                  cx="510"
+                  cy="582"
+                  r="38"
+                  stroke="#ff6a1a"
+                  stroke-width="2.5"
+                  fill="none"
+                />
+                <!-- Shield / Octagon post symbol -->
+                <g id="checkpoint-node" transform="translate(494, 566)">
+                  <polygon
+                    points="10,0 22,0 32,10 32,22 22,32 10,32 0,22 0,10"
+                    fill="#ff6a1a"
+                    stroke="#141414"
+                    stroke-width="3"
+                  />
+                  <!-- Inner barrier bars -->
+                  <line x1="8" y1="16" x2="24" y2="16" stroke="#141414" stroke-width="3" />
+                  <line x1="16" y1="8" x2="16" y2="24" stroke="#141414" stroke-width="3" />
+                </g>
+                <!-- Callout connector line -->
+                <line
+                  id="line-chot"
+                  x1="405"
+                  y1="650"
+                  x2="492"
+                  y2="590"
+                  stroke="#141414"
+                  stroke-width="2"
+                  stroke-dasharray="4 4"
+                />
+              </g>
+
+              <!-- OVERLAY 4: Tổ cứu nạn ứng trực (x=600, y=860) -->
+              <g id="rescue-group" opacity="0">
+                <!-- Perimeter coverage circle -->
+                <circle
+                  id="radius-cuunan"
+                  cx="600"
+                  cy="860"
+                  r="64"
+                  stroke="#141414"
+                  stroke-width="2.5"
+                  stroke-dasharray="6 6"
+                  fill="none"
+                />
+                <!-- Station symbol (Cross on orange circle) -->
+                <g id="rescue-station" transform="translate(584, 844)">
+                  <circle cx="16" cy="16" r="16" fill="#ff6a1a" stroke="#141414" stroke-width="3" />
+                  <rect x="13" y="7" width="6" height="18" fill="#141414" />
+                  <rect x="7" y="13" width="18" height="6" fill="#141414" />
+                </g>
+                <!-- Callout connector line -->
+                <line
+                  id="line-cuunan"
+                  x1="415"
+                  y1="820"
+                  x2="580"
+                  y2="856"
+                  stroke="#141414"
+                  stroke-width="2"
+                  stroke-dasharray="4 4"
+                />
+              </g>
+            </svg>
+
+            <!-- Static Street Name Plates inside map frame (placed cleanly outside callout bounds) -->
+            <div id="labels-streets" style="opacity: 0">
+              <div class="street-label-plate" style="top: 110px; left: 595px">Đ. BẠCH ĐẰNG</div>
+              <div class="street-label-plate" style="top: 110px; left: 470px">Đ. TRẦN PHÚ</div>
+              <div class="street-label-plate" style="top: 545px; left: 220px">Đ. NGUYỄN VĂN LINH</div>
+              <div class="street-label-plate" style="top: 265px; left: 240px">Đ. LÊ DUẨN</div>
+            </div>
+
+            <!-- OVERLAY 1 HTML Card: HONDA VARIO (atMs: 61360 -> rel 2.26s) -->
+            <div id="badge-vario" class="callout-badge accent-orange" style="top: 415px; left: 120px; opacity: 0">
+              <span class="callout-tag">PHƯƠNG TIỆN DI CHUYỂN</span>
+              <h2 class="callout-heading">HONDA VARIO</h2>
+              <p class="callout-sub">TUYẾN ĐƯỜNG QUẬN HẢI CHÂU</p>
+            </div>
+
+            <!-- OVERLAY 2 HTML Card: PIN LỄ HỘI (atMs: 63390 -> rel 4.29s) -->
+            <div id="badge-festival" style="opacity: 0">
+              <div style="color: #ff6a1a; font-size: 13px; font-weight: 900; letter-spacing: 0.5px">
+                KHU VỰC SỰ KIỆN
+              </div>
+              <div style="color: #f7f4ec; font-size: 20px; font-weight: 900; margin-top: 2px">
+                LỄ HỘI PHÁO HOA
+              </div>
+            </div>
+
+            <!-- Traffic Alert Sub-callout -->
+            <div id="badge-traffic-alert" style="opacity: 0">
+              <div style="color: #ff6a1a; font-size: 13px; font-weight: 900">MẬT ĐỘ LƯU THÔNG</div>
+              <div style="color: #f7f4ec; font-size: 19px; font-weight: 900; margin-top: 2px">
+                ÙN TẮC CỤC BỘ DỌC BỜ SÔNG
+              </div>
+            </div>
+
+            <!-- OVERLAY 3 HTML Card: CHỐT ĐIỀU TIẾT (atMs: 67910 -> rel 8.81s) -->
+            <div id="badge-chot" class="callout-badge accent-orange" style="top: 630px; left: 80px; opacity: 0">
+              <span class="callout-tag">AN NINH & TRẬT TỰ</span>
+              <h2 class="callout-heading">CHỐT ĐIỀU TIẾT</h2>
+              <p class="callout-sub">PHÂN LUỒNG TỪ XA • CHỐNG ÙN TẮC</p>
+            </div>
+
+            <!-- OVERLAY 4 HTML Card: TỔ CỨU NẠN ỨNG TRỰC (atMs: 70030 -> rel 10.93s) -->
+            <div id="badge-cuunan" class="callout-badge" style="top: 770px; left: 80px; opacity: 0">
+              <span class="callout-tag">LỰC LƯỢNG SẴN SÀNG</span>
+              <h2 class="callout-heading">TỔ CỨU NẠN ỨNG TRỰC</h2>
+              <p class="callout-sub">PCCC & PHỤC VỤ CÔNG TÁC CỨU HỘ</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Legend Status Bar -->
+        <div id="legend-bar">
+          <div class="legend-item">
+            <span class="legend-indicator circle"></span>
+            <span>XE HONDA VARIO</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-indicator"></span>
+            <span>CHỐT ĐIỀU TIẾT</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-indicator ring"></span>
+            <span>TỔ CỨU NẠN & PCCC</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Signature Orange Bar at bottom edge -->
+      <div class="bottom-accent-bar"></div>
+    </div>
+
+    <script>
+      // Prepare SVG path lengths for clean progressive draw
+      const roadPaths = document.querySelectorAll(".road-draw");
+      roadPaths.forEach((path) => {
+        const len = path.getTotalLength();
+        path.style.strokeDasharray = `${len}`;
+        path.style.strokeDashoffset = `${len}`;
+      });
+
+      // Prepare perimeter rescue circle
+      const rescueCircle = document.getElementById("radius-cuunan");
+      if (rescueCircle) {
+        const circleLen = 2 * Math.PI * 64;
+        rescueCircle.style.strokeDasharray = `${circleLen}`;
+        rescueCircle.style.strokeDashoffset = `${circleLen}`;
+      }
+
+      // Initialize single paused timeline
+      const tl = gsap.timeline({ paused: true });
+
+      // 0.0s - 1.2s: Scene Entrance ("grow" transitionIn)
+      tl.fromTo(
+        "#header-card",
+        { y: -45, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.65, ease: "power3.out" },
+        0.15,
+      );
+
+      tl.fromTo(
+        "#map-container",
+        { scale: 0.9, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.75, ease: "power3.out" },
+        0.2,
+      );
+
+      tl.fromTo(
+        "#legend-bar",
+        { y: 30, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.5, ease: "power2.out" },
+        0.4,
+      );
+
+      // Road networks trace out progressively
+      tl.to(
+        "#road-bachdang",
+        { strokeDashoffset: 0, duration: 0.8, ease: "power2.out" },
+        0.35,
+      );
+      tl.to(
+        "#road-nguyenvanlinh",
+        { strokeDashoffset: 0, duration: 0.75, ease: "power2.out" },
+        0.45,
+      );
+      tl.to(
+        "#road-tranphu",
+        { strokeDashoffset: 0, duration: 0.7, ease: "power2.out" },
+        0.55,
+      );
+      tl.to(
+        "#road-leduan",
+        { strokeDashoffset: 0, duration: 0.65, ease: "power2.out" },
+        0.65,
+      );
+      tl.to(
+        "#road-hungvuong",
+        { strokeDashoffset: 0, duration: 0.6, ease: "power2.out" },
+        0.75,
+      );
+      tl.to(
+        "#road-phanchautrinh",
+        { strokeDashoffset: 0, duration: 0.6, ease: "power2.out" },
+        0.8,
+      );
+      tl.to(
+        "#road-hoangdieu",
+        { strokeDashoffset: 0, duration: 0.6, ease: "power2.out" },
+        0.85,
+      );
+      tl.to(
+        "#road-duytan",
+        { strokeDashoffset: 0, duration: 0.6, ease: "power2.out" },
+        0.9,
+      );
+
+      // Street name labels and flow arrows fade in
+      tl.to("#labels-streets", { opacity: 1, duration: 0.5, ease: "power1.out" }, 1.1);
+      tl.to("#flow-arrows", { opacity: 0.75, duration: 0.6, ease: "power1.out" }, 1.3);
+
+      // 2.26s: OVERLAY 1 — "HONDA VARIO" (Shotlist: atMs 61360 -> rel 2.26s)
+      tl.to("#target-vario-group", { opacity: 1, duration: 0.1 }, 2.26);
+      tl.fromTo(
+        "#marker-vario",
+        { scale: 0 },
+        { scale: 1, duration: 0.45, ease: "power3.out" },
+        2.26,
+      );
+      tl.fromTo(
+        "#badge-vario",
+        { x: -30, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.5, ease: "power3.out" },
+        2.36,
+      );
+      tl.fromTo(
+        "#ping-vario",
+        { scale: 0.8, opacity: 0.9 },
+        { scale: 2.2, opacity: 0, duration: 1.1, repeat: 4, ease: "power1.out" },
+        2.4,
+      );
+
+      // 4.29s: OVERLAY 2 — "PIN" icon (Shotlist: atMs 63390 -> rel 4.29s)
+      tl.to("#festival-group", { opacity: 1, duration: 0.1 }, 4.29);
+      tl.fromTo(
+        "#pin-festival",
+        { y: -36, opacity: 0, scale: 0.5 },
+        { y: 0, opacity: 1, scale: 1, duration: 0.5, ease: "power3.out" },
+        4.29,
+      );
+      tl.fromTo(
+        "#badge-festival",
+        { y: 15, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.45, ease: "power3.out" },
+        4.45,
+      );
+      tl.fromTo(
+        "#ring-festival",
+        { scale: 0.6, opacity: 0.8 },
+        { scale: 2.1, opacity: 0, duration: 1.3, repeat: 3, ease: "power2.out" },
+        4.5,
+      );
+
+      // 5.5s - 13.77s: Camera Motion (Continuous gentle "zoom-in")
+      tl.fromTo(
+        "#camera-stage",
+        { scale: 1.0, x: 0, y: 0 },
+        { scale: 1.08, x: -18, y: -24, duration: 8.27, ease: "sine.inOut" },
+        5.5,
+      );
+
+      // 6.2s: Congestion alert notification
+      tl.fromTo(
+        "#badge-traffic-alert",
+        { x: -25, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.5, ease: "power3.out" },
+        6.2,
+      );
+
+      // 8.81s: OVERLAY 3 — "CHỐT ĐIỀU TIẾT" (Shotlist: atMs 67910 -> rel 8.81s)
+      tl.to("#checkpoint-group", { opacity: 1, duration: 0.1 }, 8.81);
+      tl.fromTo(
+        "#checkpoint-node",
+        { scale: 0 },
+        { scale: 1, duration: 0.45, ease: "power3.out" },
+        8.81,
+      );
+      tl.fromTo(
+        "#badge-chot",
+        { x: 30, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.5, ease: "power3.out" },
+        8.92,
+      );
+      tl.fromTo(
+        "#sweep-chot",
+        { scale: 0.7, opacity: 0.8 },
+        { scale: 1.8, opacity: 0, duration: 1.2, repeat: 3, ease: "power1.out" },
+        9.0,
+      );
+
+      // 10.93s: OVERLAY 4 — "TỔ CỨU NẠN ỨNG TRỰC" (Shotlist: atMs 70030 -> rel 10.93s)
+      tl.to("#rescue-group", { opacity: 1, duration: 0.1 }, 10.93);
+      tl.fromTo(
+        "#rescue-station",
+        { scale: 0 },
+        { scale: 1, duration: 0.45, ease: "power3.out" },
+        10.93,
+      );
+      tl.fromTo(
+        "#badge-cuunan",
+        { y: -20, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.45, ease: "power3.out" },
+        11.05,
+      );
+      tl.to(
+        "#radius-cuunan",
+        { strokeDashoffset: 0, duration: 0.8, ease: "power2.out" },
+        11.1,
+      );
+
+      // Register master timeline with exact composition-id
+      window.__timelines = window.__timelines || {};
+      window.__timelines["scene-s08"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

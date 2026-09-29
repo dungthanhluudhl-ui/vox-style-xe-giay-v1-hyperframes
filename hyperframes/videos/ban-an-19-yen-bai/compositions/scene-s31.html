@@ -1,0 +1,788 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap"
+    />
+      <style>
+      /* hf-safe-colors (tất định từ style-tokens.json) */
+      .hf-text-ink { color: #141414; }
+      .hf-text-light { color: #F7F4EC; }
+      .hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+      .hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+      .hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+      .hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        padding: 0;
+        background: #e7e3d9;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: #e7e3d9;
+      }
+
+      .clip {
+        position: absolute;
+        inset: 0;
+      }
+
+      /* Background Chart Variant (theo style-tokens.json: 4 đường kẻ tại 20/40/60/80% + tick cam) */
+      .chart-background {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+      }
+
+      /* Vertical guide lines */
+      .v-grid-line {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 1px;
+        background: rgba(20, 20, 20, 0.08);
+      }
+
+      /* Chart horizontal rules */
+      .chart-rule {
+        position: absolute;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: rgba(20, 20, 20, 0.28);
+      }
+
+      .chart-rule-light {
+        position: absolute;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: rgba(20, 20, 20, 0.1);
+      }
+
+      /* Orange left ticks for chart variant */
+      .orange-tick {
+        position: absolute;
+        left: 0;
+        width: 24px;
+        height: 6px;
+        background: #ff6a1a;
+      }
+
+      /* Top Header / Docket strip */
+      .top-docket-bar {
+        position: absolute;
+        top: 175px;
+        left: 60px;
+        right: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .docket-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        background: #141414;
+        color: #f7f4ec;
+        padding: 8px 18px;
+        border-radius: 4px;
+        font-weight: 900;
+        font-size: 20px;
+        letter-spacing: 2px;
+      }
+
+      .docket-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        border: 2px solid #141414;
+        padding: 6px 14px;
+        border-radius: 4px;
+        font-weight: 700;
+        font-size: 18px;
+        color: #141414;
+        letter-spacing: 1px;
+      }
+
+      .docket-dot {
+        width: 8px;
+        height: 8px;
+        background: #ff6a1a;
+        border-radius: 50%;
+      }
+
+      /* Punch Phrase Zone (top: 245px -> ~400px) */
+      .punch-zone {
+        position: absolute;
+        top: 245px;
+        left: 60px;
+        right: 60px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+      }
+
+      .punch-lead {
+        margin: 0 0 12px 0;
+        font-weight: 900;
+        font-size: 52px;
+        line-height: 1.1;
+        letter-spacing: 1px;
+        color: #141414;
+      }
+
+      .punch-plate {
+        background: #141414;
+        padding: 14px 34px;
+        border-radius: 8px;
+        display: inline-flex;
+        align-items: center;
+        gap: 14px;
+        box-shadow: 0 10px 24px rgba(20, 20, 20, 0.15);
+      }
+
+      .punch-metric {
+        font-weight: 900;
+        font-size: 64px;
+        line-height: 1;
+        color: #ff6a1a;
+      }
+
+      .punch-question {
+        font-weight: 900;
+        font-size: 64px;
+        line-height: 1;
+        color: #f7f4ec;
+      }
+
+      /* Diagram Stage: Bàn cân công lý (top: 415px -> 995px) */
+      .diagram-stage {
+        position: absolute;
+        top: 415px;
+        left: 40px;
+        right: 40px;
+        height: 580px;
+      }
+
+      .scale-svg {
+        position: absolute;
+        inset: 0;
+        width: 1000px;
+        height: 580px;
+        overflow: visible;
+      }
+
+      .scale-axis {
+        stroke: #141414;
+        stroke-width: 8;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        fill: none;
+      }
+
+      .scale-fulcrum {
+        fill: #141414;
+      }
+
+      .scale-beam-line {
+        stroke: #141414;
+        stroke-width: 9;
+        stroke-linecap: round;
+        fill: none;
+      }
+
+      .scale-chain {
+        stroke: #141414;
+        stroke-width: 3.5;
+        stroke-dasharray: 6 6;
+        fill: none;
+      }
+
+      .scale-pan {
+        fill: none;
+        stroke: #141414;
+        stroke-width: 6;
+        stroke-linecap: round;
+      }
+
+      /* Pan Card Overlays */
+      .pan-card {
+        position: absolute;
+        width: 330px;
+        border-radius: 8px;
+        box-sizing: border-box;
+      }
+
+      .card-conduct {
+        background: #f5f0e4;
+        border: 3px solid #141414;
+        padding: 20px 18px;
+        text-align: center;
+        left: 75px;
+        top: 215px;
+      }
+
+      .card-record {
+        background: #141414;
+        border: 3px solid #141414;
+        padding: 20px 18px;
+        text-align: center;
+        right: 75px;
+        top: 215px;
+        box-shadow: 0 14px 32px rgba(20, 20, 20, 0.2);
+      }
+
+      .card-header-badge {
+        font-weight: 900;
+        font-size: 18px;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        margin-bottom: 8px;
+      }
+
+      .card-conduct .card-header-badge {
+        color: #141414;
+      }
+
+      .card-record .card-header-badge {
+        color: #ff6a1a;
+      }
+
+      .card-title {
+        font-weight: 900;
+        font-size: 26px;
+        line-height: 1.25;
+        margin-bottom: 6px;
+      }
+
+      .card-conduct .card-title {
+        color: #141414;
+      }
+
+      .card-record .card-title {
+        color: #f7f4ec;
+      }
+
+      .card-subtext {
+        font-weight: 700;
+        font-size: 17px;
+        line-height: 1.3;
+      }
+
+      .card-conduct .card-subtext {
+        color: #141414;
+      }
+
+      .card-record .card-subtext {
+        color: #f7f4ec;
+      }
+
+      /* Scanning Light Effect */
+      .scan-light-beam {
+        position: absolute;
+        top: 85px;
+        right: 80px;
+        width: 320px;
+        height: 330px;
+        background: linear-gradient(
+          180deg,
+          rgba(255, 106, 26, 0.35) 0%,
+          rgba(255, 106, 26, 0.05) 85%,
+          transparent 100%
+        );
+        clip-path: polygon(45% 0%, 55% 0%, 100% 100%, 0% 100%);
+        pointer-events: none;
+        opacity: 0;
+        transform-origin: top center;
+      }
+
+      .scan-laser-line {
+        position: absolute;
+        left: 20px;
+        right: 20px;
+        height: 3px;
+        background: #ff6a1a;
+        box-shadow: 0 0 12px #ff6a1a;
+        opacity: 0;
+      }
+
+      /* Label Callout Zone (top: 1040px -> 1184px, nằm an toàn trên caption margin 1390px) */
+      .label-callout-zone {
+        position: absolute;
+        top: 1040px;
+        left: 60px;
+        right: 60px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 14px;
+      }
+
+      .stamp-label {
+        background: #ff6a1a;
+        color: #141414;
+        padding: 16px 42px;
+        border-radius: 6px;
+        font-weight: 900;
+        font-size: 38px;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        border: 3px solid #141414;
+        box-shadow: 5px 7px 0px #141414;
+        display: inline-flex;
+        align-items: center;
+        gap: 14px;
+        transform-origin: center center;
+        opacity: 0;
+      }
+
+      .stamp-icon-box {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .stamp-sub-banner {
+        background: #141414;
+        color: #f7f4ec;
+        padding: 10px 22px;
+        border-radius: 4px;
+        font-weight: 700;
+        font-size: 22px;
+        letter-spacing: 1px;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        opacity: 0;
+      }
+
+      /* Signature Orange Bottom Bar */
+      .bottom-orange-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 12px;
+        background: #ff6a1a;
+        z-index: 100;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s31"
+      data-width="1080"
+      data-height="1920"
+      data-duration="7.2"
+    >
+      <!-- Background Chart Visuals (Clip: 0s -> 7.2s) -->
+      <section
+        id="bg-clip"
+        class="clip"
+        data-start="0"
+        data-duration="7.2"
+        data-track-index="0"
+      >
+        <div class="chart-background">
+          <!-- Vertical subtle guides -->
+          <div class="v-grid-line" style="left: 120px"></div>
+          <div class="v-grid-line" style="left: 540px"></div>
+          <div class="v-grid-line" style="left: 960px"></div>
+
+          <!-- Secondary intermediate rules -->
+          <div class="chart-rule-light" style="top: 192px"></div>
+          <div class="chart-rule-light" style="top: 576px"></div>
+          <div class="chart-rule-light" style="top: 960px"></div>
+          <div class="chart-rule-light" style="top: 1344px"></div>
+
+          <!-- 4 Primary Rules at 20%, 40%, 60%, 80% height with left-edge orange ticks (style-tokens.json) -->
+          <!-- 20% height: 384px -->
+          <div class="chart-rule" style="top: 384px"></div>
+          <div class="orange-tick" style="top: 382px"></div>
+
+          <!-- 40% height: 768px -->
+          <div class="chart-rule" style="top: 768px"></div>
+          <div class="orange-tick" style="top: 766px"></div>
+
+          <!-- 60% height: 1152px -->
+          <div class="chart-rule" style="top: 1152px"></div>
+          <div class="orange-tick" style="top: 1150px"></div>
+
+          <!-- 80% height: 1536px -->
+          <div class="chart-rule" style="top: 1536px"></div>
+          <div class="orange-tick" style="top: 1534px"></div>
+        </div>
+      </section>
+
+      <!-- Main Motion Stage (Clip: 0s -> 7.2s) -->
+      <section
+        id="stage-clip"
+        class="clip"
+        data-start="0"
+        data-duration="7.2"
+        data-track-index="1"
+      >
+        <!-- Top Docket Header -->
+        <div id="top-docket" class="top-docket-bar">
+          <div class="docket-badge">
+            <span class="docket-dot"></span>
+            HỒ SƠ BẢN ÁN SƠ THẨM
+          </div>
+          <div class="docket-tag">HỒ SƠ NHÂN THÂN</div>
+        </div>
+
+        <!-- Punch Phrase Zone (at 0.86s / 246680ms) -->
+        <div id="punch-group" class="punch-zone">
+          <h1 class="punch-lead">TẠI SAO</h1>
+          <div class="punch-plate">
+            <span class="punch-metric">13 NĂM 6 THÁNG</span>
+            <span class="punch-question">?</span>
+          </div>
+        </div>
+
+        <!-- Diagram Stage: Scale of Justice (at 2.34s / 248160ms) -->
+        <div id="diagram-container" class="diagram-stage">
+          <!-- Scanner Beam Effect over Criminal Record Pan -->
+          <div id="scan-beam" class="scan-light-beam">
+            <div id="scan-laser" class="scan-laser-line" style="top: 90px"></div>
+          </div>
+
+          <!-- SVG Scale Geometry -->
+          <svg class="scale-svg" viewBox="0 0 1000 580">
+            <!-- Center Vertical Pillar & Base -->
+            <path
+              id="path-pillar"
+              class="scale-axis draw-path"
+              d="M 500 520 L 500 130"
+            ></path>
+            <!-- Fulcrum Base Triangle -->
+            <polygon
+              id="path-base"
+              class="scale-fulcrum draw-path"
+              points="450,520 550,520 500,470"
+            ></polygon>
+
+            <!-- Tilting Beam Assembly (Center Pivot: 500, 140) -->
+            <g id="scale-beam-group">
+              <!-- Horizontal Crossbar -->
+              <line
+                id="path-beam"
+                class="scale-beam-line draw-path"
+                x1="240"
+                y1="140"
+                x2="760"
+                y2="140"
+              ></line>
+              <circle
+                id="path-pivot"
+                class="scale-fulcrum"
+                cx="500"
+                cy="140"
+                r="10"
+              ></circle>
+
+              <!-- Left Pan Chains (Hành vi) -->
+              <g id="left-pan-assembly">
+                <line
+                  class="scale-chain draw-path"
+                  x1="240"
+                  y1="140"
+                  x2="150"
+                  y2="280"
+                ></line>
+                <line
+                  class="scale-chain draw-path"
+                  x1="240"
+                  y1="140"
+                  x2="330"
+                  y2="280"
+                ></line>
+                <path
+                  class="scale-pan draw-path"
+                  d="M 130 280 Q 240 310 350 280"
+                ></path>
+              </g>
+
+              <!-- Right Pan Chains (Nhân thân) -->
+              <g id="right-pan-assembly">
+                <line
+                  class="scale-chain draw-path"
+                  x1="760"
+                  y1="140"
+                  x2="670"
+                  y2="280"
+                ></line>
+                <line
+                  class="scale-chain draw-path"
+                  x1="760"
+                  y1="140"
+                  x2="850"
+                  y2="280"
+                ></line>
+                <path
+                  class="scale-pan draw-path"
+                  d="M 650 280 Q 760 310 870 280"
+                ></path>
+              </g>
+            </g>
+          </svg>
+
+          <!-- Floating Pan Content Cards -->
+          <!-- Left Card: Hành vi hiện tại (Elevates up on scale tilt) -->
+          <div id="card-left" class="pan-card card-conduct">
+            <div class="card-header-badge">HÀNH VI LẦN NÀY</div>
+            <div class="card-title">CƯỠNG ĐOẠT TÀI SẢN</div>
+            <div class="card-subtext">Hành vi đe dọa tống tiền</div>
+          </div>
+
+          <!-- Right Card: Quá khứ nhân thân (Weighs down heavily on scale tilt) -->
+          <div id="card-right" class="pan-card card-record">
+            <div class="card-header-badge">HỒ SƠ TÒA XEM XÉT</div>
+            <div class="card-title">LÝ LỊCH BỊ CÁO</div>
+            <div class="card-subtext">Các bản án trong quá khứ</div>
+          </div>
+        </div>
+
+        <!-- Label Callout: YẾU TỐ NHÂN THÂN (at 5.83s / 251650ms, safely above caption safe margin) -->
+        <div id="label-group" class="label-callout-zone">
+          <div id="stamp-badge" class="stamp-label">
+            <span class="stamp-icon-box">
+              <svg width="34" height="34" viewBox="0 0 24 24" fill="none">
+                <path
+                  d="M12 2L3 7V12C3 17.52 6.84 22.74 12 24C17.16 22.74 21 17.52 21 12V7L12 2Z"
+                  fill="#141414"
+                />
+                <path
+                  d="M10 15.5L6.5 12L7.91 10.59L10 12.67L16.09 6.59L17.5 8L10 15.5Z"
+                  fill="#FF6A1A"
+                />
+              </svg>
+            </span>
+            YẾU TỐ NHÂN THÂN
+          </div>
+          <div id="stamp-sub" class="stamp-sub-banner">
+            <span>HỒ SƠ QUÁ KHỨ CỦA BỊ CÁO</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Signature Orange Bar at Bottom -->
+      <div class="bottom-orange-bar"></div>
+    </div>
+
+    <!-- GSAP Seekable Timeline Script -->
+    <script>
+      // Single paused timeline contract on window.__timelines["scene-s31"]
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true });
+
+      // Pre-measure SVG paths for progressive draw animation
+      const paths = document.querySelectorAll(".draw-path");
+      paths.forEach((p) => {
+        const len = p.getTotalLength();
+        p.style.strokeDasharray = len + 1;
+        p.style.strokeDashoffset = len + 1;
+      });
+
+      // ----------------------------------------------------
+      // PHASE 1: Scene Entrance "Punch" (t = 0.0s -> 0.6s)
+      // ----------------------------------------------------
+      tl.fromTo(
+        "#bg-clip",
+        { opacity: 0, scale: 1.04 },
+        { opacity: 1, scale: 1, duration: 0.5, ease: "power3.out" },
+        0.0,
+      );
+
+      tl.fromTo(
+        "#top-docket",
+        { y: -30, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.45, ease: "power3.out" },
+        0.1,
+      );
+
+      // ----------------------------------------------------
+      // PHASE 2: Punch Phrase Entrance (t = 0.86s, atMs 246680)
+      // ----------------------------------------------------
+      tl.fromTo(
+        "#punch-group",
+        { y: 35, scale: 0.88, opacity: 0 },
+        { y: 0, scale: 1, opacity: 1, duration: 0.45, ease: "power4.out" },
+        0.86,
+      );
+
+      // Micro-impact settle on the plate metric
+      tl.fromTo(
+        ".punch-plate",
+        { scale: 0.94 },
+        { scale: 1, duration: 0.35, ease: "power3.out" },
+        1.05,
+      );
+
+      // ----------------------------------------------------
+      // PHASE 3: Scale of Justice Icon Draw (t = 2.34s, atMs 248160)
+      // ----------------------------------------------------
+      tl.fromTo(
+        "#diagram-container",
+        { opacity: 0 },
+        { opacity: 1, duration: 0.2 },
+        2.2,
+      );
+
+      // Progressive SVG path stroke draw
+      tl.to(
+        "#path-pillar, #path-base",
+        { strokeDashoffset: 0, duration: 0.6, ease: "power2.out" },
+        2.34,
+      );
+
+      tl.to(
+        "#path-beam",
+        { strokeDashoffset: 0, duration: 0.5, ease: "power2.out" },
+        2.6,
+      );
+
+      tl.to(
+        ".scale-chain, .scale-pan",
+        {
+          strokeDashoffset: 0,
+          duration: 0.6,
+          stagger: 0.08,
+          ease: "power2.out",
+        },
+        2.8,
+      );
+
+      // Cards settle in balanced position first
+      tl.fromTo(
+        "#card-left",
+        { scale: 0.8, opacity: 0, y: 30 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.45, ease: "power3.out" },
+        3.0,
+      );
+
+      tl.fromTo(
+        "#card-right",
+        { scale: 0.8, opacity: 0, y: 30 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.45, ease: "power3.out" },
+        3.15,
+      );
+
+      // ----------------------------------------------------
+      // PHASE 4: Scale Tilting under the weight of Record (t = 3.6s)
+      // Beam rotates, Left pan goes UP, Right pan goes DOWN
+      // ----------------------------------------------------
+      tl.to(
+        "#scale-beam-group",
+        {
+          rotation: 8,
+          transformOrigin: "500px 140px",
+          duration: 0.85,
+          ease: "power3.inOut",
+        },
+        3.6,
+      );
+
+      tl.to(
+        "#card-left",
+        {
+          y: -38,
+          duration: 0.85,
+          ease: "power3.inOut",
+        },
+        3.6,
+      );
+
+      tl.to(
+        "#card-right",
+        {
+          y: 38,
+          duration: 0.85,
+          ease: "power3.inOut",
+        },
+        3.6,
+      );
+
+      // ----------------------------------------------------
+      // PHASE 5: Scan Light Beam Activates (t = 4.6s -> 5.7s)
+      // "Con mắt công lý quét tia sáng cam sâu vào quá khứ nhân thân"
+      // ----------------------------------------------------
+      tl.fromTo(
+        "#scan-beam",
+        { opacity: 0, scaleY: 0.2 },
+        { opacity: 1, scaleY: 1, duration: 0.5, ease: "power2.out" },
+        4.6,
+      );
+
+      tl.fromTo(
+        "#scan-laser",
+        { opacity: 0, y: 40 },
+        { opacity: 1, y: 220, duration: 1.0, ease: "sine.inOut" },
+        4.7,
+      );
+
+      // Card Right border highlight pulses
+      tl.to(
+        "#card-right",
+        {
+          borderColor: "#FF6A1A",
+          boxShadow: "0 16px 36px rgba(255, 106, 26, 0.35)",
+          duration: 0.4,
+          ease: "power2.out",
+        },
+        5.1,
+      );
+
+      // ----------------------------------------------------
+      // PHASE 6: Stamp Label "YẾU TỐ NHÂN THÂN" (t = 5.83s, atMs 251650)
+      // ----------------------------------------------------
+      tl.fromTo(
+        "#stamp-badge",
+        { scale: 1.5, opacity: 0, rotation: -3 },
+        {
+          scale: 1,
+          opacity: 1,
+          rotation: 0,
+          duration: 0.4,
+          ease: "power4.out",
+        },
+        5.83,
+      );
+
+      tl.fromTo(
+        "#stamp-sub",
+        { y: 15, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.35, ease: "power3.out" },
+        6.05,
+      );
+
+      // Hold settled state cleanly until 7.2s
+      window.__timelines["scene-s31"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

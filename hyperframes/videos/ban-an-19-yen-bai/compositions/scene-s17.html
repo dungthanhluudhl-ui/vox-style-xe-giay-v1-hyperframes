@@ -1,0 +1,609 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap">
+      <style>
+/* hf-safe-colors (tất định từ style-tokens.json) */
+.hf-text-ink { color: #141414; }
+.hf-text-light { color: #F7F4EC; }
+.hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+.hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+.hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+.hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+    /* CSS Reset & Canvas Setup */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    html, body {
+      width: 1080px;
+      height: 1920px;
+      overflow: hidden;
+      background-color: #E7E3D9;
+      font-family: "Be Vietnam Pro", sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    #root {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+    .clip {
+      position: absolute;
+      inset: 0;
+    }
+
+    /* Style DNA Utility Tokens */
+    .hf-text-ink { color: #141414; }
+    .hf-text-light { color: #F7F4EC; }
+    .hf-hl-orange { background-color: #FF6A1A; color: #141414; }
+    .hf-plate-ink { background-color: #141414; color: #F7F4EC; }
+    .hf-plate-ink-orange { background-color: #141414; color: #FF6A1A; }
+    .hf-plate-paper { background-color: #E7E3D9; color: #141414; }
+
+    /* Scene Background (Spotlight Variant) */
+    #bg-layer {
+      position: absolute;
+      inset: 0;
+      background-color: #E7E3D9;
+      background-image:
+        linear-gradient(rgba(20, 20, 20, 0.18) 1.5px, transparent 1.5px),
+        linear-gradient(90deg, rgba(20, 20, 20, 0.18) 1.5px, transparent 1.5px);
+      background-size: 84px 84px;
+    }
+    #spotlight-vignette {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 50% 48%, rgba(20, 20, 20, 0) 35%, rgba(20, 20, 20, 0.28) 100%);
+      pointer-events: none;
+    }
+
+    /* Camera Stage */
+    #camera-stage {
+      position: absolute;
+      inset: 0;
+      transform-origin: 540px 780px;
+    }
+
+    /* Forensic Header */
+    #forensic-header {
+      position: absolute;
+      top: 180px;
+      left: 60px;
+      right: 60px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 20;
+    }
+    .header-box {
+      background-color: #141414;
+      padding: 14px 24px;
+      border-left: 6px solid #FF6A1A;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .header-tag {
+      font-size: 20px;
+      font-weight: 900;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #FF6A1A;
+    }
+    .header-title {
+      font-size: 32px;
+      font-weight: 900;
+      color: #F7F4EC;
+      letter-spacing: 0.5px;
+    }
+    .header-badge {
+      background-color: #141414;
+      border: 2px solid #FF6A1A;
+      padding: 12px 20px;
+      font-size: 22px;
+      font-weight: 900;
+      color: #FF6A1A;
+      letter-spacing: 1px;
+    }
+
+    /* Overlay 1: CỰ LY: 1 MÉT */
+    #ruler-group {
+      position: absolute;
+      top: 360px;
+      left: 60px;
+      width: 440px;
+      z-index: 30;
+      opacity: 0;
+    }
+    .ruler-badge {
+      background-color: #141414;
+      border: 3px solid #FF6A1A;
+      padding: 14px 24px;
+      display: inline-flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .ruler-tag {
+      font-size: 18px;
+      font-weight: 900;
+      color: #FF6A1A;
+      letter-spacing: 1.5px;
+    }
+    .ruler-val {
+      font-size: 46px;
+      font-weight: 900;
+      color: #F7F4EC;
+      letter-spacing: 1px;
+      line-height: 1.1;
+    }
+
+    /* Overlay 2: VÙNG BỤNG NGUY HIỂM (Punch-Phrase) */
+    #overlay-punch {
+      position: absolute;
+      top: 840px;
+      left: 540px;
+      right: 60px;
+      z-index: 40;
+      opacity: 0;
+    }
+    .punch-card {
+      background-color: #141414;
+      border: 4px solid #FF6A1A;
+      padding: 24px 30px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .punch-tag-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .punch-tag {
+      background-color: #FF6A1A;
+      color: #141414;
+      font-size: 20px;
+      font-weight: 900;
+      padding: 4px 12px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+    .punch-meta {
+      color: #F7F4EC;
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: 1px;
+    }
+    .punch-heading {
+      font-size: 56px;
+      font-weight: 900;
+      line-height: 1.25;
+      color: #F7F4EC;
+      letter-spacing: -0.5px;
+    }
+
+    /* Overlay 3: VẾT THƯƠNG CÁNH TAY (Label) */
+    #overlay-arm {
+      position: absolute;
+      top: 480px;
+      left: 60px;
+      width: 440px;
+      z-index: 40;
+      opacity: 0;
+    }
+    .arm-card {
+      background-color: #141414;
+      border: 3px solid #FF6A1A;
+      padding: 20px 26px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .arm-tag {
+      background-color: #FF6A1A;
+      color: #141414;
+      font-size: 20px;
+      font-weight: 900;
+      padding: 4px 12px;
+      align-self: flex-start;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+    .arm-heading {
+      font-size: 42px;
+      font-weight: 900;
+      color: #F7F4EC;
+      line-height: 1.2;
+    }
+    .arm-sub {
+      color: #F7F4EC;
+      font-size: 20px;
+      font-weight: 700;
+    }
+
+    /* Escape Path Tag (Positioned safely near side door at bottom-left) */
+    #escape-tag {
+      position: absolute;
+      top: 1060px;
+      left: 80px;
+      background-color: #141414;
+      border-left: 4px solid #FF6A1A;
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      z-index: 25;
+      opacity: 0;
+    }
+    .escape-tag-icon {
+      color: #FF6A1A;
+      font-size: 16px;
+      font-weight: 900;
+    }
+    .escape-tag-text {
+      font-size: 20px;
+      font-weight: 900;
+      color: #F7F4EC;
+      letter-spacing: 1px;
+    }
+
+    /* Fixed Brand Bottom Bar */
+    #bottom-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 10px;
+      background-color: #FF6A1A;
+      z-index: 1000;
+    }
+  </style>
+
+  <div id="root" data-composition-id="scene-s17" data-width="1080" data-height="1920" data-duration="10.64">
+    <!-- Single Scene Clip -->
+    <div id="shot-s17" class="clip" data-start="0" data-duration="10.64">
+      <!-- Camera Zoom Stage -->
+      <div id="camera-stage">
+        <!-- Background Elements -->
+        <div id="bg-layer"></div>
+        <div id="spotlight-vignette"></div>
+
+        <!-- Forensic Header -->
+        <header id="forensic-header">
+          <div class="header-box">
+            <span class="header-tag">HỒ SƠ GIÁM ĐỊNH PHÁP Y</span>
+            <h1 class="header-title">SƠ ĐỒ CƠ CHẾ TẤN CÔNG</h1>
+          </div>
+          <div class="header-badge">CỰ LY GẦN</div>
+        </header>
+
+        <!-- SVG Anatomy Diagram & Dynamic Vectors -->
+        <svg id="anatomy-svg" viewBox="0 0 1080 1920" style="position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10;">
+          <defs>
+            <!-- Arrowheads -->
+            <marker id="arrow-orange" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="#FF6A1A" />
+            </marker>
+            <marker id="arrow-ink" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="#141414" />
+            </marker>
+          </defs>
+
+          <!-- Forensic Measurement Grid Lines -->
+          <g id="forensic-grid-lines" stroke="rgba(20,20,20,0.22)" stroke-width="1.5" stroke-dasharray="8 8">
+            <line x1="80" y1="495" x2="1000" y2="495" />
+            <line x1="80" y1="670" x2="1000" y2="670" />
+            <line x1="80" y1="780" x2="1000" y2="780" />
+            <line x1="80" y1="920" x2="1000" y2="920" />
+            <line x1="540" y1="340" x2="540" y2="1280" />
+          </g>
+
+          <!-- Technical Scale Marks -->
+          <g id="scale-ticks" stroke="#141414" stroke-width="2">
+            <line x1="120" y1="495" x2="140" y2="495" />
+            <line x1="120" y1="670" x2="140" y2="670" />
+            <line x1="120" y1="780" x2="150" y2="780" stroke="#FF6A1A" stroke-width="3" />
+            <line x1="120" y1="920" x2="140" y2="920" />
+          </g>
+
+          <!-- Human Body Silhouette (Anatomy Wireframe) -->
+          <g id="human-body" fill="#F5F0E4" stroke="#141414" stroke-width="4" stroke-linejoin="round">
+            <!-- Head & Neck -->
+            <ellipse cx="540" cy="400" rx="46" ry="62" />
+            <path d="M 522 460 L 522 495 L 558 495 L 558 460" />
+
+            <!-- Torso (Shoulders, Chest, Abdomen, Hips) -->
+            <path d="M 455 495 C 490 490, 590 490, 625 495 C 615 570, 608 650, 618 730 C 628 800, 615 880, 590 920 L 490 920 C 465 880, 452 800, 462 730 C 472 650, 465 570, 455 495 Z" />
+
+            <!-- Right Arm (Viewer's Left) -->
+            <path id="arm-right" d="M 455 495 C 425 520, 405 580, 390 650 C 378 710, 368 780, 355 830 L 325 820 C 335 760, 350 690, 368 630 C 390 560, 415 510, 440 495 Z" />
+
+            <!-- Left Arm (Viewer's Right) -->
+            <path id="arm-left" d="M 625 495 C 655 520, 675 580, 690 650 C 702 710, 712 780, 725 830 L 755 820 C 745 760, 730 690, 712 630 C 690 560, 665 510, 640 495 Z" />
+
+            <!-- Lower Limbs (Legs) -->
+            <path d="M 490 920 L 480 1080 L 470 1260 L 515 1260 L 525 1080 L 536 940 L 544 940 L 555 1080 L 565 1260 L 610 1260 L 600 1080 L 590 920 Z" />
+
+            <!-- Abdomen Internal Forensic Quadrants -->
+            <g stroke="rgba(20,20,20,0.3)" stroke-width="2" stroke-dasharray="4 4" fill="none">
+              <line x1="475" y1="780" x2="605" y2="780" />
+              <line x1="540" y1="710" x2="540" y2="850" />
+            </g>
+          </g>
+
+          <!-- Left Abdomen Danger Zone Highlight -->
+          <path id="belly-highlight" d="M 540 730 C 575 730, 612 745, 616 780 C 618 805, 605 835, 575 840 L 540 840 Z" fill="#FF6A1A" fill-opacity="0" stroke="#FF6A1A" stroke-width="3" stroke-dasharray="6 6" />
+
+          <!-- MECHANISM 1: Distance Measurement Line & Attacker Knife Vector -->
+          <g id="svg-ruler" stroke-linecap="round">
+            <!-- 1 Metre Dimension Line -->
+            <line id="ruler-bar" x1="160" y1="520" x2="540" y2="520" stroke="#141414" stroke-width="4" />
+            <line id="ruler-bound-left" x1="160" y1="495" x2="160" y2="545" stroke="#141414" stroke-width="4" />
+            <line id="ruler-bound-right" x1="540" y1="495" x2="540" y2="545" stroke="#141414" stroke-width="4" />
+
+            <!-- Attacker Thrust Arrow -->
+            <g id="knife-thrust" transform="translate(160, 520)">
+              <line x1="0" y1="0" x2="45" y2="0" stroke="#FF6A1A" stroke-width="8" marker-end="url(#arrow-orange)" />
+              <circle cx="0" cy="0" r="10" fill="#141414" stroke="#FF6A1A" stroke-width="3" />
+            </g>
+          </g>
+
+          <!-- Fatal Belly Impact Elements (Target at 590, 780) -->
+          <g id="impact-belly" transform="translate(590, 780)" opacity="0">
+            <!-- Shockwaves -->
+            <circle id="belly-wave-1" cx="0" cy="0" r="30" fill="none" stroke="#FF6A1A" stroke-width="4" />
+            <circle id="belly-wave-2" cx="0" cy="0" r="18" fill="none" stroke="#FF6A1A" stroke-width="3" />
+            <!-- Forensic Crosshair -->
+            <circle cx="0" cy="0" r="28" fill="none" stroke="#141414" stroke-width="3" stroke-dasharray="6 4" />
+            <line x1="-36" y1="0" x2="36" y2="0" stroke="#141414" stroke-width="2.5" />
+            <line x1="0" y1="-36" x2="0" y2="36" stroke="#141414" stroke-width="2.5" />
+            <!-- Puncture Core -->
+            <polygon points="-12,-16 0,-26 12,-16 16,0 12,16 0,26 -12,16 -16,0" fill="#FF6A1A" stroke="#141414" stroke-width="3" />
+            <circle id="belly-glow" cx="0" cy="0" r="10" fill="#141414" />
+          </g>
+
+          <!-- Connector: Belly Impact to Punch-Phrase Card -->
+          <path id="connector-belly" d="M 590 780 L 680 810 L 680 840" fill="none" stroke="#FF6A1A" stroke-width="4" stroke-dasharray="300" stroke-dashoffset="300" />
+
+          <!-- MECHANISM 2: Escape Route to Side Door (Cửa ngách at bottom-left) -->
+          <g id="escape-route">
+            <path id="escape-path" d="M 480 800 C 400 870, 280 940, 180 1020" fill="none" stroke="#141414" stroke-width="4" stroke-dasharray="10 8" stroke-dashoffset="500" marker-end="url(#arrow-ink)" />
+            <!-- Side Door Waypoint Frame -->
+            <rect id="door-marker" x="140" y="990" width="40" height="60" fill="none" stroke="#FF6A1A" stroke-width="3" stroke-dasharray="5 3" opacity="0" />
+          </g>
+
+          <!-- MECHANISM 3: Pursuit & Arm Slash Vector (Target at 360, 670) -->
+          <g id="slash-group">
+            <path id="slash-vector" d="M 180 580 L 360 670" fill="none" stroke="#FF6A1A" stroke-width="6" stroke-dasharray="350" stroke-dashoffset="350" marker-end="url(#arrow-orange)" />
+          </g>
+
+          <!-- Arm Wound Impact Elements (Target at 360, 670) -->
+          <g id="impact-arm" transform="translate(360, 670)" opacity="0">
+            <!-- Shockwave -->
+            <circle id="arm-wave" cx="0" cy="0" r="22" fill="none" stroke="#FF6A1A" stroke-width="3" />
+            <!-- Crosshair -->
+            <circle cx="0" cy="0" r="20" fill="none" stroke="#141414" stroke-width="2" stroke-dasharray="4 4" />
+            <line x1="-26" y1="0" x2="26" y2="0" stroke="#141414" stroke-width="2" />
+            <line x1="0" y1="-26" x2="0" y2="26" stroke="#141414" stroke-width="2" />
+            <!-- Slash Wound Mark -->
+            <line x1="-16" y1="-12" x2="16" y2="12" stroke="#FF6A1A" stroke-width="6" stroke-linecap="round" />
+            <circle cx="0" cy="0" r="6" fill="#141414" />
+          </g>
+
+          <!-- Connector: Arm Impact to Arm Label Card -->
+          <path id="connector-arm" d="M 360 670 L 280 620 L 280 570" fill="none" stroke="#FF6A1A" stroke-width="4" stroke-dasharray="250" stroke-dashoffset="250" />
+        </svg>
+
+        <!-- HTML OVERLAYS -->
+        <!-- Overlay 1: CỰ LY: 1 MÉT -->
+        <div id="ruler-group">
+          <div class="ruler-badge">
+            <span class="ruler-tag">KHOẢNG CÁCH ÁP SÁT</span>
+            <div class="ruler-val">CỰ LY: 1 MÉT</div>
+          </div>
+        </div>
+
+        <!-- Escape Path Label Tag (Placed near door marker at bottom-left) -->
+        <div id="escape-tag">
+          <span class="escape-tag-icon">▶▶</span>
+          <span class="escape-tag-text">HƯỚNG THÁO CHẠY: CỬA NGÁCH</span>
+        </div>
+
+        <!-- Overlay 2: VÙNG BỤNG NGUY HIỂM (Punch-phrase) -->
+        <div id="overlay-punch">
+          <div class="punch-card">
+            <div class="punch-tag-row">
+              <span class="punch-tag">VÙNG TRỌNG YẾU</span>
+              <span class="punch-meta">HẠ SƯỜN TRÁI // Ổ BỤNG</span>
+            </div>
+            <h2 class="punch-heading">VÙNG BỤNG NGUY HIỂM</h2>
+          </div>
+        </div>
+
+        <!-- Overlay 3: VẾT THƯƠNG CÁNH TAY (Label) -->
+        <div id="overlay-arm">
+          <div class="arm-card">
+            <span class="arm-tag">NHÁT ĐÂM VỚI</span>
+            <h2 class="arm-heading">VẾT THƯƠNG CÁNH TAY</h2>
+            <p class="arm-sub">TRÚNG KHI NẠN NHÂN THÁO CHẠY</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Signature Orange Bar Fixed at Bottom -->
+      <div id="bottom-bar"></div>
+    </div>
+  </div>
+
+  <script>
+    // Build seekable paused GSAP timeline
+    const tl = gsap.timeline({ paused: true });
+
+    // 1. Scene Entrance (Rise Transition & Camera Drift)
+    tl.fromTo("#camera-stage",
+      { y: 50, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.8, ease: "power3.out" },
+      0
+    );
+
+    // Continuous Subtle Camera Zoom-In
+    tl.fromTo("#camera-stage",
+      { scale: 1.0 },
+      { scale: 1.08, duration: 10.64, ease: "none" },
+      0
+    );
+
+    // 2. OVERLAY 1: "CỰ LY: 1 MÉT" (Shotlist: atMs 130440 -> 0.94s, holdMs 2400 -> to 3.34s)
+    tl.fromTo("#ruler-group",
+      { opacity: 0, scale: 0.9, y: 15 },
+      { opacity: 1, scale: 1.0, y: 0, duration: 0.45, ease: "power3.out" },
+      0.94
+    );
+
+    // Rapid Contraction of 1 Metre Distance & Knife Thrust (1.55s -> 2.10s)
+    tl.to("#ruler-bar",
+      { attr: { x1: 540 }, duration: 0.55, ease: "power3.in" },
+      1.55
+    );
+    tl.to("#ruler-bound-left",
+      { attr: { x1: 540, x2: 540 }, duration: 0.55, ease: "power3.in" },
+      1.55
+    );
+    tl.to("#knife-thrust",
+      { x: 590, y: 780, duration: 0.55, ease: "power3.in" },
+      1.55
+    );
+
+    // Fatal Belly Impact at 2.10s (Sharp Forensic Impact)
+    tl.fromTo("#impact-belly",
+      { opacity: 0, scale: 0 },
+      { opacity: 1, scale: 1, duration: 0.2, ease: "power3.out" },
+      2.10
+    );
+    tl.fromTo("#belly-wave-1",
+      { r: 10, opacity: 1 },
+      { r: 70, opacity: 0, duration: 0.65, ease: "power2.out" },
+      2.10
+    );
+    tl.fromTo("#belly-wave-2",
+      { r: 6, opacity: 1 },
+      { r: 45, opacity: 0, duration: 0.55, ease: "power2.out" },
+      2.15
+    );
+    tl.to("#belly-highlight",
+      { fillOpacity: 0.45, strokeDashoffset: 0, duration: 0.4, ease: "power2.out" },
+      2.10
+    );
+
+    // Fade out Ruler Overlay by 3.34s
+    tl.to("#ruler-group",
+      { opacity: 0, scale: 0.95, duration: 0.25, ease: "power2.in" },
+      3.15
+    );
+    tl.to("#svg-ruler",
+      { opacity: 0, duration: 0.25, ease: "power2.in" },
+      3.15
+    );
+
+    // 3. OVERLAY 2: "VÙNG BỤNG NGUY HIỂM" (Shotlist: atMs 132430 -> 2.93s, holdMs 2500 -> to 5.43s)
+    tl.fromTo("#overlay-punch",
+      { opacity: 0, scale: 0.9, y: 20 },
+      { opacity: 1, scale: 1.0, y: 0, duration: 0.45, ease: "power3.out" },
+      2.93
+    );
+    tl.to("#connector-belly",
+      { strokeDashoffset: 0, duration: 0.4, ease: "power2.out" },
+      2.93
+    );
+
+    // Warning Pulse on Abdomen Wound
+    tl.fromTo("#belly-glow",
+      { fill: "#141414" },
+      { fill: "#FF6A1A", repeat: 5, yoyo: true, duration: 0.3, ease: "sine.inOut" },
+      3.00
+    );
+
+    // Retract Punch Card at 5.15s (Completes at 5.43s)
+    tl.to("#overlay-punch",
+      { opacity: 0, y: -15, duration: 0.28, ease: "power2.in" },
+      5.15
+    );
+    tl.to("#connector-belly",
+      { opacity: 0, duration: 0.25 },
+      5.15
+    );
+
+    // 4. Escape Sequence: Running Towards Side Door (6.0s -> 8.4s)
+    tl.to("#escape-path",
+      { strokeDashoffset: 0, duration: 0.9, ease: "power2.out" },
+      6.00
+    );
+    tl.to("#door-marker",
+      { opacity: 1, duration: 0.4, ease: "power2.out" },
+      6.30
+    );
+    tl.fromTo("#escape-tag",
+      { opacity: 0, x: -15 },
+      { opacity: 1, x: 0, duration: 0.4, ease: "power3.out" },
+      6.20
+    );
+    // Body shifts posture in flight
+    tl.to("#human-body",
+      { x: -18, rotation: -2.5, transformOrigin: "540px 800px", duration: 0.85, ease: "power2.out" },
+      6.10
+    );
+
+    // Fade out Escape Tag & dim route before pursuit strike begins
+    tl.to("#escape-tag",
+      { opacity: 0, y: -10, duration: 0.25, ease: "power2.in" },
+      8.30
+    );
+    tl.to("#escape-route",
+      { opacity: 0.25, duration: 0.35, ease: "power2.out" },
+      8.30
+    );
+
+    // 5. Pursuit & Secondary Strike at Arm (8.60s -> 9.20s)
+    tl.to("#slash-vector",
+      { strokeDashoffset: 0, duration: 0.55, ease: "power3.in" },
+      8.65
+    );
+
+    // Impact Arm Wound at 9.20s
+    tl.fromTo("#impact-arm",
+      { opacity: 0, scale: 0 },
+      { opacity: 1, scale: 1, duration: 0.2, ease: "power3.out" },
+      9.20
+    );
+    tl.fromTo("#arm-wave",
+      { r: 8, opacity: 1 },
+      { r: 55, opacity: 0, duration: 0.5, ease: "power2.out" },
+      9.20
+    );
+
+    // 6. OVERLAY 3: "VẾT THƯƠNG CÁNH TAY" (Shotlist: atMs 138700 -> 9.20s, hold to end of scene)
+    tl.fromTo("#overlay-arm",
+      { opacity: 0, scale: 0.9, x: -25 },
+      { opacity: 1, scale: 1.0, x: 0, duration: 0.45, ease: "power3.out" },
+      9.20
+    );
+    tl.to("#connector-arm",
+      { strokeDashoffset: 0, duration: 0.4, ease: "power2.out" },
+      9.20
+    );
+
+    // Register single paused timeline onto window.__timelines
+    window.__timelines["scene-s17"] = tl;
+  </script>
+
+    </template>
+  </body>
+</html>

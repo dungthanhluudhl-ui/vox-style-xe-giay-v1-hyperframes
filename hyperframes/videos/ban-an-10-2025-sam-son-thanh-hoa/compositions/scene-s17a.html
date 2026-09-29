@@ -1,0 +1,579 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap">
+      <style>
+    /* hf-safe-colors (tất định từ style-tokens.json) */
+    .hf-text-ink { color: #141414; }
+    .hf-text-light { color: #F7F4EC; }
+    .hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+    .hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+    .hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+    .hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: #E7E3D9;
+      color: #141414;
+      font-family: "Be Vietnam Pro", sans-serif;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    #root {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #E7E3D9;
+    }
+
+    /* Quy ước HyperFrames Core: clip chiếm trọn khung bằng inset: 0 */
+    .clip {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+    }
+
+    /* Container camera phục vụ chuyển động zoom-in toàn cảnh */
+    .camera-rig {
+      position: absolute;
+      inset: 0;
+      transform-origin: 540px 840px;
+    }
+
+    /* Lưới ô vuông 84px chuẩn Style DNA */
+    .grid-background {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    /* Dải cam nhận diện thương hiệu đáy màn hình */
+    .bottom-brand-bar {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 14px;
+      background-color: #FF6A1A;
+      z-index: 100;
+    }
+
+    /* Header hồ sơ vụ án / căn cứ pháp lý */
+    .doc-header {
+      position: absolute;
+      top: 170px;
+      left: 60px;
+      right: 60px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      transform-origin: top center;
+    }
+
+    .doc-meta {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .doc-pill {
+      background-color: #141414;
+      color: #F7F4EC;
+      font-size: 20px;
+      font-weight: 900;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      padding: 6px 16px;
+      border-radius: 4px;
+    }
+
+    .doc-id {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      color: #141414;
+      text-transform: uppercase;
+    }
+
+    .doc-title {
+      font-size: 64px;
+      font-weight: 900;
+      line-height: 1.18;
+      color: #141414;
+      letter-spacing: -1.5px;
+      text-transform: uppercase;
+    }
+
+    .title-rule {
+      width: 100%;
+      height: 4px;
+      background-color: #141414;
+      position: relative;
+      margin-top: 4px;
+      transform-origin: left center;
+    }
+
+    .title-rule::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 180px;
+      height: 100%;
+      background-color: #FF6A1A;
+    }
+
+    /* Thước đo kỹ thuật bên trái nối 3 khối căn cứ */
+    .timeline-rail {
+      position: absolute;
+      top: 390px;
+      left: 78px;
+      width: 4px;
+      height: 760px;
+      background-color: rgba(20, 20, 20, 0.22);
+      z-index: 5;
+    }
+
+    .timeline-progress {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: #FF6A1A;
+      transform-origin: top center;
+      transform: scaleY(0);
+    }
+
+    /* Container chứa 3 thẻ bằng chứng (Evidence Cards) */
+    .cards-stack {
+      position: absolute;
+      top: 380px;
+      left: 104px;
+      right: 60px;
+      display: flex;
+      flex-direction: column;
+      gap: 26px;
+      z-index: 10;
+    }
+
+    .evidence-card {
+      position: relative;
+      background-color: #F5F0E4;
+      border: 3px solid #141414;
+      box-shadow: 8px 8px 0px #141414;
+      border-radius: 8px;
+      height: 240px;
+      display: flex;
+      overflow: hidden;
+      transform-origin: center left;
+    }
+
+    /* Khối icon và mã số bên trái card */
+    .card-graphic {
+      width: 210px;
+      background-color: #E7E3D9;
+      border-right: 3px solid #141414;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 14px;
+      position: relative;
+      flex-shrink: 0;
+    }
+
+    .index-badge {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      background-color: #FF6A1A;
+      color: #141414;
+      font-size: 16px;
+      font-weight: 900;
+      padding: 3px 8px;
+      border-radius: 3px;
+      border: 1.5px solid #141414;
+    }
+
+    .card-icon {
+      width: 92px;
+      height: 92px;
+      margin-top: 10px;
+    }
+
+    /* Khối nội dung văn bản bên phải card */
+    .card-body {
+      flex: 1;
+      padding: 20px 24px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .card-category {
+      font-size: 17px;
+      font-weight: 900;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: #141414;
+    }
+
+    /* Thanh nhãn chính (Punch label overlay) theo shotlist */
+    .label-plate {
+      display: inline-flex;
+      align-items: center;
+      background-color: #141414;
+      border-radius: 6px;
+      padding: 8px 16px;
+      align-self: flex-start;
+      margin: 2px 0 6px 0;
+      border-left: 6px solid #FF6A1A;
+      transform-origin: left center;
+    }
+
+    .label-text {
+      color: #F7F4EC;
+      font-size: 28px;
+      font-weight: 900;
+      line-height: 1.2;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    .card-footer {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border-top: 1.5px dashed rgba(20, 20, 20, 0.35);
+      padding-top: 8px;
+    }
+
+    .check-mark {
+      width: 22px;
+      height: 22px;
+      flex-shrink: 0;
+    }
+
+    .verify-note {
+      font-size: 19px;
+      font-weight: 700;
+      color: #141414;
+    }
+
+    /* Con dấu pháp lý thẩm quyền: đặt ngay dưới 3 card, an toàn tuyệt đối trên caption band */
+    .legal-stamp {
+      position: absolute;
+      top: 1184px;
+      right: 60px;
+      background-color: #FF6A1A;
+      border: 3.5px solid #141414;
+      box-shadow: 6px 6px 0px #141414;
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      border-radius: 8px;
+      z-index: 30;
+      transform-origin: center center;
+    }
+
+    .stamp-text {
+      color: #141414;
+      font-size: 22px;
+      font-weight: 900;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      line-height: 1.25;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .stamp-icon {
+      width: 32px;
+      height: 32px;
+      flex-shrink: 0;
+    }
+  </style>
+
+  <div
+    id="root"
+    data-composition-id="scene-s17a"
+    data-width="1080"
+    data-height="1920"
+    data-duration="6.08"
+  >
+    <!-- Visual Scene Clip độc lập -->
+    <section id="scene-s17a" class="clip" data-start="0" data-duration="6.08">
+      
+      <!-- Camera Rig cho chuyển động zoom-in toàn cảnh -->
+      <div id="cam-rig" class="camera-rig">
+        
+        <!-- Nền lưới ô vuông 84px sắc nét -->
+        <svg class="grid-background" width="1080" height="1920" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <pattern id="grid-pattern" width="84" height="84" patternUnits="userSpaceOnUse">
+              <path d="M 84 0 L 0 0 0 84" fill="none" stroke="rgba(20,20,20,0.32)" stroke-width="1.5" />
+            </pattern>
+          </defs>
+          <rect width="100%" height="100%" fill="url(#grid-pattern)" />
+        </svg>
+
+        <!-- Tiêu đề Header hồ sơ -->
+        <header id="header-block" class="doc-header">
+          <div class="doc-meta">
+            <span class="doc-pill">TỔ CÔNG TÁC</span>
+            <span class="doc-id">CĂN CỨ PHÁP LÝ</span>
+          </div>
+          <h1 class="doc-title">CƠ SỞ LÀM VIỆC ĐÚNG LUẬT</h1>
+          <div id="header-rule" class="title-rule"></div>
+        </header>
+
+        <!-- Ray đo tiến độ kỹ thuật -->
+        <div class="timeline-rail">
+          <div id="rail-fill" class="timeline-progress"></div>
+        </div>
+
+        <!-- Danh sách 3 khối căn cứ pháp lý vững chắc -->
+        <main class="cards-stack">
+          
+          <!-- KHỐI 1: SẮC PHỤC CÔNG AN -->
+          <article id="card-1" class="evidence-card">
+            <div class="card-graphic">
+              <span class="index-badge">01</span>
+              <!-- SVG sắc phục cảnh sát: áo cổ bẻ, phù hiệu, sao cấp hiệu -->
+              <svg class="card-icon" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <!-- Thân áo -->
+                <path d="M 22 28 L 50 16 L 78 28 L 84 86 L 16 86 Z" fill="#F5F0E4" stroke="#141414" stroke-width="3" stroke-linejoin="round"/>
+                <!-- Cổ bẻ hai bên -->
+                <path d="M 36 22 L 50 48 L 24 44 Z" fill="#FF6A1A" stroke="#141414" stroke-width="2.5" stroke-linejoin="round"/>
+                <path d="M 64 22 L 50 48 L 76 44 Z" fill="#FF6A1A" stroke="#141414" stroke-width="2.5" stroke-linejoin="round"/>
+                <!-- Đường nẹp cúc áo -->
+                <line x1="50" y1="48" x2="50" y2="86" stroke="#141414" stroke-width="2.5" stroke-linecap="round"/>
+                <!-- Cầu vai trái & phải -->
+                <rect x="14" y="28" width="16" height="8" rx="2" fill="#FF6A1A" stroke="#141414" stroke-width="2"/>
+                <rect x="70" y="28" width="16" height="8" rx="2" fill="#FF6A1A" stroke="#141414" stroke-width="2"/>
+                <!-- Hàng cúc áo -->
+                <circle cx="50" cy="58" r="2.5" fill="#141414"/>
+                <circle cx="50" cy="70" r="2.5" fill="#141414"/>
+                <circle cx="50" cy="80" r="2.5" fill="#141414"/>
+              </svg>
+            </div>
+            <div class="card-body">
+              <div class="card-category">TRANG PHỤC CÔNG TÁC</div>
+              <div id="label-1" class="label-plate">
+                <span class="label-text">MẶC SẮC PHỤC ĐẦY ĐỦ</span>
+              </div>
+              <div class="card-footer">
+                <svg class="check-mark" viewBox="0 0 24 24" fill="none">
+                  <circle cx="12" cy="12" r="10" fill="#FF6A1A" stroke="#141414" stroke-width="2"/>
+                  <path d="M 7 12 L 10.5 15.5 L 17 8.5" stroke="#141414" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span class="verify-note">Đúng điều lệnh CAND khi làm nhiệm vụ</span>
+              </div>
+            </div>
+          </article>
+
+          <!-- KHỐI 2: GIẤY CHỨNG MINH CÔNG AN -->
+          <article id="card-2" class="evidence-card">
+            <div class="card-graphic">
+              <span class="index-badge">02</span>
+              <!-- SVG Thẻ chứng minh CAND: thẻ khung chữ nhật, lá chắn công an, mã số -->
+              <svg class="card-icon" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <!-- Thẻ ID -->
+                <rect x="12" y="20" width="76" height="60" rx="5" fill="#F5F0E4" stroke="#141414" stroke-width="3"/>
+                <!-- Dải băng đỏ cam góc trên -->
+                <path d="M 12 25 C 12 22.5 14 20 17 20 L 83 20 C 86 20 88 22.5 88 25 L 88 34 L 12 34 Z" fill="#FF6A1A" stroke="#141414" stroke-width="2"/>
+                <!-- Khung ảnh thẻ bên trái -->
+                <rect x="20" y="42" width="22" height="28" rx="2" fill="#E7E3D9" stroke="#141414" stroke-width="2"/>
+                <circle cx="31" cy="51" r="5" fill="#141414"/>
+                <path d="M 23 68 C 23 60 39 60 39 68 Z" fill="#141414"/>
+                <!-- Biểu tượng lá chắn công an bên phải -->
+                <path d="M 58 40 L 76 40 L 76 54 C 76 62 67 67 58 70 C 49 67 40 62 40 54 L 40 40 Z" fill="#F5F0E4" stroke="#141414" stroke-width="2"/>
+                <!-- Ngôi sao giữa lá chắn -->
+                <polygon points="58,45 60.5,52 68,52 62,56.5 64,63 58,59 52,63 54,56.5 48,52 55.5,52" fill="#FF6A1A" stroke="#141414" stroke-width="1"/>
+              </svg>
+            </div>
+            <div class="card-body">
+              <div class="card-category">XÁC MINH THẨM QUYỀN</div>
+              <div id="label-2" class="label-plate">
+                <span class="label-text">XUẤT TRÌNH GIẤY CHỨNG MINH</span>
+              </div>
+              <div class="card-footer">
+                <svg class="check-mark" viewBox="0 0 24 24" fill="none">
+                  <circle cx="12" cy="12" r="10" fill="#FF6A1A" stroke="#141414" stroke-width="2"/>
+                  <path d="M 7 12 L 10.5 15.5 L 17 8.5" stroke="#141414" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span class="verify-note">Chứng minh CAND hợp lệ, công khai minh bạch</span>
+              </div>
+            </div>
+          </article>
+
+          <!-- KHỐI 3: HIỆU LỆNH KIỂM TRA PHƯƠNG TIỆN -->
+          <article id="card-3" class="evidence-card">
+            <div class="card-graphic">
+              <span class="index-badge">03</span>
+              <!-- SVG Gậy chỉ huy & Tín hiệu dừng phương tiện -->
+              <svg class="card-icon" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <!-- Vạch sóng tín hiệu phát xạ -->
+                <circle cx="50" cy="50" r="38" stroke="rgba(20,20,20,0.2)" stroke-width="2" stroke-dasharray="4 4"/>
+                <!-- Gậy chỉ huy giao thông chéo -->
+                <rect x="26" y="66" width="48" height="12" rx="4" transform="rotate(-45 26 66)" fill="#F5F0E4" stroke="#141414" stroke-width="3"/>
+                <!-- Khúc giữa màu cam phản quang -->
+                <rect x="36" y="56" width="16" height="12" transform="rotate(-45 36 56)" fill="#FF6A1A" stroke="#141414" stroke-width="2"/>
+                <!-- Tay cầm màu đen mực -->
+                <rect x="22" y="70" width="10" height="12" transform="rotate(-45 22 70)" fill="#141414"/>
+                <!-- Biển báo hiệu dừng xe hình tròn -->
+                <circle cx="68" cy="32" r="18" fill="#FF6A1A" stroke="#141414" stroke-width="2.5"/>
+                <circle cx="68" cy="32" r="13" fill="#F5F0E4" stroke="#141414" stroke-width="1.5"/>
+                <rect x="58" y="30" width="20" height="4" fill="#141414"/>
+              </svg>
+            </div>
+            <div class="card-body">
+              <div class="card-category">TRÌNH TỰ KIỂM SOÁT</div>
+              <div id="label-3" class="label-plate">
+                <span class="label-text">HIỆU LỆNH HỢP PHÁP</span>
+              </div>
+              <div class="card-footer">
+                <svg class="check-mark" viewBox="0 0 24 24" fill="none">
+                  <circle cx="12" cy="12" r="10" fill="#FF6A1A" stroke="#141414" stroke-width="2"/>
+                  <path d="M 7 12 L 10.5 15.5 L 17 8.5" stroke="#141414" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span class="verify-note">Yêu cầu đưa phương tiện vào vị trí kiểm tra</span>
+              </div>
+            </div>
+          </article>
+
+        </main>
+
+        <!-- Con dấu thẩm quyền chốt hạ ở cuối scene: đặt an toàn tại y=1184px (cách caption zone >130px) -->
+        <aside id="stamp-badge" class="legal-stamp">
+          <svg class="stamp-icon" viewBox="0 0 24 24" fill="none">
+            <path d="M 12 2 L 20 5 L 20 12 C 20 17 16.5 21 12 22 C 7.5 21 4 17 4 12 L 4 5 Z" fill="#141414"/>
+            <path d="M 8.5 12 L 11 14.5 L 15.5 9.5" stroke="#FF6A1A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <div class="stamp-text">
+            <span>ĐÚNG THẨM QUYỀN</span>
+            <span>QUY TRÌNH HỢP PHÁP</span>
+          </div>
+        </aside>
+
+      </div>
+
+      <!-- Dải cam chữ ký thương hiệu đáy màn hình -->
+      <div class="bottom-brand-bar"></div>
+
+    </section>
+  </div>
+
+  <script>
+    // BẮT BUỘC: Đăng ký timeline paused trên window.__timelines["scene-s17a"]
+    window.__timelines = window.__timelines || {};
+
+    const tl = gsap.timeline({
+      paused: true,
+      defaults: { ease: "power3.out" }
+    });
+
+    // 1. Camera Motion: zoom-in chậm, liền mạch suốt 6.08s
+    tl.fromTo("#cam-rig", 
+      { scale: 1.0 }, 
+      { scale: 1.036, duration: 6.08, ease: "none" }, 
+      0
+    );
+
+    // 2. Entrance Animation: unfold mở màn cho header
+    tl.fromTo("#header-block",
+      { y: -36, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.65, ease: "power3.out" },
+      0.15
+    );
+
+    tl.fromTo("#header-rule",
+      { scaleX: 0 },
+      { scaleX: 1, duration: 0.7, ease: "power2.out" },
+      0.35
+    );
+
+    // 3. KHỐI 1 xuất hiện & Label "MẶC SẮC PHỤC ĐẦY ĐỦ" (Shotlist overlay atMs: 146870 -> 1.51s)
+    tl.fromTo("#card-1",
+      { x: -65, opacity: 0, scale: 0.96 },
+      { x: 0, opacity: 1, scale: 1, duration: 0.6, ease: "power3.out" },
+      0.65
+    );
+
+    tl.fromTo("#rail-fill",
+      { scaleY: 0 },
+      { scaleY: 0.32, duration: 0.6, ease: "power2.out" },
+      0.75
+    );
+
+    // Cú punch đồng bộ đúng mốc 1.51s: giật scale nhấn mạnh mà không phá contrast
+    tl.fromTo("#label-1",
+      { scale: 1.07, x: 6 },
+      { scale: 1.0, x: 0, duration: 0.45, ease: "power2.out" },
+      1.51
+    );
+
+    // 4. KHỐI 2 xuất hiện & Label "XUẤT TRÌNH GIẤY CHỨNG MINH" (Shotlist overlay atMs: 148320 -> 2.96s)
+    tl.fromTo("#card-2",
+      { x: -65, opacity: 0, scale: 0.96 },
+      { x: 0, opacity: 1, scale: 1, duration: 0.6, ease: "power3.out" },
+      2.10
+    );
+
+    tl.to("#rail-fill",
+      { scaleY: 0.68, duration: 0.6, ease: "power2.out" },
+      2.20
+    );
+
+    // Cú punch đồng bộ đúng mốc 2.96s
+    tl.fromTo("#label-2",
+      { scale: 1.07, x: 6 },
+      { scale: 1.0, x: 0, duration: 0.45, ease: "power2.out" },
+      2.96
+    );
+
+    // 5. KHỐI 3 xuất hiện & Label "HIỆU LỆNH HỢP PHÁP" (Shotlist overlay atMs: 149760 -> 4.40s)
+    tl.fromTo("#card-3",
+      { x: -65, opacity: 0, scale: 0.96 },
+      { x: 0, opacity: 1, scale: 1, duration: 0.6, ease: "power3.out" },
+      3.55
+    );
+
+    tl.to("#rail-fill",
+      { scaleY: 1.0, duration: 0.6, ease: "power2.out" },
+      3.65
+    );
+
+    // Cú punch đồng bộ đúng mốc 4.40s
+    tl.fromTo("#label-3",
+      { scale: 1.07, x: 6 },
+      { scale: 1.0, x: 0, duration: 0.45, ease: "power2.out" },
+      4.40
+    );
+
+    // 6. Con dấu xác nhận pháp lý chốt hạ "bức tường căn cứ vững chắc" (đáp xuống ở y=1184px)
+    tl.fromTo("#stamp-badge",
+      { scale: 2.1, opacity: 0, rotation: -16 },
+      { scale: 1.0, opacity: 1, rotation: -3, duration: 0.5, ease: "power4.out" },
+      4.85
+    );
+
+    window.__timelines["scene-s17a"] = tl;
+  </script>
+
+    </template>
+  </body>
+</html>

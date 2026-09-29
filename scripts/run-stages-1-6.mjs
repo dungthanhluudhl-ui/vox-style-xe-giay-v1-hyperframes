@@ -250,8 +250,17 @@ async function main() {
   try {
     const scenePlan = JSON.parse(fs.readFileSync(vp.scenePlanJson, "utf8"));
     if (!Array.isArray(scenePlan) || scenePlan.length === 0) throw new Error("scene-plan.json rỗng hoặc không phải mảng");
+    const CANONICAL_SCENE_ID_RE = /^S\d{2,}$/;
     sceneIds = scenePlan.map((s, i) => {
       if (!s || typeof s.id !== "string" || !s.id) throw new Error(`scene thứ ${i} thiếu field "id" hợp lệ`);
+      if (!CANONICAL_SCENE_ID_RE.test(s.id)) {
+        throw new Error(
+          `scene thứ ${i} có id "${s.id}" KHÔNG đúng dạng chuẩn "S" + ≥2 chữ số (vd S01, S02, ... S100) — ` +
+            `lẽ ra scripts/05-scene-plan.router.mjs phải tự chuẩn hoá id theo vị trí mảng, lỗi này báo hiệu ` +
+            `cơ chế đó có bug hoặc đã bị bỏ qua (vd scene-plan.json bị sửa tay). Kiểm tra ` +
+            `${path.relative(root, vp.scenePlanJson)} và scripts/05-scene-plan.router.mjs.`,
+        );
+      }
       return s.id;
     });
   } catch (e) {

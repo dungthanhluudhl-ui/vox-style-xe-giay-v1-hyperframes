@@ -1,0 +1,644 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+      /* hf-safe-colors (tất định từ style-tokens.json) */
+      .hf-text-ink { color: #141414; }
+      .hf-text-light { color: #F7F4EC; }
+      .hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+      .hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+      .hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+      .hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background: #E7E3D9;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+      .clip {
+        position: absolute;
+        inset: 0;
+      }
+
+      /* Background Chart Variant: Đường kẻ ngang và tick cam đồ họa thuần túy */
+      .bg-layer {
+        position: absolute;
+        inset: 0;
+        background-color: #E7E3D9;
+        pointer-events: none;
+      }
+      .chart-grid {
+        position: absolute;
+        inset: 0;
+      }
+      .chart-line {
+        position: absolute;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background-color: rgba(20, 20, 20, 0.22);
+        transform-origin: left center;
+      }
+      .chart-tick {
+        position: absolute;
+        left: 0;
+        width: 28px;
+        height: 6px;
+        background-color: #FF6A1A;
+        transform: translateY(-2px);
+      }
+
+      /* Camera Container */
+      #scene-camera {
+        position: absolute;
+        inset: 0;
+        transform-origin: 50% 45%;
+      }
+
+      /* Header Dossier Tag */
+      .dossier-header {
+        position: absolute;
+        top: 170px;
+        left: 60px;
+        right: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding-bottom: 14px;
+        border-bottom: 3px solid #141414;
+      }
+      .dossier-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        background-color: #141414;
+        color: #F7F4EC;
+        padding: 8px 18px;
+        border-radius: 6px;
+        font-size: 20px;
+        font-weight: 900;
+        letter-spacing: 2px;
+      }
+      .dossier-pill-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background-color: #FF6A1A;
+      }
+      .dossier-code {
+        font-size: 19px;
+        font-weight: 900;
+        color: #141414;
+        letter-spacing: 1.5px;
+      }
+
+      /* Flow Stack Container (Usable safe band: 240px -> 1380px) */
+      .flow-container {
+        position: absolute;
+        top: 244px;
+        left: 60px;
+        right: 60px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      /* Shared Node Card Styles */
+      .flow-card {
+        width: 100%;
+        border-radius: 10px;
+        position: relative;
+      }
+
+      /* Node 1 & Node 2: Light Cards */
+      .card-light {
+        background-color: #F5F0E4;
+        border: 2px solid rgba(20, 20, 20, 0.25);
+        box-shadow: 0 4px 12px rgba(20, 20, 20, 0.06);
+        padding: 22px 28px;
+      }
+      .card-step-badge {
+        display: inline-block;
+        background-color: #141414;
+        color: #F7F4EC;
+        font-size: 15px;
+        font-weight: 900;
+        letter-spacing: 1.5px;
+        padding: 4px 12px;
+        border-radius: 4px;
+        margin-bottom: 8px;
+      }
+      .card-title-light {
+        font-size: 38px;
+        font-weight: 900;
+        color: #141414;
+        line-height: 1.2;
+        margin: 0;
+        letter-spacing: 0.5px;
+      }
+
+      /* Warning Icon Overlay Container */
+      #warn-overlay-wrap {
+        position: absolute;
+        right: 28px;
+        top: 50%;
+        transform: translateY(-50%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      #warn-badge {
+        width: 58px;
+        height: 58px;
+      }
+
+      /* Vertical Flow Connectors */
+      .connector-wrap {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        height: 34px;
+        position: relative;
+      }
+      .connector-stem {
+        width: 4px;
+        height: 100%;
+        background-color: #141414;
+        transform-origin: top center;
+      }
+      .connector-arrow {
+        width: 0;
+        height: 0;
+        border-left: 7px solid transparent;
+        border-right: 7px solid transparent;
+        border-top: 9px solid #141414;
+        margin-top: -2px;
+      }
+
+      /* Mid Transformation Label: GIAO THÔNG -> HÌNH SỰ */
+      #label-transition-band {
+        width: 100%;
+        margin: 2px 0;
+        display: flex;
+        justify-content: center;
+      }
+      .shift-pill {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #FF6A1A;
+        border: 3px solid #141414;
+        padding: 12px 30px;
+        border-radius: 8px;
+        box-shadow: 0 5px 0 #141414;
+        transform-origin: center center;
+      }
+      .shift-text {
+        font-size: 28px;
+        font-weight: 900;
+        color: #141414;
+        letter-spacing: 2px;
+        margin: 0;
+      }
+
+      /* Node 3: Án hình sự (Dark Shift) */
+      .card-dark {
+        background-color: #141414;
+        border: 3px solid #FF6A1A;
+        padding: 22px 28px;
+        box-shadow: 0 8px 20px rgba(20, 20, 20, 0.25);
+      }
+      .card-step-badge-orange {
+        display: inline-block;
+        background-color: #FF6A1A;
+        color: #141414;
+        font-size: 15px;
+        font-weight: 900;
+        letter-spacing: 1.5px;
+        padding: 4px 12px;
+        border-radius: 4px;
+        margin-bottom: 8px;
+      }
+      .card-title-dark {
+        font-size: 38px;
+        font-weight: 900;
+        color: #F7F4EC;
+        line-height: 1.2;
+        margin: 0;
+        letter-spacing: 0.5px;
+      }
+
+      /* Node 4: The Punch Phrase Card (12 THÁNG THỬ THÁCH) */
+      #node-4 {
+        background-color: #141414;
+        border: 3px solid #141414;
+        border-radius: 14px;
+        padding: 24px 28px;
+        box-shadow: 0 10px 28px rgba(20, 20, 20, 0.35);
+        position: relative;
+        overflow: hidden;
+      }
+      .punch-top-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 12px;
+      }
+      .punch-tag {
+        background-color: #FF6A1A;
+        color: #141414;
+        font-size: 16px;
+        font-weight: 900;
+        letter-spacing: 2px;
+        padding: 5px 14px;
+        border-radius: 4px;
+      }
+      .punch-accent-line {
+        height: 5px;
+        background-color: #FF6A1A;
+        border-radius: 3px;
+        margin-bottom: 14px;
+        transform-origin: left center;
+      }
+      .punch-main-phrase {
+        font-size: 58px;
+        font-weight: 900;
+        color: #F7F4EC;
+        line-height: 1.15;
+        letter-spacing: 1px;
+        margin: 0 0 10px 0;
+      }
+      .punch-sub-desc {
+        font-size: 24px;
+        font-weight: 700;
+        color: #FF6A1A;
+        line-height: 1.34;
+        margin: 0;
+      }
+
+      /* Vox Brand Bottom Bar */
+      .vox-brand-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 14px;
+        background-color: #FF6A1A;
+        z-index: 100;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s31"
+      data-width="1080"
+      data-height="1920"
+      data-duration="8.9"
+    >
+      <!-- Background Chart Grid Lines & Ticks -->
+      <div class="bg-layer" aria-hidden="true">
+        <div class="chart-grid">
+          <!-- 20% = 384px -->
+          <div class="chart-line" style="top: 384px;"></div>
+          <div class="chart-tick" style="top: 384px;"></div>
+
+          <!-- 40% = 768px -->
+          <div class="chart-line" style="top: 768px;"></div>
+          <div class="chart-tick" style="top: 768px;"></div>
+
+          <!-- 60% = 1152px -->
+          <div class="chart-line" style="top: 1152px;"></div>
+          <div class="chart-tick" style="top: 1152px;"></div>
+
+          <!-- 80% = 1536px -->
+          <div class="chart-line" style="top: 1536px;"></div>
+          <div class="chart-tick" style="top: 1536px;"></div>
+        </div>
+      </div>
+
+      <!-- Main Scene Clip -->
+      <div id="scene-clip" class="clip" data-start="0" data-duration="8.9">
+        <div id="scene-camera">
+          <!-- Top Dossier Header -->
+          <header id="header-badge" class="dossier-header">
+            <div class="dossier-pill">
+              <span class="dossier-pill-dot"></span>
+              <span>CHUỖI NHÂN QUẢ</span>
+            </div>
+            <div class="dossier-code">HỒ SƠ: S-31</div>
+          </header>
+
+          <!-- 4-Step Vertical Flow Diagram Stack -->
+          <main class="flow-container">
+            <!-- Step 1: Không dừng lại -->
+            <section id="node-1" class="flow-card card-light">
+              <div class="inner-content">
+                <span class="card-step-badge">BƯỚC 01</span>
+                <h2 class="card-title-light">KHÔNG DỪNG LẠI</h2>
+              </div>
+
+              <!-- Warning Icon (Overlay at 0.81s) -->
+              <div id="warn-overlay-wrap">
+                <svg id="warn-badge" viewBox="0 0 64 64" fill="none">
+                  <path
+                    id="warn-path"
+                    d="M32 8L58 54H6L32 8Z"
+                    stroke="#FF6A1A"
+                    stroke-width="5"
+                    stroke-linejoin="round"
+                    stroke-linecap="round"
+                  />
+                  <g id="warn-excl">
+                    <line x1="32" y1="24" x2="32" y2="38" stroke="#FF6A1A" stroke-width="5" stroke-linecap="round" />
+                    <circle cx="32" cy="46" r="3" fill="#FF6A1A" />
+                  </g>
+                </svg>
+              </div>
+            </section>
+
+            <!-- Connector 1 -> 2 -->
+            <div class="connector-wrap">
+              <div id="line-1" class="connector-stem"></div>
+              <div id="arrow-1" class="connector-arrow"></div>
+            </div>
+
+            <!-- Step 2: Tông xe -->
+            <section id="node-2" class="flow-card card-light">
+              <div class="inner-content">
+                <span class="card-step-badge">BƯỚC 02</span>
+                <h2 class="card-title-light">TÔNG XE</h2>
+              </div>
+            </section>
+
+            <!-- Connector 2 -> Label Shift -->
+            <div class="connector-wrap">
+              <div id="line-2" class="connector-stem"></div>
+              <div id="arrow-2" class="connector-arrow"></div>
+            </div>
+
+            <!-- Transformation Label: GIAO THÔNG -> HÌNH SỰ (Overlay at 3.64s) -->
+            <div id="label-transition-band">
+              <div id="label-shift" class="shift-pill">
+                <h3 class="shift-text">GIAO THÔNG → HÌNH SỰ</h3>
+              </div>
+            </div>
+
+            <!-- Connector Label -> Step 3 -->
+            <div class="connector-wrap">
+              <div id="line-2b" class="connector-stem"></div>
+              <div id="arrow-2b" class="connector-arrow"></div>
+            </div>
+
+            <!-- Step 3: Án hình sự -->
+            <section id="node-3" class="flow-card card-dark">
+              <div class="inner-content">
+                <span class="card-step-badge-orange">BƯỚC 03</span>
+                <h2 class="card-title-dark">ÁN HÌNH SỰ</h2>
+              </div>
+            </section>
+
+            <!-- Connector 3 -> Step 4 -->
+            <div class="connector-wrap">
+              <div id="line-3" class="connector-stem"></div>
+              <div id="arrow-3" class="connector-arrow"></div>
+            </div>
+
+            <!-- Step 4: 12 Tháng thử thách (Punch Phrase Overlay at 6.01s) -->
+            <section id="node-4" class="flow-card">
+              <div class="punch-top-row">
+                <span class="punch-tag">BƯỚC 04</span>
+              </div>
+              <div id="punch-bar" class="punch-accent-line"></div>
+              <h1 id="punch-text" class="punch-main-phrase">12 THÁNG THỬ THÁCH</h1>
+              <p id="punch-sub" class="punch-sub-desc">Dưới sự giám sát của địa phương</p>
+            </section>
+          </main>
+        </div>
+      </div>
+
+      <!-- Signature Orange Bar at Bottom Frame -->
+      <footer class="vox-brand-bar" aria-hidden="true"></footer>
+    </div>
+
+    <!-- Animation Master Timeline -->
+    <script>
+      const tl = gsap.timeline({ paused: true });
+
+      // Measure warning SVG path length
+      const warnPath = document.getElementById("warn-path");
+      const warnLen = warnPath ? warnPath.getTotalLength() : 180;
+      if (warnPath) {
+        warnPath.style.strokeDasharray = String(warnLen);
+        warnPath.style.strokeDashoffset = String(warnLen);
+      }
+
+      // Initial Setup
+      gsap.set("#warn-excl", { scale: 0, transformOrigin: "center center" });
+      gsap.set("#arrow-1, #arrow-2, #arrow-2b, #arrow-3", { scale: 0, transformOrigin: "center top" });
+
+      // 1. Camera Subtle Zoom-in (0s -> 8.9s)
+      tl.fromTo(
+        "#scene-camera",
+        { scale: 1.0, y: 0 },
+        { scale: 1.035, y: -20, duration: 8.9, ease: "none" },
+        0
+      );
+
+      // 2. Background Grid Lines Reveal (0.05s)
+      tl.fromTo(
+        ".chart-line",
+        { scaleX: 0 },
+        { scaleX: 1, duration: 0.65, ease: "power2.out", stagger: 0.08 },
+        0.05
+      );
+      tl.fromTo(
+        ".chart-tick",
+        { opacity: 0, x: -16 },
+        { opacity: 1, x: 0, duration: 0.45, ease: "power2.out", stagger: 0.08 },
+        0.15
+      );
+
+      // 3. Header Badge Entrance (0.12s)
+      tl.fromTo(
+        "#header-badge",
+        { y: -30, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.5, ease: "power3.out" },
+        0.12
+      );
+
+      // 4. Node 1 Entrance: Unfold (0.28s)
+      tl.fromTo(
+        "#node-1",
+        { scaleY: 0, opacity: 0, transformOrigin: "top center" },
+        { scaleY: 1, opacity: 1, duration: 0.5, ease: "power3.out" },
+        0.28
+      );
+      tl.fromTo(
+        "#node-1 .inner-content",
+        { y: 14, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.38, ease: "power2.out" },
+        0.42
+      );
+
+      // 5. Warning Icon Overlay (Shotlist atMs: 276110 -> 0.81s)
+      tl.to(
+        "#warn-path",
+        { strokeDashoffset: 0, duration: 0.48, ease: "power2.out" },
+        0.81
+      );
+      tl.to(
+        "#warn-excl",
+        { scale: 1, duration: 0.28, ease: "power3.out" },
+        1.1
+      );
+      tl.to(
+        "#warn-badge",
+        { rotation: 6, duration: 0.08, yoyo: true, repeat: 3, ease: "sine.inOut" },
+        1.25
+      );
+      tl.to(
+        "#warn-badge",
+        { rotation: 0, duration: 0.06 },
+        1.55
+      );
+
+      // 6. Connector 1 -> 2 (1.65s)
+      tl.fromTo(
+        "#line-1",
+        { scaleY: 0 },
+        { scaleY: 1, duration: 0.32, ease: "none" },
+        1.65
+      );
+      tl.to(
+        "#arrow-1",
+        { scale: 1, duration: 0.18, ease: "power3.out" },
+        1.92
+      );
+
+      // 7. Node 2 Entrance: Tông xe (2.05s)
+      tl.fromTo(
+        "#node-2",
+        { scaleY: 0, opacity: 0, transformOrigin: "top center" },
+        { scaleY: 1, opacity: 1, duration: 0.5, ease: "power3.out" },
+        2.05
+      );
+      tl.fromTo(
+        "#node-2 .inner-content",
+        { y: 14, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.38, ease: "power2.out" },
+        2.2
+      );
+
+      // 8. Connector 2 -> Label Transition (3.25s)
+      tl.fromTo(
+        "#line-2",
+        { scaleY: 0 },
+        { scaleY: 1, duration: 0.3, ease: "none" },
+        3.25
+      );
+      tl.to(
+        "#arrow-2",
+        { scale: 1, duration: 0.16, ease: "power3.out" },
+        3.5
+      );
+
+      // 9. Label Overlay: GIAO THÔNG → HÌNH SỰ (Shotlist atMs: 278940 -> 3.64s)
+      tl.fromTo(
+        "#label-shift",
+        { scale: 0.8, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.42, ease: "power3.out" },
+        3.64
+      );
+
+      // 10. Connector Label -> Step 3 (4.02s)
+      tl.fromTo(
+        "#line-2b",
+        { scaleY: 0 },
+        { scaleY: 1, duration: 0.28, ease: "none" },
+        4.02
+      );
+      tl.to(
+        "#arrow-2b",
+        { scale: 1, duration: 0.16, ease: "power3.out" },
+        4.24
+      );
+
+      // 11. Node 3: Án hình sự (4.32s)
+      tl.fromTo(
+        "#node-3",
+        { scale: 0.94, opacity: 0, transformOrigin: "top center" },
+        { scale: 1, opacity: 1, duration: 0.5, ease: "power3.out" },
+        4.32
+      );
+      tl.fromTo(
+        "#node-3 .inner-content",
+        { y: 14, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.38, ease: "power2.out" },
+        4.48
+      );
+
+      // 12. Connector 3 -> Step 4 (5.5s)
+      tl.fromTo(
+        "#line-3",
+        { scaleY: 0 },
+        { scaleY: 1, duration: 0.32, ease: "none" },
+        5.5
+      );
+      tl.to(
+        "#arrow-3",
+        { scale: 1, duration: 0.18, ease: "power3.out" },
+        5.78
+      );
+
+      // 13. Step 4 / Punch-Phrase: 12 THÁNG THỬ THÁCH (Shotlist atMs: 281310 -> 6.01s)
+      tl.fromTo(
+        "#node-4",
+        { scale: 0.92, opacity: 0, transformOrigin: "center center" },
+        { scale: 1, opacity: 1, duration: 0.52, ease: "power3.out" },
+        6.01
+      );
+      tl.fromTo(
+        "#punch-text",
+        { scale: 1.12, opacity: 0, y: -8 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.45, ease: "power4.out" },
+        6.1
+      );
+      tl.fromTo(
+        "#punch-bar",
+        { scaleX: 0 },
+        { scaleX: 1, duration: 0.42, ease: "power3.out" },
+        6.26
+      );
+      tl.fromTo(
+        "#punch-sub",
+        { y: 12, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.38, ease: "power2.out" },
+        6.42
+      );
+
+      // Register timeline to HyperFrames
+      window.__timelines = window.__timelines || {};
+      window.__timelines["scene-s31"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

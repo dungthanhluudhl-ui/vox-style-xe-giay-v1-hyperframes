@@ -1,0 +1,608 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap"
+    />
+      <style>
+/* hf-safe-colors (tất định từ style-tokens.json) */
+.hf-text-ink { color: #141414; }
+.hf-text-light { color: #F7F4EC; }
+.hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+.hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+.hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+.hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        margin: 0;
+        background: #e7e3d9;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: #e7e3d9;
+      }
+      .clip {
+        position: absolute;
+        inset: 0;
+      }
+
+      /* Thanh nhận diện cam cố định ở mép đáy */
+      .bottom-orange-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 16px;
+        background: #ff6a1a;
+        z-index: 100;
+      }
+
+      /* Card phán quyết của Hội đồng xét xử */
+      .verdict-card {
+        position: absolute;
+        top: 200px;
+        left: 60px;
+        width: 960px;
+        height: 1140px;
+        background: #f5f0e4;
+        border: 3px solid #141414;
+        box-shadow: 16px 20px 0px #141414;
+        padding: 46px 52px;
+        display: flex;
+        flex-direction: column;
+        transform-origin: top left;
+        z-index: 10;
+      }
+
+      /* Header của card phán quyết */
+      .card-header {
+        position: relative;
+        border-bottom: 2px solid #141414;
+        padding-bottom: 22px;
+        margin-bottom: 28px;
+      }
+      .court-title {
+        font-size: 24px;
+        font-weight: 700;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        color: #141414;
+        margin-bottom: 6px;
+      }
+      .panel-title {
+        font-size: 44px;
+        font-weight: 900;
+        text-transform: uppercase;
+        color: #141414;
+        line-height: 1.22;
+        max-width: 600px;
+      }
+
+      /* Dấu mộc tòa án cam nổi bật ở góc phải */
+      .court-seal {
+        position: absolute;
+        top: 32px;
+        right: 40px;
+        width: 210px;
+        height: 210px;
+        background: #ff6a1a;
+        border: 4px solid #141414;
+        border-radius: 50%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        transform: rotate(-12deg);
+        box-shadow: 6px 6px 0px #141414;
+        z-index: 20;
+      }
+      .seal-inner-ring {
+        position: absolute;
+        inset: 6px;
+        border: 2px dashed #141414;
+        border-radius: 50%;
+        pointer-events: none;
+      }
+      .seal-text-top {
+        font-size: 15px;
+        font-weight: 900;
+        color: #141414;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+      }
+      .seal-star {
+        font-size: 24px;
+        color: #141414;
+        margin: 4px 0;
+        line-height: 1;
+      }
+      .seal-text-main {
+        font-size: 19px;
+        font-weight: 900;
+        color: #141414;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+
+      /* Thân thẻ phán quyết */
+      .card-body {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        position: relative;
+      }
+
+      /* Thẻ thông tin tình tiết xem xét */
+      .case-meta {
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        margin-bottom: 26px;
+      }
+      .case-tag {
+        background: #141414;
+        color: #f7f4ec;
+        font-size: 18px;
+        font-weight: 900;
+        padding: 8px 16px;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+      }
+      .case-desc {
+        font-size: 21px;
+        font-weight: 700;
+        color: #141414;
+      }
+
+      /* Khu vực minh họa giữa thẻ: Icon văn bản + Trạng thái cách ly */
+      .middle-visual {
+        position: relative;
+        height: 300px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: #e7e3d9;
+        border: 2px solid #141414;
+        padding: 24px 34px;
+        margin-bottom: 30px;
+      }
+
+      /* Icon document (văn bản hồ sơ) */
+      .doc-evidence {
+        display: flex;
+        align-items: center;
+        gap: 24px;
+      }
+      .doc-icon-svg {
+        width: 90px;
+        height: 120px;
+        flex-shrink: 0;
+      }
+      .doc-draw-path {
+        fill: none;
+        stroke: #141414;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+      .doc-info {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .doc-title {
+        font-size: 26px;
+        font-weight: 900;
+        color: #141414;
+        line-height: 1.25;
+      }
+      .doc-subtitle {
+        font-size: 19px;
+        font-weight: 700;
+        color: #141414;
+      }
+
+      /* Khối trạng thái cách ly (sẽ bị gạch bỏ và mờ đi) */
+      .isolation-indicator {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        width: 230px;
+        height: 230px;
+        border: 2px solid #141414;
+        background: #f5f0e4;
+        padding: 14px;
+        text-align: center;
+        position: relative;
+      }
+      .isolation-svg {
+        width: 58px;
+        height: 58px;
+        margin-bottom: 10px;
+      }
+      .isolation-label {
+        font-size: 17px;
+        font-weight: 900;
+        color: #141414;
+        text-transform: uppercase;
+        line-height: 1.25;
+      }
+      .isolation-strike-svg {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+      }
+      .strike-line {
+        fill: none;
+        stroke: #ff6a1a;
+        stroke-width: 6;
+        stroke-linecap: round;
+      }
+
+      /* Khối Punch-phrase chính: nền mực đặc, chữ sáng */
+      .punch-plate {
+        background: #141414;
+        border: 3px solid #141414;
+        padding: 34px 40px;
+        position: relative;
+        box-shadow: 10px 10px 0px rgba(20, 20, 20, 0.4);
+      }
+      .punch-subheading {
+        font-size: 20px;
+        font-weight: 900;
+        color: #ff6a1a;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .punch-subheading::before {
+        content: "";
+        display: inline-block;
+        width: 12px;
+        height: 12px;
+        background: #ff6a1a;
+      }
+      .punch-headline {
+        font-size: 68px;
+        font-weight: 900;
+        color: #f7f4ec;
+        text-transform: uppercase;
+        line-height: 1.14;
+        letter-spacing: -0.5px;
+        margin-bottom: 12px;
+      }
+      .punch-detail {
+        font-size: 23px;
+        font-weight: 700;
+        color: #e7e3d9;
+        line-height: 1.38;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s25"
+      data-start="0"
+      data-width="1080"
+      data-height="1920"
+      data-duration="6.11"
+    >
+      <!-- Shot S25-1: Card phán quyết Hội đồng xét xử -->
+      <section id="shot-25-1" class="clip" data-start="0" data-duration="6.11">
+        <!-- Card phán quyết -->
+        <div id="verdict-card" class="verdict-card">
+          <!-- Dấu mộc tòa án cam ở góc phải -->
+          <div id="court-seal" class="court-seal">
+            <div class="seal-inner-ring"></div>
+            <div class="seal-text-top">HỘI ĐỒNG XÉT XỬ</div>
+            <div class="seal-star">★</div>
+            <div class="seal-text-main">ĐÃ TUYÊN ÁN</div>
+          </div>
+
+          <!-- Header tòa án -->
+          <div id="card-header" class="card-header">
+            <div class="court-title">TÒA ÁN NHÂN DÂN</div>
+            <div class="panel-title">HỘI ĐỒNG XÉT XỬ</div>
+          </div>
+
+          <!-- Nội dung xem xét -->
+          <div class="card-body">
+            <div id="case-meta" class="case-meta">
+              <span class="case-tag">QUYẾT ĐỊNH</span>
+              <span class="case-desc">XEM XÉT TÌNH TIẾT BỊ CÁO VỊ THÀNH NIÊN</span>
+            </div>
+
+            <!-- Khu vực minh họa: Hồ sơ + Trạng thái cách ly -->
+            <div id="middle-visual" class="middle-visual">
+              <!-- Overlay Icon Doc (222980ms -> 1.78s) -->
+              <div class="doc-evidence">
+                <svg
+                  class="doc-icon-svg"
+                  viewBox="0 0 90 120"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <!-- Đường viền văn bản -->
+                  <path
+                    class="doc-draw-path"
+                    stroke-width="4"
+                    d="M 12 8 L 58 8 L 78 28 L 78 112 L 12 112 Z"
+                  />
+                  <!-- Nếp gấp góc văn bản -->
+                  <path
+                    class="doc-draw-path"
+                    stroke-width="4"
+                    d="M 58 8 L 58 28 L 78 28"
+                  />
+                  <!-- Các dòng chữ tài liệu -->
+                  <path
+                    class="doc-draw-path"
+                    stroke-width="3.5"
+                    d="M 24 44 L 66 44"
+                  />
+                  <path
+                    class="doc-draw-path"
+                    stroke-width="3.5"
+                    d="M 24 62 L 66 62"
+                  />
+                  <path
+                    class="doc-draw-path"
+                    stroke-width="3.5"
+                    d="M 24 80 L 52 80"
+                  />
+                </svg>
+
+                <div id="doc-info" class="doc-info">
+                  <div class="doc-title">HỒ SƠ VỤ ÁN</div>
+                  <div class="doc-subtitle">ĐÁNH GIÁ NHÂN THÂN BỊ CÁO</div>
+                </div>
+              </div>
+
+              <!-- Trạng thái cách ly xã hội: mờ đi và bị gạch bỏ -->
+              <div id="isolation-box" class="isolation-indicator">
+                <svg
+                  class="isolation-svg"
+                  viewBox="0 0 64 64"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <circle
+                    cx="32"
+                    cy="32"
+                    r="26"
+                    fill="none"
+                    stroke="#141414"
+                    stroke-width="4"
+                  />
+                  <line
+                    x1="22"
+                    y1="12"
+                    x2="22"
+                    y2="52"
+                    stroke="#141414"
+                    stroke-width="3.5"
+                  />
+                  <line
+                    x1="32"
+                    y1="8"
+                    x2="32"
+                    y2="56"
+                    stroke="#141414"
+                    stroke-width="3.5"
+                  />
+                  <line
+                    x1="42"
+                    y1="12"
+                    x2="42"
+                    y2="52"
+                    stroke="#141414"
+                    stroke-width="3.5"
+                  />
+                </svg>
+                <div class="isolation-label">BIỆN PHÁP CÁCH LY</div>
+
+                <!-- Đường gạch chéo hủy bỏ -->
+                <svg
+                  class="isolation-strike-svg"
+                  viewBox="0 0 230 230"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    class="strike-line strike-line-1"
+                    d="M 30 30 L 200 200"
+                  />
+                  <path
+                    class="strike-line strike-line-2"
+                    d="M 200 30 L 30 200"
+                  />
+                </svg>
+              </div>
+            </div>
+
+            <!-- Overlay Punch-phrase: "KHÔNG CẦN CÁCH LY" (224770ms -> 3.57s) -->
+            <div id="punch-plate" class="punch-plate">
+              <div class="punch-subheading">PHÁN QUYẾT TÒA ÁN</div>
+              <div class="punch-headline">KHÔNG CẦN CÁCH LY</div>
+              <div class="punch-detail">
+                CHƯA CẦN THIẾT CÁCH LY KHỎI XÃ HỘI
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Thanh cam đáy khung hình -->
+        <div class="bottom-orange-bar"></div>
+      </section>
+    </div>
+
+    <script>
+      // 1. Chuẩn bị hiệu ứng stroke-dashoffset cho các đường vẽ SVG
+      document.querySelectorAll(".doc-draw-path, .strike-line").forEach((p) => {
+        const len = p.getTotalLength();
+        p.style.strokeDasharray = `${len}`;
+        p.style.strokeDashoffset = `${len}`;
+      });
+
+      // 2. Khởi tạo GSAP Timeline chính thức (seekable, paused)
+      const tl = gsap.timeline({ paused: true });
+
+      // Giai đoạn 0.0s - 0.8s: Peel transition vào card phán quyết
+      tl.fromTo(
+        "#verdict-card",
+        {
+          opacity: 0,
+          scale: 0.94,
+          rotationX: -16,
+          rotationY: 7,
+          rotationZ: -3,
+          y: -40,
+        },
+        {
+          opacity: 1,
+          scale: 1,
+          rotationX: 0,
+          rotationY: 0,
+          rotationZ: 0,
+          y: 0,
+          duration: 0.8,
+          ease: "power3.out",
+        },
+        0.08,
+      );
+
+      // Header xuất hiện
+      tl.fromTo(
+        "#card-header",
+        { opacity: 0, y: -18 },
+        { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" },
+        0.35,
+      );
+
+      // Dấu mộc tòa án cam đóng mạnh xuống ở góc phải
+      tl.fromTo(
+        "#court-seal",
+        { opacity: 0, scale: 2.2, rotation: 22 },
+        {
+          opacity: 1,
+          scale: 1,
+          rotation: -12,
+          duration: 0.48,
+          ease: "power4.out",
+        },
+        0.75,
+      );
+
+      // Thẻ phân loại và khung minh họa
+      tl.fromTo(
+        "#case-meta",
+        { opacity: 0, x: -24 },
+        { opacity: 1, x: 0, duration: 0.4, ease: "power2.out" },
+        1.05,
+      );
+
+      tl.fromTo(
+        "#middle-visual",
+        { opacity: 0, y: 24 },
+        { opacity: 1, y: 0, duration: 0.48, ease: "power3.out" },
+        1.25,
+      );
+
+      // Giai đoạn 1.78s: Overlay icon "doc" xuất hiện
+      tl.to(
+        ".doc-draw-path",
+        {
+          strokeDashoffset: 0,
+          duration: 0.65,
+          ease: "power2.out",
+          stagger: 0.1,
+        },
+        1.78,
+      );
+
+      tl.fromTo(
+        "#doc-info",
+        { opacity: 0, x: -16 },
+        { opacity: 1, x: 0, duration: 0.45, ease: "power2.out" },
+        1.98,
+      );
+
+      // Giai đoạn 2.4s - 3.2s: Trạng thái cách ly xã hội bị gạch bỏ và mờ đi
+      tl.to(
+        ".strike-line-1",
+        { strokeDashoffset: 0, duration: 0.32, ease: "power2.out" },
+        2.4,
+      );
+      tl.to(
+        ".strike-line-2",
+        { strokeDashoffset: 0, duration: 0.32, ease: "power2.out" },
+        2.68,
+      );
+      tl.to(
+        "#isolation-box",
+        { opacity: 0.2, scale: 0.9, duration: 0.55, ease: "power2.out" },
+        3.05,
+      );
+
+      // Giai đoạn 3.57s: Overlay Punch-phrase "KHÔNG CẦN CÁCH LY" đập vào mạnh mẽ
+      tl.fromTo(
+        "#punch-plate",
+        { opacity: 0, y: 44, scale: 0.92 },
+        {
+          opacity: 1,
+          y: 0,
+          scale: 1,
+          duration: 0.52,
+          ease: "power3.out",
+        },
+        3.57,
+      );
+
+      tl.fromTo(
+        ".punch-headline",
+        { opacity: 0, y: 16 },
+        { opacity: 1, y: 0, duration: 0.38, ease: "power3.out" },
+        3.76,
+      );
+
+      // Chuyển động nhẹ nhàng giữ nhịp sống cho thẻ đến cuối scene
+      tl.to(
+        "#verdict-card",
+        {
+          y: -5,
+          duration: 2.0,
+          ease: "sine.inOut",
+          yoyo: true,
+          repeat: 1,
+        },
+        1.6,
+      );
+
+      // Đăng ký timeline cho HyperFrames seek
+      window.__timelines = window.__timelines || {};
+      window.__timelines["scene-s25"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

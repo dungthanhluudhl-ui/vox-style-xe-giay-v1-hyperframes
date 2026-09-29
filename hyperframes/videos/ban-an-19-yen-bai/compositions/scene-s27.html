@@ -1,0 +1,423 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap"
+    />
+      <style>
+      /* hf-safe-colors (tất định từ style-tokens.json) */
+      .hf-text-ink { color: #141414; }
+      .hf-text-light { color: #F7F4EC; }
+      .hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+      .hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+      .hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+      .hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #e7e3d9;
+        font-family: "Be Vietnam Pro", sans-serif;
+        color: #141414;
+        overflow: hidden;
+      }
+      #root {
+        position: relative;
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+        background-color: #e7e3d9;
+      }
+
+      /* Nền lưới ô vuông 84px chuẩn Vox */
+      .bg-grid {
+        position: absolute;
+        inset: 0;
+        background-size: 84px 84px;
+        background-image:
+          linear-gradient(to right, rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px),
+          linear-gradient(to bottom, rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px);
+      }
+
+      /* Spotlight vignette tập trung sự chú ý theo visual language của scene */
+      .bg-spotlight {
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(
+          circle at 50% 50%,
+          transparent 20%,
+          rgba(20, 20, 20, 0.28) 60%,
+          rgba(20, 20, 20, 0.52) 100%
+        );
+        pointer-events: none;
+      }
+
+      /* Thanh cam nhận diện thương hiệu đáy khung hình */
+      .bottom-orange-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 8px;
+        background-color: #ff6a1a;
+        z-index: 100;
+      }
+
+      /* Contract clip */
+      .clip {
+        position: absolute;
+        inset: 0;
+      }
+
+      /* Container chính cho hiệu ứng xoay xoắn ốc (spiral entrance) */
+      #spiral-wrapper {
+        position: absolute;
+        inset: 0;
+        transform-origin: 540px 960px;
+      }
+
+      /* Header hồ sơ điều tra */
+      .header-badge {
+        position: absolute;
+        top: 180px;
+        left: 80px;
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        background-color: #141414;
+        color: #f7f4ec;
+        padding: 10px 24px;
+        border-radius: 4px;
+        font-size: 22px;
+        font-weight: 900;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+      }
+      .badge-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background-color: #ff6a1a;
+      }
+
+      /* KHỐI 1: Hướng tiếp cận ban đầu - Đo lường thương tật trừu tượng */
+      #old-hypothesis-card {
+        position: absolute;
+        top: 250px;
+        left: 80px;
+        width: 920px;
+        background-color: #f5f0e4;
+        border: 4px solid #141414;
+        box-shadow: 10px 10px 0px #141414;
+        padding: 32px 36px;
+        transform-origin: center center;
+      }
+      .card-tag {
+        font-size: 22px;
+        font-weight: 700;
+        color: #141414;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 12px;
+      }
+      .card-question {
+        font-size: 44px;
+        font-weight: 900;
+        line-height: 1.25;
+        color: #141414;
+        margin: 0 0 24px 0;
+        text-transform: uppercase;
+      }
+
+      /* Thước đo tiến trình giám định thương tật (trừu tượng) */
+      .gauge-container {
+        width: 100%;
+        background-color: #e7e3d9;
+        border: 3px solid #141414;
+        height: 40px;
+        position: relative;
+        overflow: hidden;
+      }
+      .gauge-fill {
+        height: 100%;
+        width: 0%;
+        background-color: #141414;
+      }
+      .gauge-labels {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 8px;
+        font-size: 18px;
+        font-weight: 700;
+        color: #141414;
+      }
+
+      /* KHU VỰC DÀNH RIÊNG CHO STAMP: "THƯƠNG TẬT KHÔNG ĐỦ" (Xuất hiện lúc 4.01s)
+         Tách rời hoàn toàn khỏi card cũ để tránh lỗi che khuất chữ (text_occluded) */
+      #stamp-container {
+        position: absolute;
+        top: 535px;
+        left: 80px;
+        width: 920px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        pointer-events: none;
+      }
+      #stamp-label {
+        background-color: #ff6a1a;
+        color: #141414;
+        border: 5px solid #141414;
+        box-shadow: 8px 8px 0px #141414;
+        padding: 16px 36px;
+        font-size: 40px;
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        transform-origin: center center;
+        opacity: 0;
+      }
+
+      /* Dấu nối mũi tên đảo ngược góc nhìn */
+      #reversal-indicator {
+        position: absolute;
+        top: 635px;
+        left: 0;
+        width: 1080px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        opacity: 0;
+      }
+      .indicator-line {
+        width: 4px;
+        height: 30px;
+        background-color: #141414;
+      }
+      .indicator-arrow {
+        width: 0;
+        height: 0;
+        border-left: 14px solid transparent;
+        border-right: 14px solid transparent;
+        border-top: 18px solid #141414;
+      }
+
+      /* KHỐI 2: Bước ngoặt bản chất (VÌ SAO VẪN SỐNG? - Lúc 5.77s) */
+      #reversal-card {
+        position: absolute;
+        top: 710px;
+        left: 80px;
+        width: 920px;
+        background-color: #141414;
+        border: 5px solid #ff6a1a;
+        box-shadow: 14px 14px 0px rgba(255, 106, 26, 0.4);
+        padding: 44px 36px;
+        transform-origin: center center;
+        opacity: 0;
+        z-index: 30;
+      }
+      .reversal-tag-row {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 20px;
+      }
+      .reversal-badge {
+        background-color: #ff6a1a;
+        color: #141414;
+        padding: 8px 22px;
+        font-size: 22px;
+        font-weight: 900;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+      }
+      .punch-phrase {
+        font-size: 70px;
+        font-weight: 900;
+        line-height: 1.25;
+        color: #f7f4ec;
+        text-align: center;
+        margin: 0;
+        letter-spacing: -0.5px;
+        text-transform: uppercase;
+      }
+      .icon-question-wrap {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-top: 24px;
+      }
+      .icon-svg {
+        width: 100px;
+        height: 100px;
+      }
+      .q-stroke {
+        fill: none;
+        stroke: #ff6a1a;
+        stroke-width: 10;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+      .card-subtext {
+        text-align: center;
+        font-size: 24px;
+        font-weight: 700;
+        color: #f7f4ec;
+        margin-top: 20px;
+        letter-spacing: 1px;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s27"
+      data-width="1080"
+      data-height="1920"
+      data-duration="7.68"
+    >
+      <!-- Nền lưới & spotlight cố định -->
+      <div class="bg-grid"></div>
+      <div class="bg-spotlight"></div>
+
+      <!-- Scene clip timed chính -->
+      <section id="scene-clip" class="clip" data-start="0" data-duration="7.68">
+        <div id="spiral-wrapper">
+          <!-- Header hồ sơ -->
+          <div class="header-badge">
+            <span class="badge-dot"></span>
+            <span>TƯ DUY ĐIỀU TRA // BƯỚC NGOẶT</span>
+          </div>
+
+          <!-- Khối giả thuyết cũ: Tỷ lệ thương tật trừu tượng, không nêu tên hay quy kết cá nhân -->
+          <div id="old-hypothesis-card">
+            <div class="card-tag">HƯỚNG TIẾP CẬN BAN ĐẦU</div>
+            <h2 class="card-question">BAO NHIÊU % THƯƠNG TẬT?</h2>
+            <div class="gauge-container">
+              <div id="gauge-bar" class="gauge-fill"></div>
+            </div>
+            <div class="gauge-labels">
+              <span>MỨC ĐỘ THƯƠNG TÍCH</span>
+              <span>ĐANG ĐÁNH GIÁ</span>
+            </div>
+          </div>
+
+          <!-- Container Stamp: THƯƠNG TẬT KHÔNG ĐỦ (Nằm riêng biệt dưới card cũ) -->
+          <div id="stamp-container">
+            <div id="stamp-label">THƯƠNG TẬT KHÔNG ĐỦ</div>
+          </div>
+
+          <!-- Mũi tên đảo hướng -->
+          <div id="reversal-indicator">
+            <div class="indicator-line"></div>
+            <div class="indicator-arrow"></div>
+          </div>
+
+          <!-- Khối bản chất: VÌ SAO VẪN SỐNG? -->
+          <div id="reversal-card">
+            <div class="reversal-tag-row">
+              <div class="reversal-badge">CÂU HỎI QUYẾT ĐỊNH</div>
+            </div>
+            <h1 class="punch-phrase">VÌ SAO VẪN SỐNG?</h1>
+
+            <!-- Icon Question tự vẽ theo style Vox -->
+            <div class="icon-question-wrap">
+              <svg class="icon-svg" viewBox="0 0 120 120">
+                <!-- Nét cong của dấu hỏi -->
+                <path
+                  class="q-stroke"
+                  d="M 36 46 C 36 24, 84 24, 84 46 C 84 62, 60 66, 60 82"
+                />
+                <!-- Dấu chấm tròn bên dưới -->
+                <path class="q-stroke" d="M 60 98 L 60 102" />
+              </svg>
+            </div>
+
+            <div class="card-subtext">LĂNG KÍNH THAY ĐỔI HOÀN TOÀN BẢN ÁN</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Thanh màu cam chữ ký dưới đáy khung hình -->
+      <div class="bottom-orange-bar"></div>
+    </div>
+
+    <script>
+      // Thiết lập stroke SVG cho icon question tự vẽ
+      const paths = document.querySelectorAll(".q-stroke");
+      paths.forEach((p) => {
+        const len = p.getTotalLength();
+        p.style.strokeDasharray = len + "px";
+        p.style.strokeDashoffset = len + "px";
+      });
+
+      // Tạo timeline GSAP paused cho composition
+      const tl = gsap.timeline({ paused: true });
+
+      // 1. Entrance "spiral": Xoay xoắn ốc đảo hướng từ 0.1s đến 0.9s
+      tl.fromTo(
+        "#spiral-wrapper",
+        { scale: 0.35, rotation: -36, opacity: 0 },
+        { scale: 1, rotation: 0, opacity: 1, duration: 0.8, ease: "power3.out" },
+        0.1
+      );
+
+      // Thước đo tiến trình giám định chạy dần từ 0.7s đến 2.0s
+      tl.to(
+        "#gauge-bar",
+        { width: "50%", duration: 1.3, ease: "power2.out" },
+        0.7
+      );
+
+      // 2. Mốc 4.01s (atMs: 217910): Stamp "THƯƠNG TẬT KHÔNG ĐỦ" dập mạnh xuống vị trí riêng biệt
+      tl.fromTo(
+        "#stamp-label",
+        { scale: 2.2, rotation: 12, opacity: 0 },
+        { scale: 1, rotation: -3, opacity: 1, duration: 0.38, ease: "power4.out" },
+        4.01
+      );
+
+      // Mũi tên đảo hướng xuất hiện lúc 4.8s
+      tl.fromTo(
+        "#reversal-indicator",
+        { y: -12, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.35, ease: "power2.out" },
+        4.8
+      );
+
+      // 3. Mốc 5.77s (atMs: 219670): PUNCH PHRASE "VÌ SAO VẪN SỐNG?" bùng nổ trung tâm
+      // Khối giả thuyết cũ, stamp và mũi tên fade out để nhường toàn bộ ánh đèn cho bước ngoặt
+      tl.to(
+        ["#old-hypothesis-card", "#stamp-label", "#reversal-indicator"],
+        { opacity: 0, duration: 0.28, ease: "power2.in" },
+        5.77
+      );
+
+      tl.fromTo(
+        "#reversal-card",
+        { scale: 0.72, opacity: 0, y: 30 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.55, ease: "power3.out" },
+        5.77
+      );
+
+      // Icon question tự vẽ dần theo nét stroke
+      tl.to(
+        paths,
+        { strokeDashoffset: 0, duration: 0.52, ease: "power2.out", stagger: 0.12 },
+        5.95
+      );
+
+      // Đăng ký timeline duy nhất vào window.__timelines["scene-s27"]
+      window.__timelines = window.__timelines || {};
+      window.__timelines["scene-s27"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

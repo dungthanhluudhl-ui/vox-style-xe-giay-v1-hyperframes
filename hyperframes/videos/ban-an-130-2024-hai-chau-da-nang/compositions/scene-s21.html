@@ -1,0 +1,543 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+      /* hf-safe-colors (tất định từ style-tokens.json) */
+      .hf-text-ink { color: #141414; }
+      .hf-text-light { color: #F7F4EC; }
+      .hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+      .hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+      .hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+      .hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+      *, *::before, *::after {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #E7E3D9;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      /* Container Root */
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+
+      /* Quy ước .clip của HyperFrames Core */
+      .clip {
+        position: absolute;
+        inset: 0;
+      }
+
+      /* Thanh cam nhận diện thương hiệu đáy màn hình */
+      .signature-bottom-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 14px;
+        background-color: #FF6A1A;
+        z-index: 100;
+      }
+
+      /* Nền dạng lưới nhẹ Vox Style */
+      .bg-grid {
+        position: absolute;
+        inset: 0;
+        background-color: #E7E3D9;
+        background-image:
+          linear-gradient(rgba(20, 20, 20, 0.08) 1.5px, transparent 1.5px),
+          linear-gradient(90deg, rgba(20, 20, 20, 0.08) 1.5px, transparent 1.5px);
+        background-size: 84px 84px;
+        z-index: 1;
+      }
+
+      /* Khung Card chính (Hồ sơ tư pháp / Bản lề) */
+      .card-viewport {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10;
+        perspective: 1400px;
+      }
+
+      .court-card {
+        position: absolute;
+        top: 200px;
+        width: 960px;
+        height: 1140px;
+        background-color: #F5F0E4;
+        border: 4px solid #141414;
+        box-shadow: 18px 18px 0px #141414;
+        padding: 44px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: space-between;
+        transform-origin: 50% 50%;
+        will-change: transform, opacity;
+      }
+
+      /* Header của hồ sơ toà án */
+      .card-header {
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 2px solid #141414;
+        padding-bottom: 20px;
+      }
+
+      .header-title-group {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      .header-org {
+        font-size: 22px;
+        font-weight: 900;
+        letter-spacing: 2px;
+        color: #141414;
+        text-transform: uppercase;
+      }
+
+      .header-sub {
+        font-size: 15px;
+        font-weight: 700;
+        color: #141414;
+        letter-spacing: 1px;
+      }
+
+      .header-case-badge {
+        background-color: #141414;
+        color: #F7F4EC;
+        font-size: 16px;
+        font-weight: 900;
+        padding: 8px 18px;
+        letter-spacing: 1px;
+      }
+
+      /* Khu vực huy hiệu trung tâm & cán cân công lý */
+      .emblem-stage {
+        position: relative;
+        width: 100%;
+        height: 520px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .scales-svg-wrap {
+        position: absolute;
+        width: 580px;
+        height: 420px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      /* Đĩa tròn trung tâm chứa dấu hỏi cam */
+      .question-badge {
+        position: absolute;
+        width: 190px;
+        height: 190px;
+        border-radius: 50%;
+        background-color: #141414;
+        border: 4px solid #141414;
+        box-shadow: 0 0 0 6px #F5F0E4, 0 0 0 10px #141414;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 25;
+        will-change: transform;
+      }
+
+      .question-mark-text {
+        color: #FF6A1A;
+        font-size: 130px;
+        font-weight: 900;
+        line-height: 1;
+        user-select: none;
+        transform: translateY(-4px);
+      }
+
+      /* Con dấu Mộc đỏ: "BẮT QUẢ TANG" */
+      .stamp-caught-wrap {
+        position: absolute;
+        top: 50px;
+        left: 40px;
+        z-index: 30;
+        transform-origin: 50% 50%;
+        will-change: transform, opacity;
+      }
+
+      .stamp-box {
+        background-color: #FF6A1A;
+        border: 5px solid #141414;
+        padding: 18px 36px;
+        box-shadow: 8px 8px 0px #141414;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .stamp-label-main {
+        font-size: 40px;
+        font-weight: 900;
+        color: #141414;
+        letter-spacing: 2px;
+        line-height: 1;
+        text-transform: uppercase;
+        white-space: nowrap;
+      }
+
+      /* Tấm nền câu hỏi trọng tâm (Punch-Phrase Plate) */
+      .punch-container {
+        position: relative;
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        margin-top: 10px;
+        z-index: 35;
+      }
+
+      .punch-plate {
+        position: relative;
+        width: 100%;
+        background-color: #141414;
+        border: 4px solid #141414;
+        box-shadow: 10px 10px 0px #FF6A1A;
+        padding: 34px 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        will-change: transform, opacity;
+      }
+
+      .punch-plate-glow {
+        position: absolute;
+        inset: -6px;
+        border: 3px solid #FF6A1A;
+        pointer-events: none;
+        opacity: 0;
+      }
+
+      .punch-main-title {
+        color: #FF6A1A;
+        font-size: 72px;
+        font-weight: 900;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        margin: 0;
+        line-height: 1.1;
+        text-align: center;
+        will-change: transform, opacity;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s21"
+      data-width="1080"
+      data-height="1920"
+      data-duration="6"
+    >
+      <!-- Scene Clip độc lập cho Shot S21-1 (thời lượng 6s) -->
+      <section id="shot-s21" class="clip" data-start="0" data-duration="6">
+        <!-- Nền ô vuông đặc trưng Vox -->
+        <div class="bg-grid"></div>
+
+        <!-- Khung Card Câu Hỏi Tư Pháp -->
+        <div class="card-viewport">
+          <div id="court-card" class="court-card">
+            
+            <!-- Header hồ sơ -->
+            <div class="card-header">
+              <div class="header-title-group">
+                <span class="header-org">HỒ SƠ TƯ PHÁP</span>
+                <span class="header-sub">HỘI ĐỒNG XÉT XỬ TÒA ÁN NHÂN DÂN</span>
+              </div>
+              <div class="header-case-badge">BIÊN BẢN</div>
+            </div>
+
+            <!-- Khu vực đồ họa: Cán cân công lý & Huy hiệu toà án -->
+            <div class="emblem-stage">
+              <!-- SVG Cán cân công lý -->
+              <div id="scales-wrap" class="scales-svg-wrap">
+                <svg viewBox="0 0 580 420" width="100%" height="100%" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <!-- Trục đứng giữa -->
+                  <rect x="284" y="50" width="12" height="310" fill="#141414" />
+                  <path d="M 240 370 L 340 370 L 320 350 L 260 350 Z" fill="#141414" />
+                  <!-- Đỉnh cán cân -->
+                  <circle cx="290" cy="46" r="16" fill="#141414" />
+                  <circle cx="290" cy="46" r="6" fill="#F5F0E4" />
+                  
+                  <!-- Thanh ngang đòn cân xoay quanh đỉnh (290, 80) -->
+                  <g id="scales-beam" style="transform-origin: 290px 80px; will-change: transform;">
+                    <rect x="70" y="74" width="440" height="12" rx="4" fill="#141414" />
+                    <circle cx="290" cy="80" r="10" fill="#141414" />
+
+                    <!-- Dây treo & đĩa trái -->
+                    <line x1="110" y1="86" x2="60" y2="240" stroke="#141414" stroke-width="3" stroke-dasharray="6 4" />
+                    <line x1="110" y1="86" x2="160" y2="240" stroke="#141414" stroke-width="3" stroke-dasharray="6 4" />
+                    <path d="M 50 240 Q 110 280 170 240 Z" fill="#141414" />
+
+                    <!-- Dây treo & đĩa phải -->
+                    <line x1="470" y1="86" x2="420" y2="240" stroke="#141414" stroke-width="3" stroke-dasharray="6 4" />
+                    <line x1="470" y1="86" x2="520" y2="240" stroke="#141414" stroke-width="3" stroke-dasharray="6 4" />
+                    <path d="M 410 240 Q 470 280 530 240 Z" fill="#141414" />
+                  </g>
+
+                  <!-- Vòng nguyệt quế trang trí toà án hai bên -->
+                  <path d="M 170 320 C 130 280 130 200 170 140" stroke="#141414" stroke-width="4" stroke-linecap="round" fill="none" opacity="0.4" />
+                  <path d="M 410 320 C 450 280 450 200 410 140" stroke="#141414" stroke-width="4" stroke-linecap="round" fill="none" opacity="0.4" />
+                </svg>
+              </div>
+
+              <!-- Dấu hỏi ? màu cam vẽ tay xuất hiện giữa huy hiệu toà án -->
+              <div id="question-badge" class="question-badge">
+                <span class="question-mark-text">?</span>
+              </div>
+
+              <!-- Con dấu mộc: BẮT QUẢ TANG -->
+              <div id="stamp-caught" class="stamp-caught-wrap">
+                <div class="stamp-box">
+                  <span class="stamp-label-main">BẮT QUẢ TANG</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Tấm Punch-Phrase: VÌ SAO ÁN TREO? -->
+            <div class="punch-container">
+              <div id="punch-plate" class="punch-plate">
+                <div id="punch-glow" class="punch-plate-glow"></div>
+                <h1 id="punch-main-text" class="punch-main-title">VÌ SAO ÁN TREO?</h1>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Dải cam chữ ký thương hiệu ở mép đáy -->
+        <div class="signature-bottom-bar"></div>
+      </section>
+    </div>
+
+    <script>
+      // Khởi tạo GSAP Timeline chính thức theo đúng hợp đồng HyperFrames Core
+      const tl = gsap.timeline({ paused: true });
+
+      // Đăng ký timeline cho root composition
+      window.__timelines = window.__timelines || {};
+      window.__timelines["scene-s21"] = tl;
+
+      // 1. Giai đoạn 0.05s - 0.75s: Card lật mở vào (Entrance Flip)
+      tl.fromTo(
+        "#court-card",
+        {
+          rotationY: -65,
+          opacity: 0,
+          scale: 0.88,
+        },
+        {
+          rotationY: 0,
+          opacity: 1,
+          scale: 1,
+          duration: 0.7,
+          ease: "power3.out",
+        },
+        0.05
+      );
+
+      // 2. Giai đoạn 0.25s - 0.8s: Cán cân công lý và huy hiệu xuất hiện
+      tl.fromTo(
+        "#scales-wrap",
+        {
+          scale: 0.75,
+          opacity: 0,
+        },
+        {
+          scale: 1,
+          opacity: 1,
+          duration: 0.6,
+          ease: "power3.out",
+        },
+        0.25
+      );
+
+      tl.fromTo(
+        "#question-badge",
+        {
+          scale: 0,
+          rotation: -40,
+        },
+        {
+          scale: 1,
+          rotation: 0,
+          duration: 0.55,
+          ease: "power3.out",
+        },
+        0.45
+      );
+
+      // 3. Giai đoạn 0.98s (atMs: 192180): Dấu mộc "BẮT QUẢ TANG" dập mạnh xuống
+      tl.fromTo(
+        "#stamp-caught",
+        {
+          scale: 2.2,
+          opacity: 0,
+          rotation: -24,
+        },
+        {
+          scale: 1,
+          opacity: 1,
+          rotation: -7,
+          duration: 0.35,
+          ease: "power4.out",
+        },
+        0.98
+      );
+
+      // Cán cân phản ứng rung chấn khi mộc đập xuống (đĩa trái trĩu xuống)
+      tl.to(
+        "#scales-beam",
+        {
+          rotation: -9,
+          duration: 0.18,
+          ease: "power2.out",
+        },
+        1.08
+      );
+      tl.to(
+        "#scales-beam",
+        {
+          rotation: -5,
+          duration: 0.35,
+          ease: "sine.inOut",
+        },
+        1.26
+      );
+
+      // 4. Giai đoạn 2.2s - 2.8s: Dấu hỏi cam nhịp đập
+      tl.to(
+        "#question-badge",
+        {
+          scale: 1.12,
+          duration: 0.3,
+          ease: "power2.out",
+        },
+        2.2
+      );
+      tl.to(
+        "#question-badge",
+        {
+          scale: 1.0,
+          duration: 0.3,
+          ease: "power2.in",
+        },
+        2.5
+      );
+
+      // 5. Giai đoạn 3.3s - 3.9s: Mâu thuẫn va chạm - Con dấu "BẮT QUẢ TANG" bị lung lay
+      tl.to(
+        "#stamp-caught",
+        {
+          rotation: 4,
+          x: 12,
+          duration: 0.28,
+          ease: "power1.inOut",
+        },
+        3.3
+      );
+      tl.to(
+        "#stamp-caught",
+        {
+          rotation: -2,
+          x: 0,
+          duration: 0.28,
+          ease: "power1.inOut",
+        },
+        3.58
+      );
+
+      // Cán cân đảo chiều, nghiêng mạnh về phía câu hỏi nghi vấn
+      tl.to(
+        "#scales-beam",
+        {
+          rotation: 8,
+          duration: 0.65,
+          ease: "power2.inOut",
+        },
+        3.6
+      );
+
+      // 6. Giai đoạn 4.4s: Tấm Punch Plate trồi lên vững chắc
+      tl.fromTo(
+        "#punch-plate",
+        {
+          y: 40,
+          opacity: 0,
+          scale: 0.95,
+        },
+        {
+          y: 0,
+          opacity: 1,
+          scale: 1,
+          duration: 0.5,
+          ease: "power3.out",
+        },
+        4.4
+      );
+
+      // 7. Giai đoạn 5.06s (atMs: 196260): Punch-phrase "VÌ SAO ÁN TREO?" nổ tung sắc sảo
+      tl.fromTo(
+        "#punch-main-text",
+        {
+          scale: 1.25,
+          opacity: 0,
+        },
+        {
+          scale: 1,
+          opacity: 1,
+          duration: 0.35,
+          ease: "power4.out",
+        },
+        5.06
+      );
+
+      // Viền sáng bừng nở quanh tấm punch plate tại mốc 5.06s
+      tl.fromTo(
+        "#punch-glow",
+        {
+          opacity: 0.8,
+          scale: 1.02,
+        },
+        {
+          opacity: 0,
+          scale: 1.1,
+          duration: 0.45,
+          ease: "power2.out",
+        },
+        5.06
+      );
+    </script>
+  
+    </template>
+  </body>
+</html>

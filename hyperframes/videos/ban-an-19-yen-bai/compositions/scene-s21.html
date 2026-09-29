@@ -1,0 +1,450 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+/* hf-safe-colors (tất định từ style-tokens.json) */
+.hf-text-ink { color: #141414; }
+.hf-text-light { color: #F7F4EC; }
+.hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+.hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+.hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+.hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #e7e3d9;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        background-color: #e7e3d9;
+        background-image:
+          linear-gradient(to right, rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px),
+          linear-gradient(to bottom, rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px);
+        background-size: 84px 84px;
+        overflow: hidden;
+      }
+
+      /* Quy ước bắt buộc: .clip dùng inset: 0 */
+      .clip {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+        pointer-events: none;
+      }
+
+      /* Lớp màu an toàn WCAG */
+      .hf-plate-ink {
+        background-color: #141414;
+        color: #f7f4ec;
+      }
+
+      .hf-text-ink {
+        color: #141414;
+      }
+
+      .hf-text-light {
+        color: #f7f4ec;
+      }
+
+      .hf-hl-orange {
+        background-color: #ff6a1a;
+        color: #141414;
+      }
+
+      /* Khung xoay 3D chuyển cảnh Flip */
+      #scene-container {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        transform-origin: 50% 50%;
+        will-change: transform, opacity;
+      }
+
+      /* Khung camera pan-right */
+      #camera-frame {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+
+      /* Ảnh nền background-photo phủ toàn màn hình */
+      #hero-img {
+        position: absolute;
+        inset: -5%;
+        width: 110%;
+        height: 110%;
+        object-fit: cover;
+        display: block;
+        will-change: transform;
+      }
+
+      /* Layout căn giữa cho các lớp overlay */
+      .overlay-slot-scale {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
+        padding-top: 250px;
+      }
+
+      .overlay-slot-diagram {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
+        padding-top: 220px;
+      }
+
+      .overlay-slot-label {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
+        padding-top: 450px;
+      }
+
+      /* Overlay 1: Badge icon cán cân tự vẽ (Scale of Justice) */
+      .scale-badge {
+        width: 210px;
+        height: 210px;
+        border-radius: 28px;
+        border: 4px solid #ff6a1a;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 24px 50px rgba(0, 0, 0, 0.65);
+        will-change: transform, opacity;
+      }
+
+      .scale-svg {
+        width: 150px;
+        height: 150px;
+      }
+
+      .scale-path {
+        stroke-dasharray: 100;
+        stroke-dashoffset: 100;
+      }
+
+      /* Overlay 2: Thẻ diagram "4 YẾU TỐ ĐỊNH TỘI" */
+      .diagram-panel {
+        width: 920px;
+        border-radius: 20px;
+        border: 3px solid #ff6a1a;
+        padding: 30px 40px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        box-shadow: 0 24px 56px rgba(0, 0, 0, 0.65);
+        will-change: transform, opacity;
+      }
+
+      .diagram-tag-badge {
+        background-color: #ff6a1a;
+        color: #141414;
+        font-size: 24px;
+        font-weight: 900;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        padding: 6px 20px;
+        border-radius: 6px;
+        margin-bottom: 16px;
+      }
+
+      .diagram-headline {
+        margin: 0;
+        font-size: 64px;
+        font-weight: 900;
+        line-height: 1.2;
+        letter-spacing: -0.5px;
+        text-transform: uppercase;
+        color: #f7f4ec;
+        text-align: center;
+      }
+
+      /* Overlay 3: Nhãn "HÀNH VI • HUNG KHÍ" */
+      .label-panel {
+        width: 860px;
+        border-radius: 18px;
+        border: 2px solid #ff6a1a;
+        padding: 22px 36px;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+        gap: 20px;
+        box-shadow: 0 20px 44px rgba(0, 0, 0, 0.6);
+        will-change: transform, opacity;
+      }
+
+      .label-accent-dot {
+        width: 16px;
+        height: 16px;
+        background-color: #ff6a1a;
+        border-radius: 50%;
+        flex-shrink: 0;
+      }
+
+      .label-title {
+        font-size: 46px;
+        font-weight: 900;
+        line-height: 1.2;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        color: #f7f4ec;
+      }
+
+      /* Dải cam cố định ở mép đáy khung hình theo Style DNA */
+      #bottom-signature-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 14px;
+        background-color: #ff6a1a;
+        z-index: 999;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s21"
+      data-start="0"
+      data-width="1080"
+      data-height="1920"
+      data-duration="7.88"
+    >
+      <!-- Track 0: Hình nền chính & chuyển động Camera Pan Right -->
+      <section id="bg-clip" class="clip" data-start="0" data-duration="7.88" data-track-index="0">
+        <div id="scene-container">
+          <div id="camera-frame" data-layout-allow-overflow="true">
+            <img
+              id="hero-img"
+              data-layout-allow-overflow="true"
+              src="assets/img-17-legal-scale-injury-intent-analysis.jpg"
+              alt="Cán cân công lý phân tích pháp lý"
+            />
+          </div>
+        </div>
+      </section>
+
+      <!-- Track 1: Overlay icon scale (Cán cân công lý vẽ nét) -->
+      <section
+        id="clip-scale"
+        class="clip overlay-slot-scale"
+        data-start="0.33"
+        data-duration="1.8"
+        data-track-index="1"
+      >
+        <div id="scale-badge" class="scale-badge hf-plate-ink">
+          <svg class="scale-svg" viewBox="0 0 160 160" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <!-- Đế và trụ đứng -->
+            <path
+              id="sc-base"
+              class="scale-path"
+              d="M 40 135 L 120 135"
+              stroke="#F7F4EC"
+              stroke-width="5"
+              stroke-linecap="round"
+              pathLength="100"
+            />
+            <path
+              id="sc-pole"
+              class="scale-path"
+              d="M 80 135 L 80 35"
+              stroke="#F7F4EC"
+              stroke-width="5"
+              stroke-linecap="round"
+              pathLength="100"
+            />
+            <circle id="sc-pivot" cx="80" cy="35" r="5" fill="#141414" stroke="#FF6A1A" stroke-width="4" />
+
+            <!-- Cần cân nghiêng xuống bên phải (bên nặng) -->
+            <path
+              id="sc-beam"
+              class="scale-path"
+              d="M 30 45 L 130 55"
+              stroke="#FF6A1A"
+              stroke-width="6"
+              stroke-linecap="round"
+              pathLength="100"
+            />
+
+            <!-- Đĩa cân trái (nhẹ hơn) -->
+            <path
+              id="sc-left-cables"
+              class="scale-path"
+              d="M 30 45 L 18 80 M 30 45 L 42 80"
+              stroke="#F7F4EC"
+              stroke-width="3"
+              stroke-linecap="round"
+              pathLength="100"
+            />
+            <path
+              id="sc-left-pan"
+              class="scale-path"
+              d="M 12 80 Q 30 94 48 80 Z"
+              stroke="#FF6A1A"
+              stroke-width="4"
+              fill="none"
+              stroke-linejoin="round"
+              pathLength="100"
+            />
+
+            <!-- Đĩa cân phải (chịu lực, nặng hơn) -->
+            <path
+              id="sc-right-cables"
+              class="scale-path"
+              d="M 130 55 L 118 98 M 130 55 L 142 98"
+              stroke="#F7F4EC"
+              stroke-width="3"
+              stroke-linecap="round"
+              pathLength="100"
+            />
+            <path
+              id="sc-right-pan"
+              class="scale-path"
+              d="M 112 98 Q 130 112 148 98 Z"
+              stroke="#FF6A1A"
+              stroke-width="4"
+              fill="none"
+              stroke-linejoin="round"
+              pathLength="100"
+            />
+          </svg>
+        </div>
+      </section>
+
+      <!-- Track 2: Overlay Diagram "4 YẾU TỐ ĐỊNH TỘI" -->
+      <section
+        id="clip-diagram"
+        class="clip overlay-slot-diagram"
+        data-start="2.75"
+        data-duration="4.5"
+        data-track-index="2"
+      >
+        <div id="diagram-card" class="diagram-panel hf-plate-ink">
+          <span class="diagram-tag-badge">Ý THỨC CHỦ QUAN</span>
+          <h1 class="diagram-headline">4 YẾU TỐ ĐỊNH TỘI</h1>
+        </div>
+      </section>
+
+      <!-- Track 3: Overlay Label "HÀNH VI • HUNG KHÍ" -->
+      <section
+        id="clip-label"
+        class="clip overlay-slot-label"
+        data-start="4.32"
+        data-duration="3.0"
+        data-track-index="3"
+      >
+        <div id="label-card" class="label-panel hf-plate-ink">
+          <div class="label-accent-dot"></div>
+          <span class="label-title">HÀNH VI • HUNG KHÍ</span>
+        </div>
+      </section>
+
+      <!-- Chữ ký thị giác mép đáy khung hình -->
+      <div id="bottom-signature-bar"></div>
+    </div>
+
+    <script>
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true });
+
+      // 1. Chuyển cảnh vào (Flip lật mở 3D) và Camera Pan Right nhẹ qua đĩa cân bên phải
+      tl.fromTo(
+        "#scene-container",
+        { rotationY: -35, transformPerspective: 1200, opacity: 0, scale: 0.94 },
+        { rotationY: 0, opacity: 1, scale: 1, duration: 0.75, ease: "power3.out" },
+        0
+      );
+
+      tl.fromTo(
+        "#hero-img",
+        { x: 30, scale: 1.06 },
+        { x: -40, scale: 1.09, duration: 7.88, ease: "none" },
+        0
+      );
+
+      // 2. Track 1: Hiệu ứng vẽ nét icon Cán cân công lý (từ 0.33s tới 2.13s)
+      tl.fromTo(
+        "#scale-badge",
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.35, ease: "power3.out" },
+        0.33
+      );
+
+      tl.to("#sc-base", { strokeDashoffset: 0, duration: 0.25, ease: "power2.out" }, 0.45);
+      tl.to("#sc-pole", { strokeDashoffset: 0, duration: 0.25, ease: "power2.out" }, 0.55);
+      tl.to("#sc-beam", { strokeDashoffset: 0, duration: 0.3, ease: "power2.out" }, 0.7);
+      tl.to(
+        ["#sc-left-cables", "#sc-left-pan"],
+        { strokeDashoffset: 0, duration: 0.35, ease: "power2.out" },
+        0.85
+      );
+      tl.to(
+        ["#sc-right-cables", "#sc-right-pan"],
+        { strokeDashoffset: 0, duration: 0.35, ease: "power2.out" },
+        0.95
+      );
+
+      tl.to(
+        "#scale-badge",
+        { scale: 0.85, opacity: 0, duration: 0.25, ease: "power2.in" },
+        1.85
+      );
+
+      // 3. Track 2: Diagram card "4 YẾU TỐ ĐỊNH TỘI" (từ 2.75s tới 7.25s)
+      tl.fromTo(
+        "#diagram-card",
+        { y: 35, opacity: 0, scale: 0.94 },
+        { y: 0, opacity: 1, scale: 1, duration: 0.5, ease: "power3.out" },
+        2.75
+      );
+
+      tl.to(
+        "#diagram-card",
+        { y: -15, opacity: 0, duration: 0.25, ease: "power2.in" },
+        6.95
+      );
+
+      // 4. Track 3: Label card "HÀNH VI • HUNG KHÍ" (từ 4.32s tới 7.32s)
+      tl.fromTo(
+        "#label-card",
+        { y: 30, opacity: 0, scale: 0.94 },
+        { y: 0, opacity: 1, scale: 1, duration: 0.45, ease: "power3.out" },
+        4.32
+      );
+
+      tl.to(
+        "#label-card",
+        { y: -15, opacity: 0, duration: 0.25, ease: "power2.in" },
+        7.0
+      );
+
+      // Đăng ký timeline chính với HyperFrames runtime
+      window.__timelines["scene-s21"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

@@ -1,0 +1,644 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+    /* hf-safe-colors (chuẩn mực tương phản từ style-tokens.json) */
+    .hf-text-ink { color: #141414; }
+    .hf-text-light { color: #F7F4EC; }
+    .hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+    .hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+    .hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+    .hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #E7E3D9;
+      color: #141414;
+      font-family: "Be Vietnam Pro", sans-serif;
+      overflow: hidden;
+      width: 1080px;
+      height: 1920px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    #root {
+      position: relative;
+      width: 1080px;
+      height: 1920px;
+      background-color: #E7E3D9;
+      overflow: hidden;
+    }
+
+    /* Lưới ô vuông 84px chuẩn Vox */
+    .grid-bg {
+      position: absolute;
+      inset: 0;
+      background-image: 
+        linear-gradient(to right, rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px),
+        linear-gradient(to bottom, rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px);
+      background-size: 84px 84px;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .clip {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+    }
+
+    /* Thanh cam thương hiệu cố định mép dưới */
+    #bottom-brand-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 16px;
+      background-color: #FF6A1A;
+      z-index: 100;
+    }
+
+    /* Camera motion container: zoom-in */
+    #camera-wrapper {
+      position: absolute;
+      inset: 0;
+      z-index: 2;
+      transform-origin: 540px 750px;
+    }
+
+    /* Vùng an toàn: Top safe 160px, bottom safe 530px (khung hiển thị khả dụng Y: 160 -> 1390px) */
+    .content-container {
+      position: absolute;
+      top: 180px;
+      left: 60px;
+      width: 960px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+    }
+
+    /* Header Bar: Tiêu đề bối cảnh hồ sơ */
+    .header-bar {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 3px solid #141414;
+      padding-bottom: 14px;
+      margin-bottom: 24px;
+    }
+
+    .dossier-tag {
+      background-color: #141414;
+      color: #F7F4EC;
+      font-size: 22px;
+      font-weight: 900;
+      padding: 6px 16px;
+      border-radius: 4px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+    }
+
+    .date-tag {
+      font-size: 22px;
+      font-weight: 900;
+      color: #141414;
+      letter-spacing: 1px;
+    }
+
+    /* Map Graphic Area */
+    .map-frame {
+      position: relative;
+      width: 960px;
+      height: 580px;
+      background-color: #F5F0E4;
+      border: 3px solid #141414;
+      box-shadow: 8px 8px 0px #141414;
+      overflow: hidden;
+      margin-bottom: 26px;
+    }
+
+    .map-inner-grid {
+      position: absolute;
+      inset: 0;
+      background-image: 
+        linear-gradient(to right, rgba(20, 20, 20, 0.12) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(20, 20, 20, 0.12) 1px, transparent 1px);
+      background-size: 42px 42px;
+    }
+
+    .map-svg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Pin Marker & Ripple Target */
+    .pin-target {
+      position: absolute;
+      left: 500px;
+      top: 290px;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+    }
+
+    .target-ring {
+      position: absolute;
+      left: -42px;
+      top: -42px;
+      width: 84px;
+      height: 84px;
+      border: 3px solid #FF6A1A;
+      border-radius: 50%;
+      background-color: rgba(255, 106, 26, 0.15);
+    }
+
+    .target-dot {
+      position: absolute;
+      left: -12px;
+      top: -12px;
+      width: 24px;
+      height: 24px;
+      background-color: #FF6A1A;
+      border: 3px solid #141414;
+      border-radius: 50%;
+    }
+
+    /* Map Callout Stamp */
+    .map-stamp {
+      position: absolute;
+      left: 570px;
+      top: 265px;
+      background-color: #141414;
+      border: 2px solid #FF6A1A;
+      padding: 10px 22px;
+      border-radius: 6px;
+      box-shadow: 4px 4px 0px rgba(20, 20, 20, 0.6);
+      z-index: 10;
+    }
+
+    .map-stamp-title {
+      color: #FF6A1A;
+      font-size: 26px;
+      font-weight: 900;
+      letter-spacing: 1px;
+    }
+
+    /* Info Card: Mechanical Clock & Punch Text Block */
+    .info-card {
+      width: 100%;
+      height: 400px;
+      background-color: #141414;
+      border: 3px solid #141414;
+      box-shadow: 8px 8px 0px #FF6A1A;
+      border-radius: 8px;
+      display: flex;
+      padding: 24px 36px;
+      gap: 36px;
+      align-items: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Cột trái: Đồng hồ kim chỉ 21:00 */
+    .clock-col {
+      width: 250px;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      border-right: 2px dashed rgba(247, 244, 236, 0.25);
+      padding-right: 28px;
+    }
+
+    .clock-dial {
+      width: 200px;
+      height: 200px;
+      border-radius: 50%;
+      background-color: #F7F4EC;
+      border: 6px solid #FF6A1A;
+      position: relative;
+      box-shadow: inset 0 0 10px rgba(20, 20, 20, 0.4);
+    }
+
+    .clock-center-dot {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 16px;
+      height: 16px;
+      background-color: #FF6A1A;
+      border: 2px solid #141414;
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 10;
+    }
+
+    .hand {
+      position: absolute;
+      bottom: 50%;
+      left: 50%;
+      transform-origin: 50% 100%;
+      border-radius: 4px;
+    }
+
+    .hour-hand {
+      width: 8px;
+      height: 54px;
+      background-color: #141414;
+      margin-left: -4px;
+      z-index: 5;
+    }
+
+    .minute-hand {
+      width: 5px;
+      height: 78px;
+      background-color: #FF6A1A;
+      margin-left: -2.5px;
+      z-index: 6;
+    }
+
+    .clock-badge {
+      margin-top: 16px;
+      background-color: #FF6A1A;
+      color: #141414;
+      font-size: 20px;
+      font-weight: 900;
+      padding: 4px 16px;
+      border-radius: 4px;
+      letter-spacing: 1px;
+    }
+
+    /* Cột phải: Punch Phrase & Metadata */
+    .data-col {
+      flex: 1;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    .badge-datetime {
+      background-color: #FF6A1A;
+      color: #141414;
+      font-size: 22px;
+      font-weight: 900;
+      padding: 6px 18px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .main-punch-text {
+      color: #F7F4EC;
+      font-size: 58px;
+      font-weight: 900;
+      line-height: 1.15;
+      letter-spacing: -0.5px;
+      text-transform: uppercase;
+    }
+
+    .accent-orange {
+      color: #FF6A1A;
+    }
+
+    .sub-punch-text {
+      color: #F7F4EC;
+      font-size: 24px;
+      font-weight: 700;
+      line-height: 1.34;
+      letter-spacing: 0.5px;
+    }
+
+    .divider-line {
+      width: 100%;
+      height: 3px;
+      background-color: #FF6A1A;
+      transform-origin: left center;
+    }
+
+    /* Pin Icon Overlay Highlight lúc kết thúc cảnh */
+    #pin-overlay-highlight {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 30;
+    }
+  </style>
+
+  <div
+    id="root"
+    data-composition-id="scene-s05"
+    data-width="1080"
+    data-height="1920"
+    data-duration="5.96"
+  >
+    <!-- Background Grid -->
+    <div class="grid-bg"></div>
+
+    <!-- Main Scene Clip -->
+    <div class="clip" data-start="0" data-duration="5.96">
+      
+      <!-- Camera Wrapper: zoom-in motion -->
+      <div id="camera-wrapper">
+        <div class="content-container">
+
+          <!-- Header dossier information -->
+          <div class="header-bar" id="header-bar">
+            <div class="dossier-tag">HỒ SƠ VỤ ÁN</div>
+            <div class="date-tag">29.08.2023</div>
+          </div>
+
+          <!-- Map Frame Area: Bản đồ vector định vị Yên Bái -->
+          <div class="map-frame" id="map-frame">
+            <div class="map-inner-grid"></div>
+
+            <svg class="map-svg" viewBox="0 0 960 580" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <!-- Pattern gạch chéo vùng địa lý Yên Bái -->
+                <pattern id="hatch-yb" width="16" height="16" patternTransform="rotate(45 0 0)" patternUnits="userSpaceOnUse">
+                  <line x1="0" y1="0" x2="0" y2="16" stroke="#FF6A1A" stroke-width="2.5" opacity="0.35" />
+                </pattern>
+              </defs>
+
+              <!-- Các đường gióng kỹ thuật phong cách hồ sơ -->
+              <g stroke="#141414" stroke-dasharray="4 6" stroke-width="1.5" opacity="0.3">
+                <line x1="240" y1="0" x2="240" y2="580" />
+                <line x1="480" y1="0" x2="480" y2="580" />
+                <line x1="720" y1="0" x2="720" y2="580" />
+                <line x1="0" y1="180" x2="960" y2="180" />
+                <line x1="0" y1="380" x2="960" y2="380" />
+              </g>
+
+              <!-- Nền lãnh thổ xung quanh tối giản, không chứa nhãn địa danh lạ -->
+              <path d="M 120 80 L 460 70 L 420 180 L 160 160 Z" fill="#E7E3D9" stroke="#141414" stroke-width="1.5" opacity="0.6" />
+              <path d="M 460 70 L 840 90 L 780 260 L 520 200 Z" fill="#E7E3D9" stroke="#141414" stroke-width="1.5" opacity="0.6" />
+              <path d="M 100 240 L 320 280 L 290 520 L 100 440 Z" fill="#E7E3D9" stroke="#141414" stroke-width="1.5" opacity="0.6" />
+              <path d="M 520 320 L 860 300 L 820 540 L 520 480 Z" fill="#E7E3D9" stroke="#141414" stroke-width="1.5" opacity="0.6" />
+
+              <!-- ĐỊA PHẬN TỈNH YÊN BÁI (Trung tâm nổi bật) -->
+              <path
+                id="yen-bai-boundary"
+                d="M 320 160 
+                   L 450 190 
+                   L 570 220 
+                   L 670 310 
+                   L 590 400 
+                   L 530 480 
+                   L 400 420 
+                   L 330 290 
+                   L 250 240 Z"
+                fill="url(#hatch-yb)"
+                stroke="#141414"
+                stroke-width="5"
+                stroke-linejoin="round"
+              />
+
+              <!-- Đường viền cam thứ cấp nhấn mạnh ranh giới Yên Bái -->
+              <path
+                id="yen-bai-outline-glow"
+                d="M 320 160 
+                   L 450 190 
+                   L 570 220 
+                   L 670 310 
+                   L 590 400 
+                   L 530 480 
+                   L 400 420 
+                   L 330 290 
+                   L 250 240 Z"
+                fill="none"
+                stroke="#FF6A1A"
+                stroke-width="3"
+                stroke-dasharray="12 6"
+              />
+
+              <!-- Nét sông tự nhiên cắt qua Yên Bái -->
+              <path
+                id="river-line"
+                d="M 360 100 Q 430 220 500 290 T 620 420 T 710 500"
+                fill="none"
+                stroke="#141414"
+                stroke-width="4"
+                stroke-linecap="round"
+                opacity="0.65"
+              />
+            </svg>
+
+            <!-- Map Target Crosshair & Pin tại Yên Bái -->
+            <div class="pin-target" id="pin-target">
+              <div class="target-ring" id="target-ring-1"></div>
+              <div class="target-ring" id="target-ring-2" style="transform: scale(1.6); opacity: 0.6;"></div>
+              <div class="target-dot"></div>
+            </div>
+
+            <!-- Map Stamp Callout: Đúng tên địa danh Yên Bái -->
+            <div class="map-stamp" id="map-stamp">
+              <span class="map-stamp-title">YÊN BÁI</span>
+            </div>
+          </div>
+
+          <!-- Info Card: Mechanical Clock & Punch Text Block -->
+          <div class="info-card" id="info-card">
+
+            <!-- Cột trái: Đồng hồ kim chỉ 21:00 (Overlay icon: clock atMs 35880 = 1.98s) -->
+            <div class="clock-col" id="clock-col">
+              <div class="clock-dial">
+                <!-- Ticks trên mặt đồng hồ -->
+                <svg width="200" height="200" viewBox="0 0 200 200" style="position: absolute; inset: 0;">
+                  <!-- 12 vạch giờ -->
+                  <g stroke="#141414" stroke-width="3" stroke-linecap="round">
+                    <line x1="100" y1="12" x2="100" y2="24" />
+                    <line x1="100" y1="176" x2="100" y2="188" />
+                    <line x1="12" y1="100" x2="24" y2="100" />
+                    <line x1="176" y1="100" x2="188" y2="100" />
+                    <line x1="162" y1="38" x2="154" y2="46" stroke-width="2" />
+                    <line x1="38" y1="162" x2="46" y2="154" stroke-width="2" />
+                    <line x1="38" y1="38" x2="46" y2="46" stroke-width="2" />
+                    <line x1="162" y1="162" x2="154" y2="154" stroke-width="2" />
+                  </g>
+                </svg>
+
+                <!-- Kim giờ và kim phút -->
+                <div class="hand hour-hand" id="hour-hand"></div>
+                <div class="hand minute-hand" id="minute-hand"></div>
+                <div class="clock-center-dot"></div>
+              </div>
+              <div class="clock-badge">21:00 ĐÊM</div>
+            </div>
+
+            <!-- Cột phải: Punch Phrase & Metadata (Overlay label: YÊN BÁI • 21:00 atMs 36910 = 3.01s) -->
+            <div class="data-col" id="data-col">
+              <div class="badge-datetime" id="badge-datetime">29 THÁNG 8 NĂM 2023</div>
+              <h1 class="main-punch-text" id="main-punch-text">
+                YÊN BÁI <span class="accent-orange">•</span> 21:00
+              </h1>
+              <div class="divider-line" id="divider-line"></div>
+              <p class="sub-punch-text" id="sub-punch-text">
+                THỜI ĐIỂM BẮT ĐẦU
+              </p>
+            </div>
+
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Icon Pin Highlight Overlay at Ms 39250 / 5.35s -->
+      <div id="pin-overlay-highlight" style="opacity: 0;">
+        <svg width="120" height="120" viewBox="0 0 100 100">
+          <circle cx="50" cy="50" r="42" fill="#FF6A1A" stroke="#141414" stroke-width="6" />
+          <path d="M 50 24 C 40 24 32 32 32 42 C 32 56 50 76 50 76 C 50 76 68 56 68 42 C 68 32 60 24 50 24 Z" fill="#141414" />
+          <circle cx="50" cy="40" r="6" fill="#F7F4EC" />
+        </svg>
+      </div>
+
+    </div>
+
+    <!-- Thanh cam cố định mép dưới -->
+    <div id="bottom-brand-bar"></div>
+  </div>
+
+  <script>
+    // Khởi tạo Timeline HyperFrames chính thức (paused: true)
+    const tl = gsap.timeline({ paused: true });
+
+    // 1. Camera zoom-in motion mượt mà suốt thời lượng 5.96s
+    tl.fromTo("#camera-wrapper", 
+      { scale: 0.96 }, 
+      { scale: 1.03, duration: 5.96, ease: "none" }, 
+      0
+    );
+
+    // 2. Entrance (0.0s -> 1.0s): Grow bối cảnh bản đồ và hồ sơ
+    tl.fromTo("#header-bar",
+      { opacity: 0, y: -20 },
+      { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" },
+      0.1
+    );
+
+    tl.fromTo("#map-frame",
+      { scale: 0.88, opacity: 0 },
+      { scale: 1, opacity: 1, duration: 0.8, ease: "power3.out" },
+      0.15
+    );
+
+    // Vẽ đường ranh giới tỉnh Yên Bái
+    const ybPath = document.getElementById("yen-bai-boundary");
+    if (ybPath) {
+      const len = ybPath.getTotalLength();
+      ybPath.style.strokeDasharray = len;
+      tl.fromTo(ybPath, 
+        { strokeDashoffset: len }, 
+        { strokeDashoffset: 0, duration: 1.0, ease: "power2.out" }, 
+        0.3
+      );
+    }
+
+    // Target pin tại Yên Bái
+    tl.fromTo("#pin-target",
+      { scale: 0, opacity: 0 },
+      { scale: 1, opacity: 1, duration: 0.5, ease: "power3.out" },
+      0.7
+    );
+
+    tl.fromTo("#map-stamp",
+      { y: 15, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.5, ease: "power3.out" },
+      0.9
+    );
+
+    // 3. Info Card Entrance: xuất hiện đồng bộ
+    tl.fromTo("#info-card",
+      { y: 40, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.7, ease: "power3.out" },
+      1.1
+    );
+
+    // 4. OVERLAY 1: Icon Clock & Hand Animation (atMs 35880 -> relative 1.98s)
+    // Đồng hồ xoay kim tới 21:00 (Kim giờ dừng ở 9h = 270deg, Kim phút quay 2 vòng dừng ở 12h = 720deg)
+    tl.fromTo("#clock-col",
+      { scale: 0.8, opacity: 0 },
+      { scale: 1, opacity: 1, duration: 0.6, ease: "power3.out" },
+      1.98
+    );
+
+    tl.fromTo("#hour-hand",
+      { rotation: 0 },
+      { rotation: 270, duration: 1.2, ease: "power2.out" },
+      1.98
+    );
+
+    tl.fromTo("#minute-hand",
+      { rotation: 0 },
+      { rotation: 720, duration: 1.4, ease: "power2.out" },
+      1.98
+    );
+
+    // 5. OVERLAY 2: Label "YÊN BÁI • 21:00" Punch Text (atMs 36910 -> relative 3.01s)
+    tl.fromTo("#badge-datetime",
+      { y: -14, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.4, ease: "power3.out" },
+      3.01
+    );
+
+    tl.fromTo("#main-punch-text",
+      { scale: 0.9, opacity: 0 },
+      { scale: 1, opacity: 1, duration: 0.5, ease: "power3.out" },
+      3.15
+    );
+
+    tl.fromTo("#divider-line",
+      { scaleX: 0 },
+      { scaleX: 1, duration: 0.5, ease: "power2.out" },
+      3.35
+    );
+
+    tl.fromTo("#sub-punch-text",
+      { opacity: 0, y: 10 },
+      { opacity: 1, y: 0, duration: 0.4, ease: "power2.out" },
+      3.45
+    );
+
+    // 6. OVERLAY 3: Pin Highlight Pulse (atMs 39250 -> relative 5.35s)
+    tl.fromTo("#pin-overlay-highlight",
+      { scale: 0.3, opacity: 0 },
+      { scale: 1.15, opacity: 1, duration: 0.35, ease: "power3.out" },
+      5.35
+    );
+
+    tl.to("#pin-overlay-highlight",
+      { scale: 1.0, duration: 0.2, ease: "power2.out" },
+      5.70
+    );
+
+    // Đăng ký timeline cho seek engine HyperFrames
+    window.__timelines = window.__timelines || {};
+    window.__timelines["scene-s05"] = tl;
+  </script>
+
+    </template>
+  </body>
+</html>

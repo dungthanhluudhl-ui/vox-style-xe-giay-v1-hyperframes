@@ -1,0 +1,590 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap"
+    />
+      <style>
+      /* hf-safe-colors (tất định từ style-tokens.json) */
+      .hf-text-ink { color: #141414; }
+      .hf-text-light { color: #F7F4EC; }
+      .hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+      .hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+      .hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+      .hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #e7e3d9;
+        font-family: "Be Vietnam Pro", sans-serif;
+        color: #141414;
+        -webkit-font-smoothing: antialiased;
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: #e7e3d9;
+      }
+
+      /* Style DNA standard clip convention */
+      .clip {
+        position: absolute;
+        inset: 0;
+      }
+
+      /* Background Grid (84px pattern, rgba(20,20,20,0.32)) */
+      .grid-canvas {
+        position: absolute;
+        inset: 0;
+        background-image:
+          linear-gradient(to right, rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px),
+          linear-gradient(to bottom, rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px);
+        background-size: 84px 84px;
+        opacity: 0.65;
+        pointer-events: none;
+      }
+
+      /* Vox technical header annotation */
+      .tech-coords {
+        position: absolute;
+        top: 65px;
+        left: 50px;
+        right: 50px;
+        display: flex;
+        justify-content: space-between;
+        font-size: 19px;
+        font-weight: 700;
+        letter-spacing: 2px;
+        color: #141414;
+        text-transform: uppercase;
+        border-bottom: 2px solid rgba(20, 20, 20, 0.25);
+        padding-bottom: 12px;
+      }
+
+      /* Main World Container for camera pan & entrance */
+      #world {
+        position: absolute;
+        inset: 0;
+        will-change: transform;
+      }
+
+      #scene-content {
+        position: absolute;
+        inset: 0;
+        will-change: transform, opacity;
+      }
+
+      /* Diagram Stage - strictly inside safe area [160, 1390] */
+      .diagram-stage {
+        position: absolute;
+        top: 170px;
+        left: 50px;
+        width: 980px;
+        height: 1180px;
+      }
+
+      /* Origin Node (Giai đoạn 01: Mâu thuẫn) */
+      .node-origin {
+        position: absolute;
+        top: 30px;
+        left: 30px;
+        width: 440px;
+        background: #f5f0e4;
+        border: 4px solid #141414;
+        box-shadow: 8px 8px 0px #141414;
+        padding: 24px;
+        z-index: 10;
+        will-change: transform, opacity;
+      }
+
+      .node-tag {
+        display: inline-block;
+        background: #141414;
+        color: #f7f4ec;
+        font-size: 20px;
+        font-weight: 900;
+        padding: 6px 14px;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        margin-bottom: 12px;
+      }
+
+      .node-title {
+        font-size: 38px;
+        font-weight: 900;
+        line-height: 1.2;
+        color: #141414;
+        margin: 0 0 10px 0;
+        text-transform: uppercase;
+      }
+
+      .node-sub {
+        font-size: 22px;
+        font-weight: 700;
+        color: #141414;
+        margin: 0;
+      }
+
+      /* SVG Trajectory Layer */
+      .vector-layer {
+        position: absolute;
+        inset: 0;
+        z-index: 5;
+        pointer-events: none;
+      }
+
+      /* Destination Node (Giai đoạn 02: Tăng tốc rời đi) */
+      .node-dest {
+        position: absolute;
+        top: 510px;
+        right: 30px;
+        width: 460px;
+        background: #f5f0e4;
+        border: 4px solid #141414;
+        box-shadow: 8px 8px 0px #141414;
+        padding: 24px;
+        z-index: 10;
+        will-change: transform, opacity;
+      }
+
+      .dest-tag {
+        display: inline-block;
+        background: #ff6a1a;
+        color: #141414;
+        font-size: 20px;
+        font-weight: 900;
+        padding: 6px 14px;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        margin-bottom: 12px;
+      }
+
+      .dest-title {
+        font-size: 38px;
+        font-weight: 900;
+        line-height: 1.2;
+        color: #141414;
+        margin: 0 0 10px 0;
+        text-transform: uppercase;
+      }
+
+      .dest-sub {
+        font-size: 22px;
+        font-weight: 700;
+        color: #141414;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .arrow-indicator {
+        display: inline-block;
+        width: 14px;
+        height: 14px;
+        border-top: 4px solid #141414;
+        border-right: 4px solid #141414;
+        transform: rotate(45deg);
+      }
+
+      /* Speed indicator streaks */
+      .streak-group {
+        position: absolute;
+        top: 450px;
+        left: 210px;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        z-index: 8;
+      }
+
+      .streak {
+        height: 6px;
+        background: #ff6a1a;
+        border-radius: 3px;
+        transform-origin: left center;
+        will-change: transform, opacity;
+      }
+
+      /* Punch-phrase & Quote Card (Overlay at 80860ms -> 2.44s) */
+      .punch-overlay-container {
+        position: absolute;
+        top: 830px;
+        left: 30px;
+        right: 30px;
+        z-index: 30;
+      }
+
+      .punch-card {
+        background: #141414;
+        border: 4px solid #141414;
+        box-shadow: 12px 12px 0px #ff6a1a;
+        padding: 30px 40px;
+        position: relative;
+        will-change: transform, opacity;
+      }
+
+      .punch-header {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 18px;
+      }
+
+      .punch-badge {
+        background: #ff6a1a;
+        color: #141414;
+        font-size: 20px;
+        font-weight: 900;
+        padding: 6px 16px;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+      }
+
+      .punch-meta {
+        font-size: 20px;
+        font-weight: 700;
+        color: #f7f4ec;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+      }
+
+      .punch-body {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
+
+      .punch-bar {
+        width: 12px;
+        height: 76px;
+        background: #ff6a1a;
+        flex-shrink: 0;
+      }
+
+      .punch-text {
+        font-size: 58px;
+        font-weight: 900;
+        color: #f7f4ec;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        margin: 0;
+        line-height: 1.15;
+      }
+
+      .quote-glyph {
+        color: #ff6a1a;
+        font-size: 64px;
+        line-height: 0;
+        vertical-align: -10px;
+      }
+
+      /* Warning Icon Badge (Overlay at 81640ms -> 3.22s) */
+      .warning-badge {
+        position: absolute;
+        top: -38px;
+        right: 28px;
+        width: 86px;
+        height: 86px;
+        background: #ff6a1a;
+        border: 4px solid #141414;
+        display: grid;
+        place-items: center;
+        box-shadow: 6px 6px 0px #141414;
+        will-change: transform, opacity;
+      }
+
+      .warning-svg {
+        width: 48px;
+        height: 48px;
+      }
+
+      /* Bottom Brand Orange Bar (Fixed, 14px) */
+      .brand-bottom-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 14px;
+        background: #ff6a1a;
+        z-index: 100;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s11"
+      data-width="1080"
+      data-height="1920"
+      data-duration="5.52"
+    >
+      <!-- Background Grid -->
+      <div class="grid-canvas"></div>
+
+      <!-- Top Technical Annotation -->
+      <div class="tech-coords">
+        <span>CHUỖI NHÂN QUẢ</span>
+        <span>HÀNH VI // 01</span>
+      </div>
+
+      <!-- Main Visual Scene Wrapper (Shot S11-1) -->
+      <section id="shot-s11" class="clip" data-start="0" data-duration="5.52">
+        <div id="world">
+          <div id="scene-content">
+            <div class="diagram-stage">
+              <!-- SVG Connector / Trajectory Layer -->
+              <svg
+                class="vector-layer"
+                viewBox="0 0 980 1180"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <!-- Ghost Guide Line -->
+                <path
+                  d="M 250 180 C 250 440, 710 350, 710 510"
+                  stroke="rgba(20,20,20,0.22)"
+                  stroke-width="8"
+                  stroke-dasharray="14 14"
+                />
+                <!-- Main Velocity Stroke -->
+                <path
+                  id="trajectory-path"
+                  d="M 250 180 C 250 440, 710 350, 710 510"
+                  stroke="#FF6A1A"
+                  stroke-width="12"
+                  stroke-linecap="round"
+                />
+                <!-- Distance Marker ticks -->
+                <line
+                  x1="210"
+                  y1="180"
+                  x2="290"
+                  y2="180"
+                  stroke="#141414"
+                  stroke-width="4"
+                />
+                <line
+                  x1="670"
+                  y1="510"
+                  x2="750"
+                  y2="510"
+                  stroke="#141414"
+                  stroke-width="4"
+                />
+              </svg>
+
+              <!-- Node 1: Mâu thuẫn -->
+              <div id="node-origin" class="node-origin">
+                <div class="node-tag">GIAI ĐOẠN 01</div>
+                <h2 class="node-title">MÂU THUẪN</h2>
+                <p class="node-sub">XUNG ĐỘT PHÁT SINH</p>
+              </div>
+
+              <!-- Motion Streaks along Trajectory -->
+              <div class="streak-group">
+                <div id="streak-1" class="streak" style="width: 240px"></div>
+                <div id="streak-2" class="streak" style="width: 360px"></div>
+                <div id="streak-3" class="streak" style="width: 180px"></div>
+              </div>
+
+              <!-- Node 2: Tăng tốc rời đi -->
+              <div id="node-dest" class="node-dest">
+                <div class="dest-tag">GIAI ĐOẠN 02</div>
+                <h2 class="dest-title">TĂNG TỐC RỜI ĐI</h2>
+                <p class="dest-sub">
+                  <span>DI CHUYỂN TỐC ĐỘ</span>
+                  <span class="arrow-indicator"></span>
+                </p>
+              </div>
+
+              <!-- Punch Phrase & Quote Card Overlay -->
+              <div class="punch-overlay-container">
+                <div id="punch-box" class="punch-card">
+                  <div class="punch-header">
+                    <span class="punch-badge">HÀNH VI</span>
+                    <span class="punch-meta">DIỄN BIẾN LEO THANG</span>
+                  </div>
+                  <div class="punch-body">
+                    <div class="punch-bar"></div>
+                    <h1 class="punch-text">
+                      <span class="quote-glyph">“</span>TUYÊN BỐ ĐE DỌA<span class="quote-glyph">”</span>
+                    </h1>
+                  </div>
+
+                  <!-- Warning Icon Badge (Icon vocabulary: warning) -->
+                  <div id="warning-badge" class="warning-badge">
+                    <svg
+                      class="warning-svg"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="#141414"
+                      stroke-width="2.8"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <path
+                        d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"
+                      />
+                      <line x1="12" y1="9" x2="12" y2="13" />
+                      <line x1="12" y1="17" x2="12.01" y2="17" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Signature Orange Bar at Bottom -->
+      <div class="brand-bottom-bar"></div>
+    </div>
+
+    <script>
+      // Single deterministic paused GSAP timeline
+      const tl = gsap.timeline({ paused: true });
+
+      // Path setup for SVG drawing
+      const trajectory = document.getElementById("trajectory-path");
+      const pathLength = trajectory.getTotalLength();
+      trajectory.style.strokeDasharray = pathLength;
+      trajectory.style.strokeDashoffset = pathLength;
+
+      // 1. Initial State Settings (explicit values to avoid CSS conflicts)
+      gsap.set("#scene-content", { y: 120, opacity: 0 });
+      gsap.set("#node-origin", { scale: 0.9, opacity: 0 });
+      gsap.set("#node-dest", { x: 50, opacity: 0 });
+      gsap.set(".streak", { scaleX: 0, opacity: 0 });
+      gsap.set("#punch-box", { scale: 0.85, opacity: 0, y: 30 });
+      gsap.set("#warning-badge", { scale: 0, opacity: 0, rotation: -20 });
+
+      // 2. Entrance Animation: "rise" (0.0s - 0.65s)
+      tl.to(
+        "#scene-content",
+        {
+          y: 0,
+          opacity: 1,
+          duration: 0.65,
+          ease: "power3.out",
+        },
+        0.05
+      );
+
+      // Node Origin appears
+      tl.to(
+        "#node-origin",
+        {
+          scale: 1,
+          opacity: 1,
+          duration: 0.5,
+          ease: "power2.out",
+        },
+        0.2
+      );
+
+      // 3. Trajectory Path Drawing (Vector stroke drawn) (0.6s - 1.6s)
+      tl.to(
+        trajectory,
+        {
+          strokeDashoffset: 0,
+          duration: 1.0,
+          ease: "power2.inOut",
+        },
+        0.6
+      );
+
+      // Destination Node emerges as the vector arrives
+      tl.to(
+        "#node-dest",
+        {
+          x: 0,
+          opacity: 1,
+          duration: 0.55,
+          ease: "power3.out",
+        },
+        1.1
+      );
+
+      // Speed Streaks shoot along the trajectory (1.3s - 1.8s)
+      tl.to(
+        "#streak-1",
+        { scaleX: 1, opacity: 1, duration: 0.35, ease: "power2.out" },
+        1.3
+      );
+      tl.to(
+        "#streak-2",
+        { scaleX: 1, opacity: 1, duration: 0.4, ease: "power2.out" },
+        1.45
+      );
+      tl.to(
+        "#streak-3",
+        { scaleX: 1, opacity: 1, duration: 0.3, ease: "power2.out" },
+        1.6
+      );
+
+      // Camera motion: pan-left (camera moves left -> world drifts right)
+      tl.to(
+        "#world",
+        {
+          x: 36,
+          duration: 4.8,
+          ease: "sine.inOut",
+        },
+        0.5
+      );
+
+      // 4. Overlay 1: Punch Phrase "TUYÊN BỐ ĐE DỌA" (atMs: 80860 -> 2.44s from scene start)
+      tl.to(
+        "#punch-box",
+        {
+          scale: 1,
+          opacity: 1,
+          y: 0,
+          duration: 0.55,
+          ease: "power3.out",
+        },
+        2.44
+      );
+
+      // 5. Overlay 2: Warning Icon (atMs: 81640 -> 3.22s from scene start)
+      tl.to(
+        "#warning-badge",
+        {
+          scale: 1,
+          opacity: 1,
+          rotation: 0,
+          duration: 0.45,
+          ease: "back.out(1.5)",
+        },
+        3.22
+      );
+
+      // Ambient drift to maintain visual vitality up to 5.52s
+      tl.to(
+        "#punch-box",
+        {
+          y: -4,
+          duration: 1.6,
+          ease: "sine.inOut",
+        },
+        3.6
+      );
+
+      // Register timeline strictly to window.__timelines["scene-s11"]
+      window.__timelines["scene-s11"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

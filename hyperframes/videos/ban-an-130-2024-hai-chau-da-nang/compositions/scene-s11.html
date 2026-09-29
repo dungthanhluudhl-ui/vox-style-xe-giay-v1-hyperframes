@@ -1,0 +1,548 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+/* hf-safe-colors (tất định từ style-tokens.json) */
+.hf-text-ink { color: #141414; }
+.hf-text-light { color: #F7F4EC; }
+.hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+.hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+.hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+.hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #0b0f14;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+      }
+
+      /* Root composition */
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: #E7E3D9;
+      }
+
+      /* Quy ước clip HyperFrames */
+      .clip {
+        position: absolute;
+        inset: 0;
+      }
+
+      .overlay-clip {
+        pointer-events: none;
+      }
+
+      /* Lớp camera rig */
+      #camera-rig {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        transform-origin: 50% 50%;
+        will-change: transform;
+      }
+
+      /* Ảnh chính: background-photo phủ toàn màn hình */
+      .hero-image {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center;
+      }
+
+      /* Biến thể nền Spotlight theo Style DNA */
+      .spotlight-vignette {
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(circle at 50% 48%, rgba(20, 20, 20, 0.08) 35%, rgba(20, 20, 20, 0.65) 100%);
+        pointer-events: none;
+      }
+
+      /* Lưới ô vuông 84px đặc trưng Vox */
+      .grid-overlay {
+        position: absolute;
+        inset: 0;
+        background-size: 84px 84px;
+        background-image:
+          linear-gradient(to right, rgba(20, 20, 20, 0.16) 1.5px, transparent 1.5px),
+          linear-gradient(to bottom, rgba(20, 20, 20, 0.16) 1.5px, transparent 1.5px);
+        pointer-events: none;
+      }
+
+      /* Shatter entrance shards */
+      #shatter-overlay {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        z-index: 20;
+      }
+
+      .shard {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+        will-change: transform, opacity;
+      }
+
+      .shard-img {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center;
+      }
+
+      #shard-1 { clip-path: polygon(0 0, 100% 0, 52% 48%, 0 54%); }
+      #shard-2 { clip-path: polygon(100% 0, 100% 52%, 52% 48%); }
+      #shard-3 { clip-path: polygon(0 54%, 52% 48%, 48% 100%, 0 100%); }
+      #shard-4 { clip-path: polygon(52% 48%, 100% 52%, 100% 100%, 48% 100%); }
+
+      /* Đường nứt shatter phát sáng */
+      #seam-svg {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: 25;
+      }
+
+      .seam-line {
+        fill: none;
+        stroke: #FF6A1A;
+        stroke-width: 6;
+        stroke-linecap: round;
+      }
+
+      /* Chớp sáng va chạm */
+      #impact-flash, #collision-flash {
+        position: absolute;
+        inset: 0;
+        background: #F7F4EC;
+        opacity: 0;
+        pointer-events: none;
+        z-index: 30;
+      }
+
+      /* Thanh cam nhận diện cố định đáy khung hình */
+      #bottom-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 1080px;
+        height: 8px;
+        background-color: #FF6A1A;
+        z-index: 999;
+      }
+
+      /* Safe classes bắt buộc */
+      .hf-text-ink { color: #141414; }
+      .hf-text-light { color: #F7F4EC; }
+      .hf-hl-orange { background-color: #FF6A1A; color: #141414; }
+      .hf-plate-ink { background-color: #141414; color: #F7F4EC; }
+
+      /* 1. Label Card: CHẠY NGƯỢC CHIỀU (t=2.48s -> 4.98s) */
+      #label-card {
+        position: absolute;
+        top: 220px;
+        left: 60px;
+        display: flex;
+        align-items: center;
+        background-color: #141414;
+        padding: 16px 28px;
+        border-radius: 4px;
+        border-left: 8px solid #FF6A1A;
+        box-shadow: 0 12px 36px rgba(0, 0, 0, 0.45);
+        will-change: transform, opacity;
+      }
+
+      .badge-warning {
+        background-color: #FF6A1A;
+        color: #141414;
+        font-weight: 900;
+        font-size: 22px;
+        letter-spacing: 1px;
+        padding: 6px 14px;
+        border-radius: 2px;
+        margin-right: 18px;
+        white-space: nowrap;
+      }
+
+      .label-text {
+        color: #F7F4EC;
+        font-weight: 900;
+        font-size: 38px;
+        letter-spacing: 0.5px;
+        white-space: nowrap;
+      }
+
+      /* 2. Ban Icon Card (t=6.58s -> 8.58s) */
+      #ban-card {
+        position: absolute;
+        top: 220px;
+        left: 60px;
+        display: flex;
+        align-items: center;
+        gap: 22px;
+        background-color: #141414;
+        padding: 18px 30px;
+        border-radius: 6px;
+        border: 2px solid rgba(255, 106, 26, 0.5);
+        box-shadow: 0 16px 42px rgba(0, 0, 0, 0.55);
+        will-change: transform, opacity;
+      }
+
+      .ban-icon-svg {
+        width: 86px;
+        height: 86px;
+        display: block;
+        flex-shrink: 0;
+      }
+
+      .ban-icon-path {
+        fill: none;
+        stroke: #FF6A1A;
+        stroke-width: 9;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
+      .ban-card-content {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .ban-tag {
+        color: #FF6A1A;
+        font-size: 22px;
+        font-weight: 900;
+        letter-spacing: 1.5px;
+      }
+
+      .ban-title {
+        color: #F7F4EC;
+        font-size: 40px;
+        font-weight: 900;
+        line-height: 1.2;
+      }
+
+      /* 3. Punch-phrase Card: TĂNG GA TÔNG THẲNG (t=8.49s -> 11.09s) */
+      #punch-card {
+        position: absolute;
+        top: 220px;
+        left: 60px;
+        right: 60px;
+        background-color: #141414;
+        padding: 34px 40px;
+        border-radius: 6px;
+        box-shadow: 0 24px 60px rgba(0, 0, 0, 0.65);
+        will-change: transform, opacity;
+      }
+
+      #punch-bar {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 8px;
+        background-color: #FF6A1A;
+        transform-origin: 0% 50%;
+      }
+
+      .punch-badge {
+        display: inline-block;
+        background-color: #FF6A1A;
+        color: #141414;
+        font-weight: 900;
+        font-size: 24px;
+        letter-spacing: 1px;
+        padding: 6px 16px;
+        border-radius: 2px;
+        margin-bottom: 16px;
+      }
+
+      .punch-headline {
+        color: #F7F4EC;
+        font-size: 64px;
+        font-weight: 900;
+        line-height: 1.22;
+        letter-spacing: -0.5px;
+      }
+    </style>
+
+    <!-- Composition Root: duration = 11.8s (từ 95.6s đến 107.4s) -->
+    <div
+      id="root"
+      data-composition-id="scene-s11"
+      data-start="0"
+      data-width="1080"
+      data-height="1920"
+      data-duration="11.8"
+    >
+      <!-- Base Shot 1 Clip -->
+      <section id="scene-shot" class="clip" data-start="0" data-duration="11.8">
+        <div id="camera-rig">
+          <!-- Hình ảnh chính phủ toàn khung hình -->
+          <img
+            class="hero-image"
+            src="assets/img-09-motorbike-hitting-police-officer.jpg"
+            alt="Cú tông xe máy vào cán bộ công an"
+          />
+
+          <!-- Biến thể nền Spotlight & Grid kẻ -->
+          <div class="spotlight-vignette"></div>
+          <div class="grid-overlay"></div>
+
+          <!-- Shatter Transition-In Overlay (4 mảnh vỡ) -->
+          <div id="shatter-overlay">
+            <div id="shard-1" class="shard">
+              <img class="shard-img" src="assets/img-09-motorbike-hitting-police-officer.jpg" alt="" />
+            </div>
+            <div id="shard-2" class="shard">
+              <img class="shard-img" src="assets/img-09-motorbike-hitting-police-officer.jpg" alt="" />
+            </div>
+            <div id="shard-3" class="shard">
+              <img class="shard-img" src="assets/img-09-motorbike-hitting-police-officer.jpg" alt="" />
+            </div>
+            <div id="shard-4" class="shard">
+              <img class="shard-img" src="assets/img-09-motorbike-hitting-police-officer.jpg" alt="" />
+            </div>
+
+            <svg id="seam-svg" viewBox="0 0 1080 1920" xmlns="http://www.w3.org/2000/svg">
+              <line class="seam-line" x1="0" y1="1036" x2="561" y2="921" />
+              <line class="seam-line" x1="561" y1="921" x2="1080" y2="998" />
+              <line class="seam-line" x1="561" y1="921" x2="518" y2="1920" />
+            </svg>
+          </div>
+
+          <!-- Hiệu ứng chớp sáng khi shatter và va chạm -->
+          <div id="impact-flash"></div>
+          <div id="collision-flash"></div>
+        </div>
+      </section>
+
+      <!-- Overlay 1 Clip: CHẠY NGƯỢC CHIỀU (t=2.48s, duration=2.5s) -->
+      <div id="clip-label" class="clip overlay-clip" data-start="2.48" data-duration="2.5">
+        <div id="label-card">
+          <div class="badge-warning">CẢNH BÁO</div>
+          <div class="label-text">CHẠY NGƯỢC CHIỀU</div>
+        </div>
+      </div>
+
+      <!-- Overlay 2 Clip: Icon BAN (t=6.58s, duration=2.0s) -->
+      <div id="clip-ban" class="clip overlay-clip" data-start="6.58" data-duration="2.0">
+        <div id="ban-card">
+          <svg class="ban-icon-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <circle id="ban-circle" class="ban-icon-path" cx="50" cy="50" r="38" />
+            <line id="ban-slash" class="ban-icon-path" x1="23" y1="23" x2="77" y2="77" />
+          </svg>
+          <div class="ban-card-content">
+            <div class="ban-tag">HIỆU LỆNH</div>
+            <div class="ban-title">DỪNG XE</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Overlay 3 Clip: Punch-phrase TĂNG GA TÔNG THẲNG (t=8.49s, duration=2.6s) -->
+      <div id="clip-punch" class="clip overlay-clip" data-start="8.49" data-duration="2.6">
+        <div id="punch-card">
+          <div id="punch-bar"></div>
+          <div class="punch-badge">HÀNH VI NGUY HIỂM</div>
+          <div class="punch-headline">TĂNG GA TÔNG THẲNG</div>
+        </div>
+      </div>
+
+      <!-- Thanh cam đáy khung hình (cố định xuyên suốt) -->
+      <div id="bottom-bar"></div>
+    </div>
+
+    <!-- GSAP Script -->
+    <script>
+      // Đảm bảo cấu trúc registry HyperFrames
+      window.__timelines = window.__timelines || {};
+
+      // Tạo timeline gốc duy nhất, ở trạng thái paused
+      const tl = gsap.timeline({ paused: true });
+
+      // Thiết lập độ dài stroke cho SVG Ban Icon
+      const circleEl = document.getElementById("ban-circle");
+      const slashEl = document.getElementById("ban-slash");
+      const cLen = circleEl.getTotalLength();
+      const sLen = slashEl.getTotalLength();
+
+      circleEl.style.strokeDasharray = cLen;
+      circleEl.style.strokeDashoffset = cLen;
+      slashEl.style.strokeDasharray = sLen;
+      slashEl.style.strokeDashoffset = sLen;
+
+      /* ========================================================
+         PHASE 1: SHATTER ENTRANCE (t = 0 -> 0.6s)
+         ======================================================== */
+      // 4 mảnh vỡ lao vào ghép thành khung hình hoàn chỉnh
+      tl.fromTo(
+        "#shard-1",
+        { x: -70, y: -50, rotation: -3, opacity: 0.4 },
+        { x: 0, y: 0, rotation: 0, opacity: 1, duration: 0.46, ease: "power4.out" },
+        0
+      );
+      tl.fromTo(
+        "#shard-2",
+        { x: 65, y: -45, rotation: 2.5, opacity: 0.4 },
+        { x: 0, y: 0, rotation: 0, opacity: 1, duration: 0.46, ease: "power4.out" },
+        0
+      );
+      tl.fromTo(
+        "#shard-3",
+        { x: -60, y: 65, rotation: 2, opacity: 0.4 },
+        { x: 0, y: 0, rotation: 0, opacity: 1, duration: 0.46, ease: "power4.out" },
+        0
+      );
+      tl.fromTo(
+        "#shard-4",
+        { x: 60, y: 70, rotation: -2.5, opacity: 0.4 },
+        { x: 0, y: 0, rotation: 0, opacity: 1, duration: 0.46, ease: "power4.out" },
+        0
+      );
+
+      // Đường nứt cam lóe sáng rồi mờ dần
+      tl.fromTo(
+        "#seam-svg",
+        { opacity: 1 },
+        { opacity: 0, duration: 0.35, ease: "power2.out" },
+        0.32
+      );
+
+      // Chớp trắng impact khi các mảnh va vào nhau
+      tl.fromTo(
+        "#impact-flash",
+        { opacity: 0.65 },
+        { opacity: 0, duration: 0.28, ease: "power2.out" },
+        0.42
+      );
+
+      // Thu gọn lớp shatter sau khi hoàn tất
+      tl.to("#shatter-overlay", { opacity: 0, duration: 0.08 }, 0.62);
+
+      /* ========================================================
+         PHASE 2: CAMERA MOTION (Slow Zoom-in & Climax Punch)
+         ======================================================== */
+      // Camera zoom-in chậm dần đều tới trước thời điểm va chạm
+      tl.fromTo(
+        "#camera-rig",
+        { scale: 1.0, x: 0, y: 0 },
+        { scale: 1.06, duration: 8.49, ease: "none" },
+        0.6
+      );
+
+      /* ========================================================
+         PHASE 3: OVERLAY 1 - LABEL "CHẠY NGƯỢC CHIỀU" (t = 2.48s)
+         ======================================================== */
+      tl.fromTo(
+        "#label-card",
+        { x: -60, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.45, ease: "power3.out" },
+        2.52
+      );
+      tl.to(
+        "#label-card",
+        { x: -35, opacity: 0, duration: 0.32, ease: "power2.in" },
+        4.64
+      );
+
+      /* ========================================================
+         PHASE 4: OVERLAY 2 - BAN ICON "HIỆU LỆNH DỪNG XE" (t = 6.58s)
+         ======================================================== */
+      tl.fromTo(
+        "#ban-card",
+        { scale: 0.78, opacity: 0 },
+        { scale: 1.0, opacity: 1, duration: 0.4, ease: "power3.out" },
+        6.62
+      );
+      // Tự vẽ đường nét vòng tròn và đường chéo
+      tl.to("#ban-circle", { strokeDashoffset: 0, duration: 0.42, ease: "power2.out" }, 6.78);
+      tl.to("#ban-slash", { strokeDashoffset: 0, duration: 0.32, ease: "power2.out" }, 7.08);
+
+      tl.to(
+        "#ban-card",
+        { scale: 0.9, opacity: 0, duration: 0.28, ease: "power2.in" },
+        8.24
+      );
+
+      /* ========================================================
+         PHASE 5: CLIMAX IMPACT & PUNCH-PHRASE (t = 8.49s)
+         ======================================================== */
+      // Cú tông xe: giật nhanh, nảy nhẹ và zoom-in kịch tính
+      tl.to(
+        "#camera-rig",
+        { scale: 1.15, x: -18, y: 14, duration: 0.08, ease: "power4.out" },
+        8.49
+      );
+      tl.to(
+        "#camera-rig",
+        { x: 14, y: -10, duration: 0.08, ease: "power2.inOut" },
+        8.57
+      );
+      tl.to(
+        "#camera-rig",
+        { x: -6, y: 6, duration: 0.08, ease: "power2.inOut" },
+        8.65
+      );
+      tl.to(
+        "#camera-rig",
+        { x: 0, y: 0, scale: 1.11, duration: 0.4, ease: "power2.out" },
+        8.73
+      );
+
+      // Chớp sáng va chạm trực diện
+      tl.fromTo(
+        "#collision-flash",
+        { opacity: 0.6 },
+        { opacity: 0, duration: 0.32, ease: "power2.out" },
+        8.49
+      );
+
+      // Punch-phrase xuất hiện với độ nảy mạnh mẽ
+      tl.fromTo(
+        "#punch-card",
+        { scale: 1.2, opacity: 0 },
+        { scale: 1.0, opacity: 1, duration: 0.38, ease: "power4.out" },
+        8.52
+      );
+      tl.fromTo(
+        "#punch-bar",
+        { scaleX: 0 },
+        { scaleX: 1, duration: 0.35, ease: "power2.out" },
+        8.62
+      );
+
+      // Ẩn punch card trước khi clip kết thúc
+      tl.to(
+        "#punch-card",
+        { opacity: 0, y: -25, duration: 0.3, ease: "power2.in" },
+        10.74
+      );
+
+      // Đăng ký timeline cho HyperFrames seek runtime
+      window.__timelines["scene-s11"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

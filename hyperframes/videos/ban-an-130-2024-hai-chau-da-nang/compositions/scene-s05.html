@@ -1,0 +1,600 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap">
+      <style>
+    /* hf-safe-colors (chuẩn WCAG từ style-tokens.json) */
+    .hf-text-ink { color: #141414; }
+    .hf-text-light { color: #F7F4EC; }
+    .hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+    .hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+    .hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+    .hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      margin: 0;
+      padding: 0;
+      width: 1080px;
+      height: 1920px;
+      background-color: #E7E3D9;
+      font-family: "Be Vietnam Pro", sans-serif;
+      color: #141414;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+    #root {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #E7E3D9;
+      background-image: 
+        linear-gradient(to right, rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px),
+        linear-gradient(to bottom, rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px);
+      background-size: 84px 84px;
+    }
+    .clip {
+      position: absolute;
+      inset: 0;
+    }
+    
+    /* Thanh cam đáy khung hình nhận diện thương hiệu cố định */
+    .brand-bottom-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 10px;
+      background-color: #FF6A1A;
+      z-index: 100;
+    }
+
+    /* Khung Camera Rig cho chuyển động xoay spiral và zoom-out */
+    #camera-rig {
+      position: absolute;
+      inset: 0;
+      transform-origin: 540px 720px;
+      will-change: transform, opacity;
+    }
+
+    /* Dải không gian nội dung an toàn (Safe Zone Y:160 đến Y:1390 - kết thúc trước Y:1000) */
+    .content-area {
+      position: absolute;
+      top: 180px;
+      left: 60px;
+      width: 960px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* Thanh thông tin Header đồ họa đầu trang */
+    .header-bar {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 52px;
+      margin-bottom: 18px;
+      will-change: transform, opacity;
+    }
+    .badge-ink {
+      background-color: #141414;
+      color: #FF6A1A;
+      font-size: 22px;
+      font-weight: 900;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      padding: 8px 20px;
+      border-radius: 6px;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .badge-card {
+      background-color: #F5F0E4;
+      color: #141414;
+      border: 2px solid #141414;
+      font-size: 20px;
+      font-weight: 900;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      padding: 7px 18px;
+      border-radius: 6px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Thẻ đồ họa Trục thời gian (Timeline Ruler) */
+    #timeline-ruler-card {
+      width: 100%;
+      background-color: #141414;
+      border-radius: 12px;
+      padding: 18px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 20px;
+      box-shadow: 0 8px 24px rgba(20, 20, 20, 0.15);
+      will-change: transform, opacity;
+    }
+    .ruler-top-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .ruler-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #F7F4EC;
+      font-size: 22px;
+      font-weight: 900;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+    .ruler-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background-color: #FF6A1A;
+    }
+    .ruler-badge {
+      background-color: #FF6A1A;
+      color: #141414;
+      font-size: 18px;
+      font-weight: 900;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      padding: 4px 14px;
+      border-radius: 6px;
+    }
+    .ruler-track-wrapper {
+      position: relative;
+      width: 100%;
+      height: 36px;
+      display: flex;
+      align-items: center;
+    }
+    .ruler-track {
+      position: relative;
+      width: 100%;
+      height: 8px;
+      background-color: rgba(247, 244, 236, 0.2);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .ruler-progress {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: #FF6A1A;
+      transform-origin: left center;
+      will-change: transform;
+    }
+    /* Scrubber pin đặt vị trí căn giữa dọc bằng top cố định, dùng GSAP x để di chuyển không giật */
+    .ruler-scrubber {
+      position: absolute;
+      left: 60px;
+      top: 6px;
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      will-change: transform;
+    }
+    .scrubber-pin {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background-color: #FF6A1A;
+      border: 3px solid #F7F4EC;
+      box-shadow: 0 0 10px rgba(255, 106, 26, 0.8);
+    }
+    .ruler-labels {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 19px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      padding-top: 4px;
+      border-top: 1px solid rgba(247, 244, 236, 0.15);
+    }
+    .label-target {
+      color: #FF6A1A;
+      font-weight: 900;
+    }
+    .label-now {
+      color: #E7E3D9;
+    }
+
+    /* Vùng chứa đồng hồ trung tâm & vòng xoáy rewind (Overlay 1: clock, atMs: 36360 -> 1.96s) */
+    .clock-container {
+      position: relative;
+      width: 420px;
+      height: 380px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 24px;
+    }
+    .vortex-svg {
+      position: absolute;
+      inset: -50px;
+      width: 520px;
+      height: 480px;
+      pointer-events: none;
+      transform-origin: center;
+      opacity: 0;
+      will-change: transform, opacity;
+    }
+    .clock-svg {
+      position: relative;
+      width: 340px;
+      height: 340px;
+      filter: drop-shadow(0 12px 28px rgba(20, 20, 20, 0.18));
+      transform-origin: center;
+      opacity: 0;
+      will-change: transform, opacity;
+    }
+
+    /* Thẻ Punch Phrase đích (Overlay 2: punch-phrase, text: "22:00 ĐÊM 13/07", atMs: 37380 -> 2.98s) */
+    #punch-phrase-card {
+      width: 100%;
+      background-color: #141414;
+      border-radius: 16px;
+      border-left: 14px solid #FF6A1A;
+      padding: 24px 34px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      box-shadow: 0 16px 36px rgba(20, 20, 20, 0.25);
+      transform-origin: center;
+      opacity: 0;
+      will-change: transform, opacity;
+    }
+    .card-top-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .tag-orange {
+      background-color: #FF6A1A;
+      color: #141414;
+      font-size: 20px;
+      font-weight: 900;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      padding: 6px 16px;
+      border-radius: 6px;
+      display: inline-block;
+    }
+    .tag-status {
+      color: #FF6A1A;
+      font-size: 20px;
+      font-weight: 900;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .tag-status::before {
+      content: "";
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background-color: #FF6A1A;
+      display: inline-block;
+    }
+    .punch-headline {
+      color: #F7F4EC;
+      font-size: 68px;
+      font-weight: 900;
+      line-height: 1.15;
+      letter-spacing: -0.5px;
+      text-transform: uppercase;
+    }
+    .card-bottom-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-top: 1.5px solid rgba(247, 244, 236, 0.15);
+      padding-top: 12px;
+    }
+    .sub-detail {
+      color: #E7E3D9;
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+    .lock-stamp {
+      background-color: #F5F0E4;
+      color: #141414;
+      font-size: 18px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      padding: 4px 12px;
+      border-radius: 4px;
+    }
+  </style>
+
+  <div
+    id="root"
+    data-composition-id="scene-s05"
+    data-width="1080"
+    data-height="1920"
+    data-duration="5"
+    data-start="0"
+  >
+    <!-- Scene Container (Duration 5.0s = 150 frames @ 30fps) -->
+    <section id="scene-s05" class="clip" data-start="0" data-duration="5">
+      <!-- Camera Rig Container for Spiral Entrance & Zoom-Out Motion -->
+      <div id="camera-rig">
+        <div class="content-area">
+          
+          <!-- Top Metadata Header -->
+          <div class="header-bar">
+            <div class="badge-ink">
+              <span>HỒ SƠ VỤ VIỆC</span>
+            </div>
+            <div class="badge-card">
+              <span>⟲ TUA NGƯỢC THỜI GIAN</span>
+            </div>
+          </div>
+
+          <!-- Timeline Ruler Graphic Component -->
+          <div id="timeline-ruler-card">
+            <div class="ruler-top-row">
+              <div class="ruler-title">
+                <span class="ruler-dot"></span>
+                <span>TRỤC THỜI GIAN</span>
+              </div>
+              <div class="ruler-badge">
+                <span>◄◄ TUA NGƯỢC</span>
+              </div>
+            </div>
+            <div class="ruler-track-wrapper">
+              <div class="ruler-track">
+                <div id="ruler-progress" class="ruler-progress"></div>
+              </div>
+              <div id="ruler-scrubber" class="ruler-scrubber">
+                <div class="scrubber-pin"></div>
+              </div>
+            </div>
+            <div class="ruler-labels">
+              <span class="label-target">◄ QUÁ KHỨ</span>
+              <span class="label-now">HIỆN TẠI ►</span>
+            </div>
+          </div>
+
+          <!-- Central Clock Assembly & Rewind Spiral Vortex -->
+          <div class="clock-container">
+            <!-- Spiral Vortex Decoratives -->
+            <svg id="vortex-svg" class="vortex-svg" viewBox="0 0 520 480" aria-hidden="true">
+              <g id="vortex-group" style="transform-origin: 260px 240px;">
+                <circle cx="260" cy="240" r="230" stroke="rgba(20,20,20,0.28)" stroke-width="2" stroke-dasharray="16 12" fill="none" />
+                <circle cx="260" cy="240" r="205" stroke="#FF6A1A" stroke-width="2.5" stroke-dasharray="8 14" fill="none" />
+                <circle cx="260" cy="240" r="180" stroke="rgba(20,20,20,0.35)" stroke-width="1.5" stroke-dasharray="4 8" fill="none" />
+                <!-- Rewind Direction Flow Arcs -->
+                <path d="M 260 20 A 220 220 0 0 0 50 160" fill="none" stroke="#FF6A1A" stroke-width="3.5" stroke-linecap="round" />
+                <path d="M 260 460 A 220 220 0 0 0 470 320" fill="none" stroke="#FF6A1A" stroke-width="3.5" stroke-linecap="round" />
+              </g>
+            </svg>
+
+            <!-- SVG Clock Graphic (Overlay 1: clock, atMs: 36360 -> 1.96s) -->
+            <svg id="clock-svg" class="clock-svg" viewBox="0 0 360 360" aria-label="Đồng hồ tua ngược">
+              <!-- Dial Background & Rim -->
+              <circle id="clock-dial-bg" cx="180" cy="180" r="150" fill="#F5F0E4" />
+              <circle id="clock-dial-border" cx="180" cy="180" r="150" fill="none" stroke="#141414" stroke-width="6" />
+              <circle cx="180" cy="180" r="138" fill="none" stroke="rgba(20,20,20,0.25)" stroke-width="1.5" stroke-dasharray="4 4" />
+
+              <!-- Hour Tick Marks -->
+              <line x1="180" y1="36" x2="180" y2="52" stroke="#141414" stroke-width="5" stroke-linecap="round" />
+              <line x1="324" y1="180" x2="308" y2="180" stroke="#141414" stroke-width="5" stroke-linecap="round" />
+              <line x1="180" y1="324" x2="180" y2="308" stroke="#141414" stroke-width="5" stroke-linecap="round" />
+              <line x1="36" y1="180" x2="52" y2="180" stroke="#141414" stroke-width="5" stroke-linecap="round" />
+
+              <line x1="180" y1="38" x2="180" y2="48" stroke="#141414" stroke-width="2.5" transform="rotate(30 180 180)" />
+              <line x1="180" y1="38" x2="180" y2="48" stroke="#141414" stroke-width="2.5" transform="rotate(60 180 180)" />
+              <line x1="180" y1="38" x2="180" y2="48" stroke="#141414" stroke-width="2.5" transform="rotate(120 180 180)" />
+              <line x1="180" y1="38" x2="180" y2="48" stroke="#141414" stroke-width="2.5" transform="rotate(150 180 180)" />
+              <line x1="180" y1="38" x2="180" y2="48" stroke="#141414" stroke-width="2.5" transform="rotate(210 180 180)" />
+              <line x1="180" y1="38" x2="180" y2="48" stroke="#141414" stroke-width="2.5" transform="rotate(240 180 180)" />
+              <!-- Điểm đánh dấu vị trí 10:00 (tức 22:00) được làm nổi bật với màu cam -->
+              <line x1="180" y1="35" x2="180" y2="55" stroke="#FF6A1A" stroke-width="6" stroke-linecap="round" transform="rotate(300 180 180)" />
+              <line x1="180" y1="38" x2="180" y2="48" stroke="#141414" stroke-width="2.5" transform="rotate(330 180 180)" />
+
+              <!-- Numbers -->
+              <text x="180" y="74" font-family="'Be Vietnam Pro', sans-serif" font-weight="900" font-size="28" fill="#141414" text-anchor="middle" dominant-baseline="central">12</text>
+              <text x="286" y="180" font-family="'Be Vietnam Pro', sans-serif" font-weight="900" font-size="28" fill="#141414" text-anchor="middle" dominant-baseline="central">3</text>
+              <text x="180" y="286" font-family="'Be Vietnam Pro', sans-serif" font-weight="900" font-size="28" fill="#141414" text-anchor="middle" dominant-baseline="central">6</text>
+              <text x="74" y="180" font-family="'Be Vietnam Pro', sans-serif" font-weight="900" font-size="28" fill="#141414" text-anchor="middle" dominant-baseline="central">9</text>
+
+              <!-- Mũi tên chỉ hướng tua ngược ngược chiều kim đồng hồ -->
+              <path d="M 180 100 A 80 80 0 0 0 110 150" fill="none" stroke="#FF6A1A" stroke-width="3" stroke-linecap="round" />
+              <polygon points="106,140 113,154 121,144" fill="#FF6A1A" />
+
+              <!-- Kim phút (Minute Hand) -->
+              <g id="minute-hand" style="transform-origin: 180px 180px;">
+                <line x1="180" y1="180" x2="180" y2="66" stroke="#141414" stroke-width="6" stroke-linecap="round" />
+                <circle cx="180" cy="66" r="4.5" fill="#FF6A1A" />
+              </g>
+
+              <!-- Kim giờ (Hour Hand - dừng tại góc 300 độ tương ứng 22:00) -->
+              <g id="hour-hand" style="transform-origin: 180px 180px;">
+                <line x1="180" y1="180" x2="180" y2="104" stroke="#141414" stroke-width="10" stroke-linecap="round" />
+              </g>
+
+              <!-- Trục giữa đồng hồ -->
+              <g id="clock-center-hub" style="transform-origin: 180px 180px;">
+                <circle cx="180" cy="180" r="14" fill="#FF6A1A" stroke="#141414" stroke-width="4" />
+                <circle cx="180" cy="180" r="4" fill="#141414" />
+              </g>
+            </svg>
+          </div>
+
+          <!-- Thẻ Punch Phrase đích (Overlay 2: punch-phrase "22:00 ĐÊM 13/07", atMs: 37380 -> 2.98s) -->
+          <div id="punch-phrase-card">
+            <div class="card-top-row">
+              <span class="tag-orange">MỐC THỜI GIAN</span>
+              <span class="tag-status">ĐÃ XÁC ĐỊNH</span>
+            </div>
+            <h1 class="punch-headline">22:00 ĐÊM 13/07</h1>
+            <div class="card-bottom-row">
+              <span class="sub-detail">THỜI GIAN ĐÃ KHÓA</span>
+              <span class="lock-stamp">HOÀN TẤT TUA NGƯỢC</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- Bottom Brand Bar -->
+    <div class="brand-bottom-bar" data-start="0" data-duration="5"></div>
+  </div>
+
+  <script>
+    // Khởi tạo Timeline GSAP tạm dừng (paused: true) cho việc seek tất định
+    const tl = gsap.timeline({ paused: true });
+
+    // 1. Vào cảnh: Xoay Spiral Rewind & Camera Zoom-Out (0.0s - 1.0s)
+    tl.fromTo(
+      "#camera-rig",
+      { scale: 1.22, rotation: -16, opacity: 0 },
+      { scale: 1.04, rotation: 0, opacity: 1, duration: 1.0, ease: "power3.out" },
+      0
+    );
+
+    // Chuyển động zoom-out nhẹ liên tục xuyên suốt cảnh (1.0s - 5.0s)
+    tl.to(
+      "#camera-rig",
+      { scale: 1.0, duration: 4.0, ease: "sine.out" },
+      1.0
+    );
+
+    // 2. Xuất hiện Header và Thẻ Trục thời gian (0.15s - 0.75s)
+    tl.fromTo(
+      ".header-bar",
+      { y: -20, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.4, ease: "power3.out" },
+      0.15
+    );
+
+    tl.fromTo(
+      "#timeline-ruler-card",
+      { y: -20, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.45, ease: "power3.out" },
+      0.3
+    );
+
+    // Tua ngược con trỏ scrubber & thanh tiến trình bằng transform GPU (x & scaleX) không gây snap layout
+    tl.fromTo(
+      "#ruler-scrubber",
+      { x: 740 },
+      { x: 0, duration: 1.4, ease: "power2.inOut" },
+      0.5
+    );
+    tl.fromTo(
+      "#ruler-progress",
+      { scaleX: 0.95 },
+      { scaleX: 0.15, duration: 1.4, ease: "power2.inOut" },
+      0.5
+    );
+
+    // 3. Xuất hiện Icon Đồng hồ (Overlay 1: clock, đúng mốc atMs: 36360 -> tương ứng 1.96s)
+    tl.fromTo(
+      "#clock-svg",
+      { scale: 0, opacity: 0 },
+      { scale: 1, opacity: 1, duration: 0.45, ease: "power3.out" },
+      1.96
+    );
+
+    tl.fromTo(
+      "#vortex-svg",
+      { scale: 0.7, opacity: 0 },
+      { scale: 1, opacity: 1, duration: 0.45, ease: "power2.out" },
+      1.96
+    );
+
+    // Vòng xoáy tua ngược quay liên tục từ lúc đồng hồ xuất hiện
+    tl.fromTo(
+      "#vortex-group",
+      { rotation: 180 },
+      { rotation: -180, duration: 2.8, ease: "linear" },
+      1.96
+    );
+
+    // Kim phút quay ngược nhanh nhiều vòng và dừng chính xác tại vị trí 12h (góc 0 độ) tại 2.98s
+    tl.fromTo(
+      "#minute-hand",
+      { rotation: 1440 },
+      { rotation: 0, duration: 0.98, ease: "power3.out" },
+      2.0
+    );
+
+    // Kim giờ quay ngược nhanh và dừng chính xác tại vị trí 22h (góc 300 độ) tại 2.98s
+    tl.fromTo(
+      "#hour-hand",
+      { rotation: 1380 },
+      { rotation: 300, duration: 0.98, ease: "power3.out" },
+      2.0
+    );
+
+    // 4. Xuất hiện Thẻ Punch Phrase đích (Overlay 2: punch-phrase, đúng mốc atMs: 37380 -> 2.98s)
+    // Hiệu ứng phản hồi khóa mốc thời gian trên viền mặt đồng hồ
+    tl.fromTo(
+      "#clock-dial-border",
+      { stroke: "#FF6A1A", strokeWidth: 10 },
+      { stroke: "#141414", strokeWidth: 6, duration: 0.35, ease: "power2.out" },
+      2.98
+    );
+
+    tl.fromTo(
+      "#clock-center-hub",
+      { scale: 1.5 },
+      { scale: 1.0, duration: 0.3, ease: "power3.out" },
+      2.98
+    );
+
+    // Thẻ Punch Phrase xuất hiện dứt khoát
+    tl.fromTo(
+      "#punch-phrase-card",
+      { scale: 0.85, opacity: 0, y: -15 },
+      { scale: 1, opacity: 1, y: 0, duration: 0.5, ease: "power3.out" },
+      2.98
+    );
+
+    // Nhịp xung tín hiệu trạng thái đã khóa (hữu hạn, 3 chu kỳ tất định)
+    tl.fromTo(
+      ".tag-status",
+      { opacity: 0.3 },
+      { opacity: 1.0, duration: 0.25, repeat: 2, yoyo: true, ease: "sine.inOut" },
+      3.4
+    );
+
+    // Đăng ký timeline đồng bộ với trình seek của HyperFrames
+    window.__timelines = window.__timelines || {};
+    window.__timelines["scene-s05"] = tl;
+  </script>
+
+    </template>
+  </body>
+</html>
