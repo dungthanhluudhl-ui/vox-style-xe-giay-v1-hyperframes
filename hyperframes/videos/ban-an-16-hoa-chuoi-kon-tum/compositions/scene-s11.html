@@ -1,0 +1,388 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap"
+    />
+      <style>
+/* hf-safe-colors (tất định từ style-tokens.json) */
+.hf-text-ink { color: #141414; }
+.hf-text-light { color: #F7F4EC; }
+.hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+.hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+.hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+.hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+
+      /* Quy ước clip chuẩn của HyperFrames: không set px cứng */
+      .clip {
+        position: absolute;
+        inset: 0;
+      }
+
+      /* Bảng màu WCAG chuẩn từ style-tokens.json */
+      .hf-text-ink {
+        color: #141414;
+      }
+      .hf-text-light {
+        color: #f7f4ec;
+      }
+      .hf-hl-orange {
+        background-color: #ff6a1a;
+        color: #141414;
+      }
+      .hf-plate-ink {
+        background-color: #141414;
+        color: #f7f4ec;
+      }
+      .hf-plate-ink-orange {
+        background-color: #141414;
+        color: #ff6a1a;
+      }
+      .hf-plate-paper {
+        background-color: #e7e3d9;
+        color: #141414;
+      }
+
+      /* Nền lưới giấy ngà biến thể spotlight */
+      .grid-bg {
+        position: absolute;
+        inset: 0;
+        background-color: #e7e3d9;
+        background-image:
+          linear-gradient(rgba(20, 20, 20, 0.28) 1.5px, transparent 1.5px),
+          linear-gradient(90deg, rgba(20, 20, 20, 0.28) 1.5px, transparent 1.5px);
+        background-size: 84px 84px;
+      }
+
+      /* Wrapper ảnh để thực hiện camera motion và crop đặc tả */
+      #hero-wrapper {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+        transform-origin: 50% 35%;
+      }
+
+      #hero-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: 50% 26%;
+        display: block;
+        transform-origin: 50% 35%;
+      }
+
+      /* Hiệu ứng spotlight vignette tối tập trung vào ánh mắt và quai hàm */
+      .spotlight-vignette {
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(
+          circle at 50% 36%,
+          rgba(20, 20, 20, 0.05) 0%,
+          rgba(20, 20, 20, 0.42) 50%,
+          rgba(20, 20, 20, 0.88) 88%,
+          rgba(20, 20, 20, 0.98) 100%
+        );
+        pointer-events: none;
+      }
+
+      /* Cấu trúc layer cho các overlay có thời gian */
+      .overlay-layer {
+        display: flex;
+        justify-content: center;
+        pointer-events: none;
+      }
+
+      /* Overlay 1: Biểu tượng tiền bạc rẻ rúng */
+      .overlay-top-1 {
+        align-items: flex-start;
+        padding-top: 250px;
+        z-index: 20;
+      }
+
+      #icon-card {
+        width: 176px;
+        height: 176px;
+        background-color: #141414;
+        border-radius: 32px;
+        border: 4px solid #ff6a1a;
+        box-shadow: 0 16px 40px rgba(0, 0, 0, 0.55);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transform-origin: 50% 50%;
+      }
+
+      .draw-stroke {
+        fill: none;
+        stroke: #ff6a1a;
+        stroke-width: 6;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
+      /* Overlay 2: Nhãn vẽ tay "CHẲNG MẤY ĐỒNG" */
+      .overlay-top-2 {
+        align-items: flex-start;
+        padding-top: 468px;
+        z-index: 21;
+      }
+
+      #label-badge {
+        background-color: #ff6a1a;
+        color: #141414;
+        font-size: 48px;
+        font-weight: 900;
+        line-height: 1.2;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        padding: 18px 44px;
+        border-radius: 16px;
+        border: 4px solid #141414;
+        box-shadow: 0 14px 36px rgba(0, 0, 0, 0.45);
+        white-space: nowrap;
+        transform-origin: 50% 50%;
+      }
+
+      /* Overlay 3: Punch phrase "TỔN THƯƠNG TỰ ÁI" */
+      .overlay-bottom {
+        align-items: flex-start;
+        padding-top: 1200px;
+        z-index: 30;
+      }
+
+      #punch-plate {
+        background-color: #141414;
+        padding: 30px 52px;
+        border-radius: 22px;
+        border: 4px solid #ff6a1a;
+        box-shadow: 0 20px 54px rgba(0, 0, 0, 0.65);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        transform-origin: 50% 50%;
+      }
+
+      .punch-text {
+        font-size: 68px;
+        font-weight: 900;
+        line-height: 1.25;
+        color: #f7f4ec;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        text-align: center;
+        white-space: nowrap;
+      }
+
+      #punch-accent-bar {
+        display: block;
+        width: 100%;
+        height: 6px;
+        background-color: #ff6a1a;
+        border-radius: 3px;
+        margin-top: 18px;
+        transform-origin: left center;
+      }
+
+      /* Thanh cam nhận diện thương hiệu cố định đáy khung hình */
+      #bottom-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 10px;
+        background-color: #ff6a1a;
+        z-index: 99;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s11"
+      data-width="1080"
+      data-height="1920"
+      data-duration="8.68"
+      data-fps="30"
+    >
+      <!-- Shot 1: Nền spotlight + Hero Cutout đặc tả khuôn mặt Thắng -->
+      <section id="shot-1" class="clip" data-start="0" data-duration="8.68">
+        <div class="grid-bg"></div>
+        <div id="hero-wrapper">
+          <img
+            id="hero-img"
+            src="assets/img-03-angry-suspect-interrogation-cutout.jpg"
+            alt="Thắng thẩm vấn căng thẳng"
+          />
+          <div class="spotlight-vignette"></div>
+        </div>
+      </section>
+
+      <!-- Overlay 1: Biểu tượng money tự vẽ dần -->
+      <div
+        id="overlay-icon"
+        class="clip overlay-layer overlay-top-1"
+        data-start="1.36"
+        data-duration="2.2"
+      >
+        <div id="icon-card" class="hf-plate-ink">
+          <svg class="money-svg" viewBox="0 0 160 160" width="120" height="120">
+            <path class="draw-stroke" d="M 24 46 H 136 V 114 H 24 Z" />
+            <path class="draw-stroke" d="M 80 58 A 22 22 0 1 1 79.9 58 Z" />
+            <path class="draw-stroke" d="M 42 62 V 98 M 118 62 V 98" />
+            <path class="draw-stroke" d="M 74 72 H 86 M 80 68 V 92 M 72 81 H 88" />
+          </svg>
+        </div>
+      </div>
+
+      <!-- Overlay 2: Label "CHẲNG MẤY ĐỒNG" -->
+      <div
+        id="overlay-label"
+        class="clip overlay-layer overlay-top-2"
+        data-start="3.31"
+        data-duration="2.2"
+      >
+        <div id="label-badge" class="hf-hl-orange">CHẲNG MẤY ĐỒNG</div>
+      </div>
+
+      <!-- Overlay 3: Punch phrase "TỔN THƯƠNG TỰ ÁI" -->
+      <div
+        id="overlay-punch"
+        class="clip overlay-layer overlay-bottom"
+        data-start="6.41"
+        data-duration="2.27"
+      >
+        <div id="punch-plate" class="hf-plate-ink">
+          <div class="punch-text">TỔN THƯƠNG TỰ ÁI</div>
+          <div id="punch-accent-bar"></div>
+        </div>
+      </div>
+
+      <!-- Dải cam đáy khung hình nhận diện thương hiệu -->
+      <div id="bottom-bar"></div>
+    </div>
+
+    <script>
+      // Đo độ dài thực tế của từng đường nét SVG để chuẩn bị hiệu ứng vẽ dần
+      document.querySelectorAll(".draw-stroke").forEach((p) => {
+        const len = Math.ceil(p.getTotalLength());
+        p.dataset.len = len;
+        p.style.strokeDasharray = `${len}`;
+        p.style.strokeDashoffset = `${len}`;
+      });
+
+      // Khởi tạo timeline gốc PAUSED bắt buộc cho HyperFrames
+      const tl = gsap.timeline({ paused: true });
+
+      // 1. Scene Entrance (transitionIn: "grow") & Camera Motion (zoom-in)
+      tl.fromTo(
+        "#hero-wrapper",
+        { scale: 0.94, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.65, ease: "power3.out" },
+        0
+      );
+
+      tl.fromTo(
+        "#hero-img",
+        { scale: 1.05, y: 0 },
+        { scale: 1.25, y: -25, duration: 8.68, ease: "sine.out" },
+        0
+      );
+
+      tl.fromTo(
+        ".spotlight-vignette",
+        { opacity: 0.82 },
+        { opacity: 1.0, duration: 8.68, ease: "sine.inOut" },
+        0
+      );
+
+      // 2. Overlay 1: Biểu tượng money xuất hiện (1.36s) và tự vẽ dần
+      tl.fromTo(
+        "#icon-card",
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.45, ease: "power3.out" },
+        1.36
+      );
+
+      document.querySelectorAll(".draw-stroke").forEach((p, idx) => {
+        const len = Number(p.dataset.len) || 300;
+        tl.fromTo(
+          p,
+          { strokeDashoffset: len },
+          { strokeDashoffset: 0, duration: 0.6, ease: "power2.out" },
+          1.45 + idx * 0.1
+        );
+      });
+
+      // Icon card thu nhỏ và nhường chỗ trước khi label xuất hiện
+      tl.to(
+        "#icon-card",
+        { scale: 0.8, opacity: 0, duration: 0.28, ease: "power2.in" },
+        3.2
+      );
+
+      // 3. Overlay 2: Label "CHẲNG MẤY ĐỒNG" xuất hiện (3.31s)
+      tl.fromTo(
+        "#label-badge",
+        { scale: 0.85, opacity: 0, y: -20 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.5, ease: "power3.out" },
+        3.31
+      );
+
+      tl.to(
+        "#label-badge",
+        { opacity: 0, y: 15, duration: 0.35, ease: "power2.in" },
+        5.15
+      );
+
+      // 4. Overlay 3: Punch phrase "TỔN THƯƠNG TỰ ÁI" dập mạnh vào khung hình (6.41s)
+      tl.fromTo(
+        "#punch-plate",
+        { scale: 1.15, opacity: 0, y: 30 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.45, ease: "power4.out" },
+        6.41
+      );
+
+      tl.fromTo(
+        "#punch-accent-bar",
+        { scaleX: 0 },
+        { scaleX: 1, duration: 0.4, ease: "power2.out" },
+        6.55
+      );
+
+      // Đăng ký timeline gốc vào registry của HyperFrames
+      window.__timelines = window.__timelines || {};
+      window.__timelines["scene-s11"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

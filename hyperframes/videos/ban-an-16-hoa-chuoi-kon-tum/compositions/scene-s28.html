@@ -1,0 +1,313 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+/* hf-safe-colors (tất định từ style-tokens.json) */
+.hf-text-ink { color: #141414; }
+.hf-text-light { color: #F7F4EC; }
+.hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+.hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+.hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+.hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background: #E7E3D9;
+      color: #141414;
+      font-family: "Be Vietnam Pro", sans-serif;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    #root {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #E7E3D9;
+    }
+
+    .clip {
+      position: absolute;
+      inset: 0;
+    }
+
+    /* Layer Background & Ảnh phiên tòa (giữ nguyên màu gốc không filter/blend làm tối) */
+    #bg-container {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      z-index: 1;
+    }
+
+    #bg-wrapper {
+      position: absolute;
+      inset: 0;
+      transform-origin: 50% 45%;
+      will-change: transform;
+    }
+
+    #bg-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    #grid-overlay {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background-size: 84px 84px;
+      background-image:
+        linear-gradient(to right, rgba(20, 20, 20, 0.16) 1.5px, transparent 1.5px),
+        linear-gradient(to bottom, rgba(20, 20, 20, 0.16) 1.5px, transparent 1.5px);
+      z-index: 3;
+    }
+
+    /* Layer Văn bản phán quyết & Overlay đồ họa */
+    #overlay-layer {
+      z-index: 10;
+      pointer-events: none;
+    }
+
+    /* Thẻ tài liệu phán quyết Tòa án */
+    #verdict-card {
+      position: absolute;
+      top: 660px;
+      left: 70px;
+      width: 940px;
+      padding: 42px 46px;
+      border-radius: 6px;
+      background-color: #141414;
+      border: 3px solid rgba(247, 244, 236, 0.22);
+      box-shadow: 18px 18px 0px rgba(20, 20, 20, 0.9);
+      transform-origin: 50% 50%;
+      will-change: transform, opacity;
+      opacity: 0;
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .header-badge {
+      display: inline-block;
+      font-size: 22px;
+      font-weight: 900;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      padding: 6px 16px;
+      border-radius: 4px;
+    }
+
+    .header-court-label {
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: #E7E3D9;
+    }
+
+    .card-divider {
+      height: 3px;
+      width: 100%;
+      background-color: #FF6A1A;
+      transform-origin: left center;
+      margin-bottom: 26px;
+      will-change: transform;
+    }
+
+    .verdict-title {
+      font-size: 64px;
+      font-weight: 900;
+      line-height: 1.15;
+      letter-spacing: -0.5px;
+      text-transform: uppercase;
+      margin-bottom: 20px;
+    }
+
+    .verdict-status {
+      display: block;
+      font-size: 42px;
+      font-weight: 900;
+      line-height: 1.25;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: #FF6A1A;
+      margin-top: 10px;
+    }
+
+    .verdict-legal-basis {
+      font-size: 24px;
+      font-weight: 700;
+      line-height: 1.34;
+      color: #F7F4EC;
+      border-left: 4px solid #FF6A1A;
+      padding-left: 14px;
+    }
+
+    /* Con dấu pháp lý áp xuống: TÍNH CHẤT CÔN ĐỒ */
+    #stamp-seal {
+      position: absolute;
+      top: 1050px;
+      right: 70px;
+      width: 480px;
+      padding: 22px 28px;
+      background-color: #FF6A1A;
+      border: 5px solid #141414;
+      outline: 2px dashed #141414;
+      outline-offset: -12px;
+      border-radius: 4px;
+      box-shadow: 12px 14px 0px rgba(20, 20, 20, 0.95);
+      transform-origin: 50% 50%;
+      will-change: transform, opacity;
+      opacity: 0;
+    }
+
+    .stamp-inner {
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .stamp-category {
+      font-size: 19px;
+      font-weight: 900;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: #141414;
+    }
+
+    .stamp-text {
+      font-size: 38px;
+      font-weight: 900;
+      line-height: 1.1;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      color: #141414;
+    }
+
+    /* Thanh cam nhận diện thương hiệu cố định mép đáy */
+    #bottom-brand-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 12px;
+      background-color: #FF6A1A;
+      z-index: 50;
+    }
+  </style>
+
+  <div
+    id="root"
+    data-composition-id="scene-s28"
+    data-width="1080"
+    data-height="1920"
+    data-duration="6"
+  >
+    <!-- Background Shot S28-1: Ảnh phiên tòa nguyên bản -->
+    <section id="scene-bg" class="clip" data-start="0" data-duration="6">
+      <div id="bg-container">
+        <div id="bg-wrapper">
+          <img
+            id="bg-img"
+            src="assets/img-04-courtroom-trial-defendant-accusation.jpg"
+            alt="Phiên tòa hình sự xét xử bị cáo Thắng"
+          />
+        </div>
+      </div>
+      <div id="grid-overlay"></div>
+    </section>
+
+    <!-- Overlay Shot S28-1: Văn bản tuyên án & Con dấu tình tiết tăng nặng -->
+    <section id="overlay-layer" class="clip" data-start="0" data-duration="6">
+      <!-- Thẻ phán quyết chính thức của HĐXX -->
+      <div id="verdict-card">
+        <div class="card-header">
+          <span class="header-badge hf-hl-orange">PHÁN QUYẾT</span>
+          <span class="header-court-label">HỘI ĐỒNG XÉT XỬ CHÍNH THỨC</span>
+        </div>
+        <div id="card-divider" class="card-divider"></div>
+        <h1 class="verdict-title hf-text-light">
+          TỘI GIẾT NGƯỜI
+          <span class="verdict-status">(CHƯA ĐẠT)</span>
+        </h1>
+        <div class="verdict-legal-basis">Căn cứ Điều 123 & Điều 15 Bộ luật Hình sự</div>
+      </div>
+
+      <!-- Con dấu pháp lý áp xuống: TÍNH CHẤT CÔN ĐỒ -->
+      <div id="stamp-seal">
+        <div class="stamp-inner">
+          <span class="stamp-category">TÌNH TIẾT TĂNG NẶNG</span>
+          <span class="stamp-text">TÍNH CHẤT CÔN ĐỒ</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Thanh cam chữ ký Vox ở mép đáy khung hình -->
+    <div id="bottom-brand-bar"></div>
+  </div>
+
+  <script>
+    // Khởi tạo timeline paused duy nhất gắn với window.__timelines["scene-s28"]
+    const tl = gsap.timeline({ paused: true });
+
+    // 1. Camera Motion: Zoom-in chậm trên không gian phiên tòa (toàn bộ 6 giây)
+    tl.fromTo(
+      "#bg-wrapper",
+      { scale: 1.0 },
+      { scale: 1.08, duration: 6.0, ease: "none" },
+      0
+    );
+
+    // 2. Punch-phrase Entrance: Bản án áp xuống đanh thép lúc t = 1.0s (226880ms)
+    tl.fromTo(
+      "#verdict-card",
+      { scale: 0.82, opacity: 0, y: 35 },
+      { scale: 1.0, opacity: 1, y: 0, duration: 0.55, ease: "power3.out" },
+      1.0
+    );
+
+    // Vạch cam mở ra dứt khoát ngay sau khi thẻ đáp xuống
+    tl.fromTo(
+      "#card-divider",
+      { scaleX: 0 },
+      { scaleX: 1.0, duration: 0.45, ease: "power2.out" },
+      1.35
+    );
+
+    // 3. Stamp Slam: Con dấu đỏ "TÍNH CHẤT CÔN ĐỒ" đóng cộp xuống lúc t = 4.3s (230180ms)
+    tl.fromTo(
+      "#stamp-seal",
+      { scale: 2.3, opacity: 0, rotation: -24 },
+      { scale: 1.0, opacity: 1, rotation: -7, duration: 0.38, ease: "power4.out" },
+      4.3
+    );
+
+    // Đăng ký timeline cho HyperFrames render engine
+    window.__timelines["scene-s28"] = tl;
+  </script>
+
+    </template>
+  </body>
+</html>

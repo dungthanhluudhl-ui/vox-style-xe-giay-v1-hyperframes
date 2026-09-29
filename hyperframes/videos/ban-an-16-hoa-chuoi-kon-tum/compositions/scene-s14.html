@@ -1,0 +1,418 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap">
+      <style>
+    /* hf-safe-colors (tất định từ style-tokens.json) */
+    .hf-text-ink { color: #141414; }
+    .hf-text-light { color: #F7F4EC; }
+    .hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+    .hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+    .hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+    .hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      width: 1080px;
+      height: 1920px;
+      overflow: hidden;
+      background-color: #141414;
+      color: #141414;
+      font-family: "Be Vietnam Pro", sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    #root {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #141414;
+    }
+
+    /* Quy ước layout chuẩn HyperFrames: inset: 0, không set width/height cứng */
+    .clip {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    /* Shot chính và các layer nền: cô lập stacking context ở z-index 1 */
+    #shot-1 {
+      z-index: 1;
+    }
+
+    /* Camera wrapper toàn khung cho visual language background-photo */
+    #camera-wrap {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      transform-origin: 50% 45%;
+      z-index: 1;
+    }
+
+    /* Ảnh gốc toàn khung (background-photo), giữ nguyên màu sắc */
+    #photo-img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center 40%;
+      display: block;
+      transform-origin: 50% 45%;
+    }
+
+    /* Spotlight vignette nằm bên trong layer nền shot-1, dưới diagram và chữ */
+    .bg-spotlight {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 50% 42%, rgba(20, 20, 20, 0.05) 25%, rgba(20, 20, 20, 0.42) 65%, rgba(20, 20, 20, 0.8) 100%);
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    /* Diagram SVG overlay hiển thị cơ chế lực va chạm đối đầu và các vết nứt */
+    #diagram-svg {
+      position: absolute;
+      inset: 0;
+      width: 1080px;
+      height: 1920px;
+      z-index: 3;
+      pointer-events: none;
+    }
+
+    /* Overlay 1: Label "TẠO HUNG KHÍ NHỌN" (z-index 20 - trên toàn bộ ảnh và vignette) */
+    #overlay-label-clip {
+      z-index: 20;
+    }
+
+    #label-box {
+      position: absolute;
+      top: 1080px;
+      left: 60px;
+      width: 960px;
+      background-color: #141414;
+      border-left: 10px solid #FF6A1A;
+      border-radius: 4px;
+      padding: 26px 32px;
+      box-shadow: 14px 14px 0px rgba(0, 0, 0, 0.75);
+      transform-origin: 50% 50%;
+      z-index: 21;
+    }
+
+    .label-category {
+      color: #FF6A1A;
+      font-size: 20px;
+      font-weight: 900;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    .label-title {
+      color: #F7F4EC;
+      font-size: 46px;
+      font-weight: 900;
+      line-height: 1.25;
+      margin-top: 8px;
+      letter-spacing: -0.5px;
+    }
+
+    .label-sub {
+      color: #E7E3D9;
+      font-size: 22px;
+      font-weight: 700;
+      line-height: 1.35;
+      margin-top: 10px;
+    }
+
+    /* Overlay 2: Punch-phrase "CẠNH VỠ SẮC NHỌN" (z-index 30 - trên layer nền) */
+    #overlay-punch-clip {
+      z-index: 30;
+    }
+
+    #punch-box {
+      position: absolute;
+      top: 1060px;
+      left: 60px;
+      width: 960px;
+      background-color: #141414;
+      border: 3px solid #141414;
+      border-radius: 4px;
+      padding: 28px 34px;
+      box-shadow: 16px 16px 0px #FF6A1A;
+      transform-origin: 50% 50%;
+      z-index: 31;
+    }
+
+    .punch-prefix {
+      color: #FF6A1A;
+      font-size: 20px;
+      font-weight: 900;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .punch-prefix-dot {
+      width: 10px;
+      height: 10px;
+      background-color: #FF6A1A;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    .punch-headline {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .punch-line-1 {
+      color: #F7F4EC;
+      font-size: 58px;
+      font-weight: 900;
+      line-height: 1.1;
+      letter-spacing: -1px;
+    }
+
+    .punch-line-2-wrap {
+      display: inline-block;
+      align-self: flex-start;
+      background-color: #FF6A1A;
+      padding: 4px 18px;
+      border-radius: 2px;
+    }
+
+    .punch-line-2 {
+      color: #141414;
+      font-size: 58px;
+      font-weight: 900;
+      line-height: 1.15;
+      letter-spacing: -1px;
+    }
+
+    .punch-footer {
+      color: #E7E3D9;
+      font-size: 20px;
+      font-weight: 700;
+      margin-top: 12px;
+      letter-spacing: 0.5px;
+      border-top: 1px solid rgba(247, 244, 236, 0.2);
+      padding-top: 10px;
+    }
+
+    /* Thanh cam đáy khung hình - Chữ ký thị giác nhận diện Vox */
+    #vox-bottom-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 1080px;
+      height: 10px;
+      background-color: #FF6A1A;
+      z-index: 1000;
+    }
+  </style>
+
+  <div
+    id="root"
+    data-composition-id="scene-s14"
+    data-start="0"
+    data-width="1080"
+    data-height="1920"
+    data-duration="7.57"
+  >
+    <!-- Shot chính S14-1: Nền toàn khung background-photo kết hợp diagram overlay -->
+    <div id="shot-1" class="clip" data-start="0" data-duration="7.57">
+      <!-- Camera wrapper thực hiện cameraMotion zoom-in và transitionIn shatter -->
+      <div id="camera-wrap">
+        <img
+          id="photo-img"
+          src="assets/img-10-bar-fight-broken-bottles.jpg"
+          alt="Đập vỡ hai chai bia tạo hung khí nhọn"
+          data-layout-allow-overflow="true"
+        >
+      </div>
+
+      <!-- Spotlight vignette tập trung ánh nhìn vào vùng hung khí sắc nhọn -->
+      <div class="bg-spotlight"></div>
+
+      <!-- Diagram SVG: Cơ chế lực va chạm đối đầu và các đường nứt vỡ -->
+      <svg id="diagram-svg" viewBox="0 0 1080 1920">
+        <!-- Vòng chấn động tỏa ra từ điểm va chạm (540, 720) -->
+        <circle class="shockwave" cx="540" cy="720" r="60" fill="none" stroke="#FF6A1A" stroke-width="4" opacity="0" />
+        <circle class="shockwave" cx="540" cy="720" r="110" fill="none" stroke="#FF6A1A" stroke-width="2" stroke-dasharray="8 6" opacity="0" />
+        <circle class="shockwave" cx="540" cy="720" r="160" fill="none" stroke="#F7F4EC" stroke-width="2" stroke-dasharray="6 6" opacity="0" />
+
+        <!-- Các đường nứt vỡ (shatter fracture lines) bùng nổ từ tâm -->
+        <g stroke-linecap="round">
+          <path class="crack-line" d="M 540 720 L 400 620 L 310 640" fill="none" stroke="#FF6A1A" stroke-width="4" />
+          <path class="crack-line" d="M 540 720 L 690 635 L 770 600" fill="none" stroke="#FF6A1A" stroke-width="4" />
+          <path class="crack-line" d="M 540 720 L 480 860 L 440 930" fill="none" stroke="#F7F4EC" stroke-width="4" />
+          <path class="crack-line" d="M 540 720 L 600 870 L 640 950" fill="none" stroke="#F7F4EC" stroke-width="4" />
+          <path class="crack-line" d="M 540 720 L 540 900" fill="none" stroke="#FF6A1A" stroke-width="3" stroke-dasharray="6 4" />
+        </g>
+
+        <!-- Mũi tên vector biểu diễn lực va chạm hai chai bia đập vào nhau -->
+        <g>
+          <!-- Lực F1 (từ trái sang) -->
+          <line class="vector-arrow" x1="320" y1="720" x2="480" y2="720" stroke="#FF6A1A" stroke-width="5" stroke-linecap="square" />
+          <polygon class="vector-head" points="480,708 510,720 480,732" fill="#FF6A1A" opacity="0" />
+
+          <!-- Lực F2 (từ phải sang) -->
+          <line class="vector-arrow" x1="760" y1="720" x2="600" y2="720" stroke="#FF6A1A" stroke-width="5" stroke-linecap="square" />
+          <polygon class="vector-head" points="600,708 570,720 600,732" fill="#FF6A1A" opacity="0" />
+        </g>
+      </svg>
+    </div>
+
+    <!-- Overlay 1: Label "TẠO HUNG KHÍ NHỌN" (atMs: 105920 = 3.01s, holdMs: 2400) -->
+    <div id="overlay-label-clip" class="clip" data-start="3.01" data-duration="2.4">
+      <div id="label-box">
+        <div class="label-category">[ CƠ CHẾ HUNG KHÍ ]</div>
+        <div class="label-title">TẠO HUNG KHÍ NHỌN</div>
+        <div class="label-sub">Đập vỡ hai chai bia tạo cạnh vỡ nhọn có tính sát thương cao</div>
+      </div>
+    </div>
+
+    <!-- Overlay 2: Punch-phrase "CẠNH VỠ SẮC NHỌN" (atMs: 108580 = 5.67s, holdMs: 1900) -->
+    <div id="overlay-punch-clip" class="clip" data-start="5.67" data-duration="1.9">
+      <div id="punch-box">
+        <div class="punch-prefix">
+          <span class="punch-prefix-dot"></span>
+          ĐẶC TÍNH NGUY HIỂM
+        </div>
+        <div class="punch-headline">
+          <div class="punch-line-1">CẠNH VỠ</div>
+          <div class="punch-line-2-wrap" id="punch-highlight">
+            <span class="punch-line-2">SẮC NHỌN</span>
+          </div>
+        </div>
+        <div class="punch-footer">Hành vi bộc phát • Biến vỏ chai thành vũ khí tấn công</div>
+      </div>
+    </div>
+
+    <!-- Chữ ký thị giác: Thanh cam cố định mép dưới cùng -->
+    <div id="vox-bottom-bar"></div>
+  </div>
+
+  <script>
+    // Đăng ký timeline chính ở trạng thái paused theo composition contract
+    const tl = gsap.timeline({ paused: true });
+
+    // Chuẩn bị các nét vẽ SVG theo quy tắc svg-path-draw
+    document.querySelectorAll(".crack-line, .vector-arrow").forEach((p) => {
+      const len = p.getTotalLength();
+      p.style.strokeDasharray = `${len}`;
+      p.style.strokeDashoffset = `${len}`;
+    });
+
+    // 1. BEAT 1: SHATTER ENTRANCE & VA CHẠM (0.0s -> 0.8s)
+    // Camera zoom-in chậm rãi xuyên suốt toàn bộ scene (0s -> 7.57s)
+    tl.fromTo(
+      "#photo-img",
+      { scale: 1.04 },
+      { scale: 1.15, duration: 7.57, ease: "sine.out" },
+      0.0
+    );
+
+    // Xuất hiện cú va chạm mạnh (Shatter arrival)
+    tl.fromTo(
+      "#camera-wrap",
+      { scale: 0.98, opacity: 0 },
+      { scale: 1.0, opacity: 1, duration: 0.18, ease: "power2.out" },
+      0.0
+    );
+
+    // Chấn động mô phỏng va đập thủy tinh vỡ (Impact shake)
+    tl.to("#camera-wrap", { x: 12, y: -10, duration: 0.04, ease: "none" }, 0.12);
+    tl.to("#camera-wrap", { x: -10, y: 10, duration: 0.04, ease: "none" }, 0.16);
+    tl.to("#camera-wrap", { x: 8, y: -6, duration: 0.04, ease: "none" }, 0.20);
+    tl.to("#camera-wrap", { x: -5, y: 4, duration: 0.04, ease: "none" }, 0.24);
+    tl.to("#camera-wrap", { x: 0, y: 0, duration: 0.04, ease: "power1.out" }, 0.28);
+
+    // Sóng chấn động tròn tỏa ra từ tâm điểm va chạm (540, 720)
+    tl.fromTo(
+      ".shockwave",
+      { scale: 0.4, opacity: 0.9 },
+      {
+        scale: 1.3,
+        opacity: 0,
+        duration: 0.55,
+        stagger: 0.08,
+        ease: "power2.out",
+        transformOrigin: "540px 720px"
+      },
+      0.15
+    );
+
+    // Các đường nứt vỡ (Shatter fracture lines) bùng nổ vẽ ra
+    tl.to(
+      ".crack-line",
+      { strokeDashoffset: 0, duration: 0.4, stagger: 0.05, ease: "power2.out" },
+      0.18
+    );
+
+    // 2. BEAT 2: LỰC TÁC ĐỘNG (0.8s -> 3.0s)
+    // Mũi tên vector biểu diễn lực va chạm đối đầu F1 & F2 xuất hiện
+    tl.to(
+      ".vector-arrow",
+      { strokeDashoffset: 0, duration: 0.45, stagger: 0.12, ease: "power2.out" },
+      0.95
+    );
+    tl.fromTo(
+      ".vector-head",
+      { opacity: 0, scale: 0.5 },
+      { opacity: 1, scale: 1, duration: 0.2, stagger: 0.12, ease: "power1.out" },
+      1.2
+    );
+
+    // 3. BEAT 3: OVERLAY 1 - LABEL "TẠO HUNG KHÍ NHỌN" (3.01s -> 5.41s)
+    tl.fromTo(
+      "#label-box",
+      { y: 35, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.45, ease: "power3.out" },
+      3.01
+    );
+    tl.to(
+      "#label-box",
+      { y: -20, opacity: 0, duration: 0.25, ease: "power2.in" },
+      5.15
+    );
+
+    // Giảm độ nổi của diagram overlay để nhường tiêu điểm cho punch-phrase
+    tl.to("#diagram-svg", { opacity: 0.35, duration: 0.4, ease: "power1.out" }, 5.2);
+
+    // 4. BEAT 4: OVERLAY 2 - PUNCH-PHRASE "CẠNH VỠ SẮC NHỌN" (5.67s -> 7.57s)
+    tl.fromTo(
+      "#punch-box",
+      { y: 35, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.45, ease: "power3.out" },
+      5.67
+    );
+    tl.fromTo(
+      "#punch-highlight",
+      { scale: 0.94 },
+      { scale: 1.0, duration: 0.28, ease: "power2.out" },
+      5.85
+    );
+
+    // Đăng ký timeline cho HyperFrames seek renderer
+    window.__timelines["scene-s14"] = tl;
+  </script>
+
+    </template>
+  </body>
+</html>

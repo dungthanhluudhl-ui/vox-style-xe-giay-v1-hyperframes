@@ -1,0 +1,448 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+/* hf-safe-colors (tất định từ style-tokens.json) */
+.hf-text-ink { color: #141414; }
+.hf-text-light { color: #F7F4EC; }
+.hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+.hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+.hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+.hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #E7E3D9;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+
+      /* Chuẩn HyperFrames clip - inset:0, không set width/height cứng */
+      .clip {
+        position: absolute;
+        inset: 0;
+      }
+
+      /* Background variant: chart (4 đường ngang + vạch cam mép trái) */
+      .chart-bg {
+        position: absolute;
+        inset: 0;
+        background-color: #E7E3D9;
+        pointer-events: none;
+        z-index: 1;
+      }
+      .chart-line {
+        position: absolute;
+        left: 0;
+        right: 0;
+        height: 1.5px;
+        background: rgba(20, 20, 20, 0.32);
+      }
+      .chart-line::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: -2px;
+        width: 22px;
+        height: 5px;
+        background: #FF6A1A;
+      }
+
+      /* Thanh cam nhận diện Vox cố định đáy khung */
+      .brand-bottom-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 12px;
+        background: #FF6A1A;
+        z-index: 100;
+      }
+
+      /* Safe Zone Y: [160, 1390] */
+      .header-container {
+        position: absolute;
+        top: 175px;
+        left: 60px;
+        right: 60px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+        z-index: 25;
+      }
+
+      .eyebrow-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        background: #141414;
+        color: #F7F4EC;
+        padding: 8px 20px;
+        border-radius: 4px;
+        font-size: 19px;
+        font-weight: 900;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+      }
+
+      .eyebrow-dot {
+        width: 10px;
+        height: 10px;
+        background: #FF6A1A;
+        border-radius: 2px;
+        flex-shrink: 0;
+      }
+
+      .main-title-plate {
+        background: #141414;
+        border-left: 8px solid #FF6A1A;
+        padding: 14px 34px;
+        border-radius: 6px;
+        box-shadow: 0 14px 34px rgba(20, 20, 20, 0.28);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .main-title-text {
+        margin: 0;
+        font-size: 44px;
+        font-weight: 900;
+        line-height: 1.2;
+        color: #F7F4EC;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+      }
+
+      /* Thư mục hồ sơ bằng chứng (Dossier docket) */
+      .dossier-wrapper {
+        position: absolute;
+        top: 300px;
+        left: 65px;
+        width: 950px;
+        height: 1060px;
+        z-index: 10;
+        perspective: 1400px;
+      }
+
+      .dossier-card {
+        width: 100%;
+        height: 100%;
+        background: #F5F0E4;
+        border: 3.5px solid #141414;
+        border-radius: 10px;
+        box-shadow: 0 20px 50px rgba(20, 20, 20, 0.24);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        transform-origin: 50% 10%;
+      }
+
+      .dossier-bar {
+        height: 48px;
+        background: #141414;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 22px;
+        flex-shrink: 0;
+      }
+
+      .dossier-bar-title {
+        color: #F7F4EC;
+        font-size: 17px;
+        font-weight: 700;
+        letter-spacing: 1px;
+      }
+
+      .dossier-bar-tag {
+        background: #FF6A1A;
+        color: #141414;
+        font-size: 13px;
+        font-weight: 900;
+        padding: 3px 10px;
+        border-radius: 3px;
+        letter-spacing: 0.5px;
+      }
+
+      .dossier-body {
+        position: relative;
+        flex: 1;
+        width: 100%;
+        height: calc(100% - 48px);
+        overflow: hidden;
+        background: #0d1522;
+      }
+
+      /* Ảnh minh hoạ AI Flow nguyên màu gốc theo STYLE DNA §2 */
+      .evidence-image {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+
+      /* Khung phát sáng bao quanh từng Exhibit */
+      .exhibit-frame {
+        position: absolute;
+        left: 20px;
+        right: 20px;
+        border-radius: 8px;
+        border: 3px solid transparent;
+        pointer-events: none;
+        z-index: 15;
+      }
+
+      #frame-1 {
+        top: 24px;
+        height: 295px;
+      }
+
+      #frame-2 {
+        top: 340px;
+        height: 310px;
+      }
+
+      #frame-3 {
+        top: 670px;
+        height: 330px;
+      }
+
+      /* Thẻ callout đặt trên nền đệm ĐẶC, đạt chuẩn tương phản WCAG */
+      .exhibit-tag {
+        position: absolute;
+        right: 24px;
+        background: #141414;
+        border-left: 6px solid #FF6A1A;
+        border-radius: 6px;
+        padding: 10px 18px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        z-index: 20;
+      }
+
+      .tag-num {
+        background: #FF6A1A;
+        color: #141414;
+        font-size: 14px;
+        font-weight: 900;
+        padding: 3px 9px;
+        border-radius: 3px;
+        letter-spacing: 0.5px;
+        flex-shrink: 0;
+      }
+
+      .tag-label {
+        color: #F7F4EC;
+        font-size: 26px;
+        font-weight: 900;
+        letter-spacing: 0.5px;
+        white-space: nowrap;
+      }
+
+      /* Vị trí độc lập từng tag, tuyệt đối không chồng lấn */
+      #tag-1 {
+        top: 40px;
+      }
+
+      #tag-2 {
+        top: 360px;
+      }
+
+      #tag-3 {
+        top: 690px;
+        padding: 12px 22px;
+        border-left-width: 8px;
+      }
+      #tag-3 .tag-label {
+        font-size: 28px;
+      }
+
+      /* Các class màu chuẩn hỗ trợ WCAG */
+      .hf-text-ink { color: #141414; }
+      .hf-text-light { color: #F7F4EC; }
+      .hf-hl-orange { background: #FF6A1A; color: #141414; }
+      .hf-plate-ink { background: #141414; color: #F7F4EC; }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s25"
+      data-width="1080"
+      data-height="1920"
+      data-duration="13"
+    >
+      <section id="scene-s25" class="clip" data-start="0" data-duration="13" data-track-index="0">
+        <!-- Nền Chart: 4 đường ngang tương ứng 20%, 40%, 60%, 80% chiều cao canvas -->
+        <div class="chart-bg">
+          <div class="chart-line" style="top: 384px;"></div>
+          <div class="chart-line" style="top: 768px;"></div>
+          <div class="chart-line" style="top: 1152px;"></div>
+          <div class="chart-line" style="top: 1536px;"></div>
+        </div>
+
+        <!-- Khối Tiêu đề & Punch Phrase mở đầu -->
+        <div id="header-group" class="header-container">
+          <div class="eyebrow-badge">
+            <span class="eyebrow-dot"></span>
+            <span>HỘI ĐỒNG XÉT XỬ • CĂN CỨ ĐỊNH TỘI</span>
+          </div>
+          <div class="main-title-plate">
+            <h1 class="main-title-text">3 YẾU TỐ QUAN TRỌNG</h1>
+          </div>
+        </div>
+
+        <!-- Thư mục hồ sơ bằng chứng chứa ảnh img-13 -->
+        <div class="dossier-wrapper">
+          <div id="dossier-card" class="dossier-card">
+            <div class="dossier-bar">
+              <span class="dossier-bar-title">BẢN GIẢI PHẪU PHÁP Y & HUNG KHÍ</span>
+              <span class="dossier-bar-tag">EXHIBIT ANALYSIS</span>
+            </div>
+            <div class="dossier-body">
+              <img
+                id="evidence-img"
+                class="evidence-image"
+                src="assets/img-13-crime-evidence-exhibits-analysis.jpg"
+                alt="Hồ sơ 3 thẻ bằng chứng"
+              />
+
+              <!-- Frame 1: Thẻ chai bia vỡ nhọn -->
+              <div id="frame-1" class="exhibit-frame"></div>
+              <div id="tag-1" class="exhibit-tag">
+                <span class="tag-num">EXHIBIT 1</span>
+                <span class="tag-label">1. HUNG KHÍ NHỌN</span>
+              </div>
+
+              <!-- Frame 2: Thẻ vùng cổ tử huyệt -->
+              <div id="frame-2" class="exhibit-frame"></div>
+              <div id="tag-2" class="exhibit-tag">
+                <span class="tag-num">EXHIBIT 2</span>
+                <span class="tag-label">2. VÙNG CỔ HIỂM</span>
+              </div>
+
+              <!-- Frame 3: Thẻ chuỗi nhát đâm liên tiếp -->
+              <div id="frame-3" class="exhibit-frame"></div>
+              <div id="tag-3" class="exhibit-tag">
+                <span class="tag-num">EXHIBIT 3</span>
+                <span class="tag-label">3. TẤN CÔNG LIÊN TIẾP</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Thanh cam nhận diện Vox cố định mép dưới cùng -->
+        <div class="brand-bottom-bar"></div>
+      </section>
+    </div>
+
+    <script>
+      // Timeline gốc chính thức cho HyperFrames - PAUSED theo đúng hợp đồng
+      const tl = gsap.timeline({ paused: true });
+
+      // 1. Giai đoạn vào cảnh: Unfold hiệu ứng tài liệu mở ra trên bàn điều tra
+      tl.fromTo(
+        "#dossier-card",
+        { scale: 0.88, opacity: 0, rotateX: -22 },
+        { scale: 1, opacity: 1, rotateX: 0, duration: 0.75, ease: "power3.out" },
+        0.0
+      );
+
+      // Camera motion: Parallax drift chậm tinh tế trên asset suốt toàn cảnh 13s
+      tl.fromTo(
+        "#evidence-img",
+        { scale: 1.0, y: 0 },
+        { scale: 1.035, y: -16, duration: 13.0, ease: "none" },
+        0.0
+      );
+
+      // 2. Overlay 1: "3 YẾU TỐ QUAN TRỌNG" (tương ứng 192300ms trong kịch bản tổng -> 0.42s)
+      tl.fromTo(
+        "#header-group",
+        { y: -35, opacity: 0, scale: 0.94 },
+        { y: 0, opacity: 1, scale: 1, duration: 0.55, ease: "power3.out" },
+        0.42
+      );
+
+      // 3. Thẻ 1: "1. HUNG KHÍ NHỌN" (tương ứng 195290ms -> 3.41s)
+      // Thẻ phát sáng viền cam + tag nhảy vào dứt khoát
+      tl.fromTo(
+        "#frame-1",
+        { borderColor: "transparent", backgroundColor: "rgba(255, 106, 26, 0)" },
+        { borderColor: "#FF6A1A", backgroundColor: "rgba(255, 106, 26, 0.08)", duration: 0.4, ease: "power2.out" },
+        3.41
+      );
+      tl.fromTo(
+        "#tag-1",
+        { x: 35, opacity: 0, scale: 0.88 },
+        { x: 0, opacity: 1, scale: 1, duration: 0.45, ease: "power3.out" },
+        3.41
+      );
+
+      // 4. Thẻ 2: "2. VÙNG CỔ HIỂM" (tương ứng 198370ms -> 6.49s)
+      // Hạ sáng thẻ 1 để dẫn hướng mắt người xem sang thẻ 2
+      tl.to("#frame-1", { backgroundColor: "rgba(255, 106, 26, 0.02)", opacity: 0.6, duration: 0.35, ease: "power1.out" }, 6.2);
+
+      tl.fromTo(
+        "#frame-2",
+        { borderColor: "transparent", backgroundColor: "rgba(255, 106, 26, 0)" },
+        { borderColor: "#FF6A1A", backgroundColor: "rgba(255, 106, 26, 0.08)", duration: 0.4, ease: "power2.out" },
+        6.49
+      );
+      tl.fromTo(
+        "#tag-2",
+        { x: 35, opacity: 0, scale: 0.88 },
+        { x: 0, opacity: 1, scale: 1, duration: 0.45, ease: "power3.out" },
+        6.49
+      );
+
+      // 5. Thẻ 3: "3. TẤN CÔNG LIÊN TIẾP" (Punch-phrase lúc 202030ms -> 10.15s)
+      // Hạ sáng thẻ 2, tập trung tối đa vào đòn tấn công quyết liệt
+      tl.to("#frame-2", { backgroundColor: "rgba(255, 106, 26, 0.02)", opacity: 0.6, duration: 0.35, ease: "power1.out" }, 9.9);
+
+      tl.fromTo(
+        "#frame-3",
+        { borderColor: "transparent", backgroundColor: "rgba(255, 106, 26, 0)" },
+        { borderColor: "#FF6A1A", backgroundColor: "rgba(255, 106, 26, 0.12)", duration: 0.4, ease: "power2.out" },
+        10.15
+      );
+      tl.fromTo(
+        "#tag-3",
+        { y: 20, opacity: 0, scale: 0.84 },
+        { y: 0, opacity: 1, scale: 1, duration: 0.5, ease: "power4.out" },
+        10.15
+      );
+      // Nhịp nhấn punch cho yếu tố thứ ba
+      tl.to("#tag-3", { scale: 1.05, duration: 0.22, yoyo: true, repeat: 1, ease: "power2.inOut" }, 10.65);
+
+      // Đăng ký timeline cho HyperFrames seek-driven renderer
+      window.__timelines = window.__timelines || {};
+      window.__timelines["scene-s25"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

@@ -1,0 +1,384 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+/* hf-safe-colors (tất định từ style-tokens.json) */
+.hf-text-ink { color: #141414; }
+.hf-text-light { color: #F7F4EC; }
+.hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+.hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+.hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+.hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+      *, *::before, *::after {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      /* Quy ước kích thước root chuẩn portrait 1080x1920 */
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: #F5F0E4; /* Biến thể card phẳng theo Scene Plan */
+      }
+
+      /* .clip layout full-frame theo quy chuẩn HyperFrames */
+      .clip {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+      }
+
+      /* Khung nội dung chính bám sát Safe Zone [Y: 160, 1390] */
+      #content-flow {
+        position: absolute;
+        top: 170px;
+        left: 60px;
+        width: 960px;
+        display: flex;
+        flex-direction: column;
+        z-index: 10;
+      }
+
+      /* Header chủ đề tố tụng */
+      #header-panel {
+        width: 100%;
+        background-color: #141414;
+        border: 2px solid #FF6A1A;
+        border-radius: 12px;
+        padding: 18px 28px;
+        margin-bottom: 24px;
+        box-shadow: 4px 4px 0px rgba(20, 20, 20, 0.2);
+      }
+      #header-tag {
+        font-size: 20px;
+        font-weight: 900;
+        color: #FF6A1A; /* Cam trên nền mực = 6.4:1 WCAG */
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        margin-bottom: 6px;
+      }
+      #header-title {
+        font-size: 34px;
+        font-weight: 900;
+        color: #F7F4EC; /* Kem sáng trên nền mực = 16.8:1 WCAG */
+        line-height: 1.25;
+        letter-spacing: -0.5px;
+      }
+
+      /* Khung tư liệu sách luật img-07 */
+      #photo-frame {
+        position: relative;
+        width: 100%;
+        height: 410px;
+        border: 3px solid #141414;
+        border-radius: 12px;
+        overflow: hidden;
+        background-color: #141414;
+        box-shadow: 6px 6px 0px #141414;
+        margin-bottom: 26px;
+      }
+      #photo-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+        transform-origin: center center;
+      }
+      /* Tấm nhãn tư liệu đặt trực tiếp trên ảnh (nền mực đặc để đạt chuẩn tương phản) */
+      #photo-badge {
+        position: absolute;
+        bottom: 16px;
+        left: 16px;
+        background-color: #141414;
+        border: 1.5px solid #FF6A1A;
+        border-radius: 6px;
+        padding: 8px 18px;
+        z-index: 2;
+      }
+      #photo-badge-text {
+        font-size: 20px;
+        font-weight: 900;
+        color: #F7F4EC;
+        letter-spacing: 0.5px;
+      }
+
+      /* Khu vực chia tách 2 nhánh tố tụng (Split visual language) */
+      #split-container {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        position: relative;
+      }
+
+      /* Thẻ Bước 01: Định tội danh */
+      #card-step-1 {
+        width: 100%;
+        background-color: #FFFFFF;
+        border: 3px solid #141414;
+        border-radius: 12px;
+        box-shadow: 6px 6px 0px #141414;
+        padding: 20px 28px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        position: relative;
+      }
+      .badge-step {
+        display: inline-block;
+        background-color: #FF6A1A;
+        color: #141414; /* Chữ mực trên nền cam = 6.4:1 WCAG */
+        font-size: 18px;
+        font-weight: 900;
+        padding: 4px 14px;
+        border-radius: 4px;
+        width: fit-content;
+        margin-bottom: 8px;
+        letter-spacing: 1px;
+      }
+      .card-title {
+        font-size: 44px;
+        font-weight: 900;
+        color: #141414; /* Chữ mực trên nền sáng = >16:1 WCAG */
+        line-height: 1.2;
+        letter-spacing: -0.5px;
+        margin-bottom: 6px;
+      }
+      .card-desc {
+        font-size: 22px;
+        font-weight: 700;
+        color: #141414;
+        opacity: 0.85;
+      }
+
+      /* Phân cách ở giữa: Thể hiện tính tách biệt "≠" */
+      #split-divider-row {
+        height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        z-index: 5;
+      }
+      #split-divider-line {
+        position: absolute;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background-color: rgba(20, 20, 20, 0.25);
+      }
+      #split-tag {
+        position: relative;
+        background-color: #141414;
+        border: 2px solid #FF6A1A;
+        border-radius: 20px;
+        padding: 4px 20px;
+        color: #FF6A1A; /* Cam trên mực = 6.4:1 */
+        font-size: 20px;
+        font-weight: 900;
+        letter-spacing: 1px;
+        z-index: 6;
+      }
+
+      /* Thẻ Bước 02: Lượng hình độc lập (Punch phrase) */
+      #card-step-2 {
+        width: 100%;
+        background-color: #FFFFFF;
+        border: 3px solid #141414;
+        border-radius: 12px;
+        box-shadow: 6px 6px 0px #141414;
+        padding: 20px 28px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        position: relative;
+      }
+
+      /* Con dấu độc lập góc card bước 2 */
+      #stamp-independent {
+        position: absolute;
+        top: 20px;
+        right: 24px;
+        background-color: #FF6A1A;
+        border: 2px dashed #141414;
+        border-radius: 4px;
+        padding: 6px 14px;
+        color: #141414;
+        font-size: 18px;
+        font-weight: 900;
+        letter-spacing: 1px;
+        transform-origin: center center;
+      }
+
+      /* Lớp Peel Transition mở đầu */
+      #peel-overlay {
+        position: absolute;
+        inset: 0;
+        background-color: #E7E3D9;
+        z-index: 80;
+        pointer-events: none;
+      }
+
+      /* Thanh cam nhận diện thương hiệu cố định mép đáy */
+      #brand-bottom-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 8px;
+        background-color: #FF6A1A;
+        z-index: 100;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s30"
+      data-start="0"
+      data-width="1080"
+      data-height="1920"
+      data-duration="6"
+    >
+      <!-- Shot S30-1 kéo dài toàn bộ 6 giây của Scene S30 -->
+      <section id="shot-s30-1" class="clip" data-start="0" data-duration="6">
+        <!-- Khối luồng nội dung bài toán tố tụng -->
+        <div id="content-flow">
+          <!-- 1. Header giải thích nguyên tắc -->
+          <div id="header-panel">
+            <div id="header-tag">Nguyên tắc tố tụng hình sự</div>
+            <div id="header-title">HAI QUY TRÌNH TÁCH BIỆT HOÀN TOÀN</div>
+          </div>
+
+          <!-- 2. Khung hình ảnh tư liệu img-07 -->
+          <div id="photo-frame">
+            <img
+              id="photo-img"
+              src="assets/img-07-penal-code-investigation-questions.jpg"
+              alt="Bộ luật Hình sự và hồ sơ tư liệu điều tra"
+            />
+            <div id="photo-badge">
+              <span id="photo-badge-text">TƯ LIỆU: BỘ LUẬT HÌNH SỰ</span>
+            </div>
+          </div>
+
+          <!-- 3. Cấu trúc chia tách 2 nhánh (Split Layout) -->
+          <div id="split-container">
+            <!-- Bước 1: Overlay Label tại 0.67s -->
+            <div id="card-step-1">
+              <div class="badge-step">BƯỚC 01</div>
+              <div class="card-title">ĐỊNH TỘI DANH</div>
+              <div class="card-desc">Xác định hành vi có cấu thành tội phạm không</div>
+            </div>
+
+            <!-- Dấu phân tách ở giữa -->
+            <div id="split-divider-row">
+              <div id="split-divider-line"></div>
+              <div id="split-tag">≠ KHÔNG PHẢI LÀ MỘT</div>
+            </div>
+
+            <!-- Bước 2: Overlay Punch-Phrase tại 2.86s -->
+            <div id="card-step-2">
+              <div id="stamp-independent">ĐỘC LẬP</div>
+              <div class="badge-step">BƯỚC 02</div>
+              <div class="card-title">LƯỢNG HÌNH ĐỘC LẬP</div>
+              <div class="card-desc">Cân đo mức án phạt dựa trên tình tiết giảm nhẹ</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Lớp bìa Peel Transition lật mở đầu cảnh -->
+        <div id="peel-overlay"></div>
+      </section>
+
+      <!-- Dải cam thương hiệu luôn cố định ở đáy -->
+      <div id="brand-bottom-bar"></div>
+    </div>
+
+    <script>
+      // Khởi tạo Timeline GSAP duy nhất, seek-safe và deterministic
+      const tl = gsap.timeline({ paused: true });
+
+      // 1. Peel transition ở đầu cảnh (0.0s -> 0.65s): bóc tách lớp bìa để lộ trang tư liệu
+      tl.fromTo(
+        "#peel-overlay",
+        { clipPath: "polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)" },
+        {
+          clipPath: "polygon(100% 100%, 100% 100%, 100% 100%, 100% 100%)",
+          duration: 0.65,
+          ease: "power2.inOut",
+        },
+        0
+      );
+
+      // 2. Camera Motion: Zoom-out nhẹ của ảnh tư liệu trong suốt 6 giây (scale 1.1 -> 1.0)
+      tl.fromTo(
+        "#photo-img",
+        { scale: 1.1 },
+        { scale: 1.0, duration: 6, ease: "none" },
+        0
+      );
+
+      // 3. Header panel trượt nhẹ xuống (0.15s -> 0.7s)
+      tl.fromTo(
+        "#header-panel",
+        { y: -30, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.55, ease: "power3.out" },
+        0.15
+      );
+
+      // 4. Nhánh 1: "ĐỊNH TỘI DANH" (atMs: 239550 - 238880 = 670ms -> 0.67s)
+      // Entrance dạng spring pop chuẩn không overshoot
+      tl.fromTo(
+        "#card-step-1",
+        { y: 35, opacity: 0, scale: 0.96 },
+        { y: 0, opacity: 1, scale: 1, duration: 0.55, ease: "power3.out" },
+        0.67
+      );
+
+      // 5. Huy hiệu phân tách "≠ KHÔNG PHẢI LÀ MỘT" xuất hiện (1.75s)
+      tl.fromTo(
+        "#split-tag",
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.45, ease: "power3.out" },
+        1.75
+      );
+
+      // 6. Nhánh 2: Punch-phrase "LƯỢNG HÌNH ĐỘC LẬP" (atMs: 241740 - 238880 = 2860ms -> 2.86s)
+      // Xuất hiện đĩnh đạc, vững chắc
+      tl.fromTo(
+        "#card-step-2",
+        { y: 40, opacity: 0, scale: 0.95 },
+        { y: 0, opacity: 1, scale: 1, duration: 0.6, ease: "power3.out" },
+        2.86
+      );
+
+      // Con dấu "ĐỘC LẬP" đóng xuống ngay sau khi card bước 2 xuất hiện (3.25s)
+      tl.fromTo(
+        "#stamp-independent",
+        { scale: 1.8, opacity: 0, rotation: 12 },
+        { scale: 1, opacity: 1, rotation: -4, duration: 0.35, ease: "power3.out" },
+        3.25
+      );
+
+      // Đăng ký timeline cho HyperFrames seek controller
+      window.__timelines = window.__timelines || {};
+      window.__timelines["scene-s30"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

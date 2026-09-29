@@ -1,0 +1,407 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+      /* hf-safe-colors (tất định từ style-tokens.json) */
+      .hf-text-ink { color: #141414; }
+      .hf-text-light { color: #F7F4EC; }
+      .hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+      .hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+      .hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+      .hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+      *, *::before, *::after {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #E7E3D9;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+      .clip {
+        position: absolute;
+        inset: 0;
+      }
+
+      /* Main container */
+      #scene-container {
+        position: absolute;
+        inset: 0;
+        will-change: transform, opacity;
+      }
+
+      /* Full-bleed background photo (img-15) */
+      #hero-image-wrap {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+        z-index: 1;
+      }
+      #hero-image {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+        will-change: transform;
+      }
+
+      /* Background variant: chart overlay lines */
+      #bg-chart {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        z-index: 2;
+      }
+      .chart-line {
+        position: absolute;
+        left: 0;
+        width: 100%;
+        height: 2px;
+        background-color: rgba(20, 20, 20, 0.22);
+      }
+      .chart-tick {
+        position: absolute;
+        left: 0;
+        width: 32px;
+        height: 6px;
+        background-color: #FF6A1A;
+        transform: translateY(-2px);
+      }
+
+      /* Header / Punch section (Safe zone: Top >= 160px) */
+      #header-card {
+        position: absolute;
+        top: 168px;
+        left: 60px;
+        right: 60px;
+        background-color: #141414;
+        border: 4px solid #141414;
+        border-radius: 16px;
+        padding: 24px 32px;
+        box-shadow: 10px 10px 0px #FF6A1A;
+        z-index: 20;
+      }
+      .badge-tag {
+        display: inline-block;
+        padding: 6px 14px;
+        border-radius: 6px;
+        font-size: 20px;
+        font-weight: 900;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        margin-bottom: 10px;
+      }
+      .headline-text {
+        margin: 0;
+        font-size: 56px;
+        font-weight: 900;
+        line-height: 1.25;
+        color: #F7F4EC;
+        letter-spacing: -0.5px;
+      }
+
+      /* Overlays & Annotation cards (Solid plates ensuring WCAG compliance) */
+      .annotated-card {
+        position: absolute;
+        background-color: #F5F0E4;
+        border: 4px solid #141414;
+        border-radius: 14px;
+        padding: 20px 24px;
+        box-shadow: 8px 8px 0px #141414;
+        z-index: 25;
+        will-change: transform, opacity;
+      }
+
+      /* Card 1: Chưa tiền án */
+      #card-clean-record {
+        top: 380px;
+        left: 60px;
+        width: 480px;
+      }
+      .card-pill-dark {
+        display: inline-block;
+        background-color: #141414;
+        color: #F7F4EC;
+        padding: 4px 12px;
+        border-radius: 6px;
+        font-size: 18px;
+        font-weight: 900;
+        letter-spacing: 1px;
+        margin-bottom: 8px;
+      }
+      .card-title-ink {
+        font-size: 34px;
+        font-weight: 900;
+        color: #141414;
+        line-height: 1.25;
+        margin: 0 0 4px 0;
+      }
+      .card-sub-ink {
+        font-size: 22px;
+        font-weight: 700;
+        color: #141414;
+        margin: 0;
+      }
+
+      /* Card 2: Thành khẩn ăn năn + Icon check */
+      #card-remorse {
+        top: 680px;
+        right: 60px;
+        width: 500px;
+      }
+      .card-header-flex {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+      }
+      .check-icon-circle {
+        width: 48px;
+        height: 48px;
+        background-color: #141414;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      /* Card 3: Biên lai bồi thường 6 triệu đồng */
+      #card-compensation {
+        position: absolute;
+        top: 1020px;
+        left: 60px;
+        right: 60px;
+        background-color: #141414;
+        border: 4px solid #FF6A1A;
+        border-radius: 14px;
+        box-shadow: 10px 10px 0px #141414;
+        padding: 24px 32px;
+        z-index: 25;
+        will-change: transform, opacity;
+      }
+      .comp-header-flex {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        margin-bottom: 12px;
+      }
+      .comp-badge {
+        background-color: #FF6A1A;
+        color: #141414;
+        padding: 6px 16px;
+        border-radius: 6px;
+        font-size: 20px;
+        font-weight: 900;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+      }
+      .comp-title {
+        font-size: 28px;
+        font-weight: 900;
+        color: #F7F4EC;
+        margin: 0;
+      }
+      .comp-amount {
+        font-size: 52px;
+        font-weight: 900;
+        color: #FF6A1A;
+        line-height: 1.15;
+        letter-spacing: 0.5px;
+        margin: 0 0 6px 0;
+      }
+      .comp-sub {
+        font-size: 22px;
+        font-weight: 700;
+        color: #E7E3D9;
+        margin: 0;
+      }
+
+      /* Bottom brand bar (DNA signature) */
+      #bottom-brand-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 10px;
+        background-color: #FF6A1A;
+        z-index: 100;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s31"
+      data-start="0"
+      data-width="1080"
+      data-height="1920"
+      data-duration="8"
+      data-fps="30"
+    >
+      <!-- Main Scene Clip (Shot S31-1) -->
+      <section id="scene-s31" class="clip" data-start="0" data-duration="8">
+        <div id="scene-container">
+          <!-- Full-bleed background photo (img-15) -->
+          <div id="hero-image-wrap">
+            <img
+              id="hero-image"
+              src="assets/img-15-courtroom-mitigating-circumstances-defen.jpg"
+              alt="Bị cáo cúi đầu thành khẩn trước toà"
+            />
+          </div>
+
+          <!-- Background variant: chart lines overlay -->
+          <div id="bg-chart">
+            <div class="chart-line" style="top: 20%;"><div class="chart-tick"></div></div>
+            <div class="chart-line" style="top: 40%;"><div class="chart-tick"></div></div>
+            <div class="chart-line" style="top: 60%;"><div class="chart-tick"></div></div>
+            <div class="chart-line" style="top: 80%;"><div class="chart-tick"></div></div>
+          </div>
+
+          <!-- Top Header / Punch Card -->
+          <div id="header-card">
+            <span class="badge-tag hf-hl-orange">HỘI ĐỒNG XÉT XỬ GHI NHẬN</span>
+            <h1 class="headline-text">CĂN CỨ GIẢM NHẸ HÌNH SỰ</h1>
+          </div>
+
+          <!-- Overlay 1: Chưa tiền án (at 1.64s) -->
+          <div id="card-clean-record" class="annotated-card">
+            <span class="card-pill-dark">01. LÝ LỊCH TƯ PHÁP</span>
+            <h2 class="card-title-ink">CHƯA TIỀN ÁN</h2>
+            <p class="card-sub-ink">Nhân thân tốt, lần đầu phạm tội</p>
+          </div>
+
+          <!-- Overlay 2: Thành khẩn ăn năn + Animated Checkmark (at 3.87s) -->
+          <div id="card-remorse" class="annotated-card">
+            <div class="card-header-flex">
+              <span class="card-pill-dark">02. THÁI ĐỘ KHAI BÁO</span>
+              <div class="check-icon-circle">
+                <svg width="28" height="28" viewBox="0 0 28 28">
+                  <path
+                    id="check-path"
+                    d="M6 14 L12 20 L22 8"
+                    fill="none"
+                    stroke="#FF6A1A"
+                    stroke-width="3.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </div>
+            </div>
+            <h2 class="card-title-ink">THÀNH KHẨN ĂN NĂN</h2>
+            <p class="card-sub-ink">Hối cải trước Hội đồng Xét xử</p>
+          </div>
+
+          <!-- Overlay 3: Biên lai bồi thường: 6 triệu đồng (at 5.89s) -->
+          <div id="card-compensation">
+            <div class="comp-header-flex">
+              <span class="comp-badge">03. KHẮC PHỤC HẬU QUẢ</span>
+              <span class="comp-title">BIÊN LAI DÂN SỰ</span>
+            </div>
+            <div class="comp-amount">BỒI THƯỜNG: 6 TRIỆU ĐỒNG</div>
+            <p class="comp-sub">Gia đình bị cáo đã tự nguyện bồi thường cho ông Tùng</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Signature Orange Bar at Bottom -->
+      <div id="bottom-brand-bar"></div>
+    </div>
+
+    <!-- GSAP Choreography Timeline -->
+    <script>
+      const tl = gsap.timeline({ paused: true });
+
+      // Path length measurement for checkmark icon
+      const checkPath = document.getElementById("check-path");
+      let pathLen = 30;
+      if (checkPath) {
+        pathLen = checkPath.getTotalLength();
+        checkPath.style.strokeDasharray = pathLen;
+        checkPath.style.strokeDashoffset = pathLen;
+      }
+
+      // Initial visual states (seek-safe via fromTo)
+      // 0.0s - 0.7s: Scene entrance ("rise" animation)
+      tl.fromTo(
+        "#scene-container",
+        { y: 60, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.7, ease: "power3.out" },
+        0
+      );
+
+      // Header entrance
+      tl.fromTo(
+        "#header-card",
+        { y: -30, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.6, ease: "power3.out" },
+        0.15
+      );
+
+      // Camera motion: slow Ken Burns zoom-in on hero image throughout 8.0s
+      tl.fromTo(
+        "#hero-image",
+        { scale: 1.0 },
+        { scale: 1.06, duration: 8.0, ease: "none" },
+        0
+      );
+
+      // Overlay 1: "CHƯA TIỀN ÁN" at 1.64s (from shotlist atMs: 246520)
+      tl.fromTo(
+        "#card-clean-record",
+        { scale: 0.75, opacity: 0, y: 30 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.5, ease: "power3.out" },
+        1.64
+      );
+
+      // Overlay 2: "THÀNH KHẨN ĂN NĂN" at 3.87s (from shotlist atMs: 248750)
+      tl.fromTo(
+        "#card-remorse",
+        { scale: 0.75, opacity: 0, y: 30 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.5, ease: "power3.out" },
+        3.87
+      );
+
+      // Self-drawing SVG checkmark stroke
+      if (checkPath) {
+        tl.fromTo(
+          checkPath,
+          { strokeDashoffset: pathLen },
+          { strokeDashoffset: 0, duration: 0.45, ease: "power2.out" },
+          4.05
+        );
+      }
+
+      // Overlay 3: "BỒI THƯỜNG: 6 TRIỆU ĐỒNG" at 5.89s (from shotlist atMs: 250770)
+      tl.fromTo(
+        "#card-compensation",
+        { scale: 0.8, opacity: 0, y: 35 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.55, ease: "power3.out" },
+        5.89
+      );
+
+      // Register master timeline on window.__timelines["scene-s31"]
+      window.__timelines = window.__timelines || {};
+      window.__timelines["scene-s31"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

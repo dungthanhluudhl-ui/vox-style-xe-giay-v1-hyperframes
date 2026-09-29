@@ -93,11 +93,17 @@ export async function callModel({
 /** Lỗi HẠ TẦNG khi gọi model (không phải lỗi nội dung): HTTP 403/408/429/5xx, timeout, mất kết nối.
  * Bài học thật (2026-09-26, audit Stage 7): reviewer hết hạn mức trả 503 bọc "[403] ... (reset after
  * 48s)"; trước đây lỗi này bị tính là 1 lần thử hỏng → vứt code đã PASS verify, sinh lại từ đầu —
- * ban-an-425-phan-1 mất 97/186 lần thử, hinh-phat 255/497 vì vậy. */
+ * ban-an-425-phan-1 mất 97/186 lần thử, hinh-phat 255/497 vì vậy.
+ * Bài học thật #2 (2026-09-29, video ban-an-16-hoa-chuoi-kon-tum): 9router cũng có thể trả 400 "model
+ * X không được hỗ trợ khi dùng Codex với tài khoản ChatGPT" — đây là lỗi CẤU HÌNH TÀI KHOẢN/ROUTING
+ * phía backend (model đó vẫn PASS được ở lần gọi khác trong cùng lần chạy), không phải lỗi nội dung
+ * request — cùng bản chất với 403/5xx nhưng mã 400 không khớp regex cũ, khiến cả 3 lần thử lãng phí
+ * sinh lại code dù verify đã PASS thay vì chuyển ngay sang model dự phòng. */
 export function isInfraError(e) {
   const msg = String(e?.message ?? e);
   return (
     /9router trả lỗi (403|408|429|5\d\d)\b/.test(msg) ||
+    /9router trả lỗi 400\b.*not supported when using/i.test(msg) ||
     /9router timeout/.test(msg) ||
     /fetch failed|ECONNRESET|ECONNREFUSED|ETIMEDOUT|socket hang up|network/i.test(msg)
   );

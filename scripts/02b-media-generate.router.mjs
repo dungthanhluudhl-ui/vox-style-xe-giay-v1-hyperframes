@@ -216,7 +216,7 @@ const IMAGE_STYLE = {
 async function generateScenePrompts(script, styleNotes) {
   const systemPrompt = `Bạn là chuyên gia viết prompt tạo ảnh AI theo phong cách "Vox-style" (xé giấy/cắt dán — paper cutout/collage) cho video ngắn dạng phóng sự/kể chuyện.
 
-Nhiệm vụ: đọc kịch bản dưới đây, tự chia thành các phân cảnh hợp lý — SỐ LƯỢNG PHÂN CẢNH TỈ LỆ THUẬN VỚI ĐỘ DÀI KỊCH BẢN (kịch bản dài cần nhiều phân cảnh hơn để bao quát đủ nội dung, KHÔNG giới hạn cố định ở 5-6 cảnh) — rồi viết ĐÚNG 1 prompt tạo ảnh tiếng Anh cho mỗi phân cảnh.
+Nhiệm vụ: đọc kịch bản dưới đây, tự chia thành các phân cảnh hợp lý — MẬT ĐỘ BẮT BUỘC: cứ khoảng 2-3 CÂU trong kịch bản thì cần có ÍT NHẤT 1 phân cảnh/ảnh minh hoạ riêng (đếm câu theo dấu chấm câu ".", "?", "!", không phải theo dòng/đoạn) — kịch bản dài cần nhiều phân cảnh hơn để bao quát đủ nội dung theo đúng mật độ này, KHÔNG giới hạn cố định ở 5-6 cảnh — rồi viết ĐÚNG 1 prompt tạo ảnh tiếng Anh cho mỗi phân cảnh.
 
 Mỗi prompt PHẢI theo đúng cấu trúc đã chứng minh hiệu quả qua các ví dụ thật sau:
 """
@@ -242,7 +242,9 @@ Trả về JSON đúng format: {"prompts": ["prompt phân cảnh 1 bằng tiến
     ],
     responseFormat: { type: "json_object" },
     temperature: 0.4,
-    maxTokens: 4000,
+    // 4000 trước đây đã gần chạm trần với 21 ảnh (video kinh-te-meo); mật độ mới (2-3 câu/ảnh)
+    // sinh nhiều ảnh hơn cho cùng độ dài kịch bản nên tăng biên an toàn.
+    maxTokens: 8000,
   });
   const parsed = extractJson(extractText(response));
   return parsed.prompts;
