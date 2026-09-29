@@ -1,0 +1,574 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap">
+      <style>
+/* hf-safe-colors (tất định từ style-tokens.json) */
+.hf-text-ink { color: #141414; }
+.hf-text-light { color: #F7F4EC; }
+.hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+.hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+.hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+.hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      background-color: #E7E3D9;
+      color: #141414;
+      font-family: "Be Vietnam Pro", sans-serif;
+      overflow: hidden;
+      width: 1080px;
+      height: 1920px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Quy ước bắt buộc: .clip inset 0 không set cứng px width/height */
+    .clip {
+      position: absolute;
+      inset: 0;
+    }
+
+    #root {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #E7E3D9;
+    }
+
+    /* Vox Grid Background: ô vuông 84px với nét rgba(20,20,20,0.32) */
+    .vox-grid-bg {
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(to right, rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px),
+        linear-gradient(to bottom, rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px);
+      background-size: 84px 84px;
+      pointer-events: none;
+    }
+
+    /* Thanh cam nhận diện Vox cố định ở đáy khung hình */
+    .vox-bottom-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 14px;
+      background-color: #FF6A1A;
+      z-index: 100;
+    }
+
+    /* Khung nội dung chính nằm trọn trong Safe Zone Y[160, 1390] */
+    .scene-container {
+      position: absolute;
+      top: 170px;
+      left: 50px;
+      width: 980px;
+      height: 1200px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* 1. Header văn bản đối chiếu */
+    .header-panel {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 36px;
+    }
+
+    .doc-category-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background-color: #141414;
+      color: #FF6A1A;
+      padding: 8px 24px;
+      border-radius: 4px;
+      font-size: 22px;
+      font-weight: 900;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 14px;
+    }
+
+    .main-title {
+      font-size: 58px;
+      font-weight: 900;
+      line-height: 1.25;
+      text-align: center;
+      color: #141414;
+      text-transform: uppercase;
+      letter-spacing: -1px;
+    }
+
+    /* 2. Hai cột so sánh đối lập */
+    .comparison-grid {
+      width: 100%;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 32px;
+      position: relative;
+    }
+
+    .column-card {
+      background-color: #F5F0E4;
+      border: 3.5px solid #141414;
+      border-radius: 8px;
+      padding: 36px 28px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 600px;
+      position: relative;
+      box-shadow: 10px 10px 0px rgba(20, 20, 20, 0.9);
+    }
+
+    .col-header {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+      border-bottom: 2.5px dashed rgba(20, 20, 20, 0.4);
+      padding-bottom: 22px;
+      margin-bottom: 26px;
+    }
+
+    .col-number {
+      font-size: 20px;
+      font-weight: 900;
+      color: #141414;
+      opacity: 0.6;
+      margin-bottom: 6px;
+    }
+
+    .col-title {
+      font-size: 34px;
+      font-weight: 900;
+      text-align: center;
+      line-height: 1.25;
+      color: #141414;
+      text-transform: uppercase;
+    }
+
+    .col-icon-wrapper {
+      width: 150px;
+      height: 150px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 15px 0 25px 0;
+      background-color: #E7E3D9;
+      border: 2px solid #141414;
+      border-radius: 50%;
+    }
+
+    .col-status-box {
+      width: 100%;
+      border-radius: 6px;
+      padding: 16px 14px;
+      text-align: center;
+      margin-top: auto;
+    }
+
+    /* Thẻ vế 1: Hậu cung - chấp nhận */
+    .status-tolerated {
+      background-color: #E7E3D9;
+      border: 2px solid #141414;
+    }
+    .status-tolerated .status-label {
+      font-size: 20px;
+      font-weight: 700;
+      color: #141414;
+      opacity: 0.75;
+      margin-bottom: 4px;
+    }
+    .status-tolerated .status-val {
+      font-size: 28px;
+      font-weight: 900;
+      color: #141414;
+    }
+
+    /* Thẻ vế 2: Kỹ viện - vi phạm */
+    .status-violation {
+      background-color: #141414;
+      border: 2px solid #141414;
+    }
+    .status-violation .status-label {
+      font-size: 20px;
+      font-weight: 700;
+      color: #F7F4EC;
+      opacity: 0.75;
+      margin-bottom: 4px;
+    }
+    .status-violation .status-val {
+      font-size: 28px;
+      font-weight: 900;
+      color: #FF6A1A;
+    }
+
+    /* 3. Con dấu mộc giáng xuống: "SAI QUY TẮC" (Punch-phrase) */
+    .stamp-container {
+      position: absolute;
+      top: 250px;
+      right: 18px;
+      width: 440px;
+      pointer-events: none;
+      z-index: 50;
+      transform-origin: 50% 50%;
+      opacity: 0;
+    }
+
+    .stamp-seal {
+      background-color: #141414;
+      border: 6px solid #FF6A1A;
+      border-radius: 8px;
+      padding: 18px 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 16px 36px rgba(20, 20, 20, 0.45);
+      position: relative;
+    }
+
+    .stamp-inner-border {
+      position: absolute;
+      inset: 6px;
+      border: 2px dashed #FF6A1A;
+      border-radius: 4px;
+      pointer-events: none;
+    }
+
+    .stamp-subtext {
+      font-size: 19px;
+      font-weight: 900;
+      color: #F7F4EC;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    .stamp-text {
+      font-size: 52px;
+      font-weight: 900;
+      color: #FF6A1A;
+      line-height: 1.1;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      text-align: center;
+    }
+
+    /* Shockwave khi đóng dấu */
+    .stamp-shockwave {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 120px;
+      height: 120px;
+      border: 4px solid #FF6A1A;
+      border-radius: 50%;
+      transform: translate(-50%, -50%) scale(0.2);
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    /* 4. Banner xung đột ở đáy dải an toàn: "CÃI VÃ TRIỀN MIÊN" */
+    .conflict-banner-wrapper {
+      width: 100%;
+      margin-top: 36px;
+      opacity: 0;
+      transform-origin: 50% 50%;
+    }
+
+    .conflict-banner {
+      background-color: #141414;
+      border: 3.5px solid #141414;
+      border-radius: 8px;
+      padding: 22px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 8px 8px 0px #FF6A1A;
+    }
+
+    .conflict-icon-box {
+      width: 60px;
+      height: 60px;
+      background-color: #FF6A1A;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .conflict-text-group {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      margin-left: 20px;
+      flex-grow: 1;
+    }
+
+    .conflict-subtitle {
+      font-size: 19px;
+      font-weight: 900;
+      color: #FF6A1A;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 2px;
+    }
+
+    .conflict-headline {
+      font-size: 44px;
+      font-weight: 900;
+      color: #F7F4EC;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      line-height: 1.15;
+    }
+
+    .conflict-strike-pill {
+      background-color: #FF6A1A;
+      color: #141414;
+      font-size: 20px;
+      font-weight: 900;
+      padding: 10px 18px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+  </style>
+
+  <div id="root" data-composition-id="scene-s22" data-width="1080" data-height="1920" data-duration="6.44">
+    <!-- Nền lưới toạ độ Vox -->
+    <div class="vox-grid-bg"></div>
+
+    <!-- Thanh chỉ báo thương hiệu cố định mép đáy -->
+    <div class="vox-bottom-bar"></div>
+
+    <!-- Container diễn hoạt chính của toàn bộ scene -->
+    <section class="clip" data-start="0" data-duration="6.44">
+      <div class="scene-container" id="camera-frame">
+
+        <!-- 1. Header đối chiếu -->
+        <header class="header-panel" id="header-box">
+          <div class="doc-category-badge">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FF6A1A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="16" y1="13" x2="8" y2="13"></line>
+              <line x1="16" y1="17" x2="8" y2="17"></line>
+            </svg>
+            QUY TẮC PHONG KIẾN
+          </div>
+          <h1 class="main-title">RANH GIỚI PHÁN XÉT</h1>
+        </header>
+
+        <!-- 2. Bố cục 2 cột so sánh -->
+        <main class="comparison-grid">
+
+          <!-- Cột Trái: Hậu Cung Đông Đảo (Được dung thứ / Trong lệ) -->
+          <div class="column-card" id="col-left">
+            <div class="col-header">
+              <span class="col-number">TIỀN LỆ HOÀNG TỘC</span>
+              <h2 class="col-title">HẬU CUNG<br>ĐÔNG ĐẢO</h2>
+            </div>
+
+            <div class="col-icon-wrapper">
+              <!-- SVG Icon: Cung cấm / Phi tần hợp thức -->
+              <svg width="84" height="84" viewBox="0 0 24 24" fill="none" stroke="#141414" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 21h18"></path>
+                <path d="M5 21V9l7-5 7 5v12"></path>
+                <path d="M9 21V13h6v8"></path>
+                <circle cx="12" cy="7" r="1.5" fill="#141414"></circle>
+              </svg>
+            </div>
+
+            <div class="col-status-box status-tolerated" id="status-left">
+              <div class="status-label">THÁI ĐỘ DOÃN THỊ</div>
+              <div class="status-val">"TÔI KHÔNG NÓI"</div>
+            </div>
+          </div>
+
+          <!-- Cột Phải: Ra Ngoài Kỹ Viện (Bị lên án / Trái quy chế) -->
+          <div class="column-card" id="col-right">
+            <div class="col-header">
+              <span class="col-number">HÀNH VI NHÀ VUA</span>
+              <h2 class="col-title">RA NGOÀI<br>KỸ VIỆN</h2>
+            </div>
+
+            <div class="col-icon-wrapper">
+              <!-- SVG Icon: Đèn lồng kỹ quán / Lầu hoa cấm -->
+              <svg width="84" height="84" viewBox="0 0 24 24" fill="none" stroke="#141414" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="5" y="5" width="14" height="14" rx="2"></rect>
+                <line x1="12" y1="2" x2="12" y2="5"></line>
+                <line x1="12" y1="19" x2="12" y2="22"></line>
+                <line x1="9" y1="9" x2="15" y2="15"></line>
+                <line x1="15" y1="9" x2="9" y2="15"></line>
+              </svg>
+            </div>
+
+            <div class="col-status-box status-violation" id="status-right">
+              <div class="status-label">KẾT LUẬN LỄ GIÁO</div>
+              <div class="status-val">VI PHẠM GIA PHÁP</div>
+            </div>
+          </div>
+
+          <!-- 3. Con dấu giáng mộc PUNCH-PHRASE (Xuất hiện ở t = 3.48s) -->
+          <div class="stamp-container" id="stamp-wrapper">
+            <div class="stamp-shockwave" id="stamp-wave"></div>
+            <div class="stamp-seal">
+              <div class="stamp-inner-border"></div>
+              <span class="stamp-subtext">ĐIỀU CẤM KỴ TRIỀU ĐÌNH</span>
+              <div class="stamp-text">SAI QUY TẮC</div>
+            </div>
+          </div>
+
+        </main>
+
+        <!-- 4. Banner kết luận: CÃI VÃ TRIỀN MIÊN (Xuất hiện ở t = 5.47s) -->
+        <footer class="conflict-banner-wrapper" id="conflict-wrapper">
+          <div class="conflict-banner">
+            <div class="conflict-icon-box">
+              <!-- SVG: Tia chớp xung đột va chạm -->
+              <svg width="34" height="34" viewBox="0 0 24 24" fill="#141414">
+                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+              </svg>
+            </div>
+            <div class="conflict-text-group">
+              <span class="conflict-subtitle">MÂU THUẪN ĐỈNH ĐIỂM</span>
+              <span class="conflict-headline">CÃI VÃ TRIỀN MIÊN</span>
+            </div>
+            <div class="conflict-strike-pill">BẤT HÒA</div>
+          </div>
+        </footer>
+
+      </div>
+    </section>
+  </div>
+
+  <script>
+    // Khởi tạo GSAP Timeline tuân thủ chặt chẽ HyperFrames Deterministic Contract
+    const tl = gsap.timeline({ paused: true });
+
+    // 1. Giai đoạn mở đầu (t = 0.0s - 1.2s):
+    // Header xuất hiện với nhịp rơi đầm
+    tl.fromTo("#header-box", 
+      { y: -30, opacity: 0 }, 
+      { y: 0, opacity: 1, duration: 0.55, ease: "power3.out" }, 
+      0.1
+    );
+
+    // Cột trái "HẬU CUNG ĐÔNG ĐẢO" tiến vào (t = 0.35s)
+    tl.fromTo("#col-left",
+      { y: 50, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.6, ease: "power3.out" },
+      0.35
+    );
+
+    // Chi tiết thái độ "Tôi không nói" nhấn nhẹ
+    tl.fromTo("#status-left",
+      { scale: 0.9, opacity: 0 },
+      { scale: 1, opacity: 1, duration: 0.45, ease: "power2.out" },
+      0.85
+    );
+
+    // 2. Giai đoạn đối nghịch (t = 1.4s - 2.4s):
+    // Cột phải "RA NGOÀI KỸ VIỆN" tiến vào gắt hơn
+    tl.fromTo("#col-right",
+      { y: 50, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.6, ease: "power3.out" },
+      1.4
+    );
+
+    tl.fromTo("#status-right",
+      { scale: 0.9, opacity: 0 },
+      { scale: 1, opacity: 1, duration: 0.45, ease: "power2.out" },
+      1.9
+    );
+
+    // 3. Camera slow zoom-in dần toàn cảnh (2.0s -> 6.44s) tạo căng thẳng
+    tl.to("#camera-frame", {
+      scale: 1.03,
+      duration: 4.44,
+      ease: "none"
+    }, 2.0);
+
+    // 4. PUNCH-PHRASE: DẤU MỘC "SAI QUY TẮC" GIÁNG XUỐNG (t = 3.48s, đúng 213300ms)
+    // Hiệu ứng "strike": rơi từ trên cao cực nhanh, va đập rung chuyển
+    tl.fromTo("#stamp-wrapper",
+      {
+        scale: 2.8,
+        rotation: 18,
+        opacity: 0,
+        y: -40
+      },
+      {
+        scale: 1,
+        rotation: -7,
+        opacity: 1,
+        y: 0,
+        duration: 0.24,
+        ease: "power4.in"
+      },
+      3.48
+    );
+
+    // Chấn động va chạm (Screen shockwave & tremor)
+    tl.fromTo("#stamp-wave",
+      { scale: 0.2, opacity: 0.9 },
+      { scale: 3.2, opacity: 0, duration: 0.45, ease: "power2.out" },
+      3.72
+    );
+
+    // Rung giật cột bên phải do bị đóng dấu mạnh
+    tl.to("#col-right", { x: 8, duration: 0.04, yoyo: true, repeat: 3, ease: "power1.inOut" }, 3.72);
+    tl.to("#col-right", { x: 0, duration: 0.05 }, 3.88);
+
+    // 5. LABEL: "CÃI VÃ TRIỀN MIÊN" XUẤT HIỆN (t = 5.47s, đúng 215290ms)
+    // Bật lên như nhát cắt dứt khoát xác nhận kết cục bất hòa
+    tl.fromTo("#conflict-wrapper",
+      {
+        y: 35,
+        scale: 0.94,
+        opacity: 0
+      },
+      {
+        y: 0,
+        scale: 1,
+        opacity: 1,
+        duration: 0.35,
+        ease: "back.out(1.4)"
+      },
+      5.47
+    );
+
+    // Rung động nhẹ biểu thị xung đột âm ỉ đến hết scene
+    tl.to("#conflict-wrapper", {
+      x: 3,
+      duration: 0.08,
+      repeat: 5,
+      yoyo: true,
+      ease: "sine.inOut"
+    }, 5.85);
+    tl.to("#conflict-wrapper", { x: 0, duration: 0.05 }, 6.25);
+
+    // BẮT BUỘC: Đăng ký timeline cho HyperFrames seek engine
+    window.__timelines = window.__timelines || {};
+    window.__timelines["scene-s22"] = tl;
+  </script>
+
+    </template>
+  </body>
+</html>

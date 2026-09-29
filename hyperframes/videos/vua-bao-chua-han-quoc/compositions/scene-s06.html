@@ -1,0 +1,606 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+/* hf-safe-colors (tất định từ style-tokens.json) */
+.hf-text-ink { color: #141414; }
+.hf-text-light { color: #F7F4EC; }
+.hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+.hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+.hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+.hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #E7E3D9;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+      .clip {
+        position: absolute;
+        inset: 0;
+      }
+      /* Vox Paper Grid Background */
+      .paper-grid {
+        position: absolute;
+        inset: 0;
+        background-color: #E7E3D9;
+        background-image:
+          linear-gradient(to right, rgba(20, 20, 20, 0.18) 1.5px, transparent 1.5px),
+          linear-gradient(to bottom, rgba(20, 20, 20, 0.18) 1.5px, transparent 1.5px);
+        background-size: 84px 84px;
+        z-index: 1;
+      }
+      /* Scene Header Area (Within Safe Zone: Y=175 to 350) */
+      .scene-header {
+        position: absolute;
+        top: 175px;
+        left: 60px;
+        right: 60px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        z-index: 20;
+      }
+      .category-chip {
+        display: inline-flex;
+        align-items: center;
+        background-color: #141414;
+        color: #FF6A1A;
+        font-weight: 900;
+        font-size: 18px;
+        letter-spacing: 2px;
+        padding: 8px 24px;
+        border-radius: 4px;
+        text-transform: uppercase;
+        margin-bottom: 12px;
+      }
+      .main-title {
+        margin: 0;
+        font-size: 58px;
+        font-weight: 900;
+        line-height: 1.18;
+        color: #141414;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      .title-highlight {
+        background-color: #FF6A1A;
+        color: #141414;
+        padding: 2px 14px;
+        border-radius: 6px;
+        display: inline-block;
+      }
+      .sub-lead {
+        margin-top: 8px;
+        font-size: 22px;
+        font-weight: 700;
+        color: #141414;
+        letter-spacing: 0.2px;
+      }
+
+      /* Scale Canvas & Diagram Elements */
+      .scale-canvas {
+        position: absolute;
+        inset: 0;
+        width: 1080px;
+        height: 1920px;
+        z-index: 10;
+        pointer-events: none;
+      }
+
+      /* Character Profile Dossier Cards */
+      .profile-card {
+        position: absolute;
+        top: 530px;
+        width: 440px;
+        height: 560px;
+        border-radius: 12px;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        z-index: 30;
+      }
+      .card-dark {
+        left: 54px;
+        background-color: #141414;
+        border: 3.5px solid #FF6A1A;
+        box-shadow: 0 16px 32px rgba(20, 20, 20, 0.4);
+      }
+      .card-light {
+        right: 54px;
+        background-color: #F5F0E4;
+        border: 3.5px solid #141414;
+        box-shadow: 0 16px 32px rgba(20, 20, 20, 0.25);
+      }
+
+      /* Card Headers */
+      .card-top-strip {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 2px solid rgba(255, 255, 255, 0.15);
+        padding-bottom: 12px;
+      }
+      .card-light .card-top-strip {
+        border-bottom: 2px solid rgba(20, 20, 20, 0.2);
+      }
+      .version-tag {
+        font-size: 16px;
+        font-weight: 900;
+        padding: 4px 10px;
+        border-radius: 4px;
+        letter-spacing: 1px;
+      }
+      .source-tag {
+        font-size: 15px;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+      }
+
+      /* Portrait Container */
+      .portrait-box {
+        width: 100%;
+        height: 240px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+      }
+      .portrait-svg {
+        width: 220px;
+        height: 220px;
+      }
+
+      /* Metadata rows */
+      .card-meta-list {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        padding: 8px 4px;
+      }
+      .meta-line {
+        display: flex;
+        font-size: 16px;
+        line-height: 1.3;
+      }
+      .meta-k-dark {
+        color: #FF6A1A;
+        font-weight: 900;
+        width: 110px;
+        flex-shrink: 0;
+      }
+      .meta-v-dark {
+        color: #F7F4EC;
+        font-weight: 700;
+      }
+      .meta-k-light {
+        color: #141414;
+        font-weight: 900;
+        width: 110px;
+        flex-shrink: 0;
+      }
+      .meta-v-light {
+        color: #141414;
+        font-weight: 700;
+      }
+
+      /* Punch Overlay Labels (Shotlist Overlays) */
+      .profile-label-box {
+        width: 100%;
+        padding: 12px 10px;
+        border-radius: 8px;
+        text-align: center;
+        font-size: 26px;
+        font-weight: 900;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        border: 2px solid #141414;
+      }
+      .label-orange {
+        background-color: #FF6A1A;
+        color: #141414;
+        box-shadow: 0 6px 0 #141414;
+      }
+      .label-dark {
+        background-color: #141414;
+        color: #F7F4EC;
+        box-shadow: 0 6px 0 #FF6A1A;
+      }
+
+      /* Decorative Rubber Stamps */
+      .stamp-badge {
+        position: absolute;
+        top: 200px;
+        right: 18px;
+        padding: 6px 14px;
+        font-size: 20px;
+        font-weight: 900;
+        border-radius: 4px;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        pointer-events: none;
+        z-index: 35;
+      }
+      .stamp-tyrant {
+        background-color: #141414;
+        color: #FF6A1A;
+        border: 3px dashed #FF6A1A;
+      }
+      .stamp-noble {
+        background-color: #FF6A1A;
+        color: #141414;
+        border: 3px dashed #141414;
+      }
+
+      /* Central Paradox VS Seal */
+      .center-vs-seal {
+        position: absolute;
+        left: 495px;
+        top: 760px;
+        width: 90px;
+        height: 90px;
+        border-radius: 50%;
+        background-color: #141414;
+        border: 3.5px solid #FF6A1A;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        color: #FF6A1A;
+        font-weight: 900;
+        font-size: 28px;
+        box-shadow: 0 8px 16px rgba(20, 20, 20, 0.4);
+        z-index: 40;
+      }
+      .vs-sub {
+        font-size: 11px;
+        letter-spacing: 1px;
+        color: #F7F4EC;
+        margin-top: -2px;
+      }
+
+      /* Fixed Brand Bottom Orange Bar */
+      .bottom-orange-bar {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 12px;
+        background-color: #FF6A1A;
+        z-index: 1000;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s06"
+      data-width="1080"
+      data-height="1920"
+      data-duration="6.96"
+    >
+      <!-- Background Grid -->
+      <div class="paper-grid" aria-hidden="true"></div>
+
+      <!-- Main Scene Clip -->
+      <section id="shot-1" class="clip" data-start="0" data-duration="6.96" data-track-index="0">
+        <!-- Top Editorial Header -->
+        <header id="header-area" class="scene-header">
+          <div class="category-chip">
+            HỒ SƠ NHÂN VẬT // NGHỊCH LÝ LỊCH SỬ
+          </div>
+          <h1 class="main-title">
+            TÀN ÁC <span class="title-highlight">HAY</span> ĐIỂN TRAI?
+          </h1>
+          <div class="sub-lead">
+            Sự phân cực gay gắt giữa hai luồng sử liệu khi khắc họa cùng một nhân vật
+          </div>
+        </header>
+
+        <!-- Balance Scale Vector Diagram -->
+        <svg id="scale-canvas" class="scale-canvas" viewBox="0 0 1080 1920" xmlns="http://www.w3.org/2000/svg">
+          <!-- Stationary Pillar and Base -->
+          <g id="scale-base-pillar">
+            <path d="M 480 1260 L 600 1260 L 580 1230 L 550 1230 L 550 480 L 530 480 L 530 1230 L 500 1230 Z" fill="#141414" />
+            <polygon points="510,1260 570,1260 560,1245 520,1245" fill="#FF6A1A" />
+            <!-- Calibrated Gauge Arc -->
+            <path d="M 470 470 A 70 70 0 0 1 610 470" fill="none" stroke="#141414" stroke-width="3" stroke-dasharray="4,6" />
+          </g>
+
+          <!-- Tilting Beam & Hub -->
+          <g id="scale-beam-rotator" style="transform-origin: 540px 470px;">
+            <!-- Vertical Needle -->
+            <polygon points="537,470 543,470 541,400 539,400" fill="#FF6A1A" stroke="#141414" stroke-width="1.5" />
+            <!-- Crossbar -->
+            <line x1="274" y1="470" x2="806" y2="470" stroke="#141414" stroke-width="9" stroke-linecap="round" />
+            <!-- Orange Endpoint Brackets -->
+            <rect x="268" y="462" width="12" height="16" rx="2" fill="#FF6A1A" stroke="#141414" stroke-width="2" />
+            <rect x="800" y="462" width="12" height="16" rx="2" fill="#FF6A1A" stroke="#141414" stroke-width="2" />
+            <!-- Central Pivot Ring -->
+            <circle id="scale-pivot-orb" cx="540" cy="470" r="22" fill="#141414" stroke="#FF6A1A" stroke-width="4" />
+            <circle cx="540" cy="470" r="7" fill="#FF6A1A" />
+          </g>
+
+          <!-- Left Scale Suspension Cords -->
+          <g id="chain-left">
+            <line x1="274" y1="470" x2="104" y2="530" stroke="#141414" stroke-width="3" stroke-dasharray="6,4" />
+            <line x1="274" y1="470" x2="444" y2="530" stroke="#141414" stroke-width="3" stroke-dasharray="6,4" />
+            <circle cx="274" cy="470" r="5" fill="#FF6A1A" />
+          </g>
+
+          <!-- Right Scale Suspension Cords -->
+          <g id="chain-right">
+            <line x1="806" y1="470" x2="636" y2="530" stroke="#141414" stroke-width="3" stroke-dasharray="6,4" />
+            <line x1="806" y1="470" x2="976" y2="530" stroke="#141414" stroke-width="3" stroke-dasharray="6,4" />
+            <circle cx="806" cy="470" r="5" fill="#FF6A1A" />
+          </g>
+        </svg>
+
+        <!-- Left Character Dossier: BẠO CHÚA TÀN ÁC -->
+        <article id="card-left" class="profile-card card-dark">
+          <div class="card-top-strip">
+            <span class="version-tag" style="background-color: #FF6A1A; color: #141414;">PHÂN LOẠI A</span>
+            <span class="source-tag" style="color: #F7F4EC;">DÃ SỬ & KẺ THÙ</span>
+          </div>
+
+          <div class="portrait-box">
+            <svg viewBox="0 0 240 240" class="portrait-svg">
+              <circle cx="120" cy="120" r="102" fill="#1e1e1e" stroke="#FF6A1A" stroke-width="2.5" />
+              <!-- Spiked Iron Crown -->
+              <polygon points="65,95 85,55 105,80 120,40 135,80 155,55 175,95" fill="#FF6A1A" stroke="#141414" stroke-width="2" />
+              <rect x="65" y="93" width="110" height="12" fill="#FF6A1A" />
+              <!-- Brutal Head Contour -->
+              <path d="M85,105 C85,105 75,150 90,175 C100,192 120,195 120,195 C120,195 140,192 150,175 C165,150 155,105 155,105 Z" fill="#E7E3D9" />
+              <!-- Angular Shadows & Sharp Beard -->
+              <path d="M88,145 L120,195 L152,145 L138,150 L120,180 L102,150 Z" fill="#141414" />
+              <!-- Fierce Gaze Slits -->
+              <polygon points="98,125 112,130 100,132" fill="#141414" />
+              <polygon points="142,125 128,130 140,132" fill="#141414" />
+              <circle cx="106" cy="128" r="3" fill="#FF6A1A" />
+              <circle cx="134" cy="128" r="3" fill="#FF6A1A" />
+              <!-- Bloodline Slash -->
+              <line x1="102" y1="110" x2="94" y2="140" stroke="#FF6A1A" stroke-width="3" stroke-linecap="round" />
+              <!-- Iron Pauldron Mantle -->
+              <path d="M45,230 L75,185 L165,185 L195,230 Z" fill="#141414" stroke="#FF6A1A" stroke-width="2" />
+            </svg>
+          </div>
+
+          <div class="card-meta-list">
+            <div class="meta-line"><span class="meta-k-dark">TÍNH CÁCH:</span><span class="meta-v-dark">BẠO NGƯỢC, ĐẪM MÁU</span></div>
+            <div class="meta-line"><span class="meta-k-dark">NGUỒN TIN:</span><span class="meta-v-dark">KẺ THÙ TRUYỀN MIỆNG</span></div>
+            <div class="meta-line"><span class="meta-k-dark">HÌNH TƯỢNG:</span><span class="meta-v-dark">QUỶ DỮ ĐOẠT MỆNH</span></div>
+          </div>
+
+          <!-- Rubber Stamp Left -->
+          <div id="stamp-left" class="stamp-badge stamp-tyrant" data-layout-allow-overflow="true">
+            BẠO NGƯỢC
+          </div>
+
+          <!-- Overlay Label Left (At t=2.75s) -->
+          <div id="label-left" class="profile-label-box label-orange">
+            BẠO CHÚA TÀN ÁC
+          </div>
+        </article>
+
+        <!-- Right Character Dossier: MỸ NAM HOÀNG TỘC -->
+        <article id="card-right" class="profile-card card-light">
+          <div class="card-top-strip">
+            <span class="version-tag" style="background-color: #141414; color: #F7F4EC;">PHÂN LOẠI B</span>
+            <span class="source-tag" style="color: #141414;">CHÍNH SỬ & THI CA</span>
+          </div>
+
+          <div class="portrait-box">
+            <svg viewBox="0 0 240 240" class="portrait-svg">
+              <circle cx="120" cy="120" r="102" fill="#F5F0E4" stroke="#141414" stroke-width="2.5" />
+              <!-- Radiant Sunburst Rays -->
+              <g stroke="#141414" stroke-width="1.5">
+                <line x1="120" y1="18" x2="120" y2="34" />
+                <line x1="192" y1="48" x2="180" y2="60" />
+                <line x1="222" y1="120" x2="206" y2="120" />
+                <line x1="48" y1="48" x2="60" y2="60" />
+                <line x1="18" y1="120" x2="34" y2="120" />
+              </g>
+              <!-- Golden Laurel Coronet -->
+              <path d="M70,90 C80,70 110,60 120,62 C130,60 160,70 170,90" fill="none" stroke="#FF6A1A" stroke-width="4" stroke-linecap="round" />
+              <ellipse cx="85" cy="76" rx="8" ry="4" transform="rotate(-30 85 76)" fill="#FF6A1A" />
+              <ellipse cx="105" cy="65" rx="8" ry="4" transform="rotate(-15 105 65)" fill="#FF6A1A" />
+              <ellipse cx="135" cy="65" rx="8" ry="4" transform="rotate(15 135 65)" fill="#FF6A1A" />
+              <ellipse cx="155" cy="76" rx="8" ry="4" transform="rotate(30 155 76)" fill="#FF6A1A" />
+              <!-- Aristocratic Classical Silhouette -->
+              <path d="M88,100 C88,100 80,145 95,172 C106,188 120,192 120,192 C120,192 134,188 145,172 C160,145 152,100 152,100 Z" fill="#141414" />
+              <path d="M92,105 C95,95 110,90 120,90 C130,90 145,95 148,105 C140,102 128,102 120,102 C112,102 100,102 92,105 Z" fill="#FF6A1A" />
+              <path d="M100,142 C105,160 115,175 120,178 C125,175 135,160 140,142" fill="none" stroke="#E7E3D9" stroke-width="2" />
+              <!-- Royal Cape Collar -->
+              <path d="M50,230 L80,185 L160,185 L190,230 Z" fill="#FF6A1A" stroke="#141414" stroke-width="2.5" />
+              <polygon points="120,185 105,230 135,230" fill="#141414" />
+            </svg>
+          </div>
+
+          <div class="card-meta-list">
+            <div class="meta-line"><span class="meta-k-light">TÍNH CÁCH:</span><span class="meta-v-light">TUẤN TÚ, UY NGHIÊM</span></div>
+            <div class="meta-line"><span class="meta-k-light">NGUỒN TIN:</span><span class="meta-v-light">CHÍNH THỐNG CA TỤNG</span></div>
+            <div class="meta-line"><span class="meta-k-light">HÌNH TƯỢNG:</span><span class="meta-v-light">VƯƠNG GIẢ XUẤT CHÚNG</span></div>
+          </div>
+
+          <!-- Rubber Stamp Right -->
+          <div id="stamp-right" class="stamp-badge stamp-noble" data-layout-allow-overflow="true">
+            VƯƠNG GIẢ
+          </div>
+
+          <!-- Overlay Label Right (At t=5.81s) -->
+          <div id="label-right" class="profile-label-box label-dark">
+            MỸ NAM HOÀNG TỘC
+          </div>
+        </article>
+
+        <!-- Central Paradox Seal -->
+        <div id="vs-badge" class="center-vs-seal" data-layout-allow-overflow="true">
+          <span>VS</span>
+          <span class="vs-sub">NGHỊCH LÝ</span>
+        </div>
+      </section>
+
+      <!-- Signature Vox Orange Bottom Bar -->
+      <div class="bottom-orange-bar" aria-hidden="true"></div>
+    </div>
+
+    <!-- Animation Runtime Script -->
+    <script>
+      const tl = gsap.timeline({ paused: true });
+
+      // 1. Header Entrance (t = 0.1s)
+      tl.fromTo(
+        "#header-area",
+        { y: -45, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.55, ease: "power3.out" },
+        0.1
+      );
+
+      // 2. Scale Icon & Vector Diagram Reveal (t = 0.30s)
+      tl.fromTo(
+        "#scale-base-pillar",
+        { scaleY: 0, transformOrigin: "540px 1260px" },
+        { scaleY: 1, duration: 0.5, ease: "power3.out" },
+        0.3
+      );
+      tl.fromTo(
+        "#scale-beam-rotator",
+        { scaleX: 0, transformOrigin: "540px 470px" },
+        { scaleX: 1, duration: 0.5, ease: "power3.out" },
+        0.45
+      );
+      tl.fromTo(
+        "#scale-pivot-orb",
+        { scale: 0, transformOrigin: "540px 470px" },
+        { scale: 1, duration: 0.35, ease: "power3.out" },
+        0.55
+      );
+
+      // 3. Left Card ("Bạo Chúa") Wobble-Drop Entrance (t = 0.80s)
+      tl.fromTo(
+        "#card-left",
+        { y: -300, opacity: 0, rotation: -8 },
+        { y: 0, opacity: 1, rotation: -2, duration: 0.65, ease: "power3.out" },
+        0.8
+      );
+      tl.fromTo(
+        "#chain-left",
+        { opacity: 0, scaleY: 0, transformOrigin: "274px 470px" },
+        { opacity: 1, scaleY: 1, duration: 0.5, ease: "power2.out" },
+        0.85
+      );
+
+      // 4. Left Impact Tilts Scale Down (t = 1.25s)
+      tl.to("#scale-beam-rotator", { rotation: -6, duration: 0.55, ease: "power2.out" }, 1.25);
+      tl.to("#card-left", { y: 30, duration: 0.55, ease: "power2.out" }, 1.25);
+      tl.to("#chain-left", { y: 30, duration: 0.55, ease: "power2.out" }, 1.25);
+
+      // 5. Left Sway Recoil (t = 1.90s)
+      tl.to("#scale-beam-rotator", { rotation: -4.5, duration: 0.7, ease: "sine.inOut" }, 1.9);
+      tl.to("#card-left", { y: 22, duration: 0.7, ease: "sine.inOut" }, 1.9);
+      tl.to("#chain-left", { y: 22, duration: 0.7, ease: "sine.inOut" }, 1.9);
+
+      // 6. Overlay 2: BẠO CHÚA TÀN ÁC (t = 2.75s)
+      tl.fromTo(
+        "#label-left",
+        { scale: 0.45, opacity: 0, y: -16 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.42, ease: "power4.out" },
+        2.75
+      );
+      tl.fromTo(
+        "#stamp-left",
+        { scale: 2.2, opacity: 0, rotation: -26 },
+        { scale: 1, opacity: 1, rotation: -8, duration: 0.35, ease: "power3.out" },
+        2.95
+      );
+
+      // 7. Right Card ("Mỹ Nam") Wobble-Drop Entrance (t = 3.60s)
+      tl.fromTo(
+        "#card-right",
+        { y: -300, opacity: 0, rotation: 8 },
+        { y: 0, opacity: 1, rotation: 2, duration: 0.65, ease: "power3.out" },
+        3.6
+      );
+      tl.fromTo(
+        "#chain-right",
+        { opacity: 0, scaleY: 0, transformOrigin: "806px 470px" },
+        { opacity: 1, scaleY: 1, duration: 0.5, ease: "power2.out" },
+        3.65
+      );
+
+      // 8. Right Impact Swings Scale Heavily Right (t = 4.05s)
+      tl.to("#scale-beam-rotator", { rotation: 7.5, duration: 0.65, ease: "power2.out" }, 4.05);
+      tl.to("#card-left", { y: -35, duration: 0.65, ease: "power2.out" }, 4.05);
+      tl.to("#chain-left", { y: -35, duration: 0.65, ease: "power2.out" }, 4.05);
+      tl.to("#card-right", { y: 35, duration: 0.65, ease: "power2.out" }, 4.05);
+      tl.to("#chain-right", { y: 35, duration: 0.65, ease: "power2.out" }, 4.05);
+
+      // 9. Damped Harmonic Counter-Sway (t = 4.75s)
+      tl.to("#scale-beam-rotator", { rotation: -2.5, duration: 0.6, ease: "sine.inOut" }, 4.75);
+      tl.to("#card-left", { y: 12, duration: 0.6, ease: "sine.inOut" }, 4.75);
+      tl.to("#chain-left", { y: 12, duration: 0.6, ease: "sine.inOut" }, 4.75);
+      tl.to("#card-right", { y: -12, duration: 0.6, ease: "sine.inOut" }, 4.75);
+      tl.to("#chain-right", { y: -12, duration: 0.6, ease: "sine.inOut" }, 4.75);
+
+      // 10. Center Paradox VS Seal Arrival (t = 5.20s)
+      tl.fromTo(
+        "#vs-badge",
+        { scale: 0, opacity: 0, rotation: -90 },
+        { scale: 1, opacity: 1, rotation: 0, duration: 0.45, ease: "power3.out" },
+        5.2
+      );
+
+      // 11. Minor Counter-Oscillation (t = 5.35s)
+      tl.to("#scale-beam-rotator", { rotation: 1.0, duration: 0.45, ease: "sine.inOut" }, 5.35);
+      tl.to("#card-left", { y: -5, duration: 0.45, ease: "sine.inOut" }, 5.35);
+      tl.to("#chain-left", { y: -5, duration: 0.45, ease: "sine.inOut" }, 5.35);
+      tl.to("#card-right", { y: 5, duration: 0.45, ease: "sine.inOut" }, 5.35);
+      tl.to("#chain-right", { y: 5, duration: 0.45, ease: "sine.inOut" }, 5.35);
+
+      // 12. Overlay 3: MỸ NAM HOÀNG TỘC (t = 5.81s)
+      tl.fromTo(
+        "#label-right",
+        { scale: 0.45, opacity: 0, y: -16 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.42, ease: "power4.out" },
+        5.81
+      );
+      tl.fromTo(
+        "#stamp-right",
+        { scale: 2.2, opacity: 0, rotation: 26 },
+        { scale: 1, opacity: 1, rotation: 6, duration: 0.35, ease: "power3.out" },
+        6.0
+      );
+
+      // 13. Dynamic Equilibrium Final Settle (t = 6.20s to 6.80s)
+      tl.to("#scale-beam-rotator", { rotation: 0, duration: 0.6, ease: "sine.out" }, 6.2);
+      tl.to("#card-left", { y: 0, duration: 0.6, ease: "sine.out" }, 6.2);
+      tl.to("#chain-left", { y: 0, duration: 0.6, ease: "sine.out" }, 6.2);
+      tl.to("#card-right", { y: 0, duration: 0.6, ease: "sine.out" }, 6.2);
+      tl.to("#chain-right", { y: 0, duration: 0.6, ease: "sine.out" }, 6.2);
+
+      // Register the paused timeline with exact composition-id
+      window.__timelines["scene-s06"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

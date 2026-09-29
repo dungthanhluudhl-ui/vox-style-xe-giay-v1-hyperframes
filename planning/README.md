@@ -280,6 +280,19 @@ quét từng video: `planning/incident-log.md`.
 - [x] Stage 7b integration check PASS (2026-09-28) — 37/37 scene, audio, caption-track, `hyperframes check` ok=true (111 mốc/37 shot).
 - [x] Render bản đầy đủ (2026-09-28) — `out/nguon-goc-ra-doi-cua-ai-full.mp4`, **307.433s** (khớp audio thật 307.416s), 1080×1920 h264/aac, 194.4MB, render mất 10m24s (37 scene/9223 frame). `completion-manifest.json` xác nhận mọi field `*Ok=true`. **Chưa được người dùng xem/xác nhận.**
 
+### Video "vua-bao-chua-han-quoc" (lịch sử bạo chúa Yeonsangun triều Joseon, 239.3s, 25 scene/44 shot)
+- [x] Nhận script + audio (2026-09-29) từ `Vox style 3.1_test/.../input audio + transcript/Lịch sử/Vua bạo chúa Hàn Quốc` — không có media nguồn sẵn. Audio nguồn dạng `.wav`, convert sang `narration.mp3` bằng ffmpeg (giữ nguyên duration 239.284s).
+- [x] Transcribe (whisper.cpp CUDA) + align với script gốc qua 9router (2026-09-29) — 855 caption sau align.
+- [x] Tạo ảnh qua Google Flow (Stage 2b, 2026-09-29, account `default`, `--images-only`) — 6 ảnh, 0 video (đúng yêu cầu người dùng chỉ cần ảnh tĩnh cho video này). Giai đoạn tải file zip lần đầu HẾT 25 bước cho phép (agent không bấm trúng đúng menu "Tải dự án xuống" sau nhiều lần thử) — script tự dừng đúng thiết kế (project đã tồn tại → không đổi account) và in sẵn lệnh resume; chạy lại bằng `--resume-project=<url đã lưu>` thành công ngay (bỏ qua Giai đoạn 1+2, chỉ tải lại).
+- [x] Phân tích + chuẩn hoá tên media qua 9router[vision] (2026-09-29) — 6/6 ảnh.
+- [x] Scene Plan (2026-09-29) — 25 scene. Shotlist (2026-09-29) — 44 shot/25 scene.
+- [x] Dựng composition qua nhánh HyperFrames (2026-09-29) — chạy thẳng 25 scene song song (concurrency=10): 23/25 PASS trong ngân sách tự động, 2 scene cần Claude can thiệp:
+  - **S10**: lỗi hạ tầng đúng gotcha đã biết (`EPIPE`/race condition `cpSync` khi bootstrap project chung — xem `planning/responsibility-matrix.md` mục 6) — chạy lại riêng `--scenes=S10` PASS ngay lần 1 (project đã tồn tại nên không còn đi qua nhánh bootstrap race nữa), dùng model dự phòng `cx/gpt-6-sol` do generator chính timeout hạ tầng.
+  - **S15**: lỗi nội dung thật — generator nhốt ảnh img-05 trong khung nhỏ 900×800/910 kiểu "hồ sơ tài liệu" kèm nền biểu đồ trang trí (`#chart-background`, 4 nhãn `.chart-label` không có trong shotlist), gây 5 lỗi layout (`text_occluded` x4 + `caption_zone_collision` x1). Sửa bằng `--issue-file` 2 vòng: vòng 1 chỉ bỏ nhãn text trang trí (hết lỗi layout nhưng reviewer bắt tiếp lỗi thật — ảnh phải phủ toàn khung 9:16 theo đúng `assetTreatment` của shotlist và đúng pattern các scene khác trong video, không được nhốt trong khung nhỏ); vòng 2 sửa đúng gốc (ảnh full-bleed background, bỏ khung tài liệu) — PASS ngay, chỉ còn 2 ADVISORY không chặn.
+  - Quan sát thêm (chưa đủ để coi là gotcha lặp lại, chỉ ghi nhận): model reviewer hiện tại theo `scripts/model-routing.json` (`cx/gpt-6-sol`, khác với `cx/gpt-5.6-luna-review` mô tả trong `responsibility-matrix.md` mục 6 — có thể là cấu hình đang thử nghiệm chưa commit) thỉnh thoảng trả lỗi hạ tầng `HTTP 400: 'gpt-6-sol' model is not supported when using Codex with a ChatGPT account` — không chặn video này (retry ở attempt khác vẫn qua) nhưng đáng theo dõi nếu lặp lại nhiều ở video sau.
+- [x] Stage 7b integration check PASS (2026-09-29) — 25/25 scene, audio, caption-track, `hyperframes check` ok=true (132 mốc/44 shot).
+- [x] Render bản đầy đủ (2026-09-29) — `out/vua-bao-chua-han-quoc-full.mp4`, **239.200s** (khớp audio thật 239.284s), 1080×1920 h264/aac, 140.0MB, render mất 547.2s. `completion-manifest.json` xác nhận mọi field `*Ok=true`. **Chưa được người dùng xem/xác nhận.**
+
 ## Archive: pipeline Remotion cũ (4 video đầu, `archive/remotion-legacy/`)
 
 Giữ lại đúng nguyên trạng để tham khảo/sửa lỗi cho 4 video archive — KHÔNG áp dụng cho video mới.

@@ -494,6 +494,21 @@ qua an toàn khi lỗi (field `meta.name` chỉ cosmetic, không dùng ở đâu
 xác nhận). Cách phục hồi khi gặp lại: chỉ cần chạy lại đúng scene lỗi (`--scenes=SNN`), vì lần chạy
 lại `hyperframes.json` đã tồn tại nên không còn đi qua nhánh bootstrap/race này nữa.
 
+**Tổng quát hoá bản vá trên sang TOÀN BỘ vòng lặp copy scaffold (video "vua-bao-chua-han-quoc",
+2026-09-29):** bản vá `meta.json` ở trên chỉ bọc đúng bước đọc/ghi `meta.json`, KHÔNG bọc vòng lặp
+copy chung phía trên nó (`for (const f of fs.readdirSync(tmpDir)) ... fs.cpSync(...)`, copy MỌI file
+scaffold: `hyperframes.json`/`meta.json`/`package.json`/`index.html`...) — cùng race y hệt (guard
+`!fs.existsSync(dest)` không atomic giữa nhiều process) tái diễn thật trên `package.json`: `Error:
+EPIPE, The process cannot access the file because it is being used by another process` khi 10 scene
+cùng bootstrap lần đầu. `pipeline/codegen-issues.jsonl` không có dòng nào ghi lỗi này ở bất kỳ video
+trước — vì crash xảy ra trước khi kịp ghi issue log, nên chưa từng được phát hiện/đếm dù nhiều khả
+năng đã âm thầm xảy ra trước đó. Đã sửa: bọc từng lần `fs.cpSync` trong vòng lặp bằng try/catch, bỏ
+qua an toàn khi lỗi — cùng lý do với `meta.json` (mỗi process tự `hyperframes init` ra bộ file GIỐNG
+HỆT nhau trong tmp dir riêng, nên nếu bị chặn copy 1 file do process khác đang tranh chấp đúng file
+đó, file đó chắc chắn sẽ có ở đích do chính process kia hoàn tất). **Chưa có lần chạy thật nào sau
+bản vá kích hoạt lại đúng nhánh race để xác nhận trực tiếp** — theo dõi qua các video sau bootstrap
+project mới với ≥2 scene song song.
+
 ## 7. Preview & QA
 **QUAN TRỌNG (làm rõ 2026-09-22 sau khi Claude hiểu nhầm và tự ý làm sai — xem bài học bên dưới):
 đây KHÔNG PHẢI bước bắt buộc chạy tự động cho mọi video.** Sau khi Stage 6 xong và

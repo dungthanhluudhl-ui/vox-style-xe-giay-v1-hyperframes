@@ -5,831 +5,244 @@
   </head>
   <body>
     <template>
-      <link
-      rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap"
-    />
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap">
       <style>
-      * {
-        box-sizing: border-box;
-      }
-      body {
-        margin: 0;
-        padding: 0;
-        background-color: #f5f0e4;
-        color: #141414;
-        font-family: "Be Vietnam Pro", sans-serif;
-        overflow: hidden;
-        -webkit-font-smoothing: antialiased;
-      }
-      #root {
-        position: relative;
-        width: 100%;
-        height: 100%;
-        overflow: hidden;
-        background-color: #f5f0e4;
-      }
-      .clip {
-        position: absolute;
-        inset: 0;
-      }
+/* hf-safe-colors (tất định từ style-tokens.json) */
+.hf-text-ink { color: #141414; }
+.hf-text-light { color: #F7F4EC; }
+.hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+.hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+.hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+.hf-plate-paper { color: #141414; background-color: #F5F0E4; }
 
-      /* Camera Rig & Unfold Container */
-      #camera-rig {
-        position: absolute;
-        inset: 0;
-        will-change: transform;
-      }
-      #unfold-container {
-        position: absolute;
-        inset: 0;
-        transform-origin: 50% 50%;
-        will-change: transform, opacity;
-      }
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      margin: 0;
+      padding: 0;
+      background: #141414;
+      font-family: "Be Vietnam Pro", sans-serif;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+    #root {
+      position: relative;
+      width: 1080px;
+      height: 1920px;
+      background: #E7E3D9;
+      overflow: hidden;
+      perspective: 1200px;
+    }
+    .clip {
+      position: absolute;
+      inset: 0;
+    }
 
-      /* Top Header Meta */
-      .top-meta {
-        position: absolute;
-        top: 170px;
-        left: 60px;
-        right: 60px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-      }
-      .pill-tag {
-        display: inline-flex;
-        align-items: center;
-        gap: 10px;
-        background: #141414;
-        color: #f7f4ec;
-        font-weight: 900;
-        font-size: 22px;
-        letter-spacing: 1.5px;
-        padding: 8px 20px;
-        border-radius: 4px;
-        text-transform: uppercase;
-      }
-      .pill-tag-dot {
-        width: 10px;
-        height: 10px;
-        border-radius: 50%;
-        background-color: #ff6a1a;
-      }
-      .meta-doc {
-        font-size: 22px;
-        font-weight: 700;
-        color: #141414;
-        letter-spacing: 1px;
-      }
+    /* Background Variant: chart (4 horizontal lines + left-edge orange ticks) */
+    .chart-background {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 1;
+    }
+    .chart-line {
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: rgba(20, 20, 20, 0.32);
+    }
+    .chart-tick {
+      position: absolute;
+      left: 0;
+      width: 24px;
+      height: 4px;
+      background: #FF6A1A;
+      transform: translateY(-1px);
+    }
+    .chart-line-1 { top: 384px; }
+    .chart-line-2 { top: 768px; }
+    .chart-line-3 { top: 1152px; }
+    .chart-line-4 { top: 1536px; }
 
-      /* Main Dashboard Panel */
-      .main-panel {
-        position: absolute;
-        top: 250px;
-        left: 60px;
-        width: 960px;
-        height: 670px;
-        background: #faf8f2;
-        border: 3px solid #141414;
-        box-shadow: 8px 8px 0px #141414;
-        display: flex;
-        flex-direction: column;
-      }
-      .panel-header {
-        height: 60px;
-        background: #141414;
-        color: #f7f4ec;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 0 24px;
-        border-bottom: 3px solid #141414;
-      }
-      .panel-header-title {
-        font-size: 24px;
-        font-weight: 900;
-        letter-spacing: 1.5px;
-        text-transform: uppercase;
-      }
-      .panel-header-status {
-        font-size: 20px;
-        font-weight: 900;
-        color: #ff6a1a;
-        letter-spacing: 1px;
-      }
-      .panel-body {
-        flex: 1;
-        display: flex;
-        padding: 24px 30px;
-        gap: 24px;
-      }
+    /* Media Wrapper for Zoom / Pan */
+    .media-wrapper {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+    }
+    .scene-image {
+      position: absolute;
+      inset: 0;
+      width: 1080px;
+      height: 1920px;
+      object-fit: cover;
+    }
+    .lighting-overlay {
+      position: absolute;
+      inset: 0;
+      background: #141414;
+      pointer-events: none;
+    }
 
-      /* Left: HTML Dial Clock Section */
-      .clock-section {
-        flex: 1.1;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        border-right: 2px dashed rgba(20, 20, 20, 0.3);
-        padding-right: 20px;
-      }
-      .clock-dial {
-        position: relative;
-        width: 300px;
-        height: 300px;
-        border-radius: 50%;
-        background: #faf8f2;
-        border: 4px solid #141414;
-      }
-      .clock-ticks {
-        position: absolute;
-        inset: 0;
-      }
-      .mark-11 {
-        position: absolute;
-        top: 36px;
-        left: 54px;
-        width: 36px;
-        height: 36px;
-        background: #141414;
-        color: #ff6a1a;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 19px;
-        font-weight: 900;
-        border: 2px solid #ff6a1a;
-        z-index: 3;
-      }
-      .clock-hub {
-        position: absolute;
-        top: 150px;
-        left: 150px;
-        width: 22px;
-        height: 22px;
-        margin: -11px 0 0 -11px;
-        background: #141414;
-        border-radius: 50%;
-        z-index: 10;
-        border: 3px solid #f7f4ec;
-      }
-      .clock-hand {
-        position: absolute;
-        transform-origin: 50% 100%;
-        will-change: transform;
-      }
-      .hour-hand {
-        left: 150px;
-        bottom: 150px;
-        width: 10px;
-        height: 75px;
-        margin-left: -5px;
-        background: #141414;
-        border-radius: 5px 5px 0 0;
-        z-index: 4;
-      }
-      .minute-hand {
-        left: 150px;
-        bottom: 150px;
-        width: 6px;
-        height: 108px;
-        margin-left: -3px;
-        background: #ff6a1a;
-        border-radius: 3px 3px 0 0;
-        z-index: 5;
-      }
+    /* Stage / Shot */
+    #shot-1 {
+      position: absolute;
+      inset: 0;
+      z-index: 2;
+      transform-origin: top center;
+    }
 
-      /* Digital Clock Slot */
-      .digital-card {
-        margin-top: 20px;
-        width: 100%;
-        background: #e7e3d9;
-        border: 2px solid #141414;
-        padding: 10px 18px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-      }
-      .digital-label {
-        font-size: 19px;
-        font-weight: 700;
-        color: #141414;
-        text-transform: uppercase;
-      }
-      .digital-display {
-        position: relative;
-        height: 40px;
-        overflow: hidden;
-      }
-      .digital-slot {
-        display: flex;
-        flex-direction: column;
-        will-change: transform;
-      }
-      .time-item {
-        height: 40px;
-        line-height: 40px;
-        font-size: 32px;
-        font-weight: 900;
-        color: #141414;
-        text-align: right;
-        min-width: 100px;
-      }
+    /* Overlay 1: Data badge (QUA 11:00 AM) */
+    .data-badge-pos {
+      position: absolute;
+      top: 220px;
+      left: 80px;
+      z-index: 10;
+    }
+    .data-card {
+      display: inline-flex;
+      align-items: center;
+      padding: 18px 36px;
+      border-left: 10px solid #FF6A1A;
+      border-radius: 8px;
+      box-shadow: 0 14px 32px rgba(0, 0, 0, 0.45);
+    }
+    .data-text {
+      font-size: 52px;
+      font-weight: 900;
+      letter-spacing: 2px;
+      white-space: nowrap;
+      line-height: 1.2;
+    }
 
-      /* Right: Pressure Meter Section */
-      .meter-section {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        padding-left: 10px;
-      }
-      .meter-title-wrap {
-        display: flex;
-        flex-direction: column;
-        gap: 4px;
-      }
-      .meter-sub {
-        font-size: 18px;
-        font-weight: 700;
-        color: #141414;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-      }
-      .meter-title {
-        font-size: 30px;
-        font-weight: 900;
-        color: #141414;
-        line-height: 1.15;
-      }
-      .gauge-container {
-        display: flex;
-        align-items: flex-end;
-        gap: 28px;
-        margin-top: 10px;
-        height: 330px;
-      }
-      .gauge-track {
-        position: relative;
-        width: 76px;
-        height: 330px;
-        background: #e7e3d9;
-        border: 3px solid #141414;
-        overflow: hidden;
-      }
-      #meter-fill {
-        position: absolute;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        height: 100%;
-        background: #ff6a1a;
-        transform-origin: 50% 100%;
-        will-change: transform;
-      }
-      .gauge-danger-line {
-        position: absolute;
-        top: 25%;
-        left: 0;
-        right: 0;
-        border-top: 2px dashed #141414;
-        z-index: 2;
-      }
+    /* Overlay 2: Punch phrase (TẠM THỜI SỐNG SÓT) */
+    .punch-phrase-pos {
+      position: absolute;
+      top: 1020px;
+      left: 80px;
+      right: 80px;
+      display: flex;
+      justify-content: center;
+      z-index: 10;
+    }
+    .punch-card {
+      padding: 24px 44px;
+      border-radius: 12px;
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.4);
+      display: inline-block;
+      text-align: center;
+    }
+    .punch-text {
+      font-size: 64px;
+      font-weight: 900;
+      letter-spacing: 1px;
+      white-space: nowrap;
+      line-height: 1.2;
+    }
 
-      .gauge-readout {
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        height: 100%;
-      }
-      .readout-danger {
-        font-size: 20px;
-        font-weight: 900;
-        color: #141414;
-      }
-      .readout-value-box {
-        background: #141414;
-        padding: 12px 20px;
-        border-radius: 4px;
-        display: flex;
-        align-items: baseline;
-        gap: 4px;
-      }
-      .readout-big {
-        font-size: 72px;
-        font-weight: 900;
-        color: #f7f4ec;
-        line-height: 1;
-      }
-      .readout-unit {
-        font-size: 36px;
-        font-weight: 900;
-        color: #ff6a1a;
-      }
-      .readout-safe {
-        font-size: 20px;
-        font-weight: 900;
-        color: #141414;
-      }
+    /* Fixed Brand Accent Bar */
+    .brand-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 12px;
+      background: #FF6A1A;
+      z-index: 100;
+    }
+  </style>
 
-      /* Overlay 1: Qua Giờ Nguy Hiểm */
-      #overlay-1 {
-        position: absolute;
-        top: 945px;
-        left: 60px;
-        width: 960px;
-        height: 125px;
-        background: #141414;
-        color: #f7f4ec;
-        border-left: 14px solid #ff6a1a;
-        box-shadow: 8px 8px 0px rgba(20, 20, 20, 0.25);
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 0 36px;
-        transform-origin: 50% 50%;
-        will-change: transform, opacity;
-      }
-      .overlay-1-title {
-        font-size: 48px;
-        font-weight: 900;
-        letter-spacing: 1px;
-      }
-      .overlay-1-tag {
-        font-size: 22px;
-        font-weight: 900;
-        color: #ff6a1a;
-        background: #141414;
-        border: 2px solid #ff6a1a;
-        padding: 8px 16px;
-        text-transform: uppercase;
-        border-radius: 4px;
-      }
-
-      /* Fall Indicator Strip */
-      #fall-indicator-box {
-        position: absolute;
-        top: 1095px;
-        left: 60px;
-        width: 960px;
-        height: 115px;
-        background: #e7e3d9;
-        border: 3px solid #141414;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 0 30px;
-        box-shadow: 6px 6px 0px #141414;
-        will-change: transform, opacity;
-      }
-      .fall-label-wrap {
-        display: flex;
-        flex-direction: column;
-      }
-      .fall-label-top {
-        font-size: 18px;
-        font-weight: 700;
-        color: #141414;
-        text-transform: uppercase;
-      }
-      .fall-label-main {
-        font-size: 30px;
-        font-weight: 900;
-        color: #141414;
-      }
-      .fall-chart-wrap {
-        width: 420px;
-        height: 70px;
-      }
-
-      /* Overlay 2: Tạm Thời Sống Sót */
-      #overlay-2 {
-        position: absolute;
-        top: 1235px;
-        left: 60px;
-        width: 960px;
-        height: 195px;
-        background: #faf8f2;
-        border: 4px solid #141414;
-        box-shadow: 8px 8px 0px #ff6a1a;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 0 40px;
-        transform-origin: 50% 50%;
-        will-change: transform, opacity;
-      }
-      .overlay-2-content {
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
-      }
-      .overlay-2-title {
-        font-size: 54px;
-        font-weight: 900;
-        color: #141414;
-        line-height: 1.1;
-      }
-      .overlay-2-sub {
-        font-size: 24px;
-        font-weight: 700;
-        color: #141414;
-      }
-      .stamp-badge {
-        width: 135px;
-        height: 135px;
-        border: 4px solid #141414;
-        border-radius: 50%;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        background: #141414;
-        box-shadow: 4px 4px 0px #ff6a1a;
-      }
-      .stamp-text-1 {
-        font-size: 17px;
-        font-weight: 900;
-        color: #ff6a1a;
-        letter-spacing: 1px;
-      }
-      .stamp-text-2 {
-        font-size: 24px;
-        font-weight: 900;
-        color: #f7f4ec;
-        text-transform: uppercase;
-      }
-
-      /* Fixed Signature Orange Bottom Bar */
-      .vox-bottom-bar {
-        position: absolute;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        height: 14px;
-        background-color: #ff6a1a;
-        z-index: 100;
-      }
-    </style>
-
-    <div
-      id="root"
-      data-composition-id="scene-s05"
-      data-start="0"
-      data-duration="6"
-      data-width="1080"
-      data-height="1920"
-    >
-      <div id="camera-rig" class="clip" data-start="0" data-duration="6">
-        <div id="unfold-container">
-          <!-- Top Header Meta -->
-          <div class="top-meta">
-            <div class="pill-tag">
-              <span class="pill-tag-dot"></span>
-              <span>QUY LUẬT SINH TỒN</span>
-            </div>
-            <div class="meta-doc">FIG. 05 // 11:00 AM</div>
-          </div>
-
-          <!-- Central Dashboard Panel -->
-          <div class="main-panel">
-            <div class="panel-header">
-              <span class="panel-header-title">THEO DÕI ÁP LỰC BUỔI SÁNG</span>
-              <span class="panel-header-status">MỐC THỜI GIAN VÀNG</span>
-            </div>
-
-            <div class="panel-body">
-              <!-- Left: Clock Section -->
-              <div class="clock-section">
-                <div class="clock-dial">
-                  <svg
-                    class="clock-ticks"
-                    width="300"
-                    height="300"
-                    viewBox="0 0 300 300"
-                  >
-                    <!-- Major ticks -->
-                    <line
-                      x1="150"
-                      y1="16"
-                      x2="150"
-                      y2="34"
-                      stroke="#141414"
-                      stroke-width="5"
-                    />
-                    <line
-                      x1="284"
-                      y1="150"
-                      x2="266"
-                      y2="150"
-                      stroke="#141414"
-                      stroke-width="5"
-                    />
-                    <line
-                      x1="150"
-                      y1="284"
-                      x2="150"
-                      y2="266"
-                      stroke="#141414"
-                      stroke-width="5"
-                    />
-                    <line
-                      x1="16"
-                      y1="150"
-                      x2="34"
-                      y2="150"
-                      stroke="#141414"
-                      stroke-width="5"
-                    />
-                    <!-- Minor ticks -->
-                    <line
-                      x1="217"
-                      y1="34"
-                      x2="208"
-                      y2="50"
-                      stroke="#141414"
-                      stroke-width="3"
-                    />
-                    <line
-                      x1="266"
-                      y1="83"
-                      x2="250"
-                      y2="92"
-                      stroke="#141414"
-                      stroke-width="3"
-                    />
-                    <line
-                      x1="266"
-                      y1="217"
-                      x2="250"
-                      y2="208"
-                      stroke="#141414"
-                      stroke-width="3"
-                    />
-                    <line
-                      x1="217"
-                      y1="266"
-                      x2="208"
-                      y2="250"
-                      stroke="#141414"
-                      stroke-width="3"
-                    />
-                    <line
-                      x1="83"
-                      y1="266"
-                      x2="92"
-                      y2="250"
-                      stroke="#141414"
-                      stroke-width="3"
-                    />
-                    <line
-                      x1="34"
-                      y1="217"
-                      x2="50"
-                      y2="208"
-                      stroke="#141414"
-                      stroke-width="3"
-                    />
-                    <line
-                      x1="34"
-                      y1="83"
-                      x2="50"
-                      y2="92"
-                      stroke="#141414"
-                      stroke-width="3"
-                    />
-                    <!-- Target 11 o'clock tick -->
-                    <line
-                      x1="83"
-                      y1="34"
-                      x2="92"
-                      y2="50"
-                      stroke="#FF6A1A"
-                      stroke-width="6"
-                    />
-                  </svg>
-
-                  <!-- 11 o'clock highlight mark -->
-                  <div class="mark-11">11</div>
-
-                  <!-- Hands -->
-                  <div class="clock-hand hour-hand" id="hand-hour"></div>
-                  <div class="clock-hand minute-hand" id="hand-minute"></div>
-                  <div class="clock-hub"></div>
-                </div>
-
-                <div class="digital-card">
-                  <span class="digital-label">MỐC KIỂM SOÁT</span>
-                  <div class="digital-display">
-                    <div class="digital-slot" id="digital-slot">
-                      <div class="time-item">10:55</div>
-                      <div class="time-item">11:15</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Right: Pressure Meter Section -->
-              <div class="meter-section">
-                <div class="meter-title-wrap">
-                  <span class="meter-sub">CHỈ SỐ THỰC TẾ</span>
-                  <span class="meter-title">ÁP LỰC TÂM LÝ TRẠI GIAM</span>
-                </div>
-
-                <div class="gauge-container">
-                  <div class="gauge-track">
-                    <div class="gauge-danger-line"></div>
-                    <div id="meter-fill"></div>
-                  </div>
-
-                  <div class="gauge-readout">
-                    <span class="readout-danger">BÁO ĐỘNG</span>
-                    <div class="readout-value-box">
-                      <span id="pressure-num" class="readout-big">92</span
-                      ><span class="readout-unit">%</span>
-                    </div>
-                    <span class="readout-safe">AN TOÀN</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Overlay 1: Qua Giờ Nguy Hiểm -->
-          <div id="overlay-1">
-            <span class="overlay-1-title">QUA GIỜ NGUY HIỂM</span>
-            <span class="overlay-1-tag">MỐC 11:00 AM</span>
-          </div>
-
-          <!-- Fall Indicator Box (SVG Trajectory) -->
-          <div id="fall-indicator-box">
-            <div class="fall-label-wrap">
-              <span class="fall-label-top">XU HƯỚNG CĂNG THẲNG</span>
-              <span class="fall-label-main">HẠ NHANH VỀ MỨC THẤP</span>
-            </div>
-            <div class="fall-chart-wrap">
-              <svg
-                width="420"
-                height="70"
-                viewBox="0 0 420 70"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <line
-                  x1="10"
-                  y1="56"
-                  x2="410"
-                  y2="56"
-                  stroke="rgba(20,20,20,0.3)"
-                  stroke-width="2"
-                  stroke-dasharray="6 6"
-                />
-                <path
-                  id="fall-path"
-                  d="M 10 16 L 110 16 L 250 56 L 380 56"
-                  fill="none"
-                  stroke="#FF6A1A"
-                  stroke-width="7"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                />
-                <g id="fall-arrow" style="will-change: transform, opacity">
-                  <polygon points="380,45 406,56 380,67" fill="#FF6A1A" />
-                </g>
-              </svg>
-            </div>
-          </div>
-
-          <!-- Overlay 2: Tạm Thời Sống Sót -->
-          <div id="overlay-2">
-            <div class="overlay-2-content">
-              <span class="overlay-2-title">TẠM THỜI SỐNG SÓT</span>
-              <span class="overlay-2-sub">Nhà tù trở lại nhịp bình thường</span>
-            </div>
-            <div class="stamp-badge">
-              <span class="stamp-text-1">TRẠNG THÁI</span>
-              <span class="stamp-text-2">ỔN ĐỊNH</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Fixed Bottom Orange Bar -->
-        <div class="vox-bottom-bar"></div>
-      </div>
+  <div id="root" data-composition-id="scene-s05" data-width="1080" data-height="1920" data-duration="6">
+    <!-- Chart Background Variant -->
+    <div class="chart-background">
+      <div class="chart-line chart-line-1"><div class="chart-tick"></div></div>
+      <div class="chart-line chart-line-2"><div class="chart-tick"></div></div>
+      <div class="chart-line chart-line-3"><div class="chart-tick"></div></div>
+      <div class="chart-line chart-line-4"><div class="chart-tick"></div></div>
     </div>
 
-    <script>
-      const tl = gsap.timeline({ paused: true });
+    <!-- Shot S05-1 -->
+    <section id="shot-1" class="clip" data-start="0" data-duration="6">
+      <div id="media-wrapper" class="media-wrapper">
+        <img id="scene-img" class="clip scene-image" data-start="0" data-duration="6" src="assets/img-03-prison-morning-roll-call.jpg" alt="" />
+        <div id="lighting-overlay" class="lighting-overlay"></div>
+      </div>
 
-      // Setup initial clock hand angles & meter scale
-      gsap.set("#hand-minute", { rotation: 330 });
-      gsap.set("#hand-hour", { rotation: 327 });
-      gsap.set("#meter-fill", { scaleY: 0.92 });
+      <!-- Overlay 1: Data badge -->
+      <div class="data-badge-pos">
+        <div id="data-card" class="data-card hf-plate-ink">
+          <span class="data-text hf-text-light">QUA 11:00 AM</span>
+        </div>
+      </div>
 
-      // Measure SVG path for stroke animation
-      const fallPath = document.getElementById("fall-path");
-      if (fallPath) {
-        const len = Math.ceil(fallPath.getTotalLength() || 400);
-        fallPath.style.strokeDasharray = len;
-        fallPath.style.strokeDashoffset = len;
-      }
+      <!-- Overlay 2: Punch phrase -->
+      <div class="punch-phrase-pos">
+        <div id="punch-card" class="punch-card hf-hl-orange">
+          <span class="punch-text hf-text-ink">TẠM THỜI SỐNG SÓT</span>
+        </div>
+      </div>
+    </section>
 
-      // 1. Entrance: Unfold vertically (0.0s -> 0.65s)
-      tl.fromTo(
-        "#unfold-container",
-        { scaleY: 0.1, opacity: 0 },
-        { scaleY: 1, opacity: 1, duration: 0.65, ease: "power3.out" },
-        0,
-      );
+    <!-- Brand Bar (Fixed Bottom) -->
+    <div class="brand-bar"></div>
+  </div>
 
-      // 2. Camera motion: subtle pan-right drift (0.0s -> 6.0s)
-      tl.fromTo(
-        "#camera-rig",
-        { x: -16 },
-        { x: 16, duration: 6.0, ease: "sine.inOut" },
-        0,
-      );
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+  <script>
+    const tl = gsap.timeline({ paused: true });
 
-      // 3. Clock transition past 11:00 AM (0.75s -> 2.25s)
-      tl.to(
-        "#hand-minute",
-        { rotation: 450, duration: 1.5, ease: "power2.inOut" },
-        0.75,
-      );
-      tl.to(
-        "#hand-hour",
-        { rotation: 338, duration: 1.5, ease: "power2.inOut" },
-        0.75,
-      );
+    // TransitionIn: unfold for Shot 1
+    tl.fromTo("#shot-1",
+      { rotationX: -60, opacity: 0, transformPerspective: 1200 },
+      { rotationX: 0, opacity: 1, duration: 0.65, ease: "power3.out" },
+      0
+    );
 
-      // Digital time slot rolls from 10:55 to 11:15 at 1.45s
-      tl.to(
-        "#digital-slot",
-        { y: -40, duration: 0.35, ease: "power2.inOut" },
-        1.45,
-      );
+    // Camera Motion: zoom-out on media wrapper
+    tl.fromTo("#media-wrapper",
+      { scale: 1.16 },
+      { scale: 1.0, duration: 5.9, ease: "power1.out" },
+      0
+    );
 
-      // 4. Pressure meter drops sharply from 92% to 16% (0.9s -> 2.3s)
-      tl.to(
-        "#meter-fill",
-        { scaleY: 0.16, duration: 1.4, ease: "power2.out" },
-        0.9,
-      );
-      tl.to(
-        "#pressure-num",
-        {
-          innerText: 16,
-          snap: { innerText: 1 },
-          duration: 1.4,
-          ease: "power2.out",
-        },
-        0.9,
-      );
+    // Asset Treatment: Phòng giam dần bừng sáng
+    tl.fromTo("#lighting-overlay",
+      { opacity: 0.55 },
+      { opacity: 0, duration: 1.6, ease: "power2.out" },
+      0.1
+    );
 
-      // 5. Overlay 1: "QUA GIỜ NGUY HIỂM" enters at relative 1.48s (atMs: 31720)
-      tl.fromTo(
-        "#overlay-1",
-        { scale: 0.9, opacity: 0, y: 22 },
-        { scale: 1, opacity: 1, y: 0, duration: 0.48, ease: "power3.out" },
-        1.48,
-      );
+    // Overlay 1: "QUA 11:00 AM" (type: data, atMs: 30500 -> 0.26s, holdMs: 2700)
+    tl.fromTo("#data-card",
+      { scale: 0.8, opacity: 0, y: -24 },
+      { scale: 1, opacity: 1, y: 0, duration: 0.45, ease: "power3.out" },
+      0.26
+    );
+    tl.fromTo("#data-card",
+      { opacity: 1 },
+      { opacity: 0, duration: 0.2, ease: "power2.in" },
+      2.96
+    );
 
-      // 6. Icon "fall" (Graph strip & path drawing) at relative 2.56s (atMs: 32800)
-      tl.fromTo(
-        "#fall-indicator-box",
-        { opacity: 0, y: 20 },
-        { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" },
-        2.56,
-      );
-      if (fallPath) {
-        tl.to(
-          fallPath,
-          { strokeDashoffset: 0, duration: 0.6, ease: "power2.out" },
-          2.68,
-        );
-      }
-      tl.fromTo(
-        "#fall-arrow",
-        { scale: 0, opacity: 0 },
-        { scale: 1, opacity: 1, duration: 0.25, ease: "power3.out" },
-        3.15,
-      );
+    // Overlay 2: "TẠM THỜI SỐNG SÓT" (type: label, atMs: 33400 -> 3.16s, holdMs: 2700)
+    tl.fromTo("#punch-card",
+      { scale: 0.82, opacity: 0, y: 30 },
+      { scale: 1, opacity: 1, y: 0, duration: 0.48, ease: "power3.out" },
+      3.16
+    );
+    tl.fromTo("#punch-card",
+      { opacity: 1 },
+      { opacity: 0, duration: 0.14, ease: "power2.in" },
+      5.85
+    );
 
-      // 7. Overlay 2: "TẠM THỜI SỐNG SÓT" enters at relative 4.03s (atMs: 34270)
-      tl.fromTo(
-        "#overlay-2",
-        { scale: 0.92, opacity: 0, y: 24 },
-        { scale: 1, opacity: 1, y: 0, duration: 0.52, ease: "power3.out" },
-        4.03,
-      );
+    window.__timelines["scene-s05"] = tl;
+  </script>
 
-      // Register timeline strictly after construction
-      window.__timelines = window.__timelines || {};
-      window.__timelines["scene-s05"] = tl;
-    </script>
-  
     </template>
   </body>
 </html>

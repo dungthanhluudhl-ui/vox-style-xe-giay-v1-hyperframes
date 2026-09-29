@@ -1,0 +1,643 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+/* hf-safe-colors (tất định từ style-tokens.json) */
+.hf-text-ink { color: #141414; }
+.hf-text-light { color: #F7F4EC; }
+.hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+.hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+.hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+.hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+      *, *::before, *::after {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        padding: 0;
+        width: 1080px;
+        height: 1920px;
+        background-color: #E7E3D9;
+        font-family: "Be Vietnam Pro", sans-serif;
+        color: #141414;
+        overflow: hidden;
+      }
+
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        background-color: #E7E3D9;
+        overflow: hidden;
+      }
+
+      /* Nền lưới ô vuông 84px chuẩn Vox DNA */
+      .bg-grid {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background-size: 84px 84px;
+        background-image:
+          linear-gradient(to right, rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px),
+          linear-gradient(to bottom, rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px);
+        opacity: 0.85;
+        z-index: 1;
+      }
+
+      /* Thanh cam nhận diện thương hiệu cố định đáy khung hình */
+      #brand-bottom-bar {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 12px;
+        background-color: #FF6A1A;
+        z-index: 9999;
+      }
+
+      /* Hợp đồng layout HyperFrames .clip */
+      .clip {
+        position: absolute;
+        inset: 0;
+        z-index: 10;
+      }
+
+      /* Vùng an toàn & hộp chứa nội dung (Safe zone y: [160, 1390]) */
+      .scene-container {
+        position: absolute;
+        top: 160px;
+        left: 60px;
+        right: 60px;
+        height: 1230px;
+      }
+
+      /* Thẻ thông tin và badge chuẩn tương phản WCAG */
+      .hf-plate-ink {
+        background-color: #141414;
+        border-radius: 12px;
+        box-shadow: 8px 8px 0px rgba(20, 20, 20, 0.28);
+      }
+
+      .hf-plate-card {
+        background-color: #F5F0E4;
+        border: 3.5px solid #141414;
+        border-radius: 12px;
+        box-shadow: 6px 6px 0px #141414;
+      }
+
+      .hf-badge-orange {
+        display: inline-block;
+        background-color: #FF6A1A;
+        color: #141414;
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+      }
+
+      .hf-badge-ink {
+        display: inline-block;
+        background-color: #141414;
+        color: #F7F4EC;
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+      }
+
+      /* SHOT 1: Vương miện gai góc & Tội lỗi bạo tàn */
+      #s1-content {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      #s1-meta-tag {
+        margin-top: 20px;
+        padding: 8px 24px;
+        font-size: 22px;
+        border-radius: 6px;
+      }
+
+      #s1-visual-center {
+        position: relative;
+        width: 620px;
+        height: 580px;
+        margin-top: 30px;
+        display: grid;
+        place-items: center;
+      }
+
+      #s1-punch-plate {
+        width: 100%;
+        margin-top: 28px;
+        padding: 34px 40px;
+        border-left: 12px solid #FF6A1A;
+      }
+
+      #s1-warning-box {
+        margin-top: 24px;
+        width: 100%;
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        padding: 16px 28px;
+        background-color: #F5F0E4;
+        border: 3px solid #141414;
+        border-radius: 10px;
+        box-shadow: 4px 4px 0px #141414;
+      }
+
+      /* SHOT 2: Sơ đồ dòng chảy nhân quả lần ngược về cội rễ */
+      #s2-viewport {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+      }
+
+      #s2-flow-tree {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .flow-node-top {
+        width: 100%;
+        padding: 24px 32px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .flow-connector-wrap {
+        width: 100%;
+        height: 140px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        position: relative;
+      }
+
+      .flow-node-mid {
+        width: 100%;
+        padding: 26px 34px;
+        background-color: #F5F0E4;
+        border: 3.5px solid #141414;
+        border-radius: 12px;
+        box-shadow: 6px 6px 0px #141414;
+      }
+
+      .flow-connector-roots {
+        width: 100%;
+        height: 150px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        position: relative;
+      }
+
+      #s2-root-plate {
+        width: 100%;
+        padding: 34px 38px;
+        background-color: #141414;
+        border-radius: 14px;
+        box-shadow: 8px 8px 0px rgba(20, 20, 20, 0.35);
+        border-top: 8px solid #FF6A1A;
+      }
+
+      /* Typographic helpers */
+      .title-900 {
+        font-weight: 900;
+        line-height: 1.25;
+      }
+
+      .text-700 {
+        font-weight: 700;
+        line-height: 1.45;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s09"
+      data-start="0"
+      data-width="1080"
+      data-height="1920"
+      data-duration="12.3"
+    >
+      <!-- Lưới toạ độ nền 84px -->
+      <div class="bg-grid"></div>
+
+      <!-- Thanh nhận diện màu cam cố định chân trang -->
+      <div id="brand-bottom-bar"></div>
+
+      <!-- ========================================== -->
+      <!-- SHOT 1: Vương miện nhuốm máu & Tính khí bạo tàn -->
+      <!-- 0.0s -> 6.31s (76440ms -> 82750ms) -->
+      <!-- ========================================== -->
+      <section id="shot1" class="clip" data-start="0" data-duration="6.31">
+        <div class="scene-container">
+          <div id="s1-content">
+            <!-- Nhãn định danh bối cảnh -->
+            <div id="s1-meta-tag" class="hf-badge-ink">
+              HỒ SƠ TÂM LÝ LỊCH SỬ • TRIỀU ĐẠI JOSEON
+            </div>
+
+            <!-- Trọng tâm thị giác: Vương miện vỡ nứt & Vòng gai bọc ngoài -->
+            <div id="s1-visual-center">
+              <svg id="s1-crown-svg" viewBox="0 0 540 500" width="540" height="500" style="overflow: visible;">
+                <!-- Vòng tròn hào quang gai góc nhọn sắc bao bọc bên ngoài -->
+                <g id="s1-thorn-ring">
+                  <circle cx="270" cy="250" r="215" fill="none" stroke="#141414" stroke-width="4" stroke-dasharray="14 10" />
+                  <!-- 8 chĩa gai nhọn xung quanh tâm -->
+                  <path d="M 270 20 L 262 35 L 278 35 Z" fill="#FF6A1A" />
+                  <path d="M 270 480 L 262 465 L 278 465 Z" fill="#FF6A1A" />
+                  <path d="M 40 250 L 55 242 L 55 258 Z" fill="#FF6A1A" />
+                  <path d="M 500 250 L 485 242 L 485 258 Z" fill="#FF6A1A" />
+                  <path d="M 107 87 L 123 93 L 113 107 Z" fill="#141414" />
+                  <path d="M 433 87 L 417 93 L 427 107 Z" fill="#141414" />
+                  <path d="M 107 413 L 123 407 L 113 393 Z" fill="#141414" />
+                  <path d="M 433 413 L 417 407 L 427 393 Z" fill="#141414" />
+                </g>
+
+                <!-- Thân vương miện hoàng gia Joseon sắc nhọn -->
+                <g id="s1-crown-body">
+                  <!-- Bệ đế vương miện đúc bằng mực đen đặc -->
+                  <path d="M 110 350 L 430 350 L 415 390 L 125 390 Z" fill="#141414" stroke="#141414" stroke-width="3" />
+                  <rect x="140" y="360" width="260" height="18" fill="#FF6A1A" />
+                  <circle cx="170" cy="369" r="5" fill="#141414" />
+                  <circle cx="270" cy="369" r="5" fill="#141414" />
+                  <circle cx="370" cy="369" r="5" fill="#141414" />
+
+                  <!-- 5 chóp đỉnh vương quyền vươn cao -->
+                  <path d="M 125 350 L 120 220 L 175 270 L 210 180 L 270 260 L 330 180 L 365 270 L 420 220 L 415 350 Z" 
+                        fill="#141414" />
+
+                  <!-- Chóp chính vương quyền vươn thẳng lên đỉnh điểm -->
+                  <path d="M 245 260 L 270 110 L 295 260 Z" fill="#FF6A1A" stroke="#141414" stroke-width="4" />
+                  <circle cx="270" cy="98" r="14" fill="#FF6A1A" stroke="#141414" stroke-width="4" />
+
+                  <!-- Các chi tiết trang trí dạng cành lộc vương giả -->
+                  <circle cx="120" cy="210" r="10" fill="#141414" />
+                  <circle cx="210" cy="170" r="10" fill="#141414" />
+                  <circle cx="330" cy="170" r="10" fill="#141414" />
+                  <circle cx="420" cy="210" r="10" fill="#141414" />
+                </g>
+
+                <!-- Vết nứt đỏ đứt gãy đâm toạc thân vương miện -->
+                <g id="s1-cracks">
+                  <path id="s1-crack-main"
+                        d="M 270 98 L 265 170 L 285 220 L 255 280 L 275 330 L 260 390" 
+                        fill="none" stroke="#FF6A1A" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"
+                        pathLength="100" stroke-dasharray="100" stroke-dashoffset="100" />
+                  <path id="s1-crack-branch"
+                        d="M 285 220 L 340 260 L 375 320" 
+                        fill="none" stroke="#FF6A1A" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"
+                        pathLength="100" stroke-dasharray="100" stroke-dashoffset="100" />
+                  <path id="s1-crack-left"
+                        d="M 255 280 L 195 315 L 160 365" 
+                        fill="none" stroke="#FF6A1A" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"
+                        pathLength="100" stroke-dasharray="100" stroke-dashoffset="100" />
+                </g>
+              </svg>
+            </div>
+
+            <!-- Tấm thông tin trọng tâm: TÍNH KHÍ BẠO TÀN (Overlay lúc 0.85s) -->
+            <div id="s1-punch-plate" class="hf-plate-ink">
+              <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+                <span class="hf-badge-orange" style="padding: 6px 14px; font-size: 20px; border-radius: 4px;">
+                  BIỂU HIỆN BỀ NỔI
+                </span>
+                <span style="color: #FF6A1A; font-size: 20px; font-weight: 700; letter-spacing: 2px;">
+                  CHƯƠNG I / SƠ KHỞI
+                </span>
+              </div>
+              <h1 id="s1-title" class="title-900" style="margin: 0; font-size: 64px; color: #F7F4EC; letter-spacing: -0.5px;">
+                TÍNH KHÍ BẠO TÀN
+              </h1>
+              <p class="text-700" style="margin: 12px 0 0 0; font-size: 26px; color: #E7E3D9;">
+                Không thể chỉ nhìn vào đỉnh điểm cuồng loạn của một triều đại...
+              </p>
+            </div>
+
+            <!-- Thẻ Icon Cảnh báo (Overlay lúc 3.70s) -->
+            <div id="s1-warning-box">
+              <div style="width: 58px; height: 58px; display: grid; place-items: center; flex-shrink: 0;">
+                <svg id="s1-warning-icon" viewBox="0 0 64 64" width="56" height="56">
+                  <!-- Biểu tượng warning tự vẽ chuẩn Vox icon vocabulary -->
+                  <polygon id="s1-warn-tri" points="32,6 60,56 4,56" 
+                           fill="none" stroke="#FF6A1A" stroke-width="5" stroke-linejoin="round"
+                           pathLength="100" stroke-dasharray="100" stroke-dashoffset="100" />
+                  <line id="s1-warn-line" x1="32" y1="24" x2="32" y2="40" stroke="#141414" stroke-width="5" stroke-linecap="round" />
+                  <circle id="s1-warn-dot" cx="32" cy="48" r="3.5" fill="#141414" />
+                </svg>
+              </div>
+              <div style="display: flex; flex-direction: column;">
+                <span style="font-size: 24px; font-weight: 900; color: #141414; letter-spacing: 0.5px;">
+                  GÓC NHÌN ĐƠN CHIỀU DỄ GÂY SAI LỆCH
+                </span>
+                <span style="font-size: 21px; font-weight: 700; color: #141414; opacity: 0.85;">
+                  Bạo quyền khét tiếng không tự nhiên sinh ra từ hư vô.
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================================== -->
+      <!-- SHOT 2: Dòng chảy sơ đồ nhân quả đâm sâu cội rễ -->
+      <!-- 6.31s -> 12.30s (82750ms -> 88740ms) -->
+      <!-- ========================================== -->
+      <section id="shot2" class="clip" data-start="6.31" data-duration="5.99">
+        <div class="scene-container">
+          <div id="s2-viewport">
+            <div id="s2-flow-tree">
+              <!-- Nốt 1: Hậu quả trên đỉnh (Vương miện suy thoái) -->
+              <div id="s2-node-1" class="flow-node-top hf-plate-card">
+                <div style="display: flex; align-items: center; gap: 16px;">
+                  <div style="width: 48px; height: 48px; background-color: #141414; border-radius: 8px; display: grid; place-items: center;">
+                    <svg viewBox="0 0 32 32" width="28" height="28">
+                      <path d="M 6 24 L 26 24 L 24 12 L 18 18 L 16 8 L 14 18 L 8 12 Z" fill="#FF6A1A" />
+                    </svg>
+                  </div>
+                  <div>
+                    <div style="font-size: 18px; font-weight: 900; color: #141414; letter-spacing: 1px;">
+                      KẾT CỤC THỊ GIÁC
+                    </div>
+                    <div style="font-size: 32px; font-weight: 900; color: #141414;">
+                      BẠO CHÚA YEONSANGUN
+                    </div>
+                  </div>
+                </div>
+                <div class="hf-badge-ink" style="padding: 6px 14px; font-size: 18px; border-radius: 4px;">
+                  HẬU QUẢ
+                </div>
+              </div>
+
+              <!-- Đường nối đứt gãy 1: Truy vết dòng thời gian -->
+              <div class="flow-connector-wrap">
+                <svg viewBox="0 0 120 140" width="120" height="140">
+                  <path id="s2-line-1"
+                        d="M 60 0 L 60 40 L 75 70 L 45 100 L 60 140" 
+                        fill="none" stroke="#FF6A1A" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"
+                        pathLength="100" stroke-dasharray="100" stroke-dashoffset="100" />
+                  <polygon points="60,138 52,122 68,122" fill="#FF6A1A" />
+                </svg>
+                <div style="position: absolute; right: 40px; background-color: #F5F0E4; border: 2px solid #141414; padding: 4px 14px; border-radius: 4px;">
+                  <span style="font-size: 18px; font-weight: 900; color: #141414;">NGƯỢC DÒNG THỜI GIAN</span>
+                </div>
+              </div>
+
+              <!-- Nốt 2: Tầng biến chuyển tâm lý giữa cung cấm -->
+              <div id="s2-node-2" class="flow-node-mid">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                  <span class="hf-badge-orange" style="padding: 4px 12px; font-size: 18px; border-radius: 4px;">
+                    CƠ CHẾ TÂM LÝ
+                  </span>
+                  <span style="font-size: 18px; font-weight: 700; color: #141414;">
+                    GIAI ĐOẠN ĐỨT GÃY
+                  </span>
+                </div>
+                <div style="font-size: 34px; font-weight: 900; color: #141414; margin-bottom: 6px;">
+                  ÁM ẢNH BỊ PHẢN BỘI & CÔ ĐỘC
+                </div>
+                <div style="font-size: 22px; font-weight: 700; color: #141414; opacity: 0.9;">
+                  Nỗi sợ hãi mất ngai vàng hóa thành những cuộc thanh trừng máu lạnh.
+                </div>
+              </div>
+
+              <!-- Đường nối đứt gãy 2: Rễ ngầm cắm sâu xuống cung đình -->
+              <div class="flow-connector-roots">
+                <svg viewBox="0 0 240 150" width="240" height="150">
+                  <!-- Nhánh rễ chính đâm thẳng xuống tâm rễ -->
+                  <path id="s2-root-main"
+                        d="M 120 0 L 120 50 L 105 85 L 120 150" 
+                        fill="none" stroke="#FF6A1A" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"
+                        pathLength="100" stroke-dasharray="100" stroke-dashoffset="100" />
+                  <!-- Nhánh rễ phụ toả hai bên -->
+                  <path id="s2-root-left"
+                        d="M 120 50 L 60 90 L 30 140" 
+                        fill="none" stroke="#141414" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"
+                        pathLength="100" stroke-dasharray="100" stroke-dashoffset="100" />
+                  <path id="s2-root-right"
+                        d="M 105 85 L 175 110 L 210 145" 
+                        fill="none" stroke="#141414" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"
+                        pathLength="100" stroke-dasharray="100" stroke-dashoffset="100" />
+                </svg>
+                <div style="position: absolute; left: 10px; background-color: #141414; padding: 4px 12px; border-radius: 4px;">
+                  <span style="font-size: 16px; font-weight: 900; color: #FF6A1A;">TẦNG NỀN MÓNG</span>
+                </div>
+              </div>
+
+              <!-- Nốt 3: NGUYÊN NHÂN SÂU XA (Tấm Hero chôn sâu dưới cung cấm) -->
+              <div id="s2-root-plate">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
+                  <span class="hf-badge-orange" style="padding: 8px 18px; font-size: 22px; border-radius: 4px;">
+                    NGUYÊN NHÂN SÂU XA
+                  </span>
+                  <span style="color: #FF6A1A; font-size: 18px; font-weight: 900; letter-spacing: 1px;">
+                    GỐC RỄ BỊ CHÔN GIẤU
+                  </span>
+                </div>
+
+                <div class="title-900" style="font-size: 44px; color: #F7F4EC; margin-bottom: 12px; letter-spacing: -0.5px;">
+                  BI KỊCH PHẾ PHI YUN & TỔN THƯƠNG
+                </div>
+
+                <div style="border-left: 4px solid #FF6A1A; padding-left: 18px; margin: 16px 0;">
+                  <p class="text-700" style="margin: 0; font-size: 24px; color: #E7E3D9;">
+                    Án tử bí mật của người mẹ ruột bị triều thần che giấu, biến tuổi thơ thành một chuỗi dối trá và u uất.
+                  </p>
+                </div>
+
+                <div style="margin-top: 18px; display: flex; align-items: center; gap: 12px;">
+                  <div style="width: 12px; height: 12px; background-color: #FF6A1A; border-radius: 50%;"></div>
+                  <span style="font-size: 21px; font-weight: 900; color: #FF6A1A; letter-spacing: 0.5px;">
+                    KẾT LUẬN: BẠO TÀN KHÔNG TỰ NHIÊN SINH RA
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- GSAP Animation Engine -->
+    <script>
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true });
+
+      // ========================================================
+      // SHOT 1 CHOREOGRAPHY (0.0s -> 6.31s)
+      // Transition In: "grow"
+      // ========================================================
+
+      // 1. Tag bối cảnh xuất hiện mượt mà
+      tl.fromTo(
+        "#s1-meta-tag",
+        { y: -25, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.5, ease: "power3.out" },
+        0.1
+      );
+
+      // 2. Trọng tâm vương miện lớn lên từ tâm (Grow entrance)
+      tl.fromTo(
+        "#s1-visual-center",
+        { scale: 0.35, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.75, ease: "power3.out" },
+        0.2
+      );
+
+      // Vòng gai xoay nhẹ tạo cảm giác bất an
+      tl.fromTo(
+        "#s1-thorn-ring",
+        { rotation: -40, transformOrigin: "270px 250px" },
+        { rotation: 0, duration: 1.2, ease: "power2.out" },
+        0.2
+      );
+
+      // 3. Vết nứt màu cam đâm toạc thân vương miện (stroke-dashoffset draw)
+      tl.to(
+        "#s1-crack-main",
+        { strokeDashoffset: 0, duration: 0.7, ease: "power2.out" },
+        0.55
+      );
+      tl.to(
+        "#s1-crack-branch",
+        { strokeDashoffset: 0, duration: 0.5, ease: "power2.out" },
+        0.8
+      );
+      tl.to(
+        "#s1-crack-left",
+        { strokeDashoffset: 0, duration: 0.45, ease: "power2.out" },
+        0.95
+      );
+
+      // 4. Overlay Text "TÍNH KHÍ BẠO TÀN" xuất hiện chắc nịch (atMs: 77290 -> 0.85s)
+      tl.fromTo(
+        "#s1-punch-plate",
+        { y: 50, opacity: 0, scale: 0.96 },
+        { y: 0, opacity: 1, scale: 1, duration: 0.6, ease: "power3.out" },
+        0.85
+      );
+
+      // 5. Overlay Icon "warning" tự vẽ dần theo phong cách Vox (atMs: 80140 -> 3.70s)
+      tl.fromTo(
+        "#s1-warning-box",
+        { scale: 0.85, opacity: 0, y: 20 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.5, ease: "power3.out" },
+        3.70
+      );
+
+      // Nét vẽ tam giác cảnh báo
+      tl.to(
+        "#s1-warn-tri",
+        { strokeDashoffset: 0, duration: 0.6, ease: "power2.out" },
+        3.80
+      );
+
+      // Dấu chấm than cảnh báo nảy xuống
+      tl.fromTo(
+        "#s1-warn-line",
+        { scaleY: 0, transformOrigin: "32px 24px" },
+        { scaleY: 1, duration: 0.35, ease: "power3.out" },
+        4.15
+      );
+      tl.fromTo(
+        "#s1-warn-dot",
+        { scale: 0, transformOrigin: "32px 48px" },
+        { scale: 1, duration: 0.25, ease: "back.out(2)" },
+        4.35
+      );
+
+      // Camera zoom-in vi tế trong toàn bộ Shot 1 (0 -> 6.31s)
+      tl.fromTo(
+        "#s1-content",
+        { scale: 0.98 },
+        { scale: 1.05, duration: 6.31, ease: "none" },
+        0
+      );
+
+      // ========================================================
+      // SHOT 2 CHOREOGRAPHY (6.31s -> 12.30s)
+      // Transition In: "cut"
+      // Camera Motion: "pan-down" (lần ngược về cội rễ)
+      // ========================================================
+
+      // 1. Nốt đỉnh (Hậu quả) vào vị trí ngay tức thì khi chuyển cảnh
+      tl.fromTo(
+        "#s2-node-1",
+        { y: -30, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.45, ease: "power3.out" },
+        6.31
+      );
+
+      // 2. Đường dây nứt gãy 1 đâm xuyên xuống (Reverse timeline flow)
+      tl.to(
+        "#s2-line-1",
+        { strokeDashoffset: 0, duration: 0.55, ease: "power2.out" },
+        6.55
+      );
+
+      // 3. Nốt giữa (Tổn thương tâm lý & ám ảnh cung cấm) mở ra
+      tl.fromTo(
+        "#s2-node-2",
+        { scale: 0.92, opacity: 0, y: 20 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.5, ease: "power3.out" },
+        6.95
+      );
+
+      // 4. Nhánh rễ ngầm toả đâm sâu xuống lòng đất hoàng cung
+      tl.to(
+        "#s2-root-main",
+        { strokeDashoffset: 0, duration: 0.65, ease: "power2.out" },
+        7.35
+      );
+      tl.to(
+        "#s2-root-left",
+        { strokeDashoffset: 0, duration: 0.5, ease: "power2.out" },
+        7.65
+      );
+      tl.to(
+        "#s2-root-right",
+        { strokeDashoffset: 0, duration: 0.5, ease: "power2.out" },
+        7.75
+      );
+
+      // 5. CAMERA PAN-DOWN: Cuộn dịch chuyển toàn bộ cây sơ đồ lên trên
+      // để dồn sự tập trung thị giác vào tầng rễ ngầm sâu nhất
+      tl.fromTo(
+        "#s2-flow-tree",
+        { y: 0 },
+        { y: -240, duration: 3.8, ease: "power2.inOut" },
+        7.80
+      );
+
+      // 6. Overlay Text "NGUYÊN NHÂN SÂU XA" (atMs: 84870 -> 8.43s)
+      tl.fromTo(
+        "#s2-root-plate",
+        { y: 60, opacity: 0, scale: 0.95 },
+        { y: 0, opacity: 1, scale: 1, duration: 0.65, ease: "power3.out" },
+        8.43
+      );
+
+      // Đăng ký timeline gốc vào window.__timelines theo hợp đồng HyperFrames
+      window.__timelines["scene-s09"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

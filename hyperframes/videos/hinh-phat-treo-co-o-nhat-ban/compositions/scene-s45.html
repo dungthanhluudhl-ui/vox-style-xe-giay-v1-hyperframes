@@ -5,704 +5,121 @@
   </head>
   <body>
     <template>
-      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap">
       <style>
-      * {
-        box-sizing: border-box;
-      }
-      body {
-        margin: 0;
-        padding: 0;
-        background: #E7E3D9;
-        color: #141414;
-        font-family: "Be Vietnam Pro", sans-serif;
-        overflow: hidden;
-        -webkit-font-smoothing: antialiased;
-      }
-      #root {
-        position: relative;
-        width: 100%;
-        height: 100%;
-        overflow: hidden;
-        background-color: #E7E3D9;
-      }
-      .clip {
-        position: absolute;
-        inset: 0;
-      }
+/* hf-safe-colors (tất định từ style-tokens.json) */
+.hf-text-ink { color: #141414; }
+.hf-text-light { color: #F7F4EC; }
+.hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+.hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+.hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+.hf-plate-paper { color: #141414; background-color: #F5F0E4; }
 
-      /* Camera stage rig for subtle zoom-in */
-      #camera-rig {
-        position: absolute;
-        inset: 0;
-        transform-origin: 540px 750px;
-        will-change: transform;
-      }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      margin: 0;
+      padding: 0;
+      background: #E7E3D9;
+      font-family: "Be Vietnam Pro", sans-serif;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+    #root {
+      position: relative;
+      width: 1080px;
+      height: 1920px;
+      background: #E7E3D9;
+      overflow: hidden;
+    }
+    .clip {
+      position: absolute;
+      inset: 0;
+    }
+  </style>
 
-      /* Background Variant: Chart (84px grid + horizontal ruled lines + ticks) */
-      .bg-grid {
-        position: absolute;
-        inset: 0;
-        background-size: 84px 84px;
-        background-image:
-          linear-gradient(to right, rgba(20, 20, 20, 0.05) 1px, transparent 1px),
-          linear-gradient(to bottom, rgba(20, 20, 20, 0.05) 1px, transparent 1px);
-        pointer-events: none;
-      }
-      .chart-lines-layer {
-        position: absolute;
-        inset: 0;
-        pointer-events: none;
-      }
-      .chart-rule {
-        position: absolute;
-        left: 0;
-        right: 0;
-        height: 2px;
-        background-color: rgba(20, 20, 20, 0.25);
-        transform-origin: left center;
-      }
-      .chart-tick {
-        position: absolute;
-        left: 0;
-        top: -2px;
-        width: 28px;
-        height: 6px;
-        background-color: #FF6A1A;
-        transform-origin: left center;
-      }
-
-      /* Safe Zone Container (Top: 160px, usable band X: 60px..1020px) */
-      #scene-content {
-        position: absolute;
-        top: 165px;
-        left: 60px;
-        width: 960px;
-        height: 1350px;
-      }
-
-      /* Header section */
-      #header-block {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-      }
-      .meta-tag {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        padding: 6px 14px;
-        background-color: #141414;
-        color: #F7F4EC;
-        font-size: 15px;
-        font-weight: 700;
-        letter-spacing: 1.5px;
-        border-radius: 4px;
-        text-transform: uppercase;
-      }
-      .meta-dot {
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
-        background-color: #FF6A1A;
-      }
-      .scene-title {
-        margin: 14px 0 0 0;
-        font-size: 44px;
-        font-weight: 900;
-        line-height: 1.2;
-        color: #141414;
-        letter-spacing: -0.5px;
-        text-transform: uppercase;
-      }
-      .title-accent-rule {
-        margin-top: 14px;
-        width: 100%;
-        height: 3px;
-        background: linear-gradient(to right, #141414 0%, #141414 45%, rgba(20, 20, 20, 0.15) 100%);
-      }
-
-      /* Central Donut Diagram section */
-      #diagram-section {
-        position: absolute;
-        top: 145px;
-        left: 0;
-        width: 100%;
-        height: 500px;
-      }
-      .donut-wrapper {
-        position: absolute;
-        top: 30px;
-        left: 260px;
-        width: 440px;
-        height: 440px;
-      }
-      #donut-svg {
-        width: 100%;
-        height: 100%;
-        overflow: visible;
-      }
-
-      /* Center hole stats display */
-      .donut-center-info {
-        position: absolute;
-        top: 90px;
-        left: 90px;
-        width: 260px;
-        height: 260px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        gap: 6px;
-        text-align: center;
-        pointer-events: none;
-      }
-      .center-badge {
-        display: inline-block;
-        padding: 4px 10px;
-        background-color: #141414;
-        color: #F7F4EC;
-        border-radius: 4px;
-        font-size: 13px;
-        font-weight: 700;
-        letter-spacing: 1px;
-      }
-      .center-stat-val {
-        margin: 0;
-        font-size: 76px;
-        font-weight: 900;
-        line-height: 1.05;
-        color: #141414;
-        letter-spacing: -1px;
-      }
-      .center-stat-label {
-        margin: 0;
-        font-size: 13px;
-        font-weight: 900;
-        color: #141414;
-        letter-spacing: 1.2px;
-        text-transform: uppercase;
-      }
-
-      /* Callout annotation cards */
-      .callout-card {
-        position: absolute;
-        border-radius: 8px;
-        padding: 14px 18px;
-        z-index: 5;
-      }
-      #callout-special {
-        top: 45px;
-        right: 0;
-        width: 250px;
-        background-color: #FF6A1A;
-        color: #141414;
-        box-shadow: 4px 4px 0px #141414;
-      }
-      #callout-special .callout-head {
-        font-size: 19px;
-        font-weight: 900;
-        line-height: 1.22;
-        letter-spacing: -0.2px;
-        color: #141414;
-      }
-      #callout-special .callout-sub {
-        margin-top: 6px;
-        font-size: 13px;
-        font-weight: 700;
-        line-height: 1.35;
-        color: #141414;
-      }
-
-      #callout-other {
-        bottom: 55px;
-        left: 0;
-        width: 250px;
-        background-color: #F5F0E4;
-        border: 2px solid #141414;
-        box-shadow: 4px 4px 0px rgba(20, 20, 20, 0.25);
-      }
-      #callout-other .callout-head {
-        font-size: 18px;
-        font-weight: 900;
-        color: #141414;
-        line-height: 1.22;
-      }
-      #callout-other .callout-sub {
-        margin-top: 6px;
-        font-size: 13px;
-        font-weight: 700;
-        line-height: 1.35;
-        color: #141414;
-      }
-
-      /* SVG Leader connector lines layer */
-      #leader-svg {
-        position: absolute;
-        inset: 0;
-        width: 100%;
-        height: 100%;
-        pointer-events: none;
-      }
-
-      /* Timed Overlays inside safe area */
-      #overlay-punch-slot,
-      #overlay-crowd-slot {
-        pointer-events: none;
-      }
-
-      /* Overlay 1: Punch Phrase Box (Starts at 1.75s, duration 3.25s) */
-      #punch-card {
-        position: absolute;
-        top: 670px;
-        left: 0;
-        width: 100%;
-        height: 165px;
-        background-color: #141414;
-        border-radius: 12px;
-        padding: 22px 30px;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        border-left: 10px solid #FF6A1A;
-        box-shadow: 0 16px 36px rgba(20, 20, 20, 0.22);
-      }
-      .punch-meta {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        font-size: 14px;
-        font-weight: 700;
-        color: #FF6A1A;
-        letter-spacing: 1.5px;
-        text-transform: uppercase;
-      }
-      .punch-headline {
-        margin: 8px 0 6px 0;
-        font-size: 52px;
-        font-weight: 900;
-        line-height: 1.15;
-        color: #F7F4EC;
-        letter-spacing: -0.5px;
-        text-transform: uppercase;
-      }
-      .punch-desc {
-        margin: 0;
-        font-size: 20px;
-        font-weight: 700;
-        color: #F7F4EC;
-      }
-
-      /* Overlay 2: Crowd Icon Card (Starts at 3.51s, duration 1.49s) */
-      #crowd-card {
-        position: absolute;
-        top: 865px;
-        left: 0;
-        width: 100%;
-        height: 150px;
-        background-color: #F5F0E4;
-        border: 2.5px solid #141414;
-        border-radius: 12px;
-        padding: 18px 28px;
-        display: flex;
-        align-items: center;
-        gap: 28px;
-        box-shadow: 6px 6px 0px #141414;
-      }
-      .crowd-icon-box {
-        width: 120px;
-        height: 96px;
-        flex-shrink: 0;
-        display: grid;
-        place-items: center;
-      }
-      #crowd-svg {
-        width: 110px;
-        height: 84px;
-        overflow: visible;
-      }
-      .crowd-text-box {
-        flex-grow: 1;
-      }
-      .crowd-title {
-        font-size: 30px;
-        font-weight: 900;
-        color: #141414;
-        letter-spacing: -0.2px;
-        text-transform: uppercase;
-        margin: 0 0 6px 0;
-      }
-      .crowd-note {
-        font-size: 20px;
-        font-weight: 700;
-        color: #141414;
-        margin: 0;
-      }
-
-      /* Signature bottom orange bar (constant across all camera motions) */
-      #bottom-brand-bar {
-        position: absolute;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        height: 12px;
-        background-color: #FF6A1A;
-        z-index: 100;
-      }
-    </style>
-
-    <div
-      id="root"
-      data-composition-id="scene-s45"
-      data-start="0"
-      data-width="1080"
-      data-height="1920"
-      data-duration="5"
-    >
-      <!-- Base Scene Clip (Full 5.0 seconds duration) -->
-      <section id="scene-s45" class="clip" data-start="0" data-duration="5">
-        <div id="camera-rig">
-          <!-- Background Variant: Chart -->
-          <div class="bg-grid"></div>
-          <div class="chart-lines-layer">
-            <!-- 4 Ruled horizontal lines at 20%, 40%, 60%, 80% height + orange ticks -->
-            <div class="chart-rule" style="top: 384px;">
-              <div class="chart-tick"></div>
-            </div>
-            <div class="chart-rule" style="top: 768px;">
-              <div class="chart-tick"></div>
-            </div>
-            <div class="chart-rule" style="top: 1152px;">
-              <div class="chart-tick"></div>
-            </div>
-            <div class="chart-rule" style="top: 1536px;">
-              <div class="chart-tick"></div>
-            </div>
-          </div>
-
-          <!-- Main Content Safe Area -->
-          <div id="scene-content">
-            <!-- Header Block -->
-            <div id="header-block">
-              <div class="meta-tag">
-                <span class="meta-dot"></span>
-                <span>DỮ LIỆU NHÂN SỰ // KHẢO SÁT DOANH NGHIỆP</span>
-              </div>
-              <h1 class="scene-title">CƠ CẤU LAO ĐỘNG DOANH NGHIỆP</h1>
-              <div class="title-accent-rule"></div>
-            </div>
-
-            <!-- Central Donut Diagram Area -->
-            <div id="diagram-section">
-              <!-- SVG Leader Lines -->
-              <svg id="leader-svg" viewBox="0 0 960 500">
-                <!-- Line to orange callout on the right -->
-                <path
-                  id="leader-path-orange"
-                  d="M 585 140 L 645 95 L 710 95"
-                  fill="none"
-                  stroke="#FF6A1A"
-                  stroke-width="3"
-                  stroke-linecap="round"
-                />
-                <circle cx="585" cy="140" r="5" fill="#FF6A1A" />
-
-                <!-- Line to other callout on the left -->
-                <path
-                  id="leader-path-other"
-                  d="M 370 330 L 310 395 L 250 395"
-                  fill="none"
-                  stroke="#141414"
-                  stroke-width="3"
-                  stroke-linecap="round"
-                />
-                <circle cx="370" cy="330" r="5" fill="#141414" />
-              </svg>
-
-              <!-- Donut Chart SVG (Radius 150, Circumference = 942.5px) -->
-              <div class="donut-wrapper">
-                <svg id="donut-svg" viewBox="0 0 440 440">
-                  <!-- Outer dashed guide ring -->
-                  <circle
-                    cx="220"
-                    cy="220"
-                    r="195"
-                    fill="none"
-                    stroke="rgba(20,20,20,0.22)"
-                    stroke-width="1.5"
-                    stroke-dasharray="4 8"
-                  />
-
-                  <!-- Underlying track circle -->
-                  <circle
-                    cx="220"
-                    cy="220"
-                    r="150"
-                    fill="none"
-                    stroke="rgba(20,20,20,0.12)"
-                    stroke-width="48"
-                  />
-
-                  <!-- Remaining employees slice (58% = 547px of 943px), rotated to follow 42% -->
-                  <circle
-                    id="slice-other"
-                    cx="220"
-                    cy="220"
-                    r="150"
-                    fill="none"
-                    stroke="#262626"
-                    stroke-width="48"
-                    stroke-dasharray="547 943"
-                    stroke-dashoffset="547"
-                    transform="rotate(61.2 220 220)"
-                  />
-
-                  <!-- Special group slice (>40% = 42% = 396px of 943px), starts at 12 o'clock -->
-                  <circle
-                    id="slice-special"
-                    cx="220"
-                    cy="220"
-                    r="150"
-                    fill="none"
-                    stroke="#FF6A1A"
-                    stroke-width="54"
-                    stroke-linecap="round"
-                    stroke-dasharray="396 943"
-                    stroke-dashoffset="396"
-                    transform="rotate(-90 220 220)"
-                  />
-                </svg>
-
-                <!-- Center Hole Stat Display -->
-                <div class="donut-center-info">
-                  <div class="center-badge">TỶ LỆ ĐẶC THÙ</div>
-                  <div class="center-stat-val"><span id="counter-num">0</span>%</div>
-                  <div class="center-stat-label">TỪNG CÓ TIỀN ÁN</div>
-                </div>
-              </div>
-
-              <!-- Top-Right Callout Tag (Orange Slice) -->
-              <div id="callout-special" class="callout-card">
-                <div class="callout-head">&gt;40% LAO ĐỘNG ĐẶC THÙ</div>
-                <div class="callout-sub">Nhân sự từng có án tích được tuyển dụng</div>
-              </div>
-
-              <!-- Bottom-Left Callout Tag (Other Employees) -->
-              <div id="callout-other" class="callout-card">
-                <div class="callout-head">58% LAO ĐỘNG PHỔ THÔNG</div>
-                <div class="callout-sub">Làm việc &amp; hòa nhập đồng hành</div>
-              </div>
-            </div>
-
-            <!-- Overlay 1 Slot: Timed clip for Punch Phrase Card (359990ms = 1.75s, duration 3.25s) -->
-            <div id="overlay-punch-slot" class="clip" data-start="1.75" data-duration="3.25">
-              <div id="punch-card">
-                <div class="punch-meta">
-                  <span class="meta-dot"></span>
-                  <span>BẰNG CHỨNG XÁC THỰC</span>
-                </div>
-                <div class="punch-headline">&gt;40% TỪNG CÓ TIỀN ÁN</div>
-                <p class="punch-desc">Doanh nghiệp tiếp nhận &amp; tạo việc làm ổn định</p>
-              </div>
-            </div>
-
-            <!-- Overlay 2 Slot: Timed clip for Crowd Icon Card (361750ms = 3.51s, duration 1.49s) -->
-            <div id="overlay-crowd-slot" class="clip" data-start="3.51" data-duration="1.49">
-              <div id="crowd-card">
-                <div class="crowd-icon-box">
-                  <svg id="crowd-svg" viewBox="0 0 120 90">
-                    <!-- Left figure -->
-                    <circle class="crowd-path" cx="30" cy="34" r="10" fill="none" stroke="#141414" stroke-width="4" stroke-linecap="round" />
-                    <path class="crowd-path" d="M 12 76 C 12 60 48 60 48 76" fill="none" stroke="#141414" stroke-width="4" stroke-linecap="round" />
-
-                    <!-- Right figure -->
-                    <circle class="crowd-path" cx="90" cy="34" r="10" fill="none" stroke="#141414" stroke-width="4" stroke-linecap="round" />
-                    <path class="crowd-path" d="M 72 76 C 72 60 108 60 108 76" fill="none" stroke="#141414" stroke-width="4" stroke-linecap="round" />
-
-                    <!-- Center figure (Prominent with Orange stroke) -->
-                    <circle class="crowd-path" cx="60" cy="26" r="12" fill="none" stroke="#FF6A1A" stroke-width="5" stroke-linecap="round" />
-                    <path class="crowd-path" d="M 36 76 C 36 52 84 52 84 76" fill="none" stroke="#FF6A1A" stroke-width="5" stroke-linecap="round" />
-                  </svg>
-                </div>
-                <div class="crowd-text-box">
-                  <h2 class="crowd-title">TẬP THỂ TÁI HÒA NHẬP</h2>
-                  <p class="crowd-note">Xóa bỏ rào cản • Chung tay xây dựng cuộc sống</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- Signature Orange Bar at the very bottom -->
-      <div id="bottom-brand-bar"></div>
+  <div id="root" data-composition-id="scene-s45" data-width="1080" data-height="1920" data-duration="8.36">
+    <!-- Nền chart: 4 đường kẻ ngang (20%, 40%, 60%, 80%) và vạch cam mép trái -->
+    <div id="chart-bg" style="position: absolute; inset: 0; pointer-events: none;">
+      <div style="position: absolute; top: 384px; left: 0; right: 0; height: 2px; background: rgba(20,20,20,0.32);">
+        <div style="position: absolute; left: 0; top: -3px; width: 24px; height: 8px; background: #FF6A1A;"></div>
+      </div>
+      <div style="position: absolute; top: 768px; left: 0; right: 0; height: 2px; background: rgba(20,20,20,0.32);">
+        <div style="position: absolute; left: 0; top: -3px; width: 24px; height: 8px; background: #FF6A1A;"></div>
+      </div>
+      <div style="position: absolute; top: 1152px; left: 0; right: 0; height: 2px; background: rgba(20,20,20,0.32);">
+        <div style="position: absolute; left: 0; top: -3px; width: 24px; height: 8px; background: #FF6A1A;"></div>
+      </div>
+      <div style="position: absolute; top: 1536px; left: 0; right: 0; height: 2px; background: rgba(20,20,20,0.32);">
+        <div style="position: absolute; left: 0; top: -3px; width: 24px; height: 8px; background: #FF6A1A;"></div>
+      </div>
     </div>
 
-    <script>
-      // Single paused master timeline for HyperFrames deterministic rendering
-      const tl = gsap.timeline({ paused: true });
+    <!-- Shot 1: S45-1 -->
+    <section id="shot-1" class="clip" data-start="0" data-duration="8.36">
+      <div id="shot-content" style="position: absolute; inset: 0;">
+        <!-- Khung ảnh căn phòng ngủ ký túc xá (img-11) -->
+        <div id="media-frame" style="position: absolute; left: 90px; top: 220px; width: 900px; height: 940px; border: 3px solid #141414; background: #F5F0E4; box-shadow: 14px 14px 0px rgba(20,20,20,0.18); overflow: hidden; border-radius: 4px;">
+          <img src="assets/img-11-depressed-man-sitting-bedroom.jpg" style="width: 100%; height: 100%; object-fit: cover; display: block;" alt="" />
+        </div>
 
-      // Pre-measure SVG path lengths for crowd icon self-drawing
-      const crowdElements = Array.from(document.querySelectorAll(".crowd-path"));
-      const crowdLengths = crowdElements.map((path) => {
-        const length = Math.ceil(path.getTotalLength ? path.getTotalLength() : 80);
-        path.style.strokeDasharray = length + "";
-        path.style.strokeDashoffset = length + "";
-        return length;
-      });
+        <!-- Overlay 1: data (> 40% TỪNG CÓ TIỀN ÁN) - nằm ở nửa dưới khung ảnh -->
+        <div id="overlay-1" class="hf-plate-ink" style="position: absolute; left: 110px; right: 110px; top: 880px; height: auto; padding: 26px 32px; border-left: 14px solid #FF6A1A; box-shadow: 0 16px 36px rgba(0,0,0,0.45); text-align: center; border-radius: 4px; opacity: 0; z-index: 10;">
+          <span style="font-family: 'Be Vietnam Pro', sans-serif; font-weight: 900; font-size: 48px; line-height: 1.25; letter-spacing: -0.5px; color: #F7F4EC; display: block;">&gt; 40% TỪNG CÓ TIỀN ÁN</span>
+        </div>
 
-      // Measure leader connector lines once and reuse values
-      const leaderOrange = document.getElementById("leader-path-orange");
-      let orangeLeaderLen = 0;
-      if (leaderOrange) {
-        orangeLeaderLen = Math.ceil(leaderOrange.getTotalLength());
-        leaderOrange.style.strokeDasharray = orangeLeaderLen + "";
-        leaderOrange.style.strokeDashoffset = orangeLeaderLen + "";
-      }
+        <!-- Overlay 2: label (KÝ TÚC XÁ TẦNG TRÊN) - nằm bên dưới khung ảnh, tọa độ tách biệt tránh chồng lấn -->
+        <div id="overlay-2" class="hf-plate-ink" style="position: absolute; left: 140px; right: 140px; top: 1200px; height: auto; padding: 22px 30px; border-left: 14px solid #FF6A1A; box-shadow: 0 14px 32px rgba(0,0,0,0.35); text-align: center; border-radius: 4px; opacity: 0; z-index: 11;">
+          <span style="font-family: 'Be Vietnam Pro', sans-serif; font-weight: 900; font-size: 44px; line-height: 1.25; letter-spacing: -0.5px; color: #F7F4EC; display: block;">KÝ TÚC XÁ TẦNG TRÊN</span>
+        </div>
+      </div>
+    </section>
 
-      const leaderOther = document.getElementById("leader-path-other");
-      let otherLeaderLen = 0;
-      if (leaderOther) {
-        otherLeaderLen = Math.ceil(leaderOther.getTotalLength());
-        leaderOther.style.strokeDasharray = otherLeaderLen + "";
-        leaderOther.style.strokeDashoffset = otherLeaderLen + "";
-      }
+    <!-- Thanh cam đáy 12px nhận diện thương hiệu cố định -->
+    <div id="bottom-bar" style="position: absolute; bottom: 0; left: 0; right: 0; height: 12px; background: #FF6A1A; z-index: 999;"></div>
+  </div>
 
-      // 1. Subtle camera zoom-in over 5 seconds (1.00 -> 1.04)
-      tl.fromTo(
-        "#camera-rig",
-        { scale: 1.0 },
-        { scale: 1.04, duration: 5.0, ease: "none" },
-        0
-      );
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+  <script>
+    const tl = gsap.timeline({ paused: true });
 
-      // 2. Scene entrance: punch-in transition
-      tl.fromTo(
-        "#scene-content",
-        { scale: 0.94, opacity: 0 },
-        { scale: 1.0, opacity: 1, duration: 0.45, ease: "power4.out" },
-        0.05
-      );
+    // Shot 1 transitionIn: wobble-drop (rơi có độ lệch nhẹ và dừng êm)
+    tl.fromTo("#shot-content",
+      { y: -80, rotation: -2, opacity: 0 },
+      { y: 0, rotation: 0, opacity: 1, duration: 0.65, ease: "power3.out" },
+      0
+    );
 
-      // 3. Ruled horizontal chart lines reveal
-      tl.fromTo(
-        ".chart-rule",
-        { scaleX: 0 },
-        { scaleX: 1, duration: 0.45, stagger: 0.06, ease: "power2.out" },
-        0.1
-      );
-      tl.fromTo(
-        ".chart-tick",
-        { scaleX: 0 },
-        { scaleX: 1, duration: 0.3, stagger: 0.05, ease: "power2.out" },
-        0.2
-      );
+    // Overlay 1: data "> 40% TỪNG CÓ TIỀN ÁN" (atMs: 359000 -> 0.76s; holdMs: 3500)
+    tl.fromTo("#overlay-1",
+      { scale: 0.88, opacity: 0, y: 25 },
+      { scale: 1, opacity: 1, y: 0, duration: 0.45, ease: "power3.out" },
+      0.76
+    );
+    tl.fromTo("#overlay-1",
+      { opacity: 1, y: 0 },
+      { opacity: 0, y: -15, duration: 0.3, ease: "power2.in" },
+      4.4
+    );
 
-      // 4. Header title slide-in
-      tl.fromTo(
-        "#header-block",
-        { y: -24, opacity: 0 },
-        { y: 0, opacity: 1, duration: 0.4, ease: "power3.out" },
-        0.12
-      );
+    // Overlay 2: label "KÝ TÚC XÁ TẦNG TRÊN" (atMs: 363500 -> 5.26s; holdMs: 2800)
+    tl.fromTo("#overlay-2",
+      { scale: 0.88, opacity: 0, y: 25 },
+      { scale: 1, opacity: 1, y: 0, duration: 0.45, ease: "power3.out" },
+      5.26
+    );
+    tl.fromTo("#overlay-2",
+      { opacity: 1 },
+      { opacity: 0, duration: 0.2, ease: "power2.in" },
+      8.12
+    );
 
-      // 5. Donut slices animation
-      // Other employees (58% slice) draws in first
-      tl.fromTo(
-        "#slice-other",
-        { strokeDashoffset: 547 },
-        { strokeDashoffset: 0, duration: 0.75, ease: "power3.out" },
-        0.3
-      );
-      // Hero orange slice (42% special group) sweeps in
-      tl.fromTo(
-        "#slice-special",
-        { strokeDashoffset: 396 },
-        { strokeDashoffset: 0, duration: 0.85, ease: "power3.out" },
-        0.42
-      );
+    window.__timelines["scene-s45"] = tl;
+  </script>
 
-      // 6. Direct DOM innerText counter from 0 to 42 (deterministic seek)
-      tl.fromTo(
-        "#counter-num",
-        { innerText: 0 },
-        {
-          innerText: 42,
-          snap: { innerText: 1 },
-          duration: 0.85,
-          ease: "power2.out"
-        },
-        0.42
-      );
-
-      // 7. Leader lines draw using stored measurements
-      if (leaderOrange) {
-        tl.fromTo(
-          leaderOrange,
-          { strokeDashoffset: orangeLeaderLen },
-          { strokeDashoffset: 0, duration: 0.4, ease: "power2.out" },
-          0.75
-        );
-      }
-      if (leaderOther) {
-        tl.fromTo(
-          leaderOther,
-          { strokeDashoffset: otherLeaderLen },
-          { strokeDashoffset: 0, duration: 0.4, ease: "power2.out" },
-          0.85
-        );
-      }
-
-      // 8. Callout annotation tags arrive
-      tl.fromTo(
-        "#callout-special",
-        { scale: 0.82, opacity: 0, x: 20 },
-        { scale: 1.0, opacity: 1, x: 0, duration: 0.45, ease: "power3.out" },
-        0.8
-      );
-      tl.fromTo(
-        "#callout-other",
-        { scale: 0.82, opacity: 0, x: -20 },
-        { scale: 1.0, opacity: 1, x: 0, duration: 0.45, ease: "power3.out" },
-        0.9
-      );
-
-      // 9. OVERLAY 1: Punch phrase entrance (timed clip starts at 1.75s)
-      tl.fromTo(
-        "#punch-card",
-        { scale: 0.84, opacity: 0, y: 24 },
-        { scale: 1.0, opacity: 1, y: 0, duration: 0.45, ease: "power4.out" },
-        1.75
-      );
-
-      // 10. OVERLAY 2: Crowd Icon Card entrance (timed clip starts at 3.51s)
-      tl.fromTo(
-        "#crowd-card",
-        { scale: 0.86, opacity: 0, y: 20 },
-        { scale: 1.0, opacity: 1, y: 0, duration: 0.4, ease: "power3.out" },
-        3.51
-      );
-      // SVG paths self-drawing for the crowd icon with pre-measured lengths
-      crowdElements.forEach((pathEl, idx) => {
-        const pathLen = crowdLengths[idx];
-        tl.fromTo(
-          pathEl,
-          { strokeDashoffset: pathLen },
-          {
-            strokeDashoffset: 0,
-            duration: 0.5,
-            ease: "power2.out"
-          },
-          3.55 + idx * 0.06
-        );
-      });
-
-      // Register timeline for seekable HyperFrames frame rendering
-      window.__timelines["scene-s45"] = tl;
-    </script>
-  
     </template>
   </body>
 </html>

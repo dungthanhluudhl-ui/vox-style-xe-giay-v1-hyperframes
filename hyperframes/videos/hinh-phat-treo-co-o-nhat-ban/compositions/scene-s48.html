@@ -7,650 +7,206 @@
     <template>
       <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap">
       <style>
+    /* hf-safe-colors (tất định từ style-tokens.json) */
+    .hf-text-ink { color: #141414; }
+    .hf-text-light { color: #F7F4EC; }
+    .hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+    .hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+    .hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+    .hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
     }
-
     body {
-      background-color: #E7E3D9;
-      color: #141414;
-      font-family: "Be Vietnam Pro", sans-serif;
+      width: 1080px;
+      height: 1920px;
       overflow: hidden;
-      -webkit-font-smoothing: antialiased;
+      background-color: #F5F0E4;
+      font-family: "Be Vietnam Pro", sans-serif;
     }
-
     #root {
       position: relative;
-      width: 100%;
-      height: 100%;
+      width: 1080px;
+      height: 1920px;
+      background-color: #F5F0E4;
       overflow: hidden;
-      background-color: #E7E3D9;
     }
 
-    /* Nền lưới ô vuông 84px - ADN Vox Style */
-    .bg-grid {
-      position: absolute;
-      inset: 0;
-      background-image: 
-        linear-gradient(to right, rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px),
-        linear-gradient(to bottom, rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px);
-      background-size: 84px 84px;
-      pointer-events: none;
-      z-index: 1;
-    }
-
-    /* Thanh cam nhận diện thương hiệu cố định ở mép đáy */
-    .brand-bottom-bar {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      height: 14px;
-      background-color: #FF6A1A;
-      z-index: 100;
-    }
-
-    /* Chuẩn clip HyperFrames: inset 0, layout tuyệt đối */
+    /* Base clip style following framework contract */
     .clip {
       position: absolute;
       inset: 0;
+    }
+
+    /* Fixed brand indicator line at the bottom */
+    #brand-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 1080px;
+      height: 12px;
+      background-color: #FF6A1A;
+      z-index: 50;
+    }
+
+    /* Video stage wrapper without data-start for peel transition & pan */
+    #video-wrapper {
+      position: absolute;
+      inset: 0;
       overflow: hidden;
+      z-index: 1;
+    }
+    #video-pan-container {
+      position: absolute;
+      top: 0;
+      left: -120px;
+      width: 1240px;
+      height: 1920px;
+    }
+    #vid-06 {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    /* Overlay container keeping all text safely inside Y: 160-1200 (well above caption zone) */
+    .overlay-container {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding-top: 260px;
+      padding-bottom: 740px;
+      padding-left: 80px;
+      padding-right: 80px;
       z-index: 10;
     }
 
-    /* =========================================
-       SHOT 1: GIA ĐÌNH 7 THÀNH VIÊN
-       ========================================= */
-    #family-card {
-      position: absolute;
-      top: 220px;
-      left: 80px;
-      width: 920px;
-      height: 940px;
-      background-color: #F5F0E4;
-      border: 4px solid #141414;
-      box-shadow: 12px 12px 0px #ff7a1a;
-      padding: 28px 32px;
+    .overlay-top-row {
       display: flex;
-      flex-direction: column;
-      transform-origin: center center;
-    }
-
-    .card-tape {
-      position: absolute;
-      top: -16px;
-      left: 360px;
-      width: 200px;
-      height: 34px;
-      background-color: rgba(20, 20, 20, 0.12);
-      border: 1.5px dashed rgba(20, 20, 20, 0.4);
-      transform: rotate(-2deg);
-    }
-
-    .card-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 2px solid #141414;
-      padding-bottom: 14px;
-      margin-bottom: 20px;
-    }
-
-    .card-meta-tag {
-      font-size: 24px;
-      font-weight: 900;
-      letter-spacing: 2px;
-      color: #141414;
-      text-transform: uppercase;
-    }
-
-    .card-stamp-badge {
-      background-color: #141414;
-      color: #F7F4EC;
-      padding: 6px 14px;
-      font-size: 20px;
-      font-weight: 900;
-      letter-spacing: 1px;
-    }
-
-    .family-svg-wrap {
-      flex: 1;
-      width: 100%;
-      position: relative;
-    }
-
-    .family-svg {
-      width: 100%;
-      height: 100%;
-    }
-
-    /* Diagram callouts */
-    .callout-pill {
-      position: absolute;
-      background-color: #141414;
-      color: #F7F4EC;
-      padding: 8px 16px;
-      font-size: 22px;
-      font-weight: 900;
-      border-radius: 6px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      box-shadow: 4px 4px 0px #FF6A1A;
-    }
-
-    .callout-pill span.num {
-      background-color: #FF6A1A;
-      color: #141414;
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
-      display: inline-flex;
-      align-items: center;
       justify-content: center;
-      font-size: 18px;
-      font-weight: 900;
-    }
-
-    /* Punch phrase 1 */
-    #punch-1 {
-      position: absolute;
-      top: 1220px;
-      left: 80px;
-      width: 920px;
-      background-color: #141414;
-      border: 3.5px solid #FF6A1A;
-      box-shadow: 10px 10px 0px rgba(20, 20, 20, 0.25);
-      border-radius: 14px;
-      padding: 30px 24px;
-      text-align: center;
-    }
-
-    .punch-title-1 {
-      color: #F7F4EC;
-      font-size: 64px;
-      font-weight: 900;
-      line-height: 1.25;
-      letter-spacing: 1px;
-      text-transform: uppercase;
-    }
-
-    .punch-subtitle-1 {
-      color: #F7F4EC;
-      font-size: 26px;
-      font-weight: 700;
-      margin-top: 10px;
-      letter-spacing: 1.5px;
-    }
-
-    #icon-crowd-wrap {
-      position: absolute;
-      top: 1440px;
-      left: 330px;
-      width: 420px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 16px;
-      background-color: #F5F0E4;
-      border: 2.5px solid #141414;
-      padding: 12px 28px;
-      border-radius: 40px;
-      box-shadow: 4px 4px 0px #141414;
-    }
-
-    .icon-label {
-      font-size: 24px;
-      font-weight: 900;
-      color: #141414;
-      letter-spacing: 1px;
-    }
-
-    /* =========================================
-       SHOT 2: NGHỀ SỬA ỐNG NƯỚC & VÒNG LAO LÝ
-       ========================================= */
-    #plumber-badge {
-      position: absolute;
-      top: 190px;
-      left: 80px;
-      background-color: #F5F0E4;
-      border: 3px solid #141414;
-      padding: 12px 24px;
-      box-shadow: 6px 6px 0px #141414;
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      z-index: 15;
-    }
-
-    .badge-dot {
-      width: 14px;
-      height: 14px;
-      border-radius: 50%;
-      background-color: #FF6A1A;
-    }
-
-    .badge-text {
-      font-size: 26px;
-      font-weight: 900;
-      color: #141414;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-    }
-
-    /* Thẻ đồ nghề: vẽ kỹ thuật thuần vector, KHÔNG chứa text để tránh occlusion */
-    #tools-card {
-      position: absolute;
-      top: 275px;
-      left: 80px;
-      width: 920px;
-      height: 720px;
-      background-color: #F5F0E4;
-      border: 4px solid #141414;
-      box-shadow: 12px 12px 0px rgba(20, 20, 20, 0.2);
-      padding: 24px;
-      overflow: hidden;
-    }
-
-    .tools-svg {
       width: 100%;
-      height: 100%;
     }
 
-    /* Song sắt nhà giam phủ xuống bộ dụng cụ */
-    #jail-bars-overlay {
-      position: absolute;
-      inset: 0;
-      background-color: rgba(18, 18, 18, 0.85);
-      background-image: repeating-linear-gradient(
-        to right,
-        transparent,
-        transparent 95px,
-        rgba(10, 10, 10, 0.95) 95px,
-        rgba(10, 10, 10, 0.95) 125px
-      );
-      z-index: 20;
-      opacity: 0;
-      pointer-events: none;
+    .overlay-bottom-row {
+      display: flex;
+      justify-content: flex-end;
+      width: 100%;
     }
 
-    /* Hồ sơ án tích / Con dấu: VÒNG LAO LÝ */
-    #legal-stamp-box {
-      position: absolute;
-      top: 1050px;
-      left: 80px;
-      width: 920px;
-      background-color: #141414;
-      border: 4px solid #FF6A1A;
-      box-shadow: 12px 12px 0px rgba(20, 20, 20, 0.35);
-      border-radius: 12px;
-      padding: 34px 28px;
-      text-align: center;
-      z-index: 30;
-      transform-origin: center center;
-    }
-
-    .dossier-tag {
+    /* Overlay 1: Punch phrase label */
+    .label-box {
       display: inline-block;
-      background-color: #FF6A1A;
-      color: #141414;
-      font-size: 22px;
+      padding: 18px 36px;
+      border-radius: 8px;
+      font-size: 44px;
       font-weight: 900;
-      padding: 6px 18px;
-      letter-spacing: 2px;
-      margin-bottom: 14px;
-      border-radius: 4px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      border-left: 10px solid #FF6A1A;
+      box-shadow: 0 16px 36px rgba(20, 20, 20, 0.45);
+      line-height: 1.34;
     }
 
-    .stamp-headline {
-      color: #F7F4EC;
-      font-size: 70px;
+    /* Overlay 2: Document stamp */
+    .stamp-box {
+      display: inline-block;
+      padding: 22px 38px;
+      border-radius: 6px;
+      font-size: 48px;
       font-weight: 900;
-      line-height: 1.15;
       letter-spacing: 2px;
       text-transform: uppercase;
-    }
-
-    .crime-charge-text {
-      color: #F7F4EC;
-      font-size: 26px;
-      font-weight: 700;
-      margin-top: 14px;
-      letter-spacing: 1.5px;
-      border-top: 1.5px dashed rgba(247, 244, 236, 0.35);
-      padding-top: 14px;
-    }
-
-    /* Icon BAN tự vẽ nét SVG */
-    #ban-icon-wrap {
-      position: absolute;
-      top: 920px;
-      left: 740px;
-      width: 200px;
-      height: 200px;
-      z-index: 40;
+      border: 6px solid #FF6A1A;
+      box-shadow: 0 20px 42px rgba(20, 20, 20, 0.5);
+      line-height: 1.34;
       transform-origin: center center;
     }
   </style>
 
-  <div id="root" data-composition-id="scene-s48" data-width="1080" data-height="1920" data-duration="7.57">
-    <!-- Nền lưới Vox -->
-    <div class="bg-grid"></div>
+  <div id="root" data-composition-id="scene-s48" data-width="1080" data-height="1920" data-duration="10.17">
+    <!-- Brand identity accent bar -->
+    <div id="brand-bar"></div>
 
-    <!-- Thanh cam đáy cố định nhận diện DNA -->
-    <div class="brand-bottom-bar"></div>
+    <!-- Video layer: wrapper without data-start enables peel entrance and pan motion -->
+    <div id="video-wrapper">
+      <div id="video-pan-container">
+        <video
+          id="vid-06"
+          src="assets/vid-06-sad-man-leaving-family.mp4"
+          muted
+          playsinline
+          data-start="0"
+          data-duration="10.17"
+          data-media-start="0"
+        ></video>
+      </div>
+    </div>
 
-    <!-- =======================================================
-         SHOT 1 (0.0s - 2.66s): Bức vẽ gia đình 7 người (Strike In)
-         ======================================================= -->
-    <section id="shot-1" class="clip" data-start="0" data-duration="2.66" data-track-index="0">
-      <!-- Thẻ hồ sơ gia đình -->
-      <div id="family-card">
-        <div class="card-tape"></div>
-        
-        <div class="card-header">
-          <span class="card-meta-tag">HỒ SƠ GIA ĐÌNH // HAMAGUCHI</span>
-          <span class="card-stamp-badge">7 THÀNH VIÊN</span>
+    <!-- Shot 1 Overlays -->
+    <section id="shot-1" class="clip" data-start="0" data-duration="10.17">
+      <div class="overlay-container">
+        <div class="overlay-top-row">
+          <div id="label-family" class="hf-plate-ink label-box">VỢ VÀ 5 CON NHỎ</div>
         </div>
-
-        <div class="family-svg-wrap">
-          <svg class="family-svg" viewBox="0 0 856 680" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <!-- Silhouette người cha (trụ cột gia đình) - Bóng cam đặc Vox -->
-            <g transform="translate(12, 12)">
-              <circle cx="450" cy="220" r="70" fill="#ff7a1a" />
-              <path d="M340 310 C340 290 400 285 450 285 C500 285 560 290 560 310 L585 620 L315 620 Z" fill="#ff7a1a" />
-            </g>
-            <!-- Người cha: Mực đen #141414 -->
-            <g id="figure-father">
-              <circle cx="450" cy="220" r="70" fill="#141414" />
-              <path d="M340 310 C340 290 400 285 450 285 C500 285 560 290 560 310 L585 620 L315 620 Z" fill="#141414" />
-              <!-- Mũ thợ sửa nước màu cam -->
-              <path d="M375 185 C375 155 525 155 525 185 L545 190 L355 190 Z" fill="#FF6A1A" />
-            </g>
-
-            <!-- Silhouette người mẹ - Bóng cam đặc -->
-            <g transform="translate(10, 10)">
-              <circle cx="280" cy="260" r="55" fill="#ff7a1a" />
-              <path d="M190 345 C190 320 240 315 280 315 C320 315 370 320 370 345 L385 620 L175 620 Z" fill="#ff7a1a" />
-            </g>
-            <!-- Người mẹ: Mực đen -->
-            <g id="figure-mother">
-              <circle cx="280" cy="260" r="55" fill="#141414" />
-              <path d="M190 345 C190 320 240 315 280 315 C320 315 370 320 370 345 L385 620 L175 620 Z" fill="#141414" />
-              <path d="M250 315 C270 335 295 335 315 315 L310 350 L255 350 Z" fill="#FF6A1A" />
-            </g>
-
-            <!-- 5 người con nhỏ xếp thành hàng cân đối -->
-            <!-- Con 1: bên phải cha -->
-            <g id="child-1">
-              <circle cx="630" cy="350" r="42" fill="#141414" />
-              <path d="M570 410 C570 395 600 390 630 390 C660 390 690 395 690 410 L705 620 L555 620 Z" fill="#141414" />
-              <circle cx="630" cy="350" r="42" stroke="#FF6A1A" stroke-width="4" fill="none" />
-            </g>
-
-            <!-- Con 2: bên trái mẹ -->
-            <g id="child-2">
-              <circle cx="120" cy="390" r="38" fill="#141414" />
-              <path d="M65 445 C65 430 95 425 120 425 C145 425 175 430 175 445 L190 620 L50 620 Z" fill="#141414" />
-              <circle cx="120" cy="390" r="38" stroke="#FF6A1A" stroke-width="4" fill="none" />
-            </g>
-
-            <!-- Con 3: trước người cha -->
-            <g id="child-3">
-              <circle cx="450" cy="420" r="36" fill="#141414" />
-              <path d="M400 470 C400 460 425 455 450 455 C475 455 500 460 500 470 L515 620 L385 620 Z" fill="#141414" />
-              <circle cx="450" cy="420" r="36" stroke="#FF6A1A" stroke-width="4" fill="none" />
-            </g>
-
-            <!-- Con 4: ngoài cùng bên phải -->
-            <g id="child-4">
-              <circle cx="740" cy="440" r="32" fill="#141414" />
-              <path d="M695 485 C695 475 720 470 740 470 C760 470 785 475 785 485 L795 620 L685 620 Z" fill="#141414" />
-              <circle cx="740" cy="440" r="32" stroke="#FF6A1A" stroke-width="4" fill="none" />
-            </g>
-
-            <!-- Con 5: con út nhỏ bên trái -->
-            <g id="child-5">
-              <circle cx="210" cy="460" r="28" fill="#141414" />
-              <path d="M175 500 C175 490 195 485 210 485 C225 485 245 490 245 500 L255 620 L165 620 Z" fill="#141414" />
-              <circle cx="210" cy="460" r="28" stroke="#FF6A1A" stroke-width="4" fill="none" />
-            </g>
-
-            <!-- Thước đo kỹ thuật dưới chân -->
-            <line x1="40" y1="640" x2="816" y2="640" stroke="#141414" stroke-width="3" stroke-dasharray="8 8" />
-            <circle cx="40" cy="640" r="6" fill="#141414" />
-            <circle cx="816" cy="640" r="6" fill="#141414" />
-          </svg>
-
-          <!-- Diagram Callout Badges -->
-          <div class="callout-pill" id="tag-father" style="top: 130px; right: 20px;">
-            <span class="num">1</span>
-            <span>CHA (TRỤ CỘT)</span>
-          </div>
-          <div class="callout-pill" id="tag-mother" style="top: 175px; left: 10px;">
-            <span class="num">1</span>
-            <span>NGƯỜI VỢ</span>
-          </div>
-          <div class="callout-pill" id="tag-kids" style="bottom: 25px; left: 280px;">
-            <span class="num">5</span>
-            <span>CON NHỎ</span>
-          </div>
+        <div class="overlay-bottom-row">
+          <div id="doc-stamp" class="hf-plate-paper stamp-box">ĐƠN XIN LY HÔN</div>
         </div>
-      </div>
-
-      <!-- Punch phrase 1 -->
-      <div id="punch-1">
-        <div class="punch-title-1">GIA ĐÌNH 7 THÀNH VIÊN</div>
-        <div class="punch-subtitle-1">MÁI ẤM TRƯỚC BIẾN CỐ</div>
-      </div>
-
-      <!-- Icon crowd -->
-      <div id="icon-crowd-wrap">
-        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#141414" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-          <circle cx="9" cy="7" r="4"></circle>
-          <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-          <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-        </svg>
-        <span class="icon-label">TỔ ẤM 7 NGƯỜI</span>
-      </div>
-    </section>
-
-    <!-- =======================================================
-         SHOT 2 (2.66s - 7.57s): Nghề Sửa Ống Nước & Vòng Lao Lý
-         ======================================================= -->
-    <section id="shot-2" class="clip" data-start="2.66" data-duration="4.91" data-track-index="0">
-      <!-- Badge nghề nghiệp -->
-      <div id="plumber-badge">
-        <div class="badge-dot"></div>
-        <span class="badge-text">NGHỀ NGHIỆP: THỢ SỬA ỐNG NƯỚC</span>
-      </div>
-
-      <!-- Bảng dụng cụ thợ nước: vector thuần túy, an toàn tuyệt đối với occlusion -->
-      <div id="tools-card">
-        <svg class="tools-svg" viewBox="0 0 870 670" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <!-- Hệ thống đường ống nước diagram -->
-          <path d="M80 140 L440 140 L440 380 L800 380" stroke="#141414" stroke-width="26" stroke-linecap="square" />
-          <path d="M440 380 L440 600" stroke="#141414" stroke-width="26" stroke-linecap="square" />
-
-          <!-- Khớp nối và van cam -->
-          <circle cx="440" cy="140" r="34" fill="#FF6A1A" stroke="#141414" stroke-width="6" />
-          <circle cx="440" cy="380" r="38" fill="#FF6A1A" stroke="#141414" stroke-width="6" />
-
-          <!-- Đồng hồ đo áp suất nước (Gauge) - Vẽ chi tiết đồ họa -->
-          <circle cx="260" cy="140" r="54" fill="#F5F0E4" stroke="#141414" stroke-width="8" />
-          <circle cx="260" cy="140" r="44" fill="#E7E3D9" />
-          <!-- Vạch chia độ quanh đồng hồ -->
-          <line x1="260" y1="102" x2="260" y2="110" stroke="#141414" stroke-width="4" />
-          <line x1="230" y1="118" x2="236" y2="124" stroke="#141414" stroke-width="4" />
-          <line x1="290" y1="118" x2="284" y2="124" stroke="#141414" stroke-width="4" />
-          <line x1="222" y1="140" x2="230" y2="140" stroke="#141414" stroke-width="4" />
-          <line x1="298" y1="140" x2="290" y2="140" stroke="#141414" stroke-width="4" />
-          <!-- Kim áp suất màu cam -->
-          <line x1="260" y1="140" x2="286" y2="114" stroke="#FF6A1A" stroke-width="6" stroke-linecap="round" />
-          <circle cx="260" cy="140" r="8" fill="#141414" />
-
-          <!-- Cờ lê mỏ lết thợ nước (Pipe Wrench) nằm gọn trong khung -->
-          <g id="wrench-group" transform="translate(140, 260) rotate(-16)">
-            <!-- Bóng cam đặc Vox -->
-            <rect x="8" y="8" width="460" height="52" rx="8" fill="#ff7a1a" />
-            <!-- Thân cờ lê mực đen -->
-            <rect x="0" y="0" width="460" height="52" rx="8" fill="#141414" />
-            <!-- Đầu ngàm kẹp -->
-            <path d="M420 -35 L500 -35 L500 85 L420 85 Z" fill="#141414" />
-            <path d="M455 -60 L500 -60 L500 -35 L455 -35 Z" fill="#FF6A1A" />
-            <!-- Răng cưa ngàm kẹp -->
-            <line x1="465" y1="-20" x2="490" y2="-20" stroke="#F7F4EC" stroke-width="4" />
-            <line x1="465" y1="-8" x2="490" y2="-8" stroke="#F7F4EC" stroke-width="4" />
-            <line x1="465" y1="4" x2="490" y2="4" stroke="#F7F4EC" stroke-width="4" />
-            <!-- Lỗ móc treo ở chuôi -->
-            <circle cx="40" cy="26" r="14" fill="#F5F0E4" stroke="#141414" stroke-width="5" />
-          </g>
-
-          <!-- Kìm kẹp ống nước thứ hai -->
-          <g id="pliers-group" transform="translate(240, 470) rotate(10)">
-            <rect x="0" y="0" width="380" height="34" rx="6" fill="#141414" />
-            <circle cx="320" cy="17" r="20" fill="#FF6A1A" stroke="#141414" stroke-width="5" />
-            <path d="M320 -15 L370 -15 L370 45 L320 45 Z" fill="#141414" />
-          </g>
-
-          <!-- Đường dóng kích thước kỹ thuật blueprint -->
-          <line x1="40" y1="640" x2="830" y2="640" stroke="rgba(20,20,20,0.35)" stroke-width="2.5" stroke-dasharray="8 8" />
-          <circle cx="40" cy="640" r="5" fill="#141414" />
-          <circle cx="830" cy="640" r="5" fill="#141414" />
-        </svg>
-
-        <!-- Song sắt nhà giam phủ xuống bộ dụng cụ khi biến cố xảy ra -->
-        <div id="jail-bars-overlay"></div>
-      </div>
-
-      <!-- Hồ sơ pháp lý / Punch phrase: VÒNG LAO LÝ -->
-      <div id="legal-stamp-box">
-        <div class="dossier-tag">HỒ SƠ TỐ TỤNG // BỊ CAN</div>
-        <h1 class="stamp-headline">VÒNG LAO LÝ</h1>
-        <div class="crime-charge-text">TỘI DANH: TẤN CÔNG TÌNH DỤC</div>
-      </div>
-
-      <!-- Icon BAN tự vẽ nét -->
-      <div id="ban-icon-wrap">
-        <svg width="200" height="200" viewBox="0 0 100 100">
-          <circle id="ban-circle" cx="50" cy="50" r="40" fill="none" stroke="#FF6A1A" stroke-width="10" stroke-linecap="round" />
-          <line id="ban-slash" x1="22" y1="22" x2="78" y2="78" stroke="#FF6A1A" stroke-width="10" stroke-linecap="round" />
-        </svg>
       </div>
     </section>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
   <script>
-    // Chuẩn bị stroke SVG cho icon BAN để vẽ nét dần
-    const banCircle = document.getElementById("ban-circle");
-    const banSlash = document.getElementById("ban-slash");
-    if (banCircle && banSlash) {
-      const circleLen = banCircle.getTotalLength();
-      banCircle.style.strokeDasharray = circleLen;
-      banCircle.style.strokeDashoffset = circleLen;
-
-      const slashLen = banSlash.getTotalLength();
-      banSlash.style.strokeDasharray = slashLen;
-      banSlash.style.strokeDashoffset = slashLen;
-    }
-
-    // Khởi tạo Timeline Paused chính xác theo chuẩn HyperFrames
     const tl = gsap.timeline({ paused: true });
 
-    // ==========================================
-    // SHOT 1 TIMELINE (t = 0.0s -> 2.66s)
-    // ==========================================
-    // Cú dập STRIKE đưa bức vẽ gia đình 7 người vào khung hình
-    tl.fromTo("#family-card", 
-      { y: -70, scale: 1.05, opacity: 0 }, 
-      { y: 0, scale: 1, opacity: 1, duration: 0.45, ease: "power4.out" }, 
-      0.1
+    // Shot 1 entrance: Peel transition revealing the scene
+    tl.fromTo(
+      "#video-wrapper",
+      { transformOrigin: "top right", rotation: -5, x: -50, opacity: 0 },
+      { rotation: 0, x: 0, opacity: 1, duration: 0.65, ease: "power3.out" },
+      0
     );
 
-    // Stagger các nhãn diagram thành viên gia đình
-    tl.fromTo("#tag-father",
-      { x: 30, opacity: 0 },
-      { x: 0, opacity: 1, duration: 0.35, ease: "power3.out" },
-      0.55
-    );
-    tl.fromTo("#tag-mother",
-      { x: -30, opacity: 0 },
-      { x: 0, opacity: 1, duration: 0.35, ease: "power3.out" },
-      0.70
-    );
-    tl.fromTo("#tag-kids",
-      { y: 20, opacity: 0 },
-      { y: 0, opacity: 1, duration: 0.35, ease: "power3.out" },
-      0.85
+    // Camera motion: pan-left across shot duration (ends before 10.17s boundary)
+    tl.fromTo(
+      "#video-pan-container",
+      { x: -40 },
+      { x: 80, duration: 10.15, ease: "none" },
+      0
     );
 
-    // Punch phrase 1: "GIA ĐÌNH 7 THÀNH VIÊN" xuất hiện
-    tl.fromTo("#punch-1",
-      { scale: 0.9, y: 30, opacity: 0 },
-      { scale: 1, y: 0, opacity: 1, duration: 0.45, ease: "power3.out" },
-      1.29
+    // Overlay 1 (label): Pop entrance at 0.43s (atMs: 381500)
+    tl.fromTo(
+      "#label-family",
+      { scale: 0.8, opacity: 0, y: 24 },
+      { scale: 1, opacity: 1, y: 0, duration: 0.45, ease: "power3.out" },
+      0.43
     );
 
-    // Icon crowd xuất hiện
-    tl.fromTo("#icon-crowd-wrap",
-      { scale: 0, opacity: 0 },
-      { scale: 1, opacity: 1, duration: 0.35, ease: "power3.out" },
-      2.17
+    // Overlay 1: Exit fade out after holdMs: 3000ms (at 3.43s)
+    tl.fromTo(
+      "#label-family",
+      { scale: 1, opacity: 1, y: 0 },
+      { scale: 0.96, opacity: 0, y: -16, duration: 0.25, ease: "power2.in" },
+      3.43
     );
 
-    // ==========================================
-    // SHOT 2 TIMELINE (t = 2.66s -> 7.57s)
-    // ==========================================
-    // Dụng cụ sửa ống nước xuất hiện khi chuyển vào Shot 2
-    tl.fromTo("#tools-card",
-      { opacity: 0, y: 25 },
-      { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" },
-      2.70
+    // Overlay 2 (document): Stamp slam entrance at 7.73s (atMs: 388800)
+    tl.fromTo(
+      "#doc-stamp",
+      { opacity: 0, scale: 1.4, rotation: -12 },
+      { opacity: 1, scale: 1, rotation: -3, duration: 0.28, ease: "power4.out" },
+      7.73
     );
 
-    // Nhãn "THỢ SỬA ỐNG NƯỚC" trượt vào
-    tl.fromTo("#plumber-badge",
-      { x: -50, opacity: 0 },
-      { x: 0, opacity: 1, duration: 0.4, ease: "power3.out" },
-      2.80
-    );
-
-    // Biến cố: Nhãn tội danh "VÒNG LAO LÝ" đập xuống (duy nhất 1 fromTo, không lặp)
-    tl.fromTo("#legal-stamp-box",
-      { scale: 1.12, y: -50, opacity: 0 },
-      { scale: 1, y: 0, opacity: 1, duration: 0.4, ease: "power4.out" },
-      3.54
-    );
-
-    // Song sắt nhà giam phủ xuống bộ dụng cụ sửa nước
-    tl.fromTo("#jail-bars-overlay",
-      { opacity: 0 },
-      { opacity: 0.88, duration: 0.7, ease: "power2.out" },
-      3.65
-    );
-
-    // Icon BAN xuất hiện và tự vẽ nét
-    tl.fromTo("#ban-icon-wrap",
-      { scale: 0, opacity: 0 },
-      { scale: 1, opacity: 1, duration: 0.25, ease: "power3.out" },
-      4.39
-    );
-
-    if (banCircle && banSlash) {
-      tl.to(banCircle,
-        { strokeDashoffset: 0, duration: 0.4, ease: "power2.out" },
-        4.45
-      );
-      tl.to(banSlash,
-        { strokeDashoffset: 0, duration: 0.3, ease: "power2.out" },
-        4.70
-      );
-    }
-
-    // Đăng ký timeline cho render engine của HyperFrames
+    // Register paused master timeline
     window.__timelines["scene-s48"] = tl;
   </script>
 

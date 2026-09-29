@@ -1,0 +1,33 @@
+# Scene Plan — viet-nam-tham-du-world-cup-2030
+
+> Sinh bởi `scripts/05-scene-plan.router.mjs` qua cx/gpt-6-sol. Nguồn dữ liệu: `planning/videos/viet-nam-tham-du-world-cup-2030/scene-plan.json`. Sửa tay thì sửa cả 2 file cho khớp.
+
+Tổng thời lượng: 87.400s · 11 scene
+
+| # | Thời gian | Lời thoại | Chức năng | Quan hệ hình ảnh | Ngôn ngữ thị giác | Nền | Asset | Vào cảnh |
+|---|---|---|---|---|---|---|---|---|
+| S01 | 0.000s–8.000s | Đội tuyển Việt Nam tham dự World Cup: Nghe thì xa vời, nhưng cánh cửa này vừa bất ngờ rộng mở hơn bao giờ hết, nhờ một thông tin cực nóng từ FIFA. | hook | Khoảng cách giữa cầu thủ Việt Nam và chiếc cúp ban đầu chiếm gần hết khung hình; camera tiến về phía khoảng mở trong lớp giấy, khiến đích đến trông gần hơn trước khi nguồn tin FIFA được hé lộ. | background-photo + annotated | grid | img-05 | zoom-through |
+| S02 | 8.000s–16.120s | Chủ tịch Gianni Infantino xác nhận FIFA đang nghiên cứu mở rộng World Cup 2030 lên 64 đội, tức là gấp đôi quy mô so với trước đây. | evidence | Từ nhân vật đang phát biểu, điểm chú ý chuyển sang tờ giấy “64 TEAMS”; một thẻ trạng thái hiện rõ rằng con số này thuộc phương án đang nghiên cứu, chưa phải quyết định thông qua. | background-photo + document | card | img-08 | flip |
+| S03 | 16.120s–26.640s | Quyết định này được đưa ra sau thành công vượt mong đợi của kỳ World Cup 2026. Trình độ giữa các châu lục đang thu hẹp rõ rệt khi mọi liên đoàn đều ghi bàn và giành điểm tại vòng bảng. | cause | Bối cảnh World Cup 2026 nhường chỗ cho một khối chữ về thành tích vòng bảng: người xem đi từ nhận định “thành công” sang lý do cụ thể là các liên đoàn đều có bàn thắng và điểm. | background-photo + split | card | img-09 | peel |
+| S04 | 26.640s–34.760s | Đồng thời giải đấu còn mang về nguồn thu khổng lồ cho nhà tổ chức. Nếu phương án 64 đội được thông qua, châu Á dự kiến sẽ có ít nhất 10 suất chính thức. | causal-chain | Cảnh sân vận động và doanh thu được thay bằng bản đồ châu Á cùng hình ảnh tấm vé; lợi ích của giải đấu dẫn sang khả năng châu Á nhận thêm suất, nhưng chỉ trong điều kiện phương án được thông qua. | background-photo + data | chart | vid-04, vid-07, img-06 | rise |
+| S05 | 34.760s–41.480s | Đây chính là cơ hội vàng cho những đội tuyển chiếu dưới như là Việt Nam. Tuy nhiên, cơ hội lớn đi kèm với thực tế phũ phàng. | reversal | Hình ảnh người Việt với tay tới tấm vé giữ cảm giác lạc quan, rồi bị một khối chữ tối lấn dần sang khi câu “Tuy nhiên” bắt đầu; cơ hội vẫn nhìn thấy nhưng không còn chiếm toàn bộ khung. | background-photo + quote | spotlight | img-06 | unfold |
+| S06 | 41.480s–49.720s | Sau World Cup vừa qua, các ông lớn châu Âu đang kịch liệt phản đối vì cho rằng giải đấu quá loãng và chất lượng chuyên môn bị giảm sút. | paradox | Nhóm người phản đối tiến vào chiếm khung hình; camera chuyển sự chú ý từ phản ứng của họ sang dòng “TOO DILUTED?” trên chiếc cúp để làm rõ chính xác điều họ phản đối. | background-photo + annotated | spotlight | vid-03, img-01 | punch |
+| S07 | 49.720s–54.950s | Các đại diện châu Á dù có nhiều vé, nhưng thi đấu rất bết bát, hầu hết bị loại ngay từ vòng bảng. | evidence | Từ hình ảnh các cầu thủ còn trên sân, chuyển động suy sụp dẫn tới khung hình cuối với trạng thái bị loại; đối lập “nhiều vé” và “dừng ở vòng bảng” hình thành theo đúng thứ tự lời thoại. | background-photo + document | card | vid-02, img-02 | wobble-drop |
+| S08 | 54.950s–62.040s | Bản thân đội tuyển Việt Nam hiện chỉ đứng thứ 17 châu Á. Nếu muốn lọt vào nhóm 10 đội mạnh nhất để đi tiếp, chúng ta vẫn phải vượt qua những ngọn núi rất cao. | mechanism | Cầu thủ xuất phát ở bậc #17 và leo về đỉnh TOP 10; quãng bậc còn lại tiếp tục hiện diện trong khung để người xem thấy khoảng cách giữa thứ hạng hiện tại và mục tiêu. | background-photo + data | chart | vid-01, img-04 | grow |
+| S09 | 62.040s–71.560s | Nhật Bản, Hàn Quốc hay Iran gần như đã bỏ túi các suất đầu tiên. Việt Nam sẽ phải cạnh tranh tấm vé còn lại với các đối thủ khó nhằn ở nhóm hai như Uzbekistan, Iraq, | list | Tầng các đội dẫn đầu được xác lập ở phía trên trước; sự chú ý sau đó hạ xuống tầng của Việt Nam, nơi các đối thủ cạnh tranh bắt đầu xuất hiện quanh một tấm vé chưa thuộc về ai. | background-photo + split | grid | vid-05 | shatter |
+| S10 | 71.560s–81.760s | và thậm chí là những người hàng xóm Thái Lan, Indonesia, Malaysia. Giấc mơ World Cup đã gần hơn về mặt lý thuyết, nhưng thực lực của chúng ta vẫn cần một cuộc lột xác triệt để. | conclusion | Các đối thủ khu vực lần lượt chiếm vùng cạnh tranh với Việt Nam; sau đó góc nhìn trở lại cầu thủ và chiếc cúp, nhưng khoảng cách giữa hai bên vẫn được giữ lại thay vì khép kín. | background-photo + annotated | spotlight | img-03, img-05 | peel |
+| S11 | 81.760s–87.400s | Bạn tin Việt Nam có thể làm nên lịch sử vào năm 2030 hay không? Hãy để lại bình luận và follow kênh nhé! | question | Từ cầu thủ đứng giữa những phản ứng của cộng đồng, sự chú ý chuyển sang một câu hỏi dành cho người xem; vùng bình luận trở thành nơi chờ câu trả lời, không xuất hiện kết quả giả định. | background-photo + quote | card | vid-06, img-07 | flip |
+
+## Ghi chú từng scene
+
+- **S01**: Ảnh khớp trực tiếp giấc mơ World Cup của Việt Nam. Chưa trình bày khả năng tham dự như một suất đã được xác nhận.
+- **S02**: Không biến chữ “64 TEAMS” có sẵn trong ảnh thành thông báo rằng FIFA đã chính thức mở rộng giải.
+- **S03**: Chỉ dùng phần sân vận động của ảnh làm bối cảnh 2026; không trình bày biểu đồ doanh thu có sẵn trong ảnh như bằng chứng cho nhận định về trình độ.
+- **S04**: Không tách riêng hai câu thành các scene dưới 5 giây. Không thêm số doanh thu vì kịch bản không nêu con số.
+- **S05**: Đảo chiều bằng thay đổi phần diện tích mỗi ý chiếm trên màn hình, không chỉ đổi sang ảnh tối.
+- **S06**: Trình bày đây là lập luận của bên phản đối, không xác nhận chất lượng chuyên môn thực tế đã giảm.
+- **S07**: Hai asset được gộp trong một scene dài hơn 5 giây; không tạo scene riêng cho ảnh.
+- **S08**: Hai mốc #17 và TOP 10 đều có trong lời thoại và media; không tự suy ra số bậc hay số trận phải thắng.
+- **S09**: “Gần như bỏ túi” là đánh giá trong kịch bản, không thể hiện các suất là kết quả đã chính thức chốt. Không phủ sơ đồ hay đường nối lên video.
+- **S10**: Hai ảnh phục vụ hai nhịp ý nghĩa trong cùng scene, tránh tách câu liệt kê ngắn thành một scene dưới 5 giây. Không minh họa “lột xác” bằng thành tích chưa xảy ra.
+- **S11**: Thẻ câu hỏi là lời mời phản hồi, không khẳng định Việt Nam đã giành vé. Không thêm icon tương tác lên media vì ảnh và video đã có sẵn chúng.

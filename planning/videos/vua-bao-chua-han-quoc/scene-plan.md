@@ -1,0 +1,61 @@
+# Scene Plan — vua-bao-chua-han-quoc
+
+> Sinh bởi `scripts/05-scene-plan.router.mjs` qua ag/gemini-3.8-flash-high. Nguồn dữ liệu: `planning/videos/vua-bao-chua-han-quoc/scene-plan.json`. Sửa tay thì sửa cả 2 file cho khớp.
+
+Tổng thời lượng: 239.180s · 25 scene
+
+| # | Thời gian | Lời thoại | Chức năng | Quan hệ hình ảnh | Ngôn ngữ thị giác | Nền | Asset | Vào cảnh |
+|---|---|---|---|---|---|---|---|---|
+| S01 | 0.000s–8.020s | Chào mọi người! Bạn có biết "bạo chúa số một Hàn Quốc" là ai không? Hôm nay, mình sẽ kể cho các bạn nghe câu chuyện về ông ấy. | hook | Từ bóng đen ẩn danh phóng to dần hiện lên danh xưng 'BẠO CHÚA SỐ 1' đóng dấu đỏ rực trên nền chân dung tư liệu cổ về vị vua Joseon. | background-photo + annotated | spotlight | img-04 | punch |
+| S02 | 8.020s–17.440s | Xin chào! Mình là Long từ kênh Thông Não. Mình tin rằng bất kỳ ai là fan của phim truyền hình Hàn Quốc chắc hẳn đã từng nghe đến cái tên "Yeonsangun", | definition | Khung màn hình TV trượt vào giữa nền giấy, bên trong phát dải sóng K-drama rồi khóa nét vào tên tuổi Yeonsangun bằng viền cam. | mockup + diagram | card | — | unfold |
+| S03 | 17.440s–27.230s | vì ông ấy xuất hiện trong rất nhiều bộ phim. Người ta nói rằng ông là bạo chúa số một của Hàn Quốc, một vị vua tàn bạo nhất, một vị vua đã gây ra vô số chuyện | evidence | Ba nhãn tội trạng ('TÀN BẠO NHẤT', 'VÔ SỐ BIẾN CỐ', 'SỐ 1 TRIỀU ĐẠI') lần lượt rơi xuống đóng đinh đè lên hình bóng vương giả. | annotated + flow | spotlight | — | strike |
+| S04 | 27.230s–34.180s | và là nguồn tư liệu lý tưởng để sản xuất các bộ phim truyền hình, được chuyển thể thành tiểu thuyết lịch sử, thành nhiều thể loại khác nhau. | list | Một biểu tượng kịch bản gốc ở tâm bung nở thành 3 nhánh mũi tên cam dẫn tới 3 định dạng: Phim truyền hình, Tiểu thuyết và Kịch nghệ. | flow + diagram | grid | — | rise |
+| S05 | 34.180s–46.000s | Có những phiên bản miêu tả ông ta là một kẻ phản diện tột cùng, nhưng cũng có những phiên bản cho rằng, thực tế các sự kiện không phải như vậy, mà chính những người ghi chép lịch sử đã lừa dối chúng ta. | paradox | Khung hình tách đôi: nửa trái 'Kẻ phản diện tột cùng' bị nửa phải 'Sử quan bóp méo sự thật' dùng vệt cọ cam lấn sang giành lãnh thổ. | split + document | card | — | flip |
+| S06 | 46.000s–52.960s | Một số phiên bản khắc họa ông ta cực kỳ tàn ác, trong khi những phiên bản khác lại miêu tả ông ta rất điển trai. | paradox | Hai thẻ hồ sơ nhân vật trượt vào đặt cân xứng hai bên trục cân: bên trái mang mặt nạ bạo ngược, bên phải mang chân dung mỹ nam vương giả. | diagram + annotated | grid | — | wobble-drop |
+| S07 | 52.960s–64.960s | Vậy câu hỏi là, Yeonsangun thực sự là ai? Những chiến công của ông trong lịch sử? Ông ấy đã thực sự như thế nào trước khi được chuyển thể thành các phiên bản mà chúng ta thường xem? | question | Ba con dấu niêm phong màu mực đen gắn ba câu hỏi lớn lần lượt bị đóng mộc cam 'CHƯA CÓ LỜI GIẢI' từ trên xuống dưới. | document + annotated | spotlight | — | zoom-through |
+| S08 | 64.960s–76.440s | Hôm nay, mình đã thu thập những câu chuyện về ông để chia sẻ với mọi người. Nếu các bạn đã sẵn sàng lắng nghe một câu chuyện vừa thú vị vừa mang nhiều ý nghĩa, vậy thì hãy cùng bắt đầu nhé! | hook | Một trục thời gian cuộn ngược 500 năm từ hiện tại về thế kỷ 15, mở ra cuốn biên niên sử hoàng gia Joseon đang lật trang. | timeline + flow | card | — | peel |
+| S09 | 76.440s–88.740s | Nếu kể về sự tàn bạo của Yeonsangun, chúng ta không thể chỉ bắt đầu câu chuyện từ thời đại của ông ấy. Bởi vì, thực chất, có thể có những nguyên nhân sâu xa đã khiến ông trở thành người như vậy. | cause | Từ vương miện đẫm máu của Yeonsangun, một đường dây đứt gãy lần ngược xuống tầng gốc rễ nhân quả chôn sâu dưới cung đình. | flow + diagram | grid | — | grow |
+| S10 | 88.740s–99.440s | Chúng ta cần bắt đầu kể từ thời của vua cha, một câu chuyện đã diễn ra khoảng hơn 500 năm trước, vào "thế kỷ 15, dưới sự trị vì của vua Seongjong triều đại Joseon". | definition | Mốc thời gian số '500 NĂM' thu nhỏ nhường chỗ cho dòng chữ thế kỷ 15 và con dấu niên hiệu vua Seongjong ngự trị ở vị trí trung tâm. | timeline + document | chart | — | spiral |
+| S11 | 99.440s–111.030s | Chính trong hậu cung mà sự hỗn loạn đã bắt đầu. Vào triều đại của vua Seongjong, vị vương phi đầu tiên của ngài đã qua đời mà không để lại bất kỳ hoàng tử hay người thừa kế nào. | cause | Ngai vàng uy nghiêm của vua Seongjong xuất hiện với chiếc ghế trống bên cạnh, một đường gạch chéo cam đỏ giáng xuống biểu tượng người nối dõi. | background-photo + annotated | spotlight | img-02 | strike |
+| S12 | 111.030s–118.560s | Đây luôn là vấn đề muôn thuở của các vị quân vương ở bất kỳ quốc gia nào: Việc không có người kế vị là điều không thể chấp nhận. | definition | Luật thừa kế ngai vàng được vẽ thành cột trụ cung đình, một vết nứt đỏ xuất hiện kèm nhãn 'KHÔNG THỂ CHẤP NHẬN' đóng sập xuống. | document + diagram | card | — | punch |
+| S13 | 118.560s–124.220s | Do đó vua Seongjong phải nhanh chóng tìm một vị vương phi mới để sớm sinh hạ hoàng tử. | causal-chain | Từ ngai vua, một mũi tên truy tìm rẽ nhánh sang nhiều gia tộc quý tộc rồi dừng lại khoanh vùng cam vào chân dung Yoon thị từ thuở ấu thơ. | flow + annotated | grid | — | rise |
+| S14 | 124.220s–135.610s | Sau khi xem xét, ông đã chọn được Yoon thị, người mà có lẽ đã được ông để ý từ lâu và đã thân thiết từ khi còn bé. Chính vì vậy, vua Seongjong đã sắc phong Yoon thị lên làm vương phi. | mechanism | Chiếc vương miện hoàng hậu hạ cánh lên đầu Yoon thị trong đại lễ sắc phong, đường kẻ nối vương quyền giữa vua Seongjong và tân vương phi hình thành. | background-photo + annotated | card | img-01 | unfold |
+| S15 | 135.610s–146.660s | Và không lâu sau, vào năm 1476, vị vương phi mới đã sinh cho ông một cậu con trai, đặt tên là Yi Yung, hay còn gọi là hoàng tử Yeonsan, tức Yeonsangun. | evidence | Trục mốc năm 1476 sáng bừng lên, một nhánh phả hệ mới mọc ra từ hoàng hậu Yoon dẫn thẳng đến đứa trẻ sơ sinh với nhãn tước vị 'HOÀNG TỬ YEONSAN'. | timeline + background-photo | chart | img-05 | grow |
+| S16 | 146.660s–159.040s | 'Gun' có nghĩa là hoàng tử. Đây chính là nhân vật chính của chúng ta hôm nay, điều này có thể khiến bạn hơi bối rối rằng, "Chúng ta nói ông ấy là vua của Hàn Quốc mà? Sao lại gọi ông là hoàng tử?" | question | Danh hiệu 'GUN' (Hoàng tử) và 'WANG' (Vua) được đặt lên hai đĩa cân so sánh quyền lực, đĩa cân 'GUN' chùng xuống kèm một dấu hỏi lớn. | split + diagram | card | — | flip |
+| S17 | 159.040s–171.900s | Chúng ta sẽ có câu trả lời nếu bạn nghe tiếp. Mọi thứ dường như là một cuộc sống hoàn hảo, đúng không? Có phụ hoàng là vua, mẫu thân là vương phi, vừa sinh ra đã có vị trí thế tử trong tầm tay. | paradox | Tam giác quyền lực phụ hoàng - mẫu thân - thế tử tỏa sáng vàng ngọc, mũi tên định mệnh trao sẵn ngai vàng vào tầm tay ấu chúa. | flow + diagram | grid | — | rise |
+| S18 | 171.900s–180.960s | Nhưng câu chuyện không hề dễ dàng như vậy. Bởi vì người ta đồn đại (tôi xin nhắc lại là người ta đồn đại) rằng "vương phi Doãn thị có rất nhiều vấn đề". | reversal | Bức tranh hoàng gia hoàn hảo bị một vệt xé rách màu cam gạch chéo qua, để lộ hồ sơ đồn đại mang nhãn 'VƯƠNG PHI NHIỀU VẤN ĐỀ'. | split + annotated | spotlight | — | shatter |
+| S19 | 180.960s–191.460s | Bà là người nóng nảy, ghen tuông dữ dội, lại quá nghiêm khắc với các quy tắc. Do đó, bà thường xuyên mâu thuẫn với vua Seongjong và các hậu cung khác trong cung. | cause | Ba khối gai nhọn tính cách ('Nóng nảy', 'Ghen tuông', 'Hà khắc') từ vương phi lao tới va chạm dữ dội với biểu tượng hậu cung Joseon. | diagram + annotated | spotlight | — | wobble-drop |
+| S20 | 191.460s–200.540s | Một số người nói rằng lý do họ thường xuyên cãi nhau là vì vương phi Doãn thị quá khắt khe, trong khi vua Seongjong lại thích lẻn ra ngoài đến kỹ viện. | evidence | Bóng lưng vua Seongjong lén lút rời khỏi tường thành hoàng cung trong đêm tối, hướng mũi tên cam chỉ thẳng về phía khu phố kỹ viện đèn lồng đỏ. | background-photo + annotated | spotlight | img-03 | zoom-through |
+| S21 | 200.540s–209.820s | Vương phi Doãn thị kiểu như: "Không được, người không thể đến kỹ viện. Trong cung có bao nhiêu nữ nhân, là một vị vua sao có thể ra ngoài như vậy? | quote | Khung thoại sắc lạnh của Vương phi Doãn thị đè bẹp lối ra của cung điện, biểu tượng lệnh cấm (ban icon) màu cam khóa chặt chữ 'KỸ VIỆN'. | quote + document | card | — | punch |
+| S22 | 209.820s–216.260s | Có nhiều nữ nhân tôi không nói, nhưng việc đến kỹ viện là sai quy tắc". Vì thế họ thường xuyên cãi vã. | paradox | Cán cân so sánh: một bên 'Nhiều nữ nhân trong cung' (hợp lệ), một bên 'Đến kỹ viện' bị đóng dấu mộc 'SAI QUY TẮC' bốc khói xung đột. | document + diagram | grid | — | strike |
+| S23 | 216.260s–225.180s | Nhưng cũng có người nói rằng vấn đề không phải là quy tắc, mà là do bà quá ghen tuông. Vì cũng có trường hợp bà bỏ độc các hậu cung khác. | evidence | Nhãn 'QUY TẮC' bị gạt sang một bên, nhường chỗ cho bình độc dược màu tối đổ giọt cam lan sang danh sách tên các hậu cung khác. | flow + annotated | spotlight | — | peel |
+| S24 | 225.180s–233.020s | Nói chung là, hình ảnh Vương phi Yoon là một người vợ hay ghen tuông đáng sợ, mọi người ạ. Vì vậy, họ thường xuyên tranh cãi. | definition | Hình bóng Vương phi Yoon biến đổi thành bóng đen ma mị kèm nhãn 'NGƯỜI VỢ GHEN TUÔNG ĐÁNG SỢ' với các tia sét căng thẳng bao quanh. | diagram + annotated | spotlight | — | grow |
+| S25 | 233.020s–239.180s | Cho đến một ngày, bước ngoặt quan trọng đã xảy ra khi vương phi Yoon và vua Seongjong lại cãi nhau. | reversal | Vết nứt đỏ bùng nổ chia cắt hoàn toàn không gian giữa vua Seongjong và vương phi Yoon, đẩy mâu thuẫn lên điểm gãy lịch sử không thể hàn gắn. | background-photo + annotated | spotlight | img-06 | shatter |
+
+## Ghi chú từng scene
+
+- **S01**: Ưu tiên asset img-04 làm background-photo kết hợp overlay nhãn chữ punch, tạo ấn tượng mở đầu bí ẩn và kịch tính.
+- **S02**: Dựng mockup TV phát drama để gắn kết thói quen xem phim của khán giả với nhân vật lịch sử.
+- **S03**: Sử dụng các nhãn tem đóng mộc với hiệu ứng strike dứt khoát để khắc họa sự tàn bạo danh bất hư truyền.
+- **S04**: Sơ đồ nhánh phóng thích thông tin thể hiện sự phổ biến của nhân vật qua các loại hình nghệ thuật.
+- **S05**: Bố cục split động với hiệu ứng lấn vùng để minh họa nghi vấn về tính xác thực của biên niên sử.
+- **S06**: Phép so sánh trải rộng khung hình giữa hai cực hình ảnh: bạo ngược đối kháng với điển trai.
+- **S07**: Cảnh đặt câu hỏi cốt lõi, visual tập trung vào 3 văn thư mật chất vấn sự thật lịch sử.
+- **S08**: Chuyển giao tâm lý từ mở đầu sang hành trình quay ngược thời gian khám phá lịch sử cổ xưa.
+- **S09**: Sơ đồ dòng chảy nhân quả truy tìm nguồn cơn biến chuyển tâm lý của vị bạo vương.
+- **S10**: Định vị tọa độ thời gian và triều đại của vua cha Seongjong.
+- **S11**: Ưu tiên asset img-02 thể hiện vua Seongjong trầm tư muộn phiền trên ngai vàng vì hậu cung không người thừa kế.
+- **S12**: Nhấn mạnh quy tắc thép của các triều đại phong kiến về vấn đề nối dõi tông đường.
+- **S13**: Sơ đồ tìm kiếm ứng viên vương phi mới giải quyết khủng hoảng người kế vị.
+- **S14**: Ưu tiên asset img-01 cảnh đại lễ sắc phong vương phi Yoon thị trong hoàng cung Joseon.
+- **S15**: Ưu tiên asset img-05 khắc họa Hoàng hậu Yoon bế ấu chúa Yi Yung năm 1476.
+- **S16**: Giải thích nghịch lý danh xưng 'Quân' thay vì 'Vương' của Yeonsangun.
+- **S17**: Dựng cấu trúc gia đình quyền lực hoàn hảo trước khi sóng gió ập đến.
+- **S18**: Bước ngoặt lật ngược tâm lý, xé tan hình tượng hoàn mỹ của vương phi Doãn thị.
+- **S19**: Liệt kê ba mầm mống xung đột nội cung qua sơ đồ xung lực va chạm.
+- **S20**: Ưu tiên asset img-03 khắc họa cảnh rình rập đêm tối, vua lén ra ngoài đến kỹ viện.
+- **S21**: Bong bóng thoại trích dẫn gay gắt kết hợp icon ban thể hiện thái độ cấm đoán quyết liệt của vương phi.
+- **S22**: Phân tích lý lẽ quy tắc phong kiến của Doãn thị đối chọi hành vi của nhà vua.
+- **S23**: Bóc trần cáo buộc hãm hại thâm cung độc ác: nghi án hạ độc phi tần.
+- **S24**: Khắc họa hình tượng vương phi ghen tuông cực đoan tạo tiền đề cho bi kịch tiếp theo.
+- **S25**: Ưu tiên asset img-06 khắc họa đỉnh điểm cuộc cãi vã gay gắt giữa vua và vương phi trong cung điện, khép lại video ở cao trào kịch tính.

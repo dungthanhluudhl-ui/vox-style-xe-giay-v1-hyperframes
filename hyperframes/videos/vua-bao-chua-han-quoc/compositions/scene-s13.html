@@ -1,0 +1,849 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+/* hf-autofix contrast (tất định, màu palette) */
+.hf-cfix-s13-1 { color: #141414 !important; }
+.hf-cfix-s13-2 { color: #141414 !important; }
+.hf-cfix-s13-3 { color: #141414 !important; }
+.hf-cfix-s13-4 { color: #141414 !important; }
+
+/* hf-safe-colors (tất định từ style-tokens.json) */
+.hf-text-ink { color: #141414; }
+.hf-text-light { color: #F7F4EC; }
+.hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+.hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+.hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+.hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+      *, *::before, *::after {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #E7E3D9;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        -webkit-font-smoothing: antialiased;
+        overflow: hidden;
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: #E7E3D9;
+        background-image:
+          linear-gradient(to right, rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px),
+          linear-gradient(to bottom, rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px);
+        background-size: 84px 84px;
+      }
+      .clip {
+        position: absolute;
+        inset: 0;
+      }
+
+      /* Camera Rig & Scene Container */
+      #camera-rig {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+      }
+      #scene-content {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+      }
+
+      /* 1. Header & Title Area (Safe zone top: >160px) */
+      .dossier-header {
+        position: absolute;
+        top: 175px;
+        left: 70px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        z-index: 10;
+      }
+      .dossier-pill {
+        background-color: #141414;
+        color: #F7F4EC;
+        font-size: 13px;
+        font-weight: 900;
+        letter-spacing: 1.5px;
+        padding: 6px 14px;
+        border-radius: 4px;
+        text-transform: uppercase;
+      }
+      .dossier-sep {
+        font-size: 16px;
+        font-weight: 900;
+        color: #141414;
+      }
+      .dossier-code {
+        font-size: 14px;
+        font-weight: 700;
+        color: #141414;
+        letter-spacing: 1px;
+      }
+
+      .dossier-title-area {
+        position: absolute;
+        top: 220px;
+        left: 70px;
+        right: 70px;
+        z-index: 10;
+      }
+      .dossier-title {
+        margin: 0;
+        font-size: 38px;
+        font-weight: 900;
+        line-height: 1.2;
+        color: #141414;
+        text-transform: uppercase;
+        letter-spacing: -0.5px;
+      }
+      .dossier-subtitle {
+        margin-top: 6px;
+        font-size: 15px;
+        font-weight: 700;
+        color: #141414;
+        letter-spacing: 0.5px;
+      }
+
+      /* 2. King Node (Top authority card) */
+      .king-card {
+        position: absolute;
+        top: 305px;
+        left: 70px;
+        width: 940px;
+        height: 115px;
+        background-color: #F5F0E4;
+        border: 3px solid #141414;
+        box-shadow: 5px 5px 0px #141414;
+        display: flex;
+        align-items: center;
+        padding: 16px 24px;
+        gap: 20px;
+        z-index: 10;
+      }
+      .king-emblem {
+        width: 68px;
+        height: 68px;
+        background-color: #141414;
+        border: 2px solid #141414;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+      .king-info {
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+      }
+      .king-badge-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .king-status-tag {
+        background-color: #141414;
+        color: #F7F4EC;
+        font-size: 12px;
+        font-weight: 900;
+        letter-spacing: 1px;
+        padding: 3px 8px;
+        border-radius: 2px;
+      }
+      .king-name {
+        font-size: 23px;
+        font-weight: 900;
+        color: #141414;
+        letter-spacing: 0.5px;
+      }
+      .king-sub {
+        font-size: 13.5px;
+        font-weight: 700;
+        color: #141414;
+      }
+
+      /* 3. Flow SVG Connectors & Vòng tròn cam khóa nét */
+      .flow-svg-canvas {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: 12;
+      }
+      .flow-path {
+        fill: none;
+        stroke: #141414;
+        stroke-width: 3.5px;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
+      /* VÒNG TRÒN CAM KHÓA NÉT (The Definitive Visual Ending Climax) */
+      .target-circle-main {
+        fill: none;
+        stroke: #FF6A1A;
+        stroke-width: 8px;
+        stroke-linecap: round;
+        transform-origin: 540px 675px;
+        transform: rotate(-90deg);
+      }
+      .target-ring-dashed {
+        fill: none;
+        stroke: #FF6A1A;
+        stroke-width: 3px;
+        stroke-dasharray: 8 6;
+      }
+      .target-tick {
+        stroke: #FF6A1A;
+        stroke-width: 5px;
+        stroke-linecap: round;
+      }
+      .target-bracket {
+        fill: none;
+        stroke: #FF6A1A;
+        stroke-width: 4px;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
+      /* 4. Overlay Label "TÌM KIẾM VƯƠNG PHI" (at 1.57s) */
+      .search-overlay-badge {
+        position: absolute;
+        left: 340px;
+        top: 445px;
+        width: 400px;
+        height: 48px;
+        background-color: #FF6A1A;
+        border: 3px solid #141414;
+        box-shadow: 4px 4px 0px #141414;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        z-index: 15;
+      }
+      .search-overlay-text {
+        font-size: 19px;
+        font-weight: 900;
+        color: #141414;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+      }
+
+      /* 5. Side Candidate Cards (Han & Kim Clans) */
+      .side-candidate-card {
+        position: absolute;
+        width: 250px;
+        height: 350px;
+        top: 550px;
+        background-color: #F5F0E4;
+        border: 3px solid #141414;
+        box-shadow: 4px 4px 0px #141414;
+        padding: 18px 16px;
+        display: flex;
+        flex-direction: column;
+        z-index: 8;
+      }
+      #card-clan-han {
+        left: 70px;
+      }
+      #card-clan-kim {
+        left: 760px;
+      }
+      .side-badge {
+        align-self: flex-start;
+        font-size: 11px;
+        font-weight: 900;
+        letter-spacing: 1px;
+        padding: 4px 8px;
+        border-radius: 2px;
+        background-color: #141414;
+        color: #F7F4EC;
+        text-transform: uppercase;
+      }
+      .side-clan-title {
+        font-size: 13.5px;
+        font-weight: 700;
+        color: #141414;
+        margin-top: 14px;
+      }
+      .side-clan-name {
+        font-size: 21px;
+        font-weight: 900;
+        color: #141414;
+        line-height: 1.2;
+        margin-top: 2px;
+      }
+      .side-clan-desc {
+        margin-top: 12px;
+        font-size: 12.5px;
+        font-weight: 700;
+        color: #141414;
+        line-height: 1.4;
+      }
+      .side-reject-stamp {
+        margin-top: auto;
+        border: 2px solid #141414;
+        background-color: #141414;
+        color: #F7F4EC;
+        padding: 6px 10px;
+        text-align: center;
+        font-size: 13px;
+        font-weight: 900;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+      }
+
+      /* 6. Central Hero Node: Yoon Thị */
+      .hero-yoon-container {
+        position: absolute;
+        left: 350px;
+        top: 520px;
+        width: 380px;
+        height: 445px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        z-index: 10;
+      }
+      .target-lock-tag {
+        position: absolute;
+        top: 0px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 250px;
+        height: 28px;
+        background-color: #141414;
+        border: 2px solid #FF6A1A;
+        color: #FF6A1A;
+        font-size: 12.5px;
+        font-weight: 900;
+        letter-spacing: 2px;
+        text-align: center;
+        line-height: 24px;
+        z-index: 20;
+        text-transform: uppercase;
+      }
+
+      /* Circular Portrait Anchor */
+      .hero-avatar-circle-wrapper {
+        margin-top: 35px;
+        width: 160px;
+        height: 160px;
+        border-radius: 50%;
+        background-color: #F5F0E4;
+        border: 3.5px solid #141414;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        z-index: 10;
+      }
+
+      /* Yoon Info Block beneath the circular portrait */
+      .hero-info-box {
+        margin-top: 14px;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 3px;
+        z-index: 10;
+      }
+      .hero-clan {
+        font-size: 13px;
+        font-weight: 700;
+        color: #141414;
+        letter-spacing: 0.5px;
+      }
+      .hero-name {
+        font-size: 30px;
+        font-weight: 900;
+        color: #141414;
+        line-height: 1.1;
+      }
+      .hero-role {
+        font-size: 12.5px;
+        font-weight: 900;
+        color: #141414;
+        letter-spacing: 0.5px;
+        margin-top: 1px;
+      }
+      .hero-criteria-list {
+        margin-top: 8px;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        text-align: left;
+      }
+      .hero-criteria-item {
+        font-size: 12px;
+        font-weight: 700;
+        color: #141414;
+        line-height: 1.3;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .criteria-dot {
+        font-size: 10px;
+        color: #141414;
+      }
+
+      /* 7. Overlay Icon: Pin (at 3.73s) */
+      .pin-marker {
+        position: absolute;
+        left: 630px;
+        top: 565px;
+        z-index: 25;
+      }
+
+      /* 8. Bottom Result / Consequence Card (Safe zone Y: 985px - 1125px <= 1390) */
+      .result-box {
+        position: absolute;
+        top: 985px;
+        left: 70px;
+        width: 940px;
+        height: 140px;
+        background-color: #F5F0E4;
+        border: 3px solid #141414;
+        box-shadow: 5px 5px 0px #141414;
+        display: flex;
+        align-items: center;
+        padding: 18px 24px;
+        gap: 24px;
+        z-index: 10;
+      }
+      .result-badge-col {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+        padding-right: 20px;
+        border-right: 2px solid #141414;
+        flex-shrink: 0;
+      }
+      .result-label {
+        background-color: #141414;
+        color: #F7F4EC;
+        font-size: 12px;
+        font-weight: 900;
+        letter-spacing: 1px;
+        padding: 4px 10px;
+        border-radius: 2px;
+        text-transform: uppercase;
+      }
+      .result-year {
+        font-size: 26px;
+        font-weight: 900;
+        color: #141414;
+        line-height: 1;
+      }
+      .result-content-col {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+      }
+      .result-title {
+        font-size: 18px;
+        font-weight: 900;
+        color: #141414;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      .result-desc {
+        font-size: 14px;
+        font-weight: 700;
+        color: #141414;
+        line-height: 1.35;
+      }
+
+      /* Bottom Brand Orange Bar */
+      .bottom-brand-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 10px;
+        background-color: #FF6A1A;
+        z-index: 100;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s13"
+      data-start="0"
+      data-width="1080"
+      data-height="1920"
+      data-duration="5.66"
+    >
+      <section id="scene-clip" class="clip" data-start="0" data-duration="5.66">
+        <div id="camera-rig">
+          <div id="scene-content">
+
+            <!-- 1. Header & Title -->
+            <div class="dossier-header">
+              <span class="dossier-pill">HỒ SƠ TRIỀU CHÍNH</span>
+              <span class="dossier-sep">/</span>
+              <span class="dossier-code">TẬP 07 • NIÊN HIỆU THÀNH TÔNG THỨ 7</span>
+            </div>
+
+            <div class="dossier-title-area">
+              <h1 class="dossier-title">TÌM KIẾM VƯƠNG PHI MỚI</h1>
+              <div class="dossier-subtitle">SƠ ĐỒ TRUY TUYỂN ỨNG VIÊN GIẢI QUYẾT KHỦNG HOẢNG KẾ VỊ</div>
+            </div>
+
+            <!-- 2. King Node -->
+            <div id="node-king" class="king-card">
+              <div class="king-emblem">
+                <!-- Throne / Crown Emblem -->
+                <svg width="44" height="44" viewBox="0 0 40 40" fill="none">
+                  <path d="M6 30H34V34H6V30Z" fill="#FF6A1A" />
+                  <path d="M8 26L5 12L14 18L20 8L26 18L35 12L32 26H8Z" fill="#FF6A1A" stroke="#FF6A1A" stroke-width="2" stroke-linejoin="round" />
+                  <circle cx="20" cy="8" r="2.5" fill="#F7F4EC" />
+                  <circle cx="5" cy="12" r="2" fill="#F7F4EC" />
+                  <circle cx="35" cy="12" r="2" fill="#F7F4EC" />
+                </svg>
+              </div>
+              <div class="king-info">
+                <div class="king-badge-row">
+                  <span class="king-status-tag">TRIỀU TIÊN THÀNH TÔNG • 1469–1494</span>
+                </div>
+                <div class="king-name">VUA SEONGJONG (19 TUỔI)</div>
+                <div class="king-sub">ÁP LỰC CHÍNH TRỊ: CẦN GẤP ĐÍCH TỬ NỐI DÕI NGAY TRONG NĂM 1476</div>
+              </div>
+            </div>
+
+            <!-- 3. Branching SVG Connectors & Vòng tròn cam khóa nét -->
+            <svg id="flow-svg" class="flow-svg-canvas" viewBox="0 0 1080 1920">
+              <!-- Stem from King Node down to Branch Junction -->
+              <path id="path-stem" class="flow-path" d="M 540 420 L 540 445" />
+              <!-- Branches from Junction to Candidates -->
+              <path id="path-left" class="flow-path" d="M 540 493 L 540 515 L 195 515 L 195 550" />
+              <path id="path-center" class="flow-path" d="M 540 493 L 540 545" />
+              <path id="path-right" class="flow-path" d="M 540 493 L 540 515 L 885 515 L 885 550" />
+
+              <!-- VÒNG TRÒN CAM KHÓA NÉT (THE HERO ENDING TARGET LOCK AT cx=540, cy=675) -->
+              <g id="target-lock-system">
+                <!-- 1. Vòng định vị nét đứt bên ngoài -->
+                <circle id="target-ring-dashed" class="target-ring-dashed" cx="540" cy="675" r="115" />
+
+                <!-- 2. VÒNG TRÒN CAM CHÍNH KHÓA NÉT (Bold 8px solid orange circle) -->
+                <circle id="target-circle-main" class="target-circle-main" cx="540" cy="675" r="100" />
+
+                <!-- 3. Bốn vạch định vị reticle ticks khóa nét tại 12h, 6h, 9h, 3h -->
+                <line id="tick-12" class="target-tick" x1="540" y1="545" x2="540" y2="565" />
+                <line id="tick-6" class="target-tick" x1="540" y1="785" x2="540" y2="805" />
+                <line id="tick-9" class="target-tick" x1="410" y1="675" x2="430" y2="675" />
+                <line id="tick-3" class="target-tick" x1="650" y1="675" x2="670" y2="675" />
+
+                <!-- 4. Bốn góc ngắm L-brackets định vị mục tiêu -->
+                <path id="bracket-tl" class="target-bracket" d="M 415 570 L 415 550 L 435 550" />
+                <path id="bracket-tr" class="target-bracket" d="M 645 550 L 665 550 L 665 570" />
+                <path id="bracket-bl" class="target-bracket" d="M 415 780 L 415 800 L 435 800" />
+                <path id="bracket-br" class="target-bracket" d="M 645 800 L 665 800 L 665 780" />
+              </g>
+            </svg>
+
+            <!-- 4. Overlay Label (SHOTLIST Overlay: "TÌM KIẾM VƯƠNG PHI" at 1.57s) -->
+            <div id="search-label-overlay" class="search-overlay-badge">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#141414" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+              <span class="search-overlay-text">TÌM KIẾM VƯƠNG PHI</span>
+            </div>
+
+            <!-- 5. Side Candidates -->
+            <!-- Left Candidate: Gia tộc Han -->
+            <div id="card-clan-han" class="side-candidate-card">
+              <div class="side-badge hf-cfix-s13-3">NGOẠI THÍCH CŨ</div>
+              <div class="side-clan-title">THANH CHÂU</div>
+              <div class="side-clan-name">GIA TỘC HAN</div>
+              <div class="side-clan-desc">Dòng tộc Cung Huệ Vương hậu quá cố — Không còn người thích hợp nối ngôi.</div>
+              <div id="stamp-han" class="side-reject-stamp hf-cfix-s13-1">KHÔNG CHỌN</div>
+            </div>
+
+            <!-- Right Candidate: Gia tộc Kim -->
+            <div id="card-clan-kim" class="side-candidate-card">
+              <div class="side-badge hf-cfix-s13-4">DANH MÔN QUÝ TỘC</div>
+              <div class="side-clan-title">AN ĐÔNG</div>
+              <div class="side-clan-name">GIA TỘC KIM</div>
+              <div class="side-clan-desc">Thế lực triều thần đối trọng Huấn Cự — Nguy cơ bùng phát mâu thuẫn phe phái.</div>
+              <div id="stamp-kim" class="side-reject-stamp hf-cfix-s13-2">LOẠI TRỪ</div>
+            </div>
+
+            <!-- 6. Central Hero Candidate: Yoon Thị -->
+            <div id="hero-yoon-node" class="hero-yoon-container">
+              <!-- Target Tag Header -->
+              <div id="target-lock-tag" class="target-lock-tag">KHÓA NÉT: YOON THỊ</div>
+
+              <!-- Stylized Circular Portrait of Yoon Thị -->
+              <div class="hero-avatar-circle-wrapper">
+                <svg width="140" height="140" viewBox="0 0 140 140" fill="none">
+                  <!-- Soft circular base -->
+                  <circle cx="70" cy="70" r="68" fill="#F5F0E4" stroke="#141414" stroke-width="2.5" />
+                  <!-- Traditional Korean hair chignon / Gache -->
+                  <circle cx="70" cy="52" r="28" fill="#141414" />
+                  <circle cx="70" cy="42" r="16" fill="#141414" />
+                  <!-- Hanbok shoulders & court gown -->
+                  <path d="M 28 126 C 28 92 46 80 70 80 C 94 80 112 92 112 126 Z" fill="#141414" />
+                  <!-- Collar fold lines -->
+                  <path d="M 58 80 L 70 98 L 82 80" stroke="#F5F0E4" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+                  <!-- Royal Orange Binyeo (Trâm cài hoàng tộc cam) -->
+                  <path d="M 40 40 L 100 40" stroke="#FF6A1A" stroke-width="6" stroke-linecap="round" />
+                  <circle cx="102" cy="40" r="6" fill="#FF6A1A" stroke="#141414" stroke-width="1.5" />
+                  <path d="M 98 46 L 98 56" stroke="#FF6A1A" stroke-width="3" stroke-linecap="round" />
+                  <circle cx="98" cy="58" r="3" fill="#FF6A1A" />
+                </svg>
+              </div>
+
+              <!-- Information beneath portrait -->
+              <div class="hero-info-box">
+                <div class="hero-clan">HÀM AN YOON THỊ</div>
+                <div class="hero-name">YOON THỊ</div>
+                <div class="hero-role">THỤC NGHI ➔ KẾ VƯƠNG PHI</div>
+                <div class="hero-criteria-list">
+                  <div class="hero-criteria-item">
+                    <span class="criteria-dot">■</span>
+                    <span>Nhập cung từ thuở ấu thơ</span>
+                  </div>
+                  <div class="hero-criteria-item">
+                    <span class="criteria-dot">■</span>
+                    <span>Được Thành Tông sủng ái nhất</span>
+                  </div>
+                  <div class="hero-criteria-item">
+                    <span class="criteria-dot">■</span>
+                    <span>Đủ tư cách sinh Đích tử nối dõi</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 7. Overlay Icon (SHOTLIST Overlay: "pin" at 3.73s) -->
+            <div id="pin-icon" class="pin-marker">
+              <svg width="48" height="60" viewBox="0 0 48 60" fill="none">
+                <!-- Map Pin Body in Orange, Outline in Ink -->
+                <path d="M 24 58 L 20 30 C 12 28 8 20 8 14 C 8 6 15 0 24 0 C 33 0 40 6 40 14 C 40 20 36 28 28 30 Z" fill="#FF6A1A" stroke="#141414" stroke-width="3.5" stroke-linejoin="round" />
+                <circle cx="24" cy="14" r="6" fill="#141414" />
+                <circle cx="21" cy="11" r="2" fill="#F7F4EC" />
+              </svg>
+            </div>
+
+            <!-- 8. Bottom Result Card -->
+            <div id="bottom-result" class="result-box">
+              <div class="result-badge-col">
+                <span class="result-label">KẾT QUẢ</span>
+                <span class="result-year">1476</span>
+              </div>
+              <div class="result-content-col">
+                <div class="result-title">SẮC PHONG KẾ VƯƠNG PHI ĐỂ SINH HẠ ĐÍCH TỬ</div>
+                <div class="result-desc">
+                  Yoon thị được chọn bước lên ngôi vị Mẫu nghi thiên hạ — mở đầu cho chuỗi bi kịch lớn nhất triều đại Joseon.
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Fixed bottom brand bar (Vox visual signature) -->
+        <div class="bottom-brand-bar"></div>
+      </section>
+    </div>
+
+    <!-- GSAP Seekable Timeline Script -->
+    <script>
+      // 1. Setup SVG stroke geometry for progressive self-drawing
+      const pathsToMeasure = [
+        document.getElementById("path-stem"),
+        document.getElementById("path-left"),
+        document.getElementById("path-center"),
+        document.getElementById("path-right"),
+        document.getElementById("target-circle-main"),
+        document.getElementById("target-ring-dashed"),
+        document.getElementById("bracket-tl"),
+        document.getElementById("bracket-tr"),
+        document.getElementById("bracket-bl"),
+        document.getElementById("bracket-br")
+      ];
+      pathsToMeasure.forEach(p => {
+        if (p && p.getTotalLength) {
+          const len = p.getTotalLength();
+          p.style.strokeDasharray = len;
+          p.style.strokeDashoffset = len;
+        }
+      });
+
+      // Hide target lock ticks and tag initially
+      gsap.set(["#tick-12", "#tick-6", "#tick-9", "#tick-3"], {
+        opacity: 0,
+        scale: 0.5,
+        transformOrigin: "540px 675px"
+      });
+      gsap.set("#target-lock-tag", {
+        opacity: 0,
+        scale: 0.8
+      });
+
+      // 2. Initialize Paused GSAP Timeline
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true });
+
+      // 0.0s: Transition in - rise
+      tl.fromTo("#scene-content",
+        { y: 45, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.65, ease: "power3.out" },
+        0
+      );
+
+      // Continuous subtle camera pan-left
+      tl.fromTo("#camera-rig",
+        { x: 15 },
+        { x: -15, duration: 5.66, ease: "none" },
+        0
+      );
+
+      // 0.25s: King card enters
+      tl.fromTo("#node-king",
+        { y: -20, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.45, ease: "power3.out" },
+        0.25
+      );
+
+      // 0.75s: SVG stem path draws down
+      tl.to("#path-stem",
+        { strokeDashoffset: 0, duration: 0.25, ease: "power2.out" },
+        0.75
+      );
+
+      // 1.05s: Branch paths draw outward to candidates
+      tl.to(["#path-left", "#path-center", "#path-right"], {
+        strokeDashoffset: 0,
+        duration: 0.45,
+        ease: "power2.out",
+        stagger: 0.08
+      }, 1.05);
+
+      // 1.57s: SHOTLIST OVERLAY - Label "TÌM KIẾM VƯƠNG PHI" (atMs: 120130 -> 1.57s)
+      tl.fromTo("#search-label-overlay",
+        { scale: 0.75, opacity: 0, y: 10 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.35, ease: "power3.out" },
+        1.57
+      );
+
+      // 1.85s: Candidate nodes reveal
+      tl.fromTo("#card-clan-han",
+        { y: 25, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.4, ease: "power3.out" },
+        1.85
+      );
+      tl.fromTo("#hero-yoon-node",
+        { scale: 0.9, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.45, ease: "power3.out" },
+        1.95
+      );
+      tl.fromTo("#card-clan-kim",
+        { y: 25, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.4, ease: "power3.out" },
+        2.05
+      );
+
+      // 2.15s: Bottom result card reveals early so it doesn't distract from the climax
+      tl.fromTo("#bottom-result",
+        { y: 25, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.45, ease: "power3.out" },
+        2.15
+      );
+
+      // 2.45s: Rejection stamps slam down on side candidates
+      tl.fromTo("#stamp-han",
+        { scale: 1.5, opacity: 0, rotation: -16 },
+        { scale: 1, opacity: 1, rotation: -8, duration: 0.25, ease: "power2.out" },
+        2.45
+      );
+      tl.fromTo("#stamp-kim",
+        { scale: 1.5, opacity: 0, rotation: 16 },
+        { scale: 1, opacity: 1, rotation: 8, duration: 0.25, ease: "power2.out" },
+        2.60
+      );
+
+      // 2.75s: Dim rejected candidates to isolate Yoon Thị in the center
+      tl.to(["#card-clan-han", "#card-clan-kim"], {
+        opacity: 0.45,
+        duration: 0.35,
+        ease: "power2.out"
+      }, 2.75);
+
+      // 3.0s: SHOTLIST REQUIREMENT - "kết thúc bằng vòng tròn cam khóa nét"
+      // VÒNG TRÒN CAM CHÍNH KHÓA NÉT vẽ ôm trọn chân dung Yoon thị
+      tl.to("#target-circle-main", {
+        strokeDashoffset: 0,
+        duration: 0.65,
+        ease: "power2.out"
+      }, 3.0);
+
+      // 3.25s: Vòng định vị nét đứt bên ngoài vẽ theo
+      tl.to("#target-ring-dashed", {
+        strokeDashoffset: 0,
+        duration: 0.5,
+        ease: "power2.out"
+      }, 3.25);
+
+      // 3.45s: Bốn góc ngắm khóa nét L-brackets xuất hiện
+      tl.to(["#bracket-tl", "#bracket-tr", "#bracket-bl", "#bracket-br"], {
+        strokeDashoffset: 0,
+        duration: 0.3,
+        ease: "power2.out",
+        stagger: 0.03
+      }, 3.45);
+
+      // 3.55s: Bốn vạch reticle ticks khóa chặt mục tiêu
+      tl.to(["#tick-12", "#tick-6", "#tick-9", "#tick-3"], {
+        opacity: 1,
+        scale: 1,
+        duration: 0.25,
+        ease: "power3.out",
+        stagger: 0.03
+      }, 3.55);
+
+      // 3.60s: Tag tiêu đề khóa nét bật lên
+      tl.to("#target-lock-tag", {
+        opacity: 1,
+        scale: 1,
+        duration: 0.25,
+        ease: "power3.out"
+      }, 3.60);
+
+      // 3.73s: SHOTLIST OVERLAY - Icon "pin" (atMs: 122290 -> 3.73s)
+      // Ghim thẳng vào góc trên của vòng tròn cam đã khóa nét
+      tl.fromTo("#pin-icon",
+        { y: -50, scale: 2.2, opacity: 0 },
+        { y: 0, scale: 1, opacity: 1, duration: 0.35, ease: "power3.out" },
+        3.73
+      );
+
+      // Register timeline for HyperFrames renderer
+      window.__timelines["scene-s13"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

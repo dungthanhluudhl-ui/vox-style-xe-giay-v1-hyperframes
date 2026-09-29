@@ -1,0 +1,728 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap"
+    />
+      <style>
+      /* hf-safe-colors (tất định từ style-tokens.json) */
+      .hf-text-ink { color: #141414; }
+      .hf-text-light { color: #F7F4EC; }
+      .hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+      .hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+      .hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+      .hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background: #f5f0e4;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+      }
+      #root {
+        position: relative;
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+      }
+      .clip {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+      }
+
+      /* Nền dạng card với texture viền tài liệu cổ phong cách Vox */
+      .card-bg-surface {
+        position: absolute;
+        inset: 0;
+        background-color: #f5f0e4;
+        background-image: 
+          linear-gradient(rgba(20, 20, 20, 0.05) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(20, 20, 20, 0.05) 1px, transparent 1px);
+        background-size: 84px 84px;
+      }
+
+      .doc-frame {
+        position: absolute;
+        inset: 32px;
+        border: 2px solid rgba(20, 20, 20, 0.22);
+        pointer-events: none;
+      }
+      .doc-corner {
+        position: absolute;
+        width: 24px;
+        height: 24px;
+        border-color: #141414;
+        border-style: solid;
+      }
+      .corner-tl { top: -2px; left: -2px; border-width: 4px 0 0 4px; }
+      .corner-tr { top: -2px; right: -2px; border-width: 4px 4px 0 0; }
+      .corner-bl { bottom: -2px; left: -2px; border-width: 0 0 4px 4px; }
+      .corner-br { bottom: -2px; right: -2px; border-width: 0 4px 4px 0; }
+
+      /* Shot 1 Elements */
+      .shot1-wrapper {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding-top: 240px;
+      }
+
+      .archive-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        background: #141414;
+        color: #f7f4ec;
+        padding: 10px 24px;
+        font-weight: 900;
+        font-size: 24px;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        border-bottom: 4px solid #ff6a1a;
+        margin-bottom: 40px;
+      }
+
+      .quote-card {
+        width: 960px;
+        background: #f5f0e4;
+        border: 5px solid #141414;
+        box-shadow: 14px 14px 0px #141414;
+        padding: 56px 48px;
+        position: relative;
+        transform-origin: center center;
+      }
+
+      .speaker-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-bottom: 3px solid rgba(20, 20, 20, 0.2);
+        padding-bottom: 24px;
+        margin-bottom: 36px;
+      }
+      .speaker-title {
+        font-size: 32px;
+        font-weight: 900;
+        color: #141414;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+      }
+      .speaker-marker {
+        width: 14px;
+        height: 14px;
+        background: #ff6a1a;
+      }
+      .doc-id {
+        font-size: 22px;
+        font-weight: 900;
+        color: #141414;
+        letter-spacing: 1px;
+      }
+
+      .speech-lead {
+        font-size: 52px;
+        font-weight: 900;
+        line-height: 1.28;
+        color: #141414;
+        margin-bottom: 44px;
+      }
+
+      .target-prohibition-box {
+        position: relative;
+        background: #141414;
+        border: 4px solid #141414;
+        height: 160px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-top: 10px;
+      }
+      .target-prohibition-text {
+        font-size: 82px;
+        font-weight: 900;
+        color: #f7f4ec;
+        letter-spacing: 8px;
+      }
+
+      /* Ban Icon SVG (căn giữa hoàn toàn bằng inset: 0 và margin: auto, tránh xung đột transform) */
+      .ban-icon-container {
+        position: absolute;
+        inset: 0;
+        margin: auto;
+        width: 240px;
+        height: 240px;
+        z-index: 10;
+        pointer-events: none;
+        transform-origin: center center;
+      }
+
+      .punch-stamp-box {
+        position: absolute;
+        bottom: -40px;
+        right: 20px;
+        background: #ff6a1a;
+        border: 6px solid #141414;
+        box-shadow: 10px 10px 0px #141414;
+        padding: 20px 36px;
+        z-index: 15;
+        transform-origin: center center;
+      }
+      .punch-stamp-text {
+        font-size: 54px;
+        font-weight: 900;
+        color: #141414;
+        letter-spacing: 3px;
+        white-space: nowrap;
+      }
+
+      /* Shot 2 Elements */
+      .shot2-wrapper {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding-top: 210px;
+      }
+
+      .shot2-camera-rig {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        transform-origin: center 45%;
+      }
+
+      .law-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        background: #ff6a1a;
+        color: #141414;
+        padding: 12px 28px;
+        font-weight: 900;
+        font-size: 26px;
+        letter-spacing: 2px;
+        border: 4px solid #141414;
+        box-shadow: 6px 6px 0px #141414;
+        margin-bottom: 30px;
+      }
+
+      .palace-gate-card {
+        width: 960px;
+        height: 560px;
+        background: #f5f0e4;
+        border: 5px solid #141414;
+        box-shadow: 14px 14px 0px #141414;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .chains-overlay {
+        position: absolute;
+        inset: 0;
+        z-index: 5;
+        pointer-events: none;
+      }
+
+      /* Ổ khóa hoàng cung (căn giữa cổng chính xác bằng pixel, không dùng CSS translate) */
+      .gate-lock-unit {
+        position: absolute;
+        top: 270px;
+        left: 410px;
+        width: 140px;
+        height: 140px;
+        background: #141414;
+        border: 5px solid #ff6a1a;
+        border-radius: 12px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 10px 20px rgba(0,0,0,0.4);
+        z-index: 6;
+        transform-origin: center center;
+      }
+
+      /* Label Overlay "QUY PHẠM ĐẾ VƯƠNG" */
+      .norm-label-card {
+        position: absolute;
+        top: 36%;
+        right: 40px;
+        background: #ff6a1a;
+        border: 5px solid #141414;
+        box-shadow: 8px 8px 0px #141414;
+        padding: 18px 30px;
+        z-index: 12;
+        transform-origin: center center;
+      }
+      .norm-label-text {
+        font-size: 34px;
+        font-weight: 900;
+        color: #141414;
+        letter-spacing: 2px;
+      }
+      .norm-pointer-line {
+        position: absolute;
+        top: 50%;
+        left: -80px;
+        width: 80px;
+        height: 4px;
+        background: #141414;
+      }
+      .norm-pointer-dot {
+        position: absolute;
+        top: -6px;
+        left: 0;
+        width: 16px;
+        height: 16px;
+        background: #ff6a1a;
+        border: 3px solid #141414;
+        border-radius: 50%;
+      }
+
+      .interrogation-plate {
+        width: 960px;
+        background: #141414;
+        border: 5px solid #141414;
+        box-shadow: 14px 14px 0px #ff6a1a;
+        padding: 44px 44px;
+        margin-top: 36px;
+      }
+      .interrogation-tag {
+        color: #ff6a1a;
+        font-size: 24px;
+        font-weight: 900;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        margin-bottom: 16px;
+      }
+      .interrogation-q1 {
+        font-size: 38px;
+        font-weight: 700;
+        line-height: 1.35;
+        color: #f7f4ec;
+        margin-bottom: 18px;
+      }
+      .interrogation-q2 {
+        font-size: 44px;
+        font-weight: 900;
+        line-height: 1.35;
+        color: #ff6a1a;
+      }
+
+      /* Thanh cam nhận diện thương hiệu Vox ở đáy khung */
+      #bottom-brand-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 12px;
+        background: #ff6a1a;
+        z-index: 100;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s21"
+      data-start="0"
+      data-width="1080"
+      data-height="1920"
+      data-duration="9.28"
+    >
+      <!-- Layer nền card chung -->
+      <div id="bg-plate" class="clip" data-start="0" data-duration="9.28" data-track-index="0">
+        <div class="card-bg-surface"></div>
+        <div class="doc-frame">
+          <div class="doc-corner corner-tl"></div>
+          <div class="doc-corner corner-tr"></div>
+          <div class="doc-corner corner-bl"></div>
+          <div class="doc-corner corner-br"></div>
+        </div>
+      </div>
+
+      <!-- SHOT 1: Bong bóng thoại gay gắt & Lệnh cấm Kỹ viện từ Hoàng Hậu Doãn Thị (0.0s -> 4.64s) -->
+      <section id="shot-1" class="clip" data-start="0" data-duration="4.64" data-track-index="1">
+        <div class="shot1-wrapper" id="shot1-content">
+          <div class="archive-badge" id="shot1-badge">
+            <span>LỆNH CẤM HOÀNG TỘC</span>
+            <span>//</span>
+            <span>HOÀNG HẬU DOÃN THỊ</span>
+          </div>
+
+          <div
+            class="quote-card"
+            id="shot1-card"
+            data-layout-allow-overlap="true"
+          >
+            <div class="speaker-row">
+              <div class="speaker-title">
+                <span class="speaker-marker"></span>
+                <span>HOÀNG HẬU DOÃN THỊ</span>
+              </div>
+              <div class="doc-id">HỒ SƠ 1479</div>
+            </div>
+
+            <div class="speech-lead" id="shot1-lead">
+              “KHÔNG ĐƯỢC! NGƯỜI TUYỆT ĐỐI KHÔNG THỂ ĐẾN...”
+            </div>
+
+            <div
+              class="target-prohibition-box"
+              id="target-box"
+              data-layout-allow-overlap="true"
+              data-layout-allow-occlusion="true"
+            >
+              <div
+                class="target-prohibition-text"
+                id="target-text"
+                data-layout-allow-overlap="true"
+                data-layout-allow-occlusion="true"
+              >
+                KỸ VIỆN
+              </div>
+
+              <!-- Icon CẤM (Ban Icon SVG) đóng sập xuống chữ Kỹ Viện -->
+              <div
+                class="ban-icon-container"
+                id="ban-icon-wrap"
+                data-layout-allow-overlap="true"
+                data-layout-allow-occlusion="true"
+              >
+                <svg
+                  viewBox="0 0 200 200"
+                  width="100%"
+                  height="100%"
+                  style="filter: drop-shadow(6px 6px 0px #141414);"
+                >
+                  <circle
+                    cx="100"
+                    cy="100"
+                    r="84"
+                    fill="none"
+                    stroke="#FF6A1A"
+                    stroke-width="26"
+                  />
+                  <line
+                    x1="41"
+                    y1="41"
+                    x2="159"
+                    y2="159"
+                    stroke="#FF6A1A"
+                    stroke-width="26"
+                    stroke-linecap="square"
+                  />
+                </svg>
+              </div>
+            </div>
+
+            <!-- Punch-phrase Stamp "KHÔNG ĐƯỢC PHÉP!" -->
+            <div
+              class="punch-stamp-box"
+              id="punch-stamp"
+              data-layout-allow-overlap="true"
+              data-layout-allow-occlusion="true"
+            >
+              <div class="punch-stamp-text">KHÔNG ĐƯỢC PHÉP!</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SHOT 2: Cổng hoàng cung khóa xích & Chất vấn đạo làm vua (4.64s -> 9.28s) -->
+      <section id="shot-2" class="clip" data-start="4.64" data-duration="4.64" data-track-index="1">
+        <div class="shot2-wrapper" id="shot2-content">
+          <div class="shot2-camera-rig" id="shot2-camera">
+            <div class="law-badge" id="shot2-badge">
+              <span>ĐIỀU LỆ HOÀNG TỘC</span>
+              <span>//</span>
+              <span>KHẮC KỶ PHỤC LỄ</span>
+            </div>
+
+            <!-- Tranh minh họa Cổng Hoàng Cung bị khóa chặt -->
+            <div class="palace-gate-card" id="palace-gate">
+              <svg viewBox="0 0 960 560" width="960" height="560" style="display: block;">
+                <!-- Tường thành gạch đá -->
+                <rect x="0" y="0" width="960" height="560" fill="#E7E3D9" />
+                <path d="M 0 110 L 960 110" stroke="#141414" stroke-width="4" />
+                <path d="M 0 220 L 960 220" stroke="#141414" stroke-width="4" opacity="0.3" />
+                <path d="M 0 340 L 960 340" stroke="#141414" stroke-width="4" opacity="0.3" />
+
+                <!-- Mái cung điện đa tầng phong cách cổ trang Vox -->
+                <polygon points="120,110 220,35 740,35 840,110" fill="#141414" />
+                <polygon points="80,120 180,60 780,60 880,120" fill="#FF6A1A" opacity="0.2" />
+                <path d="M 120 110 L 840 110" stroke="#141414" stroke-width="8" />
+
+                <!-- Cổng vòm lớn -->
+                <path
+                  d="M 280 560 L 280 240 Q 480 160 680 240 L 680 560 Z"
+                  fill="#141414"
+                />
+                <!-- Hai cánh cửa gỗ kiên cố viền mực -->
+                <rect x="296" y="250" width="176" height="310" fill="#242424" />
+                <rect x="488" y="250" width="176" height="310" fill="#242424" />
+                <!-- Đinh tán cửa hoàng cung -->
+                <circle cx="340" cy="320" r="10" fill="#FF6A1A" />
+                <circle cx="340" cy="400" r="10" fill="#FF6A1A" />
+                <circle cx="340" cy="480" r="10" fill="#FF6A1A" />
+                <circle cx="620" cy="320" r="10" fill="#FF6A1A" />
+                <circle cx="620" cy="400" r="10" fill="#FF6A1A" />
+                <circle cx="620" cy="480" r="10" fill="#FF6A1A" />
+                <!-- Rãnh then cửa giữa -->
+                <line x1="480" y1="210" x2="480" y2="560" stroke="#141414" stroke-width="8" />
+              </svg>
+
+              <!-- Dây xích sắt đen đan chéo khóa cổng -->
+              <svg class="chains-overlay" viewBox="0 0 960 560" width="960" height="560">
+                <g id="chain-left">
+                  <line
+                    x1="180"
+                    y1="200"
+                    x2="780"
+                    y2="450"
+                    stroke="#141414"
+                    stroke-width="26"
+                    stroke-dasharray="32 16"
+                  />
+                  <line
+                    x1="180"
+                    y1="200"
+                    x2="780"
+                    y2="450"
+                    stroke="#F7F4EC"
+                    stroke-width="8"
+                    stroke-dasharray="32 16"
+                  />
+                </g>
+                <g id="chain-right">
+                  <line
+                    x1="180"
+                    y1="450"
+                    x2="780"
+                    y2="200"
+                    stroke="#141414"
+                    stroke-width="26"
+                    stroke-dasharray="32 16"
+                  />
+                  <line
+                    x1="180"
+                    y1="450"
+                    x2="780"
+                    y2="200"
+                    stroke="#F7F4EC"
+                    stroke-width="8"
+                    stroke-dasharray="32 16"
+                  />
+                </g>
+              </svg>
+
+              <!-- Ổ khóa phong tỏa lớn ở tâm cổng -->
+              <div class="gate-lock-unit" id="gate-lock">
+                <svg width="64" height="64" viewBox="0 0 24 24" fill="none">
+                  <rect
+                    x="3"
+                    y="11"
+                    width="18"
+                    height="11"
+                    rx="2"
+                    fill="#FF6A1A"
+                    stroke="#141414"
+                    stroke-width="2"
+                  />
+                  <path
+                    d="M7 11V7a5 5 0 0 1 10 0v4"
+                    stroke="#F7F4EC"
+                    stroke-width="3"
+                    stroke-linecap="round"
+                  />
+                  <circle cx="12" cy="16" r="2" fill="#141414" />
+                </svg>
+              </div>
+
+              <!-- Overlay Label: QUY PHẠM ĐẾ VƯƠNG (at 6.48s) -->
+              <div
+                class="norm-label-card"
+                id="norm-label"
+                data-layout-allow-overlap="true"
+                data-layout-allow-occlusion="true"
+              >
+                <div class="norm-pointer-line">
+                  <div class="norm-pointer-dot"></div>
+                </div>
+                <div class="norm-label-text">QUY PHẠM ĐẾ VƯƠNG</div>
+              </div>
+            </div>
+
+            <!-- Khối chất vấn đạo làm vua bên dưới -->
+            <div class="interrogation-plate" id="interrogation-box">
+              <div class="interrogation-tag">TRÍCH DẪN KHẢO VẤN HOÀNG TỘC</div>
+              <div class="interrogation-q1">
+                “Trong cung có bao nhiêu nữ nhân...”
+              </div>
+              <div class="interrogation-q2">
+                “Là một vị vua, sao có thể ra ngoài như vậy?”
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Thanh cam đặc trưng thương hiệu luôn cố định đáy màn hình -->
+      <div id="bottom-brand-bar"></div>
+    </div>
+
+    <script>
+      // Single paused master timeline for HyperFrames deterministic seeking
+      const tl = gsap.timeline({ paused: true });
+
+      // ==========================================
+      // SHOT 1 CHOREOGRAPHY (0.0s -> 4.64s)
+      // ==========================================
+
+      // Entrance punch cho Shot 1
+      tl.fromTo(
+        "#shot1-content",
+        { scale: 1.15, opacity: 0 },
+        { scale: 1.0, opacity: 1, duration: 0.5, ease: "power3.out" },
+        0.05
+      );
+
+      tl.fromTo(
+        "#shot1-badge",
+        { y: -30, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.4, ease: "power2.out" },
+        0.2
+      );
+
+      tl.fromTo(
+        "#shot1-lead",
+        { y: 30, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.5, ease: "power3.out" },
+        0.4
+      );
+
+      tl.fromTo(
+        "#target-box",
+        { scale: 0.9, opacity: 0 },
+        { scale: 1.0, opacity: 1, duration: 0.45, ease: "power3.out" },
+        0.7
+      );
+
+      // Icon Ban xuất hiện mạnh mẽ tại 1.69s (atMs: 202230)
+      tl.fromTo(
+        "#ban-icon-wrap",
+        { scale: 3.0, opacity: 0, rotation: -25 },
+        { scale: 1.0, opacity: 1, rotation: 0, duration: 0.35, ease: "power4.out" },
+        1.69
+      );
+
+      // Rung nảy dứt khoát hộp thoại khi icon Ban đập xuống (tất định hoàn toàn)
+      tl.fromTo(
+        "#shot1-card",
+        { y: 0 },
+        { y: 8, duration: 0.05, yoyo: true, repeat: 1, ease: "sine.inOut" },
+        1.72
+      );
+
+      // Punch-phrase "KHÔNG ĐƯỢC PHÉP!" đập xuống như con dấu tại 2.01s (atMs: 202550)
+      tl.fromTo(
+        "#punch-stamp",
+        { scale: 2.2, opacity: 0, rotation: 20 },
+        { scale: 1.0, opacity: 1, rotation: -7, duration: 0.35, ease: "power4.out" },
+        2.01
+      );
+
+      // Rung hộp thoại lần 2 thể hiện uy lực phán quyết của hoàng hậu
+      tl.fromTo(
+        "#shot1-card",
+        { x: 0 },
+        { x: -8, duration: 0.05, yoyo: true, repeat: 1, ease: "sine.inOut" },
+        2.05
+      );
+
+      // Rút lui nhẹ nhàng trước khi chuyển cảnh
+      tl.to(
+        "#shot1-content",
+        { opacity: 0, duration: 0.2, ease: "power2.in" },
+        4.44
+      );
+
+      // ==========================================
+      // SHOT 2 CHOREOGRAPHY (4.64s -> 9.28s)
+      // ==========================================
+
+      // Transition cut: Khung Shot 2 vào vị trí
+      tl.fromTo(
+        "#shot2-content",
+        { opacity: 0 },
+        { opacity: 1, duration: 0.2, ease: "none" },
+        4.64
+      );
+
+      // Camera motion: Zoom-out chậm toàn cảnh từ 4.64s đến 9.28s
+      tl.fromTo(
+        "#shot2-camera",
+        { scale: 1.14 },
+        { scale: 1.0, duration: 4.64, ease: "sine.out" },
+        4.64
+      );
+
+      // Hai dải xích sắt lao vào siết chặt cổng thành
+      tl.fromTo(
+        "#chain-left",
+        { x: -300, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.55, ease: "power3.out" },
+        4.75
+      );
+      tl.fromTo(
+        "#chain-right",
+        { x: 300, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.55, ease: "power3.out" },
+        4.75
+      );
+
+      // Ổ khóa sập vào trung tâm
+      tl.fromTo(
+        "#gate-lock",
+        { scale: 0, opacity: 0 },
+        { scale: 1.0, opacity: 1, duration: 0.4, ease: "power3.out" },
+        5.15
+      );
+
+      // Khối chất vấn đạo làm vua trượt lên
+      tl.fromTo(
+        "#interrogation-box",
+        { y: 50, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.55, ease: "power3.out" },
+        5.45
+      );
+
+      // Label Overlay "QUY PHẠM ĐẾ VƯƠNG" xuất hiện tại 6.48s (atMs: 207020)
+      tl.fromTo(
+        "#norm-label",
+        { scale: 0.7, opacity: 0, x: 20 },
+        { scale: 1.0, opacity: 1, x: 0, duration: 0.4, ease: "power3.out" },
+        6.48
+      );
+
+      window.__timelines["scene-s21"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

@@ -1,0 +1,444 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+      /* hf-safe-colors (tất định từ style-tokens.json) */
+      .hf-text-ink { color: #141414; }
+      .hf-text-light { color: #F7F4EC; }
+      .hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+      .hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+      .hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+      .hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+      /* Reset & bố cục tổng thể */
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #0b0f14;
+        overflow: hidden;
+      }
+
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: #0b0f14;
+        font-family: "Be Vietnam Pro", sans-serif;
+      }
+
+      /* Quy ước clip: inset: 0, không đặt width/height cố định bằng px */
+      .clip {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+      }
+
+      /* Camera rig phục vụ zoom-in và cú rung shatter */
+      .camera-rig {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        transform-origin: 50% 48%;
+        will-change: transform;
+      }
+
+      /* Giữ nguyên 100% màu gốc của asset img-06, không phủ vignette hay filter làm biến đổi màu */
+      .bg-img {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+
+      /* Hiệu ứng chớp sáng & vết nứt chia tách không gian giữa vua và vương phi */
+      .shatter-layer {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+      }
+
+      .shatter-flash {
+        position: absolute;
+        inset: 0;
+        background-color: #FF6A1A;
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      .crack-svg {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        filter: drop-shadow(0 0 10px rgba(255, 106, 26, 0.85));
+      }
+
+      /* Bố cục Overlay 1: Punch phrase */
+      .punch-container {
+        position: absolute;
+        top: 220px;
+        left: 60px;
+        right: 60px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: auto;
+      }
+
+      .punch-card {
+        width: 100%;
+        max-width: 960px;
+        height: auto;
+        padding: 34px 42px;
+        border-radius: 16px;
+        border-left: 10px solid #FF6A1A;
+        box-shadow: 0 18px 46px rgba(0, 0, 0, 0.75);
+        will-change: transform, opacity;
+      }
+
+      .punch-kicker-row {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        margin-bottom: 16px;
+      }
+
+      .punch-badge {
+        font-size: 22px;
+        font-weight: 900;
+        padding: 6px 14px;
+        border-radius: 6px;
+        letter-spacing: 1px;
+      }
+
+      .punch-kicker-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background-color: #FF6A1A;
+      }
+
+      .punch-date {
+        font-size: 22px;
+        font-weight: 700;
+        color: #F7F4EC;
+        letter-spacing: 2px;
+      }
+
+      .punch-title {
+        margin: 0;
+        font-size: 58px;
+        font-weight: 900;
+        line-height: 1.24;
+        color: #F7F4EC;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        word-break: keep-all;
+      }
+
+      .punch-subbar {
+        width: 120px;
+        height: 5px;
+        background-color: #FF6A1A;
+        margin-top: 18px;
+        border-radius: 2px;
+      }
+
+      /* Bố cục Overlay 2: Technical annotation label */
+      .label-container {
+        position: absolute;
+        top: 1030px;
+        left: 60px;
+        right: 60px;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        height: auto;
+      }
+
+      .label-card {
+        display: inline-flex;
+        align-items: center;
+        gap: 20px;
+        height: auto;
+        padding: 22px 34px;
+        border-radius: 14px;
+        border: 2px solid rgba(255, 106, 26, 0.7);
+        box-shadow: 0 16px 40px rgba(0, 0, 0, 0.78);
+        will-change: transform, opacity;
+      }
+
+      .label-icon-badge {
+        width: 46px;
+        height: 46px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+
+      .label-text-col {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      .label-tag {
+        color: #FF6A1A;
+        font-size: 20px;
+        font-weight: 700;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+      }
+
+      .label-title {
+        margin: 0;
+        color: #F7F4EC;
+        font-size: 38px;
+        font-weight: 900;
+        line-height: 1.2;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+      }
+
+      .label-pointer-svg {
+        margin-top: 12px;
+        margin-left: 20px;
+        filter: drop-shadow(0 0 8px rgba(255, 106, 26, 0.5));
+      }
+
+      /* Thanh cam nhận diện thương hiệu cố định ở đáy khung hình */
+      .brand-bottom-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 8px;
+        background-color: #FF6A1A;
+        z-index: 100;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s25"
+      data-width="1080"
+      data-height="1920"
+      data-duration="6.16"
+      data-start="0"
+    >
+      <!-- Shot chính: hiển thị nguyên bản màu sắc của asset img-06 -->
+      <section id="scene-s25" class="clip" data-start="0" data-duration="6.16" data-track-index="0">
+        <div id="camera-rig" class="camera-rig">
+          <img
+            id="bg-img"
+            class="bg-img"
+            src="assets/img-06-angry-royal-couple-dispute.jpg"
+            alt="Vua Seongjong và vương phi Yoon cãi vã"
+          />
+        </div>
+
+        <!-- Lớp đồ họa vết nứt (shatter transition & visual relationship) -->
+        <div id="shatter-layer" class="shatter-layer">
+          <div id="shatter-flash" class="shatter-flash"></div>
+          <svg id="crack-svg" class="crack-svg" viewBox="0 0 1080 1920" fill="none">
+            <path
+              id="crack-main"
+              d="M 540 80 L 525 320 L 565 490 L 515 680 L 550 860 L 505 1030 L 555 1250 L 515 1460 L 545 1690 L 520 1860"
+              stroke="#FF6A1A"
+              stroke-width="7"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+            <path
+              id="crack-branch-1"
+              d="M 565 490 L 655 430 L 715 455"
+              stroke="#FF6A1A"
+              stroke-width="4.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+            <path
+              id="crack-branch-2"
+              d="M 505 1030 L 415 1075 L 355 1045"
+              stroke="#FF6A1A"
+              stroke-width="4.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+            <polygon id="shard-1" points="530,650 560,665 540,695" fill="#FF6A1A" />
+            <polygon id="shard-2" points="520,1000 550,985 558,1020 528,1028" fill="#F5F0E4" />
+            <polygon id="shard-3" points="535,1230 565,1250 530,1270" fill="#141414" />
+          </svg>
+        </div>
+      </section>
+
+      <!-- Overlay 1: 234100ms–236300ms, tương ứng 1.08s–3.28s -->
+      <section id="overlay-punch" class="clip" data-start="1.08" data-duration="2.2" data-track-index="1">
+        <div class="punch-container">
+          <div id="punch-card" class="punch-card hf-plate-ink">
+            <div class="punch-kicker-row">
+              <span class="punch-badge hf-hl-orange">BIẾN CỐ LỊCH SỬ</span>
+              <span class="punch-kicker-dot"></span>
+              <span class="punch-date">NĂM 1479</span>
+            </div>
+            <h1 class="punch-title">BƯỚC NGOẶT ĐỊNH MỆNH</h1>
+            <div class="punch-subbar"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Overlay 2: 237310ms–239110ms, tương ứng 4.29s–6.09s -->
+      <section id="overlay-label" class="clip" data-start="4.29" data-duration="1.8" data-track-index="1">
+        <div class="label-container">
+          <div id="label-card" class="label-card hf-plate-ink">
+            <div class="label-icon-badge hf-hl-orange">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#141414" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 9v4"></path>
+                <path d="M12 17h.01"></path>
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+              </svg>
+            </div>
+            <div class="label-text-col">
+              <span class="label-tag">ĐỐI ĐẦU NỘI ĐIỆN</span>
+              <h2 class="label-title">XUNG ĐỘT ĐỈNH ĐIỂM</h2>
+            </div>
+          </div>
+
+          <svg class="label-pointer-svg" width="340" height="90" viewBox="0 0 340 90" fill="none">
+            <path
+              id="label-pointer-path"
+              d="M 40 10 L 280 10 L 320 80"
+              stroke="#FF6A1A"
+              stroke-width="3.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+            <circle id="label-pointer-dot" cx="320" cy="80" r="5" fill="#FF6A1A" />
+          </svg>
+        </div>
+      </section>
+
+      <div class="brand-bottom-bar"></div>
+    </div>
+
+    <script>
+      const crackMain = document.getElementById("crack-main");
+      const crackBranch1 = document.getElementById("crack-branch-1");
+      const crackBranch2 = document.getElementById("crack-branch-2");
+      const labelPointerPath = document.getElementById("label-pointer-path");
+
+      const lenMain = crackMain ? crackMain.getTotalLength() : 1850;
+      const lenBranch1 = crackBranch1 ? crackBranch1.getTotalLength() : 160;
+      const lenBranch2 = crackBranch2 ? crackBranch2.getTotalLength() : 160;
+      const lenPointer = labelPointerPath ? labelPointerPath.getTotalLength() : 360;
+
+      if (crackMain) {
+        crackMain.style.strokeDasharray = lenMain;
+        crackMain.style.strokeDashoffset = lenMain;
+      }
+      if (crackBranch1) {
+        crackBranch1.style.strokeDasharray = lenBranch1;
+        crackBranch1.style.strokeDashoffset = lenBranch1;
+      }
+      if (crackBranch2) {
+        crackBranch2.style.strokeDasharray = lenBranch2;
+        crackBranch2.style.strokeDashoffset = lenBranch2;
+      }
+      if (labelPointerPath) {
+        labelPointerPath.style.strokeDasharray = lenPointer;
+        labelPointerPath.style.strokeDashoffset = lenPointer;
+      }
+
+      const tl = gsap.timeline({ paused: true });
+
+      /* Cú va đập đầu cảnh và vết nứt bùng nổ */
+      tl.fromTo(
+        "#camera-rig",
+        { scale: 1.06, rotation: -0.5 },
+        { scale: 1.02, rotation: 0, duration: 0.35, ease: "power3.out" },
+        0
+      );
+      tl.to("#camera-rig", { x: -8, duration: 0.05, ease: "power1.inOut" }, 0.08);
+      tl.to("#camera-rig", { x: 8, duration: 0.05, ease: "power1.inOut" }, 0.13);
+      tl.to("#camera-rig", { x: -4, duration: 0.05, ease: "power1.inOut" }, 0.18);
+      tl.to("#camera-rig", { x: 0, duration: 0.06, ease: "power2.out" }, 0.23);
+
+      tl.fromTo("#shatter-flash", { opacity: 0.55 }, { opacity: 0, duration: 0.28, ease: "power2.out" }, 0.12);
+      tl.fromTo("#crack-main", { strokeDashoffset: lenMain }, { strokeDashoffset: 0, duration: 0.45, ease: "power2.out" }, 0.12);
+      tl.fromTo("#crack-branch-1", { strokeDashoffset: lenBranch1 }, { strokeDashoffset: 0, duration: 0.35, ease: "power2.out" }, 0.26);
+      tl.fromTo("#crack-branch-2", { strokeDashoffset: lenBranch2 }, { strokeDashoffset: 0, duration: 0.35, ease: "power2.out" }, 0.3);
+
+      tl.fromTo(
+        "#shard-1",
+        { scale: 0, opacity: 0, x: 0, y: 0, rotation: 0 },
+        { scale: 1, opacity: 0.95, x: -55, y: -40, rotation: -15, duration: 0.42, ease: "power3.out" },
+        0.18
+      );
+      tl.fromTo(
+        "#shard-2",
+        { scale: 0, opacity: 0, x: 0, y: 0, rotation: 0 },
+        { scale: 1, opacity: 0.95, x: 60, y: 35, rotation: 20, duration: 0.45, ease: "power3.out" },
+        0.22
+      );
+      tl.fromTo(
+        "#shard-3",
+        { scale: 0, opacity: 0, x: 0, y: 0, rotation: 0 },
+        { scale: 1, opacity: 0.95, x: -40, y: 65, rotation: -25, duration: 0.44, ease: "power3.out" },
+        0.25
+      );
+
+      /* Zoom-in chậm vào cuộc đối đầu */
+      tl.to("#camera-rig", { scale: 1.08, duration: 5.81, ease: "sine.inOut" }, 0.35);
+
+      /* Punch phrase entrance & exit */
+      tl.fromTo(
+        "#punch-card",
+        { scale: 0.88, opacity: 0, y: 30 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.45, ease: "power3.out" },
+        1.08
+      );
+      tl.to("#punch-card", { opacity: 0, y: -20, duration: 0.25, ease: "power2.in" }, 3.0);
+
+      /* Technical annotation entrance & exit */
+      tl.fromTo(
+        "#label-pointer-path",
+        { strokeDashoffset: lenPointer },
+        { strokeDashoffset: 0, duration: 0.35, ease: "power2.out" },
+        4.29
+      );
+      tl.fromTo(
+        "#label-pointer-dot",
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.2, ease: "power2.out" },
+        4.6
+      );
+      tl.fromTo(
+        "#label-card",
+        { scale: 0.88, opacity: 0, x: -30 },
+        { scale: 1, opacity: 1, x: 0, duration: 0.42, ease: "power3.out" },
+        4.35
+      );
+      tl.to("#label-card", { opacity: 0, y: -15, duration: 0.22, ease: "power2.in" }, 5.84);
+      tl.to("#label-pointer-path", { opacity: 0, duration: 0.2, ease: "power2.in" }, 5.84);
+      tl.to("#label-pointer-dot", { opacity: 0, duration: 0.2, ease: "power2.in" }, 5.84);
+
+      window.__timelines["scene-s25"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

@@ -1,0 +1,509 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap">
+      <style>
+    /* hf-safe-colors (tất định từ style-tokens.json) */
+    .hf-text-ink { color: #141414; }
+    .hf-text-light { color: #F7F4EC; }
+    .hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+    .hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+    .hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+    .hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #141414;
+      font-family: "Be Vietnam Pro", sans-serif;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    #root {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    /* Core clip layout contract */
+    .clip {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+    }
+
+    /* Permanent Spotlight + Grid Base Canvas */
+    #bg-spotlight {
+      position: absolute;
+      inset: 0;
+      background-color: #E7E3D9;
+      background-image: 
+        radial-gradient(circle at 50% 45%, rgba(20, 20, 20, 0.04) 30%, rgba(20, 20, 20, 0.28) 95%),
+        linear-gradient(rgba(20, 20, 20, 0.28) 1.5px, transparent 1.5px),
+        linear-gradient(90deg, rgba(20, 20, 20, 0.28) 1.5px, transparent 1.5px);
+      background-size: 100% 100%, 84px 84px, 84px 84px;
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    /* Permanent Brand Orange Bottom Bar */
+    #brand-bar-layer {
+      z-index: 1000;
+      pointer-events: none;
+    }
+
+    .brand-bottom-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 14px;
+      background-color: #FF6A1A;
+    }
+
+    /* Media Containers - Giữ nguyên màu sắc tự nhiên của ảnh gốc */
+    .media-wrap {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+      transform-origin: 50% 45%;
+    }
+
+    .media-image {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center 35%;
+      display: block;
+    }
+
+    /* Strike Transition Accent Slash */
+    #strike-slash {
+      position: absolute;
+      top: 50%;
+      left: -10%;
+      width: 120%;
+      height: 24px;
+      background-color: #FF6A1A;
+      transform: rotate(-18deg);
+      transform-origin: 50% 50%;
+      z-index: 40;
+      pointer-events: none;
+    }
+
+    /* Historical Callout Tag (Shot 1) */
+    .king-callout {
+      position: absolute;
+      top: 200px;
+      right: 60px;
+      background-color: #141414;
+      padding: 14px 24px;
+      border-radius: 4px;
+      border-right: 8px solid #FF6A1A;
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.6);
+      z-index: 30;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+    }
+
+    .king-callout-sub {
+      font-size: 18px;
+      font-weight: 700;
+      color: #FF6A1A;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 2px;
+    }
+
+    .king-callout-title {
+      font-size: 28px;
+      font-weight: 900;
+      color: #F7F4EC;
+      letter-spacing: 1px;
+    }
+
+    /* Shot 1 Editorial Label Plate */
+    .editorial-label-plate {
+      position: absolute;
+      top: 340px;
+      left: 60px;
+      background-color: #141414;
+      border-left: 10px solid #FF6A1A;
+      border-radius: 4px;
+      padding: 20px 36px;
+      box-shadow: 0 20px 48px rgba(0, 0, 0, 0.65);
+      z-index: 35;
+      display: flex;
+      flex-direction: column;
+      max-width: 860px;
+    }
+
+    .label-plate-tag {
+      font-size: 20px;
+      font-weight: 700;
+      color: #FF6A1A;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    .label-plate-headline {
+      font-size: 52px;
+      font-weight: 900;
+      line-height: 1.25;
+      color: #F7F4EC;
+      letter-spacing: 1.5px;
+    }
+
+    /* Shot 2 Bracket: Chiếc ghế trống */
+    .empty-seat-bracket {
+      position: absolute;
+      top: 420px;
+      left: 80px;
+      width: 340px;
+      border: 3px dashed #FF6A1A;
+      border-radius: 6px;
+      background-color: #141414;
+      padding: 16px 22px;
+      z-index: 30;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.55);
+    }
+
+    .bracket-tag {
+      font-size: 18px;
+      font-weight: 700;
+      color: #FF6A1A;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    .bracket-text {
+      font-size: 28px;
+      font-weight: 900;
+      color: #F7F4EC;
+      line-height: 1.25;
+    }
+
+    /* Shot 2 Punch Phrase Card */
+    .punch-card-wrapper {
+      position: absolute;
+      top: 880px;
+      left: 60px;
+      right: 60px;
+      display: flex;
+      justify-content: center;
+      z-index: 35;
+    }
+
+    .punch-card-plate {
+      background-color: #141414;
+      border-left: 12px solid #FF6A1A;
+      border-radius: 4px;
+      padding: 24px 44px;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.75);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      max-width: 960px;
+      width: 100%;
+    }
+
+    .punch-card-banner {
+      font-size: 22px;
+      font-weight: 700;
+      color: #FF6A1A;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .punch-card-title {
+      font-size: 64px;
+      font-weight: 900;
+      line-height: 1.3;
+      color: #F7F4EC;
+      letter-spacing: 2px;
+    }
+
+    /* Shot 2 Fall Icon Badge */
+    .fall-icon-wrapper {
+      position: absolute;
+      top: 1140px;
+      left: 0;
+      right: 0;
+      display: flex;
+      justify-content: center;
+      z-index: 35;
+    }
+
+    .fall-badge-plate {
+      background-color: #141414;
+      border: 3px solid #FF6A1A;
+      border-radius: 8px;
+      padding: 16px 28px;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.7);
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .fall-svg {
+      display: block;
+      width: 120px;
+      height: 90px;
+    }
+
+    .fall-svg path {
+      fill: none;
+      stroke: #FF6A1A;
+      stroke-width: 7;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    #fall-path-slash {
+      stroke-width: 9;
+    }
+
+    .fall-info-box {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .fall-badge-sub {
+      font-size: 16px;
+      font-weight: 700;
+      color: #FF6A1A;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    .fall-badge-label {
+      font-size: 32px;
+      font-weight: 900;
+      color: #F7F4EC;
+      letter-spacing: 1px;
+    }
+  </style>
+
+  <div
+    id="root"
+    data-composition-id="scene-s11"
+    data-width="1080"
+    data-height="1920"
+    data-duration="11.59"
+  >
+    <!-- Background Canvas Layer -->
+    <div id="bg-spotlight" class="clip" data-start="0" data-duration="11.59"></div>
+
+    <!-- Permanent Brand Bottom Bar -->
+    <div id="brand-bar-layer" class="clip" data-start="0" data-duration="11.59">
+      <div class="brand-bottom-bar"></div>
+    </div>
+
+    <!-- SHOT 1: S11-1 (0s to 5.34s) -->
+    <section id="shot-1" class="clip" data-start="0" data-duration="5.34" style="z-index: 10;">
+      <div id="shot1-media-wrap" class="media-wrap">
+        <img
+          id="shot1-img"
+          class="media-image"
+          src="assets/img-02-king-seongjong-troubled-throne.jpg"
+          alt="Vua Seongjong ngồi ngai vàng"
+          data-layout-allow-overflow="true"
+        />
+      </div>
+
+      <div id="strike-slash"></div>
+
+      <div id="shot1-callout" class="king-callout">
+        <span class="king-callout-sub">TRIỀU ĐẠI JOSEON</span>
+        <span class="king-callout-title">VUA SEONGJONG (成宗)</span>
+      </div>
+
+      <div id="shot1-label" class="editorial-label-plate">
+        <span class="label-plate-tag">HỒ SƠ LỊCH SỬ</span>
+        <h1 class="label-plate-headline">HẬU CUNG RỐI REN</h1>
+      </div>
+    </section>
+
+    <!-- SHOT 2: S11-2 (5.34s to 11.59s) -->
+    <section id="shot-2" class="clip" data-start="5.34" data-duration="6.25" style="z-index: 10;">
+      <div id="shot2-media-wrap" class="media-wrap">
+        <img
+          id="shot2-img"
+          class="media-image"
+          src="assets/img-02-king-seongjong-troubled-throne.jpg"
+          alt="Chiếc ghế trống bên cạnh Vua Seongjong"
+          data-layout-allow-overflow="true"
+        />
+      </div>
+
+      <div id="empty-seat-bracket" class="empty-seat-bracket">
+        <div class="bracket-tag">KHOẢNG TRỐNG QUYỀN LỰC</div>
+        <div class="bracket-text">CHIẾC GHẾ TRỐNG</div>
+      </div>
+
+      <div class="punch-card-wrapper">
+        <div id="punch-phrase-card" class="punch-card-plate">
+          <span class="punch-card-banner">BI KỊCH VƯƠNG TRIỀU</span>
+          <h2 class="punch-card-title">KHÔNG NGƯỜI NỐI DÕI</h2>
+        </div>
+      </div>
+
+      <div class="fall-icon-wrapper">
+        <div id="fall-icon-badge" class="fall-badge-plate">
+          <svg class="fall-svg" viewBox="0 0 140 100">
+            <path id="fall-path-trend" d="M 20 25 L 55 25 L 85 70 L 115 90" />
+            <path id="fall-path-arrow" d="M 95 90 L 115 90 L 115 70" />
+            <path id="fall-path-slash" d="M 25 85 L 115 15" />
+          </svg>
+          <div class="fall-info-box">
+            <span class="fall-badge-sub">HUYẾT THỐNG HOÀNG TỘC</span>
+            <span class="fall-badge-label">ĐỨT GÃY</span>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    // Setup measured SVG dash pattern for progressive draw
+    const trendPath = document.getElementById("fall-path-trend");
+    const arrowPath = document.getElementById("fall-path-arrow");
+    const slashPath = document.getElementById("fall-path-slash");
+
+    const lenTrend = trendPath ? trendPath.getTotalLength() : 160;
+    const lenArrow = arrowPath ? arrowPath.getTotalLength() : 45;
+    const lenSlash = slashPath ? slashPath.getTotalLength() : 130;
+
+    if (trendPath) {
+      trendPath.style.strokeDasharray = lenTrend;
+      trendPath.style.strokeDashoffset = lenTrend;
+    }
+    if (arrowPath) {
+      arrowPath.style.strokeDasharray = lenArrow;
+      arrowPath.style.strokeDashoffset = lenArrow;
+    }
+    if (slashPath) {
+      slashPath.style.strokeDasharray = lenSlash;
+      slashPath.style.strokeDashoffset = lenSlash;
+    }
+
+    // Build deterministic GSAP paused timeline
+    const tl = gsap.timeline({ paused: true });
+
+    // ==========================================
+    // SHOT 1 CHOREOGRAPHY (t: 0s -> 5.34s)
+    // ==========================================
+    // TransitionIn: "strike" - violent arrival with immediate power settle
+    tl.fromTo("#shot1-media-wrap",
+      { scale: 1.16, y: -80, opacity: 0 },
+      { scale: 1, y: 0, opacity: 1, duration: 0.45, ease: "power4.out" },
+      0
+    );
+
+    // Strike slash accent line
+    tl.fromTo("#strike-slash",
+      { scaleX: 0, opacity: 1 },
+      { scaleX: 1, opacity: 0, duration: 0.42, ease: "expo.out" },
+      0.08
+    );
+
+    // Subtle breathing drift on the King
+    tl.to("#shot1-img",
+      { scale: 1.05, duration: 4.89, ease: "none" },
+      0.45
+    );
+
+    // Historical identifier callout
+    tl.fromTo("#shot1-callout",
+      { x: 50, opacity: 0 },
+      { x: 0, opacity: 1, duration: 0.45, ease: "power3.out" },
+      0.65
+    );
+
+    // Label: "HẬU CUNG RỐI REN" (atMs: 100820 -> 1.38s, hold 2.2s -> 3.58s)
+    tl.fromTo("#shot1-label",
+      { x: -60, opacity: 0 },
+      { x: 0, opacity: 1, duration: 0.42, ease: "power3.out" },
+      1.38
+    );
+
+    tl.to("#shot1-label",
+      { opacity: 0, y: -20, duration: 0.35, ease: "power2.in" },
+      3.58
+    );
+
+    // ==========================================
+    // SHOT 2 CHOREOGRAPHY (t: 5.34s -> 11.59s)
+    // ==========================================
+    // Cut transition + pan-right camera motion towards empty throne side
+    tl.fromTo("#shot2-img",
+      { scale: 1.34, x: 50, y: 0 },
+      { scale: 1.34, x: -160, y: -24, duration: 6.25, ease: "sine.inOut" },
+      5.34
+    );
+
+    // Empty seat bracket annotation
+    tl.fromTo("#empty-seat-bracket",
+      { scale: 0.86, opacity: 0 },
+      { scale: 1, opacity: 1, duration: 0.45, ease: "power3.out" },
+      6.25
+    );
+
+    // Punch Phrase: "KHÔNG NGƯỜI NỐI DÕI" (atMs: 107870 -> 8.43s, hold 2.4s -> 10.83s)
+    tl.fromTo("#punch-phrase-card",
+      { scale: 0.88, y: 40, opacity: 0 },
+      { scale: 1, y: 0, opacity: 1, duration: 0.42, ease: "power4.out" },
+      8.43
+    );
+
+    // Icon "fall" (atMs: 109610 -> 10.17s, hold 1.6s -> end)
+    tl.fromTo("#fall-icon-badge",
+      { scale: 0.78, opacity: 0 },
+      { scale: 1, opacity: 1, duration: 0.38, ease: "power3.out" },
+      10.17
+    );
+
+    // Progressive SVG path draws
+    tl.to("#fall-path-trend",
+      { strokeDashoffset: 0, duration: 0.42, ease: "power2.out" },
+      10.28
+    );
+
+    tl.to("#fall-path-arrow",
+      { strokeDashoffset: 0, duration: 0.28, ease: "power2.out" },
+      10.52
+    );
+
+    tl.to("#fall-path-slash",
+      { strokeDashoffset: 0, duration: 0.35, ease: "power3.out" },
+      10.72
+    );
+
+    // Register paused timeline on window.__timelines exactly at key "scene-s11"
+    window.__timelines["scene-s11"] = tl;
+  </script>
+
+    </template>
+  </body>
+</html>

@@ -1,0 +1,467 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+/* hf-safe-colors (tất định từ style-tokens.json) */
+.hf-text-ink { color: #141414; }
+.hf-text-light { color: #F7F4EC; }
+.hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+.hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+.hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+.hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+      *, *::before, *::after {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #E7E3D9;
+        font-family: "Be Vietnam Pro", sans-serif;
+        color: #141414;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: #E7E3D9;
+        background-image:
+          linear-gradient(to right, rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px),
+          linear-gradient(to bottom, rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px);
+        background-size: 84px 84px;
+      }
+      .clip {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+      }
+
+      /* Utility brand classes */
+      .hf-text-ink { color: #141414; }
+      .hf-text-light { color: #F7F4EC; }
+      .hf-hl-orange { background-color: #FF6A1A; color: #141414; }
+      .hf-plate-ink { background-color: #141414; color: #F7F4EC; }
+
+      /* Fixed bottom orange bar signature */
+      #bottom-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 14px;
+        background-color: #FF6A1A;
+        z-index: 100;
+      }
+
+      /* Header section */
+      #header-container {
+        position: absolute;
+        top: 180px;
+        left: 60px;
+        right: 60px;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      #header-badge {
+        display: inline-flex;
+        align-items: center;
+        background-color: #FF6A1A;
+        color: #141414;
+        font-size: 18px;
+        font-weight: 900;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        padding: 6px 14px;
+        border-radius: 2px;
+        margin-bottom: 12px;
+      }
+      #header-title {
+        margin: 0;
+        font-size: 50px;
+        font-weight: 900;
+        line-height: 1.25;
+        color: #141414;
+        text-transform: uppercase;
+        letter-spacing: -0.02em;
+      }
+      #header-rule {
+        width: 100%;
+        height: 3px;
+        background-color: #141414;
+        margin-top: 16px;
+        transform-origin: left center;
+      }
+
+      /* SVG Diagram Layer */
+      #diagram-svg {
+        position: absolute;
+        inset: 0;
+        width: 1080px;
+        height: 1920px;
+        pointer-events: none;
+        z-index: 10;
+      }
+      .diagram-path {
+        stroke: #FF6A1A;
+        stroke-width: 6;
+        fill: none;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+      .arrow-tip {
+        fill: #FF6A1A;
+        stroke: #141414;
+        stroke-width: 2;
+        transform-origin: center;
+      }
+
+      /* Node Card styling */
+      .diagram-card {
+        position: absolute;
+        box-sizing: border-box;
+        background-color: #F5F0E4;
+        border: 3px solid #141414;
+        box-shadow: 6px 6px 0px #141414;
+        border-radius: 4px;
+        z-index: 20;
+        transform-origin: 50% 50%;
+        will-change: transform, opacity;
+      }
+
+      .badge-orange {
+        display: inline-flex;
+        align-items: center;
+        align-self: flex-start;
+        background-color: #FF6A1A;
+        color: #141414;
+        font-weight: 900;
+        font-size: 13px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        padding: 4px 10px;
+        margin-bottom: 6px;
+        border-radius: 2px;
+        line-height: 1.2;
+      }
+      .badge-ink {
+        display: inline-flex;
+        align-items: center;
+        align-self: flex-start;
+        background-color: #141414;
+        color: #F7F4EC;
+        font-weight: 900;
+        font-size: 13px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        padding: 4px 10px;
+        margin-bottom: 6px;
+        border-radius: 2px;
+        line-height: 1.2;
+      }
+
+      /* Root Origin Node (Center Source) */
+      #node-origin {
+        left: 300px;
+        top: 420px;
+        width: 480px;
+        height: 140px;
+        padding: 16px 22px;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 18px;
+      }
+      #origin-pulse {
+        position: absolute;
+        inset: -12px;
+        border: 3px dashed #FF6A1A;
+        border-radius: 8px;
+        pointer-events: none;
+        z-index: -1;
+      }
+
+      /* Sub Nodes */
+      #node-tv {
+        left: 60px;
+        top: 730px;
+        width: 450px;
+        height: 180px;
+        padding: 18px 22px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+      }
+      #node-novel {
+        left: 570px;
+        top: 730px;
+        width: 450px;
+        height: 180px;
+        padding: 18px 22px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+      }
+      #node-other {
+        left: 220px;
+        top: 1040px;
+        width: 640px;
+        height: 180px;
+        padding: 20px 28px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+      }
+
+      .card-header-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 4px;
+      }
+      .card-title {
+        margin: 0;
+        font-weight: 900;
+        color: #141414;
+        text-transform: uppercase;
+        letter-spacing: -0.01em;
+      }
+      .card-desc {
+        margin: 6px 0 0 0;
+        font-weight: 700;
+        color: #141414;
+        line-height: 1.35;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s04"
+      data-start="0"
+      data-width="1080"
+      data-height="1920"
+      data-duration="6.95"
+    >
+      <section id="shot-s04" class="clip" data-start="0" data-duration="6.95">
+        <!-- Header -->
+        <header id="header-container">
+          <div id="header-badge">Hệ Sinh Thái Tác Phẩm</div>
+          <h1 id="header-title">Nguồn Cảm Hứng Bất Tận</h1>
+          <div id="header-rule"></div>
+        </header>
+
+        <!-- SVG Flow Lines and Arrowheads -->
+        <svg id="diagram-svg" viewBox="0 0 1080 1920">
+          <!-- Branch 1: Center to TV series -->
+          <path id="arrow-line-1" class="diagram-path" d="M 400 560 C 400 660, 285 650, 285 722" />
+          <polygon id="arrow-tip-1" class="arrow-tip" points="285,732 276,716 294,716" />
+
+          <!-- Branch 2: Center to Historical Novel -->
+          <path id="arrow-line-2" class="diagram-path" d="M 680 560 C 680 660, 795 650, 795 722" />
+          <polygon id="arrow-tip-2" class="arrow-tip" points="795,732 786,716 804,716" />
+
+          <!-- Branch 3: Center to Other Arts -->
+          <path id="arrow-line-3" class="diagram-path" d="M 540 560 L 540 1030" />
+          <polygon id="arrow-tip-3" class="arrow-tip" points="540,1042 531,1026 549,1026" />
+        </svg>
+
+        <!-- Node 0: Origin Source / Inspiration -->
+        <div id="node-origin" class="diagram-card">
+          <div id="origin-pulse"></div>
+          <svg viewBox="0 0 48 48" width="52" height="52" fill="none" style="flex-shrink: 0;">
+            <rect x="8" y="6" width="32" height="36" rx="4" stroke="#141414" stroke-width="3.5" fill="#F5F0E4" />
+            <line x1="16" y1="16" x2="32" y2="16" stroke="#FF6A1A" stroke-width="3.5" stroke-linecap="round" />
+            <line x1="16" y1="24" x2="28" y2="24" stroke="#141414" stroke-width="3" stroke-linecap="round" />
+            <line x1="16" y1="32" x2="24" y2="32" stroke="#141414" stroke-width="3" stroke-linecap="round" />
+            <circle cx="34" cy="34" r="7.5" fill="#FF6A1A" stroke="#141414" stroke-width="2.5" />
+            <path d="M 31.5 34 L 33.5 36.5 L 37 32" stroke="#141414" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+          <div style="display: flex; flex-direction: column;">
+            <div class="badge-ink">Tư Liệu Gốc</div>
+            <h2 class="card-title" style="font-size: 32px;">Nguồn Cảm Hứng</h2>
+          </div>
+        </div>
+
+        <!-- Node 1: TV Series -->
+        <div id="node-tv" class="diagram-card">
+          <div class="card-header-row">
+            <span class="badge-orange">Định Dạng 01</span>
+            <svg id="icon-tv" viewBox="0 0 48 48" width="38" height="38" fill="none">
+              <rect x="6" y="12" width="36" height="26" rx="4" stroke="#141414" stroke-width="3" fill="#F5F0E4" />
+              <path d="M 16 6 L 24 12 L 32 6" stroke="#FF6A1A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+              <polygon points="20 20, 20 30, 29 25" fill="#FF6A1A" stroke="#141414" stroke-width="2" />
+            </svg>
+          </div>
+          <h2 class="card-title" style="font-size: 30px;">Phim Truyền Hình</h2>
+          <p class="card-desc" style="font-size: 19px;">Sản xuất quy mô • Tái hiện sinh động</p>
+        </div>
+
+        <!-- Node 2: Historical Novel -->
+        <div id="node-novel" class="diagram-card">
+          <div class="card-header-row">
+            <span class="badge-orange">Định Dạng 02</span>
+            <svg id="icon-novel" viewBox="0 0 48 48" width="38" height="38" fill="none">
+              <path d="M 6 12 C 14 10, 24 14, 24 38 C 24 14, 34 10, 42 12 L 42 36 C 34 34, 24 38, 24 38 C 24 38, 14 34, 6 36 Z" stroke="#141414" stroke-width="3" fill="#F5F0E4" />
+              <path d="M 24 14 L 24 28 L 27 25 L 30 28 L 30 14" fill="#FF6A1A" stroke="#141414" stroke-width="1.5" />
+            </svg>
+          </div>
+          <h2 class="card-title" style="font-size: 28px;">Tiểu Thuyết Lịch Sử</h2>
+          <p class="card-desc" style="font-size: 19px;">Khai thác tâm lý • Tác phẩm văn chương</p>
+        </div>
+
+        <!-- Node 3: Other Genres / Multi-Arts -->
+        <div id="node-other" class="diagram-card">
+          <div class="card-header-row">
+            <span class="badge-orange">Định Dạng 03</span>
+            <svg id="icon-other" viewBox="0 0 48 48" width="40" height="40" fill="none">
+              <circle cx="18" cy="22" r="12" stroke="#141414" stroke-width="3" fill="#F5F0E4" />
+              <circle cx="14" cy="19" r="1.5" fill="#141414" />
+              <circle cx="22" cy="19" r="1.5" fill="#141414" />
+              <path d="M 14 24 Q 18 29 22 24" stroke="#FF6A1A" stroke-width="2.5" stroke-linecap="round" />
+              <path d="M 28 14 C 36 14, 41 20, 41 27 C 41 34, 36 40, 28 40" stroke="#141414" stroke-width="3" fill="#F5F0E4" />
+              <path d="M 28 32 Q 32 28 36 32" stroke="#141414" stroke-width="2.5" stroke-linecap="round" />
+              <circle cx="34" cy="21" r="3" fill="#FF6A1A" />
+            </svg>
+          </div>
+          <h2 class="card-title" style="font-size: 32px;">Nhiều Thể Loại Khác</h2>
+          <p class="card-desc" style="font-size: 20px;">Sân khấu kịch • Hội họa • Văn hóa đương đại</p>
+        </div>
+
+        <!-- Signature bottom orange accent line -->
+        <div id="bottom-bar"></div>
+      </section>
+    </div>
+
+    <script>
+      const tl = gsap.timeline({ paused: true });
+
+      // Measure SVG path lengths for clean stroke-dash drawing
+      const p1 = document.getElementById("arrow-line-1");
+      const p2 = document.getElementById("arrow-line-2");
+      const p3 = document.getElementById("arrow-line-3");
+      const len1 = p1.getTotalLength();
+      const len2 = p2.getTotalLength();
+      const len3 = p3.getTotalLength();
+
+      p1.style.strokeDasharray = len1;
+      p1.style.strokeDashoffset = len1;
+      p2.style.strokeDasharray = len2;
+      p2.style.strokeDashoffset = len2;
+      p3.style.strokeDasharray = len3;
+      p3.style.strokeDashoffset = len3;
+
+      // 1. Initial Header Reveal (0.15s - 0.6s)
+      tl.fromTo(
+        "#header-badge",
+        { y: -20, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.4, ease: "power3.out" },
+        0.15
+      );
+      tl.fromTo(
+        "#header-title",
+        { y: 30, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.5, ease: "power3.out" },
+        0.25
+      );
+      tl.fromTo(
+        "#header-rule",
+        { scaleX: 0 },
+        { scaleX: 1, duration: 0.45, ease: "power2.out" },
+        0.35
+      );
+
+      // 2. Node 0 Entrance: NGUỒN CẢM HỨNG (at ~0.59s, cue from shotlist at 27820ms)
+      tl.fromTo(
+        "#node-origin",
+        { scale: 0.88, y: 32, opacity: 0 },
+        { scale: 1, y: 0, opacity: 1, duration: 0.55, ease: "power3.out" },
+        0.59
+      );
+      tl.fromTo(
+        "#origin-pulse",
+        { scale: 0.98, opacity: 0.8 },
+        { scale: 1.15, opacity: 0, duration: 0.75, ease: "power2.out" },
+        0.95
+      );
+
+      // 3. Branch 1 & Node 1 Entrance: PHIM TRUYỀN HÌNH (at ~3.15s, cue from shotlist at 30380ms)
+      tl.fromTo(
+        p1,
+        { strokeDashoffset: len1 },
+        { strokeDashoffset: 0, duration: 0.4, ease: "power2.out" },
+        2.75
+      );
+      tl.fromTo(
+        "#arrow-tip-1",
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.15, ease: "power2.out" },
+        3.12
+      );
+      tl.fromTo(
+        "#node-tv",
+        { scale: 0.9, y: 26, opacity: 0 },
+        { scale: 1, y: 0, opacity: 1, duration: 0.5, ease: "power3.out" },
+        3.15
+      );
+      tl.fromTo(
+        "#icon-tv",
+        { rotation: -12 },
+        { rotation: 0, duration: 0.4, ease: "power2.out" },
+        3.35
+      );
+
+      // 4. Branch 2 & Node 2 Entrance: TIỂU THUYẾT LỊCH SỬ (at ~5.04s, cue from shotlist at 32270ms)
+      tl.fromTo(
+        p2,
+        { strokeDashoffset: len2 },
+        { strokeDashoffset: 0, duration: 0.4, ease: "power2.out" },
+        4.64
+      );
+      tl.fromTo(
+        "#arrow-tip-2",
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.15, ease: "power2.out" },
+        5.01
+      );
+      tl.fromTo(
+        "#node-novel",
+        { scale: 0.9, y: 26, opacity: 0 },
+        { scale: 1, y: 0, opacity: 1, duration: 0.5, ease: "power3.out" },
+        5.04
+      );
+
+      // 5. Branch 3 & Node 3 Entrance: NHIỀU THỂ LOẠI KHÁC (at ~5.80s, "thành nhiều thể loại khác nhau")
+      tl.fromTo(
+        p3,
+        { strokeDashoffset: len3 },
+        { strokeDashoffset: 0, duration: 0.35, ease: "power2.out" },
+        5.45
+      );
+      tl.fromTo(
+        "#arrow-tip-3",
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.15, ease: "power2.out" },
+        5.77
+      );
+      tl.fromTo(
+        "#node-other",
+        { scale: 0.92, y: 26, opacity: 0 },
+        { scale: 1, y: 0, opacity: 1, duration: 0.45, ease: "power3.out" },
+        5.80
+      );
+
+      // Register timeline for seekable deterministic render
+      window.__timelines["scene-s04"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

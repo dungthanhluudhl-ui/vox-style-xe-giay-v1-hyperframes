@@ -7,7 +7,14 @@
     <template>
       <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap">
       <style>
-    /* Reset & Thiết lập nền phong cách Vox (biến thể card: #F5F0E4) */
+/* hf-safe-colors (tất định từ style-tokens.json) */
+.hf-text-ink { color: #141414; }
+.hf-text-light { color: #F7F4EC; }
+.hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+.hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+.hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+.hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
     * {
       box-sizing: border-box;
       margin: 0;
@@ -16,664 +23,160 @@
     body {
       margin: 0;
       padding: 0;
-      background: #F5F0E4;
-      color: #141414;
+      background-color: #141414;
       font-family: "Be Vietnam Pro", sans-serif;
-      overflow: hidden;
-      width: 1080px;
-      height: 1920px;
       -webkit-font-smoothing: antialiased;
     }
     #root {
       position: relative;
-      width: 100%;
-      height: 100%;
+      width: 1080px;
+      height: 1920px;
       overflow: hidden;
-      background: #F5F0E4;
+      background-color: #F5F0E4;
     }
-
-    /* Clip theo chuẩn HyperFrames Core: position absolute, inset 0 */
-    .clip {
-      position: absolute;
-      inset: 0;
-      overflow: hidden;
-    }
-
-    /* Wrapper nội dung bên trong clip để thực hiện transition/fade mà KHÔNG animate thẻ .clip */
-    .shot-content {
-      position: absolute;
-      inset: 0;
-      overflow: hidden;
-    }
-
-    /* Thanh cam nhận diện thương hiệu cố định mép đáy */
     #bottom-brand-bar {
       position: absolute;
       bottom: 0;
       left: 0;
+      width: 1080px;
+      height: 12px;
+      background-color: #FF6A1A;
+      z-index: 100;
+    }
+    .clip {
+      position: absolute;
+      inset: 0;
+    }
+    #stage {
+      position: absolute;
+      inset: 0;
+      transform-origin: 50% 160px;
+    }
+    #media-frame {
+      position: absolute;
+      top: 200px;
+      left: 70px;
+      width: 940px;
+      height: 1140px;
+      border-radius: 24px;
+      overflow: hidden;
+      background-color: #141414;
+      box-shadow: 0 20px 48px rgba(20, 20, 20, 0.14);
+    }
+    #media-zoom-wrapper {
       width: 100%;
-      height: 10px;
-      background: #FF6A1A;
-      z-index: 1000;
+      height: 100%;
+      transform-origin: center center;
     }
-
-    /* Lưới tọa độ bản vẽ kỹ thuật tinh tế */
-    .blueprint-grid {
+    #media-zoom-wrapper img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center;
+      display: block;
+    }
+    #split-tag {
       position: absolute;
-      inset: 0;
-      background-image: 
-        linear-gradient(to right, rgba(20, 20, 20, 0.05) 1px, transparent 1px),
-        linear-gradient(to bottom, rgba(20, 20, 20, 0.05) 1px, transparent 1px);
-      background-size: 84px 84px;
-      pointer-events: none;
-    }
-
-    /* Khung camera di chuyển riêng biệt */
-    .camera-rig {
-      position: absolute;
-      inset: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-
-    /* Khung unfold riêng biệt (tránh xung đột transform với camera-rig) */
-    .unfold-rig {
-      position: absolute;
-      inset: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-
-    /* Header thông tin bản vẽ kỹ thuật */
-    .scene-header {
-      position: absolute;
-      top: 170px;
-      left: 80px;
-      right: 80px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      z-index: 50;
-    }
-    .technical-tag {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 16px;
-      font-weight: 700;
-      letter-spacing: 1.5px;
-      text-transform: uppercase;
-      color: #141414;
-      background: rgba(20, 20, 20, 0.08);
-      padding: 6px 14px;
-      border-radius: 6px;
+      top: 240px;
+      left: 110px;
+      padding: 20px 32px;
+      border-radius: 14px;
+      border-left: 8px solid #FF6A1A;
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.4);
+      z-index: 10;
+      opacity: 0;
       width: fit-content;
+      max-width: 820px;
     }
-    .technical-tag .dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: #FF6A1A;
-    }
-    .scene-title {
-      font-size: 54px;
+    #split-tag-text {
+      font-size: 46px;
       font-weight: 900;
-      line-height: 1.2;
-      color: #141414;
-      letter-spacing: -0.5px;
+      line-height: 1.25;
+      letter-spacing: 0.02em;
     }
-
-    /* Container sơ đồ kiến trúc mặt cắt tòa nhà (Shot 1) */
-    .building-container {
+    #punch-phrase {
       position: absolute;
-      top: 330px;
-      left: 90px;
-      width: 900px;
-      height: 820px;
-      z-index: 20;
-    }
-
-    /* Nhãn callout tối phong cách Vox: nền mực #141414, chữ kem #F7F4EC, viền cam #FF6A1A */
-    .vox-badge {
-      position: absolute;
-      background: #141414;
-      color: #F7F4EC;
-      border-radius: 12px;
-      padding: 16px 24px;
-      border-left: 6px solid #FF6A1A;
-      box-shadow: 0 12px 28px rgba(20, 20, 20, 0.18);
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-      box-sizing: border-box;
-      z-index: 60;
-      height: auto;
-    }
-    .vox-badge-sub {
-      font-size: 14px;
-      font-weight: 700;
-      letter-spacing: 1.2px;
-      text-transform: uppercase;
-      color: #FF7A1A;
-    }
-    .vox-badge-main {
-      font-size: 30px;
-      font-weight: 900;
-      line-height: 1.2;
-      color: #F7F4EC;
-    }
-
-    /* Nhãn callout cho Shot 1 */
-    #s46-1-label-card {
-      left: 90px;
-      top: 1210px;
-      width: 580px;
-    }
-
-    /* Icon pin định vị */
-    #s46-1-pin-wrapper {
-      position: absolute;
-      top: 360px;
-      left: 490px;
-      width: 80px;
-      height: 80px;
-      z-index: 70;
-      pointer-events: none;
-    }
-
-    /* Container sơ đồ mặt bằng căn phòng (Shot 2) */
-    .floorplan-container {
-      position: absolute;
-      top: 310px;
-      left: 90px;
-      width: 900px;
-      height: 720px;
-      z-index: 20;
-    }
-
-    /* Nhãn hiển thị trang thiết bị (Shot 2) - bố trí ngang hàng 1070px */
-    #badge-bed {
-      left: 80px;
-      top: 1070px;
-      width: 440px;
-    }
-    #badge-ac-pc {
-      left: 560px;
-      top: 1070px;
-      width: 440px;
-    }
-
-    /* Khối Punch-phrase "TIỆN NGHI HOÀN TOÀN" - đặt tại top 1220px, cách nhãn 70px và cách đáy 570px (an toàn tuyệt đối khỏi caption zone) */
-    #punch-phrase-container {
-      position: absolute;
-      left: 80px;
-      top: 1220px;
-      width: 920px;
-      background: #141414;
+      top: 1140px;
+      left: 110px;
+      padding: 24px 38px;
       border-radius: 16px;
-      padding: 24px 36px;
-      border-top: 6px solid #FF6A1A;
-      box-shadow: 0 16px 36px rgba(20, 20, 20, 0.22);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      text-align: center;
-      gap: 6px;
-      z-index: 80;
-      height: auto;
+      border-left: 10px solid #FF6A1A;
+      box-shadow: 0 20px 44px rgba(0, 0, 0, 0.45);
+      z-index: 10;
+      opacity: 0;
+      width: fit-content;
+      max-width: 860px;
     }
-    .punch-tag {
-      font-size: 15px;
-      font-weight: 700;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      color: #FF7A1A;
-    }
-    .punch-headline {
-      font-size: 52px;
+    #punch-phrase-text {
+      font-size: 58px;
       font-weight: 900;
-      line-height: 1.15;
-      color: #F7F4EC;
-      letter-spacing: -0.5px;
+      line-height: 1.2;
+      letter-spacing: 0.02em;
     }
   </style>
 
-  <!-- Root Composition theo chuẩn HyperFrames Core (tổng duration: 8.45s) -->
-  <div
-    id="root"
-    data-composition-id="scene-s46"
-    data-start="0"
-    data-width="1080"
-    data-height="1920"
-    data-duration="8.45"
-  >
-    <!-- Thanh viền cam nhận diện thương hiệu luôn cố định ở đáy -->
+  <div id="root" data-composition-id="scene-s46" data-width="1080" data-height="1920" data-duration="9.04">
     <div id="bottom-brand-bar"></div>
 
-    <!-- ========================================== -->
-    <!-- SHOT 1: S46-1 (0.00s -> 3.36s)            -->
-    <!-- Mô hình mặt cắt tòa nhà công ty           -->
-    <!-- ========================================== -->
-    <section id="shot-1" class="clip" data-start="0" data-duration="3.36">
-      <div class="blueprint-grid"></div>
-
-      <!-- Wrapper nội dung để tween fade out, không chạm vào .clip -->
-      <div id="shot-1-content" class="shot-content">
-        <!-- Rig camera pan-down -->
-        <div id="shot-1-camera" class="camera-rig">
-          <!-- Rig unfold entrance -->
-          <div id="shot-1-unfold" class="unfold-rig">
-            <!-- Tiêu đề & Thông tin kiến trúc -->
-            <div id="shot-1-header" class="scene-header">
-              <div class="technical-tag">
-                <span class="dot"></span>
-                HỒ SƠ CƠ SỞ VẬT CHẤT // MẶT CẮT TÒA NHÀ
-              </div>
-              <h1 class="scene-title">TÒA NHÀ CÔNG TY</h1>
-            </div>
-
-            <!-- Sơ đồ vector mặt cắt 3 tầng của tòa nhà -->
-            <div class="building-container">
-              <svg viewBox="0 0 900 820" width="900" height="820" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <!-- Khung bao kiến trúc tòa nhà -->
-                <rect x="150" y="40" width="600" height="740" rx="8" fill="#ECE8DD" stroke="#141414" stroke-width="4" />
-                
-                <!-- Tầng 01: Xưởng sản xuất (Dưới cùng) -->
-                <g id="floor-1-group">
-                  <rect x="154" y="530" width="592" height="246" fill="#E4DFCFA0" />
-                  <line x1="150" y1="530" x2="750" y2="530" stroke="#141414" stroke-width="4" />
-                  <!-- Cột chịu lực & máy móc tượng trưng -->
-                  <rect x="230" y="630" width="130" height="130" rx="4" fill="none" stroke="#141414" stroke-width="2.5" />
-                  <line x1="230" y1="695" x2="360" y2="695" stroke="#141414" stroke-width="1.5" stroke-dasharray="4 4" />
-                  <rect x="430" y="620" width="230" height="140" rx="4" fill="none" stroke="#141414" stroke-width="2.5" />
-                  <circle cx="545" cy="690" r="34" stroke="#141414" stroke-width="2" />
-                  <!-- Nhãn tầng -->
-                  <rect x="170" y="550" width="220" height="34" rx="4" fill="#141414" />
-                  <text x="182" y="573" fill="#F7F4EC" font-size="16" font-weight="900" font-family="'Be Vietnam Pro', sans-serif">TẦNG 01 // KHU SẢN XUẤT</text>
-                </g>
-
-                <!-- Tầng 02: Khu văn phòng công ty (Giữa) -->
-                <g id="floor-2-group">
-                  <rect x="154" y="285" width="592" height="245" fill="#EAE5D7A0" />
-                  <line x1="150" y1="285" x2="750" y2="285" stroke="#141414" stroke-width="4" />
-                  <!-- Bàn ghế văn phòng & phòng họp sơ đồ -->
-                  <rect x="210" y="390" width="160" height="90" rx="4" fill="none" stroke="#141414" stroke-width="2" />
-                  <rect x="260" y="355" width="60" height="24" rx="3" fill="none" stroke="#141414" stroke-width="1.5" />
-                  <rect x="450" y="370" width="220" height="110" rx="4" fill="none" stroke="#141414" stroke-width="2" />
-                  <line x1="450" y1="425" x2="670" y2="425" stroke="#141414" stroke-width="1.5" />
-                  <!-- Nhãn tầng -->
-                  <rect x="170" y="305" width="220" height="34" rx="4" fill="#141414" />
-                  <text x="182" y="328" fill="#F7F4EC" font-size="16" font-weight="900" font-family="'Be Vietnam Pro', sans-serif">TẦNG 02 // VĂN PHÒNG</text>
-                </g>
-
-                <!-- Tầng 03: Ký túc xá công nhân viên (Tầng trên - Highlight đặc biệt) -->
-                <g id="floor-3-group">
-                  <!-- Nền vàng cam ấm làm nổi bật -->
-                  <rect id="top-floor-highlight" x="154" y="44" width="592" height="241" fill="rgba(255, 106, 26, 0.12)" stroke="#FF6A1A" stroke-width="4" />
-                  
-                  <!-- Nội thất phòng ký túc xá sơ phác -->
-                  <!-- Giường ngủ tầng trên -->
-                  <rect x="210" y="130" width="150" height="110" rx="6" fill="#F5F0E4" stroke="#141414" stroke-width="2.5" />
-                  <rect x="220" y="140" width="40" height="34" rx="3" fill="none" stroke="#FF6A1A" stroke-width="2" />
-                  <rect x="220" y="186" width="40" height="34" rx="3" fill="none" stroke="#FF6A1A" stroke-width="2" />
-                  <line x1="275" y1="130" x2="275" y2="240" stroke="#141414" stroke-width="2" />
-
-                  <!-- Bàn máy tính & cửa sổ -->
-                  <rect x="480" y="140" width="180" height="80" rx="4" fill="#F5F0E4" stroke="#141414" stroke-width="2.5" />
-                  <rect x="535" y="155" width="70" height="36" rx="2" fill="#141414" />
-                  <line x1="570" y1="191" x2="570" y2="205" stroke="#141414" stroke-width="3" />
-                  
-                  <!-- Cửa sổ đón ánh sáng -->
-                  <rect x="690" y="70" width="44" height="110" fill="#FFFDF8" stroke="#141414" stroke-width="2.5" />
-                  <line x1="712" y1="70" x2="712" y2="180" stroke="#141414" stroke-width="1.5" />
-
-                  <!-- Nhãn Tầng 03 có điểm nhấn màu cam -->
-                  <rect x="170" y="60" width="280" height="36" rx="4" fill="#141414" stroke="#FF6A1A" stroke-width="2" />
-                  <text x="184" y="84" fill="#F7F4EC" font-size="16" font-weight="900" font-family="'Be Vietnam Pro', sans-serif">TẦNG TRÊN // <tspan fill="#FF7A1A">KÝ TÚC XÁ</tspan></text>
-                </g>
-
-                <!-- Mũi tên cam chỉ hướng lên tầng trên -->
-                <g id="up-arrow-group">
-                  <path d="M 90 480 L 90 180 L 130 180" stroke="#FF6A1A" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="8 6" />
-                  <polygon points="130,166 152,180 130,194" fill="#FF6A1A" />
-                </g>
-              </svg>
-            </div>
-
-            <!-- Overlay: Icon "pin" tại tầng trên (atMs: 365370 -> rel 2.13s) -->
-            <div id="s46-1-pin-wrapper">
-              <svg viewBox="0 0 80 80" width="80" height="80" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <!-- Vòng xung radar lan tỏa -->
-                <circle id="s46-1-pin-ring" cx="40" cy="40" r="18" stroke="#FF6A1A" stroke-width="3" opacity="0" data-layout-allow-overflow="true" />
-                <!-- Biểu tượng Pin -->
-                <g id="s46-1-pin-icon">
-                  <path d="M 40 12 C 27.8 12 18 21.8 18 34 C 18 48 40 68 40 68 C 40 68 62 48 62 34 C 62 21.8 52.2 12 40 12 Z" fill="#FF6A1A" stroke="#141414" stroke-width="3.5" />
-                  <circle cx="40" cy="33" r="8" fill="#141414" />
-                </g>
-              </svg>
-            </div>
-
-            <!-- Overlay: Label "KÝ TÚC XÁ TẦNG TRÊN" (atMs: 364560 -> rel 1.32s) -->
-            <div id="s46-1-label-card" class="vox-badge">
-              <div class="vox-badge-sub">VỊ TRÍ BỐ TRÍ NỘI TRÚ</div>
-              <div class="vox-badge-main">KÝ TÚC XÁ TẦNG TRÊN</div>
-            </div>
+    <section id="shot-1" class="clip" data-start="0" data-duration="9.04">
+      <div id="stage">
+        <div id="media-frame">
+          <div id="media-zoom-wrapper">
+            <img src="assets/img-11-depressed-man-sitting-bedroom.jpg" alt="" />
           </div>
         </div>
-      </div>
-    </section>
 
-    <!-- ========================================== -->
-    <!-- SHOT 2: S46-2 (3.36s -> 8.45s)            -->
-    <!-- Mặt bằng căn phòng tiện nghi đầy đủ       -->
-    <!-- ========================================== -->
-    <section id="shot-2" class="clip" data-start="3.36" data-duration="5.09">
-      <div class="blueprint-grid"></div>
+        <div id="split-tag" class="hf-plate-ink">
+          <div id="split-tag-text" class="hf-text-light">ĐẦY ĐỦ TIỆN NGHI</div>
+        </div>
 
-      <!-- Wrapper nội dung để tween dissolve, không chạm vào .clip -->
-      <div id="shot-2-content" class="shot-content">
-        <!-- Rig camera zoom-in -->
-        <div id="shot-2-camera" class="camera-rig">
-          <!-- Tiêu đề phân cảnh 2 -->
-          <div id="shot-2-header" class="scene-header">
-            <div class="technical-tag">
-              <span class="dot"></span>
-              MẶT BẰNG PHÒNG RIÊNG // DIỆN TÍCH 24M²
-            </div>
-            <h1 class="scene-title">CĂN PHÒNG TIỆN NGHI</h1>
-          </div>
-
-          <!-- Sơ đồ mặt bằng kiến trúc chi tiết căn phòng -->
-          <div class="floorplan-container">
-            <svg viewBox="0 0 900 720" width="900" height="720" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <!-- Thước đo kích thước kỹ thuật phía ngoài -->
-              <g stroke="#141414" stroke-width="1.5" opacity="0.65">
-                <line x1="80" y1="35" x2="820" y2="35" />
-                <line x1="80" y1="25" x2="80" y2="45" />
-                <line x1="820" y1="25" x2="820" y2="45" />
-                <text x="420" y="28" fill="#141414" font-size="15" font-weight="700" font-family="'Be Vietnam Pro', sans-serif">5.20 m</text>
-
-                <line x1="40" y1="50" x2="40" y2="680" />
-                <line x1="30" y1="50" x2="50" y2="50" />
-                <line x1="30" y1="680" x2="50" y2="680" />
-                <text x="14" y="375" fill="#141414" font-size="15" font-weight="700" font-family="'Be Vietnam Pro', sans-serif" transform="rotate(-90 20 375)">4.60 m</text>
-              </g>
-
-              <!-- Tường bao chịu lực 2 lớp dày dặn -->
-              <g id="room-walls">
-                <!-- Nền sàn gỗ kẻ chỉ nhẹ -->
-                <rect x="80" y="50" width="740" height="630" fill="#FAF6ED" stroke="#141414" stroke-width="7" />
-                <rect x="86" y="56" width="728" height="618" fill="none" stroke="#141414" stroke-width="2" />
-                
-                <!-- Cửa chính góc dưới bên trái có vòng cung quét mở cửa 90 độ -->
-                <path d="M 80 580 L 80 680" stroke="#FAF6ED" stroke-width="10" />
-                <path d="M 80 680 A 100 100 0 0 0 180 580" stroke="#FF6A1A" stroke-width="2" stroke-dasharray="5 5" fill="none" />
-                <line x1="80" y1="580" x2="180" y2="580" stroke="#141414" stroke-width="4" />
-
-                <!-- Cửa sổ lớn đón ánh nắng tự nhiên phía tường trên bên phải -->
-                <rect x="520" y="45" width="220" height="14" fill="#FFFFFF" stroke="#141414" stroke-width="3" />
-                <line x1="520" y1="52" x2="740" y2="52" stroke="#FF6A1A" stroke-width="2" />
-                <!-- Vạt nắng sáng sủa -->
-                <polygon points="530,60 730,60 780,220 500,220" fill="rgba(255, 106, 26, 0.06)" />
-              </g>
-
-              <!-- 1. KHU VỰC GIƯỜNG NGỦ (Bên trái phòng) -->
-              <g id="bed-element">
-                <!-- Khung giường đôi êm ái -->
-                <rect x="120" y="90" width="280" height="320" rx="8" fill="#F5F0E4" stroke="#141414" stroke-width="4" />
-                
-                <!-- Táp đầu giường -->
-                <rect x="120" y="90" width="280" height="40" fill="#141414" />
-                
-                <!-- Hai chiếc gối êm -->
-                <rect x="145" y="145" width="105" height="55" rx="8" fill="#FFFFFF" stroke="#141414" stroke-width="2.5" />
-                <rect x="270" y="145" width="105" height="55" rx="8" fill="#FFFFFF" stroke="#141414" stroke-width="2.5" />
-                
-                <!-- Nếp chăn ga mềm mại ấm áp -->
-                <rect x="130" y="220" width="260" height="180" rx="6" fill="#ECE7D8" stroke="#141414" stroke-width="3" />
-                <line x1="130" y1="260" x2="390" y2="260" stroke="#FF6A1A" stroke-width="3" stroke-dasharray="8 6" />
-
-                <!-- Đèn ngủ & bàn con cạnh giường -->
-                <rect x="415" y="90" width="55" height="55" rx="4" fill="#F5F0E4" stroke="#141414" stroke-width="2" />
-                <circle cx="442" cy="117" r="14" fill="#FF6A1A" opacity="0.85" />
-              </g>
-
-              <!-- 2. MÁY ĐIỀU HÒA (Gắn trên tường cao) -->
-              <g id="ac-element">
-                <!-- Khối điều hòa gắn tường -->
-                <rect x="530" y="60" width="200" height="44" rx="4" fill="#141414" stroke="#141414" stroke-width="2" />
-                <!-- Khe gió làm mát -->
-                <rect x="545" y="86" width="170" height="10" rx="2" fill="#FFFFFF" />
-                <circle cx="705" cy="74" r="4" fill="#FF6A1A" />
-                
-                <!-- Làn gió mát tỏa ra từ điều hòa -->
-                <path class="ac-breeze-line" d="M 560 115 C 570 145 580 165 600 190" stroke="#FF6A1A" stroke-width="2.5" stroke-linecap="round" fill="none" />
-                <path class="ac-breeze-line" d="M 630 115 C 635 145 645 170 665 200" stroke="#FF6A1A" stroke-width="2.5" stroke-linecap="round" fill="none" />
-                <path class="ac-breeze-line" d="M 700 115 C 700 145 705 170 725 195" stroke="#FF6A1A" stroke-width="2.5" stroke-linecap="round" fill="none" />
-              </g>
-
-              <!-- 3. BÀN LÀM VIỆC & MÁY TÍNH CÁ NHÂN -->
-              <g id="desk-pc-element">
-                <!-- Mặt bàn làm việc rộng rãi -->
-                <rect x="490" y="270" width="280" height="150" rx="6" fill="#F5F0E4" stroke="#141414" stroke-width="4" />
-                
-                <!-- Màn hình máy tính để bàn -->
-                <rect x="545" y="290" width="170" height="40" rx="4" fill="#141414" />
-                <rect x="552" y="295" width="156" height="28" rx="2" fill="#FAF6ED" />
-                <!-- Chân đế màn hình -->
-                <rect x="615" y="330" width="30" height="16" fill="#141414" />
-                
-                <!-- Bàn phím & Chuột -->
-                <rect x="575" y="355" width="110" height="30" rx="3" fill="#141414" />
-                <rect x="705" y="360" width="18" height="24" rx="4" fill="#141414" />
-                
-                <!-- Ghế xoay công thái học -->
-                <circle cx="630" cy="470" r="30" fill="#F5F0E4" stroke="#141414" stroke-width="3" />
-                <rect x="605" y="484" width="50" height="14" rx="4" fill="#141414" />
-              </g>
-
-              <!-- Đường dẫn chỉ vị trí đến giường ngủ (dashed leader line) -->
-              <path id="bed-pointer-line" d="M 230 420 L 230 500 L 260 540" stroke="#FF6A1A" stroke-width="3" stroke-linecap="round" fill="none" />
-
-              <!-- Đường dẫn chỉ vị trí đến điều hòa & máy tính -->
-              <path id="ac-pc-pointer-line" d="M 640 440 L 640 540" stroke="#FF6A1A" stroke-width="3" stroke-linecap="round" fill="none" />
-            </svg>
-          </div>
-
-          <!-- Overlay: Label "GIƯỜNG NGỦ ÊM ÁI" (atMs: 368400 -> rel 5.16s) -->
-          <div id="badge-bed" class="vox-badge">
-            <div class="vox-badge-sub">KHÔNG GIAN NGHỈ NGƠI</div>
-            <div class="vox-badge-main">GIƯỜNG NGỦ ÊM ÁI</div>
-          </div>
-
-          <!-- Overlay: Label "ĐIỀU HÒA - MÁY TÍNH" (atMs: 369920 -> rel 6.68s) -->
-          <div id="badge-ac-pc" class="vox-badge">
-            <div class="vox-badge-sub">TRANG BỊ LÀM VIỆC</div>
-            <div class="vox-badge-main">ĐIỀU HÒA - MÁY TÍNH</div>
-          </div>
-
-          <!-- Overlay: Punch-phrase "TIỆN NGHI HOÀN TOÀN" (atMs: 370540 -> rel 7.30s) -->
-          <div id="punch-phrase-container">
-            <div class="punch-tag">TIÊU CHUẨN KÝ TÚC XÁ DOANH NGHIỆP</div>
-            <div class="punch-headline">TIỆN NGHI HOÀN TOÀN</div>
-          </div>
+        <div id="punch-phrase" class="hf-plate-ink">
+          <div id="punch-phrase-text" class="hf-text-light">NHƯ MỘT THIÊN ĐƯỜNG</div>
         </div>
       </div>
     </section>
   </div>
 
-  <!-- GSAP Timeline Script tuân thủ nghiêm ngặt chuẩn seekable của HyperFrames -->
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
   <script>
-    // 1. Tạo duy nhất 1 paused timeline cho composition
     const tl = gsap.timeline({ paused: true });
 
-    // ==========================================
-    // DIỄN HOẠT SHOT 1: S46-1 (0.00s -> 3.36s)
-    // ==========================================
-    // TransitionIn: unfold (Mở rộng bản vẽ trên unfold-rig độc lập)
-    tl.fromTo("#shot-1-unfold",
-      { scaleY: 0.2, scaleX: 0.88, opacity: 0, transformOrigin: "50% 70%" },
-      { scaleY: 1, scaleX: 1, opacity: 1, duration: 0.65, ease: "power3.out" },
-      0.08
-    );
-
-    // Di chuyển máy quay pan-down nhẹ trên camera-rig độc lập
-    tl.fromTo("#shot-1-camera",
-      { y: -20 },
-      { y: 20, duration: 3.36, ease: "sine.inOut" },
+    tl.fromTo("#stage",
+      { scaleY: 0, opacity: 0, transformOrigin: "50% 160px" },
+      { scaleY: 1, opacity: 1, duration: 0.55, ease: "power3.out" },
       0
     );
 
-    // Header xuất hiện
-    tl.fromTo("#shot-1-header",
-      { y: -30, opacity: 0 },
-      { y: 0, opacity: 1, duration: 0.5, ease: "power2.out" },
-      0.15
+    tl.fromTo("#media-zoom-wrapper",
+      { scale: 1.15 },
+      { scale: 1.0, duration: 9.04, ease: "none" },
+      0
     );
 
-    // Tầng 1 và Tầng 2 lần lượt vẽ vào
-    tl.fromTo("#floor-1-group",
-      { opacity: 0, y: 30 },
-      { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" },
-      0.35
-    );
-    tl.fromTo("#floor-2-group",
-      { opacity: 0, y: 20 },
-      { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" },
-      0.55
+    tl.fromTo("#split-tag",
+      { scale: 0.85, opacity: 0, y: -20 },
+      { scale: 1, opacity: 1, y: 0, duration: 0.45, ease: "power3.out" },
+      0.9
     );
 
-    // Tầng 3 (Ký túc xá) mở sáng nổi bật
-    tl.fromTo("#top-floor-highlight",
-      { opacity: 0, scale: 0.94, transformOrigin: "50% 50%" },
-      { opacity: 1, scale: 1, duration: 0.55, ease: "power3.out" },
-      0.95
+    tl.fromTo("#split-tag",
+      { opacity: 1, y: 0 },
+      { opacity: 0, y: -15, duration: 0.3, ease: "power2.in" },
+      4.65
     );
 
-    // Mũi tên cam chỉ lên tầng trên
-    tl.fromTo("#up-arrow-group",
-      { y: 40, opacity: 0 },
-      { y: 0, opacity: 1, duration: 0.45, ease: "power3.out" },
-      1.15
+    tl.fromTo("#punch-phrase",
+      { scale: 0.85, opacity: 0, y: 20 },
+      { scale: 1, opacity: 1, y: 0, duration: 0.45, ease: "power3.out" },
+      5.4
     );
 
-    // Overlay Shot 1: Label "KÝ TÚC XÁ TẦNG TRÊN" (atMs: 364560 -> rel 1.32s)
-    tl.fromTo("#s46-1-label-card",
-      { x: -50, opacity: 0 },
-      { x: 0, opacity: 1, duration: 0.5, ease: "power3.out" },
-      1.32
+    tl.fromTo("#punch-phrase",
+      { opacity: 1 },
+      { opacity: 0, duration: 0.15, ease: "none" },
+      8.85
     );
 
-    // Overlay Shot 1: Icon "pin" (atMs: 365370 -> rel 2.13s)
-    tl.fromTo("#s46-1-pin-icon",
-      { y: -60, scale: 0, opacity: 0, transformOrigin: "50% 100%" },
-      { y: 0, scale: 1, opacity: 1, duration: 0.45, ease: "power3.out" },
-      2.13
-    );
-    // Vòng sóng radar tỏa ra từ chân pin
-    tl.fromTo("#s46-1-pin-ring",
-      { scale: 0.2, opacity: 1, transformOrigin: "50% 50%" },
-      { scale: 2.2, opacity: 0, duration: 0.7, ease: "power2.out" },
-      2.35
-    );
-
-    // Chuyển tiếp mờ dần nhẹ trước khi kết thúc Shot 1 (tween trên child container, KHÔNG tween .clip)
-    tl.to("#shot-1-content",
-      { opacity: 0, duration: 0.25, ease: "power2.in" },
-      3.11
-    );
-
-    // ==========================================
-    // DIỄN HOẠT SHOT 2: S46-2 (3.36s -> 8.45s)
-    // ==========================================
-    // TransitionIn: dissolve (tween trên child container, KHÔNG tween .clip)
-    tl.fromTo("#shot-2-content",
-      { opacity: 0 },
-      { opacity: 1, duration: 0.35, ease: "power2.out" },
-      3.36
-    );
-
-    // Camera motion: zoom-in nhẹ từ 3.36s tới cuối scene (8.45s)
-    tl.fromTo("#shot-2-camera",
-      { scale: 0.96, transformOrigin: "50% 45%" },
-      { scale: 1.03, duration: 5.09, ease: "sine.out" },
-      3.36
-    );
-
-    // Header Shot 2 xuất hiện
-    tl.fromTo("#shot-2-header",
-      { y: -30, opacity: 0 },
-      { y: 0, opacity: 1, duration: 0.5, ease: "power2.out" },
-      3.45
-    );
-
-    // Tường bao căn phòng vẽ thành hình
-    tl.fromTo("#room-walls",
-      { opacity: 0, scale: 0.95, transformOrigin: "50% 50%" },
-      { opacity: 1, scale: 1, duration: 0.55, ease: "power3.out" },
-      3.55
-    );
-
-    // 1. Giường ngủ êm ái hiện lên
-    tl.fromTo("#bed-element",
-      { scale: 0.75, opacity: 0, transformOrigin: "50% 50%" },
-      { scale: 1, opacity: 1, duration: 0.55, ease: "power3.out" },
-      4.35
-    );
-
-    // Overlay Shot 2: Label "GIƯỜNG NGỦ ÊM ÁI" (atMs: 368400 -> rel 5.16s)
-    tl.fromTo("#badge-bed",
-      { y: 30, opacity: 0 },
-      { y: 0, opacity: 1, duration: 0.45, ease: "power3.out" },
-      5.16
-    );
-    tl.fromTo("#bed-pointer-line",
-      { opacity: 0 },
-      { opacity: 1, duration: 0.3, ease: "power2.out" },
-      5.25
-    );
-
-    // 2. Điều hòa & Bàn máy tính cá nhân xuất hiện
-    tl.fromTo("#ac-element",
-      { y: -20, opacity: 0 },
-      { y: 0, opacity: 1, duration: 0.45, ease: "power3.out" },
-      5.85
-    );
-    tl.fromTo(".ac-breeze-line",
-      { opacity: 0 },
-      { opacity: 0.85, duration: 0.5, stagger: 0.1, ease: "power1.out" },
-      6.10
-    );
-    tl.fromTo("#desk-pc-element",
-      { scale: 0.8, opacity: 0, transformOrigin: "50% 50%" },
-      { scale: 1, opacity: 1, duration: 0.55, ease: "power3.out" },
-      6.25
-    );
-
-    // Overlay Shot 2: Label "ĐIỀU HÒA - MÁY TÍNH" (atMs: 369920 -> rel 6.68s)
-    tl.fromTo("#badge-ac-pc",
-      { y: 30, opacity: 0 },
-      { y: 0, opacity: 1, duration: 0.45, ease: "power3.out" },
-      6.68
-    );
-    tl.fromTo("#ac-pc-pointer-line",
-      { opacity: 0 },
-      { opacity: 1, duration: 0.3, ease: "power2.out" },
-      6.75
-    );
-
-    // Overlay Shot 2: Punch-phrase "TIỆN NGHI HOÀN TOÀN" (atMs: 370540 -> rel 7.30s)
-    // Giữ vững vàng đến hết scene (8.45s)
-    tl.fromTo("#punch-phrase-container",
-      { y: 35, scale: 0.94, opacity: 0 },
-      { y: 0, scale: 1, opacity: 1, duration: 0.5, ease: "power3.out" },
-      7.30
-    );
-
-    // Đăng ký timeline cho HyperFrames runtime seek
-    window.__timelines = window.__timelines || {};
     window.__timelines["scene-s46"] = tl;
   </script>
 

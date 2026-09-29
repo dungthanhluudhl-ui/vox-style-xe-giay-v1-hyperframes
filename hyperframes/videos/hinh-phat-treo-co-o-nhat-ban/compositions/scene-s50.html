@@ -5,528 +5,248 @@
   </head>
   <body>
     <template>
-      <link
-      rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap"
-    />
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap">
       <style>
-      * {
-        box-sizing: border-box;
-      }
-      body {
-        margin: 0;
-        padding: 0;
-        background: #141414;
-        color: #141414;
-        font-family: "Be Vietnam Pro", sans-serif;
-        overflow: hidden;
-        -webkit-font-smoothing: antialiased;
-      }
+/* hf-safe-colors (tất định từ style-tokens.json) */
+.hf-text-ink { color: #141414; }
+.hf-text-light { color: #F7F4EC; }
+.hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+.hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+.hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+.hf-plate-paper { color: #141414; background-color: #F5F0E4; }
 
-      #root {
-        position: relative;
-        width: 100%;
-        height: 100%;
-        overflow: hidden;
-      }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
-      .clip {
-        position: absolute;
-        inset: 0;
-        overflow: hidden;
-      }
+    body {
+      background-color: #141414;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      overflow: hidden;
+      font-family: 'Be Vietnam Pro', sans-serif;
+    }
 
-      /* Nền giấy ngà + lưới ô vuông 84px chuẩn Vox DNA */
-      .bg-paper {
-        position: absolute;
-        inset: 0;
-        background-color: #e7e3d9;
-        background-image:
-          linear-gradient(to right, rgba(20, 20, 20, 0.16) 1.5px, transparent 1.5px),
-          linear-gradient(to bottom, rgba(20, 20, 20, 0.16) 1.5px, transparent 1.5px);
-        background-size: 84px 84px;
-      }
+    #root {
+      position: relative;
+      width: 1080px;
+      height: 1920px;
+      background-color: #E7E3D9;
+      overflow: hidden;
+    }
 
-      /* Biến thể spotlight: vignette tối các mép tạo áp lực tâm lý */
-      .bg-spotlight {
-        position: absolute;
-        inset: 0;
-        background: radial-gradient(
-          circle at 50% 48%,
-          rgba(231, 227, 217, 0) 30%,
-          rgba(20, 20, 20, 0.22) 65%,
-          rgba(20, 20, 20, 0.52) 100%
-        );
-        pointer-events: none;
-      }
+    .clip {
+      position: absolute;
+      inset: 0;
+    }
 
-      /* Camera container cho hiệu ứng zoom-in liên tục */
-      #camera {
-        position: absolute;
-        inset: 0;
-        transform-origin: 540px 880px;
-      }
+    /* Spotlight background variant */
+    #spotlight-bg {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 50% 48%, rgba(231, 227, 217, 0.2) 0%, rgba(20, 20, 20, 0.45) 65%, rgba(20, 20, 20, 0.85) 100%);
+      pointer-events: none;
+      z-index: 1;
+    }
 
-      #camera-shake {
-        position: absolute;
-        inset: 0;
-      }
+    /* Entire stage wrapper for punch transition entrance */
+    #shot-stage {
+      position: absolute;
+      inset: 0;
+      transform-origin: center center;
+      z-index: 2;
+    }
 
-      .stage-area {
-        position: absolute;
-        inset: 0;
-        pointer-events: none;
-      }
+    /* Hero media framing in safe zone (y: 160–1390) */
+    #hero-frame {
+      position: absolute;
+      top: 210px;
+      left: 120px;
+      width: 840px;
+      height: 1040px;
+      overflow: hidden;
+      border-radius: 8px;
+      border: 3px solid #141414;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.4);
+      background-color: #141414;
+    }
 
-      /* Header info stamp (safe zone top >= 160px) */
-      .top-meta {
-        position: absolute;
-        top: 180px;
-        left: 60px;
-        right: 60px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        border-bottom: 2px solid rgba(20, 20, 20, 0.25);
-        padding-bottom: 14px;
-        z-index: 20;
-      }
+    #media-zoom {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      transform-origin: center 40%;
+    }
 
-      .top-tag {
-        font-size: 20px;
-        font-weight: 900;
-        letter-spacing: 2px;
-        color: #141414;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-      }
+    #media-zoom img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center 30%;
+      display: block;
+    }
 
-      .top-tag-badge {
-        background: #ff6a1a;
-        color: #141414;
-        font-size: 16px;
-        font-weight: 900;
-        padding: 4px 10px;
-        border-radius: 4px;
-      }
+    /* Dynamic darkening vignette inside/over the frame */
+    #vignette-overlay {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 50% 45%, rgba(20, 20, 20, 0) 25%, rgba(14, 14, 14, 0.88) 100%);
+      pointer-events: none;
+      z-index: 3;
+    }
 
-      .top-index {
-        font-size: 18px;
-        font-weight: 900;
-        color: #141414;
-        letter-spacing: 1.5px;
-      }
+    /* Overlay 1: Label container */
+    #label-container {
+      position: absolute;
+      top: 250px;
+      left: 0;
+      width: 1080px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 10;
+      pointer-events: none;
+    }
 
-      /* Nhãn chỉ hướng HTML thay vì SVG text để đảm bảo load font chuẩn */
-      .sightline-tag {
-        position: absolute;
-        background: #141414;
-        color: #f7f4ec;
-        font-size: 13px;
-        font-weight: 900;
-        letter-spacing: 1px;
-        padding: 6px 14px;
-        border-radius: 4px;
-        white-space: nowrap;
-        pointer-events: none;
-        z-index: 25;
-      }
+    #label-plate {
+      display: inline-block;
+      padding: 14px 28px;
+      border-left: 6px solid #FF6A1A;
+      font-weight: 700;
+      font-size: 36px;
+      line-height: 1.2;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
+    }
 
-      .sightline-tag-left {
-        top: 630px;
-        left: 120px;
-      }
+    /* Overlay 2: Punch phrase container */
+    #punch-container {
+      position: absolute;
+      top: 1140px;
+      left: 0;
+      width: 1080px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 10;
+      pointer-events: none;
+    }
 
-      .sightline-tag-right {
-        top: 640px;
-        right: 120px;
-      }
+    #punch-plate {
+      display: inline-block;
+      padding: 20px 42px;
+      border-bottom: 6px solid #FF6A1A;
+      font-weight: 900;
+      font-size: 64px;
+      line-height: 1.25;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      box-shadow: 0 18px 45px rgba(0, 0, 0, 0.55);
+      border-radius: 4px;
+    }
 
-      /* Label 1: NƠM NỚP LO SỢ */
-      .fear-label-container {
-        position: absolute;
-        top: 360px;
-        left: 60px;
-        z-index: 30;
-      }
+    /* Fixed brand bottom bar */
+    #brand-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 1080px;
+      height: 12px;
+      background-color: #FF6A1A;
+      z-index: 50;
+    }
+  </style>
 
-      .fear-badge {
-        background: #141414;
-        border-left: 8px solid #ff6a1a;
-        padding: 16px 28px;
-        border-radius: 8px;
-        box-shadow: 0 16px 32px rgba(20, 20, 20, 0.25);
-        display: inline-block;
-      }
+  <div id="root" data-composition-id="scene-s50" data-width="1080" data-height="1920" data-duration="5">
+    <!-- Base Spotlight Background -->
+    <div id="spotlight-bg"></div>
 
-      .fear-text {
-        font-size: 38px;
-        font-weight: 900;
-        color: #f7f4ec;
-        letter-spacing: 1.5px;
-        line-height: 1.2;
-        margin: 0;
-      }
-
-      .fear-sub {
-        font-size: 16px;
-        font-weight: 900;
-        color: #ff6a1a;
-        letter-spacing: 1px;
-        margin-top: 6px;
-      }
-
-      /* Warning Icon Container */
-      .warning-box {
-        position: absolute;
-        top: 350px;
-        right: 80px;
-        width: 100px;
-        height: 100px;
-        background: #f5f0e4;
-        border: 4px solid #141414;
-        box-shadow: 6px 6px 0px #ff6a1a;
-        border-radius: 12px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 30;
-      }
-
-      /* Punch Phrase: DẰN VẶT HỔ THẸN */
-      .punch-card-wrapper {
-        position: absolute;
-        top: 1250px;
-        left: 60px;
-        right: 60px;
-        z-index: 35;
-        display: flex;
-        justify-content: center;
-      }
-
-      .punch-card {
-        background: #f5f0e4;
-        border: 5px solid #141414;
-        border-radius: 16px;
-        box-shadow: 10px 10px 0px #ff6a1a;
-        padding: 30px 48px;
-        text-align: center;
-        width: 100%;
-        max-width: 940px;
-      }
-
-      .punch-title {
-        font-size: 68px;
-        font-weight: 900;
-        color: #141414;
-        line-height: 1.15;
-        margin: 0;
-        letter-spacing: 1px;
-      }
-
-      .punch-underline-bar {
-        height: 8px;
-        background: #ff6a1a;
-        margin-top: 16px;
-        border-radius: 4px;
-        transform-origin: 0% 50%;
-      }
-
-      .punch-desc {
-        font-size: 20px;
-        font-weight: 900;
-        color: #141414;
-        letter-spacing: 2px;
-        margin-top: 14px;
-      }
-
-      /* Thanh cam đáy cố định chuẩn Vox DNA */
-      .bottom-orange-bar {
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        width: 100%;
-        height: 12px;
-        background: #ff6a1a;
-        z-index: 100;
-      }
-    </style>
-
-    <div
-      id="root"
-      data-composition-id="scene-s50"
-      data-width="1080"
-      data-height="1920"
-      data-duration="5"
-    >
-      <section
-        id="scene-s50"
-        class="clip"
-        data-start="0"
-        data-duration="5"
-        data-track-index="0"
-      >
-        <!-- Nền giấy và hiệu ứng spotlight -->
-        <div class="bg-paper"></div>
-        <div class="bg-spotlight"></div>
-
-        <!-- Camera layer zoom-in nhẹ từ từ -->
-        <div id="camera">
-          <div id="camera-shake">
-            <!-- Phối cảnh vỉa hè & vòng tròn radar dằn vặt -->
-            <svg
-              class="stage-area"
-              viewBox="0 0 1080 1920"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <line x1="540" y1="560" x2="100" y2="1520" stroke="rgba(20, 20, 20, 0.28)" stroke-width="2" stroke-dasharray="12 12" />
-              <line x1="540" y1="560" x2="980" y2="1520" stroke="rgba(20, 20, 20, 0.28)" stroke-width="2" stroke-dasharray="12 12" />
-              <line x1="540" y1="560" x2="320" y2="1520" stroke="rgba(20, 20, 20, 0.16)" stroke-width="1.5" />
-              <line x1="540" y1="560" x2="760" y2="1520" stroke="rgba(20, 20, 20, 0.16)" stroke-width="1.5" />
-
-              <ellipse id="tension-circle-outer" cx="540" cy="1080" rx="300" ry="95" stroke="#FF6A1A" stroke-width="3" stroke-dasharray="10 10" fill="rgba(255, 106, 26, 0.04)" />
-              <ellipse id="tension-circle-inner" cx="540" cy="1080" rx="190" ry="60" stroke="#141414" stroke-width="2.5" fill="none" />
-
-              <!-- Ánh nhìn dò xét hướng vào đầu nhân vật -->
-              <path id="sightline-left-1" class="sightline-path" d="M 170 680 L 490 730" stroke="#141414" stroke-width="3" stroke-dasharray="6 6" />
-              <path id="sightline-left-2" class="sightline-path" d="M 190 790 L 485 765" stroke="#FF6A1A" stroke-width="2.5" stroke-dasharray="6 6" />
-              <path id="sightline-right-1" class="sightline-path" d="M 910 690 L 590 730" stroke="#141414" stroke-width="3" stroke-dasharray="6 6" />
-              <path id="sightline-right-2" class="sightline-path" d="M 890 800 L 595 765" stroke="#FF6A1A" stroke-width="2.5" stroke-dasharray="6 6" />
-            </svg>
-
-            <!-- HTML badges cho ánh nhìn dò xét đảm bảo font render chuẩn -->
-            <div class="sightline-tag sightline-tag-left">ÁNH MẮT DÒ XÉT</div>
-            <div class="sightline-tag sightline-tag-right">CHẠM MẶT BẤT CỨ LÚC NÀO</div>
-
-            <!-- Đám đông Silhouette hai bên lề đường -->
-            <div id="crowd-left" class="stage-area">
-              <svg viewBox="0 0 1080 1920" fill="none" style="position: absolute; inset: 0;">
-                <circle cx="150" cy="650" r="32" fill="#141414" />
-                <path d="M 100 760 C 100 700, 130 685, 150 685 C 170 685, 200 700, 200 760 Z" fill="#141414" />
-                <circle cx="210" cy="740" r="28" fill="#141414" opacity="0.85" />
-                <path d="M 165 850 C 165 790, 190 775, 210 775 C 230 775, 255 790, 255 850 Z" fill="#141414" opacity="0.85" />
-              </svg>
-            </div>
-
-            <div id="crowd-right" class="stage-area">
-              <svg viewBox="0 0 1080 1920" fill="none" style="position: absolute; inset: 0;">
-                <circle cx="930" cy="660" r="32" fill="#141414" />
-                <path d="M 880 770 C 880 710, 910 695, 930 695 C 950 695, 980 710, 980 770 Z" fill="#141414" />
-                <circle cx="870" cy="750" r="28" fill="#141414" opacity="0.85" />
-                <path d="M 825 860 C 825 800, 850 785, 870 785 C 890 785, 915 800, 915 860 Z" fill="#141414" opacity="0.85" />
-              </svg>
-            </div>
-
-            <!-- Nhân vật trung tâm cúi đầu lầm lũi với bóng cam chuẩn cutout DNA -->
-            <div id="hero-group" class="stage-area" style="transform-origin: 540px 900px;">
-              <div id="hero-body" style="position: absolute; inset: 0;">
-                <svg viewBox="0 0 1080 1920" fill="none" style="position: absolute; inset: 0;">
-                  <!-- Bóng cam đặc (#ff7a1a) lệch 10px đúng DNA cutout người -->
-                  <g transform="translate(10, 10)">
-                    <circle cx="540" cy="735" r="42" fill="#ff7a1a" />
-                    <path d="M 470 940 C 460 840, 480 780, 540 780 C 600 780, 620 840, 610 940 C 600 1010, 580 1050, 570 1070 L 510 1070 C 500 1050, 480 1010, 470 940 Z" fill="#ff7a1a" />
-                    <path d="M 450 830 C 470 795, 520 790, 540 805 C 560 790, 610 795, 630 830 C 640 880, 625 930, 610 950 L 470 950 C 455 930, 440 880, 450 830 Z" fill="#ff7a1a" />
-                  </g>
-
-                  <!-- Silhouette chính màu mực đen #141414 -->
-                  <g>
-                    <circle cx="540" cy="735" r="42" fill="#141414" />
-                    <path d="M 470 940 C 460 840, 480 780, 540 780 C 600 780, 620 840, 610 940 C 600 1010, 580 1050, 570 1070 L 510 1070 C 500 1050, 480 1010, 470 940 Z" fill="#141414" />
-                    <path d="M 450 830 C 470 795, 520 790, 540 805 C 560 790, 610 795, 630 830 C 640 880, 625 930, 610 950 L 470 950 C 455 930, 440 880, 450 830 Z" fill="#141414" />
-                    <path d="M 505 770 L 540 810 L 575 770 L 555 760 L 540 775 L 525 760 Z" fill="#FF6A1A" />
-                  </g>
-                </svg>
-              </div>
-            </div>
-
-            <!-- Overlays: Label NƠM NỚP LO SỢ -->
-            <div id="fear-label" class="fear-label-container">
-              <div class="fear-badge">
-                <h2 class="fear-text">NƠM NỚP LO SỢ</h2>
-                <div class="fear-sub">// ÁP LỰC CHẠM MẶT NGOÀI ĐƯỜNG</div>
-              </div>
-            </div>
-
-            <!-- Overlays: Icon Warning -->
-            <div id="warning-box" class="warning-box">
-              <svg width="56" height="56" viewBox="0 0 64 64" fill="none">
-                <path id="warning-triangle" d="M 32 8 L 58 54 L 6 54 Z" stroke="#FF6A1A" stroke-width="5" stroke-linejoin="round" stroke-linecap="round" />
-                <line id="warning-bar" x1="32" y1="23" x2="32" y2="37" stroke="#141414" stroke-width="5" stroke-linecap="round" />
-                <circle id="warning-dot" cx="32" cy="46" r="3" fill="#141414" />
-              </svg>
-            </div>
-
-            <!-- Overlays: Punch Phrase DẰN VẶT HỔ THẸN -->
-            <div class="punch-card-wrapper">
-              <div id="punch-card" class="punch-card">
-                <h1 class="punch-title">DẰN VẶT, HỔ THẸN</h1>
-                <div id="punch-underline" class="punch-underline-bar"></div>
-                <div class="punch-desc">// CẢM GIÁC TỘI LỖI BỦA VÂY</div>
-              </div>
-            </div>
+    <!-- Shot 1 -->
+    <section id="shot-1" class="clip" data-start="0" data-duration="5">
+      <div id="shot-stage">
+        <!-- Hero Media Frame -->
+        <div id="hero-frame">
+          <div id="media-zoom">
+            <img src="assets/img-13-dejected-man-walking-cutout-street.jpg" alt="Dejected man walking">
           </div>
+          <div id="vignette-overlay"></div>
         </div>
 
-        <!-- Meta Stamp cố định ở safe-zone trên (đạt chuẩn tương phản WCAG AA) -->
-        <div class="top-meta">
-          <div class="top-tag">
-            <span class="top-tag-badge">VOX-REPORT</span>
-            <span>HỒ SƠ TÂM LÝ // BƯỚC RA ĐƯỜNG</span>
-          </div>
-          <div class="top-index">SCENE S50</div>
+        <!-- Overlay 1: Label -->
+        <div id="label-container">
+          <div id="label-plate" class="hf-plate-ink">SỢ PHẢI CHẠM MẶT</div>
         </div>
 
-        <!-- Thanh cam đáy cố định nhận diện thương hiệu -->
-        <div class="bottom-orange-bar"></div>
-      </section>
-    </div>
+        <!-- Overlay 2: Punch phrase -->
+        <div id="punch-container">
+          <div id="punch-plate" class="hf-plate-ink">DẰN VẶT & HỔ THẸN</div>
+        </div>
+      </div>
+    </section>
 
-    <script>
-      // Khởi tạo GSAP Timeline paused duy nhất cho composition
-      const tl = gsap.timeline({ paused: true });
+    <!-- Bottom brand accent line -->
+    <div id="brand-bar"></div>
+  </div>
 
-      // Chuẩn bị các stroke paths để tự vẽ (SVG path draw)
-      const tensionOuter = document.querySelector("#tension-circle-outer");
-      const tensionInner = document.querySelector("#tension-circle-inner");
-      const warningTriangle = document.querySelector("#warning-triangle");
-      const warningBar = document.querySelector("#warning-bar");
-      const sightlines = document.querySelectorAll(".sightline-path");
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+  <script>
+    const tl = gsap.timeline({ paused: true });
 
-      [tensionOuter, tensionInner, warningTriangle, warningBar, ...sightlines].forEach((path) => {
-        if (path && path.getTotalLength) {
-          const len = path.getTotalLength();
-          path.style.strokeDasharray = len;
-          path.style.strokeDashoffset = len;
-        }
-      });
+    // Initial entrance: punch transition for the shot
+    tl.fromTo("#shot-stage", 
+      { scale: 1.15, opacity: 0 }, 
+      { scale: 1.0, opacity: 1, duration: 0.42, ease: "power4.out" }, 
+      0
+    );
 
-      // 1. Camera chuyển động zoom-in nhẹ từ từ (1.0 -> 1.05)
-      tl.to("#camera", { scale: 1.05, duration: 5.0, ease: "none" }, 0);
+    // Camera motion: continuous zoom-in on the hero asset
+    tl.fromTo("#media-zoom", 
+      { scale: 1.0 }, 
+      { scale: 1.22, duration: 4.85, ease: "sine.inOut" }, 
+      0
+    );
 
-      // 2. Wobble-drop entrance: Gộp các pha thành 1 tween duy nhất bằng GSAP keyframes (tránh multiple writers / overwrite desync)
-      tl.fromTo(
-        "#hero-group",
-        { y: -160, rotation: -7, opacity: 0 },
-        {
-          keyframes: [
-            { y: 0, rotation: 3, opacity: 1, duration: 0.5, ease: "power3.out" },
-            { rotation: -1.5, duration: 0.25, ease: "sine.inOut" },
-            { rotation: 0, duration: 0.25, ease: "power2.out" }
-          ]
-        },
-        0.1
-      );
+    // Dynamic rising vignette: intensifies mood of isolation and dread
+    tl.fromTo("#vignette-overlay", 
+      { opacity: 0.35 }, 
+      { opacity: 0.85, duration: 4.8, ease: "power2.inOut" }, 
+      0.2
+    );
 
-      // 3. Đám đông silhouette hai bên xuất hiện bao vây
-      tl.fromTo(
-        "#crowd-left",
-        { x: -80, opacity: 0 },
-        { x: 0, opacity: 1, duration: 0.65, ease: "power2.out" },
-        0.25
-      );
-      tl.fromTo(
-        "#crowd-right",
-        { x: 80, opacity: 0 },
-        { x: 0, opacity: 1, duration: 0.65, ease: "power2.out" },
-        0.3
-      );
+    // Overlay 1: Label "SỢ PHẢI CHẠM MẶT" (atMs: 396500 -> 0.26s, holdMs: 2200 -> holds to 2.46s)
+    tl.fromTo("#label-container", 
+      { scale: 0.82, opacity: 0, y: -25 }, 
+      { scale: 1.0, opacity: 1, y: 0, duration: 0.36, ease: "power3.out" }, 
+      0.26
+    );
+    tl.fromTo("#label-container", 
+      { opacity: 1, y: 0 }, 
+      { opacity: 0, y: -15, duration: 0.15, ease: "power2.in" }, 
+      2.46
+    );
 
-      // 4. Vòng tròn căng thẳng / radar dằn vặt dưới chân vẽ ra
-      if (tensionOuter && tensionOuter.getTotalLength) {
-        tl.to(tensionOuter, { strokeDashoffset: 0, duration: 1.0, ease: "power2.out" }, 0.5);
-      }
-      if (tensionInner && tensionInner.getTotalLength) {
-        tl.to(tensionInner, { strokeDashoffset: 0, duration: 0.85, ease: "power2.out" }, 0.7);
-      }
+    // Overlay 2: Punch-phrase "DẰN VẶT & HỔ THẸN" (atMs: 398800 -> 2.56s, holdMs: 2300 -> holds to 4.86s)
+    tl.fromTo("#punch-container", 
+      { scale: 0.86, opacity: 0, y: 35 }, 
+      { scale: 1.0, opacity: 1, y: 0, duration: 0.42, ease: "power4.out" }, 
+      2.56
+    );
+    tl.fromTo("#punch-container", 
+      { opacity: 1 }, 
+      { opacity: 0, duration: 0.12, ease: "power2.in" }, 
+      4.86
+    );
 
-      // 5. Các đường ánh nhìn dò xét (sightlines) phóng tới nhân vật
-      sightlines.forEach((line, idx) => {
-        if (line && line.getTotalLength) {
-          tl.to(line, { strokeDashoffset: 0, duration: 0.7, ease: "power2.out" }, 0.7 + idx * 0.12);
-        }
-      });
+    // Register paused timeline with HyperFrames runtime
+    window.__timelines["scene-s50"] = tl;
+  </script>
 
-      // Nhãn chữ chỉ hướng xuất hiện cùng ánh nhìn dò xét
-      tl.fromTo(
-        ".sightline-tag",
-        { opacity: 0, y: 8 },
-        { opacity: 1, y: 0, duration: 0.4, stagger: 0.15, ease: "power2.out" },
-        0.8
-      );
-
-      // 6. Label "NƠM NỚP LO SỢ" xuất hiện tại t = 1.06s (khớp 397300ms trong shotlist)
-      tl.fromTo(
-        "#fear-label",
-        { scale: 0.75, opacity: 0, y: -20 },
-        { scale: 1, opacity: 1, y: 0, duration: 0.45, ease: "power3.out" },
-        1.06
-      );
-
-      // 7. Micro-motion: Người co ro lầm lũi (dao động nhẹ trên phần tử con #hero-body, hoàn thành trước punchline)
-      tl.fromTo(
-        "#hero-body",
-        { y: 0 },
-        { y: 6, duration: 1.25, ease: "sine.inOut", yoyo: true, repeat: 1 },
-        1.4
-      );
-
-      // 8. Icon Warning xuất hiện tại t = 1.98s (khớp 398220ms trong shotlist)
-      tl.fromTo(
-        "#warning-box",
-        { scale: 0, opacity: 0, rotation: -15 },
-        { scale: 1, opacity: 1, rotation: 0, duration: 0.45, ease: "power3.out" },
-        1.98
-      );
-      if (warningTriangle && warningTriangle.getTotalLength) {
-        tl.to(warningTriangle, { strokeDashoffset: 0, duration: 0.55, ease: "power2.out" }, 2.05);
-      }
-      // Tự vẽ nét gạch của warning bằng strokeDashoffset thay vì scale để tránh lỗi transformOrigin trên SVG
-      if (warningBar && warningBar.getTotalLength) {
-        tl.to(warningBar, { strokeDashoffset: 0, duration: 0.3, ease: "power2.out" }, 2.3);
-      }
-      tl.fromTo(
-        "#warning-dot",
-        { opacity: 0 },
-        { opacity: 1, duration: 0.2, ease: "power2.out" },
-        2.45
-      );
-
-      // 9. Punch Phrase: "DẰN VẶT HỔ THẸN" xuất hiện tại t = 3.3s và giữ vững đến hết 5s
-      tl.fromTo(
-        "#punch-card",
-        { y: 40, opacity: 0, scale: 0.95 },
-        { y: 0, opacity: 1, scale: 1, duration: 0.55, ease: "power3.out" },
-        3.3
-      );
-
-      // Điểm nhấn đòn bẩy cam quét từ trái sang phải tại t = 4.16s (khớp mốc 400400ms trong shotlist)
-      tl.fromTo(
-        "#punch-underline",
-        { scaleX: 0, transformOrigin: "0% 50%" },
-        { scaleX: 1, duration: 0.35, ease: "power3.out" },
-        4.16
-      );
-
-      // Giật nhẹ camera thể hiện cảm xúc tội lỗi nhói lên tại t = 4.16s (seek-safe với keyframes)
-      tl.fromTo(
-        "#camera-shake",
-        { x: 0 },
-        {
-          keyframes: [
-            { x: -5, duration: 0.08, ease: "power1.in" },
-            { x: 4, duration: 0.08, ease: "power1.out" },
-            { x: 0, duration: 0.12, ease: "power2.out" }
-          ]
-        },
-        4.16
-      );
-
-      // Đăng ký timeline cho HyperFrames seek
-      window.__timelines["scene-s50"] = tl;
-    </script>
-  
     </template>
   </body>
 </html>

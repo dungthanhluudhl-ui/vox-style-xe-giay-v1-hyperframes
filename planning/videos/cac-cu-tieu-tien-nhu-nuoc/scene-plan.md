@@ -1,0 +1,29 @@
+# Scene Plan — cac-cu-tieu-tien-nhu-nuoc
+
+> Sinh bởi `scripts/05-scene-plan.router.mjs` qua ag/gemini-3.8-flash-high. Nguồn dữ liệu: `planning/videos/cac-cu-tieu-tien-nhu-nuoc/scene-plan.json`. Sửa tay thì sửa cả 2 file cho khớp.
+
+Tổng thời lượng: 72.680s · 9 scene
+
+| # | Thời gian | Lời thoại | Chức năng | Quan hệ hình ảnh | Ngôn ngữ thị giác | Nền | Asset | Vào cảnh |
+|---|---|---|---|---|---|---|---|---|
+| S01 | 0.000s–7.760s | Những thú vui chơi xa xỉ nhất của giới siêu giàu từ ngày xưa đến bây giờ: Bắt đầu với câu chuyện tiệc tùng đi, đại diện là Hoàng đế Francis Đệ Nhị. | hook | Sự xa hoa cực độ của giới tinh hoa xưa được thiết lập bằng hoạt cảnh đại yến tiệc hoàng triều rực sáng dưới đèn chùm pha lê, định hình ngay quy mô chịu chơi của nhân vật Francis Đệ Nhị. | background-photo + quote | card | vid-01, img-02 | grow |
+| S02 | 7.760s–16.960s | Ông này vốn thích sống kín đáo, không ưa phô trương hay mấy trò nghi lễ cung đình. Nhưng một khi đã liên quan đến thể diện và quyền lực của hoàng gia, thì ông chịu chi cực kỳ mạnh. | paradox | Tư thế tĩnh lặng, khắc kỷ của vị vua trong thư phòng đối đầu trực diện và bị áp đảo hoàn toàn bởi vương miện cùng biểu trưng hoàng quyền thúc ép ông phải vung tiền không tiếc tay. | background-photo + split | spotlight | img-03 | flip |
+| S03 | 16.960s–24.280s | Năm 1807, Francis còn ra chỉ thị rằng cung điện phải được trang trí đàng hoàng, nhưng tuyệt đối không được bày vẽ những thứ xa hoa không cần thiết. | evidence | Một văn bản chiếu chỉ hoàng triều năm 1807 mở ra với con dấu niêm phong trang trọng, khẳng định lệnh cấm xa hoa nhưng ngầm dự báo sự mỉa mai cho quy mô thực tế. | background-photo + document | card | vid-07 | peel |
+| S04 | 24.280s–33.040s | Công trình đó ngày nay được biết đến là Cung điện Hoàng gia Hofburg ở Vienna. Nổi bật nhất là sảnh nghi lễ, rộng khoảng tầm khiêm tốn thôi: 575 m². | definition | Tấm bản vẽ kiến trúc công trình cổ kính Hofburg trải rộng ra, khoanh vùng sảnh nghi lễ và đóng khung con số 575 m² như một lời định danh mỉa mai cho chữ 'khiêm tốn'. | background-photo + timeline | grid | vid-05, img-05 | unfold |
+| S05 | 33.040s–41.320s | Tức là riêng cái sảnh nghi lễ này có thể xây được cả một tòa chung cư ấy. Và một trong những sự kiện lớn nhất là đại yến tiệc khai màn với khoảng 12.000 người tham dự. | evidence | Khối sảnh tiệc hoàng kim 575 m² được đặt cân đối và nuốt trọn mô hình một tòa chung cư nhiều tầng hiện đại, trước khi nới rộng không gian tiếp đón đám đông 12.000 thực khách. | background-photo + split | chart | img-01 | punch |
+| S06 | 41.320s–48.880s | Riêng thực đơn hôm đấy đã có 360 chiếc đùi heo muối, 570 con chim rừng, 100 con thỏ quay, 48 khay thịt bò và 12 con lợn rừng. | list | Bàn tiệc chất chồng các tầng mâm cỗ sơn hào hải vị xuất hiện đồng nhịp với các thẻ kiểm kê số lượng thịt khổng lồ, tạo cảm giác choáng ngợp về mức độ tiêu thụ thực phẩm vô độ. | background-photo + annotated | grid | img-04 | rise |
+| S07 | 48.880s–58.400s | Số lượng súp được nấu lên tới 3.000 lít, đủ để đổ đầy 18 cái bồn tắm. Nhưng ăn uống thôi vẫn chưa đủ đô, Francis Đệ Nhị còn tổ chức đủ màn trình diễn đặc biệt để đãi khách. | causal-chain | Dòng chảy 3.000 lít súp từ vạc nấu khổng lồ được dẫn truyền và phân bổ làm tràn ngập 18 chiếc bồn tắm nối tiếp nhau, trước khi chuyển biến thành sân khấu đại trình diễn. | background-photo + data | chart | vid-06, img-08 | wobble-drop |
+| S08 | 58.400s–66.340s | Bình thường anh em biết trò đu quay ngựa gỗ đúng không? Ông này chơi luôn một vòng quay bằng ngựa thật. Các kỵ sĩ sẽ vừa cưỡi ngựa vừa biểu diễn những pha nhào lộn, | mechanism | Ý niệm tầm thường về trò đu quay ngựa gỗ đồ chơi trẻ con bị gạt bỏ hoàn toàn, thay thế bằng đấu trường phi ngựa thật cuồng nhiệt và những động tác xiếc nhào lộn mạo hiểm của kỵ binh. | background-photo + quote | spotlight | vid-03, img-07 | spiral |
+| S09 | 66.340s–72.680s | rồi tái hiện cả những trận đấu thương thời Trung cổ. Nói chung là sau cái event họp kéo dài 9 tháng này, kho bạc nhiều bên cũng hao hụt đáng kể đấy! | conclusion | Những mũi thương va chạm tóe lửa trong trận quyết đấu kỵ sĩ dẫn thẳng đến cảnh cửa kho bạc bật tung, để dòng tiền vàng tuôn rơi không phanh sau 9 tháng xa hoa cùng cực. | background-photo + timeline | spotlight | vid-04, vid-02, img-06, img-09 | strike |
+
+## Ghi chú từng scene
+
+- **S01**: Mở đầu video bằng video chuyển động có sẵn vid-01 tạo nhịp cuốn hút ngay 15s đầu; giữ nguyên màu gốc tranh collage theo DNA.
+- **S02**: Thể hiện chức năng nghịch lý (paradox) bằng bố cục split lấn sân lãnh thổ; thời lượng 9.2s đủ độ sâu để người xem cảm nhận bước ngoặt tâm lý.
+- **S03**: Dùng vid-07 làm bằng chứng lịch sử (evidence); lớp document dùng thẻ dán highlight chuẩn DNA không vẽ tay mũi tên.
+- **S04**: Chuyển động mở bản vẽ unfold khớp với ngôn ngữ timeline kiến trúc; con số 575 m² được neo rõ ràng trong safe zone.
+- **S05**: Img-01 minh hoạ hoàn hảo trực quan hoá kích thước (building scale comparison) theo ví dụ thực chiến của DNA; thời lượng 8.28s đạt chuẩn tải đọc hiểu.
+- **S06**: Dùng ngôn ngữ annotated dạng nhãn chữ (không vẽ mũi tên); bám sát từng cue từ vựng trong lời thoại.
+- **S07**: Gộp beat súp và câu chuyển tiếp giải trí vào chung scene 9.52s để không bị vụn vặt; đáp ứng trọn vẹn quy tắc diễn giải số liệu trực quan của Style DNA.
+- **S08**: Entrance xoay spiral mô phỏng cảm giác vòng quay đu ngựa; visual language quote kết hợp punch phrase tạo điểm nhấn mạnh mẽ.
+- **S09**: Gộp cảnh đấu thương và kết cục thâm hụt kho bạc thành một cảnh dài 6.34s (đạt chuẩn ≥5s); dùng xen 2 media nguồn có sẵn tạo cú hích kịch tính đóng lại video.

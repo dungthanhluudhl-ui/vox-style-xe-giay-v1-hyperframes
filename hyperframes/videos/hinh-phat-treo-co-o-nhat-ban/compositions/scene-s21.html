@@ -5,372 +5,237 @@
   </head>
   <body>
     <template>
-      <link
-      rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap"
-    />
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap">
       <style>
-      * {
-        box-sizing: border-box;
-      }
-      body {
-        margin: 0;
-        padding: 0;
-        background-color: #0d0f12;
-        color: #e7e3d9;
-        font-family: "Be Vietnam Pro", sans-serif;
-        overflow: hidden;
-      }
-      #root {
-        position: relative;
-        width: 100%;
-        height: 100%;
-        background-color: #0d0f12;
-        overflow: hidden;
-      }
+/* hf-safe-colors (tất định từ style-tokens.json) */
+.hf-text-ink { color: #141414; }
+.hf-text-light { color: #F7F4EC; }
+.hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+.hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+.hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+.hf-plate-paper { color: #141414; background-color: #F5F0E4; }
 
-      /* Lớp Video nền bao phủ toàn khung hình */
-      .bg-video {
-        position: absolute;
-        inset: 0;
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        transform-origin: center center;
-        filter: contrast(1.1) brightness(0.85) saturate(0.9);
-        z-index: 1;
-      }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
-      /* Container đồ hoạ & overlay cho hiệu ứng transition-in 'rise' */
-      #scene-content {
-        position: absolute;
-        inset: 0;
-        width: 1080px;
-        height: 1920px;
-        overflow: hidden;
-        z-index: 2;
-        pointer-events: none;
-      }
+    body {
+      background-color: #141414;
+      font-family: "Be Vietnam Pro", sans-serif;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
 
-      /* Biến thể nền 'spotlight' kết hợp lưới ô vuông Vox 84px */
-      .spotlight-overlay {
-        position: absolute;
-        inset: 0;
-        background: radial-gradient(
-          circle at 50% 50%,
-          rgba(20, 20, 20, 0.3) 0%,
-          rgba(10, 12, 14, 0.88) 100%
-        );
-        z-index: 2;
-      }
-      .grid-layer {
-        position: absolute;
-        inset: 0;
-        background-image:
-          linear-gradient(to right, rgba(231, 227, 217, 0.08) 1.5px, transparent 1.5px),
-          linear-gradient(to bottom, rgba(231, 227, 217, 0.08) 1.5px, transparent 1.5px);
-        background-size: 84px 84px;
-        z-index: 3;
-      }
+    #root {
+      position: relative;
+      width: 1080px;
+      height: 1920px;
+      background-color: #E7E3D9;
+      overflow: hidden;
+    }
 
-      /* Nhãn chỉ mục điều tra ở phần trên (Safe zone Y: 180px) */
-      .header-meta {
-        position: absolute;
-        top: 180px;
-        left: 60px;
-        z-index: 10;
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-      }
-      .meta-pill {
-        display: inline-flex;
-        align-items: center;
-        gap: 10px;
-        background-color: rgba(20, 20, 20, 0.88);
-        border-left: 6px solid #ff6a1a;
-        padding: 8px 18px;
-        border-radius: 4px;
-        font-size: 22px;
-        font-weight: 900;
-        letter-spacing: 2px;
-        color: #f7f4ec;
-        text-transform: uppercase;
-        width: fit-content;
-      }
-      .meta-pill .dot {
-        color: #ff6a1a;
-      }
-      .meta-sub {
-        font-size: 24px;
-        font-weight: 700;
-        letter-spacing: 0.5px;
-        color: rgba(231, 227, 217, 0.85);
-        padding-left: 6px;
-      }
+    .clip {
+      position: absolute;
+      inset: 0;
+    }
 
-      /* Overlay Icon "warning" + Nhãn cảnh báo (xuất hiện tại 3.58s) */
-      .warning-card {
-        position: absolute;
-        top: 740px;
-        left: 60px;
-        right: 60px;
-        z-index: 20;
-        background-color: rgba(18, 18, 18, 0.94);
-        border: 2px solid rgba(255, 106, 26, 0.4);
-        border-left: 14px solid #ff6a1a;
-        border-radius: 12px;
-        padding: 38px 34px;
-        box-shadow: 0 24px 50px rgba(0, 0, 0, 0.7);
-        transform-origin: center center;
-        opacity: 0;
-      }
-      .warning-inner {
-        display: flex;
-        align-items: center;
-        gap: 30px;
-        transform-origin: center center;
-      }
-      .warning-svg {
-        width: 96px;
-        height: 96px;
-        flex-shrink: 0;
-      }
-      .warning-text-group {
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
-      }
-      .warning-tag {
-        font-size: 22px;
-        font-weight: 900;
-        letter-spacing: 3px;
-        color: #ff6a1a;
-        text-transform: uppercase;
-      }
-      .warning-headline {
-        font-size: 46px;
-        font-weight: 900;
-        line-height: 1.15;
-        letter-spacing: -0.5px;
-        color: #f7f4ec;
-      }
+    /* Media stage and camera rigs */
+    #media-viewport {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+    }
 
-      /* Overlay Punch-phrase "KHẮC NGHIỆT BÀO MÒN" (xuất hiện tại 5.69s) */
-      .punch-card {
-        position: absolute;
-        top: 740px;
-        left: 60px;
-        right: 60px;
-        z-index: 30;
-        background-color: #141414;
-        border-left: 16px solid #ff6a1a;
-        border-radius: 12px;
-        padding: 44px 40px;
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-        box-shadow: 0 30px 60px rgba(0, 0, 0, 0.85);
-        transform-origin: center center;
-        opacity: 0;
-      }
-      .punch-category {
-        font-size: 24px;
-        font-weight: 900;
-        letter-spacing: 3px;
-        color: #ff6a1a;
-        text-transform: uppercase;
-      }
-      .punch-statement {
-        font-size: 62px;
-        font-weight: 900;
-        line-height: 1.15;
-        letter-spacing: -1px;
-        color: #f7f4ec;
-        margin: 0;
-      }
+    #stage-punch {
+      position: absolute;
+      inset: 0;
+      transform-origin: 50% 45%;
+    }
 
-      /* Thanh cam nhận diện thương hiệu cố định mép đáy */
-      .bottom-signature-bar {
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        height: 12px;
-        background-color: #ff6a1a;
-        z-index: 100;
-      }
-    </style>
+    #camera-rig {
+      position: absolute;
+      top: 0;
+      left: -80px;
+      width: 1240px;
+      height: 1920px;
+      transform-origin: 50% 50%;
+    }
 
-    <div
-      id="root"
-      data-composition-id="scene-s21"
-      data-start="0"
-      data-width="1080"
-      data-height="1920"
-      data-duration="7"
-    >
-      <!-- Video nền: quản giáo tuần tra dọc hành lang u ám (vid-12) -->
-      <video
-        id="vid-12"
-        class="bg-video"
-        src="assets/vid-12-prison-guard-inmates-hallway.mp4"
-        data-start="0"
-        data-duration="7"
-        data-media-start="0.5"
-        muted
-        playsinline
-      ></video>
+    #prison-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center center;
+      display: block;
+    }
 
-      <!-- Container đồ họa & hiệu ứng trượt rise -->
-      <div id="scene-content">
-        <!-- Lớp phủ ánh sáng spotlight + lưới toạ độ Vox -->
-        <div class="spotlight-overlay"></div>
-        <div class="grid-layer"></div>
+    /* Spotlight variant vignette overlay */
+    .spotlight-vignette {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 4;
+      background: radial-gradient(circle at 50% 40%, rgba(20, 20, 20, 0.15) 0%, rgba(20, 20, 20, 0.65) 75%, rgba(15, 15, 15, 0.92) 100%);
+    }
 
-        <!-- Header nhãn ngữ cảnh phóng sự điều tra -->
-        <div id="header-meta" class="header-meta">
-          <div class="meta-pill">
-            <span class="dot">■</span> NHẬT BẢN // THỰC TẾ
+    /* Dark veil rising per assetTreatment */
+    #dark-veil {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 5;
+      background: linear-gradient(180deg, rgba(20, 20, 20, 0.25) 0%, rgba(20, 20, 20, 0.72) 42%, rgba(20, 20, 20, 0.96) 95%);
+      opacity: 0;
+    }
+
+    /* Text overlays */
+    .overlay-pane {
+      position: absolute;
+      pointer-events: none;
+    }
+
+    #overlay-annotated {
+      top: 340px;
+      left: 70px;
+      z-index: 10;
+      opacity: 0;
+    }
+
+    .annotated-badge {
+      display: inline-block;
+      background-color: #FF6A1A;
+      color: #141414;
+      font-weight: 900;
+      font-size: 44px;
+      line-height: 1.2;
+      letter-spacing: 0.5px;
+      padding: 18px 28px;
+      border-radius: 4px;
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+      text-transform: uppercase;
+    }
+
+    #overlay-punch {
+      top: 760px;
+      left: 70px;
+      right: 70px;
+      z-index: 20;
+      opacity: 0;
+    }
+
+    .punch-card {
+      display: inline-block;
+      width: 100%;
+      background-color: #141414;
+      color: #F7F4EC;
+      font-weight: 900;
+      font-size: 58px;
+      line-height: 1.25;
+      letter-spacing: -0.5px;
+      padding: 32px 36px;
+      border-left: 14px solid #FF6A1A;
+      border-radius: 4px;
+      box-shadow: 0 24px 54px rgba(0, 0, 0, 0.65);
+      text-transform: uppercase;
+    }
+
+    /* Brand visual signature: fixed bottom orange bar */
+    #brand-bar {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 12px;
+      background-color: #FF6A1A;
+      z-index: 100;
+    }
+  </style>
+
+  <div id="root" data-composition-id="scene-s21" data-width="1080" data-height="1920" data-duration="7.01">
+    <section id="shot-1" class="clip" data-start="0" data-duration="7.01">
+      <div id="media-viewport">
+        <div id="stage-punch">
+          <div id="camera-rig">
+            <img
+              id="prison-img"
+              class="clip"
+              data-start="0"
+              data-duration="7.01"
+              src="assets/img-06-prison-hallway-guard-inmates.jpg"
+              alt=""
+            />
           </div>
-          <div class="meta-sub">QUÁ TRÌNH CẢI TẠO</div>
-        </div>
-
-        <!-- Overlay 1: Icon warning + Nhãn cảnh báo (atMs: 167820 -> 3.58s) -->
-        <div id="warning-card" class="warning-card">
-          <div id="warning-inner" class="warning-inner">
-            <svg class="warning-svg" viewBox="0 0 100 100">
-              <!-- Tam giác cảnh báo vẽ nét viền tự vẽ dần -->
-              <path
-                id="warn-triangle"
-                d="M 50 14 L 92 84 L 8 84 Z"
-                fill="none"
-                stroke="#FF6A1A"
-                stroke-width="8"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              />
-              <!-- Dấu chấm than bên trong -->
-              <line
-                id="warn-bar"
-                x1="50"
-                y1="38"
-                x2="50"
-                y2="58"
-                stroke="#FF6A1A"
-                stroke-width="8"
-                stroke-linecap="round"
-              />
-              <circle id="warn-dot" cx="50" cy="72" r="4.5" fill="#FF6A1A" />
-            </svg>
-            <div class="warning-text-group">
-              <div class="warning-tag">CẢNH BÁO // HẬU QUẢ</div>
-              <div class="warning-headline">NGUY CƠ MẤT MẠNG</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Overlay 2: Punch-phrase "KHẮC NGHIỆT BÀO MÒN" (atMs: 169930 -> 5.69s) -->
-        <div id="punch-card" class="punch-card">
-          <div class="punch-category">KỶ LUẬT THÉP</div>
-          <h1 class="punch-statement">KHẮC NGHIỆT BÀO MÒN</h1>
         </div>
       </div>
 
-      <!-- Dải cam nhận diện đáy khung hình -->
-      <div class="bottom-signature-bar"></div>
-    </div>
+      <div class="spotlight-vignette"></div>
+      <div id="dark-veil"></div>
 
-    <script>
-      const tl = gsap.timeline({ paused: true });
+      <div id="overlay-annotated" class="overlay-pane">
+        <div class="annotated-badge hf-hl-orange">
+          <span>KHÔNG MẤY SUÔN SẺ</span>
+        </div>
+      </div>
 
-      // Thiết lập nét vẽ cho icon tam giác cảnh báo
-      const warnTri = document.getElementById("warn-triangle");
-      if (warnTri) {
-        const len = warnTri.getTotalLength();
-        warnTri.style.strokeDasharray = len;
-        warnTri.style.strokeDashoffset = len;
-      }
+      <div id="overlay-punch" class="overlay-pane">
+        <div class="punch-card hf-plate-ink">
+          <span>MẤT MẠNG KHI CẢI TẠO</span>
+        </div>
+      </div>
+    </section>
 
-      // 1. Transition-in "rise": Lớp nội dung đồ hoạ trượt từ dưới lên
-      tl.fromTo(
-        "#scene-content",
-        { y: 120, opacity: 0 },
-        { y: 0, opacity: 1, duration: 0.65, ease: "power3.out" },
-        0
-      );
+    <div id="brand-bar"></div>
+  </div>
 
-      // 2. Camera motion: Zoom-in liên tục mượt mà trên video nền trong suốt 7s
-      tl.fromTo(
-        "#vid-12",
-        { scale: 1.0 },
-        { scale: 1.12, duration: 7.0, ease: "none" },
-        0
-      );
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+  <script>
+    const tl = gsap.timeline({ paused: true });
 
-      // 3. Header thông tin điều tra trượt nhẹ xuất hiện
-      tl.fromTo(
-        "#header-meta",
-        { opacity: 0, x: -30 },
-        { opacity: 1, x: 0, duration: 0.45, ease: "power3.out" },
-        0.3
-      );
+    // Shot 1 punch entrance transition (0s - 0.45s)
+    tl.fromTo("#stage-punch",
+      { scale: 1.18, opacity: 0 },
+      { scale: 1.05, opacity: 1, duration: 0.45, ease: "power4.out" },
+      0
+    );
 
-      // 4. Overlay Icon "warning" + Nhãn cảnh báo (atMs: 167820 -> 3.58s)
-      tl.fromTo(
-        "#warning-card",
-        { opacity: 0, scale: 0.85, y: 30 },
-        { opacity: 1, scale: 1, y: 0, duration: 0.4, ease: "power3.out" },
-        3.58
-      );
+    // Camera pan-right: viewport pan right means image shifts left (x decreases)
+    tl.fromTo("#camera-rig",
+      { x: 30 },
+      { x: -130, duration: 7.0, ease: "power1.out" },
+      0
+    );
 
-      // Stroke drawing cho viền tam giác cảnh báo
-      if (warnTri) {
-        tl.to(
-          "#warn-triangle",
-          { strokeDashoffset: 0, duration: 0.45, ease: "power2.out" },
-          3.58
-        );
-      }
+    // Overlay 1 (annotated): "KHÔNG MẤY SUÔN SẺ" at 0.55s (164500ms), hold for 3000ms
+    tl.fromTo("#overlay-annotated",
+      { scale: 0.85, opacity: 0, y: 24 },
+      { scale: 1, opacity: 1, y: 0, duration: 0.45, ease: "power3.out" },
+      0.55
+    );
+    tl.fromTo("#overlay-annotated",
+      { opacity: 1, y: 0 },
+      { opacity: 0, y: -16, duration: 0.3, ease: "power2.in" },
+      3.55
+    );
 
-      // Hiệu ứng rung rinh (tremble) tách riêng trên container con #warning-inner (4.0s -> 5.4s)
-      tl.fromTo(
-        "#warning-inner",
-        { rotation: -1.5 },
-        {
-          rotation: 1.5,
-          duration: 0.1,
-          repeat: 13,
-          yoyo: true,
-          ease: "sine.inOut",
-        },
-        4.0
-      );
-      tl.to(
-        "#warning-inner",
-        { rotation: 0, duration: 0.08, ease: "power1.out" },
-        5.4
-      );
+    // Dark veil rises along with the analysis of harsh prison reality (3.6s - 4.4s)
+    tl.fromTo("#dark-veil",
+      { opacity: 0 },
+      { opacity: 0.82, duration: 0.75, ease: "power2.out" },
+      3.6
+    );
 
-      // Card warning kết thúc hoàn toàn trước khi punch-card xuất hiện
-      tl.to(
-        "#warning-card",
-        { opacity: 0, scale: 0.94, duration: 0.15, ease: "power2.in" },
-        5.48
-      );
+    // Overlay 2 (punch-phrase): "MẤT MẠNG KHI CẢI TẠO" at 4.05s (168000ms), hold until end of shot
+    tl.fromTo("#overlay-punch",
+      { scale: 0.82, opacity: 0, y: 32 },
+      { scale: 1, opacity: 1, y: 0, duration: 0.42, ease: "power3.out" },
+      4.05
+    );
 
-      // 5. Overlay Punch-phrase "KHẮC NGHIỆT BÀO MÒN" (atMs: 169930 -> 5.69s)
-      tl.fromTo(
-        "#punch-card",
-        { opacity: 0, scale: 0.92, y: 35 },
-        { opacity: 1, scale: 1, y: 0, duration: 0.42, ease: "power3.out" },
-        5.69
-      );
+    window.__timelines["scene-s21"] = tl;
+  </script>
 
-      // Đăng ký timeline duy nhất cho HyperFrames renderer
-      window.__timelines["scene-s21"] = tl;
-    </script>
-  
     </template>
   </body>
 </html>

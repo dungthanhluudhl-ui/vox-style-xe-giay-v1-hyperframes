@@ -33494,3 +33494,119 @@ hyperframes check FAILED (nội dung):
 - **2026-09-25T08:52:20.538Z** — `scripts/09-render.hf.mjs` — Render bản đầy đủ: out\hinh-phat-treo-co-o-nhat-ban-full.mp4, 218308988 bytes (208.2MB), 1048.5s render time, quality=looks. Xác minh ffprobe: duration=437.267s (khớp audio thật 437.721s), 1080x1920 h264. Capture mode: screenshot (tắt fast-capture do: a CSS 3D rendering context (perspective / preserve-3d / backface-visibility)). GPU mode: hardware (WebGL renderer vendor="Google Inc. (NVIDIA)" renderer="ANGLE (NVIDIA, NVIDIA GeForce GTX 1660 SUPER (0x000021C4) Direct3D11 vs_5_0 ps_5_0, D3D11)"). Stage timing: compile=10.5s, browser_probe=1.2s, video_extract=9.0s, audio_process=14.1s, file_server=0.4s, capture_calibration=7.5s, capture_disk=759.4s, encode=180.4s, assemble=35.8s.
 
 - **2026-09-25T14:40:36.269Z** — qa-blank-frame-audit: 54 scene kiểm tra, 4 bị flag (S01, S03, S16, S18) — report tại `C:\vox-style-xe-giay-v1-hyperframes\pipeline\videos\hinh-phat-treo-co-o-nhat-ban\contact-sheet\report.md`
+
+- **2026-09-28T10:35:32.641Z** — `scripts/05-scene-plan.router.mjs` — Scene Plan: 54 scene bằng ag/gemini-3.8-flash-high, ghi planning/videos/hinh-phat-treo-co-o-nhat-ban/scene-plan.json + scene-plan.md
+
+- **2026-09-28T10:37:27.000Z** — `scripts/06-shotlist.router.mjs` — Shotlist: 55 shot trên 54 scene bằng ag/gemini-3.8-flash-high, ghi planning/videos/hinh-phat-treo-co-o-nhat-ban/shotlist.json + shotlist.md
+
+- **2026-09-28T10:39:52.326Z** — `scripts/07-codegen.hf.router.mjs --video=hinh-phat-treo-co-o-nhat-ban --scenes=S09` — Codegen HyperFrames scene [S09] PASS sau 1 lần thử bằng ag/gemini-3.8-flash-high (review: cx/gpt-6-sol) — đã chuyển đổi thành compositions/scene-s09.html.
+
+- **2026-09-28T10:39:54.911Z** — `scripts/07-codegen.hf.router.mjs --video=hinh-phat-treo-co-o-nhat-ban --scenes=S08` — Codegen HyperFrames scene [S08] PASS sau 1 lần thử bằng ag/gemini-3.8-flash-high (review: cx/gpt-6-sol) — đã chuyển đổi thành compositions/scene-s08.html.
+
+- **2026-09-28T10:39:58.413Z** — `scripts/07-codegen.hf.router.mjs --video=hinh-phat-treo-co-o-nhat-ban --scenes=S05` — Codegen HyperFrames scene [S05] PASS sau 1 lần thử bằng ag/gemini-3.8-flash-high (review: cx/gpt-6-sol) — đã chuyển đổi thành compositions/scene-s05.html.
+
+- **2026-09-28T10:40:02.036Z** — `scripts/07-codegen.hf.router.mjs --video=hinh-phat-treo-co-o-nhat-ban --scenes=S07` — Codegen HyperFrames scene [S07] PASS sau 1 lần thử bằng ag/gemini-3.8-flash-high (review: cx/gpt-6-sol) — đã chuyển đổi thành compositions/scene-s07.html.
+
+- **2026-09-28T10:40:02.435Z** — `scripts/07-codegen.hf.router.mjs --video=hinh-phat-treo-co-o-nhat-ban --scenes=S03` — Codegen HyperFrames scene [S03] PASS sau 1 lần thử bằng ag/gemini-3.8-flash-high (review: cx/gpt-6-sol) — đã chuyển đổi thành compositions/scene-s03.html.
+
+- **2026-09-28T10:40:13.890Z** — `scripts/07-codegen.hf.router.mjs --video=hinh-phat-treo-co-o-nhat-ban --scenes=S06` — Codegen HyperFrames scene [S06] PASS sau 1 lần thử bằng ag/gemini-3.8-flash-high (review: cx/gpt-6-sol) — đã chuyển đổi thành compositions/scene-s06.html.
+
+- **2026-09-28T10:40:24.652Z** — `scripts/07-codegen.hf.router.mjs --video=hinh-phat-treo-co-o-nhat-ban --scenes=S04` — Codegen HyperFrames scene [S04] PASS sau 1 lần thử bằng ag/gemini-3.8-flash-high (review: cx/gpt-6-sol) — đã chuyển đổi thành compositions/scene-s04.html.
+
+- **2026-09-28T10:41:29.085Z** — `scripts/07-codegen.hf.router.mjs --video=hinh-phat-treo-co-o-nhat-ban --scenes=S14` — Codegen HyperFrames scene [S14] PASS sau 1 lần thử bằng ag/gemini-3.8-flash-high (review: cx/gpt-6-sol) — đã chuyển đổi thành compositions/scene-s14.html.
+
+- **2026-09-28T10:41:29.449Z** — `scripts/07-codegen.hf.router.mjs --video=hinh-phat-treo-co-o-nhat-ban --scenes=S13` — Codegen HyperFrames scene [S13] PASS sau 1 lần thử bằng ag/gemini-3.8-flash-high (review: cx/gpt-6-sol) — đã chuyển đổi thành compositions/scene-s13.html.
+
+- **2026-09-28T10:41:29.596Z** — `scripts/07-codegen.hf.router.mjs --video=hinh-phat-treo-co-o-nhat-ban --scenes=S11` — Codegen HyperFrames scene [S11] PASS sau 1 lần thử bằng ag/gemini-3.8-flash-high (review: cx/gpt-6-sol) — đã chuyển đổi thành compositions/scene-s11.html.
+
+- **2026-09-28T10:41:59.901Z** — `scripts/07-codegen.hf.router.mjs --video=hinh-phat-treo-co-o-nhat-ban --scenes=S02` — Codegen HyperFrames scene [S02] PASS sau 2 lần thử bằng ag/gemini-3.8-flash-high (review: cx/gpt-6-sol) — đã chuyển đổi thành compositions/scene-s02.html.
+
+- **2026-09-28T10:42:02.130Z** — `scripts/07-codegen.hf.router.mjs --video=hinh-phat-treo-co-o-nhat-ban --scenes=S16` — Codegen HyperFrames scene [S16] PASS sau 1 lần thử bằng ag/gemini-3.8-flash-high (review: cx/gpt-6-sol) — đã chuyển đổi thành compositions/scene-s16.html.
+
+- **2026-09-28T10:42:04.838Z** — `scripts/07-codegen.hf.router.mjs --video=hinh-phat-treo-co-o-nhat-ban --scenes=S10` — Codegen HyperFrames scene [S10] PASS sau 2 lần thử bằng ag/gemini-3.8-flash-high (review: cx/gpt-6-sol) — đã chuyển đổi thành compositions/scene-s10.html.
+
+- **2026-09-28T10:42:11.668Z** — `scripts/07-codegen.hf.router.mjs --video=hinh-phat-treo-co-o-nhat-ban --scenes=S17` — Codegen HyperFrames scene [S17] PASS sau 1 lần thử bằng ag/gemini-3.8-flash-high (review: cx/gpt-6-sol) — đã chuyển đổi thành compositions/scene-s17.html.
+
+- **2026-09-28T10:42:50.739Z** — `scripts/07-codegen.hf.router.mjs --video=hinh-phat-treo-co-o-nhat-ban --scenes=S19` — Codegen HyperFrames scene [S19] PASS sau 1 lần thử bằng ag/gemini-3.8-flash-high (review: cx/gpt-6-sol) — đã chuyển đổi thành compositions/scene-s19.html.
+
+- **2026-09-28T10:43:08.168Z** — `scripts/07-codegen.hf.router.mjs --video=hinh-phat-treo-co-o-nhat-ban --scenes=S01` — Codegen HyperFrames scene [S01] PASS sau 2 lần thử bằng ag/gemini-3.8-flash-high (review: cx/gpt-6-sol) — đã chuyển đổi thành compositions/scene-s01.html.
+
+- **2026-09-28T10:43:10.326Z** — `scripts/07-codegen.hf.router.mjs --video=hinh-phat-treo-co-o-nhat-ban --scenes=S18` — Codegen HyperFrames scene [S18] PASS sau 1 lần thử bằng ag/gemini-3.8-flash-high (review: cx/gpt-6-sol) — đã chuyển đổi thành compositions/scene-s18.html.
+
+- **2026-09-28T10:43:29.183Z** — `scripts/07-codegen.hf.router.mjs --video=hinh-phat-treo-co-o-nhat-ban --scenes=S21` — Codegen HyperFrames scene [S21] PASS sau 1 lần thử bằng ag/gemini-3.8-flash-high (review: cx/gpt-6-sol) — đã chuyển đổi thành compositions/scene-s21.html.
+
+- **2026-09-28T10:43:40.562Z** — `scripts/07-codegen.hf.router.mjs --video=hinh-phat-treo-co-o-nhat-ban --scenes=S20` — Codegen HyperFrames scene [S20] PASS sau 1 lần thử bằng ag/gemini-3.8-flash-high (review: cx/gpt-6-sol) — đã chuyển đổi thành compositions/scene-s20.html.
+
+- **2026-09-28T10:43:48.087Z** — `scripts/07-codegen.hf.router.mjs --video=hinh-phat-treo-co-o-nhat-ban --scenes=S22` — Codegen HyperFrames scene [S22] PASS sau 1 lần thử bằng ag/gemini-3.8-flash-high (review: cx/gpt-6-sol) — đã chuyển đổi thành compositions/scene-s22.html.
+
+- **2026-09-28T10:43:51.485Z** — `scripts/07-codegen.hf.router.mjs --video=hinh-phat-treo-co-o-nhat-ban --scenes=S15` — Codegen HyperFrames scene [S15] PASS sau 2 lần thử bằng ag/gemini-3.8-flash-high (review: cx/gpt-6-sol) — đã chuyển đổi thành compositions/scene-s15.html.
+
+- **2026-09-28T10:43:54.407Z** — `scripts/07-codegen.hf.router.mjs --video=hinh-phat-treo-co-o-nhat-ban --scenes=S23` — Codegen HyperFrames scene [S23] PASS sau 1 lần thử bằng ag/gemini-3.8-flash-high (review: cx/gpt-6-sol) — đã chuyển đổi thành compositions/scene-s23.html.
+
+- **2026-09-28T10:43:55.017Z** — `scripts/07-codegen.hf.router.mjs --video=hinh-phat-treo-co-o-nhat-ban --scenes=S12` — Codegen HyperFrames scene [S12] PASS sau 2 lần thử bằng ag/gemini-3.8-flash-high (review: cx/gpt-6-sol) — đã chuyển đổi thành compositions/scene-s12.html.
+
+- **2026-09-28T10:44:26.310Z** — `scripts/07-codegen.hf.router.mjs --video=hinh-phat-treo-co-o-nhat-ban --scenes=S25` — Codegen HyperFrames scene [S25] PASS sau 1 lần thử bằng ag/gemini-3.8-flash-high (review: cx/gpt-6-sol) — đã chuyển đổi thành compositions/scene-s25.html.
+
+- **2026-09-28T10:44:30.410Z** — `scripts/07-codegen.hf.router.mjs --video=hinh-phat-treo-co-o-nhat-ban --scenes=S27` — Codegen HyperFrames scene [S27] PASS sau 1 lần thử bằng ag/gemini-3.8-flash-high (review: cx/gpt-6-sol) — đã chuyển đổi thành compositions/scene-s27.html.
+
+- **2026-09-28T10:44:37.006Z** — `scripts/07-codegen.hf.router.mjs --video=hinh-phat-treo-co-o-nhat-ban --scenes=S26` — Codegen HyperFrames scene [S26] PASS sau 1 lần thử bằng ag/gemini-3.8-flash-high (review: cx/gpt-6-sol) — đã chuyển đổi thành compositions/scene-s26.html.
+
+- **2026-09-28T10:44:49.255Z** — `scripts/07-codegen.hf.router.mjs --video=hinh-phat-treo-co-o-nhat-ban --scenes=S24` — Codegen HyperFrames scene [S24] PASS sau 1 lần thử bằng ag/gemini-3.8-flash-high (review: cx/gpt-6-sol) — đã chuyển đổi thành compositions/scene-s24.html.
+
+- **2026-09-28T10:45:10.046Z** — `scripts/07-codegen.hf.router.mjs --video=hinh-phat-treo-co-o-nhat-ban --scenes=S29` — Codegen HyperFrames scene [S29] PASS sau 1 lần thử bằng ag/gemini-3.8-flash-high (review: cx/gpt-6-sol) — đã chuyển đổi thành compositions/scene-s29.html.
+
+- **2026-09-28T10:46:07.107Z** — `scripts/07-codegen.hf.router.mjs --video=hinh-phat-treo-co-o-nhat-ban --scenes=S35` — Codegen HyperFrames scene [S35] PASS sau 1 lần thử bằng ag/gemini-3.8-flash-high (review: cx/gpt-6-sol) — đã chuyển đổi thành compositions/scene-s35.html.
+
+- **2026-09-28T10:46:19.241Z** — `scripts/07-codegen.hf.router.mjs --video=hinh-phat-treo-co-o-nhat-ban --scenes=S34` — Codegen HyperFrames scene [S34] PASS sau 1 lần thử bằng ag/gemini-3.8-flash-high (review: cx/gpt-6-sol) — đã chuyển đổi thành compositions/scene-s34.html.
+
+- **2026-09-28T10:46:23.281Z** — `scripts/07-codegen.hf.router.mjs --video=hinh-phat-treo-co-o-nhat-ban --scenes=S36` — Codegen HyperFrames scene [S36] PASS sau 1 lần thử bằng ag/gemini-3.8-flash-high (review: cx/gpt-6-sol) — đã chuyển đổi thành compositions/scene-s36.html.
+
+- **2026-09-28T10:46:33.944Z** — `scripts/07-codegen.hf.router.mjs --video=hinh-phat-treo-co-o-nhat-ban --scenes=S31` — Codegen HyperFrames scene [S31] PASS sau 1 lần thử bằng ag/gemini-3.8-flash-high (review: cx/gpt-6-sol) — đã chuyển đổi thành compositions/scene-s31.html.
+
+- **2026-09-28T10:46:35.622Z** — `scripts/07-codegen.hf.router.mjs --video=hinh-phat-treo-co-o-nhat-ban --scenes=S33` — Codegen HyperFrames scene [S33] PASS sau 2 lần thử bằng ag/gemini-3.8-flash-high (review: cx/gpt-6-sol) — đã chuyển đổi thành compositions/scene-s33.html.
+
+- **2026-09-28T10:46:50.576Z** — `scripts/07-codegen.hf.router.mjs --video=hinh-phat-treo-co-o-nhat-ban --scenes=S28` — Codegen HyperFrames scene [S28] PASS sau 2 lần thử bằng ag/gemini-3.8-flash-high (review: cx/gpt-6-sol) — đã chuyển đổi thành compositions/scene-s28.html.
+
+- **2026-09-28T10:46:55.338Z** — `scripts/07-codegen.hf.router.mjs --video=hinh-phat-treo-co-o-nhat-ban --scenes=S38` — Codegen HyperFrames scene [S38] PASS sau 1 lần thử bằng ag/gemini-3.8-flash-high (review: cx/gpt-6-sol) — đã chuyển đổi thành compositions/scene-s38.html.
+
+- **2026-09-28T10:47:03.361Z** — `scripts/07-codegen.hf.router.mjs --video=hinh-phat-treo-co-o-nhat-ban --scenes=S32` — Codegen HyperFrames scene [S32] PASS sau 2 lần thử bằng ag/gemini-3.8-flash-high (review: cx/gpt-6-sol) — đã chuyển đổi thành compositions/scene-s32.html.
+
+- **2026-09-28T10:47:11.082Z** — `scripts/07-codegen.hf.router.mjs --video=hinh-phat-treo-co-o-nhat-ban --scenes=S30` — Codegen HyperFrames scene [S30] PASS sau 2 lần thử bằng ag/gemini-3.8-flash-high (review: cx/gpt-6-sol) — đã chuyển đổi thành compositions/scene-s30.html.
+
+- **2026-09-28T10:47:22.460Z** — `scripts/07-codegen.hf.router.mjs --video=hinh-phat-treo-co-o-nhat-ban --scenes=S37` — Codegen HyperFrames scene [S37] PASS sau 1 lần thử bằng ag/gemini-3.8-flash-high (review: cx/gpt-6-sol) — đã chuyển đổi thành compositions/scene-s37.html.
+
+- **2026-09-28T10:48:38.366Z** — `scripts/07-codegen.hf.router.mjs --video=hinh-phat-treo-co-o-nhat-ban --scenes=S44` — Codegen HyperFrames scene [S44] PASS sau 1 lần thử bằng ag/gemini-3.8-flash-high (review: cx/gpt-6-sol) — đã chuyển đổi thành compositions/scene-s44.html.
+
+- **2026-09-28T10:48:52.173Z** — `scripts/07-codegen.hf.router.mjs --video=hinh-phat-treo-co-o-nhat-ban --scenes=S42` — Codegen HyperFrames scene [S42] PASS sau 1 lần thử bằng ag/gemini-3.8-flash-high (review: cx/gpt-6-sol) — đã chuyển đổi thành compositions/scene-s42.html.
+
+- **2026-09-28T10:49:08.638Z** — `scripts/07-codegen.hf.router.mjs --video=hinh-phat-treo-co-o-nhat-ban --scenes=S40` — Codegen HyperFrames scene [S40] PASS sau 1 lần thử bằng ag/gemini-3.8-flash-high (review: cx/gpt-6-sol) — đã chuyển đổi thành compositions/scene-s40.html.
+
+- **2026-09-28T10:49:10.672Z** — `scripts/07-codegen.hf.router.mjs --video=hinh-phat-treo-co-o-nhat-ban --scenes=S41` — Codegen HyperFrames scene [S41] PASS sau 2 lần thử bằng ag/gemini-3.8-flash-high (review: cx/gpt-6-sol) — đã chuyển đổi thành compositions/scene-s41.html.
+
+- **2026-09-28T10:49:10.730Z** — `scripts/07-codegen.hf.router.mjs --video=hinh-phat-treo-co-o-nhat-ban --scenes=S47` — Codegen HyperFrames scene [S47] PASS sau 1 lần thử bằng ag/gemini-3.8-flash-high (review: cx/gpt-6-sol) — đã chuyển đổi thành compositions/scene-s47.html.
+
+- **2026-09-28T10:49:26.996Z** — `scripts/07-codegen.hf.router.mjs --video=hinh-phat-treo-co-o-nhat-ban --scenes=S39` — Codegen HyperFrames scene [S39] PASS sau 2 lần thử bằng ag/gemini-3.8-flash-high (review: cx/gpt-6-sol) — đã chuyển đổi thành compositions/scene-s39.html.
+
+- **2026-09-28T10:49:29.147Z** — `scripts/07-codegen.hf.router.mjs --video=hinh-phat-treo-co-o-nhat-ban --scenes=S43` — Codegen HyperFrames scene [S43] PASS sau 1 lần thử bằng ag/gemini-3.8-flash-high (review: cx/gpt-6-sol) — đã chuyển đổi thành compositions/scene-s43.html.
+
+- **2026-09-28T10:49:43.501Z** — `scripts/07-codegen.hf.router.mjs --video=hinh-phat-treo-co-o-nhat-ban --scenes=S46` — Codegen HyperFrames scene [S46] PASS sau 2 lần thử bằng ag/gemini-3.8-flash-high (review: cx/gpt-6-sol) — đã chuyển đổi thành compositions/scene-s46.html.
+
+- **2026-09-28T10:50:09.845Z** — `scripts/07-codegen.hf.router.mjs --video=hinh-phat-treo-co-o-nhat-ban --scenes=S45` — Codegen HyperFrames scene [S45] PASS sau 2 lần thử bằng ag/gemini-3.8-flash-high (review: cx/gpt-6-sol) — đã chuyển đổi thành compositions/scene-s45.html.
+
+- **2026-09-28T10:50:31.245Z** — `scripts/07-codegen.hf.router.mjs --video=hinh-phat-treo-co-o-nhat-ban --scenes=S53` — Codegen HyperFrames scene [S53] PASS sau 1 lần thử bằng ag/gemini-3.8-flash-high (review: cx/gpt-6-sol) — đã chuyển đổi thành compositions/scene-s53.html.
+
+- **2026-09-28T10:50:31.583Z** — `scripts/07-codegen.hf.router.mjs --video=hinh-phat-treo-co-o-nhat-ban --scenes=S51` — Codegen HyperFrames scene [S51] PASS sau 1 lần thử bằng ag/gemini-3.8-flash-high (review: cx/gpt-6-sol) — đã chuyển đổi thành compositions/scene-s51.html.
+
+- **2026-09-28T10:50:31.725Z** — `scripts/07-codegen.hf.router.mjs --video=hinh-phat-treo-co-o-nhat-ban --scenes=S48` — Codegen HyperFrames scene [S48] PASS sau 2 lần thử bằng ag/gemini-3.8-flash-high (review: cx/gpt-6-sol) — đã chuyển đổi thành compositions/scene-s48.html.
+
+- **2026-09-28T10:50:37.026Z** — `scripts/07-codegen.hf.router.mjs --video=hinh-phat-treo-co-o-nhat-ban --scenes=S50` — Codegen HyperFrames scene [S50] PASS sau 1 lần thử bằng ag/gemini-3.8-flash-high (review: cx/gpt-6-sol) — đã chuyển đổi thành compositions/scene-s50.html.
+
+- **2026-09-28T10:50:54.849Z** — `scripts/07-codegen.hf.router.mjs --video=hinh-phat-treo-co-o-nhat-ban --scenes=S54` — Codegen HyperFrames scene [S54] PASS sau 1 lần thử bằng ag/gemini-3.8-flash-high (review: cx/gpt-6-sol) — đã chuyển đổi thành compositions/scene-s54.html.
+
+- **2026-09-28T10:51:09.408Z** — `scripts/07-codegen.hf.router.mjs --video=hinh-phat-treo-co-o-nhat-ban --scenes=S49` — Codegen HyperFrames scene [S49] PASS sau 2 lần thử bằng ag/gemini-3.8-flash-high (review: cx/gpt-6-sol) — đã chuyển đổi thành compositions/scene-s49.html.
+
+- **2026-09-28T10:53:27.907Z** — `scripts/07-codegen.hf.router.mjs --video=hinh-phat-treo-co-o-nhat-ban --scenes=S52` — Codegen HyperFrames scene [S52] PASS sau 3 lần thử bằng ag/gemini-3.8-flash-high (review: cx/gpt-6-sol) — đã chuyển đổi thành compositions/scene-s52.html.
+
+- **2026-09-28T10:55:50.004Z** — `scripts/07b-integration-check.hf.mjs --video=hinh-phat-treo-co-o-nhat-ban` — Stage 7b integration check PASS — 54/54 scene, có audio, có caption-track, hyperframes check ok=true (165 mốc/55 shot, 115.5s).
+
+- **2026-09-28T11:14:44.206Z** — `scripts/09-render.hf.mjs` — Render bản đầy đủ: out\hinh-phat-treo-co-o-nhat-ban-full.mp4, 475091093 bytes (453.1MB), 1133.6s render time, quality=looks. Xác minh ffprobe: duration=437.267s (khớp audio thật 437.721s), 1080x1920 h264. Capture mode: screenshot (tắt fast-capture do: a CSS 3D rendering context (perspective / preserve-3d / backface-visibility)). GPU mode: hardware (WebGL renderer vendor="Google Inc. (NVIDIA)" renderer="ANGLE (NVIDIA, NVIDIA GeForce GTX 1660 SUPER (0x000021C4) Direct3D11 vs_5_0 ps_5_0, D3D11)"). Stage timing: compile=7.0s, browser_probe=1.4s, video_extract=15.2s, audio_process=14.1s, file_server=0.0s, capture_calibration=5.4s, capture_disk=762.7s, encode=278.5s, assemble=34.2s.

@@ -112,7 +112,20 @@ if (!fs.existsSync(path.join(vp.hfProjectDir, "hyperframes.json"))) {
   fs.mkdirSync(vp.hfProjectDir, { recursive: true });
   for (const f of fs.readdirSync(tmpDir)) {
     const dest = path.join(vp.hfProjectDir, f);
-    if (!fs.existsSync(dest)) fs.cpSync(path.join(tmpDir, f), dest, { recursive: true });
+    if (fs.existsSync(dest)) continue;
+    try {
+      fs.cpSync(path.join(tmpDir, f), dest, { recursive: true });
+    } catch (e) {
+      // Race condition khi N scene cùng bootstrap project chung lần đầu (mọi tiến trình tự init
+      // ra bộ file GIỐNG HỆT trong tmp dir riêng rồi cùng copy vào 1 đích chung) — 2 tiến trình có
+      // thể cùng cpSync trúng đúng 1 file cùng lúc, Windows khoá file gây EPIPE/EBUSY dù nội dung
+      // cả 2 bên đang ghi là như nhau. An toàn bỏ qua: tiến trình đang tranh chấp file này chắc
+      // chắn sẽ hoàn tất nó. Tổng quát hoá từ bản vá riêng cho meta.json (sự cố
+      // lay-bac-tu-phim-x-quang, 2026-09-28) sang TOÀN BỘ vòng lặp copy sau khi gặp lại đúng họ
+      // lỗi này trên package.json (video vua-bao-chua-han-quoc, 2026-09-29, xem
+      // planning/responsibility-matrix.md mục 6).
+      console.warn(`  ⚠ Bỏ qua copy "${f}" (đọc/ghi trúng lúc process khác đang bootstrap song song, không ảnh hưởng render/check): ${e.message}`);
+    }
   }
   fs.rmSync(tmpDir, { recursive: true, force: true });
   const metaPath = path.join(vp.hfProjectDir, "meta.json");
