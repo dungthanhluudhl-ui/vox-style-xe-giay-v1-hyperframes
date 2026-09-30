@@ -1,0 +1,453 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+      /* hf-safe-colors (tất định từ style-tokens.json) */
+      .hf-text-ink { color: #141414; }
+      .hf-text-light { color: #F7F4EC; }
+      .hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+      .hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+      .hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+      .hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+      *, *::before, *::after {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #E7E3D9;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      /* Khung root đúng hợp đồng HyperFrames */
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+
+      /* Quy ước clip: absolute inset 0 */
+      .clip {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+      }
+
+      /* Camera Layer chứa background-photo zoom-out */
+      #camera-wrapper {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        transform-origin: 50% 50%;
+        will-change: transform;
+      }
+
+      .bg-img {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+
+      /* Unfold Curtain Transition In */
+      .unfold-curtain {
+        position: absolute;
+        left: 0;
+        right: 0;
+        background-color: #141414;
+        z-index: 80;
+        will-change: transform;
+      }
+
+      #unfold-top {
+        top: 0;
+        height: 50%;
+        transform-origin: top center;
+      }
+
+      #unfold-bottom {
+        bottom: 0;
+        height: 50%;
+        transform-origin: bottom center;
+      }
+
+      /* Overlay Containers: Căn giữa trong safe zone */
+      .overlay-center-layer {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        pointer-events: none;
+      }
+
+      /* OVERLAY 1: Clock Icon & Diagram Badge */
+      .clock-badge-plate {
+        background-color: #141414;
+        border: 2px solid #FF6A1A;
+        border-radius: 18px;
+        padding: 24px 38px;
+        display: flex;
+        align-items: center;
+        gap: 26px;
+        box-shadow: 0 16px 36px rgba(0, 0, 0, 0.6);
+        margin-top: -240px; /* An toàn trong usable band Y: 160-1390 */
+        will-change: transform, opacity;
+      }
+
+      .clock-svg-box {
+        width: 88px;
+        height: 88px;
+        flex-shrink: 0;
+      }
+
+      .clock-meta {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      .clock-tag {
+        color: #FF6A1A;
+        font-size: 24px;
+        font-weight: 900;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+      }
+
+      .clock-desc {
+        color: #F7F4EC;
+        font-size: 38px;
+        font-weight: 900;
+        line-height: 1.25;
+        letter-spacing: 0.5px;
+      }
+
+      /* OVERLAY 2: Label: KHÔNG PHẢI MẤT KIỂM SOÁT */
+      .label-badge-plate {
+        background-color: #141414;
+        border-left: 8px solid #FF6A1A;
+        border-radius: 12px;
+        padding: 28px 46px;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+        box-shadow: 0 20px 42px rgba(0, 0, 0, 0.65);
+        margin-top: 40px;
+        max-width: 920px;
+        will-change: transform, opacity;
+      }
+
+      .label-sub {
+        color: #FF6A1A;
+        font-size: 22px;
+        font-weight: 900;
+        letter-spacing: 2.5px;
+        text-transform: uppercase;
+      }
+
+      .label-title {
+        color: #F7F4EC;
+        font-size: 52px;
+        font-weight: 900;
+        line-height: 1.25;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+      }
+
+      /* OVERLAY 3: Punch-phrase: QUYẾT ĐỊNH KHÔNG DỪNG LẠI */
+      .punch-phrase-plate {
+        background-color: #141414;
+        border: 3.5px solid #FF6A1A;
+        border-radius: 20px;
+        padding: 42px 48px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: 16px;
+        box-shadow: 0 24px 56px rgba(0, 0, 0, 0.75);
+        margin-top: -20px;
+        max-width: 960px;
+        width: 90%;
+        will-change: transform, opacity;
+      }
+
+      .punch-lead {
+        color: #F7F4EC;
+        font-size: 64px;
+        font-weight: 900;
+        line-height: 1.2;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+      }
+
+      .punch-highlight-box {
+        background-color: #FF6A1A;
+        border-radius: 10px;
+        padding: 10px 28px;
+        display: inline-block;
+        transform-origin: center center;
+        will-change: transform;
+      }
+
+      .punch-highlight-text {
+        color: #141414; /* Tương phản 6.4:1 trên nền cam WCAG */
+        font-size: 66px;
+        font-weight: 900;
+        line-height: 1.2;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+      }
+
+      /* Chữ ký thị giác: Thanh cam đáy khung hình cố định */
+      .bottom-brand-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 12px;
+        background-color: #FF6A1A;
+        z-index: 100;
+      }
+    </style>
+
+    <!-- Root composition độc lập S41: duration = 8.95s (361210ms -> 370160ms) -->
+    <div
+      id="root"
+      data-composition-id="scene-s41"
+      data-width="1080"
+      data-height="1920"
+      data-duration="8.95"
+      data-start="0"
+    >
+      <!-- Base Background & Media Clip: img-01 full-frame, zoom-out chậm rãi từ 1.1x về 1.0x, giữ nguyên màu sắc gốc -->
+      <section id="shot-1-bg" class="clip" data-start="0" data-duration="8.95">
+        <div id="camera-wrapper">
+          <img
+            class="bg-img"
+            src="assets/img-01-justice-scale-vigilantism-defense.jpg"
+            alt="Cán cân công lý và câu hỏi pháp lý"
+          />
+        </div>
+      </section>
+
+      <!-- Transition In Unfold Curtain (0s -> 0.75s) -->
+      <div id="unfold-top" class="unfold-curtain"></div>
+      <div id="unfold-bottom" class="unfold-curtain"></div>
+
+      <!-- OVERLAY 1: Icon clock & Diagram (362400ms -> start = 1.19s, hold = 2.2s) -->
+      <div
+        id="clip-overlay-clock"
+        class="clip overlay-center-layer"
+        data-start="1.19"
+        data-duration="2.2"
+      >
+        <div id="clock-card" class="clock-badge-plate">
+          <div class="clock-svg-box">
+            <svg
+              id="clock-svg"
+              viewBox="0 0 100 100"
+              width="88"
+              height="88"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <!-- Viền tròn đồng hồ tự vẽ stroke -->
+              <circle
+                id="clock-rim"
+                cx="50"
+                cy="50"
+                r="40"
+                stroke="#FF6A1A"
+                stroke-width="7"
+                stroke-linecap="round"
+                transform="rotate(-90 50 50)"
+              />
+              <!-- Kim giờ -->
+              <line
+                id="clock-hour"
+                x1="50"
+                y1="50"
+                x2="50"
+                y2="28"
+                stroke="#F7F4EC"
+                stroke-width="7"
+                stroke-linecap="round"
+              />
+              <!-- Kim phút xoay -->
+              <line
+                id="clock-minute"
+                x1="50"
+                y1="50"
+                x2="68"
+                y2="50"
+                stroke="#FF6A1A"
+                stroke-width="5.5"
+                stroke-linecap="round"
+              />
+              <!-- Trục giữa -->
+              <circle cx="50" cy="50" r="5" fill="#FF6A1A" />
+            </svg>
+          </div>
+          <div class="clock-meta">
+            <span class="clock-tag">THỜI GIAN ĐÃ QUA</span>
+            <span class="clock-desc">CƠ HỘI ĐỂ DỪNG LẠI</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- OVERLAY 2: Label KHÔNG PHẢI MẤT KIỂM SOÁT (365200ms -> start = 3.99s, hold = 2.2s) -->
+      <div
+        id="clip-overlay-label"
+        class="clip overlay-center-layer"
+        data-start="3.99"
+        data-duration="2.2"
+      >
+        <div id="label-card" class="label-badge-plate">
+          <span class="label-sub">NGUYÊN NHÂN THỰC SỰ</span>
+          <span class="label-title">KHÔNG PHẢI MẤT KIỂM SOÁT</span>
+        </div>
+      </div>
+
+      <!-- OVERLAY 3: Punch-phrase QUYẾT ĐỊNH KHÔNG DỪNG LẠI (367400ms -> start = 6.19s, hold = 2.76s đến hết) -->
+      <div
+        id="clip-overlay-punch"
+        class="clip overlay-center-layer"
+        data-start="6.19"
+        data-duration="2.76"
+      >
+        <div id="punch-card" class="punch-phrase-plate">
+          <div class="punch-lead">TẤT CẢ LÀ VÌ</div>
+          <div id="punch-box" class="punch-highlight-box">
+            <span class="punch-highlight-text">QUYẾT ĐỊNH KHÔNG DỪNG LẠI</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Thanh cam đáy cố định nhận diện thương hiệu Vox -->
+      <div class="bottom-brand-bar"></div>
+    </div>
+
+    <!-- GSAP seekable timeline script -->
+    <script>
+      // Setup đo đạc stroke SVG cho icon clock đúng chuẩn svg-path-draw
+      const clockRim = document.getElementById("clock-rim");
+      if (clockRim) {
+        const rimLength = clockRim.getTotalLength();
+        clockRim.style.strokeDasharray = rimLength;
+        clockRim.style.strokeDashoffset = rimLength;
+      }
+
+      // Khởi tạo duy nhất 1 paused timeline trên window.__timelines["scene-s41"]
+      const tl = gsap.timeline({ paused: true });
+
+      // 1. Camera Motion: Zoom-out từ 1.1x về 1.0x xuyên suốt toàn bộ scene (0s -> 8.95s)
+      tl.fromTo(
+        "#camera-wrapper",
+        { scale: 1.1 },
+        { scale: 1.0, duration: 8.95, ease: "none" },
+        0
+      );
+
+      // 2. Transition In: Unfold hai cánh rèm mở dọc từ giữa màn hình (0.05s -> 0.75s)
+      tl.fromTo(
+        "#unfold-top",
+        { scaleY: 1 },
+        { scaleY: 0, duration: 0.7, ease: "power3.inOut" },
+        0.05
+      );
+      tl.fromTo(
+        "#unfold-bottom",
+        { scaleY: 1 },
+        { scaleY: 0, duration: 0.7, ease: "power3.inOut" },
+        0.05
+      );
+
+      // 3. OVERLAY 1: Icon clock & Diagram card (từ 1.19s đến 3.39s)
+      tl.fromTo(
+        "#clock-card",
+        { scale: 0.85, opacity: 0, y: 30 },
+        { scale: 1.0, opacity: 1, y: 0, duration: 0.45, ease: "power3.out" },
+        1.19
+      );
+
+      // SVG path drawing theo rule svg-path-draw
+      if (clockRim) {
+        const rimLength = clockRim.getTotalLength();
+        tl.fromTo(
+          clockRim,
+          { strokeDashoffset: rimLength },
+          { strokeDashoffset: 0, duration: 0.65, ease: "power2.out" },
+          1.28
+        );
+      }
+
+      // Kim phút xoay biểu thị thời gian trôi qua rồi khựng lại
+      tl.fromTo(
+        "#clock-minute",
+        { rotation: 0, transformOrigin: "50px 50px" },
+        { rotation: 140, duration: 0.9, ease: "power2.inOut" },
+        1.35
+      );
+
+      // Card 1 rút lui trước khi hết clip (3.15s)
+      tl.to(
+        "#clock-card",
+        { opacity: 0, y: -25, duration: 0.2, ease: "power2.in" },
+        3.15
+      );
+
+      // 4. OVERLAY 2: Label: KHÔNG PHẢI MẤT KIỂM SOÁT (từ 3.99s đến 6.19s)
+      tl.fromTo(
+        "#label-card",
+        { scale: 0.9, opacity: 0, y: 40 },
+        { scale: 1.0, opacity: 1, y: 0, duration: 0.5, ease: "power3.out" },
+        3.99
+      );
+
+      // Card 2 rút lui trước khi hết clip (5.95s)
+      tl.to(
+        "#label-card",
+        { opacity: 0, y: -25, duration: 0.2, ease: "power2.in" },
+        5.95
+      );
+
+      // 5. OVERLAY 3: Punch-phrase: QUYẾT ĐỊNH KHÔNG DỪNG LẠI (từ 6.19s đến 8.95s)
+      tl.fromTo(
+        "#punch-card",
+        { scale: 0.86, opacity: 0, y: 40 },
+        { scale: 1.0, opacity: 1, y: 0, duration: 0.55, ease: "power3.out" },
+        6.19
+      );
+
+      tl.fromTo(
+        "#punch-box",
+        { scale: 0.88, opacity: 0 },
+        { scale: 1.0, opacity: 1, duration: 0.45, ease: "back.out(1.2)" },
+        6.5
+      );
+
+      // Đăng ký timeline cho HyperFrames seek
+      window.__timelines = window.__timelines || {};
+      window.__timelines["scene-s41"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

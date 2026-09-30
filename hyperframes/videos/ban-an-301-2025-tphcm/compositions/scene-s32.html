@@ -1,0 +1,442 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+/* hf-safe-colors (tất định từ style-tokens.json) */
+.hf-text-ink { color: #141414; }
+.hf-text-light { color: #F7F4EC; }
+.hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+.hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+.hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+.hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #E7E3D9;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+      #root {
+        position: relative;
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+        background: #E7E3D9;
+      }
+      .clip {
+        position: absolute;
+        inset: 0;
+      }
+
+      /* Dải cam chữ ký thương hiệu ở đáy khung hình */
+      .bottom-orange-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 10px;
+        background-color: #FF6A1A;
+        z-index: 100;
+      }
+
+      /* Khung camera và ảnh nền bao phủ toàn khung */
+      .camera-viewport {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+      }
+      .camera-rig {
+        position: absolute;
+        inset: 0;
+        transform-origin: 50% 40%;
+        will-change: transform;
+      }
+      .bg-photo {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      /* Biến thể nền Chart: 4 đường kẻ ngang đặc trưng và vạch cam */
+      .chart-grid-overlay {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        z-index: 5;
+      }
+      .chart-line {
+        position: absolute;
+        left: 0;
+        right: 0;
+        height: 1.5px;
+        background: rgba(20, 20, 20, 0.25);
+      }
+      .chart-line-1 { top: 20%; }
+      .chart-line-2 { top: 40%; }
+      .chart-line-3 { top: 60%; }
+      .chart-line-4 { top: 80%; }
+      .chart-tick {
+        position: absolute;
+        left: 0;
+        width: 16px;
+        height: 4px;
+        background-color: #FF6A1A;
+      }
+
+      /* Lớp overlay chứa các thẻ thông tin (z-index cao hơn nền) */
+      .ui-layer {
+        position: absolute;
+        inset: 0;
+        z-index: 20;
+        pointer-events: none;
+      }
+
+      /* Header Tag: Nhãn phân loại hồ sơ tư pháp */
+      .header-tag {
+        position: absolute;
+        top: 170px;
+        left: 50px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        background-color: #141414;
+        padding: 12px 24px;
+        border-radius: 8px;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+      }
+      .header-tag-bullet {
+        width: 10px;
+        height: 10px;
+        background-color: #FF6A1A;
+        border-radius: 50%;
+      }
+      .header-tag-text {
+        font-size: 26px;
+        font-weight: 900;
+        color: #F7F4EC;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+      }
+
+      /* Thẻ bồi thường (Card 1) - Tấm nền đặc #141414 đảm bảo tương phản */
+      .compensation-card {
+        position: absolute;
+        top: 290px;
+        left: 50px;
+        right: 50px;
+        background-color: #141414;
+        border-radius: 16px;
+        padding: 36px 40px;
+        border-left: 10px solid #FF6A1A;
+        box-shadow: 0 16px 36px rgba(0, 0, 0, 0.4);
+      }
+      .card-top-row {
+        display: flex;
+        align-items: center;
+        gap: 24px;
+        margin-bottom: 24px;
+      }
+      .icon-container {
+        width: 90px;
+        height: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .money-svg {
+        width: 90px;
+        height: 60px;
+      }
+      .money-svg path,
+      .money-svg rect,
+      .money-svg circle {
+        fill: none;
+        stroke: #FF6A1A;
+        stroke-width: 3.5;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+      .card-badge {
+        display: inline-block;
+        background-color: #FF6A1A;
+        color: #141414;
+        font-size: 22px;
+        font-weight: 900;
+        padding: 6px 16px;
+        border-radius: 6px;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+      }
+
+      .compensation-title {
+        font-size: 32px;
+        font-weight: 700;
+        color: #F7F4EC;
+        margin-bottom: 12px;
+      }
+      .compensation-value-box {
+        background-color: #1F1F1F;
+        border-radius: 10px;
+        padding: 20px 24px;
+        margin-top: 14px;
+      }
+      .compensation-value {
+        font-size: 46px;
+        font-weight: 900;
+        color: #FF6A1A;
+        line-height: 1.25;
+        letter-spacing: 0.5px;
+      }
+
+      /* Thẻ đơn bãi nại / xin giảm án (Card 2) */
+      .mitigation-card {
+        position: absolute;
+        top: 750px;
+        left: 50px;
+        right: 50px;
+        background-color: #141414;
+        border-radius: 16px;
+        padding: 34px 40px;
+        border-left: 10px solid #F7F4EC;
+        box-shadow: 0 16px 36px rgba(0, 0, 0, 0.4);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .mitigation-info {
+        flex: 1;
+      }
+      .mitigation-subtitle {
+        font-size: 24px;
+        font-weight: 700;
+        color: #FF6A1A;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        margin-bottom: 10px;
+      }
+      .mitigation-main-text {
+        font-size: 44px;
+        font-weight: 900;
+        color: #F7F4EC;
+        line-height: 1.3;
+      }
+
+      /* Con dấu mộc chứng thực pháp lý */
+      .stamp-seal {
+        width: 140px;
+        height: 140px;
+        border: 4px dashed #FF6A1A;
+        border-radius: 50%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 8px;
+        transform: rotate(-8deg);
+        background-color: #1A1A1A;
+      }
+      .stamp-inner-text-top {
+        font-size: 16px;
+        font-weight: 900;
+        color: #FF6A1A;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+      .stamp-inner-icon {
+        font-size: 32px;
+        font-weight: 900;
+        color: #FF6A1A;
+        margin: 2px 0;
+      }
+      .stamp-inner-text-bot {
+        font-size: 15px;
+        font-weight: 900;
+        color: #F7F4EC;
+        text-transform: uppercase;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s32"
+      data-width="1080"
+      data-height="1920"
+      data-duration="10"
+    >
+      <!-- Dải cam đáy cố định nhận diện thương hiệu -->
+      <div class="bottom-orange-bar"></div>
+
+      <!-- Shot S32-1: Tập tài liệu biên lai nộp tiền và đơn bãi nại -->
+      <section class="clip" data-start="0" data-duration="10">
+        <!-- Khung camera chuyển động zoom-in nhẹ 1.0x -> 1.08x -->
+        <div class="camera-viewport">
+          <div id="camera-rig" class="camera-rig">
+            <img
+              id="bg-photo"
+              class="bg-photo"
+              src="assets/img-07-mitigating-circumstances-legal-documents.jpg"
+              alt="Hồ sơ tài liệu bồi thường và khắc phục hậu quả"
+            />
+          </div>
+        </div>
+
+        <!-- Lớp phủ biểu đồ (Chart background variant) -->
+        <div class="chart-grid-overlay">
+          <div class="chart-line chart-line-1"><div class="chart-tick"></div></div>
+          <div class="chart-line chart-line-2"><div class="chart-tick"></div></div>
+          <div class="chart-line chart-line-3"><div class="chart-tick"></div></div>
+          <div class="chart-line chart-line-4"><div class="chart-tick"></div></div>
+        </div>
+
+        <!-- Lớp các thẻ overlay đồ hoạ -->
+        <div class="ui-layer">
+          <!-- Tag danh mục hồ sơ -->
+          <div id="header-tag" class="header-tag">
+            <div class="header-tag-bullet"></div>
+            <div class="header-tag-text">CHỨNG CỨ · TÌNH TIẾT GIẢM NHẸ</div>
+          </div>
+
+          <!-- Card 1: Bồi thường thiệt hại (chứa icon money + label 250 + 100 TRIỆU) -->
+          <div id="compensation-card" class="compensation-card">
+            <div class="card-top-row">
+              <div class="icon-container">
+                <svg class="money-svg" viewBox="0 0 90 60">
+                  <!-- Viền tờ tiền -->
+                  <rect class="svg-stroke-item" x="4" y="4" width="82" height="52" rx="6" />
+                  <!-- Vòng tròn trung tâm -->
+                  <circle class="svg-stroke-item" cx="45" cy="30" r="14" />
+                  <!-- Ký hiệu tiền tệ trung tâm -->
+                  <path class="svg-stroke-item" d="M 45 21 L 45 39" />
+                  <path class="svg-stroke-item" d="M 40 25 C 40 22 50 22 50 27 C 50 33 40 31 40 35 C 40 39 50 39 50 36" />
+                  <!-- Vòng tròn trang trí hai bên -->
+                  <circle class="svg-stroke-item" cx="16" cy="30" r="5" />
+                  <circle class="svg-stroke-item" cx="74" cy="30" r="5" />
+                </svg>
+              </div>
+              <div class="card-badge">KHẮC PHỤC HẬU QUẢ</div>
+            </div>
+
+            <div class="compensation-title">NỘP TIỀN BỒI THƯỜNG THIỆT HẠI:</div>
+            <div id="compensation-value-box" class="compensation-value-box">
+              <div id="compensation-value" class="compensation-value">
+                BỒI THƯỜNG: 250 + 100 TRIỆU
+              </div>
+            </div>
+          </div>
+
+          <!-- Card 2: Đơn bãi nại từ gia đình bị hại -->
+          <div id="mitigation-card" class="mitigation-card">
+            <div class="mitigation-info">
+              <div class="mitigation-subtitle">ĐƠN CỦA GIA ĐÌNH BỊ HẠI</div>
+              <div class="mitigation-main-text">BỊ HẠI XIN GIẢM ÁN</div>
+            </div>
+            <div id="stamp-seal" class="stamp-seal">
+              <div class="stamp-inner-text-top">XÁC NHẬN</div>
+              <div class="stamp-inner-icon">✓</div>
+              <div class="stamp-inner-text-bot">BÃI NẠI</div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <script>
+      // Khởi tạo timeline chính ở trạng thái paused
+      const tl = gsap.timeline({ paused: true });
+
+      // Thiết lập đo và ẩn các đường vẽ SVG icon money
+      const svgElements = document.querySelectorAll(".svg-stroke-item");
+      svgElements.forEach((el) => {
+        const len = el.getTotalLength ? el.getTotalLength() : 200;
+        el.style.strokeDasharray = len + "px";
+        el.style.strokeDashoffset = len + "px";
+      });
+
+      // 1. Transition In "rise" & Camera Zoom-in
+      // Nền ảnh rise nhẹ vào khung hình lúc 0s
+      tl.fromTo(
+        "#bg-photo",
+        { y: 50, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.8, ease: "power3.out" },
+        0
+      );
+
+      // Chuyển động máy quay zoom-in nhẹ từ 1.0x lên 1.08x trong suốt cảnh
+      tl.fromTo(
+        "#camera-rig",
+        { scale: 1.0, y: 0 },
+        { scale: 1.08, y: -25, duration: 10, ease: "sine.out" },
+        0
+      );
+
+      // Header Tag xuất hiện
+      tl.fromTo(
+        "#header-tag",
+        { y: -30, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.6, ease: "power3.out" },
+        0.4
+      );
+
+      // 2. Overlay Icon "money" & Card 1 xuất hiện tại t = 1.78s (atMs: 279000, 279000 - 277220 = 1780ms)
+      tl.fromTo(
+        "#compensation-card",
+        { y: 40, opacity: 0, scale: 0.96 },
+        { y: 0, opacity: 1, scale: 1, duration: 0.6, ease: "power3.out" },
+        1.78
+      );
+
+      // Từng nét vẽ icon money hoàn thành dần
+      tl.to(
+        svgElements,
+        {
+          strokeDashoffset: 0,
+          duration: 0.9,
+          stagger: 0.08,
+          ease: "power2.out"
+        },
+        1.9
+      );
+
+      // 3. Label "BỒI THƯỜNG: 250 + 100 TRIỆU" xuất hiện nổi bật tại t = 3.18s (atMs: 280400, 280400 - 277220 = 3180ms)
+      tl.fromTo(
+        "#compensation-value-box",
+        { scale: 0.92, opacity: 0, y: 15 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.55, ease: "power3.out" },
+        3.18
+      );
+
+      // 4. Label "BỊ HẠI XIN GIẢM ÁN" xuất hiện tại t = 8.18s (atMs: 285400, 285400 - 277220 = 8180ms)
+      tl.fromTo(
+        "#mitigation-card",
+        { y: 35, opacity: 0, scale: 0.96 },
+        { y: 0, opacity: 1, scale: 1, duration: 0.5, ease: "power3.out" },
+        8.18
+      );
+
+      // Con dấu mộc xác nhận bãi nại đóng xuống dứt khoát
+      tl.fromTo(
+        "#stamp-seal",
+        { scale: 1.8, opacity: 0, rotation: -25 },
+        { scale: 1, opacity: 1, rotation: -8, duration: 0.45, ease: "power4.out" },
+        8.4
+      );
+
+      // Đăng ký timeline cho HyperFrames seek
+      window.__timelines["scene-s32"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

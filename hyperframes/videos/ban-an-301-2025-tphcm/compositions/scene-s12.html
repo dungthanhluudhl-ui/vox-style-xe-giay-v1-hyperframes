@@ -1,0 +1,666 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap"
+    />
+      <style>
+/* hf-safe-colors (tất định từ style-tokens.json) */
+.hf-text-ink { color: #141414; }
+.hf-text-light { color: #F7F4EC; }
+.hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+.hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+.hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+.hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #e7e3d9;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+
+      /* Quy ước clip HyperFrames: luôn inset 0, không hardcode width/height px */
+      .clip {
+        position: absolute;
+        inset: 0;
+      }
+
+      /* Lưới nền Vox Style: ô vuông 84px, nét kẻ rgba(20,20,20,0.32) */
+      .vox-grid-bg {
+        position: absolute;
+        inset: 0;
+        background-color: #e7e3d9;
+        background-size: 84px 84px;
+        background-image:
+          linear-gradient(to right, rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px),
+          linear-gradient(to bottom, rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px);
+        z-index: 1;
+      }
+
+      /* Sân khấu 3D cho hiệu ứng transition-in "flip" */
+      .perspective-stage {
+        position: absolute;
+        inset: 0;
+        perspective: 1400px;
+        z-index: 2;
+      }
+
+      .camera-canvas {
+        position: absolute;
+        inset: 0;
+        transform-style: preserve-3d;
+        will-change: transform;
+      }
+
+      /* Ảnh minh họa AI chính phủ toàn bộ khung 1080x1920, giữ nguyên màu gốc */
+      .bg-photo {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center 38%;
+        will-change: transform;
+      }
+
+      /* Lớp dimmer nửa bên trái: mờ dần khi Kiên đã thoát hiểm để dồn trọng tâm sang bên phải */
+      .split-dimmer-left {
+        position: absolute;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        width: 50%;
+        background-color: #141414;
+        opacity: 0;
+        pointer-events: none;
+        z-index: 3;
+      }
+
+      /* Đường phân cách rách giấy / split line đặc trưng Vox */
+      .split-divider {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 50%;
+        width: 4px;
+        transform: translateX(-50%);
+        background-color: #ff6a1a;
+        box-shadow: 0 0 16px rgba(255, 106, 26, 0.8);
+        z-index: 4;
+        transform-origin: 50% 0%;
+      }
+
+      /* Tầng UI Overlays trong dải an toàn (Safe Zone Y: 160px -> 1390px) */
+      .ui-layer {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        z-index: 10;
+      }
+
+      /* Class màu an toàn WCAG trên nền đặc */
+      .hf-plate-ink {
+        background-color: #141414;
+        color: #f7f4ec;
+      }
+
+      /* Header Tag: Định vị chủ đề cảnh */
+      .header-tag-box {
+        position: absolute;
+        top: 180px;
+        left: 60px;
+      }
+
+      .header-tag-inner {
+        display: inline-flex;
+        align-items: center;
+        gap: 14px;
+        padding: 10px 20px;
+        border-radius: 4px;
+        border-left: 6px solid #ff6a1a;
+      }
+
+      .tag-pill {
+        background-color: #ff6a1a;
+        color: #141414;
+        font-size: 20px;
+        font-weight: 900;
+        padding: 4px 10px;
+        border-radius: 3px;
+        letter-spacing: 0.5px;
+      }
+
+      .tag-title {
+        font-size: 24px;
+        font-weight: 700;
+        letter-spacing: 1px;
+        color: #f7f4ec;
+      }
+
+      /* Diagram Mũi tên đảo chiều 180 độ (Reverse Vector Diagram) */
+      .diagram-container {
+        position: absolute;
+        top: 270px;
+        left: 60px;
+        right: 60px;
+        height: 160px;
+      }
+
+      .diagram-plate {
+        width: 100%;
+        height: 100%;
+        border-radius: 8px;
+        border: 2px solid rgba(255, 106, 26, 0.4);
+        padding: 12px 24px;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+      }
+
+      .diagram-svg {
+        width: 100%;
+        height: 100%;
+        overflow: visible;
+      }
+
+      /* Thẻ Overlay 1 (Trái): NGUY HIỂM ĐÃ QUA */
+      .overlay-card-left {
+        position: absolute;
+        top: 480px;
+        left: 60px;
+        width: 440px;
+      }
+
+      /* Thẻ Overlay 2 (Phải): CHUẨN BỊ VŨ KHÍ */
+      .overlay-card-right {
+        position: absolute;
+        top: 480px;
+        right: 60px;
+        width: 440px;
+      }
+
+      .card-inner {
+        padding: 24px 22px;
+        border-radius: 6px;
+      }
+
+      .card-left-border {
+        border-top: 5px solid #f7f4ec;
+      }
+
+      .card-right-border {
+        border-top: 5px solid #ff6a1a;
+      }
+
+      .card-stage-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 8px;
+      }
+
+      .stage-dot-orange {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background-color: #ff6a1a;
+      }
+
+      .stage-label-light {
+        font-size: 19px;
+        font-weight: 700;
+        color: #e7e3d9;
+        letter-spacing: 0.5px;
+      }
+
+      .stage-label-orange {
+        font-size: 19px;
+        font-weight: 700;
+        color: #ff6a1a;
+        letter-spacing: 0.5px;
+      }
+
+      .card-title-light {
+        font-size: 34px;
+        font-weight: 900;
+        color: #f7f4ec;
+        line-height: 1.25;
+        margin: 0 0 8px 0;
+      }
+
+      .card-title-orange {
+        font-size: 34px;
+        font-weight: 900;
+        color: #ff6a1a;
+        line-height: 1.25;
+        margin: 0 0 8px 0;
+      }
+
+      .card-subtext {
+        font-size: 20px;
+        font-weight: 700;
+        color: #e7e3d9;
+        line-height: 1.35;
+        margin: 0;
+      }
+
+      /* Thẻ Punch-phrase: CHỦ ĐỘNG TRẢ THÙ */
+      .punch-phrase-container {
+        position: absolute;
+        top: 720px;
+        left: 60px;
+        right: 60px;
+      }
+
+      .punch-plate {
+        padding: 34px 30px;
+        border-radius: 8px;
+        border: 3px solid #ff6a1a;
+        box-shadow: 0 16px 36px rgba(0, 0, 0, 0.45);
+        text-align: center;
+      }
+
+      .punch-kicker {
+        font-size: 21px;
+        font-weight: 700;
+        color: #e7e3d9;
+        letter-spacing: 2.5px;
+        margin-bottom: 14px;
+      }
+
+      /* Khối banner cam nổi bật: chữ mực trên nền cam (contrast 6.4:1) */
+      .punch-main-banner {
+        background-color: #ff6a1a;
+        color: #141414;
+        font-size: 60px;
+        font-weight: 900;
+        line-height: 1.2;
+        padding: 16px 20px;
+        border-radius: 4px;
+        letter-spacing: 0.5px;
+        margin-bottom: 16px;
+      }
+
+      .punch-divider-line {
+        height: 2px;
+        background-color: rgba(247, 244, 236, 0.2);
+        margin: 16px 0;
+      }
+
+      .punch-legal-note {
+        font-size: 23px;
+        font-weight: 700;
+        color: #f7f4ec;
+        line-height: 1.4;
+      }
+
+      /* Thanh cam thương hiệu cố định mép dưới cùng (Signature Bottom Bar) */
+      .brand-bottom-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 14px;
+        background-color: #ff6a1a;
+        z-index: 100;
+      }
+    </style>
+
+    <!-- Composition Root (1080x1920, 10.4s) -->
+    <div
+      id="root"
+      data-composition-id="scene-s12"
+      data-width="1080"
+      data-height="1920"
+      data-duration="10.4"
+    >
+      <!-- Lưới giấy ngà Vox -->
+      <div class="vox-grid-bg"></div>
+
+      <!-- Main Scene Clip -->
+      <section id="scene-s12" class="clip" data-start="0" data-duration="10.4">
+        <!-- Perspective Wrapper cho 3D Flip Transition -->
+        <div class="perspective-stage">
+          <div id="camera-canvas" class="camera-canvas">
+            <!-- Ảnh minh họa gốc (img-11): phân tách đối chiếu hành vi Kiên & đồng bọn -->
+            <img
+              id="bg-photo"
+              class="bg-photo"
+              src="assets/img-11-gang-retaliation-chase-split.jpg"
+              alt="Đối chiếu hành vi nạn nhân bỏ chạy và quay lại trả thù"
+            />
+
+            <!-- Dimmer che mờ nửa bên trái khi Kiên đã thoát hiểm an toàn -->
+            <div id="left-dimmer" class="split-dimmer-left"></div>
+
+            <!-- Đường phân cách giữa khung hình phong cách Vox -->
+            <div id="split-line" class="split-divider"></div>
+          </div>
+        </div>
+
+        <!-- UI Overlays Layer (Cố định trong Safe Zone) -->
+        <div class="ui-layer">
+          <!-- Header Badge -->
+          <div id="header-tag" class="header-tag-box">
+            <div class="hf-plate-ink header-tag-inner">
+              <span class="tag-pill">HỒ SƠ VỤ ÁN</span>
+              <span class="tag-title">ĐỐI CHIẾU HÀNH VI</span>
+            </div>
+          </div>
+
+          <!-- Reverse Vector Diagram: Mũi tên uốn ngược 180 độ biểu đạt bản chất -->
+          <div id="diagram-box" class="diagram-container">
+            <div class="hf-plate-ink diagram-plate">
+              <svg class="diagram-svg" viewBox="0 0 912 136">
+                <!-- Nhánh 1: Hướng bỏ chạy ban đầu (Trỏ sang trái) -->
+                <g id="diagram-branch-flee">
+                  <path
+                    id="path-flee"
+                    d="M 430 46 L 140 46"
+                    fill="none"
+                    stroke="#F7F4EC"
+                    stroke-width="4.5"
+                    stroke-linecap="round"
+                    stroke-dasharray="320"
+                    stroke-dashoffset="0"
+                  />
+                  <polygon
+                    id="arrow-flee-head"
+                    points="140,46 160,34 160,58"
+                    fill="#F7F4EC"
+                  />
+                  <text
+                    id="text-flee"
+                    x="270"
+                    y="28"
+                    fill="#F7F4EC"
+                    font-size="20"
+                    font-weight="700"
+                    text-anchor="middle"
+                    font-family="Be Vietnam Pro"
+                  >
+                    HƯỚNG BỎ CHẠY (BẢO TOÀN TÍNH MẠNG)
+                  </text>
+                </g>
+
+                <!-- Điểm uốn đảo chiều 180 độ -->
+                <g id="diagram-pivot">
+                  <path
+                    id="path-pivot-arc"
+                    d="M 430 46 C 490 46, 490 98, 430 98"
+                    fill="none"
+                    stroke="#FF6A1A"
+                    stroke-width="5"
+                    stroke-linecap="round"
+                    stroke-dasharray="140"
+                    stroke-dashoffset="0"
+                  />
+                  <circle cx="480" cy="72" r="14" fill="#FF6A1A" />
+                  <text
+                    x="480"
+                    y="78"
+                    fill="#141414"
+                    font-size="14"
+                    font-weight="900"
+                    text-anchor="middle"
+                    font-family="Be Vietnam Pro"
+                  >
+                    180°
+                  </text>
+                </g>
+
+                <!-- Nhánh 2: Hướng quay lại truy sát (Bẻ ngược sang phải) -->
+                <g id="diagram-branch-chase">
+                  <path
+                    id="path-chase"
+                    d="M 430 98 L 770 98"
+                    fill="none"
+                    stroke="#FF6A1A"
+                    stroke-width="5"
+                    stroke-linecap="round"
+                    stroke-dasharray="360"
+                    stroke-dashoffset="0"
+                  />
+                  <polygon
+                    id="arrow-chase-head"
+                    points="776,98 756,86 756,110"
+                    fill="#FF6A1A"
+                  />
+                  <text
+                    id="text-chase"
+                    x="610"
+                    y="126"
+                    fill="#FF6A1A"
+                    font-size="21"
+                    font-weight="900"
+                    text-anchor="middle"
+                    font-family="Be Vietnam Pro"
+                  >
+                    BẺ HƯỚNG: QUAY LẠI TRUY TÌM
+                  </text>
+                </g>
+              </svg>
+            </div>
+          </div>
+
+          <!-- Overlay 1 (Trái): NGUY HIỂM ĐÃ QUA -->
+          <div id="overlay-left" class="overlay-card-left">
+            <div class="hf-plate-ink card-inner card-left-border">
+              <div class="card-stage-row">
+                <span class="stage-label-light">GIAI ĐOẠN 1</span>
+              </div>
+              <h2 class="card-title-light">NGUY HIỂM ĐÃ QUA</h2>
+              <p class="card-subtext">Đã chạy thoát khỏi sự truy đuổi</p>
+            </div>
+          </div>
+
+          <!-- Overlay 2 (Phải): CHUẨN BỊ VŨ KHÍ -->
+          <div id="overlay-right" class="overlay-card-right">
+            <div class="hf-plate-ink card-inner card-right-border">
+              <div class="card-stage-row">
+                <span class="stage-dot-orange"></span>
+                <span class="stage-label-orange">GIAI ĐOẠN 2</span>
+              </div>
+              <h2 class="card-title-orange">CHUẨN BỊ VŨ KHÍ</h2>
+              <p class="card-subtext">Tập hợp người & lấy hung khí</p>
+            </div>
+          </div>
+
+          <!-- Overlay 3: Punch-phrase CHỦ ĐỘNG TRẢ THÙ -->
+          <div id="overlay-punch" class="punch-phrase-container">
+            <div class="hf-plate-ink punch-plate">
+              <div class="punch-kicker">BẢN CHẤT PHÁP LÝ THAY ĐỔI</div>
+              <div class="punch-main-banner">CHỦ ĐỘNG TRẢ THÙ</div>
+              <div class="punch-divider-line"></div>
+              <div class="punch-legal-note">
+                Không còn là hành vi chạy trốn hay phòng vệ chính đáng
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Thanh cam đáy cố định -->
+      <div class="brand-bottom-bar"></div>
+    </div>
+
+    <!-- GSAP Seekable Timeline Script -->
+    <script>
+      window.__timelines = window.__timelines || {};
+
+      const tl = gsap.timeline({ paused: true });
+
+      // 1. Giai đoạn mở đầu (0.0s - 2.5s):
+      // Transition-in "flip": Sân khấu xoay lật 3D nhẹ vào tầm mắt
+      tl.fromTo(
+        "#camera-canvas",
+        { rotationY: -14, scale: 0.94, opacity: 0 },
+        { rotationY: 0, scale: 1, opacity: 1, duration: 0.75, ease: "power3.out" },
+        0
+      );
+
+      // Camera motion: Parallax pan chậm từ bên trái (chạy trốn) sang bên phải (truy lùng)
+      tl.fromTo(
+        "#bg-photo",
+        { scale: 1.05, x: 30 },
+        { scale: 1.15, x: -40, duration: 10.4, ease: "sine.inOut" },
+        0
+      );
+
+      // Header Tag trượt vào từ trên
+      tl.fromTo(
+        "#header-tag",
+        { y: -30, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.45, ease: "power2.out" },
+        0.35
+      );
+
+      // Khung sơ đồ xuất hiện
+      tl.fromTo(
+        "#diagram-box",
+        { y: -20, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.5, ease: "power2.out" },
+        0.55
+      );
+
+      // Diagram nhánh 1 (hướng chạy trốn sang trái) vẽ ra
+      tl.fromTo(
+        "#path-flee",
+        { strokeDashoffset: 320 },
+        { strokeDashoffset: 0, duration: 0.75, ease: "power2.out" },
+        0.75
+      );
+      tl.fromTo(
+        "#arrow-flee-head",
+        { scale: 0, transformOrigin: "140px 46px" },
+        { scale: 1, duration: 0.25, ease: "power2.out" },
+        1.45
+      );
+      tl.fromTo(
+        "#text-flee",
+        { opacity: 0, y: -10 },
+        { opacity: 1, y: 0, duration: 0.35, ease: "power2.out" },
+        1.2
+      );
+
+      // Giữ ẩn các nhánh đảo chiều ban đầu
+      tl.set("#diagram-pivot", { opacity: 0 }, 0);
+      tl.set("#diagram-branch-chase", { opacity: 0 }, 0);
+      tl.set("#split-line", { scaleY: 0, opacity: 0 }, 0);
+
+      // 2. Giai đoạn 2 (2.52s - 4.8s):
+      // Overlay 1: "NGUY HIỂM ĐÃ QUA" xuất hiện tại 2.52s (theo shotlist atMs: 99800)
+      tl.fromTo(
+        "#overlay-left",
+        { y: 35, opacity: 0, scale: 0.95 },
+        { y: 0, opacity: 1, scale: 1, duration: 0.5, ease: "power3.out" },
+        2.52
+      );
+
+      // Overlay 1 mờ dần ra sau khi giữ đủ 2000ms
+      tl.to(
+        "#overlay-left",
+        { y: -15, opacity: 0, duration: 0.35, ease: "power2.in" },
+        4.75
+      );
+
+      // 3. Giai đoạn 3 (4.8s - 7.4s):
+      // Chuyển biến: Kiên thoát hiểm, gọi người, chuẩn bị hung khí
+      // Nửa trái mờ dần biểu thị việc đã thoát khỏi nguy cơ tức thời
+      tl.to(
+        "#left-dimmer",
+        { opacity: 0.7, duration: 0.8, ease: "power2.out" },
+        4.6
+      );
+
+      // Đường rách ngăn đôi split-line hạ xuống
+      tl.fromTo(
+        "#split-line",
+        { scaleY: 0, opacity: 0 },
+        { scaleY: 1, opacity: 1, duration: 0.55, ease: "power3.out" },
+        4.65
+      );
+
+      // Diagram: Bẻ ngược góc 180 độ
+      tl.to("#diagram-pivot", { opacity: 1, duration: 0.2 }, 4.8);
+      tl.fromTo(
+        "#path-pivot-arc",
+        { strokeDashoffset: 140 },
+        { strokeDashoffset: 0, duration: 0.5, ease: "power2.out" },
+        4.85
+      );
+
+      tl.to("#diagram-branch-chase", { opacity: 1, duration: 0.2 }, 5.15);
+      tl.fromTo(
+        "#path-chase",
+        { strokeDashoffset: 360 },
+        { strokeDashoffset: 0, duration: 0.65, ease: "power2.out" },
+        5.2
+      );
+      tl.fromTo(
+        "#arrow-chase-head",
+        { scale: 0, transformOrigin: "776px 98px" },
+        { scale: 1, duration: 0.25, ease: "power2.out" },
+        5.75
+      );
+      tl.fromTo(
+        "#text-chase",
+        { opacity: 0, y: 10 },
+        { opacity: 1, y: 0, duration: 0.35, ease: "power2.out" },
+        5.4
+      );
+
+      // Overlay 2: "CHUẨN BỊ VŨ KHÍ" xuất hiện tại 5.22s (theo shotlist atMs: 102500)
+      tl.fromTo(
+        "#overlay-right",
+        { y: 35, opacity: 0, scale: 0.95 },
+        { y: 0, opacity: 1, scale: 1, duration: 0.5, ease: "power3.out" },
+        5.22
+      );
+
+      // Overlay 2 mờ dần ra sau khi giữ đủ 2000ms
+      tl.to(
+        "#overlay-right",
+        { y: -15, opacity: 0, duration: 0.35, ease: "power2.in" },
+        7.45
+      );
+
+      // 4. Giai đoạn 4 (7.92s - 10.4s):
+      // Punch-phrase: "CHỦ ĐỘNG TRẢ THÙ" xuất hiện tại 7.92s (theo shotlist atMs: 105200)
+      tl.fromTo(
+        "#overlay-punch",
+        { y: 45, opacity: 0, scale: 0.92 },
+        { y: 0, opacity: 1, scale: 1, duration: 0.55, ease: "power3.out" },
+        7.92
+      );
+
+      // Đăng ký timeline gốc duy nhất
+      window.__timelines["scene-s12"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

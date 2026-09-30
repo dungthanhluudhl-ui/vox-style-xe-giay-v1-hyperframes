@@ -1,0 +1,461 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+      /* hf-safe-colors (tất định từ style-tokens.json) */
+      .hf-text-ink { color: #141414; }
+      .hf-text-light { color: #F7F4EC; }
+      .hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+      .hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+      .hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+      .hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #e7e3d9;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+
+      /* Quy ước bắt buộc: .clip dùng inset: 0, không đặt width/height cứng */
+      .clip {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+      }
+
+      /* Khung camera và viewport chuyển động */
+      #scene-viewport {
+        position: absolute;
+        inset: 0;
+        transform-origin: 50% 50%;
+        will-change: transform;
+      }
+
+      /* Nền canvas dự phòng với lưới giấy ngà */
+      #canvas-bg {
+        position: absolute;
+        inset: 0;
+        background-color: #e7e3d9;
+        background-size: 84px 84px;
+        background-image:
+          linear-gradient(to right, rgba(20, 20, 20, 0.15) 1.5px, transparent 1.5px),
+          linear-gradient(to bottom, rgba(20, 20, 20, 0.15) 1.5px, transparent 1.5px);
+      }
+
+      /* Ảnh nền toàn cảnh (background-photo full bleed bao trọn 1080x1920) */
+      #bg-container {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+      }
+
+      /* Giữ nguyên màu gốc 100% của tranh minh họa AI Flow (không filter/tint/vignette) */
+      #hero-image {
+        position: absolute;
+        inset: -5%;
+        width: 110%;
+        height: 110%;
+        object-fit: cover;
+        object-position: center center;
+        will-change: transform;
+      }
+
+      /* UI container chính nằm trong safe-zone hữu dụng */
+      #editorial-layer {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+      }
+
+      /* 1. Label đầu: "RANH GIỚI MỎNG MANH" - căn giữa bằng margin-inline, không dùng CSS transform */
+      #label-wrapper {
+        position: absolute;
+        top: 240px;
+        left: 0;
+        right: 0;
+        margin-inline: auto;
+        width: fit-content;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 14px 26px;
+        border-radius: 6px;
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
+        border-left: 6px solid #ff6a1a;
+        opacity: 0;
+        will-change: transform, opacity;
+      }
+
+      .label-indicator {
+        width: 12px;
+        height: 12px;
+        background-color: #ff6a1a;
+        border-radius: 2px;
+        flex-shrink: 0;
+      }
+
+      .label-text {
+        font-size: 26px;
+        font-weight: 700;
+        letter-spacing: 3px;
+        text-transform: uppercase;
+        margin: 0;
+        line-height: 1;
+      }
+
+      /* 2. Cụm Punch-phrase & Visual Relationship: "NẠN NHÂN HÓA BỊ CÁO" & Hoán đổi nhãn */
+      #punch-wrapper {
+        position: absolute;
+        top: 680px;
+        left: 60px;
+        right: 60px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        opacity: 0;
+        will-change: transform, opacity;
+      }
+
+      .punch-card {
+        width: 100%;
+        padding: 34px 28px 28px;
+        border-radius: 12px;
+        box-shadow: 0 24px 50px rgba(0, 0, 0, 0.7);
+        border: 2px solid rgba(247, 244, 236, 0.12);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+      }
+
+      .punch-heading {
+        margin: 0 0 28px 0;
+        font-size: 64px;
+        font-weight: 900;
+        line-height: 1.25;
+        letter-spacing: -0.5px;
+        text-transform: uppercase;
+      }
+
+      /* Khu vực trực quan hoá sự hoán đổi nhãn dán */
+      .swap-stage {
+        position: relative;
+        width: 100%;
+        height: 180px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+
+      /* Nhãn 1: "NẠN NHÂN" */
+      #tag-victim {
+        position: absolute;
+        padding: 16px 36px;
+        border-radius: 4px;
+        border: 3px dashed #141414;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+        transform-origin: 50% 50%;
+        will-change: transform, opacity;
+      }
+
+      .tag-text-victim {
+        font-size: 40px;
+        font-weight: 900;
+        letter-spacing: 2px;
+        margin: 0;
+      }
+
+      /* Vạch gạch bỏ nhãn nạn nhân */
+      #victim-strike {
+        position: absolute;
+        left: 10px;
+        right: 10px;
+        height: 6px;
+        background-color: #141414;
+        transform-origin: 0% 50%;
+        will-change: transform;
+      }
+
+      /* Nhãn 2: "BỊ CÁO" đóng ập lên đè vị trí */
+      #tag-convict {
+        position: absolute;
+        padding: 20px 48px;
+        border-radius: 6px;
+        box-shadow: 0 16px 36px rgba(0, 0, 0, 0.6);
+        border: 4px solid #141414;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        transform-origin: 50% 50%;
+        opacity: 0;
+        will-change: transform, opacity;
+      }
+
+      .tag-text-convict {
+        font-size: 48px;
+        font-weight: 900;
+        letter-spacing: 3px;
+        margin: 0;
+        line-height: 1;
+      }
+
+      .tag-sub-convict {
+        font-size: 18px;
+        font-weight: 700;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        margin-top: 6px;
+      }
+
+      /* Thanh cam nhận diện thương hiệu cố định mép dưới khung hình */
+      #brand-bottom-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 12px;
+        background-color: #ff6a1a;
+        z-index: 999;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s38"
+      data-width="1080"
+      data-height="1920"
+      data-duration="7"
+      data-start="0"
+    >
+      <!-- Scene Clip: Chứa toàn bộ nội dung trong thời lượng 7s -->
+      <section id="scene-s38" class="clip" data-start="0" data-duration="7">
+        <div id="scene-viewport">
+          <!-- Lớp nền canvas dự phòng -->
+          <div id="canvas-bg"></div>
+
+          <!-- Lớp nền: Tranh đối lập giữa người chạy trốn đêm và phạm nhân trong song sắt (giữ nguyên màu gốc) -->
+          <div id="bg-container">
+            <img
+              id="hero-image"
+              src="assets/img-23-life-imprisonment-jail-escape-cutout.jpg"
+              alt="Mảng đối lập nạn nhân và bị cáo"
+            />
+          </div>
+
+          <!-- Lớp đồ họa thông tin biên tập -->
+          <div id="editorial-layer">
+            <!-- Label: RANH GIỚI MỎNG MANH -->
+            <div id="label-wrapper" class="hf-plate-ink">
+              <span class="label-indicator"></span>
+              <span class="label-text hf-text-light">RANH GIỚI MỎNG MANH</span>
+            </div>
+
+            <!-- Punch-phrase & Hoán đổi nhãn: NẠN NHÂN HÓA BỊ CÁO -->
+            <div id="punch-wrapper">
+              <div class="punch-card hf-plate-ink">
+                <h1 class="punch-heading hf-text-light">NẠN NHÂN HÓA BỊ CÁO</h1>
+
+                <div class="swap-stage">
+                  <!-- Nhãn ban đầu: NẠN NHÂN (nền giấy ngà đặc, chữ mực) -->
+                  <div id="tag-victim" class="hf-plate-paper" data-layout-allow-occlusion="true">
+                    <span class="tag-text-victim hf-text-ink">NẠN NHÂN</span>
+                    <div id="victim-strike"></div>
+                  </div>
+
+                  <!-- Nhãn đảo vai: BỊ CÁO (nền cam đậm đặc, chữ mực) -->
+                  <div id="tag-convict" class="hf-hl-orange">
+                    <span class="tag-text-convict hf-text-ink">BỊ CÁO</span>
+                    <span class="tag-sub-convict hf-text-ink">[ ĐẢO VAI TRONG VỤ ÁN ]</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Chữ ký thương hiệu: Dải cam mép đáy không bị ảnh hưởng bởi camera pan -->
+        <div id="brand-bottom-bar"></div>
+      </section>
+    </div>
+
+    <script>
+      // Khởi tạo duy nhất 1 GSAP timeline paused cho composition "scene-s38"
+      const tl = gsap.timeline({ paused: true });
+
+      // 1. TRANSITION IN: "flip" tại t=0
+      // 3D Flip vào cảnh từ góc nghiêng trục Y sang chính diện
+      tl.fromTo(
+        "#scene-viewport",
+        {
+          transformPerspective: 1200,
+          rotationY: 28,
+          scale: 1.08,
+          opacity: 0,
+        },
+        {
+          rotationY: 0,
+          scale: 1,
+          opacity: 1,
+          duration: 0.9,
+          ease: "power3.out",
+        },
+        0
+      );
+
+      // 2. CAMERA MOTION: "parallax" (Pan ngang nhẹ làm nổi bật sự đối lập giữa hai bờ số phận)
+      // Từ mảng người chạy trốn đêm sang phía phòng giam áo cam
+      tl.fromTo(
+        "#hero-image",
+        {
+          x: 40,
+          scale: 1.05,
+        },
+        {
+          x: -45,
+          scale: 1.12,
+          duration: 7.0,
+          ease: "none",
+        },
+        0
+      );
+
+      // 3. OVERLAY 1: Label "RANH GIỚI MỎNG MANH" tại t = 2.18s
+      tl.fromTo(
+        "#label-wrapper",
+        {
+          y: -25,
+          opacity: 0,
+        },
+        {
+          y: 0,
+          opacity: 1,
+          duration: 0.6,
+          ease: "power3.out",
+        },
+        2.18
+      );
+
+      // 4. OVERLAY 2: Punch-phrase "NẠN NHÂN HÓA BỊ CÁO" tại t = 3.98s
+      // Cả khối punch card trồi lên dứt khoát
+      tl.fromTo(
+        "#punch-wrapper",
+        {
+          y: 45,
+          scale: 0.92,
+          opacity: 0,
+        },
+        {
+          y: 0,
+          scale: 1,
+          opacity: 1,
+          duration: 0.7,
+          ease: "power3.out",
+        },
+        3.98
+      );
+
+      // 5. TRỰC QUAN HÓA THÔNG ĐIỆP: Hoán đổi nhãn (NẠN NHÂN -> BỊ CÁO)
+      // Nhãn NẠN NHÂN xuất hiện cùng lúc với card
+      tl.fromTo(
+        "#tag-victim",
+        {
+          scale: 0.8,
+          rotation: -3,
+          opacity: 0,
+        },
+        {
+          scale: 1,
+          rotation: -2,
+          opacity: 1,
+          duration: 0.45,
+          ease: "power2.out",
+        },
+        4.1
+      );
+
+      // Gạch bỏ nhãn "NẠN NHÂN"
+      tl.fromTo(
+        "#victim-strike",
+        {
+          scaleX: 0,
+        },
+        {
+          scaleX: 1,
+          duration: 0.35,
+          ease: "power3.inOut",
+        },
+        4.65
+      );
+
+      // Nhãn "NẠN NHÂN" bị bóc tách và rơi dần ra khỏi vị trí trung tâm
+      tl.to(
+        "#tag-victim",
+        {
+          y: 40,
+          opacity: 0,
+          scale: 0.85,
+          rotation: -10,
+          duration: 0.35,
+          ease: "power2.in",
+        },
+        4.95
+      );
+
+      // Nhãn "BỊ CÁO" đóng ập xuống đè lên với sức nặng bản án định mệnh tại 5.05s
+      tl.fromTo(
+        "#tag-convict",
+        {
+          scale: 1.6,
+          rotation: 12,
+          opacity: 0,
+        },
+        {
+          scale: 1,
+          rotation: 3,
+          opacity: 1,
+          duration: 0.55,
+          ease: "power4.out",
+        },
+        5.05
+      );
+
+      // Nhẹ nhàng ổn định góc của nhãn BỊ CÁO đến cuối scene (giữ > 1.6s)
+      tl.to(
+        "#tag-convict",
+        {
+          rotation: 1.5,
+          duration: 1.4,
+          ease: "sine.out",
+        },
+        5.6
+      );
+
+      // Đăng ký timeline cho HyperFrames runtime
+      window.__timelines["scene-s38"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

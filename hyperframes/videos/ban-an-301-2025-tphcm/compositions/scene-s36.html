@@ -1,0 +1,391 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+      /* hf-safe-colors (tất định từ style-tokens.json) */
+      .hf-text-ink { color: #141414; }
+      .hf-text-light { color: #F7F4EC; }
+      .hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+      .hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+      .hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+      .hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #141414;
+        color: #F7F4EC;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+      .clip {
+        position: absolute;
+        inset: 0;
+      }
+
+      /* Nền ảnh hiện trường + Spotlight Vignette */
+      .bg-container {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+      }
+      .bg-image {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transform-origin: center center;
+      }
+      .bg-spotlight {
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(circle at 50% 40%, rgba(20, 20, 20, 0.45) 20%, rgba(20, 20, 20, 0.92) 85%);
+      }
+      .bg-grid-overlay {
+        position: absolute;
+        inset: 0;
+        background-size: 84px 84px;
+        background-image: 
+          linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+          linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+        pointer-events: none;
+      }
+
+      /* Top Header Badge */
+      .header-wrap {
+        position: absolute;
+        top: 176px;
+        left: 60px;
+        right: 60px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        z-index: 10;
+      }
+      .header-tag {
+        background-color: #FF6A1A;
+        color: #141414;
+        font-weight: 900;
+        font-size: 22px;
+        letter-spacing: 2px;
+        padding: 8px 18px;
+        border-radius: 4px;
+        text-transform: uppercase;
+      }
+      .header-title {
+        background-color: #141414;
+        color: #E7E3D9;
+        border: 2px solid rgba(231, 227, 217, 0.3);
+        font-weight: 700;
+        font-size: 22px;
+        letter-spacing: 1.5px;
+        padding: 6px 18px;
+        border-radius: 4px;
+        text-transform: uppercase;
+      }
+
+      /* Khung danh sách 4 thẻ chứng cứ */
+      .cards-list {
+        position: absolute;
+        top: 268px;
+        left: 60px;
+        width: 960px;
+        display: flex;
+        flex-direction: column;
+        gap: 28px;
+        z-index: 15;
+      }
+
+      .evidence-card {
+        position: relative;
+        width: 100%;
+        height: 196px;
+        background-color: #141414;
+        border-left: 10px solid #FF6A1A;
+        border-top: 1px solid rgba(255, 255, 255, 0.12);
+        border-right: 1px solid rgba(255, 255, 255, 0.08);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 0 8px 8px 0;
+        padding: 24px 32px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        box-shadow: 0 16px 36px rgba(0, 0, 0, 0.6);
+        will-change: transform, opacity;
+      }
+
+      .card-info {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        max-width: 660px;
+      }
+      .card-meta {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+      }
+      .card-index {
+        background-color: #FF6A1A;
+        color: #141414;
+        font-weight: 900;
+        font-size: 20px;
+        padding: 3px 12px;
+        border-radius: 4px;
+        line-height: 1.2;
+      }
+      .card-label {
+        color: #E7E3D9;
+        font-size: 19px;
+        font-weight: 700;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+      }
+      .card-main-text {
+        color: #F7F4EC;
+        font-size: 42px;
+        font-weight: 900;
+        line-height: 1.2;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+      }
+
+      /* Con dấu CONFIRMED */
+      .stamp-box {
+        border: 4px solid #FF6A1A;
+        padding: 10px 18px;
+        border-radius: 6px;
+        background-color: #141414;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        transform-origin: center center;
+        box-shadow: 0 0 20px rgba(255, 106, 26, 0.25);
+        will-change: transform, opacity;
+      }
+      .stamp-text {
+        color: #FF6A1A;
+        font-size: 26px;
+        font-weight: 900;
+        letter-spacing: 3px;
+        line-height: 1.1;
+        text-transform: uppercase;
+      }
+      .stamp-sub {
+        color: #FF6A1A;
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        margin-top: 2px;
+      }
+
+      /* Dải nhận diện thương hiệu cố định mép đáy */
+      #brand-bottom-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 12px;
+        background-color: #FF6A1A;
+        z-index: 100;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s36"
+      data-width="1080"
+      data-height="1920"
+      data-duration="9"
+      data-start="0"
+    >
+      <!-- Layer 1: Nền ảnh hiện trường + Spotlight -->
+      <section id="scene-bg" class="clip" data-start="0" data-duration="9">
+        <div class="bg-container">
+          <img
+            id="bg-photo"
+            class="bg-image"
+            src="assets/img-03-crime-scene-evidence-collage.jpg"
+            alt="Hiện trường vụ án"
+          />
+          <div class="bg-spotlight"></div>
+          <div class="bg-grid-overlay"></div>
+        </div>
+      </section>
+
+      <!-- Layer 2: Giao diện hồ sơ và danh sách 4 thẻ chứng cứ -->
+      <section id="scene-content" class="clip" data-start="0" data-duration="9">
+        <!-- Header danh mục hồ sơ -->
+        <div id="header-bar" class="header-wrap">
+          <div class="header-tag">HỒ SƠ HIỆN TRƯỜNG</div>
+          <div class="header-title">4 YẾU TỐ TĂNG NẶNG</div>
+        </div>
+
+        <!-- 4 thẻ chứng cứ hiện trường -->
+        <div class="cards-list">
+          <!-- Thẻ 1 (Punch Phrase: MỘT NGƯỜI TỬ VONG) -->
+          <div id="card-1" class="evidence-card">
+            <div class="card-info">
+              <div class="card-meta">
+                <span class="card-index">01</span>
+                <span class="card-label">HẬU QUẢ ĐẶC BIỆT NGHIÊM TRỌNG</span>
+              </div>
+              <div class="card-main-text">MỘT NGƯỜI TỬ VONG</div>
+            </div>
+            <div id="stamp-1" class="stamp-box">
+              <span class="stamp-text">CONFIRMED</span>
+              <span class="stamp-sub">XÁC MINH</span>
+            </div>
+          </div>
+
+          <!-- Thẻ 2 (Label: MANG HUNG KHÍ TRẢ THÙ) -->
+          <div id="card-2" class="evidence-card">
+            <div class="card-info">
+              <div class="card-meta">
+                <span class="card-index">02</span>
+                <span class="card-label">SỬ DỤNG HUNG KHÍ</span>
+              </div>
+              <div class="card-main-text">MANG HUNG KHÍ TRẢ THÙ</div>
+            </div>
+            <div id="stamp-2" class="stamp-box">
+              <span class="stamp-text">CONFIRMED</span>
+              <span class="stamp-sub">XÁC MINH</span>
+            </div>
+          </div>
+
+          <!-- Thẻ 3 (Label: HỦY HOẠI XE MÁY) -->
+          <div id="card-3" class="evidence-card">
+            <div class="card-info">
+              <div class="card-meta">
+                <span class="card-index">03</span>
+                <span class="card-label">HỦY HOẠI TÀI SẢN</span>
+              </div>
+              <div class="card-main-text">HỦY HOẠI XE MÁY</div>
+            </div>
+            <div id="stamp-3" class="stamp-box">
+              <span class="stamp-text">CONFIRMED</span>
+              <span class="stamp-sub">XÁC MINH</span>
+            </div>
+          </div>
+
+          <!-- Thẻ 4 (Label: HÀNH VI TẬN CÙNG) -->
+          <div id="card-4" class="evidence-card">
+            <div class="card-info">
+              <div class="card-meta">
+                <span class="card-index">04</span>
+                <span class="card-label">HÀNH VI QUYẾT LIỆT</span>
+              </div>
+              <div class="card-main-text">HÀNH VI TẬN CÙNG</div>
+            </div>
+            <div id="stamp-4" class="stamp-box">
+              <span class="stamp-text">CONFIRMED</span>
+              <span class="stamp-sub">XÁC MINH</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Dải cam đáy cố định -->
+      <div id="brand-bottom-bar"></div>
+    </div>
+
+    <script>
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true });
+
+      // Camera motion: zoom-in chậm nền hiện trường trong 9s
+      tl.fromTo(
+        "#bg-photo",
+        { scale: 1.0 },
+        { scale: 1.08, duration: 9.0, ease: "none" },
+        0
+      );
+
+      // Header xuất hiện từ đầu
+      tl.fromTo(
+        "#header-bar",
+        { y: -30, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.5, ease: "power3.out" },
+        0.1
+      );
+
+      // Thẻ 1: MỘT NGƯỜI TỬ VONG (atMs: 315600 -> relative 0.38s)
+      tl.fromTo(
+        "#card-1",
+        { x: -60, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.45, ease: "power3.out" },
+        0.38
+      );
+      tl.fromTo(
+        "#stamp-1",
+        { scale: 2.2, opacity: 0, rotation: -22 },
+        { scale: 1.0, opacity: 1, rotation: -8, duration: 0.28, ease: "power4.out" },
+        0.68
+      );
+
+      // Thẻ 2: MANG HUNG KHÍ TRẢ THÙ (atMs: 317200 -> relative 1.98s)
+      tl.fromTo(
+        "#card-2",
+        { x: -60, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.45, ease: "power3.out" },
+        1.98
+      );
+      tl.fromTo(
+        "#stamp-2",
+        { scale: 2.2, opacity: 0, rotation: -22 },
+        { scale: 1.0, opacity: 1, rotation: -6, duration: 0.28, ease: "power4.out" },
+        2.28
+      );
+
+      // Thẻ 3: HỦY HOẠI XE MÁY (atMs: 319600 -> relative 4.38s)
+      tl.fromTo(
+        "#card-3",
+        { x: -60, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.45, ease: "power3.out" },
+        4.38
+      );
+      tl.fromTo(
+        "#stamp-3",
+        { scale: 2.2, opacity: 0, rotation: -22 },
+        { scale: 1.0, opacity: 1, rotation: -9, duration: 0.28, ease: "power4.out" },
+        4.68
+      );
+
+      // Thẻ 4: HÀNH VI TẬN CÙNG (atMs: 322200 -> relative 6.98s)
+      tl.fromTo(
+        "#card-4",
+        { x: -60, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.45, ease: "power3.out" },
+        6.98
+      );
+      tl.fromTo(
+        "#stamp-4",
+        { scale: 2.2, opacity: 0, rotation: -22 },
+        { scale: 1.0, opacity: 1, rotation: -7, duration: 0.28, ease: "power4.out" },
+        7.28
+      );
+
+      window.__timelines["scene-s36"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

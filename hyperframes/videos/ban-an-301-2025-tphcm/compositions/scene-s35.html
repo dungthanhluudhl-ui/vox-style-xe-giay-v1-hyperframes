@@ -1,0 +1,665 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap">
+      <style>
+    /* hf-safe-colors (tất định từ style-tokens.json) */
+    .hf-text-ink { color: #141414; }
+    .hf-text-light { color: #F7F4EC; }
+    .hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+    .hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+    .hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+    .hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      width: 1080px;
+      height: 1920px;
+      background-color: #F5F0E4;
+      color: #141414;
+      font-family: "Be Vietnam Pro", sans-serif;
+      overflow: hidden;
+    }
+
+    #root {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #F5F0E4;
+    }
+
+    .clip {
+      position: absolute;
+      inset: 0;
+    }
+
+    /* Thanh cam nhận diện thương hiệu cố định mép đáy */
+    #bottom-accent-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 1080px;
+      height: 12px;
+      background-color: #FF6A1A;
+      z-index: 100;
+    }
+
+    /* Container camera cho hiệu ứng zoom-through */
+    #viewport-container {
+      position: absolute;
+      inset: 0;
+      transform-origin: 540px 720px;
+      will-change: transform, opacity;
+    }
+
+    /* Header nhận định hồ sơ pháp lý (Safe Zone Y >= 160) */
+    .editorial-header {
+      position: absolute;
+      top: 175px;
+      left: 70px;
+      right: 70px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 2px solid #141414;
+      padding-bottom: 14px;
+    }
+
+    .editorial-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 24px;
+      font-weight: 900;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #141414;
+    }
+
+    .editorial-tag::before {
+      content: "";
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      background-color: #FF6A1A;
+    }
+
+    .editorial-sub {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      color: #141414;
+      opacity: 0.75;
+    }
+
+    /* Diagram Cán cân pháp lý */
+    #diagram-stage {
+      position: absolute;
+      top: 260px;
+      left: 60px;
+      width: 960px;
+      height: 840px;
+    }
+
+    /* Thước đo góc nghiêng trung tâm */
+    .angle-meter-bg {
+      position: absolute;
+      top: 15px;
+      left: 360px;
+      width: 240px;
+      height: 70px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Cột trụ và đế cân */
+    .scale-pillar-base {
+      position: absolute;
+      bottom: 20px;
+      left: 320px;
+      width: 320px;
+      height: 24px;
+      background-color: #141414;
+      border-radius: 4px;
+    }
+
+    .scale-pillar-stem {
+      position: absolute;
+      bottom: 40px;
+      left: 469px;
+      width: 22px;
+      height: 430px;
+      background-color: #141414;
+    }
+
+    .scale-pivot-hub {
+      position: absolute;
+      top: 336px;
+      left: 456px;
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background-color: #FF6A1A;
+      border: 6px solid #141414;
+      z-index: 10;
+    }
+
+    /* Thanh đòn xoay (pivot tại tâm 400px 9px) */
+    #scale-beam {
+      position: absolute;
+      top: 360px;
+      left: 480px;
+      width: 800px;
+      height: 18px;
+      margin-left: -400px;
+      margin-top: -9px;
+      background-color: #141414;
+      border-radius: 9px;
+      transform-origin: 400px 9px;
+      z-index: 5;
+    }
+
+    /* Khối treo đĩa trái (tình tiết giảm nhẹ) */
+    #suspension-left {
+      position: absolute;
+      top: 360px;
+      left: 110px;
+      width: 340px;
+      height: 380px;
+      pointer-events: none;
+      z-index: 8;
+    }
+
+    /* Khối treo đĩa phải (hậu quả đặc biệt nặng) */
+    #suspension-right {
+      position: absolute;
+      top: 360px;
+      left: 510px;
+      width: 340px;
+      height: 380px;
+      pointer-events: none;
+      z-index: 8;
+    }
+
+    /* Đĩa cân kim loại phẳng phong cách Vox */
+    .scale-pan {
+      position: absolute;
+      bottom: 20px;
+      left: 30px;
+      width: 280px;
+      height: 16px;
+      background-color: #141414;
+      border-radius: 4px;
+    }
+
+    /* Chồng tài liệu / biên lai giảm nhẹ ở đĩa trái (căn giữa theo pixels, không dùng CSS transform) */
+    #mitigating-docs-pack {
+      position: absolute;
+      bottom: 36px;
+      left: 50px;
+      width: 240px;
+      height: 150px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-end;
+    }
+
+    .doc-sheet {
+      position: absolute;
+      background-color: #E7E3D9;
+      border: 2px solid #141414;
+      padding: 10px 14px;
+      border-radius: 4px;
+      box-shadow: 0 4px 0 rgba(20,20,20,0.12);
+    }
+
+    .doc-sheet-1 {
+      width: 210px;
+      height: 90px;
+      bottom: 0;
+      transform: rotate(-3deg);
+    }
+
+    .doc-sheet-2 {
+      width: 195px;
+      height: 80px;
+      bottom: 12px;
+      transform: rotate(4deg);
+      background-color: #FAF7F0;
+    }
+
+    .doc-sheet-3 {
+      width: 180px;
+      height: 70px;
+      bottom: 24px;
+      transform: rotate(-1deg);
+      background-color: #E7E3D9;
+    }
+
+    .doc-line {
+      height: 4px;
+      background-color: rgba(20,20,20,0.3);
+      border-radius: 2px;
+      margin-bottom: 6px;
+    }
+
+    .doc-title {
+      font-size: 13px;
+      font-weight: 900;
+      color: #141414;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    /* Wrapper căn giữa nhãn tem "SƠ THẨM ĐÃ XEM XÉT" không dùng CSS transform */
+    #stamp-wrap {
+      position: absolute;
+      bottom: 116px;
+      left: 0;
+      right: 0;
+      display: flex;
+      justify-content: center;
+      z-index: 20;
+      pointer-events: none;
+    }
+
+    /* Overlay 1: Tem/nhãn "SƠ THẨM ĐÃ XEM XÉT" */
+    #stamp-already-considered {
+      background-color: #FF6A1A;
+      color: #141414;
+      border: 3px solid #141414;
+      padding: 12px 22px;
+      font-size: 24px;
+      font-weight: 900;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      white-space: nowrap;
+      border-radius: 4px;
+      box-shadow: 0 6px 0 #141414;
+      transform-origin: 50% 50%;
+    }
+
+    /* Khối tạ đen "HẬU QUẢ CHẾT NGƯỜI" ở đĩa phải (căn giữa theo pixels, không dùng CSS transform) */
+    #heavy-consequence-weight {
+      position: absolute;
+      bottom: 36px;
+      left: 40px;
+      width: 260px;
+      height: 185px;
+      background-color: #141414;
+      border: 4px solid #141414;
+      border-radius: 12px 12px 6px 6px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      box-shadow: 0 12px 0 rgba(20,20,20,0.25);
+      transform-origin: 50% 50%;
+    }
+
+    .weight-handle {
+      position: absolute;
+      top: -46px;
+      left: 80px;
+      width: 100px;
+      height: 52px;
+      border: 10px solid #141414;
+      border-bottom: none;
+      border-radius: 50px 50px 0 0;
+      background-color: transparent;
+    }
+
+    .weight-text-eyebrow {
+      font-size: 16px;
+      font-weight: 900;
+      color: #FF6A1A;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    .weight-main-line {
+      display: block;
+      font-size: 28px;
+      line-height: 1.15;
+      font-weight: 900;
+      color: #F7F4EC;
+      text-align: center;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    /* Wrapper căn giữa badge cảnh báo mất cân bằng */
+    #scale-badge-wrap {
+      position: absolute;
+      top: 48px;
+      left: 0;
+      right: 0;
+      display: flex;
+      justify-content: center;
+      z-index: 25;
+      pointer-events: none;
+    }
+
+    /* Overlay 2: Icon cán cân mất thăng bằng & badge cảnh báo */
+    #scale-status-badge {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background-color: #141414;
+      border: 3px solid #141414;
+      border-radius: 40px;
+      padding: 10px 24px 10px 18px;
+      box-shadow: 0 6px 0 rgba(20,20,20,0.18);
+      transform-origin: 50% 50%;
+    }
+
+    .scale-icon-box {
+      width: 44px;
+      height: 44px;
+      background-color: #FF6A1A;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .scale-status-text {
+      font-size: 22px;
+      font-weight: 900;
+      color: #F7F4EC;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+    }
+
+    /* Overlay 3: Punch-phrase "TÍNH CHẤT ĐẶC BIỆT NẶNG" (Safe Zone Y: 1160 - 1330) */
+    #punch-phrase-card {
+      position: absolute;
+      top: 1160px;
+      left: 60px;
+      right: 60px;
+      background-color: #141414;
+      border-radius: 14px;
+      padding: 28px 32px;
+      box-shadow: 0 10px 0 #FF6A1A;
+      z-index: 50;
+      text-align: center;
+      transform-origin: 50% 50%;
+    }
+
+    .punch-prefix {
+      display: block;
+      font-size: 22px;
+      font-weight: 900;
+      color: #F7F4EC;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .punch-main {
+      display: block;
+      font-size: 54px;
+      line-height: 1.18;
+      font-weight: 900;
+      color: #FF6A1A;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+  </style>
+
+  <div
+    id="root"
+    data-composition-id="scene-s35"
+    data-width="1080"
+    data-height="1920"
+    data-duration="9.94"
+  >
+    <!-- Scene Clip chính chiếm toàn bộ thời lượng 9.94s -->
+    <div id="scene-clip" class="clip" data-start="0" data-duration="9.94">
+      
+      <!-- Container chuyển động Camera / Zoom-through (có cờ allow-overflow cho entrance zoom ban đầu) -->
+      <div id="viewport-container" data-layout-allow-overflow="true">
+        
+        <!-- Header tiêu đề hồ sơ thẩm định phúc thẩm -->
+        <header class="editorial-header">
+          <div class="editorial-tag">TÒA PHÚC THẨM</div>
+          <div class="editorial-sub">ĐỐI CHIẾU PHÁP LÝ</div>
+        </header>
+
+        <!-- Sân khấu chính của Diagram Cán Cân -->
+        <div id="diagram-stage">
+          
+          <!-- Thước đo độ nghiêng / cân bằng (phía đỉnh trụ) -->
+          <div class="angle-meter-bg">
+            <svg width="220" height="40" viewBox="0 0 220 40">
+              <path d="M 20 35 A 90 90 0 0 1 200 35" fill="none" stroke="#141414" stroke-width="2.5" stroke-dasharray="4,4" />
+              <line x1="110" y1="5" x2="110" y2="25" stroke="#FF6A1A" stroke-width="3" />
+              <line x1="50" y1="18" x2="55" y2="26" stroke="#141414" stroke-width="2" />
+              <line x1="170" y1="18" x2="165" y2="26" stroke="#141414" stroke-width="2" />
+            </svg>
+          </div>
+
+          <!-- Trụ đứng và đế cán cân -->
+          <div class="scale-pillar-stem"></div>
+          <div class="scale-pillar-base"></div>
+
+          <!-- Thanh đòn xoay của cán cân (pivot ở chính giữa) -->
+          <div id="scale-beam"></div>
+          <div class="scale-pivot-hub"></div>
+
+          <!-- NHÁNH BÊN TRÁI: Đòn treo & Đĩa đựng tình tiết giảm nhẹ -->
+          <div id="suspension-left">
+            <svg width="340" height="320" style="position: absolute; top: 0; left: 0;">
+              <!-- Dây cáp treo từ đầu đòn xuống đĩa -->
+              <line x1="170" y1="0" x2="50" y2="300" stroke="#141414" stroke-width="3" />
+              <line x1="170" y1="0" x2="290" y2="300" stroke="#141414" stroke-width="3" />
+            </svg>
+            <div class="scale-pan"></div>
+
+            <!-- Chồng tài liệu hồ sơ biên lai giảm nhẹ -->
+            <div id="mitigating-docs-pack" data-layout-allow-occlusion="true">
+              <div class="doc-sheet doc-sheet-1">
+                <div class="doc-title">KHẮC PHỤC HẬU QUẢ</div>
+                <div class="doc-line" style="width: 80%;"></div>
+                <div class="doc-line" style="width: 55%;"></div>
+              </div>
+              <div class="doc-sheet doc-sheet-2">
+                <div class="doc-title">TÌNH TIẾT MỚI</div>
+                <div class="doc-line" style="width: 70%;"></div>
+                <div class="doc-line" style="width: 45%;"></div>
+              </div>
+              <div class="doc-sheet doc-sheet-3">
+                <div class="doc-title">BIÊN LAI ĐÓNG TIỀN</div>
+                <div class="doc-line" style="width: 85%;"></div>
+              </div>
+            </div>
+
+            <!-- Overlay 1: Tem "SƠ THẨM ĐÃ XEM XÉT" đóng mộc lên chồng tài liệu -->
+            <div id="stamp-wrap">
+              <div id="stamp-already-considered" data-layout-allow-occlusion="true">
+                SƠ THẨM ĐÃ XEM XÉT
+              </div>
+            </div>
+          </div>
+
+          <!-- NHÁNH BÊN PHẢI: Đòn treo & Quả tạ HẬU QUẢ CHẾT NGƯỜI -->
+          <div id="suspension-right">
+            <svg width="340" height="320" style="position: absolute; top: 0; left: 0;">
+              <!-- Dây cáp treo từ đầu đòn xuống đĩa phải -->
+              <line x1="170" y1="0" x2="50" y2="300" stroke="#141414" stroke-width="3" />
+              <line x1="170" y1="0" x2="290" y2="300" stroke="#141414" stroke-width="3" />
+            </svg>
+            <div class="scale-pan"></div>
+
+            <!-- Quả tạ đen (có cờ allow-overflow cho lúc rơi từ phía trên) -->
+            <div id="heavy-consequence-weight" data-layout-allow-overflow="true">
+              <div class="weight-handle"></div>
+              <div class="weight-text-eyebrow">TÍNH CHẤT HÀNH VI</div>
+              <span class="weight-main-line">HẬU QUẢ</span>
+              <span class="weight-main-line">CHẾT NGƯỜI</span>
+            </div>
+          </div>
+
+          <!-- Overlay 2: Icon "scale" và badge cảnh báo mất cân bằng -->
+          <div id="scale-badge-wrap">
+            <div id="scale-status-badge">
+              <div class="scale-icon-box">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
+                  <!-- Icon cán cân nghiêng vẽ bằng SVG nét sắc -->
+                  <path id="icon-scale-path" d="M12 3V21M4 9L12 6L20 9M4 9L2 15C2 16 3 17 5 17C7 17 8 16 8 15L6 9M20 9L18 15C18 16 19 17 21 17C23 17 24 16 24 15L22 9M8 21H16" stroke="#141414" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </div>
+              <div class="scale-status-text">KHÔNG ĐỦ THAY ĐỔI ÁN</div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Overlay 3: Punch-phrase phán quyết "TÍNH CHẤT ĐẶC BIỆT NẶNG" -->
+        <div id="punch-phrase-card">
+          <span class="punch-prefix">TÍNH CHẤT HÀNH VI VÀ HẬU QUẢ</span>
+          <span class="punch-main">TÍNH CHẤT ĐẶC BIỆT NẶNG</span>
+        </div>
+
+      </div>
+
+      <!-- Thanh cam đặc trưng Style DNA cố định dưới cùng -->
+      <div id="bottom-accent-bar"></div>
+
+    </div>
+  </div>
+
+  <script>
+    // Khởi tạo GSAP Timeline tuân thủ Deterministic Render Contract của HyperFrames
+    const tl = gsap.timeline({ paused: true });
+
+    // Đo độ dài path SVG của icon scale để tạo hiệu ứng vẽ nét
+    const scaleIconPath = document.getElementById("icon-scale-path");
+    let pathLen = 60;
+    if (scaleIconPath && scaleIconPath.getTotalLength) {
+      pathLen = scaleIconPath.getTotalLength();
+      scaleIconPath.style.strokeDasharray = pathLen;
+      scaleIconPath.style.strokeDashoffset = pathLen;
+    }
+
+    // 1. Entrance "zoom-through" toàn khung hình (0.0s -> 0.8s)
+    tl.fromTo("#viewport-container", 
+      { scale: 1.35, opacity: 0 },
+      { scale: 1.0, opacity: 1, duration: 0.8, ease: "power3.out" },
+      0.0
+    );
+
+    // 2. Cán cân ban đầu ở vị trí gần thăng bằng (0.2s -> 1.0s)
+    tl.fromTo("#scale-beam",
+      { rotation: 0 },
+      { rotation: -2, duration: 0.8, ease: "power2.out" },
+      0.2
+    );
+    tl.fromTo("#suspension-left",
+      { y: 0 },
+      { y: 8, duration: 0.8, ease: "power2.out" },
+      0.2
+    );
+    tl.fromTo("#suspension-right",
+      { y: 0 },
+      { y: -8, duration: 0.8, ease: "power2.out" },
+      0.2
+    );
+
+    // 3. Overlay 1: Nhãn "SƠ THẨM ĐÃ XEM XÉT" xuất hiện lúc 1.12s (tương ứng 306400ms trong kịch bản)
+    tl.fromTo("#stamp-already-considered",
+      { scale: 0, opacity: 0, rotation: -12 },
+      { scale: 1, opacity: 1, rotation: -4, duration: 0.55, ease: "power3.out" },
+      1.12
+    );
+
+    // Chồng tài liệu hơi khẽ lún xuống do có tem đóng mộc (tất định, giá trị tuyệt đối)
+    tl.fromTo("#mitigating-docs-pack",
+      { y: 0 },
+      { y: 6, duration: 0.25, ease: "power1.out" },
+      1.22
+    );
+
+    // 4. Quả tạ đen khổng lồ lao xuống từ trên cao lúc 4.15s và giáng mạnh xuống đĩa cân lúc 4.7s
+    tl.fromTo("#heavy-consequence-weight",
+      { y: -380, opacity: 0, scale: 1.2 },
+      { y: 0, opacity: 1, scale: 1.0, duration: 0.55, ease: "power4.in" },
+      4.15
+    );
+
+    // 5. Cú va chạm cực mạnh: Cán cân nghiêng đổ hoàn toàn sang phải (4.7s -> 5.3s)
+    // Đòn xoay nghiêng 18 độ, đĩa phải hạ sâu 110px, đĩa trái bị hất bổng lên 110px
+    tl.to("#scale-beam",
+      { rotation: 18, duration: 0.6, ease: "power3.out" },
+      4.7
+    );
+    tl.to("#suspension-left",
+      { y: -110, duration: 0.6, ease: "power3.out" },
+      4.7
+    );
+    tl.to("#suspension-right",
+      { y: 110, duration: 0.6, ease: "power3.out" },
+      4.7
+    );
+
+    // Chồng giấy ở đĩa trái bị nảy tung nhẹ do quán tính hất lên (tất định, giá trị tuyệt đối)
+    tl.fromTo("#mitigating-docs-pack",
+      { y: 6 },
+      { y: -30, duration: 0.35, ease: "power2.out" },
+      4.75
+    );
+    tl.to("#mitigating-docs-pack",
+      { y: 0, duration: 0.3, ease: "power1.in" },
+      5.1
+    );
+
+    // 6. Overlay 2: Icon "scale" và huy hiệu trạng thái xuất hiện lúc 5.12s (tương ứng 310400ms)
+    tl.fromTo("#scale-status-badge",
+      { scale: 0, opacity: 0, y: -20 },
+      { scale: 1, opacity: 1, y: 0, duration: 0.5, ease: "power3.out" },
+      5.12
+    );
+
+    // Vẽ nét SVG icon scale
+    if (scaleIconPath) {
+      tl.to(scaleIconPath,
+        { strokeDashoffset: 0, duration: 0.6, ease: "power2.out" },
+        5.25
+      );
+    }
+
+    // Rung chấn thứ cấp thể hiện sức nặng áp đảo của quả tạ
+    tl.to("#scale-beam", { rotation: 19.5, duration: 0.35, ease: "power1.inOut" }, 5.3);
+    tl.to("#scale-beam", { rotation: 18.5, duration: 0.45, ease: "power1.inOut" }, 5.65);
+
+    // 7. Overlay 3: Punch-phrase "TÍNH CHẤT ĐẶC BIỆT NẶNG" xuất hiện lúc 8.32s (tương ứng 313600ms)
+    tl.fromTo("#punch-phrase-card",
+      { y: 90, opacity: 0, scale: 0.95 },
+      { y: 0, opacity: 1, scale: 1.0, duration: 0.55, ease: "power3.out" },
+      8.32
+    );
+
+    // Đăng ký timeline gốc duy nhất vào registry của HyperFrames
+    window.__timelines = window.__timelines || {};
+    window.__timelines["scene-s35"] = tl;
+  </script>
+
+    </template>
+  </body>
+</html>

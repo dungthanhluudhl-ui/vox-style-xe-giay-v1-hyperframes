@@ -1,0 +1,478 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap"
+    />
+      <style>
+/* hf-safe-colors (tất định từ style-tokens.json) */
+.hf-text-ink { color: #141414; }
+.hf-text-light { color: #F7F4EC; }
+.hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+.hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+.hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+.hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        padding: 0;
+        background: #141414;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: #e7e3d9;
+      }
+
+      /* Định nghĩa chuẩn .clip theo HyperFrames Core: inset 0, không fix cứng px */
+      .clip {
+        position: absolute;
+        inset: 0;
+      }
+
+      /* Lớp ảnh nền chính phủ toàn bộ khung 1080x1920 */
+      .photo-viewport {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+      }
+
+      #bg-photo {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 125%;
+        height: 100%;
+        object-fit: cover;
+        transform-origin: left center;
+        will-change: transform, opacity;
+      }
+
+      /* Biến thể nền spotlight & lưới kỹ thuật Vox */
+      .vignette-spotlight {
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(
+          circle at 50% 48%,
+          rgba(20, 20, 20, 0.05) 30%,
+          rgba(20, 20, 20, 0.52) 80%,
+          rgba(20, 20, 20, 0.85) 100%
+        );
+        pointer-events: none;
+      }
+
+      .doc-grid {
+        position: absolute;
+        inset: 0;
+        background-image:
+          linear-gradient(to right, rgba(20, 20, 20, 0.22) 1px, transparent 1px),
+          linear-gradient(to bottom, rgba(20, 20, 20, 0.22) 1px, transparent 1px);
+        background-size: 84px 84px;
+        opacity: 0.35;
+        pointer-events: none;
+      }
+
+      /* Thanh cam nhận diện thương hiệu cố định mép đáy */
+      .bottom-brand-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 10px;
+        background: #ff6a1a;
+        z-index: 90;
+      }
+
+      /* Safe area content styling (giữ trong dải an toàn Y: 160px - 1390px) */
+      .overlay-layer {
+        pointer-events: none;
+        z-index: 30;
+      }
+
+      /* Card Overlay 1: Chạm trán ngã tư */
+      .card-confrontation {
+        position: absolute;
+        top: 230px;
+        left: 70px;
+        max-width: 820px;
+        background: #141414;
+        border-left: 10px solid #ff6a1a;
+        padding: 26px 36px 30px;
+        box-shadow: 0 16px 38px rgba(0, 0, 0, 0.45);
+        will-change: transform, opacity;
+      }
+
+      .badge-row {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        margin-bottom: 12px;
+      }
+
+      .category-pill {
+        display: inline-block;
+        background: #ff6a1a;
+        color: #141414;
+        font-size: 20px;
+        font-weight: 900;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        padding: 5px 14px;
+        border-radius: 4px;
+      }
+
+      .meta-indicator {
+        color: #e7e3d9;
+        font-size: 20px;
+        font-weight: 700;
+        letter-spacing: 1px;
+        opacity: 0.9;
+      }
+
+      .main-title {
+        margin: 0;
+        color: #f7f4ec;
+        font-size: 64px;
+        font-weight: 900;
+        line-height: 1.18;
+        letter-spacing: -0.5px;
+        text-transform: uppercase;
+      }
+
+      /* Card Overlay 2: Đo kích thước dao tự chế 70cm (Visual language: annotated) */
+      .annotation-group {
+        position: absolute;
+        top: 740px;
+        left: 60px;
+        width: 960px;
+        height: 520px;
+        pointer-events: none;
+      }
+
+      .card-weapon {
+        position: absolute;
+        top: 140px;
+        left: 20px;
+        max-width: 580px;
+        background: #141414;
+        border: 2px solid #ff6a1a;
+        border-radius: 6px;
+        padding: 24px 30px;
+        box-shadow: 0 18px 40px rgba(0, 0, 0, 0.55);
+        will-change: transform, opacity;
+      }
+
+      .weapon-label {
+        display: inline-block;
+        background: #ff6a1a;
+        color: #141414;
+        font-size: 19px;
+        font-weight: 900;
+        letter-spacing: 1.5px;
+        padding: 4px 12px;
+        border-radius: 3px;
+        margin-bottom: 10px;
+      }
+
+      .weapon-title {
+        margin: 0;
+        color: #f7f4ec;
+        font-size: 44px;
+        font-weight: 900;
+        line-height: 1.22;
+        letter-spacing: 0.5px;
+      }
+
+      /* SVG Dimension lines - Thước đo đồ họa phong cách tài liệu điều tra */
+      .dimension-svg {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        overflow: visible;
+      }
+
+      .dim-line {
+        stroke: #ff6a1a;
+        stroke-width: 4;
+        stroke-linecap: round;
+        fill: none;
+      }
+
+      .dim-line-thin {
+        stroke: #f7f4ec;
+        stroke-width: 2.5;
+        stroke-dasharray: 6 6;
+        fill: none;
+      }
+
+      .dim-node {
+        fill: #ff6a1a;
+      }
+
+      .dim-tag-badge {
+        fill: #141414;
+        stroke: #ff6a1a;
+        stroke-width: 2;
+      }
+
+      .dim-tag-text {
+        fill: #f7f4ec;
+        font-family: "Be Vietnam Pro", sans-serif;
+        font-size: 24px;
+        font-weight: 900;
+        letter-spacing: 1px;
+        text-anchor: middle;
+        dominant-baseline: central;
+      }
+
+      /* Safe WCAG utility markers */
+      .hf-plate-ink {
+        background: #141414;
+      }
+      .hf-text-light {
+        color: #f7f4ec;
+      }
+      .hf-hl-orange {
+        background: #ff6a1a;
+        color: #141414;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s16"
+      data-width="1080"
+      data-height="1920"
+      data-duration="7.19"
+    >
+      <!-- Clip 1: Ảnh nền chính (Background-photo + Pan right camera) -->
+      <section
+        id="shot-bg"
+        class="clip"
+        data-start="0"
+        data-duration="7.19"
+      >
+        <div class="photo-viewport">
+          <img
+            id="bg-photo"
+            src="assets/img-10-armed-man-street-confrontation.jpg"
+            alt="Chạm trán tại ngã tư"
+          />
+          <div class="vignette-spotlight"></div>
+          <div class="doc-grid"></div>
+        </div>
+      </section>
+
+      <!-- Clip 2: Overlay Label 1 - Chạm trán ngã tư (atMs: 133200, holdMs: 2000 -> start: 1.31s, dur: 2.0s) -->
+      <section
+        id="shot-overlay-1"
+        class="clip overlay-layer"
+        data-start="1.31"
+        data-duration="2.0"
+      >
+        <div id="card-confrontation" class="card-confrontation">
+          <div class="badge-row">
+            <span class="category-pill">ĐỐI ĐẦU</span>
+            <span class="meta-indicator">GIAO LỘ ĐÊM</span>
+          </div>
+          <h1 class="main-title">CHẠM TRÁN NGÃ TƯ</h1>
+        </div>
+      </section>
+
+      <!-- Clip 3: Overlay Label 2 - Đo kích thước Dao tự chế 70cm (atMs: 136200, holdMs: 2200 -> start: 4.31s, dur: 2.2s) -->
+      <section
+        id="shot-overlay-2"
+        class="clip overlay-layer"
+        data-start="4.31"
+        data-duration="2.2"
+      >
+        <div class="annotation-group">
+          <!-- Graphic Dimension Callout SVG -->
+          <svg class="dimension-svg" viewBox="0 0 960 520">
+            <!-- Đường gióng kích thước kỹ thuật nối chỉ vào hung khí -->
+            <line
+              id="dim-axis"
+              class="dim-line"
+              x1="620"
+              y1="40"
+              x2="780"
+              y2="420"
+            />
+            <line
+              id="dim-cap-top"
+              class="dim-line"
+              x1="590"
+              y1="50"
+              x2="650"
+              y2="30"
+            />
+            <line
+              id="dim-cap-bottom"
+              class="dim-line"
+              x1="750"
+              y1="430"
+              x2="810"
+              y2="410"
+            />
+            <polyline
+              id="dim-leader"
+              class="dim-line-thin"
+              points="700,230 520,230 460,230"
+            />
+            <circle id="dim-point" class="dim-node" cx="700" cy="230" r="7" />
+
+            <!-- Khối số đo kích thước trên đường gióng -->
+            <g id="dim-badge-group">
+              <rect
+                class="dim-tag-badge"
+                x="640"
+                y="195"
+                width="130"
+                height="46"
+                rx="4"
+              />
+              <text class="dim-tag-text" x="705" y="218">70 CM</text>
+            </g>
+          </svg>
+
+          <!-- Thẻ định danh thông tin hung khí -->
+          <div id="card-weapon" class="card-weapon">
+            <span class="weapon-label">HUNG KHÍ NGUY HIỂM</span>
+            <h2 class="weapon-title">DAO TỰ CHẾ 70CM</h2>
+          </div>
+        </div>
+      </section>
+
+      <!-- Thanh thương hiệu cố định mép đáy -->
+      <div class="bottom-brand-bar"></div>
+    </div>
+
+    <script>
+      // Khởi tạo GSAP Timeline seekable cho HyperFrames Core
+      const tl = gsap.timeline({ paused: true });
+
+      // Thiết lập dasharray / dashoffset đo đạc cho SVG path draw kỹ thuật
+      const axisLine = document.getElementById("dim-axis");
+      const leaderLine = document.getElementById("dim-leader");
+      if (axisLine && leaderLine) {
+        const axisLength = axisLine.getTotalLength();
+        const leaderLength = leaderLine.getTotalLength();
+        axisLine.style.strokeDasharray = axisLength;
+        axisLine.style.strokeDashoffset = axisLength;
+        leaderLine.style.strokeDasharray = leaderLength;
+        leaderLine.style.strokeDashoffset = leaderLength;
+      }
+
+      // --- BEAT 1: Mở đầu Scene & Camera Pan-right (t=0 -> 7.19s) ---
+      // Entrance rise mượt mà theo Style DNA
+      tl.fromTo(
+        "#bg-photo",
+        { scale: 1.18, x: 0, y: 35, opacity: 0 },
+        { scale: 1.18, y: 0, opacity: 1, duration: 0.65, ease: "power3.out" },
+        0
+      );
+
+      // Camera pan-right liên tục sang phải theo hướng nhóm Kiên đi tới
+      tl.to(
+        "#bg-photo",
+        { x: -160, duration: 7.19, ease: "none" },
+        0
+      );
+
+      tl.fromTo(
+        ".vignette-spotlight",
+        { opacity: 0 },
+        { opacity: 1, duration: 0.8, ease: "power2.out" },
+        0.1
+      );
+
+      // --- BEAT 2: Overlay 1 - "CHẠM TRÁN NGÃ TƯ" (t=1.31s -> 3.31s) ---
+      tl.fromTo(
+        "#card-confrontation",
+        { x: -50, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.45, ease: "power3.out" },
+        1.31
+      );
+
+      // Exit mượt trước ranh giới data-duration
+      tl.to(
+        "#card-confrontation",
+        { x: -30, opacity: 0, duration: 0.22, ease: "power2.in" },
+        3.08
+      );
+
+      // --- BEAT 3: Overlay 2 - "DAO TỰ CHẾ 70CM" & Dimension Callout (t=4.31s -> 6.51s) ---
+      // Vẽ đường gióng kích thước kỹ thuật
+      tl.to(
+        "#dim-axis",
+        { strokeDashoffset: 0, duration: 0.42, ease: "power2.out" },
+        4.31
+      );
+
+      tl.fromTo(
+        ["#dim-cap-top", "#dim-cap-bottom"],
+        { opacity: 0, scale: 0, transformOrigin: "center center" },
+        { opacity: 1, scale: 1, duration: 0.22, stagger: 0.08, ease: "power2.out" },
+        4.48
+      );
+
+      tl.to(
+        "#dim-leader",
+        { strokeDashoffset: 0, duration: 0.28, ease: "power2.out" },
+        4.52
+      );
+
+      tl.fromTo(
+        "#dim-point",
+        { scale: 0, opacity: 0, transformOrigin: "center center" },
+        { scale: 1, opacity: 1, duration: 0.2, ease: "back.out(1.5)" },
+        4.58
+      );
+
+      tl.fromTo(
+        "#dim-badge-group",
+        { scale: 0.7, opacity: 0, transformOrigin: "705px 218px" },
+        { scale: 1, opacity: 1, duration: 0.3, ease: "power3.out" },
+        4.62
+      );
+
+      // Thẻ thông tin hung khí xuất hiện
+      tl.fromTo(
+        "#card-weapon",
+        { y: 30, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.42, ease: "power3.out" },
+        4.45
+      );
+
+      // Exit toàn bộ overlay 2 trước khi hết thời lượng hiển thị
+      tl.to(
+        ["#card-weapon", ".dimension-svg"],
+        { opacity: 0, y: -16, duration: 0.2, ease: "power2.in" },
+        6.28
+      );
+
+      // Đăng ký timeline cho HyperFrames seek runtime
+      window.__timelines = window.__timelines || {};
+      window.__timelines["scene-s16"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

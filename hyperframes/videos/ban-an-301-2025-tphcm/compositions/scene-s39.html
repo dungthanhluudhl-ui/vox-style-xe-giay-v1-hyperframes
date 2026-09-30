@@ -1,0 +1,575 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap"
+    />
+      <style>
+      /* hf-safe-colors (tất định từ style-tokens.json) */
+      .hf-text-ink { color: #141414; }
+      .hf-text-light { color: #F7F4EC; }
+      .hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+      .hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+      .hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+      .hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background: #e7e3d9;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: #e7e3d9;
+        background-image:
+          linear-gradient(to right, rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px),
+          linear-gradient(to bottom, rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px);
+        background-size: 84px 84px;
+      }
+      .clip {
+        position: absolute;
+        inset: 0;
+      }
+
+      /* Vox UI Components */
+      .brand-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 16px;
+        background: #ff6a1a;
+        z-index: 999;
+      }
+
+      /* Header area */
+      .scene-header {
+        position: absolute;
+        top: 180px;
+        left: 60px;
+        width: 960px;
+      }
+      .kicker-tag {
+        display: inline-block;
+        background: #141414;
+        color: #f7f4ec;
+        font-size: 20px;
+        font-weight: 900;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        padding: 6px 16px;
+        border-radius: 4px;
+        margin-bottom: 14px;
+      }
+      .header-title {
+        margin: 0;
+        font-size: 64px;
+        font-weight: 900;
+        line-height: 1.15;
+        color: #141414;
+        text-transform: uppercase;
+      }
+      .header-rule {
+        width: 120px;
+        height: 8px;
+        background: #ff6a1a;
+        margin-top: 16px;
+      }
+
+      /* Flow Origin: Node 1 */
+      .origin-node {
+        position: absolute;
+        top: 350px;
+        left: 200px;
+        width: 680px;
+        background: #f5f0e4;
+        border: 4px solid #141414;
+        box-shadow: 8px 8px 0px #141414;
+        padding: 24px 30px;
+        border-radius: 8px;
+        z-index: 20;
+      }
+      .origin-kicker {
+        font-size: 18px;
+        font-weight: 900;
+        color: #141414;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        margin-bottom: 6px;
+      }
+      .origin-title {
+        font-size: 42px;
+        font-weight: 900;
+        line-height: 1.2;
+        color: #141414;
+        text-transform: uppercase;
+      }
+
+      /* SVG Connectors */
+      .flow-svg {
+        position: absolute;
+        top: 480px;
+        left: 0;
+        width: 1080px;
+        height: 240px;
+        z-index: 10;
+        pointer-events: none;
+      }
+      .flow-line {
+        fill: none;
+        stroke: #141414;
+        stroke-width: 6;
+        stroke-linecap: round;
+      }
+      .flow-line-dashed {
+        stroke-dasharray: 12 10;
+      }
+      .flow-line-escalation {
+        fill: none;
+        stroke: #ff6a1a;
+        stroke-width: 8;
+        stroke-linecap: round;
+      }
+
+      /* Columns */
+      .branch-col {
+        position: absolute;
+        top: 690px;
+        width: 460px;
+        height: 430px;
+        z-index: 20;
+      }
+      .branch-left {
+        left: 60px;
+      }
+      .branch-right {
+        left: 560px;
+      }
+
+      .card-base {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        background: #f5f0e4;
+        border: 4px solid #141414;
+        box-shadow: 8px 8px 0px #141414;
+        border-radius: 8px;
+        padding: 28px 24px;
+      }
+      .card-tag {
+        display: inline-block;
+        padding: 6px 14px;
+        font-size: 18px;
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        border-radius: 4px;
+        margin-bottom: 14px;
+      }
+      .tag-neutral {
+        background: #141414;
+        color: #f7f4ec;
+      }
+      .tag-danger {
+        background: #ff6a1a;
+        color: #141414;
+      }
+      .card-title {
+        font-size: 32px;
+        font-weight: 900;
+        line-height: 1.25;
+        color: #141414;
+        margin-bottom: 12px;
+        text-transform: uppercase;
+      }
+      .card-desc {
+        font-size: 20px;
+        font-weight: 700;
+        line-height: 1.4;
+        color: #141414;
+      }
+
+      /* Ban Overlay & Missed Chance Stamp (Branch Left) */
+      .ban-container {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 140px;
+        height: 140px;
+        z-index: 30;
+        display: grid;
+        place-items: center;
+      }
+      .stamp-missed-box {
+        position: absolute;
+        bottom: 24px;
+        left: 20px;
+        right: 20px;
+        background: #141414;
+        border: 3px solid #ff6a1a;
+        box-shadow: 4px 4px 0px rgba(20, 20, 20, 0.4);
+        padding: 14px 16px;
+        border-radius: 6px;
+        z-index: 40;
+      }
+      .stamp-title {
+        font-size: 24px;
+        font-weight: 900;
+        color: #f7f4ec;
+        text-transform: uppercase;
+        line-height: 1.25;
+      }
+
+      /* Weapon Badge Overlay (Branch Right) */
+      .weapon-box {
+        position: absolute;
+        bottom: 24px;
+        left: 20px;
+        right: 20px;
+        background: #141414;
+        border: 4px solid #ff6a1a;
+        box-shadow: 6px 6px 0px #ff6a1a;
+        padding: 16px 18px;
+        border-radius: 6px;
+        z-index: 40;
+      }
+      .weapon-tag {
+        display: inline-block;
+        background: #ff6a1a;
+        color: #141414;
+        font-size: 16px;
+        font-weight: 900;
+        padding: 4px 10px;
+        border-radius: 3px;
+        text-transform: uppercase;
+        margin-bottom: 8px;
+      }
+      .weapon-title {
+        font-size: 32px;
+        font-weight: 900;
+        color: #ff6a1a;
+        text-transform: uppercase;
+        line-height: 1.15;
+        margin-bottom: 6px;
+      }
+      .weapon-detail {
+        font-size: 18px;
+        font-weight: 700;
+        color: #f7f4ec;
+      }
+
+      /* Editorial Conclusion Card */
+      .conclusion-card {
+        position: absolute;
+        top: 1150px;
+        left: 60px;
+        width: 960px;
+        background: #141414;
+        border-left: 14px solid #ff6a1a;
+        box-shadow: 8px 8px 0px rgba(20, 20, 20, 0.5);
+        padding: 28px 32px;
+        border-radius: 6px;
+        z-index: 50;
+      }
+      .conclusion-kicker {
+        font-size: 18px;
+        font-weight: 900;
+        color: #ff6a1a;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        margin-bottom: 8px;
+      }
+      .conclusion-text {
+        font-size: 32px;
+        font-weight: 900;
+        line-height: 1.3;
+        color: #f7f4ec;
+        text-transform: uppercase;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s39"
+      data-width="1080"
+      data-height="1920"
+      data-duration="13.04"
+    >
+      <!-- Permanent signature bottom bar -->
+      <div class="brand-bar"></div>
+
+      <!-- Main Scene Clip -->
+      <section
+        id="scene-s39"
+        class="clip"
+        data-start="0"
+        data-duration="13.04"
+        data-track-index="0"
+      >
+        <!-- Header -->
+        <header id="header-block" class="scene-header">
+          <div class="kicker-tag">DIỄN BIẾN &amp; HÀNH VI</div>
+          <h1 class="header-title">NGÃ BA QUYẾT ĐỊNH</h1>
+          <div class="header-rule"></div>
+        </header>
+
+        <!-- Origin Node (Overlay 1: ĐÃ THOÁT KHỎI DAO) -->
+        <div id="origin-node" class="origin-node">
+          <div class="origin-kicker">GIAI ĐOẠN ĐẦU • THOÁT HIỂM</div>
+          <div class="origin-title">ĐÃ THOÁT KHỎI DAO</div>
+        </div>
+
+        <!-- SVG Flow Lines -->
+        <svg class="flow-svg" viewBox="0 0 1080 240">
+          <!-- Central trunk coming from top -->
+          <line id="path-trunk" class="flow-line" x1="540" y1="0" x2="540" y2="70" />
+
+          <!-- Left path curving to Branch Left -->
+          <path
+            id="path-left"
+            class="flow-line flow-line-dashed"
+            d="M 540 70 C 540 140, 290 120, 290 220"
+          />
+
+          <!-- Right path curving to Branch Right -->
+          <path
+            id="path-right"
+            class="flow-line-escalation"
+            d="M 540 70 C 540 140, 790 120, 790 220"
+          />
+        </svg>
+
+        <!-- Branch Left: Safe Choice -->
+        <div id="branch-left" class="branch-col branch-left">
+          <div class="card-base" id="card-safe">
+            <div class="card-tag tag-neutral">LỰA CHỌN PHÁP LUẬT</div>
+            <div class="card-title">DỪNG LẠI &amp; BÁO CÔNG AN</div>
+            <div class="card-desc">
+              Tránh xa xung đột • Chấm dứt nguy hiểm • Để pháp luật xử lý
+            </div>
+
+            <!-- Overlay 2: BAN Icon -->
+            <div id="ban-container" class="ban-container" data-layout-allow-occlusion="true">
+              <svg viewBox="0 0 120 120" width="120" height="120">
+                <circle
+                  id="ban-circle"
+                  cx="60"
+                  cy="60"
+                  r="50"
+                  fill="none"
+                  stroke="#FF6A1A"
+                  stroke-width="12"
+                />
+                <line
+                  id="ban-slash"
+                  x1="25"
+                  y1="25"
+                  x2="95"
+                  y2="95"
+                  stroke="#FF6A1A"
+                  stroke-width="12"
+                  stroke-linecap="round"
+                />
+              </svg>
+            </div>
+
+            <!-- Overlay 3: BỎ LỠ CƠ HỘI DỪNG LẠI -->
+            <div id="stamp-missed" class="stamp-missed-box" data-layout-allow-occlusion="true">
+              <div class="stamp-title">BỎ LỠ CƠ HỘI DỪNG LẠI</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Branch Right: Escalation Choice -->
+        <div id="branch-right" class="branch-col branch-right">
+          <div class="card-base" id="card-vengeance">
+            <div class="card-tag tag-danger">CON ĐƯỜNG TRẢ THÙ</div>
+            <div class="card-title">TÌM ĐỐI PHƯƠNG</div>
+            <div class="card-desc">
+              Rời khỏi nơi an toàn • Tìm đối phương • Hướng tới trả thù
+            </div>
+
+            <!-- Overlay 4: TỤ TẬP VŨ KHÍ -->
+            <div id="weapon-box" class="weapon-box" data-layout-allow-occlusion="true">
+              <div class="weapon-tag">HÀNH ĐỘNG TỰ QUYẾT</div>
+              <div class="weapon-title">TỤ TẬP VŨ KHÍ</div>
+              <div class="weapon-detail">Chuẩn bị hung khí • Tụ tập nhóm người</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Conclusion summary card -->
+        <div id="conclusion-card" class="conclusion-card">
+          <div class="conclusion-kicker">TRÁCH NHIỆM HÀNH VI</div>
+          <div class="conclusion-text">TỰ QUYẾT ĐỊNH TỤ TẬP VŨ KHÍ TRẢ THÙ</div>
+        </div>
+      </section>
+    </div>
+
+    <script>
+      // Single paused master timeline for HyperFrames
+      const tl = gsap.timeline({
+        paused: true,
+        defaults: { ease: "power3.out" },
+      });
+      window.__timelines = window.__timelines || {};
+      window.__timelines["scene-s39"] = tl;
+
+      // SVG path length setup for clean path drawing
+      const trunk = document.getElementById("path-trunk");
+      const pathLeft = document.getElementById("path-left");
+      const pathRight = document.getElementById("path-right");
+      const banCircle = document.getElementById("ban-circle");
+      const banSlash = document.getElementById("ban-slash");
+
+      const trunkLen = trunk.getTotalLength();
+      trunk.style.strokeDasharray = trunkLen;
+      trunk.style.strokeDashoffset = trunkLen;
+
+      const leftLen = pathLeft.getTotalLength();
+      pathLeft.style.strokeDasharray = leftLen;
+      pathLeft.style.strokeDashoffset = leftLen;
+
+      const rightLen = pathRight.getTotalLength();
+      pathRight.style.strokeDasharray = rightLen;
+      pathRight.style.strokeDashoffset = rightLen;
+
+      const circleLen = banCircle.getTotalLength();
+      banCircle.style.strokeDasharray = circleLen;
+      banCircle.style.strokeDashoffset = circleLen;
+
+      const slashLen = banSlash.getTotalLength();
+      banSlash.style.strokeDasharray = slashLen;
+      banSlash.style.strokeDashoffset = slashLen;
+
+      // Initial visual states
+      gsap.set("#header-block", { opacity: 0, y: -24 });
+      gsap.set("#origin-node", { opacity: 0, scale: 0.9, y: 30 });
+      gsap.set("#branch-left", { opacity: 0, y: 40 });
+      gsap.set("#branch-right", { opacity: 0, y: 40 });
+      gsap.set("#ban-container", { opacity: 0, scale: 0 });
+      gsap.set("#stamp-missed", { opacity: 0, scale: 0.85, y: 20 });
+      gsap.set("#weapon-box", { opacity: 0, scale: 0.85, y: 20 });
+      gsap.set("#conclusion-card", { opacity: 0, y: 30 });
+
+      // 0.0s - 0.8s: Scene entrance & header reveal
+      tl.to("#header-block", { opacity: 1, y: 0, duration: 0.7 }, 0.2);
+
+      // 1.38s: Overlay 1 -> "ĐÃ THOÁT KHỎI DAO"
+      tl.to(
+        "#origin-node",
+        {
+          opacity: 1,
+          scale: 1,
+          y: 0,
+          duration: 0.7,
+        },
+        1.38,
+      );
+
+      // 2.7s - 3.8s: Fork paths draw downwards & destination columns emerge
+      tl.to("#path-trunk", { strokeDashoffset: 0, duration: 0.4, ease: "power2.out" }, 2.7);
+      tl.to("#path-left", { strokeDashoffset: 0, duration: 0.7, ease: "power2.out" }, 3.0);
+      tl.to("#path-right", { strokeDashoffset: 0, duration: 0.7, ease: "power2.out" }, 3.1);
+
+      tl.to("#branch-left", { opacity: 1, y: 0, duration: 0.6 }, 3.5);
+      tl.to("#branch-right", { opacity: 1, y: 0, duration: 0.6 }, 3.7);
+
+      // 4.78s: Overlay 2 -> "ban" Icon strikes across the safe branch
+      tl.to(
+        "#ban-container",
+        {
+          opacity: 1,
+          scale: 1,
+          duration: 0.4,
+          ease: "power3.out",
+        },
+        4.78,
+      );
+      tl.to(
+        banCircle,
+        {
+          strokeDashoffset: 0,
+          duration: 0.5,
+          ease: "power2.out",
+        },
+        4.85,
+      );
+      tl.to(
+        banSlash,
+        {
+          strokeDashoffset: 0,
+          duration: 0.4,
+          ease: "power2.out",
+        },
+        5.15,
+      );
+
+      // 7.18s: Overlay 3 -> "BỎ LỠ CƠ HỘI DỪNG LẠI"
+      tl.to(
+        "#stamp-missed",
+        {
+          opacity: 1,
+          scale: 1,
+          y: 0,
+          duration: 0.5,
+          ease: "power3.out",
+        },
+        7.18,
+      );
+
+      // 10.18s: Overlay 4 -> "TỤ TẬP VŨ KHÍ"
+      tl.to(
+        "#weapon-box",
+        {
+          opacity: 1,
+          scale: 1,
+          y: 0,
+          duration: 0.55,
+          ease: "power3.out",
+        },
+        10.18,
+      );
+
+      // Pulse / emphasize the right branch card
+      tl.to(
+        "#card-vengeance",
+        {
+          boxShadow: "10px 10px 0px #FF6A1A",
+          duration: 0.4,
+        },
+        10.25,
+      );
+
+      // 11.4s: Editorial conclusion summary card
+      tl.to(
+        "#conclusion-card",
+        {
+          opacity: 1,
+          y: 0,
+          duration: 0.6,
+          ease: "power3.out",
+        },
+        11.4,
+      );
+    </script>
+  
+    </template>
+  </body>
+</html>

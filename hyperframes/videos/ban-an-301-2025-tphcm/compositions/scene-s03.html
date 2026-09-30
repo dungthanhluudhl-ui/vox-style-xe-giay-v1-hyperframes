@@ -1,0 +1,461 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap"
+    />
+      <style>
+      /* hf-safe-colors (tất định từ style-tokens.json) */
+      .hf-text-ink { color: #141414; }
+      .hf-text-light { color: #f7f4ec; }
+      .hf-hl-orange { color: #141414; background-color: #ff6a1a; }
+      .hf-plate-ink { color: #f7f4ec; background-color: #141414; }
+      .hf-plate-ink-orange { color: #ff6a1a; background-color: #141414; }
+      .hf-plate-paper { color: #141414; background-color: #f5f0e4; }
+
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #e7e3d9;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: #e7e3d9;
+      }
+      .clip {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+      }
+
+      /* 3D Scene container for Flip entrance */
+      #scene-viewport {
+        position: absolute;
+        inset: 0;
+        perspective: 1200px;
+        transform-style: preserve-3d;
+      }
+      #scene-stage {
+        position: absolute;
+        inset: 0;
+        transform-origin: 50% 50%;
+        will-change: transform, opacity;
+      }
+
+      /* Background Photo & Parallax Camera */
+      .media-viewport {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+      }
+      #hero-image {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        will-change: transform;
+      }
+
+      /* Spotlight vignette overlay */
+      .spotlight-vignette {
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(
+          circle at 50% 50%,
+          rgba(20, 20, 20, 0.1) 25%,
+          rgba(20, 20, 20, 0.5) 75%,
+          rgba(20, 20, 20, 0.82) 100%
+        );
+        pointer-events: none;
+      }
+
+      /* Subtle grid texture on edges */
+      .grid-pattern {
+        position: absolute;
+        inset: 0;
+        background-image:
+          linear-gradient(rgba(20, 20, 20, 0.12) 1.5px, transparent 1.5px),
+          linear-gradient(90deg, rgba(20, 20, 20, 0.12) 1.5px, transparent 1.5px);
+        background-size: 84px 84px;
+        opacity: 0.45;
+        mix-blend-mode: multiply;
+        pointer-events: none;
+      }
+
+      /* Brand bottom signature bar */
+      #brand-bottom-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 12px;
+        background-color: #ff6a1a;
+        z-index: 100;
+      }
+
+      /* OVERLAY 1: Threat status plate (Top-left, Dark threat side) */
+      .threat-container {
+        position: absolute;
+        top: 260px;
+        left: 60px;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        z-index: 20;
+      }
+      .threat-plate {
+        background-color: #141414;
+        color: #f7f4ec;
+        font-size: 42px;
+        font-weight: 900;
+        line-height: 1.25;
+        padding: 18px 32px;
+        border-radius: 8px;
+        border-left: 10px solid #ff6a1a;
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
+        letter-spacing: 1px;
+      }
+
+      /* OVERLAY 2: Clock icon badge (Center, visual vocabulary clock) */
+      .clock-container {
+        position: absolute;
+        top: 760px;
+        left: 0;
+        right: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 25;
+        pointer-events: none;
+      }
+      .clock-badge {
+        width: 140px;
+        height: 140px;
+        background-color: #141414;
+        border: 4px solid #ff6a1a;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 16px 40px rgba(0, 0, 0, 0.65);
+      }
+
+      /* OVERLAY 3: Punch-phrase plate (Lower section, safe zone compliant) */
+      .punch-container {
+        position: absolute;
+        bottom: 580px;
+        left: 60px;
+        right: 60px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 30;
+      }
+      .punch-card {
+        width: 100%;
+        background-color: #141414;
+        border: 4px solid #ff6a1a;
+        border-radius: 16px;
+        padding: 32px 36px;
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+      }
+      .punch-title {
+        color: #f7f4ec;
+        font-size: 64px;
+        font-weight: 900;
+        line-height: 1.2;
+        letter-spacing: 2px;
+        margin: 0;
+        text-transform: uppercase;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s03"
+      data-width="1080"
+      data-height="1920"
+      data-start="0"
+      data-duration="7.54"
+    >
+      <!-- Base Scene Container with 3D Flip capability -->
+      <section id="shot-stage" class="clip" data-start="0" data-duration="7.54">
+        <div id="scene-viewport">
+          <div id="scene-stage">
+            <!-- Background Image with Parallax Drift -->
+            <div class="media-viewport">
+              <img
+                id="hero-image"
+                src="assets/img-11-gang-retaliation-chase-split.jpg"
+                alt="Retaliation chase split illustration"
+              />
+            </div>
+
+            <!-- Spotlight Vignette (Style DNA: Spotlight variant) -->
+            <div class="spotlight-vignette"></div>
+
+            <!-- Subtle Grid Pattern -->
+            <div class="grid-pattern"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- OVERLAY 1: Label "THẾ BỊ ĐE DỌA" (atMs: 19800 -> 0.72s, holdMs: 2000) -->
+      <section
+        id="clip-threat"
+        class="clip"
+        data-start="0.72"
+        data-duration="2.0"
+      >
+        <div id="threat-group" class="threat-container">
+          <div class="threat-plate">THẾ BỊ ĐE DỌA</div>
+        </div>
+      </section>
+
+      <!-- OVERLAY 2: Clock Icon (atMs: 22200 -> 3.12s, holdMs: 1800) -->
+      <section
+        id="clip-clock"
+        class="clip"
+        data-start="3.12"
+        data-duration="1.8"
+      >
+        <div class="clock-container">
+          <div id="clock-badge" class="clock-badge">
+            <svg width="96" height="96" viewBox="0 0 100 100" fill="none">
+              <circle
+                id="svg-clock-rim"
+                cx="50"
+                cy="50"
+                r="42"
+                stroke="#FF6A1A"
+                stroke-width="6"
+                stroke-linecap="round"
+              />
+              <line
+                id="svg-clock-hour"
+                x1="50"
+                y1="50"
+                x2="50"
+                y2="28"
+                stroke="#F7F4EC"
+                stroke-width="5"
+                stroke-linecap="round"
+              />
+              <line
+                id="svg-clock-minute"
+                x1="50"
+                y1="50"
+                x2="68"
+                y2="50"
+                stroke="#FF6A1A"
+                stroke-width="4.5"
+                stroke-linecap="round"
+              />
+              <circle cx="50" cy="50" r="4.5" fill="#FF6A1A" />
+            </svg>
+          </div>
+        </div>
+      </section>
+
+      <!-- OVERLAY 3: Punch Phrase "TỘI DANH GIẾT NGƯỜI" (atMs: 24700 -> 5.62s, holdMs: 1.92s) -->
+      <section
+        id="clip-punch"
+        class="clip"
+        data-start="5.62"
+        data-duration="1.92"
+      >
+        <div class="punch-container">
+          <div id="punch-card" class="punch-card">
+            <h1 class="punch-title">TỘI DANH GIẾT NGƯỜI</h1>
+          </div>
+        </div>
+      </section>
+
+      <!-- Fixed Brand Signature Bar -->
+      <div id="brand-bottom-bar"></div>
+    </div>
+
+    <script>
+      const tl = gsap.timeline({ paused: true });
+
+      // 1. Scene Entrance: Flip & Unfold (transitionIn: "flip")
+      tl.fromTo(
+        "#scene-stage",
+        {
+          rotationY: 20,
+          scale: 0.96,
+          opacity: 0,
+        },
+        {
+          rotationY: 0,
+          scale: 1,
+          opacity: 1,
+          duration: 0.7,
+          ease: "power3.out",
+        },
+        0,
+      );
+
+      // 2. Camera Motion: Parallax pan from left (victim side) to right (armed retaliation side)
+      // Scale 1.12 to 1.16, smooth drift across the entire 7.54s duration
+      tl.fromTo(
+        "#hero-image",
+        {
+          x: 45,
+          scale: 1.12,
+        },
+        {
+          x: -55,
+          scale: 1.16,
+          duration: 7.54,
+          ease: "sine.inOut",
+        },
+        0,
+      );
+
+      // 3. OVERLAY 1: "THẾ BỊ ĐE DỌA" (Entrance at 0.72s, Exit at 2.35s before clip ends at 2.72s)
+      tl.fromTo(
+        "#threat-group",
+        {
+          x: -35,
+          opacity: 0,
+        },
+        {
+          x: 0,
+          opacity: 1,
+          duration: 0.5,
+          ease: "power3.out",
+        },
+        0.72,
+      );
+      tl.to(
+        "#threat-group",
+        {
+          x: -25,
+          opacity: 0,
+          duration: 0.35,
+          ease: "power2.in",
+        },
+        2.35,
+      );
+
+      // 4. OVERLAY 2: Clock Icon (Entrance at 3.12s, self-drawing SVG, exit at 4.55s)
+      const clockRim = document.getElementById("svg-clock-rim");
+      if (clockRim) {
+        const rimLength = clockRim.getTotalLength ? clockRim.getTotalLength() : 263.89;
+        clockRim.style.strokeDasharray = rimLength;
+        clockRim.style.strokeDashoffset = rimLength;
+
+        tl.to(
+          clockRim,
+          {
+            strokeDashoffset: 0,
+            duration: 0.65,
+            ease: "power2.out",
+          },
+          3.15,
+        );
+      }
+
+      tl.fromTo(
+        "#clock-badge",
+        {
+          scale: 0.8,
+          opacity: 0,
+          y: 20,
+        },
+        {
+          scale: 1,
+          opacity: 1,
+          y: 0,
+          duration: 0.45,
+          ease: "power3.out",
+        },
+        3.12,
+      );
+
+      // Rotating clock hands
+      tl.fromTo(
+        "#svg-clock-minute",
+        {
+          rotation: 0,
+          transformOrigin: "50px 50px",
+        },
+        {
+          rotation: 240,
+          duration: 1.1,
+          ease: "power2.inOut",
+        },
+        3.25,
+      );
+
+      tl.fromTo(
+        "#svg-clock-hour",
+        {
+          rotation: 0,
+          transformOrigin: "50px 50px",
+        },
+        {
+          rotation: 60,
+          duration: 1.1,
+          ease: "power2.inOut",
+        },
+        3.25,
+      );
+
+      tl.to(
+        "#clock-badge",
+        {
+          scale: 0.85,
+          opacity: 0,
+          duration: 0.35,
+          ease: "power2.in",
+        },
+        4.55,
+      );
+
+      // 5. OVERLAY 3: Punch-phrase "TỘI DANH GIẾT NGƯỜI" (Entrance at 5.62s, bold firm settle)
+      tl.fromTo(
+        "#punch-card",
+        {
+          scale: 0.88,
+          y: 40,
+          opacity: 0,
+        },
+        {
+          scale: 1,
+          y: 0,
+          opacity: 1,
+          duration: 0.55,
+          ease: "power3.out",
+        },
+        5.62,
+      );
+
+      // Register the master timeline to HyperFrames
+      window.__timelines["scene-s03"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

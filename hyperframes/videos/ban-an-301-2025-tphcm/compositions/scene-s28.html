@@ -1,0 +1,378 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+/* hf-safe-colors (tất định từ style-tokens.json) */
+.hf-text-ink { color: #141414; }
+.hf-text-light { color: #F7F4EC; }
+.hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+.hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+.hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+.hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #141414;
+        color: #F7F4EC;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: #141414;
+      }
+
+      /* Quy ước clip chuẩn HyperFrames (inset: 0, không đặt width/height px cố định) */
+      .clip {
+        position: absolute;
+        inset: 0;
+      }
+
+      /* Container ảnh nền chính */
+      .bg-container {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+      }
+      .bg-photo {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transform-origin: 50% 46%;
+      }
+
+      /* Lớp phủ Spotlight Variant (Style DNA §1 & tokens) tạo không khí phòng xử án nghiêm mật */
+      .spotlight-overlay {
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(circle at 50% 45%, rgba(20, 20, 20, 0.12) 28%, rgba(20, 20, 20, 0.88) 92%);
+        pointer-events: none;
+      }
+
+      /* Flash chớp trắng cho hiệu ứng chuyển cảnh "strike" ban đầu */
+      .strike-flash {
+        position: absolute;
+        inset: 0;
+        background-color: #F7F4EC;
+        opacity: 0;
+        pointer-events: none;
+        z-index: 50;
+      }
+
+      /* Thanh cam nhận diện thương hiệu cố định mép đáy (Style DNA §1) */
+      .bottom-brand-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 1080px;
+        height: 8px;
+        background-color: #FF6A1A;
+        z-index: 100;
+      }
+
+      /* Container bố cục Overlay chữ — dùng Flexbox căn giữa (tránh xung đột transform translate) */
+      .overlay-clip {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
+        pointer-events: none;
+        z-index: 60;
+      }
+
+      /* ==================== CARD 1: LABEL 2 TỘI DANH ==================== */
+      .plate-card-1 {
+        margin-top: 240px;
+        width: 920px;
+        display: flex;
+        align-items: stretch;
+        background-color: #141414;
+        border: 2px solid rgba(247, 244, 236, 0.18);
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 24px 50px rgba(0, 0, 0, 0.7);
+      }
+      .plate-stripe {
+        width: 14px;
+        background-color: #FF6A1A;
+        flex-shrink: 0;
+      }
+      .plate-content {
+        padding: 24px 36px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .plate-tag {
+        font-size: 24px;
+        font-weight: 700;
+        letter-spacing: 3px;
+        color: #FF6A1A;
+        text-transform: uppercase;
+      }
+      .plate-title {
+        font-size: 52px;
+        font-weight: 900;
+        color: #F7F4EC;
+        letter-spacing: 1px;
+        line-height: 1.2;
+      }
+
+      /* ==================== CARD 2: PUNCH PHRASE ÁN CHUNG THÂN ==================== */
+      .verdict-box {
+        margin-top: 250px;
+        width: 940px;
+        background-color: #141414;
+        border: 2px solid rgba(255, 106, 26, 0.45);
+        border-radius: 12px;
+        padding: 32px 40px;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        box-shadow: 0 30px 60px rgba(0, 0, 0, 0.85);
+      }
+      .verdict-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .verdict-crime-badge {
+        font-size: 22px;
+        font-weight: 700;
+        letter-spacing: 2px;
+        color: #FF6A1A;
+        text-transform: uppercase;
+      }
+      .verdict-crime-title {
+        font-size: 56px;
+        font-weight: 900;
+        color: #F7F4EC;
+        line-height: 1.15;
+      }
+      .verdict-divider {
+        width: 100%;
+        height: 2px;
+        background-color: rgba(247, 244, 236, 0.16);
+      }
+      .verdict-penalty-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .verdict-penalty-label {
+        font-size: 26px;
+        font-weight: 700;
+        letter-spacing: 2px;
+        color: #F7F4EC;
+      }
+      .verdict-penalty-stamp {
+        background-color: #FF6A1A;
+        color: #141414;
+        font-size: 70px;
+        font-weight: 900;
+        padding: 12px 36px;
+        border-radius: 8px;
+        letter-spacing: 2px;
+        line-height: 1;
+      }
+
+      /* ==================== CARD 3: LABEL TỘI HƯ HỎNG TÀI SẢN ==================== */
+      .verdict-box-secondary {
+        margin-top: 250px;
+        width: 940px;
+        background-color: #141414;
+        border: 2px solid rgba(247, 244, 236, 0.22);
+        border-radius: 12px;
+        padding: 32px 40px;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        box-shadow: 0 30px 60px rgba(0, 0, 0, 0.85);
+      }
+      .verdict-box-secondary .verdict-penalty-stamp {
+        background-color: #F7F4EC;
+        color: #141414;
+        font-size: 64px;
+        font-weight: 900;
+        padding: 12px 36px;
+        border-radius: 8px;
+        letter-spacing: 2px;
+        line-height: 1;
+      }
+    </style>
+
+    <!-- Root Composition (1080x1920 @30fps, 11.04s) -->
+    <div
+      id="root"
+      data-composition-id="scene-s28"
+      data-start="0"
+      data-width="1080"
+      data-height="1920"
+      data-duration="11.04"
+    >
+      <!-- Shot S28-1: Nền ảnh tòa án img-16 phủ toàn màn hình (Background-photo / Cutout) -->
+      <section id="shot-s28-1" class="clip" data-start="0" data-duration="11.04">
+        <div class="bg-container">
+          <img
+            id="bg-photo"
+            class="bg-photo"
+            src="assets/img-16-defendants-courtroom-life-sentence.jpg"
+            alt="Phiên tòa xét xử hai bị cáo"
+          />
+        </div>
+        <!-- Spotlight Vignette Overlay -->
+        <div id="spotlight-overlay" class="spotlight-overlay"></div>
+      </section>
+
+      <!-- Chớp trắng transitionIn "strike" -->
+      <div id="strike-flash" class="strike-flash"></div>
+
+      <!-- OVERLAY 1 (0.62s -> 3.82s, hold 2.2s+): 2 TỘI DANH ĐỘC LẬP -->
+      <div id="overlay-1-wrap" class="clip overlay-clip" data-start="0.62" data-duration="3.2">
+        <div id="card-1" class="plate-card-1">
+          <div class="plate-stripe"></div>
+          <div class="plate-content">
+            <div class="plate-tag">BẢN ÁN SƠ THẨM</div>
+            <div class="plate-title">2 TỘI DANH ĐỘC LẬP</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- OVERLAY 2 (6.42s -> 8.92s, hold 2.4s): GIẾT NGƯỜI: CHUNG THÂN (Punch-phrase) -->
+      <div id="overlay-2-wrap" class="clip overlay-clip" data-start="6.42" data-duration="2.5">
+        <div id="card-2" class="verdict-box">
+          <div class="verdict-header">
+            <div class="verdict-crime-badge">TỘI DANH 01</div>
+          </div>
+          <div class="verdict-crime-title">GIẾT NGƯỜI</div>
+          <div class="verdict-divider"></div>
+          <div class="verdict-penalty-row">
+            <div class="verdict-penalty-label">HÌNH PHẠT</div>
+            <div class="verdict-penalty-stamp">CHUNG THÂN</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- OVERLAY 3 (9.02s -> 11.04s, hold 2.0s): HƯ HỎNG TÀI SẢN: 1 NĂM -->
+      <div id="overlay-3-wrap" class="clip overlay-clip" data-start="9.02" data-duration="2.02">
+        <div id="card-3" class="verdict-box-secondary">
+          <div class="verdict-header">
+            <div class="verdict-crime-badge" style="color: #F7F4EC;">TỘI DANH 02</div>
+          </div>
+          <div class="verdict-crime-title">HƯ HỎNG TÀI SẢN</div>
+          <div class="verdict-divider"></div>
+          <div class="verdict-penalty-row">
+            <div class="verdict-penalty-label">HÌNH PHẠT</div>
+            <div class="verdict-penalty-stamp">1 NĂM</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Thanh thương hiệu màu cam cố định đáy khung hình -->
+      <div class="bottom-brand-bar"></div>
+    </div>
+
+    <!-- GSAP Animation Timeline (Duy nhất 1 timeline paused theo contract HyperFrames) -->
+    <script>
+      const tl = gsap.timeline({ paused: true });
+
+      // 1. TRANSITION IN "STRIKE" & CAMERA MOTION (0s -> 11.04s)
+      // Strike flash giáng đòn tức thì t=0
+      tl.fromTo(
+        "#strike-flash",
+        { opacity: 0.75 },
+        { opacity: 0, duration: 0.22, ease: "power2.out" },
+        0
+      );
+
+      // Va đập chớp nhoáng (strike impact) của ảnh nền lúc t=0 (scale giật từ 1.24x -> 1.05x)
+      tl.fromTo(
+        "#bg-photo",
+        { scale: 1.24, y: 24 },
+        { scale: 1.05, y: 0, duration: 0.38, ease: "power4.out" },
+        0
+      );
+
+      // Camera motion: zoom-in chậm rãi từ 1.05x lên 1.14x làm nổi bật mức án sơ thẩm (0.38s -> 11.04s)
+      tl.to(
+        "#bg-photo",
+        { scale: 1.14, duration: 10.66, ease: "none" },
+        0.38
+      );
+
+      // 2. OVERLAY 1 CHOREOGRAPHY (Xuất hiện lúc 0.62s)
+      tl.fromTo(
+        "#card-1",
+        { y: -36, opacity: 0, scale: 0.96 },
+        { y: 0, opacity: 1, scale: 1, duration: 0.44, ease: "power3.out" },
+        0.62
+      );
+      tl.to(
+        "#card-1",
+        { y: -20, opacity: 0, duration: 0.32, ease: "power2.in" },
+        3.42
+      );
+
+      // 3. MID-BEAT TENSION (4.0s -> 5.5s): Siết nhẹ spotlight vignette để dồn sự chú ý vào hai bị cáo
+      tl.to(
+        "#spotlight-overlay",
+        { opacity: 0.95, duration: 1.4, ease: "sine.inOut" },
+        4.0
+      );
+
+      // 4. OVERLAY 2 PUNCH-PHRASE (Xuất hiện lúc 6.42s)
+      // Hiệu ứng tuyên án đanh thép (stamp slam)
+      tl.fromTo(
+        "#card-2",
+        { scale: 1.22, opacity: 0, y: -28 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.38, ease: "power4.out" },
+        6.42
+      );
+      // Rung nhẹ tấm thẻ lúc va đập
+      tl.to(
+        "#card-2",
+        { y: 3, duration: 0.08, ease: "power1.inOut" },
+        6.8
+      );
+      tl.to(
+        "#card-2",
+        { y: 0, duration: 0.1, ease: "power1.out" },
+        6.88
+      );
+      // Exit của Card 2 trước khi Card 3 vào
+      tl.to(
+        "#card-2",
+        { opacity: 0, scale: 0.95, y: -16, duration: 0.3, ease: "power2.in" },
+        8.55
+      );
+
+      // 5. OVERLAY 3 LABEL (Xuất hiện lúc 9.02s)
+      tl.fromTo(
+        "#card-3",
+        { y: 36, opacity: 0, scale: 0.96 },
+        { y: 0, opacity: 1, scale: 1, duration: 0.42, ease: "power3.out" },
+        9.02
+      );
+
+      // Đăng ký timeline chính lên window.__timelines theo contract của HyperFrames
+      window.__timelines = window.__timelines || {};
+      window.__timelines["scene-s28"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>
