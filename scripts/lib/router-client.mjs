@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
+import { fetch as undiciFetch, Agent } from "undici";
 
 function loadEnvFile(root) {
   const envPath = path.join(root, ".env");
@@ -56,9 +57,12 @@ export async function callModel({
   console.log(`  [9router] gọi ${model}... (bắt đầu ${new Date(startedAt).toLocaleTimeString()})`);
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  // fetch mặc định của Node huỷ sau 300s chờ header (UND_ERR_HEADERS_TIMEOUT) — request không streaming
+  // của model suy luận chậm chỉ có header khi sinh xong, nên phải nới bằng đúng timeoutMs.
+  const dispatcher = new Agent({ headersTimeout: timeoutMs, bodyTimeout: timeoutMs });
   let res;
   try {
-    res = await fetch(`${BASE_URL}/chat/completions`, {
+    res = await undiciFetch(`${BASE_URL}/chat/completions`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -66,6 +70,7 @@ export async function callModel({
       },
       body: JSON.stringify(body),
       signal: controller.signal,
+      dispatcher,
     });
   } catch (e) {
     const elapsed = ((Date.now() - startedAt) / 1000).toFixed(1);

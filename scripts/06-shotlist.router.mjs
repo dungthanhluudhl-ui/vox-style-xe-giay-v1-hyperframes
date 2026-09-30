@@ -116,7 +116,7 @@ const response = await callModel({
   ],
   temperature: 0.4,
   maxTokens: 24000,
-  timeoutMs: 300000,
+  timeoutMs: 900000,
   responseFormat: { type: "json_object" },
 });
 

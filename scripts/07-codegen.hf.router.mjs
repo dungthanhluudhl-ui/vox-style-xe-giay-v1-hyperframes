@@ -364,6 +364,7 @@ async function generate(feedback, previousFiles) {
         ],
         temperature: 0.3,
         maxTokens: 16000,
+        timeoutMs: 900000,
       }),
     {
       label: "generator",
@@ -479,6 +480,7 @@ LƯU Ý VỀ TÊN FILE ASSET: một số file ảnh có chữ "cutout" trong TÊ
         ],
         temperature: 0.2,
         maxTokens: 2000,
+        timeoutMs: 900000,
       }),
     {
       label: "reviewer",
