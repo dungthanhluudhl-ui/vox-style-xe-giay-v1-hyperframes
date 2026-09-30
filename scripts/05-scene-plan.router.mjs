@@ -39,6 +39,20 @@ const styleTokens = read("planning/style-dna/style-tokens.json");
 // Rút gọn manifest cho gọn prompt: bỏ originalFilename (không cần cho việc lập kế hoạch)
 const mediaForPrompt = mediaManifest.map(({ originalFilename, ...rest }) => rest);
 
+// Ảnh trích dẫn từ PDF bản án (source:"pdf", Stage 2c) là BẰNG CHỨNG, khác ảnh minh hoạ AI: không tính vào
+// số media "tạo riêng" và có luật chọn riêng (chỉ có khối này khi manifest thật sự có doc-NN).
+const aiMediaCount = mediaManifest.filter((m) => m.source !== "pdf").length;
+const pdfDocs = mediaManifest.filter((m) => m.source === "pdf");
+const PDF_EVIDENCE_RULES = pdfDocs.length
+  ? `
+QUY TẮC ẢNH TRÍCH DẪN BẢN ÁN (${pdfDocs.length} asset có source="pdf", id dạng doc-NN) — ĐÂY LÀ BẰNG CHỨNG THẬT, không phải ảnh minh hoạ:
+- Mỗi doc-NN là một đoạn CHỤP NGUYÊN VĂN từ bản án; "description" ghi đúng đoạn chữ trong ảnh (kèm trang). Chỉ gán doc-NN cho scene mà LỜI THOẠI nói trực tiếp về đúng nội dung đó (nhắc bản án/toà tuyên/hình phạt/điều luật/số liệu khớp câu trích). Nếu không có scene nào khớp thật sự thì KHÔNG dùng — không ép, không cần dùng hết doc.
+- Mỗi doc-NN dùng tối đa 1 lần. Có thể đặt doc-NN CÙNG scene với ảnh minh hoạ (nối tiếp, mỗi asset 1 shot) hoặc scene riêng nhưng vẫn ≥5 giây. Với scene có doc-NN, visualLanguages nên gồm "document".
+- doc-NN là dải chữ ngang, sẽ hiển thị dạng THẺ TÀI LIỆU giữa khung (không phủ toàn khung, không làm nền) — không gán doc-NN làm ảnh nền duy nhất của scene khi scene đó còn cần hình minh hoạ cảm xúc.
+- Ghi trong "notes" câu trích/đoạn lời thoại nào khớp với doc-NN.
+`
+  : "";
+
 const totalDurationMs = captions[captions.length - 1]?.endMs ?? 0;
 
 const fromArg = process.argv.find((a) => a.startsWith("--from="));
@@ -68,17 +82,18 @@ ${styleTokens}
 NHIỆM VỤ: chia audio/script thành các SCENE theo đúng khung tư duy editorial-framework.md ("ý nghĩa trước, component sau"). Với mỗi scene, PHẢI trả lời được quan hệ hình ảnh cụ thể người xem cần THẤY HÌNH THÀNH — không phải chỉ minh hoạ chủ đề chung chung.
 
 QUY TẮC ƯU TIÊN MEDIA — QUAN TRỌNG NHẤT, GHI ĐÈ LÊN XU HƯỚNG MẶC ĐỊNH CHỌN DIAGRAM CỦA STYLE DNA:
-Toàn bộ 14 media trong manifest bên dưới được TẠO RIÊNG bằng AI dựa trên đúng kịch bản này (không phải stock chung chung, không phải ảnh minh hoạ đại diện). Vì vậy với MỖI scene, việc đầu tiên phải làm là kiểm tra manifest xem có asset nào (chưa dùng cho scene khác) khớp nội dung/cảm xúc của scene đó không.
+Toàn bộ ${aiMediaCount} media (không tính ảnh trích dẫn bản án PDF, nếu có) trong manifest bên dưới được TẠO RIÊNG bằng AI dựa trên đúng kịch bản này (không phải stock chung chung, không phải ảnh minh hoạ đại diện). Vì vậy với MỖI scene, việc đầu tiên phải làm là kiểm tra manifest xem có asset nào (chưa dùng cho scene khác) khớp nội dung/cảm xúc của scene đó không.
 - Nếu CÓ asset khớp: BẮT BUỘC dùng nó làm lớp hình ảnh chính (assetIds khai báo asset đó, visualLanguage tương ứng thường là "cutout" hoặc "background-photo"), kể cả khi một diagram/data/flow tự dựng có vẻ thể hiện "quan hệ ý nghĩa" thuần khái niệm rõ hơn — quan hệ đó vẫn truyền tải được qua caption/punch-phrase/overlay nhẹ đặt TRÊN nền media thật, không cần thay hẳn bằng cảnh dựng code.
-- CHỈ được chuyển sang dựng thuần bằng code (diagram/map/timeline/flow/data không có asset nền) khi: (a) không còn asset nào (trong 14 asset) khớp nội dung cảnh đó, HOẶC (b) cảnh bắt buộc phải thể hiện số liệu/cấu trúc/vị trí chính xác mà không ảnh/video nào truyền tải được (vd đúng con số tiền, đúng vị trí địa lý) — khi đó ưu tiên overlay diagram NHẸ trên nền media thật nếu có, chỉ dựng toàn bộ bằng code khi thực sự không còn asset nào để làm nền.
+- CHỈ được chuyển sang dựng thuần bằng code (diagram/map/timeline/flow/data không có asset nền) khi: (a) không còn asset nào (trong ${aiMediaCount} asset) khớp nội dung cảnh đó, HOẶC (b) cảnh bắt buộc phải thể hiện số liệu/cấu trúc/vị trí chính xác mà không ảnh/video nào truyền tải được (vd đúng con số tiền, đúng vị trí địa lý) — khi đó ưu tiên overlay diagram NHẸ trên nền media thật nếu có, chỉ dựng toàn bộ bằng code khi thực sự không còn asset nào để làm nền.
 - Lý do bắt buộc theo quy tắc này: code Remotion tự sinh cho diagram/icon-tự-vẽ phức tạp (mục 6 STYLE_DNA.md) rất dễ lỗi và xấu trong thực tế sản xuất. Code Remotion nên tập trung vào phụ đề/caption, text/title, ráp A-roll/B-roll (media thật), motion graphics/transition — không phải vẽ minh hoạ từ đầu khi đã có media phù hợp.
-- Cố gắng dùng hết/gần hết 14 asset đã phân tích nếu nội dung cho phép, tránh để phần lớn media không được dùng trong khi vẫn tạo thêm scene fallback bằng code.
+- Cố gắng dùng hết/gần hết ${aiMediaCount} asset đã phân tích nếu nội dung cho phép, tránh để phần lớn media không được dùng trong khi vẫn tạo thêm scene fallback bằng code.
 
 QUY TẮC NGƯỠNG NHỊP ĐỘ — ÁP DỤNG ĐỒNG THỜI VỚI QUY TẮC ƯU TIÊN MEDIA Ở TRÊN, KHÔNG ĐƯỢC HY SINH CÁI NÀY ĐỂ LẤY CÁI KIA:
 - TUYỆT ĐỐI KHÔNG được tách một scene thành nhiều scene con chỉ để mỗi asset có một scene riêng nếu việc tách khiến scene ngắn hơn ~5 giây. Ngắn hơn 5 giây khiến người xem không kịp đọc/hiểu, dù đúng asset vẫn là một lỗi.
 - Nếu một beat lời thoại quá ngắn để tách thành scene ≥5s riêng: (a) GỘP nhiều asset liên quan vào chung 1 scene (asset này có thể xuất hiện nối tiếp nhau bên trong cùng 1 scene, không cần tách scene mới cho từng cái), hoặc (b) giữ hình ảnh hiển thị LÂU HƠN đúng khoảng lời thoại đã giới thiệu nó — thời lượng trên màn hình không bắt buộc bằng đúng thời lượng câu nói (nguyên tắc comprehensionLoad ở editorial-framework.md).
 - Trước khi chốt danh sách scene cuối cùng, tự kiểm tra: có scene nào < 5 giây không? Nếu có, quay lại gộp/kéo dài thay vì giữ nguyên.
 
+${PDF_EVIDENCE_RULES}
 LƯU Ý: theo quyết định dự án hiện tại, ảnh (type="image") chỉ dùng làm ẢNH NỀN (background-photo), KHÔNG áp dụng xử lý cutout (grayscale+bóng cam) — dù mô tả có ghi "cutout style" (đó là style của chính ảnh AI tạo sẵn, không phải chỉ định phải xử lý cutout thêm). Nguồn: STYLE_DNA.md §2 "Ngoại lệ chính thức".
 ${
   fromSceneId

@@ -2,7 +2,10 @@
 // Đồng thời CHUẨN HOÁ tên file (slug ngắn theo nội dung thật) + ghi manifest tổng hợp để các
 // giai đoạn sau (scene plan, shotlist, code-gen) dễ tra cứu bằng ID thay vì tên file gốc dài.
 // Claude không mở ảnh/video này — toàn bộ việc "nhìn" do model qua 9router đảm nhiệm.
-// Usage: node scripts/03-media-analyze.router.mjs --video=<slug>
+// Usage: node scripts/03-media-analyze.router.mjs --video=<slug> [--root=<dir>]  (--root chỉ để test/POC)
+// Nếu có pipeline/videos/<slug>/case-source/case-facts.json (do scripts/02c-pdf-source.local.mjs tạo
+// từ PDF bản án), các ảnh trích dẫn doc-NN được APPEND vào cuối manifest — tất định, không gọi vision,
+// không đổi tên. Không có file đó => hành vi y hệt trước đây.
 import fs from "node:fs";
 import path from "node:path";
 import { execSync } from "node:child_process";
@@ -20,7 +23,9 @@ const routing = loadModelRouting();
 const model = routing.vision_media_analyze;
 
 const slug = getVideoSlug();
-const vp = videoPaths(slug);
+const rootArg = process.argv.find((a) => a.startsWith("--root="));
+const root = rootArg ? path.resolve(rootArg.slice("--root=".length)) : process.cwd();
+const vp = videoPaths(slug, root);
 const IMAGES_DIR = vp.imagesDir;
 const VIDEOS_DIR = vp.videosDir;
 
@@ -196,9 +201,39 @@ for (let i = 0; i < videoFiles.length; i++) {
   vidIndex++;
 }
 
+// --- Asset trích dẫn từ PDF bản án (opt-in): append sau ảnh/video, giữ nguyên field do 02c sinh ra ---
+let docCount = 0;
+if (fs.existsSync(vp.caseFactsJson)) {
+  const caseFacts = JSON.parse(fs.readFileSync(vp.caseFactsJson, "utf8"));
+  for (const a of caseFacts.assets || []) {
+    const abs = path.join(root, a.file);
+    if (!fs.existsSync(abs)) {
+      console.warn(`  ⚠ bỏ qua ${a.id}: không thấy ${a.file} (chạy lại scripts/02c-pdf-source.local.mjs)`);
+      continue;
+    }
+    const stream = ffprobeJson(abs).streams.find((s) => s.codec_type === "video");
+    manifest.push({
+      id: a.id,
+      type: "image",
+      file: a.file,
+      originalFilename: path.basename(a.file),
+      width: stream?.width,
+      height: stream?.height,
+      description: a.description,
+      tags: a.tags,
+      suggested_slug: a.suggested_slug,
+      visual_language: a.visual_language,
+      suitability_notes: a.suitability_notes,
+      source: "pdf",
+      provenance: a.provenance,
+    });
+    docCount++;
+  }
+}
+
 fs.mkdirSync(path.dirname(vp.manifestJson), { recursive: true });
 fs.writeFileSync(vp.manifestJson, JSON.stringify(manifest, null, 2), "utf8");
 
-const summary = `Phân tích ${manifest.length} asset (${imageFiles.length} ảnh, ${videoFiles.length} video) bằng ${model}, chuẩn hoá tên file (img-NN-slug / vid-NN-slug), ghi manifest tại pipeline/videos/${slug}/media-analysis/manifest.json`;
+const summary = `Phân tích ${manifest.length} asset (${imageFiles.length} ảnh, ${videoFiles.length} video${docCount ? `, ${docCount} ảnh trích dẫn PDF doc-NN (không qua vision)` : ""}) bằng ${model}, chuẩn hoá tên file (img-NN-slug / vid-NN-slug), ghi manifest tại pipeline/videos/${slug}/media-analysis/manifest.json`;
 console.log(summary);
 appendRunLog(`\`scripts/03-media-analyze.router.mjs\` — ${summary}`, vp.runLog);

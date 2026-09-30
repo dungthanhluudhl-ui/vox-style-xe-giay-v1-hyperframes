@@ -6,9 +6,10 @@
 // scripts/07-codegen-hf-parallel.mjs — script đó đã tự có worker-pool + tự gọi appendRunLog riêng
 // cho từng scene, KHÔNG đụng vào logic của nó ở đây, chỉ stream output live + truyền qua exit code.
 //
-// DAG:
-//   script + audio ─┬─> Stage 1 ─> Stage 2 ─┐
-//                   └─> Stage 2b ─> Stage 3 ─┴─> Stage 5 ─> Stage 6 ─> (Stage 7)
+// DAG (Stage 2c = PDF bản án, opt-in, chạy song song với 2b khi có content/videos/<slug>/source/*.pdf):
+//   script + audio ─┬─> Stage 1 ─> Stage 2 ─────────────┐
+//                   ├─> Stage 2b ─┬─> Stage 3 ──────────┴─> Stage 5 ─> Stage 6 ─> (Stage 7)
+//                   └─> Stage 2c ─┘ (opt-in, PDF)
 //
 // Usage: node scripts/run-stages-1-6.mjs --video=<slug>
 //   [--audio=<path>] [--script=<path>]        mặc định vp.audioFile / vp.scriptFile.
@@ -168,6 +169,14 @@ async function runTranscriptBranch() {
   return { ok: true };
 }
 
+/** Stage 2c (opt-in): chỉ chạy khi có PDF bản án trong content/videos/<slug>/source/ — tất định, không
+ * AI. Chỉ ghi case-source/ + media/documents/ (KHÔNG ghi manifest — Stage 3 ghi đè manifest mỗi lần và
+ * tự nối doc-NN vào). Không có PDF => trả null, không spawn gì. */
+function run2c() {
+  const hasPdf = fs.existsSync(vp.pdfSourceDir) && fs.readdirSync(vp.pdfSourceDir).some((f) => /\.pdf$/i.test(f));
+  return hasPdf ? runNode("scripts/02c-pdf-source.local.mjs", [`--video=${slug}`], "02c-pdf") : Promise.resolve(null);
+}
+
 async function runMediaBranch() {
   if (mediaFrom === "skip") {
     if (!fs.existsSync(vp.manifestJson)) {
@@ -191,8 +200,11 @@ async function runMediaBranch() {
     if (flags["resume-project"]) args2b.push(`--resume-project=${flags["resume-project"]}`);
     if (has("retry-animate")) args2b.push("--retry-animate");
     if (has("images-only")) args2b.push("--images-only");
-    const r2b = await runNode("scripts/02b-media-generate.router.mjs", args2b, "02b-media");
+    // Stage 2c (PDF bản án, opt-in) chạy SONG SONG với 2b — 2 stage không phụ thuộc nhau; 2c lỗi
+    // KHÔNG huỷ 2b (2b có thể đang giữa phiên Flow tốn credit): đợi cả hai rồi mới xét kết quả.
+    const [r2b, r2c] = await Promise.all([runNode("scripts/02b-media-generate.router.mjs", args2b, "02b-media"), run2c()]);
     if (r2b.code !== 0) return { ok: false, stage: "02b", message: excerpt(r2b.output) };
+    if (r2c && r2c.code !== 0) return { ok: false, stage: "02c", message: excerpt(r2c.output) };
   } else if (mediaFrom === "3") {
     if (!fs.existsSync(vp.imagesDir) && !fs.existsSync(vp.videosDir)) {
       return {
@@ -201,6 +213,12 @@ async function runMediaBranch() {
         message: `--media-from=3 nhưng không thấy media nguồn (${path.relative(root, vp.imagesDir)} / ${path.relative(root, vp.videosDir)}).`,
       };
     }
+  }
+
+  // --media-from=3: 2b không chạy nên chạy lại 2c (idempotent) trước Stage 3 để manifest có doc-NN mới nhất.
+  if (mediaFrom === "3") {
+    const r2c = await run2c();
+    if (r2c && r2c.code !== 0) return { ok: false, stage: "02c", message: excerpt(r2c.output) };
   }
 
   // LƯU Ý: Stage 3 rename file tại chỗ (fs.renameSync) khi chuẩn hoá tên — không tự động retry

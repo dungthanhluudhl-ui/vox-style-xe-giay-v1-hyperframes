@@ -39,7 +39,7 @@ Thay bước tự tay tạo ảnh/video trong Google Flow rồi copy vào `publi
 độc lập hoàn toàn với Stage 1 (whisper)/Stage 2 (align). Stage 3 (`03-media-analyze.router.mjs`)
 cũng chỉ đọc `imagesDir`/`videosDir`, không đọc `captionsFile`. Vì vậy mặc định chạy 2 nhánh song
 song: **Nhánh A** = Stage 1 → Stage 2 (ra `captions.json`); **Nhánh B** = Stage 2b → Stage 3 (ra
-`manifest.json`) — Nhánh B có thể bắt đầu ngay, không chờ Nhánh A, và Stage 3 chạy ngay khi Stage
+`manifest.json`; nếu có PDF bản án thì Stage 2c chạy song song với 2b, xem mục 2c) — Nhánh B có thể bắt đầu ngay, không chờ Nhánh A, và Stage 3 chạy ngay khi Stage
 2b xong mà không cần đợi Nhánh A. Cả 2 nhánh phải xong trước khi chạy Stage 5 (`05-scene-plan.router.mjs`
 đọc `vp.captionsFile` ở dòng 24) vì đây là điểm hợp nhất đầu tiên cần cả 2 output.
 
@@ -234,9 +234,30 @@ tạo xong.
   diễn thường xuyên, kiểm tra Task Manager có tiến trình `chrome.exe`/`agent-browser*.exe` cũ còn
   sống trỏ đúng `pipeline/.flow-profile/default/` trước khi chạy lại.
 
+## 2c. Nguồn PDF bản án (tuỳ chọn, opt-in)
+**Chỉ chạy khi có `content/videos/<slug>/source/*.pdf`** — không có PDF thì mọi stage chạy y như trước.
+PDF là **bằng chứng dẫn nguồn**, bổ sung cho ảnh/video minh hoạ chứ KHÔNG thay Stage 2b (2b vẫn luôn chạy
+tạo media từ script; prompt 2b không đọc PDF, không đổi). Toàn bộ 2c là **tất định, không AI**.
+
+- Script: `scripts/02c-pdf-source.local.mjs --video=<slug>` (helper `scripts/lib/pdf_extract.py`, cần `pip install pymupdf`).
+  Được `run-stages-1-6.mjs` chạy **song song với 2b** (2c lỗi không huỷ 2b); `--media-from=3` chạy lại 2c trước Stage 3.
+- Input tuỳ chọn: `content/videos/<slug>/source/highlights.txt` (mỗi dòng 1 cụm muốn trích dẫn nguyên văn; `#` = ghi chú).
+- Output (2c CHỈ ghi các chỗ này, KHÔNG ghi manifest): `pipeline/videos/<slug>/case-source/{case-facts.json,crosscheck.md,pages/}`
+  và ảnh trích dẫn `public/videos/<slug>/media/documents/doc-NN-<kind>.png` (kind = header|verdict|law|highlight|scan-page;
+  dải chữ ngang ~1080px có vùng quan trọng tô cam vẽ sẵn). Thư mục `documents/` tách khỏi `images/` để Stage 3 không đổi tên/vision lại.
+- `case-facts.json`: dữ kiện regex (số bản án, ngày, toà, điều luật, hình phạt, số tiền) mỗi mục kèm `page` + `quote` (là chuỗi con của text trang). Verdict/law chỉ lấy từ sau tiêu đề "QUYẾT ĐỊNH:" (bản phúc thẩm tóm tắt cả bản sơ thẩm ở phần trước).
+- `crosscheck.md`: đối chiếu số/ngày/điều luật trong script với PDF — **chỉ cảnh báo, không chặn**; "không thấy" cần người kiểm (có thể là ví dụ giả định, làm tròn, hay đơn vị khác). Số tiền lệch ≤5% = "gần khớp".
+- PDF scan (trang không có text-layer): ghi `needsOcr:true`, chỉ render trang 1 (`scan-page`, `provenance.verified:false`); KHÔNG đoán nội dung, chưa có OCR.
+- Stage 3 chỉ **nối** `doc-NN` vào cuối `manifest.json` (không vision, không đổi tên, giữ truy vết): `type:"image"`, `source:"pdf"`, `visual_language:"document"`, `provenance{pdf,page,bbox,quote,verified}`, `description` sinh tất định từ câu trích.
+- Hạ nguồn (chỉ kích hoạt khi manifest có `source:"pdf"`): Stage 5 chỉ gán doc cho scene mà lời thoại nói đúng nội dung đó (không bắt buộc dùng hết, mỗi doc ≤1 lần); Stage 6/7 hiển thị doc dạng **thẻ tài liệu giữa khung** (`object-fit:contain`, không cover/nền, không mờ/filter/lớp tối, không vẽ thêm highlight, không chép lại chữ bản án thành HTML). Số "N media" ở Stage 5 tính không kể doc.
+- Claude không tự xem ảnh doc; kiểm tra bằng số liệu (kích thước, pixel cam, quote ⊂ text trang) hoặc vision 9router hỏi về BỐ CỤC/độ đọc được (đừng yêu cầu chép nguyên văn chữ — Gemini chặn `recitation`).
+- Đã kiểm chứng: POC `poc/pdf-source/` (Bản án 935/2024/HS-PT, 87s, Stage 2c→3→5→6→7 scene S08 PASS, vision xác nhận chữ rõ, không cắt mép). Xem `poc/pdf-source/README.md`.
+- Chưa làm: OCR bản scan; highlight animate theo lời thoại (hiện tô cam cố định trong ảnh).
+
 ## 3. Xử lý Media nguồn (ảnh/video)
 Media tới đây từ Stage 2b (tự động qua Google Flow) hoặc copy tay như trước — cả 2 đường đều
-đổ vào đúng `imagesDir`/`videosDir` không đổi, Stage 3 không cần biết nguồn gốc.
+đổ vào đúng `imagesDir`/`videosDir` không đổi, Stage 3 không cần biết nguồn gốc. Riêng ảnh trích dẫn
+PDF (`doc-NN`, mục 2c) nằm ở `media/documents/` và chỉ được nối vào manifest, không qua bước vision/đổi tên.
 
 | Task | Ai/gì đảm nhiệm | Công cụ |
 |---|---|---|
@@ -674,6 +695,7 @@ Từ khi repo đã có git backup (2026-09-20), **không** tạo thêm file ki�
 - `scripts/02-audio-clean-transcript.router.mjs`
 - `scripts/02b-media-generate.router.mjs` (tạo ảnh/video qua Google Flow — xem mục 2b; số thứ
   tự có hậu tố "b" vì chèn thêm sau khi 02/03 đã tồn tại, không renumber các script cũ)
+- `scripts/02c-pdf-source.local.mjs` (PDF bản án, tất định, opt-in — xem mục 2c)
 - `scripts/03-media-analyze.router.mjs`
 - `scripts/05-scene-plan.router.mjs`
 - `scripts/06-shotlist.router.mjs`

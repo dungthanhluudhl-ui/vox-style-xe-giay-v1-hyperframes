@@ -47,6 +47,14 @@ export function videoPaths(slug, root = process.cwd()) {
     contactSheetDir: path.join(root, "pipeline", "videos", slug, "contact-sheet"),
     runLog: path.join(root, "pipeline", "videos", slug, "run-log.md"),
     mediaGenerateLog: path.join(root, "pipeline", "videos", slug, "media-generate-log.md"),
+    // Nguồn PDF bản án (tuỳ chọn, opt-in) — scripts/02c-pdf-source.local.mjs. Ảnh trích dẫn để ở
+    // media/documents/ (KHÔNG phải media/images/) để Stage 3 không đổi tên/phân tích vision lại.
+    pdfSourceDir: path.join(root, "content", "videos", slug, "source"),
+    pdfHighlightsFile: path.join(root, "content", "videos", slug, "source", "highlights.txt"),
+    caseSourceDir: path.join(root, "pipeline", "videos", slug, "case-source"),
+    caseFactsJson: path.join(root, "pipeline", "videos", slug, "case-source", "case-facts.json"),
+    caseCrosscheckMd: path.join(root, "pipeline", "videos", slug, "case-source", "crosscheck.md"),
+    documentsDir: path.join(root, "public", "videos", slug, "media", "documents"),
     // Stage 7b (scripts/07b-integration-check.hf.mjs) + completion manifest (scripts/09-render.hf.mjs)
     integrationCheckLog: path.join(root, "pipeline", "videos", slug, "integration-check.log"),
     completionManifest: path.join(root, "pipeline", "videos", slug, "completion-manifest.json"),

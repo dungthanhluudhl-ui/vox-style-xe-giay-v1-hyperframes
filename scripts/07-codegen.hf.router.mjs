@@ -187,9 +187,11 @@ for (const m of usedMedia) {
   if (!m?.file) continue;
   const src = path.join(root, m.file);
   const dest = path.join(vp.hfAssetsDir, path.basename(m.file));
-  if (fs.existsSync(src) && !fs.existsSync(dest)) {
+  // Ảnh trích dẫn PDF (doc-NN) do 02c TẠO LẠI được (idempotent) nên bản đã copy có thể cũ -> ghi đè khi khác kích thước.
+  const stalePdfCopy = m.source === "pdf" && fs.existsSync(src) && fs.existsSync(dest) && fs.statSync(src).size !== fs.statSync(dest).size;
+  if (fs.existsSync(src) && (!fs.existsSync(dest) || stalePdfCopy)) {
     fs.copyFileSync(src, dest);
-    console.log(`  copied asset ${path.basename(m.file)}`);
+    console.log(`  copied asset ${path.basename(m.file)}${stalePdfCopy ? " (ghi đè bản cũ)" : ""}`);
   }
 }
 
@@ -213,7 +215,7 @@ for (const m of usedMedia) {
   if (!m?.file) continue;
   const src = path.join(root, m.file);
   const dest = path.join(tempProjectDir, "assets", path.basename(m.file));
-  if (fs.existsSync(src) && !fs.existsSync(dest)) fs.copyFileSync(src, dest);
+  if (fs.existsSync(src) && (!fs.existsSync(dest) || (m.source === "pdf" && fs.statSync(src).size !== fs.statSync(dest).size))) fs.copyFileSync(src, dest);
 }
 
 // --- Tài liệu tham chiếu HyperFrames (đã kiểm chứng ở poc/hyperframes/codegen-poc.mjs) ---
@@ -276,6 +278,11 @@ ${VIDEO_RULE_HF}
 - TUYỆT ĐỐI không tạo NHIỀU phần tử timed (data-start khác nhau) cùng chứa/render TRÙNG LẶP cùng 1 nội dung text (vd hiệu ứng "label/punch-phrase xuất hiện" bị vô tình lặp lại thành 2-3 bản sao với data-start lệch nhau vài trăm ms đến ~1.3s thay vì đúng 1 bản duy nhất) — "hyperframes check" bắt lỗi \`content_overlap\` (2 khối text đè lên nhau tại cùng vị trí, chữ bị lem không đọc được). Mỗi label/punch-phrase/overlay chỉ được có ĐÚNG 1 phần tử/1 timeline hiển thị nó; nếu cần hiệu ứng xuất hiện theo từng từ, dùng 1 cấu trúc timeline duy nhất kiểm soát opacity/transform của từng span con, không tạo nhiều bản sao độc lập của cùng khối text.
 - TUYỆT ĐỐI không tự bịa thêm số liệu/trích dẫn cụ thể KHÔNG có trong SCENE PLAN/SHOTLIST được giao (vd % con số, tỷ lệ, tên điều/khoản luật, ngày tháng, số tiền) dù nghe có vẻ hợp lý hoặc đúng kiến thức nền — chỉ dùng ĐÚNG số liệu/chữ đã có trong "overlays"/"notes" của shot. Lỗi này đã lặp lại ở nhiều video khác nhau (số liệu tài chính bịa, % bịa, trích dẫn điều luật cụ thể không có nguồn) — kể cả khi số liệu tự thêm đúng thực tế khách quan, đây vẫn là rủi ro sai lệch nội dung bản án/kịch bản thật không được xác minh, reviewer sẽ FAIL. Nếu 1 label/overlay trong shotlist chỉ mô tả Ý ĐỒ chung (không kèm con số cụ thể), hãy diễn đạt lại bằng chữ, không tự chế thêm con số để "cho cụ thể hơn".`;
 
+// Chỉ chèn khi scene có dùng ảnh trích dẫn bản án PDF (source:"pdf") — scene khác không đổi prompt.
+const PDF_DOC_RULE_HF = usedMedia.some((m) => m?.source === "pdf")
+  ? `- ẢNH TRÍCH DẪN BẢN ÁN (asset có source="pdf", id doc-NN) là BẰNG CHỨNG, không phải ảnh nền: đây là dải chữ NGANG (vd 1080x300) chụp từ bản án, đã tô cam sẵn đoạn quan trọng NGAY TRONG ảnh. Hiển thị dạng THẺ giữa khung dọc: width ≈ 92% khung, height:auto (hoặc object-fit:contain), canh giữa theo chiều dọc trong vùng an toàn, KHÔNG dùng object-fit:cover, KHÔNG phủ toàn khung, KHÔNG dùng làm nền. Chữ trong ảnh PHẢI đọc được suốt shot: không opacity<1 sau khi đã vào, không filter/blur/lớp tối phủ lên ảnh, không cắt mép, KHÔNG vẽ thêm highlight/khung lên ảnh (đã có), không đặt overlay đè lên ảnh. Chỉ animate vào/ra (fade, trượt nhẹ, scale ≤5%). Đặt thẻ ngoài vùng phụ đề. TUYỆT ĐỐI không tự viết lại/tóm tắt/chế thêm chữ của bản án thành text HTML — chỉ dùng chữ overlay có trong SHOTLIST.`
+  : null;
+
 function buildPrompt(feedback, previousFiles) {
   const retryFilesBlock = previousFiles
     ? Object.entries(previousFiles)
@@ -302,7 +309,8 @@ DỰ ÁN HIỆN TẠI:
 - Video (assetTreatment có trimStartSec/trimEndSec) dùng thẻ <video> theo đúng CẤU TRÚC BẮT BUỘC ở mục VIDEO bên dưới.
 
 HỢP ĐỒNG RIÊNG CỦA REPO (đặt CUỐI để không bị chìm giữa ~30k token tài liệu chung — vi phạm các quy tắc này là nguyên nhân verify FAIL phổ biến nhất đã đo được; chúng KHÔNG giới hạn sáng tạo bố cục/animation, chỉ là ràng buộc kỹ thuật):
-${KNOWN_GOTCHAS_HF}
+${KNOWN_GOTCHAS_HF}${PDF_DOC_RULE_HF ? `
+${PDF_DOC_RULE_HF}` : ""}
 
 ${
   feedback

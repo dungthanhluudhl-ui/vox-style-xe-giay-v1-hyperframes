@@ -48,6 +48,12 @@ const styleDna = styleDnaFiles.map((f) => `### ${f}\n\n${read(f)}`).join("\n\n--
 const styleTokens = read("planning/style-dna/style-tokens.json");
 
 const mediaById = Object.fromEntries(mediaManifest.map((m) => [m.id, m]));
+// Chỉ có khi manifest có ảnh trích dẫn bản án PDF (source:"pdf") — video cũ không đổi prompt.
+const PDF_SHOT_RULES = mediaManifest.some((m) => m.source === "pdf")
+  ? `
+ASSET TRÍCH DẪN BẢN ÁN (source="pdf", id doc-NN): là ảnh CHỤP NGUYÊN VĂN một đoạn bản án (dải chữ ngang, đã tô cam sẵn đoạn quan trọng ngay trong ảnh). assetTreatment cho shot dùng doc-NN CHỈ được là: "hiện dạng thẻ tài liệu canh giữa khung, giữ nguyên tỉ lệ, KHÔNG crop/cover toàn khung", chuyển động rất nhẹ (static hoặc zoom-in ≤5%), tuyệt đối KHÔNG làm mờ/giảm độ sáng/che chữ trong ảnh (chữ phải đọc được suốt shot) và KHÔNG vẽ thêm highlight/khung lên ảnh (đã có sẵn). Shot dùng doc-NN phải kéo dài đủ để đọc (≥3s nếu có thể). Overlay (label tối đa 4 từ, vd "BẢN ÁN PHÚC THẨM") chỉ đặt NGOÀI vùng ảnh; KHÔNG được chép/viết lại nội dung chữ trong bản án vào overlay trừ khi đúng nguyên văn description của doc-NN.
+`
+  : "";
 
 const systemPrompt = `Bạn là Motion Implementer cho video "Vox-style" (xem style DNA bên dưới — quy tắc BẮT BUỘC).
 
@@ -67,6 +73,7 @@ VỚI MỖI SHOT PHẢI XÁC ĐỊNH:
 - cameraMotion: static/zoom-in/zoom-out/pan-left/pan-right/parallax.
 - transitionIn: 1 trong 11 kiểu ở animation-variants.md, mặc định lấy theo entranceAnimation của scene cho shot đầu tiên của scene đó; các shot sau trong cùng scene dùng transition đơn giản hơn (cut/dissolve) trừ khi cần nhấn.
 
+${PDF_SHOT_RULES}
 TRANSCRIPT VỚI TIMESTAMP CẤP TỪ (dùng để canh overlay đúng cue lời thoại):
 ${JSON.stringify(captions)}
 

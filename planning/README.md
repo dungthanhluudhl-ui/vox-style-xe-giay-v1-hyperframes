@@ -14,6 +14,7 @@ cuối file) — không migrate lại, không phát triển tiếp trên nhánh 
 - **Audio sạch**: đặt vào `public/videos/<slug>/audio/narration.mp3`
 - **Script video**: đặt vào `content/videos/<slug>/script.txt`
 - **Media nguồn** (ảnh/video): đặt vào `public/videos/<slug>/media/images/` và `public/videos/<slug>/media/videos/` — nếu chưa có, dùng Stage 2b (Google Flow, xem `responsibility-matrix.md` mục 2b) để tự tạo.
+- **PDF bản án** (tuỳ chọn): đặt vào `content/videos/<slug>/source/*.pdf` (+ `highlights.txt` nếu muốn trích đúng cụm nào) — Stage 2c tự trích dẫn/đối chiếu, xem `responsibility-matrix.md` mục 2c. Không thay Stage 2b: media minh hoạ vẫn luôn được tạo/nhận như trước.
 - **Style DNA**: dùng CHUNG cho mọi video, đã có sẵn ở `planning/style-dna/` — chỉ cần đọc/điều chỉnh (xem `planning/style-dna-integration.md`), không tạo lại cho từng video.
 
 ## Các bước dựng 1 video (chạy với `--video=<slug>` ở mọi script `.router.mjs`)
@@ -22,7 +23,7 @@ cuối file) — không migrate lại, không phát triển tiếp trên nhánh 
 ```
 node scripts/run-stages-1-6.mjs --video=<slug>
 ```
-Tự động hoá ĐÚNG 2 nhánh song song mô tả bên dưới (Stage 1-6, enforced trong code — không còn phụ
+Tự động hoá ĐÚNG 2 nhánh song song (nhánh media chạy thêm Stage 2c song song với 2b nếu có PDF) mô tả bên dưới (Stage 1-6, enforced trong code — không còn phụ
 thuộc trí nhớ agent), rồi tự chạy tiếp Stage 7 (`07-codegen-hf-parallel.mjs`) trừ khi truyền
 `--skip-stage7`. Hỗ trợ resume từ giữa khi cần sửa 1 nhánh riêng: `--transcript-from=1|2|skip`,
 `--media-from=2b|3|skip` (vd `--media-from=3` nếu Stage 2b đã chạy xong nhưng Stage 3 lỗi). Dừng
@@ -40,6 +41,7 @@ thời để rút ngắn tổng thời gian, không cần chờ tuần tự như
   2. `scripts/02-audio-clean-transcript.router.mjs --script=... --audio=...` — sửa/align transcript, ghi `public/videos/<slug>/captions/captions.json`.
 - **Nhánh B (media, chạy song song với Nhánh A, không chờ Nhánh A)**:
   3. *(không có sẵn media)* `scripts/02b-media-generate.router.mjs --video=<slug>` — tạo ảnh/video qua Google Flow.
+  3b. *(chỉ khi có PDF, chạy song song với bước 3)* `scripts/02c-pdf-source.local.mjs --video=<slug>` — trích dữ kiện + ảnh trích dẫn bản án `doc-NN`.
   4. `scripts/03-media-analyze.router.mjs --video=<slug>` — chạy NGAY khi bước 3 xong (không chờ Nhánh A) — phân tích + chuẩn hoá tên media nguồn, ghi `pipeline/videos/<slug>/media-analysis/manifest.json`.
 
 Từ bước 5 trở đi cần **cả 2 nhánh đã xong** (Stage 5 đọc cả `captions.json` lẫn `manifest.json`):
@@ -89,7 +91,7 @@ Từ bước 5 trở đi cần **cả 2 nhánh đã xong** (Stage 5 đọc cả 
   blocker cho việc dựng video mới.
 
 ### Video "an-le-64" (video đầu tiên, đã hoàn chỉnh và đã migrate vào cấu trúc mới)
-- [x] Nhận script + audio + media + style DNA (2026-09-20). PDF bản án sẽ cung cấp sau, chưa cần cho giai đoạn hiện tại.
+- [x] Nhận script + audio + media + style DNA (2026-09-20). (Lúc đó chưa có PDF bản án; từ 2026-09-30 đã hỗ trợ tuỳ chọn qua Stage 2c — xem mục Input và `responsibility-matrix.md` mục 2c.)
 - [x] Phân tích media nguồn qua 9router[vision] (2026-09-20) — 14 asset đã mô tả + gắn tag + chuẩn hoá tên file (`img-NN-slug`/`vid-NN-slug`). Xem `pipeline/videos/an-le-64/media-analysis/manifest.json`. Ảnh dùng làm nền, không cutout (theo yêu cầu người dùng).
 - [x] Transcribe audio (whisper.cpp local) + sửa transcript qua 9router (2026-09-20) — dùng script gốc làm ground truth để align, khớp 100%. Xem `public/videos/an-le-64/captions/captions.json`.
 - [x] Scene Plan (2026-09-20) — 7 scene, xem `planning/videos/an-le-64/scene-plan.md`/`.json`.
@@ -360,3 +362,8 @@ mỗi lần render rơi vào mặc định của Remotion (`min(8, cores/2)` = 8
   toàn. Mức ~5.8-6.4x thời lượng thật (54s video ~5m45s render) nhiều khả năng là chi phí VỐN CÓ
   của kiến trúc render Chromium-per-frame + decode video nguồn của Remotion trên 1 máy, không
   phải lỗi cấu hình.
+
+### Nâng cấp "nguồn PDF bản án" (2026-09-30, Stage 2c — dùng chung cho mọi video, không riêng 1 video)
+- [x] Thêm Stage 2c (`scripts/02c-pdf-source.local.mjs` + `scripts/lib/pdf_extract.py`, pymupdf): tất định, opt-in theo `content/videos/<slug>/source/*.pdf`; chạy song song 2b; Stage 3 nối `doc-NN` vào manifest; Stage 5/6/7 có luật riêng khi manifest có `source:"pdf"`. Chi tiết + giới hạn (chưa OCR, highlight tô cố định): `responsibility-matrix.md` mục 2c.
+- [x] POC kiểm chứng: `poc/pdf-source/` (Bản án 935/2024/HS-PT; Stage 2c→3→5→6→7 scene S08 PASS, vision xác nhận thẻ bản án đọc rõ). Chưa chạy end-to-end nhiều scene — xem kế hoạch POC E2E kế tiếp.
+- [x] Sửa kèm: câu "14 media" cứng ở Stage 5 → số thật; Stage 7 chép đè ảnh PDF cũ khi 02c tạo lại.

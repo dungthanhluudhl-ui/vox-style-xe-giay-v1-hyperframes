@@ -1,0 +1,500 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+      /* hf-safe-colors (tất định từ style-tokens.json) */
+      .hf-text-ink { color: #141414; }
+      .hf-text-light { color: #F7F4EC; }
+      .hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+      .hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+      .hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+      .hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #F5F0E4;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: #F5F0E4;
+      }
+      .clip {
+        position: absolute;
+        inset: 0;
+      }
+
+      /* Visual signature bottom bar */
+      #bottom-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 14px;
+        background-color: #FF6A1A;
+        z-index: 100;
+      }
+
+      /* Layout container - within safe zone Y: [160, 1390] */
+      .stage-wrapper {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 170px 45px 0 45px;
+      }
+
+      /* Top Area: Context & Decision */
+      #top-section {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin-bottom: 24px;
+      }
+
+      .context-tag {
+        display: inline-block;
+        background-color: #141414;
+        color: #F7F4EC;
+        font-weight: 700;
+        font-size: 20px;
+        letter-spacing: 2px;
+        padding: 6px 18px;
+        border-radius: 4px;
+        text-transform: uppercase;
+        margin-bottom: 16px;
+      }
+
+      #decision-banner {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
+
+      .ban-icon-box {
+        width: 64px;
+        height: 64px;
+        background-color: #141414;
+        border: 3px solid #141414;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 4px 4px 0px #141414;
+        flex-shrink: 0;
+      }
+
+      .ban-icon-box svg {
+        width: 44px;
+        height: 44px;
+      }
+
+      .decision-badge {
+        background-color: #FF6A1A;
+        color: #141414;
+        border: 3px solid #141414;
+        border-radius: 8px;
+        box-shadow: 4px 4px 0px #141414;
+        padding: 10px 24px;
+        font-size: 32px;
+        font-weight: 900;
+        line-height: 1.2;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      /* Middle Area: Evidence Document Card */
+      #doc-card {
+        width: 100%;
+        background-color: #FFFFFF;
+        border: 3px solid #141414;
+        border-radius: 12px;
+        box-shadow: 6px 6px 0px #141414;
+        padding: 16px 20px 20px 20px;
+        margin-bottom: 28px;
+      }
+
+      .doc-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 2px solid rgba(20, 20, 20, 0.15);
+        padding-bottom: 10px;
+        margin-bottom: 14px;
+      }
+
+      .doc-meta {
+        font-size: 18px;
+        font-weight: 700;
+        color: #141414;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .doc-status {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 18px;
+        font-weight: 900;
+        color: #141414;
+        text-transform: uppercase;
+      }
+
+      .status-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background-color: #FF6A1A;
+      }
+
+      .doc-image-wrap {
+        width: 100%;
+        display: block;
+        background-color: #FFFFFF;
+      }
+
+      .doc-image-wrap img {
+        width: 100%;
+        height: auto;
+        display: block;
+        object-fit: contain;
+      }
+
+      /* Bottom Area: Sentence Comparison Diagram */
+      #diagram-card {
+        width: 100%;
+        background-color: #E7E3D9;
+        border: 3px solid #141414;
+        border-radius: 12px;
+        box-shadow: 6px 6px 0px #141414;
+        padding: 24px 28px 28px 28px;
+        position: relative;
+      }
+
+      .diagram-title-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        border-bottom: 2px solid rgba(20, 20, 20, 0.2);
+        padding-bottom: 12px;
+      }
+
+      .diagram-title {
+        font-size: 26px;
+        font-weight: 900;
+        color: #141414;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .diagram-pill {
+        background-color: #141414;
+        color: #FF6A1A;
+        font-size: 18px;
+        font-weight: 900;
+        padding: 6px 14px;
+        border-radius: 6px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+
+      .bars-container {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        position: relative;
+      }
+
+      .bar-row {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
+
+      .bar-label {
+        width: 160px;
+        font-size: 24px;
+        font-weight: 900;
+        color: #141414;
+        text-transform: uppercase;
+        flex-shrink: 0;
+      }
+
+      .bar-track {
+        flex: 1;
+        height: 58px;
+        background-color: rgba(20, 20, 20, 0.08);
+        border: 2px solid #141414;
+        border-radius: 6px;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .bar-fill {
+        height: 100%;
+        width: 78%;
+        position: absolute;
+        top: 0;
+        left: 0;
+        transform-origin: left center;
+      }
+
+      #bar-sotham {
+        background-color: #141414;
+      }
+
+      #bar-phuctham {
+        background-color: #FF6A1A;
+        border-right: 3px solid #141414;
+      }
+
+      /* Vertical alignment indicator line linking both bars */
+      #equal-guide {
+        position: absolute;
+        left: calc(160px + 16px + (100% - 176px) * 0.78);
+        top: 0;
+        bottom: 0;
+        width: 3px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+      }
+
+      #equal-line {
+        position: absolute;
+        top: -6px;
+        bottom: -6px;
+        width: 3px;
+        background-color: #141414;
+        transform-origin: top center;
+      }
+
+      #equal-badge {
+        position: absolute;
+        background-color: #141414;
+        color: #F7F4EC;
+        border: 2px solid #141414;
+        border-radius: 6px;
+        padding: 4px 12px;
+        font-size: 16px;
+        font-weight: 900;
+        white-space: nowrap;
+        box-shadow: 2px 2px 0px rgba(20, 20, 20, 0.3);
+        z-index: 10;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s08"
+      data-width="1080"
+      data-height="1920"
+      data-duration="4.87"
+    >
+      <!-- Scene Clip S08-1 -->
+      <section id="shot-s08-1" class="clip" data-start="0" data-duration="4.87">
+        <div class="stage-wrapper">
+          <!-- Top Area: Ban Decision -->
+          <div id="top-section">
+            <div class="context-tag">Bản án phúc thẩm</div>
+            <div id="decision-banner">
+              <div class="ban-icon-box">
+                <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <circle
+                    id="ban-circle"
+                    cx="50"
+                    cy="50"
+                    r="38"
+                    stroke="#FF6A1A"
+                    stroke-width="9"
+                    stroke-linecap="round"
+                  />
+                  <line
+                    id="ban-slash"
+                    x1="24"
+                    y1="24"
+                    x2="76"
+                    y2="76"
+                    stroke="#FF6A1A"
+                    stroke-width="9"
+                    stroke-linecap="round"
+                  />
+                </svg>
+              </div>
+              <div class="decision-badge">Không chấp nhận kháng cáo</div>
+            </div>
+          </div>
+
+          <!-- Middle Area: Court Verdict Document -->
+          <div id="doc-card">
+            <div class="doc-header">
+              <span class="doc-meta">Trích lục bản án • Trang 22</span>
+              <div class="doc-status">
+                <span class="status-dot"></span>
+                <span>Quyết định</span>
+              </div>
+            </div>
+            <div class="doc-image-wrap">
+              <img
+                src="assets/doc-02-verdict.png"
+                alt="Trích lục bản án phúc thẩm"
+              />
+            </div>
+          </div>
+
+          <!-- Bottom Area: Maintained Penalty Diagram -->
+          <div id="diagram-card">
+            <div class="diagram-title-row">
+              <div class="diagram-title">Mức án áp dụng</div>
+              <div class="diagram-pill">Giữ nguyên</div>
+            </div>
+
+            <div class="bars-container">
+              <!-- Sơ thẩm -->
+              <div class="bar-row">
+                <div class="bar-label">Sơ thẩm</div>
+                <div class="bar-track">
+                  <div id="bar-sotham" class="bar-fill"></div>
+                </div>
+              </div>
+
+              <!-- Phúc thẩm -->
+              <div class="bar-row">
+                <div class="bar-label">Phúc thẩm</div>
+                <div class="bar-track">
+                  <div id="bar-phuctham" class="bar-fill"></div>
+                </div>
+              </div>
+
+              <!-- Vertical Alignment Guide -->
+              <div id="equal-guide">
+                <div id="equal-line"></div>
+                <div id="equal-badge">Giữ nguyên</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Vox Style signature bottom bar -->
+        <div id="bottom-bar"></div>
+      </section>
+    </div>
+
+    <script>
+      // Setup deterministic GSAP Timeline
+      const tl = gsap.timeline({ paused: true });
+
+      // Setup SVG paths for self-drawing ban icon
+      const circleEl = document.getElementById("ban-circle");
+      const slashEl = document.getElementById("ban-slash");
+      const circleLen = circleEl.getTotalLength();
+      const slashLen = slashEl.getTotalLength();
+
+      circleEl.style.strokeDasharray = circleLen;
+      circleEl.style.strokeDashoffset = circleLen;
+      slashEl.style.strokeDasharray = slashLen;
+      slashEl.style.strokeDashoffset = slashLen;
+
+      // 1. Initial State & Entrance of Document Card (t = 0.05s)
+      tl.fromTo(
+        "#doc-card",
+        { y: 50, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.65, ease: "power3.out" },
+        0.05
+      );
+
+      // 2. Decision Block Entrance (t = 0.38s ~ atMs 63500 relative)
+      tl.fromTo(
+        ".context-tag",
+        { y: -15, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.4, ease: "power2.out" },
+        0.35
+      );
+
+      tl.fromTo(
+        "#decision-banner",
+        { scale: 0.88, opacity: 0, y: 15 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.5, ease: "power3.out" },
+        0.38
+      );
+
+      // Self-draw SVG ban icon
+      tl.to(
+        circleEl,
+        { strokeDashoffset: 0, duration: 0.45, ease: "power2.out" },
+        0.42
+      );
+      tl.to(
+        slashEl,
+        { strokeDashoffset: 0, duration: 0.3, ease: "power2.out" },
+        0.65
+      );
+
+      // 3. Diagram Entrance (t = 2.36s ~ atMs 65480 relative)
+      tl.fromTo(
+        "#diagram-card",
+        { y: 40, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.55, ease: "power3.out" },
+        2.36
+      );
+
+      // Bar Sơ Thẩm extends
+      tl.fromTo(
+        "#bar-sotham",
+        { scaleX: 0 },
+        { scaleX: 1, duration: 0.6, ease: "power3.out" },
+        2.65
+      );
+
+      // Bar Phúc Thẩm extends to exact matching length
+      tl.fromTo(
+        "#bar-phuctham",
+        { scaleX: 0 },
+        { scaleX: 1, duration: 0.6, ease: "power3.out" },
+        3.10
+      );
+
+      // Alignment Guide / Equal Indicator marks identical length
+      tl.fromTo(
+        "#equal-line",
+        { scaleY: 0 },
+        { scaleY: 1, duration: 0.3, ease: "power2.out" },
+        3.65
+      );
+      tl.fromTo(
+        "#equal-badge",
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.35, ease: "power3.out" },
+        3.75
+      );
+
+      // Register timeline on HyperFrames registry
+      window.__timelines = window.__timelines || {};
+      window.__timelines["scene-s08"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>
