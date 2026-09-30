@@ -251,7 +251,7 @@ tạo media từ script; prompt 2b không đọc PDF, không đổi). Toàn bộ
 - Stage 3 chỉ **nối** `doc-NN` vào cuối `manifest.json` (không vision, không đổi tên, giữ truy vết): `type:"image"`, `source:"pdf"`, `visual_language:"document"`, `provenance{pdf,page,bbox,quote,verified}`, `description` sinh tất định từ câu trích.
 - Hạ nguồn (chỉ kích hoạt khi manifest có `source:"pdf"`): Stage 5 chỉ gán doc cho scene mà lời thoại nói đúng nội dung đó (không bắt buộc dùng hết, mỗi doc ≤1 lần); Stage 6/7 hiển thị doc dạng **thẻ tài liệu giữa khung** (`object-fit:contain`, không cover/nền, không mờ/filter/lớp tối, không vẽ thêm highlight, không chép lại chữ bản án thành HTML). Số "N media" ở Stage 5 tính không kể doc.
 - Claude không tự xem ảnh doc; kiểm tra bằng số liệu (kích thước, pixel cam, quote ⊂ text trang) hoặc vision 9router hỏi về BỐ CỤC/độ đọc được (đừng yêu cầu chép nguyên văn chữ — Gemini chặn `recitation`).
-- Đã kiểm chứng: POC `poc/pdf-source/` (Bản án 935/2024/HS-PT, 87s, Stage 2c→3→5→6→7 scene S08 PASS, vision xác nhận chữ rõ, không cắt mép). Xem `poc/pdf-source/README.md`.
+- Đã kiểm chứng: (1) POC `poc/pdf-source/` — Stage 2c→3→5→6→7 scene S08 PASS; (2) **POC E2E `poc/pdf-source-e2e/` (30/09)** — Bản án 935/2024/HS-PT, audio 35s, `run-stages-1-6.mjs` thật: Stage 2b (Flow thật, `--images-only`, 3 ảnh) chạy song song 2c, 5 scene (`doc-02` ở S02, `doc-01`+`doc-03` liên tiếp ở S05) Stage 7 PASS 5/5, 7b PASS, render `09-render.hf.mjs` (looks) 1080×1920 h264/aac đúng 35.000s, vision xác nhận thẻ bản án rõ/không cắt/không đè phụ đề, người dùng đã xem video. Chi tiết + bài học: `poc/pdf-source-e2e/README.md`.
 - Chưa làm: OCR bản scan; highlight animate theo lời thoại (hiện tô cam cố định trong ảnh).
 
 ## 3. Xử lý Media nguồn (ảnh/video)
@@ -326,6 +326,7 @@ prompt (quy tắc "không chữ cam trên nền be" có từ 21/09 vẫn là l�
   `HARD_RE` trong `review-gate.mjs` — hạ TẤT ĐỊNH các mục BLOCKING thuộc loại holdMs/transition/
   `data-layout-allow`/hoa-thường/đổi màu nội-palette xuống ADVISORY, TRỪ khi có từ khoá lỗi thật (contract,
   màu ngoài palette, nội dung sai, không tất định...) — `HARD_RE` chặn không bao giờ hạ cấp các mục đó.
+  Bổ sung 30/09: khi `checkAssetUsage()` (tất định) đã PASS, mọi mục BLOCKING nói "sai asset/tên file" cũng bị hạ cấp (`assetUsageVerified`, `ASSET_NAME_CLAIM_RE`) — reviewer chỉ thấy tên file và từng bịa quy ước `assets/<assetId>.*` (ảnh `doc-02-verdict.png`), khiến generator đổi tên file sai → `missing_local_asset`.
   Ghi `review-demoted` vào `codegen-issues.jsonl` mỗi lần kích hoạt. **Kiểm chứng: unit-test 11/11 đúng
   trên câu BLOCKING thật lấy từ log** (`node --check` + chạy tay, không phải test tự động trong CI). **CHƯA
   được A/B sống xác nhận** (0/32 lần kích hoạt trong đợt A/B 26/09 dùng để so sánh reviewer) — theo dõi

@@ -1,0 +1,21 @@
+# Scene Plan — e2e
+
+> Sinh bởi `scripts/05-scene-plan.router.mjs` qua cx/gpt-6-sol. Nguồn dữ liệu: `planning/videos/e2e/scene-plan.json`. Sửa tay thì sửa cả 2 file cho khớp.
+
+Tổng thời lượng: 35.000s · 5 scene
+
+| # | Thời gian | Lời thoại | Chức năng | Quan hệ hình ảnh | Ngôn ngữ thị giác | Nền | Asset | Vào cảnh |
+|---|---|---|---|---|---|---|---|---|
+| S01 | 0.000s–5.440s | Tòa phúc thẩm xác định Minh Hùng giữ vai trò chính, trực tiếp ký duyệt 83 hồ sơ | evidence | Từ bị cáo ở bục khai báo, sự chú ý chuyển sang xấp hồ sơ; con số 83 xuất hiện trên chính phần hồ sơ khi lời thoại nhắc việc ký duyệt, làm rõ căn cứ xác định vai trò chính. | background-photo + annotated | grid | img-03 | rise |
+| S02 | 5.440s–13.000s | và phải chịu trách nhiệm đối với thiệt hại 24 tỷ 925 triệu đồng, nên không chấp nhận kháng cáo kêu oan và giữ nguyên mức án 7 năm tù. | causal-chain | Khoản thiệt hại được đưa ra trước, rồi yêu cầu kháng cáo bị phủ định; kết quả 7 năm tù giữ nguyên xuất hiện sau cùng, để người xem thấy thứ tự căn cứ → quyết định. | document + annotated | card | doc-02 | peel |
+| S03 | 13.000s–19.000s | Riêng Hồng Hải, sau phiên sơ thẩm đã chủ động nộp 213 triệu đồng để khắc phục hậu quả. | reversal | Từ quyết định giữ nguyên án ở cảnh trước, biên lai được đưa lên làm trọng tâm; khoản 213 triệu đồng hiện rõ đúng lúc được nhắc đến, mở ra một căn cứ mới để tòa cân nhắc. | background-photo + annotated | grid | img-01 | grow |
+| S04 | 19.000s–26.000s | Tòa đánh giá đây là tình tiết giảm nhẹ mới, đồng thời xem xét vai trò của ông thấp hơn, có tính phụ thuộc vào chỉ đạo của cấp trên. | cause | Khoản đã nộp được đặt vào phía căn cứ giảm nhẹ; bên cạnh đó, vị trí của Hồng Hải dịch xuống dưới vị trí cấp trên và một đường chỉ đạo nối từ trên xuống, cho thấy hai yếu tố riêng cùng được tòa xem xét. | diagram + flow | card | — | unfold |
+| S05 | 26.000s–35.000s | Kết quả, ngày 26 tháng 9 năm 2024, Tòa án nhân dân cấp cao tại Thành phố Hồ Chí Minh giảm hình phạt cho Hồng Hải từ 3 năm xuống còn 1 năm 6 tháng tù. | conclusion | Ngày và cơ quan xét xử được xác lập bằng trích đoạn bản án; sau đó mức 3 năm trên hình bị thay thế bởi 1 năm 6 tháng, để việc giảm hình phạt diễn ra rõ ràng trên màn hình. | background-photo + document | spotlight | img-02, doc-01, doc-03 | zoom-through |
+
+## Ghi chú từng scene
+
+- **S01**: Dùng ảnh AI nguyên màu làm lớp hình chính; crop/pan từ bị cáo sang hồ sơ. Chỉ thêm điểm nhấn 83 hồ sơ, không vẽ lại phòng xử án. Tránh để chi tiết án 7 năm trong ảnh trở thành tâm điểm trước khi lời thoại nói tới.
+- **S02**: Thẻ trích bản án trang 22 khớp lời thoại «không chấp nhận kháng cáo»; giữ thẻ giữa khung, đủ lớn để đọc, không làm nền toàn khung. Số 24 tỷ 925 triệu đồng và mức 7 năm tù được đưa bằng chữ riêng theo đúng thời điểm đọc, không gán nhầm chúng là nội dung của đoạn trích doc-02.
+- **S03**: Ảnh AI nguyên màu là lớp hình chính; pan nhẹ từ người cầm giấy sang biên lai, không xử lý cutout. Giữ hình xuyên khoảng nghỉ 18–19 giây để người xem kịp nhận ra khoản tiền, không tạo một scene ngắn chỉ vì khoảng lặng.
+- **S04**: Không còn ảnh AI chưa dùng nào minh họa đúng quan hệ phụ thuộc mà không tiết lộ trước kết quả giảm án; dành img-02 cho cảnh tuyên kết quả. Dựng overlay hình khối và đường nối tối giản, không dùng sơ đồ/icon tự vẽ phức tạp. Nhãn tối đa 4 từ và không chép lại nguyên văn lời thoại.
+- **S05**: img-02 là lớp hình chính, dùng nguyên màu. Cho doc-01 thành thẻ giữa khung khi đọc «ngày 26 tháng 9 năm 2024, Tòa án nhân dân cấp cao tại Thành phố Hồ Chí Minh» (trang 1); thay bằng doc-03 khi đọc mức «1 năm 6 tháng tù» (trang 23). Hai thẻ xuất hiện nối tiếp, không chồng lên nhau hay phủ kín ảnh. Chuyển trọng tâm trong ảnh từ 3 năm sang 1 năm 6 tháng, giữ kết quả cuối đủ lâu để đọc.

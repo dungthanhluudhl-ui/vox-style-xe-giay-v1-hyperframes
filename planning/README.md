@@ -365,5 +365,6 @@ mỗi lần render rơi vào mặc định của Remotion (`min(8, cores/2)` = 8
 
 ### Nâng cấp "nguồn PDF bản án" (2026-09-30, Stage 2c — dùng chung cho mọi video, không riêng 1 video)
 - [x] Thêm Stage 2c (`scripts/02c-pdf-source.local.mjs` + `scripts/lib/pdf_extract.py`, pymupdf): tất định, opt-in theo `content/videos/<slug>/source/*.pdf`; chạy song song 2b; Stage 3 nối `doc-NN` vào manifest; Stage 5/6/7 có luật riêng khi manifest có `source:"pdf"`. Chi tiết + giới hạn (chưa OCR, highlight tô cố định): `responsibility-matrix.md` mục 2c.
-- [x] POC kiểm chứng: `poc/pdf-source/` (Bản án 935/2024/HS-PT; Stage 2c→3→5→6→7 scene S08 PASS, vision xác nhận thẻ bản án đọc rõ). Chưa chạy end-to-end nhiều scene — xem kế hoạch POC E2E kế tiếp.
+- [x] POC kiểm chứng: `poc/pdf-source/` (Bản án 935/2024/HS-PT; Stage 2c→3→5→6→7 scene S08 PASS, vision xác nhận thẻ bản án đọc rõ). 
+- [x] POC E2E `poc/pdf-source-e2e/` (35s, 5 scene, Flow thật + 2c song song, Stage 7 PASS 5/5, 7b, render mp4 OK; người dùng đã xem, kết quả ổn). Vá kèm `review-gate.mjs`: hạ cấp mục reviewer "sai asset/tên file" khi `checkAssetUsage` đã PASS.
 - [x] Sửa kèm: câu "14 media" cứng ở Stage 5 → số thật; Stage 7 chép đè ảnh PDF cũ khi 02c tạo lại.

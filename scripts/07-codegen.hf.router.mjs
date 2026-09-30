@@ -601,7 +601,7 @@ while (attempt < MAX_ATTEMPTS) {
     finalFiles = files;
     finalVerdict = reviewText;
     // SCRIPT quyết định theo danh sách lỗi CHẶN (review-gate.mjs), không theo dòng VERDICT tự do.
-    const rv = parseReviewVerdict(reviewText, { paletteHexes: PALETTE_HEXES });
+    const rv = parseReviewVerdict(reviewText, { paletteHexes: PALETTE_HEXES, assetUsageVerified: true }); // tới đây checkAssetUsage đã PASS
     if (rv.demoted?.length) {
       console.log(`(hạ cấp tự động ${rv.demoted.length} mục BLOCKING thuộc loại GÓP Ý theo chính sách)`);
       appendCodegenIssue([{ stage: "review-demoted", detail: rv.demoted.join("\n").slice(0, 2000) }]);

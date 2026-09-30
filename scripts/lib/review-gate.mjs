@@ -132,19 +132,25 @@ function paletteSwapOnly(item, paletteHexes) {
   return hexes.length >= 2 && hexes.every((h) => paletteHexes.has(h));
 }
 
-export function demoteAdvisoryItems(blocking, { paletteHexes = new Set() } = {}) {
+// Reviewer không thấy ảnh, chỉ thấy tên file; đo thật 2026-09-30 (POC e2e, ảnh trích dẫn PDF "doc-02-verdict.png"):
+// nó bịa quy ước "tên file phải là assets/<assetId>.*" rồi FAIL, generator sửa theo → missing_local_asset.
+// Khi checkAssetUsage() (tất định) ĐÃ PASS thì mọi mục BLOCKING nói "sai asset/tên file" đều bị chính script bác bỏ.
+const ASSET_NAME_CLAIM_RE = /asset sai|sai asset|dùng sai asset|không dùng (đúng )?asset|tên file[^.\n]{0,80}(assetId|khớp)|assetId[^.\n]{0,80}tên file/i;
+
+export function demoteAdvisoryItems(blocking, { paletteHexes = new Set(), assetUsageVerified = false } = {}) {
   const keep = [];
   const demoted = [];
   for (const b of blocking) {
     const advisoryLike = ADVISORY_RES.some((re) => re.test(b)) || paletteSwapOnly(b, paletteHexes);
     const selfResolved = SELF_RESOLVED_RE.test(b) && !SELF_RESOLVED_HARD_RE.test(b);
-    if ((advisoryLike && !HARD_RE.test(b)) || selfResolved) demoted.push(b);
+    const assetNameClaim = assetUsageVerified && ASSET_NAME_CLAIM_RE.test(b);
+    if ((advisoryLike && !HARD_RE.test(b)) || selfResolved || assetNameClaim) demoted.push(b);
     else keep.push(b);
   }
   return { keep, demoted };
 }
 
-export function parseReviewVerdict(rawText, { paletteHexes } = {}) {
+export function parseReviewVerdict(rawText, { paletteHexes, assetUsageVerified = false } = {}) {
   // Model hay bọc tiêu đề bằng markdown đậm ("**BLOCKING:**") — bỏ trước khi parse, nếu không dấu "*"
   // còn sót bị đọc thành 1 lỗi chặn giả.
   const text = String(rawText).replace(/\*\*|__/g, "");
@@ -161,6 +167,6 @@ export function parseReviewVerdict(rawText, { paletteHexes } = {}) {
     const legacy = section(text, "ISSUES") ?? [];
     return { structured: false, pass: verdictPass, blocking: verdictPass ? [] : legacy, advisory: [], demoted: [], verdictPass };
   }
-  const { keep: blocking, demoted } = demoteAdvisoryItems(rawBlocking, { paletteHexes });
+  const { keep: blocking, demoted } = demoteAdvisoryItems(rawBlocking, { paletteHexes, assetUsageVerified });
   return { structured: true, pass: blocking.length === 0, blocking, advisory: [...advisory, ...demoted.map((d) => `(hạ cấp tự động) ${d}`)], demoted, verdictPass };
 }
