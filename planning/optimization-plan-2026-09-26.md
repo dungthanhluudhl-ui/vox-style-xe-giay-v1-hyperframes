@@ -1,5 +1,8 @@
 # Kế hoạch tối ưu pipeline — lập 2026-09-26, thực hiện ở session MỚI
 
+> **Tài liệu LỊCH SỬ (snapshot 2026-09-26).** Tên model trong file này (vd generator `cx/gpt-5.6-terra`, reviewer `cx/gpt-5.6-luna-review`) đã LỖI THỜI.
+> Model hiện dùng + timeout: `scripts/model-routing.json` và `planning/responsibility-matrix.md` mục 6 "Model routing HIỆN TẠI…" (cập nhật 2026-09-30).
+
 Kế hoạch này được lập cuối phiên audit bug "trống hình" (xem `planning/incident-log.md` mục
 2026-09-26) theo yêu cầu người dùng: làm pipeline gọn, khoa học, hiệu suất cao, ít lỗi, dựng hàng
 loạt được mà **giữ nguyên chất lượng video hiện tại**. Người dùng đã DUYỆT làm 4 phase dưới đây.

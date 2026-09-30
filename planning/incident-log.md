@@ -889,3 +889,38 @@ cần sửa (đã xác nhận qua đọc code: chỉ dùng `.id` như chuỗi đ
 (`S17a/b/c`) không đạt gate mới — gate chỉ chạy trong `run-stages-1-6.mjs` nên không ảnh hưởng video đã render.
 **CHƯA chạy Stage 5 thật với model thật** sau bản sửa — xác nhận ở lần dựng video kế tiếp (kiểm `scene-plan.json`
 toàn `S01, S02, ...`).
+
+---
+
+### Timeout Stage 5/6 với model `cx/*` + `fetch` huỷ ở 300s + 4 bài học vận hành — video `ban-an-23-2023-ben-tre` (2026-09-30)
+
+**Tóm tắt:** dựng video 35 scene bằng `reasoning_planning=cx/gpt-6-sol`. Stage 5 timeout liên tiếp; điều tra sai hướng ban đầu rồi sửa đúng gốc.
+Tham chiếu ổn định (bảng model, timeout, chẩn đoán): `planning/responsibility-matrix.md` mục 6 — file này chỉ là nhật ký diễn biến.
+
+**Diễn biến + bằng chứng:**
+1. Stage 5 (`cx/gpt-6-sol`) `TIMEOUT sau 240.0s` 2 lần; đổi tạm `cx/gpt-5.6-sol` (theo người dùng) cũng `TIMEOUT 240.0s`. 9router vẫn healthy
+   (`curl /v1/models` 200 trong ~0.24s), các model `ag/*` cùng lần chạy đều ổn. **Giả thuyết của Claude lúc đó: "route họ `cx/*` hỏng hoặc hết hạn
+   mức" — SAI.** Người dùng cung cấp số dashboard: cả 3 lượt gọi đều ghi nhận ĐÃ HOÀN TẤT (71k↑ input, 8.8k-10.7k↓ output) → model trả xong, chỉ
+   chậm hơn 240s của client (Claude thừa nhận và điều tra lại, đúng nguyên tắc 3 của `CLAUDE.md`).
+2. Đo tốc độ streaming ngoài pipeline: `ag/gemini-3.8-flash-high` ~253 tok/s; `cx/gpt-6-sol` ~20 tok/s; `cx/gpt-5.6-sol` ~19 tok/s. 10k token ÷ 20 ≈ 500s > 240s
+   → giải thích đủ. Prompt Stage 5 nặng vì `captions.json` cấp từ (133k ký tự) + manifest 19k.
+3. Nâng `timeoutMs` Stage 5/6/7 lên 900s → lần chạy kế **lỗi khác**: `fetch failed / HeadersTimeoutError (UND_ERR_HEADERS_TIMEOUT)` ở 304.5s. Nguyên
+   nhân: `callModel()` gọi `stream:false` nên header chỉ về khi sinh xong; undici (fetch của Node) `headersTimeout` mặc định 300s → mọi `timeoutMs`
+   >300000 vô tác dụng, và lỗi này KHÔNG bao giờ hiện ở các video trước vì trước giờ chưa có lời gọi nào >300s. Sửa: `undici` `Agent{headersTimeout,bodyTimeout=timeoutMs}`
+   trong `scripts/lib/router-client.mjs` (+ dependency `undici`). Kiểm chứng: smoke test `callModel` model nhanh OK, process thoát gọn; Stage 5 chạy thật 508.4s PASS,
+   Stage 6 559.1s PASS. Commit `c1f569b`.
+4. Model routing khi đó ở working tree chưa commit từ phiên trước (`reasoning_planning`, `reasoning_generator`, `reasoning_reviewer` đổi sang họ `cx/*` + Sonnet);
+   lý do theo người dùng: hạn mức `ag/gemini-3.8-flash-high` đang cạn. Đã commit cùng `c1f569b`.
+
+**Bài học vận hành khác cùng video (đã ghi vào matrix/README):**
+- **`--issue-file` trên scene ĐÃ PASS = sinh lại từ đầu** (thư mục `.gen-tmp` bị dọn sau PASS, `previousFiles=null`): S28 và S30 chạy issue-file xong FAIL 3/3
+  (overlay tự chế/sai chữ; lồng clip trong clip). Sửa tay tất định trực tiếp `compositions/scene-sNN.html` + `syncRootHf` mới đúng. Với scene vừa FAIL (còn `.gen-tmp`)
+  issue-file hoạt động tốt (8/8 scene PASS ≤3 lần); issue-file cho lỗi vùng phụ đề phải nêu ngưỡng số `y≤1390px` (S32 bản đầu mơ hồ → FAIL 3/3, bản có số → PASS ngay).
+- **Chữ trang trí trong vùng phụ đề chỉ lộ ở 7b** (S28 `div.caption`, S30 `#caption`; lần trước S03 `.footer` ở `doi-dau-xe-tang-checkpoint-charlie`): 11 `content_overlap`
+  với `span.word.active`; 7b từ chối render đúng thiết kế. Mẫu lặp lần 2 — chưa có rule tất định trong `KNOWN_GOTCHAS_HF`, đề xuất thêm nếu tái diễn.
+- **SIGPIPE giết render**: `node scripts/09-render.hf.mjs … | tee log | head -c 200` cắt tiến trình sau 7b PASS; lệnh nền báo `exit code 0` (của `head`) trong khi không có mp4/manifest.
+  Không pipe lệnh nền dài; xác nhận xong bằng `completion-manifest.json`.
+- **Concurrency 20** (35 scene): 0 lỗi hạ tầng, 27/35 PASS lần đầu. **Reviewer tự mâu thuẫn** (S18, S19) được `parseReviewVerdict`/`SELF_RESOLVED_RE` xử lý đúng.
+- Số ảnh PDF `doc-NN` là tất định theo nội dung PDF (tối đa 1 header + 2 verdict + 1 law + highlights + scan-page), không cố định, không đọc script — người dùng hỏi, ghi ở matrix mục 2c.
+
+**Chưa xác minh:** tốc độ `cx/*` buổi sáng cùng ngày có nhanh hơn ~20 tok/s hay không (người dùng nhớ "sáng đến trưa vẫn gọi bình thường" — có thể do output nhỏ hơn hoặc nhanh hơn thật; repo không lưu thời gian sinh).

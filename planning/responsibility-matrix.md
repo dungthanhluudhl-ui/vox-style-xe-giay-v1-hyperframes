@@ -50,7 +50,10 @@ song: **Nhánh A** = Stage 1 → Stage 2 (ra `captions.json`); **Nhánh B** = St
 | Thực thi hành động trên Chrome thật qua CDP | Local | `agent-browser` (Vercel Labs, binary native, gọi thẳng không qua shell) |
 | Giải nén zip tải về (nếu có) + phân loại ảnh/video theo đuôi file vào đúng `imagesDir`/`videosDir`, chờ tất định (poll hệ thống file) cho tới khi tải thực sự xong trước khi phân loại | Local | `adm-zip` |
 
-Script: `scripts/02b-media-generate.router.mjs --video=<slug> [--flow-account=<tên>] [--style-notes="..."] [--resume-project=<url>]`.
+Script: `scripts/02b-media-generate.router.mjs --video=<slug> [--flow-account=<tên>] [--style-notes="..."] [--resume-project=<url>] [--images-only]`.
+`--images-only` (thêm 2026-09-28, pass-through qua `run-stages-1-6.mjs`): CHỈ tạo ảnh tĩnh, bỏ hẳn Giai đoạn 2
+(tạo chuyển động/video) — dùng khi người dùng nói "chỉ cần ảnh minh hoạ, không cần video chuyển động". Kết quả:
+`media/videos/` rỗng, Stage 3/5/6/7 chạy bình thường với ảnh tĩnh. Mâu thuẫn với `--retry-animate` (script từ chối).
 `--resume-project=<url>` mở lại project Flow đã tạo (URL tự lưu vào
 `pipeline/videos/<slug>/flow-project.json` sau Giai đoạn 1 mỗi lần chạy), bỏ qua hẳn Giai đoạn
 1+2, chỉ chạy Giai đoạn 3 (tải file) — dùng khi tải lỗi/thiếu file, tránh tốn credit tạo lại.
@@ -250,6 +253,7 @@ tạo media từ script; prompt 2b không đọc PDF, không đổi). Toàn bộ
 - PDF scan (trang không có text-layer): ghi `needsOcr:true`, chỉ render trang 1 (`scan-page`, `provenance.verified:false`); KHÔNG đoán nội dung, chưa có OCR.
 - Stage 3 chỉ **nối** `doc-NN` vào cuối `manifest.json` (không vision, không đổi tên, giữ truy vết): `type:"image"`, `source:"pdf"`, `visual_language:"document"`, `provenance{pdf,page,bbox,quote,verified}`, `description` sinh tất định từ câu trích.
 - Hạ nguồn (chỉ kích hoạt khi manifest có `source:"pdf"`): Stage 5 chỉ gán doc cho scene mà lời thoại nói đúng nội dung đó (không bắt buộc dùng hết, mỗi doc ≤1 lần); Stage 6/7 hiển thị doc dạng **thẻ tài liệu giữa khung** (`object-fit:contain`, không cover/nền, không mờ/filter/lớp tối, không vẽ thêm highlight, không chép lại chữ bản án thành HTML). Số "N media" ở Stage 5 tính không kể doc.
+- **Số ảnh `doc-NN` KHÔNG cố định và KHÔNG phụ thuộc script lời thoại** — do nội dung PDF khớp quy tắc regex tất định (`TARGETS` trong `scripts/lib/pdf_extract.py`): `header` (dòng "BẢN ÁN", tối đa 1) + `verdict` (tuyên bố/xử phạt/phạt tù/giữ nguyên/sửa/hủy bản án, CHỈ từ sau tiêu đề "QUYẾT ĐỊNH:", tối đa 2) + `law` (căn cứ/áp dụng … Điều N, tối đa 1) = tối đa 4; nhóm nào không khớp dòng nào thì bỏ qua (không bịa). Cộng thêm 1 ảnh `highlight` cho mỗi cụm trong `highlights.txt` tìm thấy nguyên văn, và 1 ảnh `scan-page` nếu trang 1 là bản scan. Script lời thoại chỉ dùng cho `crosscheck.md`, không ảnh hưởng số ảnh. Ví dụ thật: `ban-an-23-2023-ben-tre` → 3 ảnh (header p1, verdict p8, law p8; verdict chỉ khớp 1/2).
 - Claude không tự xem ảnh doc; kiểm tra bằng số liệu (kích thước, pixel cam, quote ⊂ text trang) hoặc vision 9router hỏi về BỐ CỤC/độ đọc được (đừng yêu cầu chép nguyên văn chữ — Gemini chặn `recitation`).
 - Đã kiểm chứng: (1) POC `poc/pdf-source/` — Stage 2c→3→5→6→7 scene S08 PASS; (2) **POC E2E `poc/pdf-source-e2e/` (30/09)** — Bản án 935/2024/HS-PT, audio 35s, `run-stages-1-6.mjs` thật: Stage 2b (Flow thật, `--images-only`, 3 ảnh) chạy song song 2c, 5 scene (`doc-02` ở S02, `doc-01`+`doc-03` liên tiếp ở S05) Stage 7 PASS 5/5, 7b PASS, render `09-render.hf.mjs` (looks) 1080×1920 h264/aac đúng 35.000s, vision xác nhận thẻ bản án rõ/không cắt/không đè phụ đề, người dùng đã xem video. Chi tiết + bài học: `poc/pdf-source-e2e/README.md`.
 - Chưa làm: OCR bản scan; highlight animate theo lời thoại (hiện tô cam cố định trong ảnh).
@@ -276,8 +280,13 @@ PDF (`doc-NN`, mục 2c) nằm ở `media/documents/` và chỉ được nối v
 ## 5. Lập kế hoạch nội dung
 | Task | Ai/gì đảm nhiệm | Công cụ |
 |---|---|---|
-| Lập Scene Plan | 9router[reasoning_planning] | `ag/gemini-3.8-flash-high` (đổi từ `cx/gpt-5.6-sol` cùng đợt POC Stage 7, xem mục 6; tách tier riêng khỏi `reasoning_generator` của Stage 7 — cùng giá trị, khác key, để đổi model Stage 5/6 không ảnh hưởng Stage 7) |
-| Lập Shotlist | 9router[reasoning_planning] | `ag/gemini-3.8-flash-high` |
+| Lập Scene Plan | 9router[reasoning_planning] | model theo `scripts/model-routing.json` (key `reasoning_planning`; ảnh chụp 2026-09-30 = `cx/gpt-6-sol`, xem mục 6 — nếu lệch, tin file JSON). Tier riêng khỏi `reasoning_generator` của Stage 7 để đổi model Stage 5/6 không ảnh hưởng Stage 7. `timeoutMs` 900s. |
+| Lập Shotlist | 9router[reasoning_planning] | cùng tier `reasoning_planning` như trên, `timeoutMs` 900s |
+
+> **Thời gian thật của Stage 5/6 khi tier `reasoning_planning` trỏ tới model họ `cx/*` (đo 2026-09-30, video 35 scene/1193 từ; đổi model trong JSON thì số này đổi theo):** Stage 5 = **508s**, Stage 6 = **559s**
+> (input ~71k token, output ~9-10k token, tốc độ sinh ~20 tok/s) — dài gấp ~10 lần so với `ag/gemini-3.8-flash-high` (~253 tok/s). Đây là
+> hành vi BÌNH THƯỜNG, không phải treo. Đừng kết luận "hết hạn mức / route hỏng" chỉ vì thấy im lặng vài phút; xem chẩn đoán ở mục 6
+> ("Giới hạn thời gian gọi 9router").
 | Đọc & chốt Scene Plan/Shotlist trước khi dựng code | Claude | — (text, không nặng context) |
 
 ## 6. Dựng video (code HyperFrames)
@@ -290,9 +299,9 @@ sub-composition trực tiếp đã bị bác bỏ vì làm giảm điểm khớp
 
 | Bước | Ai/gì đảm nhiệm | Công cụ |
 |---|---|---|
-| 1. Generate: composition standalone cho 1 scene, project tạm riêng | 9router[reasoning_generator] | script tự bundle skill docs HyperFrames + `STYLE_DNA.md`/`style-tokens.json` + shotlist |
+| 1. Generate: composition standalone cho 1 scene, project tạm riêng | 9router[reasoning_generator] → tự chuyển sang [reasoning_generator_fallback] khi lỗi hạ tầng | model theo `scripts/model-routing.json` (key `reasoning_generator`/`reasoning_generator_fallback`; ảnh chụp ở mục 6 chỉ để tham khảo); script tự bundle skill docs HyperFrames + `STYLE_DNA.md`/`style-tokens.json` + shotlist; `timeoutMs` 900s |
 | 2. Verify tự động | Local | `npx hyperframes check --json` chạy TRÊN PROJECT TẠM RIÊNG scene đó (cách ly hoàn toàn, không race khi song song) |
-| 3. Review | 9router[reasoning_reviewer] → tự chuyển sang [reasoning_reviewer_fallback] khi lỗi hạ tầng | `cx/gpt-5.6-luna-review` (mặc định từ 2026-09-26) → dự phòng `ag/claude-sonnet-4-6` — verdict PASS/FAIL + danh sách lỗi |
+| 3. Review | 9router[reasoning_reviewer] → tự chuyển sang [reasoning_reviewer_fallback] khi lỗi hạ tầng | model theo `scripts/model-routing.json` (key `reasoning_reviewer`/`reasoning_reviewer_fallback`; ảnh chụp 2026-09-30 ở mục 6 — giá trị `cx/gpt-5.6-luna-review` ở các đoạn POC/lịch sử bên dưới đã LỖI THỜI) — verdict PASS/FAIL + danh sách lỗi; `timeoutMs` 900s |
 | 4. Nếu FAIL: gửi lỗi lại generator, lặp bước 1–3 | Local orchestration | tối đa 3 lần trước khi escalate |
 | 5. PASS: chuyển đổi tất định standalone → `compositions/scene-sNN.html`, ráp `index.html` | Local, tất định, KHÔNG AI | `scripts/lib/sync-root-hf-lib.mjs` (`standaloneToSubComposition()` + `syncRootHf()`) — gọi tự động, trừ khi `--no-root-sync` |
 | 6. Ghi file + cập nhật `pipeline/videos/<slug>/run-log.md` | Local | — |
@@ -348,6 +357,10 @@ prompt (quy tắc "không chữ cam trên nền be" có từ 21/09 vẫn là l�
   cấp nhầm) trước khi tin là đúng — **bài học vận hành**: khi 1 scene FAIL nhiều lần dù đọc code không thấy
   lỗi thật, nghi ngờ NGAY parser trước khi nghi code, đọc RAW text reviewer trả về (không tin số liệu tổng
   hợp), và test bằng ĐÚNG text lỗi thật lấy từ log (không phải suy diễn/rút gọn).
+  **Kiểm chứng thêm ở sản xuất thật (2026-09-30, `ban-an-23-2023-ben-tre`):** S18 (viết `VERDICT: FAIL` rồi tự lật thành `PASS` cuối bài) và S19
+  attempt 3 (đoạn BLOCKING dài ~4000 ký tự tự phủ nhận từng ý, kết "không có lỗi blocking") đều được script xử lý ĐÚNG — log ghi "reviewer ghi VERDICT
+  FAIL nhưng không có lỗi CHẶN → PASS" / "hạ cấp tự động N mục BLOCKING". Thấy reviewer viết lê thê tự mâu thuẫn KHÔNG phải dấu hiệu lỗi; đọc dòng
+  "(hạ cấp tự động…)" và kết quả PASS/FAIL cuối cùng của script, không tin dòng VERDICT đầu tiên.
 - **Ảnh giữ nguyên màu — gỡ mâu thuẫn Stage 6 ↔ Stage 7:** Stage 6 từng chép "người grayscale + bóng cam" của
   Style DNA thành lệnh xử lý ảnh trong `assetTreatment` (74 shot/mọi video), trái quyết định dự án → reviewer
   lật qua lật lại (12/27 lần FAIL). Sửa 2 tầng: prompt `06-shotlist.router.mjs` cấm ghi lệnh xử lý màu cho
@@ -382,7 +395,28 @@ prompt (quy tắc "không chữ cam trên nền be" có từ 21/09 vẫn là l�
 **Chạy song song nhiều scene — MẶC ĐỊNH cho mọi video từ 2 scene trở lên:**
 `node scripts/07-codegen-hf-parallel.mjs --video=<slug> --scenes=S01,S02,...,SNN [--concurrency=10]` — mirror đúng worker-pool đã kiểm chứng bên Remotion (xem "Lịch sử: pipeline Remotion" bên dưới), nhưng AN TOÀN HƠN theo kiến trúc: mỗi scene HyperFrames sinh trong project tạm RIÊNG THƯ MỤC (không phải cùng chia sẻ `src/` như Remotion), nên không còn nhóm lỗi race-condition-verify-quét-nhầm-file từng gặp bên Remotion. Khi TẤT CẢ scene PASS, script tự gọi `syncRootHf()` ráp `index.html`.
 
+**Concurrency 20 đã kiểm chứng (video "ban-an-23-2023-ben-tre", 2026-09-30, 35 scene, `--concurrency=20` theo yêu cầu người dùng):** 0 lỗi
+hạ tầng/race/timeout, 27/35 PASS lần đầu (77%, nằm trong dải các video trước 65-100% ở concurrency=10); 8 scene còn lại đều lỗi NỘI DUNG thật, sửa
+xong bằng `--issue-file`/sửa tay. Mặc định trong code VẪN là 10 (`07-codegen-hf-parallel.mjs`), không tự đổi — dùng `--concurrency=20` khi
+người dùng yêu cầu. Trần thật của 9router/tài khoản CHƯA biết (chưa thử >20): nếu cần tăng nữa thì tăng dần và đo (lỗi hạ tầng `429`/`5xx`
+trong `codegen-issues.jsonl`), đừng chốt số "an toàn" không có cơ sở. Khi đổi `--concurrency` giữa chừng: dừng lệnh cũ (`TaskStop`) TRƯỚC khi
+chạy lại — scene mới bắt đầu chỉ có thư mục tạm `hyperframes/.gen-tmp/`, chưa ghi `compositions/` nên dừng an toàn.
+
 **Đã kiểm chứng thật lần đầu ở quy mô lớn (video "ban-an-473-phan-1", 2026-09-21, 14 scene, concurrency=10):** 13/13 scene (S02-S14) PASS trong ngân sách tự động retry (đa số 1 lần, S03/S08 2 lần, S14 3 lần), không cần `--issue-file` can thiệp tay, 0 lỗi mạng/timeout — kết quả tốt hơn cả mốc Remotion (15/16). Trước khi vào vòng song song, S01 (chạy riêng để bootstrap) fail 3 lần đầu do 2 gotcha thật của HyperFrames chưa từng gặp bên Remotion (contrast WCAG AA không đạt, `querySelector` dùng template literal khiến bundler crash) — đã vá vào `KNOWN_GOTCHAS_HF` trong `scripts/07-codegen.hf.router.mjs`, PASS ngay sau đó.
+
+**Cách dùng `--issue-file` đúng — phụ thuộc scene còn thư mục tạm hay không (gotcha thật, video "ban-an-23-2023-ben-tre", 2026-09-30):**
+`07-codegen.hf.router.mjs` chỉ nạp code cũ làm nền (`previousFiles`) NẾU `hyperframes/.gen-tmp/<slug>-<sceneId>/index.html` còn tồn tại
+(dòng ~507). Scene FAIL 3/3 thì thư mục tạm được GIỮ (log in "Project standalone tạm còn giữ tại") → `--issue-file` sửa TRÊN code đó, hiệu quả
+(8/8 scene FAIL nội dung của video này PASS trong ≤3 lần thử). Nhưng scene ĐÃ PASS thì thư mục tạm bị XOÁ sau khi chuyển đổi (dòng ~638) →
+chạy `--issue-file` lên scene đã PASS = generator **sinh lại cả scene từ đầu chỉ dựa vào mô tả lỗi**, không thấy code đúng trước đó. Thực tế
+gặp: S28 và S30 (vốn PASS, chỉ cần xoá 1 khối chữ trang trí đè phụ đề) chạy `--issue-file` xong đều FAIL 3/3 vì generator viết lại nội dung
+overlay sai/tự chế và lồng clip trong clip. **Quy tắc:**
+- Lỗi NHỎ, xác định rõ, sửa được tất định (xoá 1 phần tử + CSS liên quan, dời 1 vị trí Y) trên scene ĐÃ PASS → **sửa TRỰC TIẾP file**
+  `hyperframes/videos/<slug>/compositions/scene-sNN.html` (Edit), rồi `syncRootHf('<slug>')` (chỉ ráp lại `index.html`, không sinh lại scene) và chạy
+  `node scripts/09-render.hf.mjs --video=<slug>` (Stage 7b vẫn bắt buộc, không bỏ qua được). Theo nguyên tắc ưu tiên tất định của `CLAUDE.md`.
+- Chỉ dùng `--issue-file` cho scene vừa FAIL (còn `.gen-tmp`) hoặc khi thật sự cần viết lại; nêu NGUYÊN VĂN overlay từ shotlist nếu phải sinh lại.
+- Issue-file cho lỗi `caption_zone_collision`/`text_occluded` phải nêu SỐ CỤ THỂ: mép dưới nội dung ≤ **y=1390px** trên canvas 1080×1920
+  (`style-tokens.json` `safeZone.bottom=530`). Bản S32 đầu chỉ nói "dời lên" → FAIL 3/3 (mỗi lần dời một ít nhưng vẫn chạm); bản có ngưỡng số PASS ngay.
 
 **`KNOWN_GOTCHAS_HF`** (trong `scripts/07-codegen.hf.router.mjs`) là nơi tích luỹ mọi lỗi
 HyperFrames-cụ-thể tổng quát hoá được (contrast, template-literal selector, quy tắc file ảnh
@@ -414,9 +448,74 @@ standalone nên cũng không thấy). Đã kiểm chứng: bắt lại đúng l�
 che, không bắt hình minh hoạ bị che — soát thủ công khi nghi ngờ: `node
 scripts/qa-blank-frame-audit.mjs --video=<slug>` (xem mục 8).
 
+**Mẫu lỗi LẶP LẠI chỉ lộ ở Stage 7b: chữ TRANG TRÍ generator tự thêm (không có trong overlay shotlist) đặt trong vùng phụ đề** — lần 1 `.footer`
+ở S03 `doi-dau-xe-tang-checkpoint-charlie` (27/09), lần 2-3 `div.caption` ở S28 và `#caption`/`.caption-card` ở S30 `ban-an-23-2023-ben-tre` (30/09; cả
+2 nhắc lại lời thoại ở y≈1440-1520, kèm cờ `data-layout-allow-caption-zone` khiến verify standalone không báo). Khi ráp chung, chúng
+`content_overlap` với chữ phụ đề karaoke thật (`span.word.active`) — 11 lỗi ở video này, 7b từ chối render đúng thiết kế. Reviewer chỉ ghi
+"sáng tạo thêm ngoài shotlist" ở mức ADVISORY nên không chặn. Cách xử lý: xoá hẳn phần tử (xem "Cách dùng `--issue-file` đúng" ở trên). **Chưa có rule
+tất định trong `KNOWN_GOTCHAS_HF`** — nếu gặp lần nữa, nên thêm rule "cấm khối chữ nhắc lại lời thoại trong vùng phụ đề; `data-layout-allow-caption-zone`
+không dùng cho chữ nội dung" (theo bài học `feedback_recurring_codegen_errors`: lỗi lặp → khung/linter tất định, không chỉ thêm câu vào prompt).
+
 > **Sự cố cụ thể (2026-09-22) — đã chuyển sang `planning/incident-log.md`** (mục "Sự cố integration CSS sau Stage 7 — video su-kien-thien-an-mon").
 
-### Model generator/reviewer — đã đổi qua POC kiểm chứng (2026-09-22)
+### Model routing HIỆN TẠI + giới hạn thời gian gọi 9router (cập nhật 2026-09-30, commit `c1f569b`)
+
+**Nguồn xác thực DUY NHẤT về model đang dùng là `scripts/model-routing.json`** — mọi script đọc file này lúc chạy qua `loadModelRouting()`
+(`scripts/lib/router-client.mjs`), KHÔNG có tên model nào ghi cứng trong code và KHÔNG script nào đọc tài liệu. Muốn đổi model: chỉ sửa file JSON,
+không cần sửa tài liệu này; có hiệu lực ngay ở lần chạy kế tiếp. **Bảng dưới đây chỉ là ẢNH CHỤP tại 2026-09-30 để tham khảo, KHÔNG phải cấu hình** —
+nếu lệch với file JSON thì file JSON đúng (agent/session mới phải đọc JSON, không suy ra model từ tài liệu). Tên model trong các đoạn POC/lịch sử
+ngay bên dưới (mục "Model generator/reviewer — LỊCH SỬ") cũng là ảnh chụp cũ, đã lỗi thời. Ảnh chụp 2026-09-30:
+
+| Tier (key trong JSON) | Stage | Model chính | Dự phòng tự động |
+|---|---|---|---|
+| `text_cleanup` | 2 | `ag/gemini-3.7-flash-medium` | — (`text_cleanup_alt` đổi tay) |
+| `scene_image_prompt_writer`, `browser_agent` | 2b | `ag/gemini-3.7-flash-medium` | — (`*_alt` đổi tay) |
+| `vision_media_analyze` | 3 | `ag/gemini-3.8-flash-high` | — |
+| `reasoning_planning` | 5, 6 | `cx/gpt-6-sol` | — (không có; đổi tay nếu lỗi) |
+| `reasoning_generator` | 7 | `cx/gpt-6-luna` | `cx/gpt-6-sol` (`reasoning_generator_fallback`) |
+| `reasoning_reviewer` | 7 | `ag/claude-sonnet-4-6` | `cx/gpt-6-luna` (`reasoning_reviewer_fallback`) |
+
+Lý do chuyển Stage 5/6/7 sang họ `cx/*` (theo người dùng, 2026-09-30): hạn mức `ag/gemini-3.8-flash-high` đang cạn dần, không đủ dựng nhiều
+video mới. Cái giá: **họ `cx/*` chậm hơn nhiều** (đo bên dưới) nên phải nới timeout. Cấu hình này từng nằm ở working tree chưa commit qua nhiều
+phiên (các ghi chú cũ ở `planning/README.md` như "có thể là cấu hình đang thử nghiệm chưa commit" nay không còn đúng — đã commit).
+
+**Tốc độ sinh đo thật (2026-09-30, cùng 1 prompt ~40 phần tử JSON, streaming, 1 lần đo/model — chỉ mang tính tham khảo, tốc độ `cx/*` có thể đổi theo giờ/tải):**
+
+| Model | Time-to-first-token | Tốc độ sinh |
+|---|---|---|
+| `ag/gemini-3.8-flash-high` | ~4.5s | ~253 tok/s |
+| `cx/gpt-6-sol` | ~3.8s | ~20 tok/s |
+| `cx/gpt-5.6-sol` | ~4.6s | ~19 tok/s |
+
+Hệ quả: Stage 5/6 cho video dài (35 scene, output ~9-10k token — gồm cả token suy luận nội bộ) mất 500-560s với `cx/gpt-6-sol`. Chưa xác minh được tốc độ
+sáng cùng ngày có nhanh hơn không (repo không lưu thời gian sinh; dashboard 9router có thể có).
+
+**Trần thời gian mỗi lời gọi (`timeoutMs` truyền vào `callModel()`, `scripts/lib/router-client.mjs`):**
+
+| Nơi gọi | `timeoutMs` |
+|---|---|
+| Stage 5 (`05-scene-plan.router.mjs`), Stage 6 (`06-shotlist.router.mjs`) | 900000 (trước 2026-09-30: 240000 / 300000) |
+| Stage 7 generator + reviewer (`07-codegen.hf.router.mjs`) | 900000 (trước 2026-09-30: không đặt → mặc định 120000) |
+| `qa-blank-frame-audit.mjs` | 240000 |
+| Mọi nơi khác (Stage 2 align, 2b, 3...) | mặc định 120000 |
+
+**Bug hạ tầng đã sửa cùng đợt — `fetch` mặc định của Node huỷ request sau 300s bất kể `timeoutMs`:** `callModel()` gọi `stream:false`, nên header HTTP
+chỉ về khi model sinh xong TOÀN BỘ; undici (fetch của Node) có `headersTimeout` mặc định 300s → lỗi `TypeError: fetch failed` /
+`HeadersTimeoutError` / `UND_ERR_HEADERS_TIMEOUT` ở ~300s, khiến việc nâng `timeoutMs` lên >300000 hoàn toàn vô tác dụng (thấy thật lúc 304.5s khi
+thử `timeoutMs: 900000`). Đã sửa: `callModel()` dùng `fetch` + `Agent` của gói **`undici`** (dependency trong `package.json`) với
+`headersTimeout` = `bodyTimeout` = `timeoutMs`. Nếu máy mới thiếu `node_modules/undici` → `npm install`. Nếu thấy lại `UND_ERR_HEADERS_TIMEOUT` ở
+~300s: kiểm tra `router-client.mjs` còn dùng `undiciFetch`+`dispatcher` không.
+
+**Chẩn đoán nhanh khi thấy timeout/im lặng lâu khi gọi model (bài học 2026-09-30 — giả thuyết đầu tiên "hết hạn mức / route `cx/*` hỏng" đã SAI):**
+1. `9router timeout sau Nms` = client tự huỷ ở đúng `timeoutMs`; nó KHÔNG nói model hỏng. Mở dashboard 9router: nếu request hiện ĐÃ HOÀN TẤT
+   với số token output lớn → model vẫn sinh xong, chỉ chậm hơn `timeoutMs`. Ước lượng thời gian cần ≈ token output ÷ tok/s (vd 10k ÷ 20 ≈ 500s).
+2. Lỗi hạn mức THẬT có dạng khác: HTTP 403/429/5xx kèm "reset after …", hoặc HTTP 400 "model not supported when using Codex with a ChatGPT
+   account" — `isInfraError()`/`callWithModelFallback()` xử lý các dạng này (xem mục "Model + dự phòng TỰ ĐỘNG" bên dưới).
+3. Đo tốc độ thật để chốt: gọi 1 prompt nhỏ với `stream:true` + `stream_options:{include_usage:true}`, đo time-to-first-token và
+   `completion_tokens ÷ tổng thời gian`. (Script đo không nằm trong repo; viết 20 dòng `fetch` đến `${NINEROUTER_BASE_URL}/chat/completions`.)
+4. Chỉ 9router đang chạy hay không: `curl http://localhost:20128/v1/models` (200 trong <1s là ổn).
+
+### Model generator/reviewer — LỊCH SỬ POC (2026-09-22/26) — tên model dưới đây có thể đã lỗi thời, xem khối "Model routing HIỆN TẠI" ngay trên
 
 Trước đây dùng `cx/gpt-5.6-sol` (generator) + `cx/gpt-5.6-sol-review` (reviewer). Đã chạy POC
 song song 5 cặp model × 3 scene thật của video "ban-an-473-phan-1" (S01 phức tạp/từng fail thật,
@@ -461,7 +560,8 @@ production — chỉ giữ tham khảo lịch sử.
   — tái tạo được bằng cách chạy lại POC) và xác nhận đạt trước khi đổi.
 
 **Model + dự phòng TỰ ĐỘNG (cơ chế nằm trong script, không phụ thuộc Claude điều phối nhớ — mọi
-session/agent áp dụng đồng nhất):**
+session/agent áp dụng đồng nhất). LƯU Ý: CƠ CHẾ chuyển dự phòng dưới đây vẫn đúng, nhưng TÊN model cụ thể
+trong 2 bullet Generator/Reviewer là ảnh chụp 2026-09-26 — model hiện tại xem khối "Model routing HIỆN TẠI" ở trên:**
 - **Generator — dự phòng tự động từ 2026-09-26 (quyết định người dùng):** mặc định
   `ag/gemini-3.8-flash-high` (`reasoning_generator`), dự phòng TỰ ĐỘNG `cx/gpt-5.6-terra`
   (`reasoning_generator_fallback`) qua `callWithModelFallback()` — cùng cơ chế reviewer bên dưới
@@ -556,6 +656,14 @@ Preview/QA riêng ở giữa** (xem ghi chú mục 7).
 | Kiểm tra file render (duration, resolution, không lỗi) | Local | ffprobe — đã tích hợp tự động vào `scripts/09-render.hf.mjs`, không cần chạy tay |
 | Xác nhận nội dung hiển thị đúng (vd phụ đề, hiệu ứng xuyên suốt) — CHỈ khi có lý do nghi ngờ cụ thể (không mặc định mọi video) | 9router[vision_qa] | trích frame bằng ffmpeg tại nhiều mốc + gửi vision agent — bài học thật (video 5): `hyperframes check` PASS không đảm bảo mọi lớp nội dung THỰC SỰ hiển thị (vd bug stacking-context ở mục 6). Đây là ghi chú cho 1 trường hợp cụ thể đã xảy ra, KHÔNG phải quy tắc bắt buộc tự động cho mọi video. |
 | Soát scene/shot trống hình trên MP4 đã render — CHỈ khi nghi ngờ (không mặc định) | 9router[vision_qa] | `node scripts/qa-blank-frame-audit.mjs --video=<slug> [--input=<mp4>]` (2026-09-26): 3 frame/shot (20/50/80%) từ `out/<slug>-full.mp4` (hoặc `--input`) → `pipeline/videos/<slug>/contact-sheet/report.md` (gitignored) + 1 dòng `run-log.md`; trạng thái ok/blank/partial. Khoảng 1 lời gọi 9router / 3 shot. Flag có thể là báo nhầm (nội dung xuất hiện muộn, nhiễu nén video) — xác minh trước khi sửa. |
+
+**Cách chạy lệnh render/codegen dài ở nền — KHÔNG ghép `| head` / `| tee … | head` (sự cố thật 2026-09-30, `ban-an-23-2023-ben-tre`):** ghép
+`node scripts/09-render.hf.mjs … | tee log | head -c 200` khiến `head` đóng pipe sau 200 byte → SIGPIPE giết tiến trình render giữa chừng (sau khi
+Stage 7b PASS, trước khi render bắt đầu). Hệ quả gây hiểu lầm: lệnh nền báo "completed, exit code 0" (đó là exit code của `head`, không phải của
+render) nhưng KHÔNG có `out/<slug>-full.mp4` và KHÔNG có `completion-manifest.json`. Quy tắc: chạy thẳng `node scripts/09-render.hf.mjs --video=<slug>`
+(không pipe), rồi xác nhận "xong" bằng `completion-manifest.json` (mọi `*Ok=true`) + ffprobe — không bằng exit code của lệnh nền. File log nền của 7b
+rất lớn (dump JSON `hyperframes check` ~420KB): đọc bằng `tail -c` hoặc parse JSON (`integration-check.log` là 1 JSON: `.ok`, `.layout.findings[]`
+lọc `severity==='error'`), đừng `Read` cả file.
 
 **Bài học thật (video "ban-an-473-phan-2", 2026-09-22):** sau khi Stage 6 xong và `hyperframes
 check` đã ok=true, Claude tự ý mở `hyperframes preview --background` (không ai yêu cầu xem) và

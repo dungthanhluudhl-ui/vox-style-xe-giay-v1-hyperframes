@@ -67,6 +67,14 @@ việc cùng nhau.
 - **Không đoán giới hạn kỹ thuật của hệ thống bên ngoài (vd giới hạn tốc độ/đồng thời của
   9router) khi không có cách kiểm chứng từ trong repo** — nói rõ đây là ẩn số, đề xuất cách
   tăng dần có đo lường thay vì chốt một con số "an toàn" không có cơ sở.
+- **Timeout/im lặng lâu khi gọi model: đừng kết luận "hết hạn mức / route hỏng" khi chưa có số đo.** Đối chiếu token đã hoàn tất trên dashboard
+  9router (người dùng có thể cung cấp) + đo tok/s bằng streaming. Bài học thật 30/09: giả thuyết "hết hạn mức" của Claude sai — nguyên nhân là `cx/*`
+  sinh ~20 tok/s × ~10k token > timeout, rồi lộ tiếp giới hạn 300s của `fetch` Node (đã sửa bằng `undici`). Chi tiết:
+  `planning/responsibility-matrix.md` mục 6 "Model routing HIỆN TẠI + giới hạn thời gian gọi 9router".
+- **Sửa lỗi nhỏ, xác định rõ trên scene ĐÃ PASS → sửa tay trực tiếp `compositions/scene-sNN.html` + `syncRootHf`, không `--issue-file`** (thư mục tạm đã
+  bị dọn nên generator sinh lại cả scene và viết sai nội dung). `--issue-file` chỉ cho scene vừa FAIL. Chi tiết ở mục 6 của matrix.
+- **Lệnh nền dài (render, codegen): chạy thẳng, không ghép `| head`/`| tee`** (SIGPIPE giết tiến trình nhưng exit code vẫn 0). Xác nhận xong bằng
+  `completion-manifest.json`/file output thật, không bằng exit code lệnh nền.
 - Không thêm tính năng/tài liệu/trừu tượng hoá ngoài phạm vi được yêu cầu — nhưng nếu phát
   hiện vấn đề liên quan rõ ràng, nhỏ, rủi ro thấp trong lúc đang làm (vd một đường dẫn bị
   stale phát hiện qua grep), chủ động sửa luôn thay vì lờ đi, miễn có báo lại cho người dùng

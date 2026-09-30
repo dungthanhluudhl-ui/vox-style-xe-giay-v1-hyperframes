@@ -23,7 +23,8 @@ cuối file) — không migrate lại, không phát triển tiếp trên nhánh 
 ```
 node scripts/run-stages-1-6.mjs --video=<slug>
 ```
-Tự động hoá ĐÚNG 2 nhánh song song (nhánh media chạy thêm Stage 2c song song với 2b nếu có PDF) mô tả bên dưới (Stage 1-6, enforced trong code — không còn phụ
+Cờ hay dùng: `--images-only` (Stage 2b chỉ tạo ảnh tĩnh, bỏ Giai đoạn 2 tạo video — khi người dùng chỉ cần ảnh minh hoạ), `--skip-stage7`
+(dừng sau Stage 6 để checkpoint trước codegen), `--concurrency=N` (chuyển xuống Stage 7). Tự động hoá ĐÚNG 2 nhánh song song (nhánh media chạy thêm Stage 2c song song với 2b nếu có PDF) mô tả bên dưới (Stage 1-6, enforced trong code — không còn phụ
 thuộc trí nhớ agent), rồi tự chạy tiếp Stage 7 (`07-codegen-hf-parallel.mjs`) trừ khi truyền
 `--skip-stage7`. Hỗ trợ resume từ giữa khi cần sửa 1 nhánh riêng: `--transcript-from=1|2|skip`,
 `--media-from=2b|3|skip` (vd `--media-from=3` nếu Stage 2b đã chạy xong nhưng Stage 3 lỗi). Dừng
@@ -50,7 +51,8 @@ Từ bước 5 trở đi cần **cả 2 nhánh đã xong** (Stage 5 đọc cả 
 6. `scripts/05-scene-plan.router.mjs --video=<slug>` — lập Scene Plan, ghi `planning/videos/<slug>/scene-plan.json`/`.md`.
 7. `scripts/06-shotlist.router.mjs --video=<slug>` — lập Shotlist, ghi `planning/videos/<slug>/shotlist.json`/`.md`.
 8. Codegen HyperFrames (generator→verify `hyperframes check`→reviewer→retry), luôn 1 scene/lần:
-   - **Mặc định (≥2 scene)**: `node scripts/07-codegen-hf-parallel.mjs --video=<slug> --scenes=S01,S02,...,SNN [--concurrency=10]` — worker-pool song song, tự ráp `index.html` khi tất cả scene PASS.
+   - **Mặc định (≥2 scene)**: `node scripts/07-codegen-hf-parallel.mjs --video=<slug> --scenes=S01,S02,...,SNN [--concurrency=10]` — worker-pool song song, tự ráp `index.html` khi tất cả scene PASS. Mặc định 10; `--concurrency=20` đã kiểm chứng (35 scene, 0 lỗi hạ tầng — `responsibility-matrix.md` mục 6). Scene FAIL cần sửa: xem "Cách dùng `--issue-file` đúng" ở mục 6 (scene ĐÃ PASS thì sửa tay file `compositions/scene-sNN.html` rồi `syncRootHf`, đừng `--issue-file`).
+   - **Stage 5/6/7 gọi model họ `cx/*` chậm (~20 tok/s): Stage 5/6 mất 500-560s cho 35 scene là bình thường**, `timeoutMs` đã nâng 900s (2026-09-30) — đừng tưởng là treo/hết hạn mức, xem chẩn đoán ở `responsibility-matrix.md` mục 6.
    - Tuần tự/debug 1 scene riêng: `node scripts/07-codegen.hf.router.mjs --video=<slug> --scenes=SNN [--issue-file=...]`.
    - `caption-track.html` được `syncRootHf()` tự sinh tất định từ `captions.json` mỗi lần ráp (`scripts/lib/generate-caption-track-hf.mjs`) — không cần thao tác tay.
 9. Sau khi Stage 8 ráp xong: **đi thẳng sang Render, KHÔNG có bước Preview/QA bắt buộc ở giữa** (xem
@@ -58,6 +60,7 @@ Từ bước 5 trở đi cần **cả 2 nhánh đã xong** (Stage 5 đọc cả 
    --video=<slug>` (chỉ khi được yêu cầu render chính thức) — wrapper tất định tự cố định `--quality
    looks` + output `out/<slug>-full.mp4`, KHÔNG gõ tay lệnh `npx hyperframes render` thô (sự cố thật
    đã xảy ra: gõ tay lệch cả preset lẫn đường dẫn, xem `planning/responsibility-matrix.md` mục 8).
+   **Chạy thẳng, KHÔNG ghép `| head`/`| tee` sau lệnh này** (SIGPIPE giết render giữa chừng nhưng lệnh nền vẫn báo exit code 0 — sự cố thật 2026-09-30); chỉ coi là xong khi có `completion-manifest.json`.
    Trước khi render, wrapper **tự động chạy Stage 7b** (`scripts/07b-integration-check.hf.mjs
    --video=<slug>`) làm preflight bắt buộc — verify LẠI project đã ráp (không chỉ từng scene riêng lẻ:
    `hyperframes check` + `--caption-zone`, đủ scene, có audio, có caption-track), từ chối render nếu
@@ -89,6 +92,8 @@ Từ bước 5 trở đi cần **cả 2 nhánh đã xong** (Stage 5 đọc cả 
   Chi tiết đầy đủ ở `planning/responsibility-matrix.md` mục "Nhật ký audit chưa xử lý". Phần CHƯA
   xong (tách retry `review()` riêng, không tốn oan ngân sách attempt) hoãn có chủ đích, không phải
   blocker cho việc dựng video mới.
+
+- [x] **Nâng trần timeout 9router lên 900s cho Stage 5/6/7 + sửa `fetch` huỷ ở 300s bằng `undici` (2026-09-30, commit `c1f569b`)** — bắt buộc khi dùng model họ `cx/*` (~20 tok/s). Chi tiết, bảng model hiện tại và cách chẩn đoán timeout: `planning/responsibility-matrix.md` mục 6 "Model routing HIỆN TẠI + giới hạn thời gian gọi 9router".
 
 ### Video "an-le-64" (video đầu tiên, đã hoàn chỉnh và đã migrate vào cấu trúc mới)
 - [x] Nhận script + audio + media + style DNA (2026-09-20). (Lúc đó chưa có PDF bản án; từ 2026-09-30 đã hỗ trợ tuỳ chọn qua Stage 2c — xem mục Input và `responsibility-matrix.md` mục 2c.)
@@ -190,7 +195,7 @@ Từ bước 5 trở đi cần **cả 2 nhánh đã xong** (Stage 5 đọc cả 
 - [x] Scene Plan (2026-09-23) — **51 scene** (nhiều nhất từ trước tới nay), dùng 40/41 asset, mọi scene ≥5.13s.
 - [x] Shotlist (2026-09-23) — 52 shot / 51 scene.
 - [x] **2 lỗi framework thật phát hiện + sửa do quy mô script lớn (áp dụng mọi video dài sau này):**
-  1. `scripts/05-scene-plan.router.mjs` và `scripts/06-shotlist.router.mjs` gọi 9router 1 lần duy nhất, KHÔNG có cơ chế retry/chia nhỏ khi tràn token (khác Stage 2 đã có) — với script 2235 từ, timeout mặc định 120s + `maxTokens: 8000` không đủ. Đã tăng: Stage 5 timeout 120s→240s + maxTokens 8000→16000; Stage 6 timeout 120s→300s + maxTokens 8000→24000.
+  1. `scripts/05-scene-plan.router.mjs` và `scripts/06-shotlist.router.mjs` gọi 9router 1 lần duy nhất, KHÔNG có cơ chế retry/chia nhỏ khi tràn token (khác Stage 2 đã có) — với script 2235 từ, timeout mặc định 120s + `maxTokens: 8000` không đủ. Đã tăng: Stage 5 timeout 120s→240s + maxTokens 8000→16000; Stage 6 timeout 120s→300s + maxTokens 8000→24000. **[Cập nhật 2026-09-30: cả Stage 5, 6 và Stage 7 generator/reviewer đã nâng lên 900s; kèm sửa `callModel()` dùng `undici` vì `fetch` mặc định của Node huỷ ở 300s — xem `responsibility-matrix.md` mục 6 "Model routing HIỆN TẠI + giới hạn thời gian gọi 9router".]**
   2. `scripts/07-codegen.hf.router.mjs` parse `VERDICT: PASS` bằng regex `/VERDICT:\s*PASS/i` không khớp khi reviewer viết markdown bold (`VERDICT: **PASS**`) — khiến scene PASS thật bị phân loại nhầm FAIL. Sửa regex thành `/VERDICT:\s*[*_#\s]*PASS/i`.
 - [x] Dựng composition qua nhánh HyperFrames (2026-09-23) — chạy thẳng 51 scene song song (concurrency=10, đã xác nhận với người dùng trước khi chạy do quy mô lớn chưa từng làm): 43/51 PASS ngay lần đầu. 8 scene FAIL được Claude điều tra bằng cách tự chạy `hyperframes check --json` trực tiếp (không dựa mô tả reviewer — phát hiện 3/8 là báo động giả: S25/S27/S38 reviewer nghi ngờ nhưng check thực tế hoàn toàn sạch). 4 lỗi content thật sửa bằng `--issue-file`: S03 (2 dòng chữ giá đè nhau), S30 (lớp "dramatic spotlight" che khuất chat bubble), S31 (contrast chữ thấp), S43 (card đè lên node sơ đồ). Tất cả PASS trong 1-2 lần retry sau khi có issue-file đúng lỗi thật.
 - [x] Stage 7b integration check — lần đầu FAIL: scene S18 (`#punch-phrase-wrapper` đặt `top:1300px`) lấn vào vùng an toàn phụ đề (y>1529px), lỗi chỉ lộ ra khi ráp chung với caption-track thật (đúng gotcha đã ghi nhận từ video `su-kien-thien-an-mon`). Sửa `top` xuống `1160px`, ráp lại, Stage 7b PASS lần 2 (51/51 scene, audio, caption-track, `hyperframes check` ok=true).
@@ -291,7 +296,7 @@ quét từng video: `planning/incident-log.md`.
 - [x] Dựng composition qua nhánh HyperFrames (2026-09-29) — chạy thẳng 25 scene song song (concurrency=10): 23/25 PASS trong ngân sách tự động, 2 scene cần Claude can thiệp:
   - **S10**: lỗi hạ tầng đúng gotcha đã biết (`EPIPE`/race condition `cpSync` khi bootstrap project chung — xem `planning/responsibility-matrix.md` mục 6) — chạy lại riêng `--scenes=S10` PASS ngay lần 1 (project đã tồn tại nên không còn đi qua nhánh bootstrap race nữa), dùng model dự phòng `cx/gpt-6-sol` do generator chính timeout hạ tầng.
   - **S15**: lỗi nội dung thật — generator nhốt ảnh img-05 trong khung nhỏ 900×800/910 kiểu "hồ sơ tài liệu" kèm nền biểu đồ trang trí (`#chart-background`, 4 nhãn `.chart-label` không có trong shotlist), gây 5 lỗi layout (`text_occluded` x4 + `caption_zone_collision` x1). Sửa bằng `--issue-file` 2 vòng: vòng 1 chỉ bỏ nhãn text trang trí (hết lỗi layout nhưng reviewer bắt tiếp lỗi thật — ảnh phải phủ toàn khung 9:16 theo đúng `assetTreatment` của shotlist và đúng pattern các scene khác trong video, không được nhốt trong khung nhỏ); vòng 2 sửa đúng gốc (ảnh full-bleed background, bỏ khung tài liệu) — PASS ngay, chỉ còn 2 ADVISORY không chặn.
-  - Quan sát thêm (đã xác nhận là gotcha thật + đã sửa ở video kế tiếp, xem `ban-an-16-hoa-chuoi-kon-tum` bên dưới): model reviewer hiện tại theo `scripts/model-routing.json` (`cx/gpt-6-sol`, khác với `cx/gpt-5.6-luna-review` mô tả trong `responsibility-matrix.md` mục 6 — có thể là cấu hình đang thử nghiệm chưa commit) thỉnh thoảng trả lỗi hạ tầng `HTTP 400: 'gpt-6-sol' model is not supported when using Codex with a ChatGPT account` — không chặn video này (retry ở attempt khác vẫn qua) nhưng đáng theo dõi nếu lặp lại nhiều ở video sau.
+  - Quan sát thêm (đã xác nhận là gotcha thật + đã sửa ở video kế tiếp, xem `ban-an-16-hoa-chuoi-kon-tum` bên dưới): model reviewer hiện tại theo `scripts/model-routing.json` (`cx/gpt-6-sol`, khác với `cx/gpt-5.6-luna-review` mô tả trong `responsibility-matrix.md` mục 6 — có thể là cấu hình đang thử nghiệm chưa commit — **[đã commit 2026-09-30, commit `c1f569b`; model đang dùng luôn lấy từ `scripts/model-routing.json`; ảnh chụp 30/09 ở `responsibility-matrix.md` mục 6]**) thỉnh thoảng trả lỗi hạ tầng `HTTP 400: 'gpt-6-sol' model is not supported when using Codex with a ChatGPT account` — không chặn video này (retry ở attempt khác vẫn qua) nhưng đáng theo dõi nếu lặp lại nhiều ở video sau.
 - [x] Stage 7b integration check PASS (2026-09-29) — 25/25 scene, audio, caption-track, `hyperframes check` ok=true (132 mốc/44 shot).
 - [x] Render bản đầy đủ (2026-09-29) — `out/vua-bao-chua-han-quoc-full.mp4`, **239.200s** (khớp audio thật 239.284s), 1080×1920 h264/aac, 140.0MB, render mất 547.2s. `completion-manifest.json` xác nhận mọi field `*Ok=true`. **Chưa được người dùng xem/xác nhận.**
 
@@ -327,6 +332,16 @@ quét từng video: `planning/incident-log.md`.
   - Quá trình sửa xác nhận cơ chế fallback model (đã vá ở video trước) hoạt động đúng trong sản xuất thật: S03/S33 tự chuyển sang reviewer dự phòng `cx/gpt-6-luna`, S20 tự chuyển sang generator dự phòng `cx/gpt-6-sol` — không cần Claude can thiệp thủ công.
 - [x] Stage 7b integration check PASS (2026-09-29) — 39/39 scene, audio, caption-track, `hyperframes check` ok=true (117 mốc/39 shot).
 - [x] Render bản đầy đủ (2026-09-29) — `out/ban-an-19-yen-bai-full.mp4`, **317.900s** (khớp gần như tuyệt đối audio thật 317.920s), 1080×1920 h264/aac, 293.9MB, render mất 789.7s. `completion-manifest.json` xác nhận mọi field `*Ok=true`. **Chưa được người dùng xem/xác nhận.**
+
+### Video "ban-an-23-2023-ben-tre" (bản án giết người bằng bẫy điện vì nợ số đề 25 triệu, Bến Tre 2023, 293.7s, 35 scene/37 shot — có PDF bản án; `--images-only`; `--concurrency=20`; lần đầu Stage 5/6 dùng `cx/gpt-6-sol` ở quy mô lớn)
+- [x] Nhận script + audio + PDF (2026-09-30) từ `Vox style 3.1_test/.../input audio + transcript/ban an 23 2023 bến tre` — audio `.wav` 293.680s convert sang `narration.mp3` bằng ffmpeg (giữ nguyên duration), script văn xuôi sẵn, PDF bản án 10 trang đặt ở `content/videos/<slug>/source/`.
+- [x] Transcribe (whisper.cpp CUDA) + align (2026-09-30) — 2025 mục ASR thô → 1193 caption khớp script gốc, cơ chế tự chia đôi khi tràn token chạy tới depth=4.
+- [x] Stage 2b `--images-only` (Flow, account `default`) — 16 ảnh, 0 video, đúng yêu cầu người dùng "chỉ tạo ảnh minh hoạ, không tạo video chuyển động". Stage 2c song song — 3 ảnh trích dẫn (`doc-01` header trang 1, `doc-02` verdict + `doc-03` law trang 8); đối chiếu script khớp 7/gần khớp 1/không thấy 0. Stage 3 — 19 asset.
+- [x] Scene Plan (2026-09-30) — 35 scene, dùng 18/19 asset; `img-14` bị loại CÓ CHỦ ĐÍCH (ảnh AI in sẵn "MỨC PHẠT 25 TRIỆU ĐỒNG" cho chích điện đánh bắt cá, sai nội dung vụ án). `doc-03` ở S29, `doc-01`+`doc-02` liên tiếp ở S31. Shotlist — 37 shot/35 scene.
+- [x] **Sự cố hạ tầng Stage 5 (chi tiết + số đo: `responsibility-matrix.md` mục 6, `incident-log.md` mục 2026-09-30):** `cx/gpt-6-sol` (2 lần) và `cx/gpt-5.6-sol` (1 lần) đều "timeout 240s"; giả thuyết đầu "hết hạn mức / route `cx/*` hỏng" bị BÁC BỎ bằng số token dashboard người dùng cung cấp (model vẫn trả ~9-10k token) + đo tốc độ (~20 tok/s → cần ~500s). Nâng `timeoutMs` Stage 5/6/7 lên 900s → lộ thêm bug thứ 2: `fetch` mặc định của Node huỷ ở 300s (`UND_ERR_HEADERS_TIMEOUT`), sửa bằng `undici` trong `callModel()`. Sau sửa: Stage 5 = 508s, Stage 6 = 559s, PASS.
+- [x] Dựng composition (2026-09-30) — `--concurrency=20`: 27/35 PASS lần đầu, 0 lỗi hạ tầng. 8 scene FAIL nội dung (S02, S08, S18, S19, S24, S27, S28, S32) sửa bằng `--issue-file` song song (mỗi scene 1 lệnh riêng), PASS trong 1-3 lần; S32 cần issue-file lần 2 có ngưỡng số `y≤1390px` (lần 1 chỉ nói "dời lên" → FAIL 3/3). Reviewer S18/S19 viết tự mâu thuẫn nhưng script xử lý đúng (`SELF_RESOLVED_RE`).
+- [x] Stage 7b lần đầu FAIL đúng thiết kế (11 `content_overlap`): S28 `div.caption` và S30 `#caption` là chữ trang trí tự thêm, đè phụ đề karaoke thật (mẫu lỗi lặp lại, xem `responsibility-matrix.md` mục 6). Thử `--issue-file` trên 2 scene đã PASS → FAIL 3/3 (thư mục tạm đã bị dọn nên generator viết lại từ đầu, sai overlay) → **sửa tay tất định** trực tiếp `compositions/scene-s28.html`/`scene-s30.html` (xoá đúng phần tử + CSS + tween liên quan), `syncRootHf()`, 7b PASS lần 2 (35/35 scene, 111 mốc/37 shot).
+- [x] Render (2026-09-30) — `out/ban-an-23-2023-ben-tre-full.mp4`, **293.700s** (khớp audio thật 293.680s), 1080×1920 h264/aac, 218.5MB, render 684s. `completion-manifest.json` mọi field `*Ok=true`. (Lần render đầu bị SIGPIPE giết do ghép `| head` — không tạo mp4/manifest, chạy lại sạch; xem mục 8 matrix.) Commit: `c1f569b` (hạ tầng), `4105130` (video). **Chưa được người dùng xem/xác nhận.**
 
 ## Archive: pipeline Remotion cũ (4 video đầu, `archive/remotion-legacy/`)
 
