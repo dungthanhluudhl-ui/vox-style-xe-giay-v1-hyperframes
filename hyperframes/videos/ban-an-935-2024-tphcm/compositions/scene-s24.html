@@ -1,0 +1,534 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap">
+      <style>
+    /* hf-safe-colors (tất định từ style-tokens.json) */
+    .hf-text-ink { color: #141414; }
+    .hf-text-light { color: #F7F4EC; }
+    .hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+    .hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+    .hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+    .hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      margin: 0;
+      background: #E7E3D9;
+      color: #141414;
+      font-family: "Be Vietnam Pro", sans-serif;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    #root {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      background: #E7E3D9;
+      overflow: hidden;
+    }
+
+    /* Quy ước Clip chuẩn HyperFrames (inset: 0, không đặt width/height cứng) */
+    .clip {
+      position: absolute;
+      inset: 0;
+    }
+
+    /* Fixed Brand Accent Bar ở đáy khung hình (DNA signature) */
+    .bottom-brand-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 12px;
+      background: #FF6A1A;
+      z-index: 100;
+    }
+
+    /* Nền variant: chart - đường kẻ ngang đậm ở 20%, 40%, 60%, 80% + tick cam mép trái */
+    .chart-background {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .chart-grid-subtle {
+      position: absolute;
+      inset: 0;
+      background-size: 84px 84px;
+      background-image:
+        linear-gradient(to right, rgba(20, 20, 20, 0.05) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(20, 20, 20, 0.05) 1px, transparent 1px);
+    }
+
+    .chart-rule {
+      position: absolute;
+      left: 40px;
+      right: 40px;
+      height: 2px;
+      background: rgba(20, 20, 20, 0.32);
+    }
+
+    .chart-rule.rule-20 { top: 384px; }
+    .chart-rule.rule-40 { top: 768px; }
+    .chart-rule.rule-60 { top: 1152px; }
+    .chart-rule.rule-80 { top: 1536px; }
+
+    .chart-tick {
+      position: absolute;
+      left: 0;
+      top: -3px;
+      width: 16px;
+      height: 8px;
+      background: #FF6A1A;
+      border-radius: 1px;
+    }
+
+    /* Camera rig hỗ trợ pan-left nhẹ theo Shotlist */
+    #camera-rig {
+      position: absolute;
+      inset: 0;
+      z-index: 2;
+      will-change: transform;
+    }
+
+    /* Vùng an toàn (Safe Zone): Top 160px, Bottom 530px (y <= 1390px), Left/Right 60px */
+    .content-container {
+      position: absolute;
+      top: 180px;
+      left: 60px;
+      right: 60px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      gap: 28px;
+    }
+
+    /* SECTION 1: HEADER & TIMELINE LABEL (OVERLAY 1) */
+    .header-block {
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      border-bottom: 2px solid #141414;
+      padding-bottom: 16px;
+    }
+
+    .timeline-badge {
+      display: inline-flex;
+      align-items: center;
+      background: #141414;
+      color: #F7F4EC;
+      padding: 10px 24px;
+      border-radius: 8px;
+      font-size: 26px;
+      font-weight: 900;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+    }
+
+    /* SECTION 2: BỘ ĐẾM HỒ SƠ & DENSITY ICON (OVERLAY 2 & 3) */
+    .dossier-card {
+      background: #F5F0E4;
+      border: 3px solid #141414;
+      box-shadow: 8px 8px 0px #141414;
+      border-radius: 16px;
+      padding: 28px 34px;
+      position: relative;
+    }
+
+    .card-caption {
+      font-size: 22px;
+      font-weight: 900;
+      color: #141414;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+
+    .counter-row {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+    }
+
+    .counter-display {
+      display: flex;
+      align-items: baseline;
+      gap: 16px;
+    }
+
+    .counter-number {
+      font-size: 110px;
+      font-weight: 900;
+      line-height: 1;
+      color: #141414;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .counter-unit {
+      font-size: 30px;
+      font-weight: 900;
+      color: #141414;
+      text-transform: uppercase;
+    }
+
+    /* Icon Vocabulary: DENSITY (SVG tự vẽ nét theo rules) */
+    .density-icon-wrap {
+      width: 120px;
+      height: 96px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #E7E3D9;
+      border: 2px solid #141414;
+      border-radius: 12px;
+      padding: 8px;
+    }
+
+    .density-svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    .density-svg path {
+      fill: none;
+      stroke: #141414;
+      stroke-width: 4;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .density-svg path.accent-stroke {
+      stroke: #FF6A1A;
+      stroke-width: 5;
+    }
+
+    /* Dải vạch mật độ 83 hồ sơ khống */
+    .density-visual-bar-wrap {
+      margin-top: 18px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      height: 22px;
+      width: 100%;
+      overflow: hidden;
+      background: #E7E3D9;
+      border: 2px solid #141414;
+      border-radius: 6px;
+      padding: 3px;
+    }
+
+    .dossier-tick {
+      flex: 1;
+      height: 100%;
+      background: #141414;
+      transform: scaleY(0);
+      transform-origin: bottom center;
+      border-radius: 1px;
+    }
+
+    .dossier-tick.active-tick {
+      background: #FF6A1A;
+    }
+
+    /* Punch-Phrase Block: 83 HỒ SƠ KHỐNG (OVERLAY 3) */
+    .punch-banner {
+      margin-top: 20px;
+      background: #FF6A1A;
+      border: 3px solid #141414;
+      border-radius: 10px;
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transform-origin: 50% 50%;
+    }
+
+    .punch-text {
+      font-size: 44px;
+      font-weight: 900;
+      line-height: 1.2;
+      color: #141414; /* Mực đen trên cam đạt 6.4:1 WCAG AAA */
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      text-align: center;
+    }
+
+    /* SECTION 3: GIẢI NGÂN (NỀN MỰC ĐẶC #141414, OVERLAY 4) */
+    .disbursement-card {
+      background: #141414;
+      border: 3px solid #141414;
+      box-shadow: 8px 8px 0px rgba(255, 106, 26, 0.4);
+      border-radius: 18px;
+      padding: 28px 34px;
+      color: #F7F4EC;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      position: relative;
+    }
+
+    .disbursement-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .disbursement-sub {
+      font-size: 24px;
+      font-weight: 900;
+      color: #F7F4EC;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+    }
+
+    /* Thang giải ngân (progress bar) - cố định kích thước, scaleX để tránh reflow */
+    .scale-bar-track {
+      width: 100%;
+      height: 24px;
+      background: rgba(247, 244, 236, 0.2);
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid rgba(247, 244, 236, 0.4);
+    }
+
+    .scale-bar-fill {
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, #F7F4EC, #FF6A1A);
+      border-radius: 12px;
+      transform-origin: left center;
+      will-change: transform;
+    }
+
+    /* Overlay Badge duy nhất: GIẢI NGÂN: 39,69 TỶ (OVERLAY 4) */
+    .disbursement-target-pill {
+      background: #FF6A1A;
+      border-radius: 8px;
+      padding: 14px 24px;
+      font-size: 32px;
+      font-weight: 900;
+      color: #141414; /* Mực đen trên cam đạt 6.4:1 */
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      align-self: flex-start;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+  </style>
+
+  <div
+    id="root"
+    data-composition-id="scene-s24"
+    data-start="0"
+    data-width="1080"
+    data-height="1920"
+    data-duration="9.53"
+  >
+    <!-- Background variant: chart với 4 đường kẻ ngang và left ticks -->
+    <div class="chart-background">
+      <div class="chart-grid-subtle"></div>
+      <div class="chart-rule rule-20"><div class="chart-tick"></div></div>
+      <div class="chart-rule rule-40"><div class="chart-tick"></div></div>
+      <div class="chart-rule rule-60"><div class="chart-tick"></div></div>
+      <div class="chart-rule rule-80"><div class="chart-tick"></div></div>
+    </div>
+
+    <!-- Clip duy nhất của Shot S24-1 -->
+    <section id="shot-s24-1" class="clip" data-start="0" data-duration="9.53">
+      <!-- Camera Rig (pan-left nhẹ 9.53s) -->
+      <div id="camera-rig">
+        <div class="content-container">
+
+          <!-- TOP: GIAI ĐOẠN 2003 - 2004 (OVERLAY 1) -->
+          <div class="header-block" id="header-block">
+            <div class="timeline-badge" id="timeline-label">
+              GIAI ĐOẠN 2003 - 2004
+            </div>
+          </div>
+
+          <!-- MIDDLE: BỘ ĐẾM 83 HỒ SƠ + DENSITY ICON + PUNCH PHRASE (OVERLAYS 2 & 3) -->
+          <div class="dossier-card" id="dossier-card">
+            <div class="card-caption">HỒ SƠ VAY VỐN TÍCH LŨY</div>
+            <div class="counter-row">
+              <div class="counter-display">
+                <!-- Bắt đầu đúng từ 1 theo yêu cầu -->
+                <span class="counter-number" id="docs-counter">1</span>
+                <span class="counter-unit">HỒ SƠ</span>
+              </div>
+
+              <!-- Icon Vocabulary: DENSITY (Self-drawing SVG, OVERLAY 2) -->
+              <div class="density-icon-wrap" id="density-icon-container">
+                <svg class="density-svg" viewBox="0 0 100 80" xmlns="http://www.w3.org/2000/svg">
+                  <path class="draw-path" d="M 10 20 L 35 20 L 45 30 L 90 30 L 90 70 L 10 70 Z" />
+                  <path class="draw-path" d="M 22 40 L 78 40" />
+                  <path class="draw-path" d="M 22 48 L 78 48" />
+                  <path class="draw-path" d="M 22 56 L 78 56" />
+                  <path class="draw-path accent-stroke" d="M 22 64 L 64 64" />
+                </svg>
+              </div>
+            </div>
+
+            <!-- Dải vạch mật độ 83 hồ sơ khống -->
+            <div class="density-visual-bar-wrap" id="dossier-bar-wrap">
+              <div class="dossier-tick"></div><div class="dossier-tick"></div><div class="dossier-tick"></div><div class="dossier-tick"></div>
+              <div class="dossier-tick"></div><div class="dossier-tick"></div><div class="dossier-tick"></div><div class="dossier-tick"></div>
+              <div class="dossier-tick"></div><div class="dossier-tick"></div><div class="dossier-tick"></div><div class="dossier-tick"></div>
+              <div class="dossier-tick"></div><div class="dossier-tick"></div><div class="dossier-tick"></div><div class="dossier-tick"></div>
+              <div class="dossier-tick"></div><div class="dossier-tick"></div><div class="dossier-tick"></div><div class="dossier-tick"></div>
+              <div class="dossier-tick"></div><div class="dossier-tick"></div><div class="dossier-tick"></div><div class="dossier-tick"></div>
+              <div class="dossier-tick"></div><div class="dossier-tick"></div><div class="dossier-tick"></div><div class="dossier-tick"></div>
+              <div class="dossier-tick active-tick"></div><div class="dossier-tick active-tick"></div>
+            </div>
+
+            <!-- Punch-Phrase: 83 HỒ SƠ KHỐNG (OVERLAY 3) -->
+            <div class="punch-banner" id="punch-phrase-banner">
+              <span class="punch-text">83 HỒ SƠ KHỐNG</span>
+            </div>
+          </div>
+
+          <!-- BOTTOM: GIẢI NGÂN QUỸ TÍN DỤNG (OVERLAY 4) -->
+          <div class="disbursement-card" id="disbursement-card">
+            <div class="disbursement-header">
+              <div class="disbursement-sub">QUỸ TÍN DỤNG GIẢI NGÂN</div>
+            </div>
+
+            <!-- Progress Bar giải ngân (dùng scaleX tránh reflow) -->
+            <div class="scale-bar-track">
+              <div class="scale-bar-fill" id="scale-fill"></div>
+            </div>
+
+            <!-- Label Overlay duy nhất: GIẢI NGÂN: 39,69 TỶ (OVERLAY 4) -->
+            <div class="disbursement-target-pill" id="disbursement-target-pill">
+              GIẢI NGÂN: 39,69 TỶ
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- Thanh viền cam cố định mép đáy (Visual Signature) -->
+    <div class="bottom-brand-bar"></div>
+  </div>
+
+  <script>
+    // Khởi tạo GSAP Timeline bắt buộc theo contract (paused: true)
+    window.__timelines = window.__timelines || {};
+    const tl = gsap.timeline({ paused: true });
+
+    // Setup SVG Path Draw cho icon density
+    const svgPaths = document.querySelectorAll(".density-svg .draw-path");
+    svgPaths.forEach((path) => {
+      const len = path.getTotalLength();
+      path.style.strokeDasharray = len + "px";
+      path.style.strokeDashoffset = len + "px";
+    });
+
+    // 1. Camera Motion: Pan-left nhẹ nhàng xuyên suốt 9.53s
+    tl.fromTo("#camera-rig", 
+      { x: 15 }, 
+      { x: -15, duration: 9.53, ease: "none" }, 
+      0
+    );
+
+    // 2. Entrance Animation: "rise" (trượt nhẹ lên + fade in toàn khung)
+    tl.fromTo(".content-container", 
+      { y: 40, opacity: 0 }, 
+      { y: 0, opacity: 1, duration: 0.6, ease: "power3.out" }, 
+      0
+    );
+
+    // 3. Overlay 1: Label "GIAI ĐOẠN 2003 - 2004" (atMs: 205230 -> local 0.18s)
+    tl.fromTo("#timeline-label",
+      { x: -30, opacity: 0 },
+      { x: 0, opacity: 1, duration: 0.5, ease: "power3.out" },
+      0.18
+    );
+
+    // 4. Dossier Card Entrance (0.45s)
+    tl.fromTo("#dossier-card",
+      { y: 30, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.6, ease: "power3.out" },
+      0.45
+    );
+
+    // 5. Bộ đếm hồ sơ nhảy liên tục từ 1 đến 83 (bắt đầu đúng từ 1, không bắt đầu từ 0)
+    const docsObj = { count: 1 };
+    const docsElem = document.getElementById("docs-counter");
+    tl.to(docsObj, {
+      count: 83,
+      duration: 3.1,
+      ease: "power2.out",
+      onUpdate: function () {
+        docsElem.textContent = Math.max(1, Math.round(docsObj.count));
+      }
+    }, 0.7);
+
+    // Stagger các vạch hồ sơ dâng lên đồng bộ nhịp đếm
+    const ticks = document.querySelectorAll(".dossier-tick");
+    tl.fromTo(ticks, 
+      { scaleY: 0 },
+      { scaleY: 1, duration: 0.08, stagger: 0.08, ease: "power1.out" },
+      0.8
+    );
+
+    // 6. Overlay 2: Icon "density" tự vẽ SVG nét dần (atMs: 208610 -> local 3.56s)
+    tl.fromTo("#density-icon-container",
+      { scale: 0.8, opacity: 0 },
+      { scale: 1, opacity: 1, duration: 0.4, ease: "power3.out" },
+      3.4
+    );
+    svgPaths.forEach((path, idx) => {
+      tl.to(path, {
+        strokeDashoffset: "0px",
+        duration: 0.45,
+        ease: "power2.out"
+      }, 3.56 + idx * 0.08);
+    });
+
+    // 7. Overlay 3: Punch-phrase "83 HỒ SƠ KHỐNG" giáng mạnh (atMs: 209060 -> local 4.01s)
+    tl.fromTo("#punch-phrase-banner",
+      { scale: 0.85, opacity: 0, y: 15 },
+      { scale: 1, opacity: 1, y: 0, duration: 0.5, ease: "power3.out" },
+      4.01
+    );
+
+    // 8. Disbursement Card Xuất hiện (4.8s)
+    tl.fromTo("#disbursement-card",
+      { y: 30, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.6, ease: "power3.out" },
+      4.8
+    );
+
+    // 9. Thang giải ngân tăng vọt kịch trần (5.2s - 7.4s) bằng scaleX (transform compositor-cheap, không reflow)
+    tl.fromTo("#scale-fill",
+      { scaleX: 0 },
+      { scaleX: 1, duration: 2.2, ease: "power3.out" },
+      5.2
+    );
+
+    // 10. Overlay 4: Label "GIẢI NGÂN: 39,69 TỶ" chốt lại tự tin (atMs: 212530 -> local 7.48s)
+    tl.fromTo("#disbursement-target-pill",
+      { scale: 0.85, opacity: 0, y: 10 },
+      { scale: 1, opacity: 1, y: 0, duration: 0.45, ease: "power3.out" },
+      7.48
+    );
+
+    // Đăng ký timeline cho HyperFrames seek
+    window.__timelines["scene-s24"] = tl;
+  </script>
+
+    </template>
+  </body>
+</html>

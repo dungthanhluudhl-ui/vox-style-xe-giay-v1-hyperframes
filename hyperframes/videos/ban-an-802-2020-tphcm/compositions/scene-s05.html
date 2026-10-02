@@ -1,0 +1,639 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap">
+      <style>
+/* hf-safe-colors (tất định từ style-tokens.json) */
+.hf-text-ink { color: #141414; }
+.hf-text-light { color: #F7F4EC; }
+.hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+.hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+.hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+.hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      width: 1080px;
+      height: 1920px;
+      overflow: hidden;
+      background: #F5F0E4;
+      font-family: "Be Vietnam Pro", sans-serif;
+      color: #141414;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    #root {
+      position: relative;
+      width: 1080px;
+      height: 1920px;
+      overflow: hidden;
+      background: #F5F0E4;
+    }
+
+    .clip {
+      position: absolute;
+      inset: 0;
+    }
+
+    /* Chữ ký dải cam cố định mép dưới */
+    #bottom-accent-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 12px;
+      background: #FF6A1A;
+      z-index: 100;
+    }
+
+    /* Vùng an toàn & Header phân loại */
+    .scene-container {
+      position: absolute;
+      inset: 0;
+      padding: 170px 60px 530px 60px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .header-nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 16px;
+      border-bottom: 2px solid #141414;
+      margin-bottom: 24px;
+    }
+
+    .header-title-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .header-tag {
+      background: #FF6A1A;
+      color: #141414;
+      font-size: 20px;
+      font-weight: 900;
+      padding: 6px 14px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .header-label {
+      font-size: 24px;
+      font-weight: 700;
+      color: #141414;
+      letter-spacing: 0.02em;
+    }
+
+    .header-index {
+      font-size: 22px;
+      font-weight: 900;
+      color: #141414;
+      letter-spacing: 0.06em;
+    }
+
+    /* Thẻ hồ sơ đối tượng (Dossier Card) */
+    .dossier-card {
+      position: relative;
+      background: #E7E3D9;
+      border: 3px solid #141414;
+      box-shadow: 10px 10px 0px rgba(20, 20, 20, 0.16);
+      padding: 32px 32px 28px 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    /* Góc kỹ thuật của bản án */
+    .corner-mark {
+      position: absolute;
+      width: 14px;
+      height: 14px;
+      border-color: #141414;
+      pointer-events: none;
+    }
+    .corner-tl { top: -2px; left: -2px; border-top: 5px solid #141414; border-left: 5px solid #141414; }
+    .corner-tr { top: -2px; right: -2px; border-top: 5px solid #141414; border-right: 5px solid #141414; }
+    .corner-bl { bottom: -2px; left: -2px; border-bottom: 5px solid #141414; border-left: 5px solid #141414; }
+    .corner-br { bottom: -2px; right: -2px; border-bottom: 5px solid #141414; border-right: 5px solid #141414; }
+
+    /* Thanh đề mục của hồ sơ */
+    .card-topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #141414;
+      padding: 12px 20px;
+    }
+
+    .card-topbar-title {
+      color: #F7F4EC;
+      font-size: 22px;
+      font-weight: 900;
+      letter-spacing: 0.04em;
+    }
+
+    .card-topbar-status {
+      background: #FF6A1A;
+      color: #141414;
+      font-size: 18px;
+      font-weight: 900;
+      padding: 4px 10px;
+    }
+
+    /* Khu vực bố cục 3 cột (Split layout không chồng lấn) */
+    .split-section {
+      display: flex;
+      gap: 20px;
+      align-items: stretch;
+    }
+
+    /* Cột 1: Nhận diện đối tượng */
+    .identity-box {
+      width: 230px;
+      min-height: 230px;
+      background: #F5F0E4;
+      border: 2px dashed rgba(20, 20, 20, 0.45);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 14px;
+    }
+
+    .identity-silhouette {
+      width: 130px;
+      height: 130px;
+    }
+
+    .identity-badge {
+      margin-top: 12px;
+      background: #141414;
+      color: #F7F4EC;
+      font-size: 16px;
+      font-weight: 900;
+      padding: 6px 12px;
+      text-align: center;
+      letter-spacing: 0.02em;
+    }
+
+    /* Cột 2: Dữ liệu hồ sơ */
+    .metadata-box {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 12px;
+    }
+
+    .meta-row {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      border-bottom: 1.5px solid rgba(20, 20, 20, 0.2);
+      padding-bottom: 6px;
+    }
+
+    .meta-key {
+      font-size: 16px;
+      font-weight: 700;
+      color: #141414;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .meta-val {
+      font-size: 22px;
+      font-weight: 900;
+      color: #141414;
+    }
+
+    /* Cột 3: Vùng đóng dấu thẩm định độc lập (không che khuất text) */
+    .stamp-slot {
+      width: 260px;
+      background: #F5F0E4;
+      border: 2px dashed rgba(20, 20, 20, 0.35);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px;
+    }
+
+    .stamp-container {
+      width: 100%;
+      background: #141414;
+      border: 3.5px solid #FF6A1A;
+      padding: 14px 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 5px;
+      box-shadow: 4px 6px 12px rgba(20, 20, 20, 0.22);
+      transform-origin: center center;
+    }
+
+    .stamp-header {
+      font-size: 13px;
+      font-weight: 900;
+      color: #F7F4EC;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .stamp-main {
+      font-size: 25px;
+      font-weight: 900;
+      color: #FF6A1A;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      line-height: 1.15;
+    }
+
+    .stamp-sub {
+      font-size: 13px;
+      font-weight: 700;
+      color: #F7F4EC;
+      letter-spacing: 0.02em;
+    }
+
+    /* Đường phân cách kỹ thuật */
+    .card-divider {
+      height: 2px;
+      background: #141414;
+      position: relative;
+      margin: 4px 0;
+    }
+
+    .card-divider::after {
+      content: "THẨM ĐỊNH DANH TÍNH TỐ TỤNG";
+      position: absolute;
+      top: -11px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #E7E3D9;
+      padding: 0 16px;
+      font-size: 16px;
+      font-weight: 900;
+      color: #141414;
+      letter-spacing: 0.06em;
+    }
+
+    /* Phần diễn tiến tên gọi (Name Progression) */
+    .progression-section {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    /* Bước 1: Tên gốc trong công văn (Overlay 1: HUỲNH NGỌC KIM T.) */
+    .name-original-wrapper {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .section-caption {
+      font-size: 19px;
+      font-weight: 700;
+      color: #141414;
+      letter-spacing: 0.02em;
+    }
+
+    .plate-ink {
+      background: #141414;
+      padding: 16px 24px;
+      border-radius: 4px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .plate-ink-text {
+      color: #F7F4EC;
+      font-size: 44px;
+      font-weight: 900;
+      letter-spacing: 0.04em;
+    }
+
+    .plate-ink-tag {
+      background: transparent;
+      border: 1.5px solid #FF6A1A;
+      color: #FF6A1A;
+      font-size: 18px;
+      font-weight: 900;
+      padding: 4px 10px;
+      letter-spacing: 0.04em;
+    }
+
+    /* Mũi tên chuyển đổi trực quan */
+    .transition-indicator {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 0 8px;
+    }
+
+    .indicator-arrow {
+      width: 26px;
+      height: 26px;
+    }
+
+    .indicator-text {
+      font-size: 18px;
+      font-weight: 700;
+      color: #141414;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+    }
+
+    /* Bước 2: Tên quy ước trong video (Punch-phrase Overlay 2: QUY ƯỚC: KIM) */
+    .name-convention-wrapper {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .plate-orange {
+      background: #FF6A1A;
+      border: 3px solid #141414;
+      box-shadow: 6px 6px 0px #141414;
+      padding: 16px 26px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .plate-orange-text {
+      color: #141414;
+      font-size: 54px;
+      font-weight: 900;
+      letter-spacing: 0.04em;
+      line-height: 1.1;
+    }
+
+    .plate-orange-badge {
+      background: #141414;
+      color: #F7F4EC;
+      font-size: 18px;
+      font-weight: 900;
+      padding: 6px 14px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    /* Chú thích pháp lý cuối thẻ */
+    .legal-notice-box {
+      background: #F5F0E4;
+      border: 1.5px solid #141414;
+      border-left: 6px solid #FF6A1A;
+      padding: 14px 18px;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    .notice-icon {
+      width: 24px;
+      height: 24px;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .notice-text {
+      font-size: 18px;
+      font-weight: 700;
+      color: #141414;
+      line-height: 1.35;
+    }
+  </style>
+
+  <div id="root" data-composition-id="scene-s05" data-width="1080" data-height="1920" data-duration="8" data-start="0">
+    
+    <!-- Scene S05 Clip -->
+    <section id="scene-s05" class="clip" data-start="0" data-duration="8">
+      
+      <div class="scene-container">
+        
+        <!-- Header điều hướng và số hiệu hồ sơ -->
+        <header id="header-nav" class="header-nav">
+          <div class="header-title-group">
+            <span class="header-tag">TÒA ÁN NHÂN DÂN</span>
+            <span class="header-label">HỒ SƠ XÉT XỬ SƠ THẨM</span>
+          </div>
+          <div class="header-index">[ HỒ SƠ 02: KIM ]</div>
+        </header>
+
+        <!-- Thẻ hồ sơ thông tin nạn nhân Kim (Dossier Card) -->
+        <div id="dossier-card" class="dossier-card">
+          <div class="corner-mark corner-tl"></div>
+          <div class="corner-mark corner-tr"></div>
+          <div class="corner-mark corner-bl"></div>
+          <div class="corner-mark corner-br"></div>
+
+          <!-- Thanh phân loại trên đầu thẻ -->
+          <div class="card-topbar">
+            <span class="card-topbar-title">HỒ SƠ TƯ PHÁP // LỜI KHAI NẠN NHÂN</span>
+            <span class="card-topbar-status">BẢN ÁN ĐÃ TUYÊN</span>
+          </div>
+
+          <!-- Khu vực 3 cột không chồng lấn (Split Layout) -->
+          <div class="split-section">
+            
+            <!-- Cột 1: Nhận diện đối tượng -->
+            <div class="identity-box">
+              <svg class="identity-silhouette" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="50" cy="34" r="22" stroke="#141414" stroke-width="4" fill="#E7E3D9" />
+                <path d="M14 90 C14 62, 30 58, 50 58 C70 58, 86 62, 86 90" stroke="#141414" stroke-width="4" fill="#E7E3D9" />
+                <path d="M30 38 Q50 48 70 38" stroke="#141414" stroke-width="3" stroke-linecap="round" />
+                <line x1="28" y1="20" x2="38" y2="16" stroke="#FF6A1A" stroke-width="4" stroke-linecap="round" />
+                <line x1="62" y1="16" x2="72" y2="20" stroke="#FF6A1A" stroke-width="4" stroke-linecap="round" />
+              </svg>
+              <div class="identity-badge">VAI TRÒ: NẠN NHÂN</div>
+            </div>
+
+            <!-- Cột 2: Dữ liệu hồ sơ -->
+            <div class="metadata-box">
+              <div class="meta-row">
+                <span class="meta-key">Tình trạng hôn nhân</span>
+                <span class="meta-val">ĐÃ LY HÔN (NĂM 2018)</span>
+              </div>
+              <div class="meta-row">
+                <span class="meta-key">Mối quan hệ vụ án</span>
+                <span class="meta-val">VỢ CŨ NGUYỄN VĂN THÀNH</span>
+              </div>
+              <div class="meta-row">
+                <span class="meta-key">Nguồn tài liệu chứng cứ</span>
+                <span class="meta-val">LỜI KHAI ĐIỀU TRA</span>
+              </div>
+            </div>
+
+            <!-- Cột 3: Vùng đóng dấu thẩm định độc lập (Overlay 3: TÊN ĐÃ MÃ HOÁ) -->
+            <div class="stamp-slot">
+              <div id="stamp-box" class="stamp-container">
+                <span class="stamp-header">★ XÁC NHẬN TỐ TỤNG ★</span>
+                <span class="stamp-main">TÊN ĐÃ MÃ HOÁ</span>
+                <span class="stamp-sub">QUY ƯỚC TRONG VIDEO</span>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Vạch phân chia kỹ thuật -->
+          <div class="card-divider"></div>
+
+          <!-- Diễn tiến chuyển đổi tên (Name Progression) -->
+          <div class="progression-section">
+            
+            <!-- Bước 1: Danh tính pháp lý công bố (Overlay 1: HUỲNH NGỌC KIM T.) -->
+            <div id="legal-name-block" class="name-original-wrapper">
+              <span class="section-caption">DANH TÍNH VIẾT TẮT TRONG CÔNG VĂN TÒA ÁN:</span>
+              <div class="plate-ink">
+                <span class="plate-ink-text">HUỲNH NGỌC KIM T.</span>
+                <span class="plate-ink-tag">HỒ SƠ GỐC</span>
+              </div>
+            </div>
+
+            <!-- Chỉ dẫn chuyển đổi -->
+            <div id="transition-indicator" class="transition-indicator">
+              <svg class="indicator-arrow" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 4 L12 20 M12 20 L5 13 M12 20 L19 13" stroke="#141414" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+              <span class="indicator-text">QUY ƯỚC TÊN GỌI TRONG NỘI DUNG VIDEO:</span>
+            </div>
+
+            <!-- Bước 2: Tên quy ước dễ gọi (Overlay 2: QUY ƯỚC: KIM) -->
+            <div id="convention-name-block" class="name-convention-wrapper">
+              <div class="plate-orange">
+                <span class="plate-orange-text">QUY ƯỚC: KIM</span>
+                <span class="plate-orange-badge">TÊN GIẢ ĐỊNH</span>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Khối lưu ý pháp lý -->
+          <div id="legal-notice-block" class="legal-notice-box">
+            <svg class="notice-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 2 L2 22 H22 L12 2 Z" stroke="#141414" stroke-width="2.5" stroke-linejoin="round" />
+              <line x1="12" y1="9" x2="12" y2="15" stroke="#141414" stroke-width="2.5" stroke-linecap="round" />
+              <circle cx="12" cy="18.5" r="1.5" fill="#141414" />
+            </svg>
+            <span class="notice-text">
+              Tên gọi "Kim" là tên giả định trong video nhằm giúp người xem dễ theo dõi diễn biến, không phải tên đầy đủ do Tòa án công bố.
+            </span>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- Dải viền cam cố định mép dưới -->
+      <div id="bottom-accent-bar"></div>
+
+    </section>
+
+  </div>
+
+  <script>
+    // Khởi tạo GSAP Timeline với trạng thái paused: true theo chuẩn HyperFrames
+    const tl = gsap.timeline({ paused: true });
+    window.__timelines = window.__timelines || {};
+    window.__timelines["scene-s05"] = tl;
+
+    // Thiết lập trạng thái ban đầu của các phần tử (seek-safe & deterministic)
+    gsap.set("#header-nav", { opacity: 0, y: -15 });
+    gsap.set("#dossier-card", { scale: 0.95, opacity: 0, y: 20 });
+    gsap.set("#legal-name-block", { opacity: 0, x: -16 });
+    gsap.set("#transition-indicator", { opacity: 0, y: -8 });
+    gsap.set("#convention-name-block", { opacity: 0, scale: 0.94, y: 16 });
+    gsap.set("#stamp-box", { opacity: 0, scale: 1.3, rotation: -8 });
+    gsap.set("#legal-notice-block", { opacity: 0, y: 12 });
+
+    // 0.05s: Header điều hướng trượt nhẹ vào vị trí
+    tl.to("#header-nav", {
+      opacity: 1,
+      y: 0,
+      duration: 0.4,
+      ease: "power2.out"
+    }, 0.05);
+
+    // 0.15s: Hiệu ứng chuyển cảnh "grow" của thẻ hồ sơ (Dossier Card)
+    tl.to("#dossier-card", {
+      scale: 1,
+      opacity: 1,
+      y: 0,
+      duration: 0.6,
+      ease: "power3.out"
+    }, 0.15);
+
+    // 0.80s (atMs: 32780): Xuất hiện danh tính gốc "HUỲNH NGỌC KIM T." (Overlay 1)
+    tl.to("#legal-name-block", {
+      opacity: 1,
+      x: 0,
+      duration: 0.5,
+      ease: "power3.out"
+    }, 0.8);
+
+    // 1.75s: Mũi tên chỉ dẫn quy ước trượt xuống
+    tl.to("#transition-indicator", {
+      opacity: 1,
+      y: 0,
+      duration: 0.4,
+      ease: "power2.out"
+    }, 1.75);
+
+    // 2.35s (atMs: 34330): Đột phá Punch-phrase "QUY ƯỚC: KIM" (Overlay 2)
+    tl.to("#convention-name-block", {
+      opacity: 1,
+      scale: 1,
+      y: 0,
+      duration: 0.55,
+      ease: "power3.out"
+    }, 2.35);
+
+    // 4.20s: Khối giải thích bảo vệ đời tư xuất hiện mượt mà
+    tl.to("#legal-notice-block", {
+      opacity: 1,
+      y: 0,
+      duration: 0.45,
+      ease: "power2.out"
+    }, 4.2);
+
+    // 5.60s (atMs: 37580): Con dấu đóng sập xác nhận "TÊN ĐÃ MÃ HOÁ" (Overlay 3) vào ô riêng
+    tl.to("#stamp-box", {
+      opacity: 1,
+      scale: 1,
+      rotation: -2,
+      duration: 0.35,
+      ease: "power3.out"
+    }, 5.6);
+
+    // 5.95s: Độ nảy phản lực khi con dấu đóng dập lên tài liệu (deterministic)
+    tl.to("#stamp-box", {
+      scale: 1.03,
+      duration: 0.08,
+      ease: "power1.inOut"
+    }, 5.95);
+
+    tl.to("#stamp-box", {
+      scale: 1,
+      duration: 0.12,
+      ease: "power2.out"
+    }, 6.03);
+  </script>
+
+    </template>
+  </body>
+</html>

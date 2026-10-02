@@ -1,0 +1,382 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+/* hf-safe-colors (tất định từ style-tokens.json) */
+.hf-text-ink { color: #141414; }
+.hf-text-light { color: #F7F4EC; }
+.hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+.hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+.hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+.hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        background: #F5F0E4;
+        font-family: "Be Vietnam Pro", sans-serif;
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: #F5F0E4;
+      }
+      .clip {
+        position: absolute;
+        inset: 0;
+      }
+
+      /* Base safe color tokens */
+      .hf-text-ink {
+        color: #141414;
+      }
+      .hf-text-light {
+        color: #F7F4EC;
+      }
+      .hf-hl-orange {
+        background: #FF6A1A;
+        color: #141414;
+      }
+      .hf-plate-ink {
+        background: #141414;
+        color: #F7F4EC;
+      }
+
+      /* Architectural drafting background accents */
+      .corner-mark {
+        position: absolute;
+        width: 24px;
+        height: 24px;
+        pointer-events: none;
+      }
+      .corner-mark::before,
+      .corner-mark::after {
+        content: "";
+        position: absolute;
+        background: rgba(20, 20, 20, 0.35);
+      }
+      .corner-mark-tl {
+        top: 60px;
+        left: 60px;
+      }
+      .corner-mark-tl::before {
+        top: 0;
+        left: 0;
+        width: 24px;
+        height: 2px;
+      }
+      .corner-mark-tl::after {
+        top: 0;
+        left: 0;
+        width: 2px;
+        height: 24px;
+      }
+      .corner-mark-tr {
+        top: 60px;
+        right: 60px;
+      }
+      .corner-mark-tr::before {
+        top: 0;
+        right: 0;
+        width: 24px;
+        height: 2px;
+      }
+      .corner-mark-tr::after {
+        top: 0;
+        right: 0;
+        width: 2px;
+        height: 24px;
+      }
+
+      /* Map Card Container */
+      .map-wrapper {
+        position: absolute;
+        top: 190px;
+        left: 60px;
+        width: 960px;
+        height: 1080px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+      #map-card {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        border-radius: 20px;
+        border: 3.5px solid #141414;
+        background: #E7E3D9;
+        overflow: hidden;
+        box-shadow: 0 20px 48px rgba(20, 20, 20, 0.14);
+      }
+      .image-container {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+      }
+      #map-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center top;
+        display: block;
+      }
+
+      /* Architectural subtle map border guides */
+      .map-guide-frame {
+        position: absolute;
+        inset: 16px;
+        border: 1.5px dashed rgba(20, 20, 20, 0.25);
+        border-radius: 12px;
+        pointer-events: none;
+      }
+
+      /* Overlay Center Helper */
+      .overlay-center-x {
+        position: absolute;
+        left: 0;
+        right: 0;
+        display: flex;
+        justify-content: center;
+        pointer-events: none;
+      }
+
+      /* Overlay 1: Label Badge */
+      #label-wrapper {
+        top: 230px;
+        z-index: 30;
+      }
+      #label-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        padding: 14px 28px;
+        background: #141414;
+        border: 2px solid #FF6A1A;
+        border-radius: 999px;
+        box-shadow: 0 10px 28px rgba(20, 20, 20, 0.25);
+        opacity: 0;
+      }
+      .label-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: #FF6A1A;
+        flex-shrink: 0;
+      }
+      .label-text {
+        font-size: 30px;
+        font-weight: 900;
+        letter-spacing: 2px;
+        line-height: 1;
+        text-transform: uppercase;
+      }
+
+      /* Overlay 2 & 3: Punch Phrase Card + Check Icon */
+      #punch-wrapper {
+        top: 1140px;
+        z-index: 35;
+      }
+      #punch-card {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        padding: 24px 38px;
+        border-radius: 18px;
+        border: 3px solid #141414;
+        box-shadow: 0 24px 60px rgba(20, 20, 20, 0.35);
+        opacity: 0;
+      }
+      .punch-text {
+        font-size: 58px;
+        font-weight: 900;
+        line-height: 1.25;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+      }
+      #check-badge {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 68px;
+        height: 68px;
+        flex-shrink: 0;
+        opacity: 0;
+      }
+      .check-svg {
+        width: 68px;
+        height: 68px;
+        display: block;
+      }
+
+      /* Signature Orange Bottom Bar */
+      .bottom-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 14px;
+        background: #FF6A1A;
+        z-index: 100;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s41"
+      data-start="0"
+      data-width="1080"
+      data-height="1920"
+      data-duration="6.77"
+    >
+      <section id="scene-s41" class="clip" data-start="0" data-duration="6.77">
+        <!-- Drafting corner marks -->
+        <div class="corner-mark corner-mark-tl"></div>
+        <div class="corner-mark corner-mark-tr"></div>
+
+        <!-- Masterplan Map Asset Card -->
+        <div class="map-wrapper">
+          <div id="map-card">
+            <div class="image-container">
+              <img
+                id="map-img"
+                src="assets/img-22-hcmc-paper-cutout-urban-map.jpg"
+                alt="Quy hoạch đô thị bọt biển TP.HCM"
+              />
+            </div>
+            <div class="map-guide-frame"></div>
+          </div>
+        </div>
+
+        <!-- Overlay 1: Label -->
+        <div id="label-wrapper" class="overlay-center-x">
+          <div id="label-badge">
+            <span class="label-dot"></span>
+            <span class="label-text hf-text-light">SỐNG CHUNG VỚI NƯỚC</span>
+          </div>
+        </div>
+
+        <!-- Overlay 2 & 3: Punch Phrase + Check Icon -->
+        <div id="punch-wrapper" class="overlay-center-x">
+          <div id="punch-card" class="hf-plate-ink">
+            <span class="punch-text hf-text-light">KHÔNG GIAN CHO NƯỚC</span>
+            <div id="check-badge">
+              <svg class="check-svg" viewBox="0 0 68 68">
+                <circle
+                  id="circle-path"
+                  cx="34"
+                  cy="34"
+                  r="30"
+                  fill="none"
+                  stroke="#FF6A1A"
+                  stroke-width="5"
+                />
+                <path
+                  id="check-path"
+                  d="M 21 34 L 30 43 L 48 25"
+                  fill="none"
+                  stroke="#FF6A1A"
+                  stroke-width="5.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <!-- Fixed bottom identity bar -->
+        <div class="bottom-bar"></div>
+      </section>
+    </div>
+
+    <script>
+      // Setup self-drawing SVG paths (stroke-dasharray & stroke-dashoffset)
+      const circlePath = document.getElementById("circle-path");
+      const checkPath = document.getElementById("check-path");
+
+      const circleLen = circlePath.getTotalLength();
+      circlePath.style.strokeDasharray = circleLen;
+      circlePath.style.strokeDashoffset = circleLen;
+
+      const checkLen = checkPath.getTotalLength();
+      checkPath.style.strokeDasharray = checkLen;
+      checkPath.style.strokeDashoffset = checkLen;
+
+      // Master Paused Timeline
+      const tl = gsap.timeline({ paused: true });
+
+      // 1. Ken Burns Subtle Zoom-in (1.0x -> 1.06x over entire 6.77s)
+      tl.fromTo(
+        "#map-img",
+        { scale: 1.0 },
+        { scale: 1.06, duration: 6.77, ease: "none" },
+        0
+      );
+
+      // 2. Unfold transition for the masterplan card (0.1s -> 0.95s)
+      tl.fromTo(
+        "#map-card",
+        { scale: 0.88, opacity: 0, rotationX: 16 },
+        { scale: 1.0, opacity: 1, rotationX: 0, duration: 0.85, ease: "power3.out" },
+        0.1
+      );
+
+      // 3. Overlay 1: Label ("SỐNG CHUNG VỚI NƯỚC" at 1.59s, hold 2.0s)
+      tl.fromTo(
+        "#label-badge",
+        { y: -24, opacity: 0, scale: 0.9 },
+        { y: 0, opacity: 1, scale: 1.0, duration: 0.45, ease: "power3.out" },
+        1.59
+      );
+      tl.to(
+        "#label-badge",
+        { y: -18, opacity: 0, duration: 0.35, ease: "power2.in" },
+        3.59
+      );
+
+      // 4. Overlay 2: Punch Phrase ("KHÔNG GIAN CHO NƯỚC" at 4.09s, hold till end)
+      tl.fromTo(
+        "#punch-card",
+        { scale: 0.88, opacity: 0, y: 28 },
+        { scale: 1.0, opacity: 1, y: 0, duration: 0.6, ease: "power3.out" },
+        4.09
+      );
+
+      // 5. Overlay 3: Icon checkmark draws progressively (at 5.59s)
+      tl.fromTo(
+        "#check-badge",
+        { scale: 0, opacity: 0 },
+        { scale: 1.0, opacity: 1, duration: 0.35, ease: "power3.out" },
+        5.59
+      );
+      tl.to(
+        "#circle-path",
+        { strokeDashoffset: 0, duration: 0.45, ease: "power2.out" },
+        5.65
+      );
+      tl.to(
+        "#check-path",
+        { strokeDashoffset: 0, duration: 0.35, ease: "power2.out" },
+        5.85
+      );
+
+      // Register timeline on global registry
+      window.__timelines = window.__timelines || {};
+      window.__timelines["scene-s41"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

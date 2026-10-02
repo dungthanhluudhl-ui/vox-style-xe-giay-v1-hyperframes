@@ -1,0 +1,417 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+/* hf-safe-colors (tất định từ style-tokens.json) */
+.hf-text-ink { color: #141414; }
+.hf-text-light { color: #F7F4EC; }
+.hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+.hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+.hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+.hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+      *, *::before, *::after {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background: #E7E3D9;
+        font-family: "Be Vietnam Pro", sans-serif;
+        color: #141414;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+      .clip {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+      }
+
+      /* 1. Nền giấy ngà + Lưới ô vuông 84px */
+      .grid-bg {
+        position: absolute;
+        inset: 0;
+        background-color: #E7E3D9;
+        background-image:
+          linear-gradient(to right, rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px),
+          linear-gradient(to bottom, rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px);
+        background-size: 84px 84px;
+      }
+
+      /* 2. Dải cam thương hiệu đáy khung hình */
+      .bottom-signature-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 12px;
+        background: #FF6A1A;
+        z-index: 100;
+      }
+
+      /* 3. Header biên tập (Safe zone Y: 175px) */
+      .headline-container {
+        position: absolute;
+        top: 175px;
+        left: 60px;
+        right: 60px;
+      }
+      .tag-pill {
+        display: inline-block;
+        background: #FF6A1A;
+        color: #141414;
+        font-size: 20px;
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        padding: 6px 18px;
+        border-radius: 4px;
+        border: 2px solid #141414;
+        box-shadow: 4px 4px 0px #141414;
+      }
+      .main-headline {
+        margin: 12px 0 0 0;
+        font-size: 54px;
+        font-weight: 900;
+        line-height: 1.15;
+        color: #141414;
+        letter-spacing: -0.5px;
+        text-transform: uppercase;
+      }
+
+      /* 4. Khung sơ đồ kỹ thuật (Diagram Frame) */
+      #card-wrapper {
+        position: absolute;
+        top: 325px;
+        left: 60px;
+        width: 960px;
+        height: 980px;
+        perspective: 1200px;
+      }
+      #card-inner {
+        width: 100%;
+        height: 100%;
+        border: 4px solid #141414;
+        box-shadow: 16px 16px 0px #141414;
+        background: #F5F0E4;
+        border-radius: 12px;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+      }
+      .card-header {
+        height: 56px;
+        background: #141414;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 24px;
+        border-bottom: 3px solid #FF6A1A;
+        flex-shrink: 0;
+      }
+      .card-title {
+        color: #F7F4EC;
+        font-size: 20px;
+        font-weight: 900;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+      }
+      .card-badge {
+        background: #FF6A1A;
+        color: #141414;
+        font-size: 15px;
+        font-weight: 900;
+        padding: 4px 10px;
+        border-radius: 4px;
+        letter-spacing: 0.5px;
+      }
+
+      /* 5. Viewport chứa ảnh phóng to nửa phải */
+      #diagram-viewport {
+        flex: 1;
+        position: relative;
+        overflow: hidden;
+        background: #0f1216;
+      }
+      #camera-container {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        transform-origin: 50% 50%;
+      }
+      #diagram-img {
+        position: absolute;
+        width: 200%;
+        height: 100%;
+        object-fit: cover;
+        left: -100%;
+        top: 0;
+        display: block;
+      }
+
+      /* Dấu góc kỹ thuật */
+      .diag-corner {
+        position: absolute;
+        color: rgba(247, 244, 236, 0.45);
+        font-family: monospace;
+        font-size: 22px;
+        font-weight: 900;
+        pointer-events: none;
+        line-height: 1;
+      }
+      .corner-tl { top: 16px; left: 16px; }
+      .corner-tr { top: 16px; right: 16px; }
+      .corner-bl { bottom: 16px; left: 16px; }
+      .corner-br { bottom: 16px; right: 16px; }
+
+      /* 6. Hộp chú thích (Callout Boxes) */
+      .callout-box {
+        position: absolute;
+        background: #141414;
+        border: 3px solid #141414;
+        border-left: 8px solid #FF6A1A;
+        border-radius: 8px;
+        box-shadow: 8px 8px 0px rgba(20, 20, 20, 0.7);
+        padding: 14px 22px;
+        display: flex;
+        align-items: center;
+        pointer-events: auto;
+      }
+      .pos-callout-1 {
+        top: 410px;
+        left: 100px;
+      }
+      .pos-callout-2 {
+        top: 1060px;
+        left: 100px;
+      }
+      .callout-tag {
+        color: #FF6A1A;
+        font-size: 16px;
+        font-weight: 900;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        margin-bottom: 4px;
+      }
+      .callout-text {
+        color: #F7F4EC;
+        font-size: 32px;
+        font-weight: 900;
+        letter-spacing: 0.5px;
+        white-space: nowrap;
+      }
+
+      /* Mũi tên chỉ dẫn SVG */
+      .pointer-svg {
+        position: absolute;
+        left: 100%;
+        top: 26px;
+        pointer-events: none;
+        overflow: visible;
+      }
+      .pointer-svg-bottom {
+        position: absolute;
+        left: 100%;
+        top: 32px;
+        pointer-events: none;
+        overflow: visible;
+      }
+
+      /* Biểu tượng cảnh báo Warning */
+      .warning-badge-box {
+        width: 54px;
+        height: 54px;
+        background: #FF6A1A;
+        border-radius: 8px;
+        border: 2px solid #141414;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-left: 18px;
+        flex-shrink: 0;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s29"
+      data-width="1080"
+      data-height="1920"
+      data-duration="7.56"
+      data-start="0"
+    >
+      <!-- Nền cảnh và dải cam cố định -->
+      <div id="scene-bg" class="clip" data-start="0" data-duration="7.56" data-track-index="0">
+        <div class="grid-bg" data-layout-ignore="true"></div>
+        <div class="bottom-signature-bar" data-layout-ignore="true"></div>
+      </div>
+
+      <!-- Tiêu đề biên tập -->
+      <div id="scene-header" class="clip" data-start="0" data-duration="7.56" data-track-index="1">
+        <div id="headline-block" class="headline-container">
+          <div class="tag-pill">CƠ CHẾ THOÁT NƯỚC</div>
+          <h1 class="main-headline">3 ĐIỂM NGHẼN DÒNG CHẢY</h1>
+        </div>
+      </div>
+
+      <!-- Khung sơ đồ kỹ thuật img-12 crop nửa phải -->
+      <div id="scene-diagram" class="clip" data-start="0" data-duration="7.56" data-track-index="2">
+        <div id="card-wrapper">
+          <div id="card-inner">
+            <div class="card-header">
+              <div class="card-title">MẶT CẮT HẠ TẦNG CỐNG THOÁT</div>
+              <div class="card-badge">S29 // MÔ HÌNH DÒNG CHẢY</div>
+            </div>
+            <div id="diagram-viewport" data-layout-allow-overflow="true">
+              <div id="camera-container" data-layout-allow-overflow="true">
+                <img
+                  id="diagram-img"
+                  src="assets/img-12-bottleneck-traffic-drainage-diagram.jpg"
+                  alt="Sơ đồ điểm nghẽn cống thoát nước"
+                  data-layout-allow-overflow="true"
+                />
+              </div>
+              <div class="diag-corner corner-tl" data-layout-ignore="true">+</div>
+              <div class="diag-corner corner-tr" data-layout-ignore="true">+</div>
+              <div class="diag-corner corner-bl" data-layout-ignore="true">+</div>
+              <div class="diag-corner corner-br" data-layout-ignore="true">+</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Overlay 1: CỐNG LỚN NỐI NHỎ (start: 1.94s, duration: 5.62s) -->
+      <div id="clip-callout-1" class="clip" data-start="1.94" data-duration="5.62" data-track-index="3">
+        <div id="callout-1" class="callout-box pos-callout-1" data-layout-allow-overflow="true">
+          <div>
+            <div class="callout-tag">TỬ HUYỆT 01</div>
+            <div class="callout-text">CỐNG LỚN NỐI NHỎ</div>
+          </div>
+          <svg class="pointer-svg" width="140" height="40" viewBox="0 0 140 40">
+            <path id="pointer-line-1" d="M 0 20 L 100 20 L 130 35" fill="none" stroke="#FF6A1A" stroke-width="4" stroke-linecap="round" />
+            <circle cx="130" cy="35" r="5" fill="#FF6A1A" />
+          </svg>
+        </div>
+      </div>
+
+      <!-- Overlay 2 & 3: RÁC VÀ BÙN NGHẼN + Icon Cảnh báo (start: 4.44s, duration: 3.12s) -->
+      <div id="clip-callout-2" class="clip" data-start="4.44" data-duration="3.12" data-track-index="4">
+        <div id="callout-2" class="callout-box pos-callout-2" data-layout-allow-overflow="true">
+          <div>
+            <div class="callout-tag">TỬ HUYỆT 02</div>
+            <div class="callout-text">RÁC VÀ BÙN NGHẼN</div>
+          </div>
+          <div id="warning-badge" class="warning-badge-box">
+            <svg viewBox="0 0 48 48" width="34" height="34">
+              <path d="M 24 5 L 45 39 A 2 2 0 0 1 43 42 L 5 42 A 2 2 0 0 1 3 39 Z" fill="#141414" stroke="#141414" stroke-width="2" stroke-linejoin="round" />
+              <path d="M 24 16 L 24 28" stroke="#FF6A1A" stroke-width="4.5" stroke-linecap="round" />
+              <circle cx="24" cy="35" r="2.5" fill="#FF6A1A" />
+            </svg>
+          </div>
+          <svg class="pointer-svg-bottom" width="140" height="40" viewBox="0 0 140 40">
+            <path id="pointer-line-2" d="M 0 20 L 90 20 L 125 8" fill="none" stroke="#FF6A1A" stroke-width="4" stroke-linecap="round" />
+            <circle cx="125" cy="8" r="5" fill="#FF6A1A" />
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true });
+
+      // 1. Chuyển cảnh vào (transitionIn: flip) dạng lật mở thẻ 3D
+      tl.fromTo(
+        "#card-wrapper",
+        { rotationY: -65, scale: 0.88, opacity: 0 },
+        { rotationY: 0, scale: 1, opacity: 1, duration: 0.75, ease: "power3.out" },
+        0.1
+      );
+
+      // 2. Tiêu đề hạ xuống nhịp nhàng
+      tl.fromTo(
+        "#headline-block",
+        { y: -30, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.6, ease: "power3.out" },
+        0.2
+      );
+
+      // 3. Camera chuyển động zoom-in nhẹ từ 1.0x lên 1.07x xuyên suốt scene
+      tl.fromTo(
+        "#camera-container",
+        { scale: 1.0 },
+        { scale: 1.07, duration: 7.56, ease: "none" },
+        0
+      );
+
+      // 4. Overlay 1: "CỐNG LỚN NỐI NHỎ" xuất hiện tại t = 1.94s (atMs: 223500)
+      tl.fromTo(
+        "#callout-1",
+        { scale: 0.75, opacity: 0, x: -25 },
+        { scale: 1, opacity: 1, x: 0, duration: 0.5, ease: "power3.out" },
+        1.94
+      );
+
+      // Vẽ đường dẫn SVG pointer 1
+      const p1 = document.getElementById("pointer-line-1");
+      if (p1 && p1.getTotalLength) {
+        const len1 = Math.ceil(p1.getTotalLength()) || 160;
+        p1.style.strokeDasharray = len1;
+        p1.style.strokeDashoffset = len1;
+        tl.fromTo(
+          p1,
+          { strokeDashoffset: len1 },
+          { strokeDashoffset: 0, duration: 0.5, ease: "power2.out" },
+          1.94
+        );
+      }
+
+      // 5. Overlay 2: "RÁC VÀ BÙN NGHẼN" xuất hiện tại t = 4.44s (atMs: 226000)
+      tl.fromTo(
+        "#callout-2",
+        { scale: 0.75, opacity: 0, x: -25 },
+        { scale: 1, opacity: 1, x: 0, duration: 0.5, ease: "power3.out" },
+        4.44
+      );
+
+      // Vẽ đường dẫn SVG pointer 2
+      const p2 = document.getElementById("pointer-line-2");
+      if (p2 && p2.getTotalLength) {
+        const len2 = Math.ceil(p2.getTotalLength()) || 160;
+        p2.style.strokeDasharray = len2;
+        p2.style.strokeDashoffset = len2;
+        tl.fromTo(
+          p2,
+          { strokeDashoffset: len2 },
+          { strokeDashoffset: 0, duration: 0.5, ease: "power2.out" },
+          4.44
+        );
+      }
+
+      // 6. Biểu tượng cảnh báo nảy vào tại t = 4.94s (atMs: 226500)
+      tl.fromTo(
+        "#warning-badge",
+        { scale: 0, opacity: 0, rotation: -20 },
+        { scale: 1, opacity: 1, rotation: 0, duration: 0.45, ease: "back.out(1.7)" },
+        4.94
+      );
+
+      window.__timelines["scene-s29"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

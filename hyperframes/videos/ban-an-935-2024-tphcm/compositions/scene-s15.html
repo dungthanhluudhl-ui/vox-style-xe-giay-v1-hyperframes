@@ -1,0 +1,590 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap">
+      <style>
+/* hf-safe-colors (tất định từ style-tokens.json) */
+.hf-text-ink { color: #141414; }
+.hf-text-light { color: #F7F4EC; }
+.hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+.hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+.hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+.hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: #E7E3D9;
+      color: #141414;
+      font-family: "Be Vietnam Pro", sans-serif;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    #root {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #E7E3D9;
+      background-image:
+        linear-gradient(to right, rgba(20, 20, 20, 0.28) 1.5px, transparent 1.5px),
+        linear-gradient(to bottom, rgba(20, 20, 20, 0.28) 1.5px, transparent 1.5px);
+      background-size: 84px 84px;
+    }
+
+    /* Quy ước bắt buộc: .clip dùng inset: 0 */
+    .clip {
+      position: absolute;
+      inset: 0;
+    }
+
+    /* Thanh cam thương hiệu cố định mép đáy */
+    .brand-bottom-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 12px;
+      background-color: #FF6A1A;
+      z-index: 100;
+    }
+
+    /* Lớp chuyển động camera (pan-left) */
+    #camera-stage {
+      position: absolute;
+      inset: 0;
+      will-change: transform;
+    }
+
+    /* Khung an toàn nội dung chính (160px - 1390px) */
+    .content-container {
+      position: absolute;
+      top: 170px;
+      left: 50px;
+      right: 50px;
+      bottom: 540px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    /* Header tiêu đề danh mục / cơ chế */
+    .mechanism-tag-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      transform-origin: left center;
+    }
+
+    .tag-badge {
+      background-color: #141414;
+      color: #FF6A1A;
+      font-size: 26px;
+      font-weight: 900;
+      letter-spacing: 2px;
+      padding: 10px 22px;
+      border-radius: 6px;
+      text-transform: uppercase;
+    }
+
+    .tag-line {
+      height: 4px;
+      flex: 1;
+      background-color: #141414;
+      transform-origin: left center;
+    }
+
+    /* Khu vực Diagram so sánh 2 cột */
+    .diagram-arena {
+      position: relative;
+      width: 100%;
+      height: 800px;
+      display: flex;
+      justify-content: space-between;
+      align-items: stretch;
+      padding: 0 10px 0 10px;
+      border-bottom: 4px solid #141414;
+    }
+
+    /* Đường dóng so sánh ngang mốc giá trị tài sản */
+    .benchmark-line {
+      position: absolute;
+      left: 10px;
+      right: 10px;
+      bottom: 280px;
+      height: 0;
+      border-top: 3px dashed rgba(20, 20, 20, 0.45);
+      z-index: 1;
+      transform-origin: left center;
+    }
+
+    /* Nhãn mốc giá trị tài sản thật đặt ở cột trái */
+    .benchmark-badge {
+      position: absolute;
+      left: 35px;
+      bottom: 295px;
+      background-color: #141414;
+      color: #F7F4EC;
+      border: 2px solid #FF6A1A;
+      padding: 6px 16px;
+      font-size: 20px;
+      font-weight: 900;
+      letter-spacing: 0.5px;
+      border-radius: 6px;
+      z-index: 3;
+      white-space: nowrap;
+    }
+
+    /* Cấu trúc 2 cột so sánh */
+    .pillar-col {
+      position: relative;
+      width: 440px;
+      display: flex;
+      flex-direction: column;
+      z-index: 2;
+    }
+
+    .col-header {
+      width: 100%;
+      height: 56px;
+      background-color: #141414;
+      color: #F7F4EC;
+      font-size: 24px;
+      font-weight: 900;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      border-radius: 8px 8px 0 0;
+      letter-spacing: 0.5px;
+    }
+
+    .pillar-col-body {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      position: relative;
+    }
+
+    /* Cột 1: Giá trị tài sản thực tế */
+    .pillar-real {
+      width: 100%;
+      height: 280px;
+      background-color: #F5F0E4;
+      border: 4px solid #141414;
+      border-top: none;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 16px;
+      padding: 20px;
+      transform-origin: bottom center;
+    }
+
+    .real-pill {
+      background-color: #FF6A1A;
+      color: #141414;
+      font-size: 22px;
+      font-weight: 900;
+      padding: 8px 20px;
+      border-radius: 20px;
+      border: 2px solid #141414;
+      text-align: center;
+    }
+
+    .real-desc {
+      font-size: 24px;
+      font-weight: 700;
+      color: #141414;
+      text-align: center;
+      line-height: 1.3;
+    }
+
+    /* Cột 2: Bị đội khống cao hơn tài sản thực tế */
+    .pillar-inflated-top {
+      width: 100%;
+      height: 360px;
+      background-color: #FF6A1A;
+      border: 4px solid #141414;
+      border-bottom: 3px dashed #141414;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      gap: 14px;
+      transform-origin: bottom center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Hoạ tiết sọc chéo biểu thị phần ảo */
+    .pillar-inflated-top::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(
+        45deg,
+        rgba(20, 20, 20, 0.12),
+        rgba(20, 20, 20, 0.12) 14px,
+        transparent 14px,
+        transparent 28px
+      );
+      pointer-events: none;
+    }
+
+    .inflated-pill {
+      background-color: #141414;
+      color: #F7F4EC;
+      font-size: 22px;
+      font-weight: 900;
+      padding: 8px 18px;
+      border-radius: 20px;
+      z-index: 1;
+    }
+
+    .inflated-label-group {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      z-index: 1;
+    }
+
+    .inflated-label-line {
+      font-size: 28px;
+      font-weight: 900;
+      color: #141414;
+      text-align: center;
+      line-height: 1.2;
+    }
+
+    .inflated-label-sub {
+      font-size: 24px;
+      font-weight: 900;
+      color: #141414;
+      text-align: center;
+      line-height: 1.2;
+    }
+
+    /* Chân đế hồ sơ tài sản thực tế của người dân (cùng chiều cao 280px) */
+    .pillar-inflated-base {
+      width: 100%;
+      height: 280px;
+      background-color: #F5F0E4;
+      border: 4px solid #141414;
+      border-top: none;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      gap: 16px;
+      transform-origin: bottom center;
+    }
+
+    /* Icon RISE dạng SVG tự vẽ nằm ở phần trên của cột bị đội */
+    .rise-indicator {
+      position: absolute;
+      top: 10px;
+      right: 20px;
+      width: 90px;
+      height: 90px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 10;
+    }
+
+    .rise-svg {
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+    }
+
+    .rise-path {
+      fill: none;
+      stroke: #FF6A1A;
+      stroke-width: 12;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .rise-arrowhead {
+      fill: none;
+      stroke: #FF6A1A;
+      stroke-width: 12;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    /* Punch-Phrase Banner tại 5.49s */
+    .punch-wrapper {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      transform-origin: center center;
+    }
+
+    .punch-plate {
+      background-color: #141414;
+      border: 4px solid #FF6A1A;
+      border-radius: 12px;
+      padding: 22px 42px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      box-shadow: 10px 10px 0px rgba(20, 20, 20, 0.35);
+    }
+
+    .punch-accent-square {
+      width: 20px;
+      height: 20px;
+      background-color: #FF6A1A;
+      transform: rotate(45deg);
+      flex-shrink: 0;
+    }
+
+    .punch-text {
+      color: #F7F4EC;
+      font-size: 52px;
+      font-weight: 900;
+      letter-spacing: 1.5px;
+      line-height: 1.1;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+  </style>
+
+  <div
+    id="root"
+    data-composition-id="scene-s15"
+    data-width="1080"
+    data-height="1920"
+    data-duration="8.43"
+    data-start="0"
+  >
+    <!-- Thanh cam cố định mép đáy -->
+    <div class="brand-bottom-bar"></div>
+
+    <!-- Clip cảnh duy nhất của Scene 15 -->
+    <section id="scene-15" class="clip" data-start="0" data-duration="8.43">
+      <div id="camera-stage">
+        <div class="content-container">
+          
+          <!-- Phần đầu: Tag phân loại cơ chế -->
+          <div id="mechanism-tag" class="mechanism-tag-wrapper">
+            <div class="tag-badge">CƠ CHẾ THỰC HIỆN</div>
+            <div id="tag-line" class="tag-line"></div>
+          </div>
+
+          <!-- Phần giữa: Diagram so sánh 2 cột -->
+          <div id="diagram-box" class="diagram-arena">
+            
+            <!-- Đường gióng ngang đo mốc giá trị tài sản thực tế -->
+            <div id="benchmark-line" class="benchmark-line"></div>
+            <div id="benchmark-badge" class="benchmark-badge">GIÁ TRỊ TÀI SẢN</div>
+
+            <!-- Cột 1: Giá trị tài sản thực tế của người dân -->
+            <div id="col-left" class="pillar-col">
+              <div class="col-header">TÀI SẢN THỰC TẾ</div>
+              <div class="pillar-col-body">
+                <div id="pillar-left-body" class="pillar-real">
+                  <div class="real-pill">TÀI SẢN THẾ CHẤP</div>
+                  <div class="real-desc">Hồ sơ người dân</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Cột 2: Khoản vay bị đội lên cao hơn thực tế tài sản -->
+            <div id="col-right" class="pillar-col">
+              <div class="col-header">KHOẢN VAY BỊ ĐỘI</div>
+
+              <div class="pillar-col-body">
+                <!-- Icon RISE SVG -->
+                <div id="rise-icon" class="rise-indicator">
+                  <svg class="rise-svg" viewBox="0 0 100 100">
+                    <circle cx="50" cy="50" r="44" stroke="#141414" stroke-width="10" fill="#F5F0E4" />
+                    <path id="rise-arrow-stem" class="rise-path" d="M 50 74 L 50 28" />
+                    <path id="rise-arrow-head" class="rise-arrowhead" d="M 32 46 L 50 26 L 68 46" />
+                  </svg>
+                </div>
+
+                <!-- Khối hạn mức đội khống vượt mốc tài sản thực tế -->
+                <div id="inflated-top" class="pillar-inflated-top">
+                  <div class="inflated-pill">HẠN MỨC ẢO</div>
+                  <div class="inflated-label-group">
+                    <div class="inflated-label-line">KHOẢN ĐỘI THÊM</div>
+                    <div class="inflated-label-sub">CAO HƠN THỰC TẾ</div>
+                  </div>
+                </div>
+
+                <!-- Chân đế hồ sơ tài sản thực tế của người dân -->
+                <div id="inflated-base" class="pillar-inflated-base">
+                  <div class="real-pill">TÀI SẢN THẾ CHẤP</div>
+                  <div class="real-desc">Hồ sơ người dân</div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Phần cuối: Punch phrase xuất hiện ở 5.49s -->
+          <div id="punch-container" class="punch-wrapper">
+            <div class="punch-plate">
+              <div class="punch-accent-square"></div>
+              <div class="punch-text">ĐỘI KHỐNG HẠN MỨC</div>
+              <div class="punch-accent-square"></div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    // Chuẩn bị đường vẽ SVG icon rise
+    const stem = document.getElementById("rise-arrow-stem");
+    const head = document.getElementById("rise-arrow-head");
+    if (stem && head) {
+      const stemLen = stem.getTotalLength();
+      const headLen = head.getTotalLength();
+      stem.style.strokeDasharray = stemLen;
+      stem.style.strokeDashoffset = stemLen;
+      head.style.strokeDasharray = headLen;
+      head.style.strokeDashoffset = headLen;
+    }
+
+    // Khởi tạo Timeline GSAP tất định, paused: true
+    const tl = gsap.timeline({ paused: true });
+
+    // Camera motion: pan-left nhẹ xuyên suốt cảnh (từ 0s đến 8.43s)
+    tl.fromTo(
+      "#camera-stage",
+      { x: 20 },
+      { x: -20, duration: 8.43, ease: "none" },
+      0
+    );
+
+    // Transition In (unfold) - Cảnh mở ra từ trục tâm
+    tl.fromTo(
+      "#mechanism-tag",
+      { opacity: 0, scaleX: 0.8 },
+      { opacity: 1, scaleX: 1, duration: 0.5, ease: "power3.out" },
+      0.1
+    );
+
+    tl.fromTo(
+      "#tag-line",
+      { scaleX: 0 },
+      { scaleX: 1, duration: 0.5, ease: "power2.out" },
+      0.25
+    );
+
+    // Cả 2 header cột xuất hiện đồng bộ ở đỉnh
+    tl.fromTo(
+      ".col-header",
+      { opacity: 0, y: -20 },
+      { opacity: 1, y: 0, duration: 0.5, stagger: 0.15, ease: "power3.out" },
+      0.35
+    );
+
+    // Cột 1 và Chân cột 2 dựng lên từ đáy sàn
+    tl.fromTo(
+      "#pillar-left-body",
+      { scaleY: 0, opacity: 0 },
+      { scaleY: 1, opacity: 1, duration: 0.7, ease: "power3.out" },
+      0.5
+    );
+
+    tl.fromTo(
+      "#inflated-base",
+      { scaleY: 0, opacity: 0 },
+      { scaleY: 1, opacity: 1, duration: 0.7, ease: "power3.out" },
+      0.6
+    );
+
+    // Đường dóng mốc giá trị tài sản thực tế và nhãn kẻ ngang sang
+    tl.fromTo(
+      "#benchmark-line",
+      { scaleX: 0, opacity: 0 },
+      { scaleX: 1, opacity: 1, duration: 0.55, ease: "power2.out" },
+      1.0
+    );
+
+    tl.fromTo(
+      "#benchmark-badge",
+      { opacity: 0, y: 15 },
+      { opacity: 1, y: 0, duration: 0.45, ease: "power3.out" },
+      1.15
+    );
+
+    // TRỌNG TÂM: atMs: 124000 (tương đương 1.81s) -> Icon rise & Đội khống cột nợ
+    // Khối hạn mức ảo vút mọc lên từ đỉnh cột đế, vượt qua mốc giá trị tài sản thực tế
+    tl.fromTo(
+      "#inflated-top",
+      { scaleY: 0, opacity: 0 },
+      { scaleY: 1, opacity: 1, duration: 0.85, ease: "power3.out" },
+      1.81
+    );
+
+    // Icon rise xuất hiện và vẽ nét
+    tl.fromTo(
+      "#rise-icon",
+      { scale: 0, opacity: 0, y: 25 },
+      { scale: 1, opacity: 1, y: 0, duration: 0.55, ease: "power3.out" },
+      1.81
+    );
+
+    if (stem && head) {
+      tl.to(
+        "#rise-arrow-stem",
+        { strokeDashoffset: 0, duration: 0.4, ease: "power2.out" },
+        2.0
+      );
+      tl.to(
+        "#rise-arrow-head",
+        { strokeDashoffset: 0, duration: 0.35, ease: "power2.out" },
+        2.2
+      );
+    }
+
+    // Nhịp nảy nhẹ báo hiệu sự kéo căng của hạn mức
+    tl.to(
+      "#rise-icon",
+      { y: -12, duration: 0.35, ease: "power2.out" },
+      2.4
+    );
+    tl.to(
+      "#rise-icon",
+      { y: 0, duration: 0.4, ease: "power2.inOut" },
+      2.75
+    );
+
+    // TRỌNG TÂM: atMs: 127680 (tương đương 5.49s) -> Punch phrase "ĐỘI KHỐNG HẠN MỨC"
+    tl.fromTo(
+      "#punch-container",
+      { scale: 0.8, opacity: 0, y: 30 },
+      { scale: 1, opacity: 1, y: 0, duration: 0.6, ease: "power3.out" },
+      5.49
+    );
+
+    // Đăng ký timeline cho HyperFrames seek
+    window.__timelines = window.__timelines || {};
+    window.__timelines["scene-s15"] = tl;
+  </script>
+
+    </template>
+  </body>
+</html>

@@ -1,0 +1,516 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+      /* hf-safe-colors (tất định từ style-tokens.json) */
+      .hf-text-ink { color: #141414; }
+      .hf-text-light { color: #F7F4EC; }
+      .hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+      .hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+      .hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+      .hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+      *, *::before, *::after {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #E7E3D9;
+        font-family: "Be Vietnam Pro", sans-serif;
+        color: #141414;
+        overflow: hidden;
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: #E7E3D9;
+        /* Vox-style 84px square grid background */
+        background-image:
+          linear-gradient(rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px),
+          linear-gradient(90deg, rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px);
+        background-size: 84px 84px;
+        background-position: -1.5px -1.5px;
+      }
+      .clip {
+        position: absolute;
+        inset: 0;
+      }
+      /* Signature bottom orange bar */
+      #bottom-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 14px;
+        background-color: #FF6A1A;
+        z-index: 100;
+      }
+
+      /* Container for diagram & camera motion */
+      #diagram-stage {
+        position: absolute;
+        inset: 0;
+        transform-origin: 540px 700px;
+      }
+
+      /* Usable Safe Zone: x: 60px to 1020px (width 960px), y: 160px to 1390px */
+      .content-wrapper {
+        position: absolute;
+        left: 60px;
+        width: 960px;
+        top: 170px;
+      }
+
+      /* Case Context Header */
+      .header-card {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: #F5F0E4;
+        border: 3px solid #141414;
+        box-shadow: 4px 4px 0px #141414;
+        padding: 14px 24px;
+        margin-bottom: 24px;
+      }
+      .header-tag {
+        font-size: 20px;
+        font-weight: 900;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        color: #141414;
+      }
+      .header-status {
+        background: #FF6A1A;
+        color: #141414;
+        font-size: 18px;
+        font-weight: 900;
+        padding: 6px 14px;
+        border: 2px solid #141414;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+
+      /* Director Node (Minh Hùng) */
+      .director-card {
+        background: #F5F0E4;
+        border: 3px solid #141414;
+        box-shadow: 6px 6px 0px #141414;
+        padding: 24px 28px;
+        display: flex;
+        align-items: center;
+        gap: 28px;
+        margin-bottom: 24px;
+      }
+      .avatar-box {
+        width: 100px;
+        height: 100px;
+        background: #E7E3D9;
+        border: 3px solid #141414;
+        display: grid;
+        place-items: center;
+        flex-shrink: 0;
+        box-shadow: 3px 3px 0px #FF6A1A;
+      }
+      .director-info {
+        flex-grow: 1;
+      }
+      .role-badge {
+        display: inline-block;
+        background: #FF6A1A;
+        color: #141414;
+        font-size: 20px;
+        font-weight: 900;
+        padding: 4px 14px;
+        border: 2px solid #141414;
+        margin-bottom: 8px;
+        letter-spacing: 1px;
+      }
+      .director-name {
+        margin: 0;
+        font-size: 46px;
+        font-weight: 900;
+        line-height: 1.15;
+        color: #141414;
+        text-transform: uppercase;
+      }
+      .director-desc {
+        margin: 6px 0 0 0;
+        font-size: 22px;
+        font-weight: 700;
+        color: #141414;
+        opacity: 0.85;
+      }
+
+      /* Conduit & Directive Stream Layout */
+      .flow-section {
+        position: relative;
+        padding-left: 50px;
+        margin-bottom: 28px;
+      }
+      .svg-conduit {
+        position: absolute;
+        left: 20px;
+        top: 0;
+        width: 30px;
+        height: 100%;
+        overflow: visible;
+      }
+
+      /* Control Gates / Credit Checkpoints */
+      .gates-list {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+      .gate-card {
+        background: #F5F0E4;
+        border: 2.5px solid #141414;
+        box-shadow: 4px 4px 0px #141414;
+        padding: 16px 22px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .gate-meta {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
+      .gate-num {
+        width: 36px;
+        height: 36px;
+        background: #141414;
+        color: #F7F4EC;
+        font-weight: 900;
+        font-size: 20px;
+        display: grid;
+        place-items: center;
+        border-radius: 2px;
+      }
+      .gate-label {
+        font-size: 24px;
+        font-weight: 900;
+        color: #141414;
+        letter-spacing: 0.5px;
+      }
+      .gate-override-tag {
+        background: #FF6A1A;
+        color: #141414;
+        font-size: 18px;
+        font-weight: 900;
+        padding: 6px 14px;
+        border: 2px solid #141414;
+        letter-spacing: 0.8px;
+      }
+
+      /* Punch Phrase: BẬT ĐÈN XANH HỒ SƠ */
+      .punch-card {
+        background: #141414;
+        border: 4px solid #141414;
+        box-shadow: 8px 8px 0px #FF6A1A;
+        padding: 28px 32px;
+        margin-top: 14px;
+        margin-bottom: 24px;
+      }
+      .punch-tagline {
+        font-size: 20px;
+        font-weight: 900;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        color: #FF6A1A;
+        margin-bottom: 12px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .punch-title {
+        margin: 0;
+        font-size: 56px;
+        font-weight: 900;
+        line-height: 1.22;
+        letter-spacing: -0.5px;
+      }
+      .punch-orange {
+        color: #FF6A1A;
+      }
+      .punch-light {
+        color: #F7F4EC;
+      }
+      .greenlight-bar {
+        height: 6px;
+        background: #FF6A1A;
+        margin-top: 18px;
+        width: 0%;
+      }
+
+      /* Stamped Label: CHỦ TRƯƠNG LÁCH LUẬT */
+      .label-stamp-container {
+        display: flex;
+        justify-content: flex-start;
+      }
+      .label-stamp {
+        background: #FF6A1A;
+        color: #141414;
+        border: 3.5px solid #141414;
+        box-shadow: 5px 5px 0px #141414;
+        padding: 12px 24px;
+        font-size: 32px;
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        transform: rotate(-2deg);
+        display: inline-block;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s27"
+      data-width="1080"
+      data-height="1920"
+      data-duration="10.74"
+    >
+      <!-- Main Scene Clip -->
+      <section id="scene-s27" class="clip" data-start="0" data-duration="10.74">
+        <div id="diagram-stage">
+          <div class="content-wrapper">
+            <!-- Header Context: trung thực với lời thoại "Tòa án xác định" -->
+            <div id="header-panel" class="header-card">
+              <span class="header-tag">TÒA ÁN XÁC ĐỊNH</span>
+              <span class="header-status">CHỦ TRƯƠNG</span>
+            </div>
+
+            <!-- Director Node (Minh Hùng) -->
+            <div id="director-card" class="director-card">
+              <div id="person-icon-box" class="avatar-box">
+                <!-- Progressively self-drawing person icon -->
+                <svg id="person-svg" viewBox="0 0 64 64" width="60" height="60" fill="none">
+                  <circle id="person-head" cx="32" cy="19" r="10" stroke="#141414" stroke-width="4.5" />
+                  <path id="person-body" d="M14 53 C14 39, 21 36, 32 36 C43 36, 50 39, 50 53" stroke="#141414" stroke-width="4.5" stroke-linecap="round" />
+                </svg>
+              </div>
+              <div class="director-info">
+                <div id="director-role-tag" class="role-badge">QUYỀN GIÁM ĐỐC CHI NHÁNH</div>
+                <h1 class="director-name">MINH HÙNG</h1>
+                <p class="director-desc">Chủ trương tạo điều kiện cho hồ sơ</p>
+              </div>
+            </div>
+
+            <!-- Credit Pipeline & Flow Conduit -->
+            <div class="flow-section">
+              <svg class="svg-conduit" viewBox="0 0 30 240" fill="none">
+                <!-- Static rail guide -->
+                <line x1="15" y1="0" x2="15" y2="230" stroke="rgba(20,20,20,0.25)" stroke-width="3" stroke-dasharray="6 6" />
+                <!-- Dynamic directive path drawing through -->
+                <path id="conduit-line" d="M 15 0 L 15 230" stroke="#FF6A1A" stroke-width="6" stroke-linecap="round" />
+              </svg>
+
+              <!-- 3 Gates that represent internal credit checkpoints -->
+              <div class="gates-list">
+                <div class="gate-card" id="gate-1">
+                  <div class="gate-meta">
+                    <div class="gate-num">1</div>
+                    <span class="gate-label">CHỐT CHẶN TÍN DỤNG</span>
+                  </div>
+                  <div class="gate-override-tag" id="tag-1">DỠ BỎ</div>
+                </div>
+
+                <div class="gate-card" id="gate-2">
+                  <div class="gate-meta">
+                    <div class="gate-num">2</div>
+                    <span class="gate-label">THẨM ĐỊNH HỒ SƠ</span>
+                  </div>
+                  <div class="gate-override-tag" id="tag-2">TẠO ĐIỀU KIỆN</div>
+                </div>
+
+                <div class="gate-card" id="gate-3">
+                  <div class="gate-meta">
+                    <div class="gate-num">3</div>
+                    <span class="gate-label">QUY TRÌNH NỘI BỘ</span>
+                  </div>
+                  <div class="gate-override-tag" id="tag-3">THÁO GỠ</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Punch Phrase Overlay (Cue: 6.54s) -->
+            <div id="punch-card" class="punch-card">
+              <div class="punch-tagline">
+                <span>CHỦ TRƯƠNG TỪ LÃNH ĐẠO</span>
+                <span>•</span>
+                <span>TẠO ĐIỀU KIỆN</span>
+              </div>
+              <h2 class="punch-title">
+                <span class="punch-orange">BẬT ĐÈN XANH</span>
+                <span class="punch-light">HỒ SƠ</span>
+              </h2>
+              <div id="greenlight-bar" class="greenlight-bar"></div>
+            </div>
+
+            <!-- Label Overlay (Cue: 9.33s) -->
+            <div class="label-stamp-container">
+              <div id="label-stamp" class="label-stamp">
+                CHỦ TRƯƠNG LÁCH LUẬT
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      <!-- Signature bottom visual brand accent -->
+      <div id="bottom-bar"></div>
+    </div>
+
+    <script>
+      // Single deterministic paused GSAP timeline
+      const tl = gsap.timeline({ paused: true });
+
+      // Path length measurement for SVG draws
+      const personHead = document.getElementById("person-head");
+      const personBody = document.getElementById("person-body");
+      const conduitLine = document.getElementById("conduit-line");
+
+      const headLen = personHead.getTotalLength();
+      personHead.style.strokeDasharray = headLen;
+      personHead.style.strokeDashoffset = headLen;
+
+      const bodyLen = personBody.getTotalLength();
+      personBody.style.strokeDasharray = bodyLen;
+      personBody.style.strokeDashoffset = bodyLen;
+
+      const conduitLen = conduitLine.getTotalLength();
+      conduitLine.style.strokeDasharray = conduitLen;
+      conduitLine.style.strokeDashoffset = conduitLen;
+
+      // 1. Camera Subtle Zoom-in Motion across full scene
+      tl.fromTo(
+        "#diagram-stage",
+        { scale: 1 },
+        { scale: 1.045, duration: 10.74, ease: "none" },
+        0
+      );
+
+      // 2. Scene Entrance: rise up into view
+      tl.fromTo(
+        "#header-panel",
+        { y: 50, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.65, ease: "power3.out" },
+        0.2
+      );
+      tl.fromTo(
+        "#director-card",
+        { y: 60, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.75, ease: "power3.out" },
+        0.4
+      );
+
+      // 3. Person Icon & Director Tag Entrance (overlay cue ~ 1.76s)
+      tl.fromTo(
+        "#person-icon-box",
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.5, ease: "power3.out" },
+        1.76
+      );
+      tl.to(
+        "#person-head",
+        { strokeDashoffset: 0, duration: 0.5, ease: "power2.out" },
+        1.85
+      );
+      tl.to(
+        "#person-body",
+        { strokeDashoffset: 0, duration: 0.55, ease: "power2.out" },
+        2.0
+      );
+      tl.fromTo(
+        "#director-role-tag",
+        { x: -24, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.45, ease: "power2.out" },
+        1.95
+      );
+
+      // 4. Gates Establishment (2.7s - 3.4s)
+      tl.fromTo(
+        "#gate-1",
+        { y: 35, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.5, ease: "power3.out" },
+        2.7
+      );
+      tl.fromTo(
+        "#gate-2",
+        { y: 35, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.5, ease: "power3.out" },
+        2.9
+      );
+      tl.fromTo(
+        "#gate-3",
+        { y: 35, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.5, ease: "power3.out" },
+        3.1
+      );
+
+      // 5. Directive Conduit drawing down from Director through gates (4.0s - 5.4s)
+      tl.to(
+        "#conduit-line",
+        { strokeDashoffset: 0, duration: 1.3, ease: "power2.inOut" },
+        4.0
+      );
+
+      // 6. Checkpoint Override Tags pop in as the directive penetrates
+      tl.fromTo(
+        "#tag-1",
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.4, ease: "power3.out" },
+        4.5
+      );
+      tl.fromTo(
+        "#tag-2",
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.4, ease: "power3.out" },
+        4.85
+      );
+      tl.fromTo(
+        "#tag-3",
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.4, ease: "power3.out" },
+        5.2
+      );
+
+      // 7. Punch-phrase: "BẬT ĐÈN XANH HỒ SƠ" (cue: 6.54s)
+      tl.fromTo(
+        "#punch-card",
+        { y: 55, scale: 0.96, opacity: 0 },
+        { y: 0, scale: 1, opacity: 1, duration: 0.65, ease: "power3.out" },
+        6.54
+      );
+      tl.fromTo(
+        "#greenlight-bar",
+        { width: "0%" },
+        { width: "100%", duration: 0.8, ease: "power2.out" },
+        6.8
+      );
+
+      // 8. Label: "CHỦ TRƯƠNG LÁCH LUẬT" (cue: 9.33s)
+      tl.fromTo(
+        "#label-stamp",
+        { scale: 1.4, opacity: 0, rotation: -6 },
+        { scale: 1, opacity: 1, rotation: -2, duration: 0.45, ease: "power3.out" },
+        9.33
+      );
+
+      // Register the master timeline
+      window.__timelines = window.__timelines || {};
+      window.__timelines["scene-s27"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

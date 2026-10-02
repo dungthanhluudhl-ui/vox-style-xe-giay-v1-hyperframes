@@ -1,0 +1,432 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+/* hf-safe-colors (tất định từ style-tokens.json) */
+.hf-text-ink { color: #141414; }
+.hf-text-light { color: #F7F4EC; }
+.hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+.hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+.hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+.hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #f5f0e4;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+
+      /* Base layout tokens */
+      .hf-text-ink { color: #141414; }
+      .hf-text-light { color: #f7f4ec; }
+      .hf-hl-orange { background-color: #ff6a1a; color: #141414; }
+      .hf-plate-ink { background-color: #141414; color: #f7f4ec; }
+      .hf-plate-ink-orange { background-color: #141414; color: #ff6a1a; }
+      .hf-plate-paper { background-color: #e7e3d9; color: #141414; }
+
+      .clip {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+      }
+
+      /* Canvas & signature elements */
+      #canvas-bg {
+        position: absolute;
+        inset: 0;
+        background-color: #f5f0e4;
+        z-index: 0;
+      }
+      #brand-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 12px;
+        background-color: #ff6a1a;
+        z-index: 100;
+      }
+
+      /* Editorial Top Badge */
+      .top-header-container {
+        position: absolute;
+        top: 176px;
+        left: 80px;
+        right: 80px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 15;
+      }
+      .top-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 28px;
+        border-radius: 30px;
+        border: 2px solid rgba(20, 20, 20, 0.15);
+        box-shadow: 0 8px 24px rgba(20, 20, 20, 0.12);
+        will-change: transform, opacity;
+      }
+      .pulse-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background-color: #ff6a1a;
+        display: inline-block;
+      }
+      .top-badge-text {
+        font-size: 24px;
+        font-weight: 900;
+        letter-spacing: 1px;
+      }
+
+      /* Central Map Card */
+      .map-card {
+        position: absolute;
+        top: 276px;
+        left: 80px;
+        width: 920px;
+        height: 820px;
+        border-radius: 16px;
+        overflow: hidden;
+        border: 3px solid #141414;
+        background-color: #e7e3d9;
+        box-shadow: 0 20px 48px rgba(20, 20, 20, 0.2);
+        z-index: 10;
+        will-change: transform;
+      }
+      .map-inner {
+        position: absolute;
+        inset: 0;
+        transform-origin: center center;
+        will-change: transform;
+      }
+      .map-img {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center 30%;
+        display: block;
+      }
+      #map-base-img {
+        opacity: 0;
+        will-change: opacity;
+      }
+
+      /* Shatter Transition In Shards */
+      .shatter-container {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+      }
+      .shard {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+        will-change: transform, opacity;
+      }
+      .shard-1 {
+        clip-path: polygon(0 0, 58% 0, 48% 50%, 0 44%);
+      }
+      .shard-2 {
+        clip-path: polygon(58% 0, 100% 0, 100% 52%, 48% 50%);
+      }
+      .shard-3 {
+        clip-path: polygon(0 44%, 48% 50%, 52% 100%, 0 100%);
+      }
+      .shard-4 {
+        clip-path: polygon(48% 50%, 100% 52%, 100% 100%, 52% 100%);
+      }
+
+      /* Overlay 1: Thesis Callout ("CÓ CỐNG THOÁT") */
+      .thesis-card {
+        position: absolute;
+        top: 740px;
+        left: 110px;
+        width: 520px;
+        border-radius: 14px;
+        padding: 22px 26px;
+        border-left: 8px solid #ff6a1a;
+        box-shadow: 0 18px 40px rgba(20, 20, 20, 0.4);
+        z-index: 25;
+        will-change: transform, opacity;
+      }
+      .thesis-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 18px;
+        font-weight: 900;
+        padding: 4px 12px;
+        border-radius: 4px;
+        letter-spacing: 0.5px;
+      }
+      .thesis-title {
+        font-size: 46px;
+        font-weight: 900;
+        line-height: 1.15;
+        margin-top: 10px;
+        letter-spacing: -0.5px;
+      }
+      .thesis-desc {
+        color: #e7e3d9;
+        font-size: 20px;
+        font-weight: 700;
+        margin-top: 6px;
+      }
+
+      /* Overlay 2 & 3: Reversal Punch Card ("KHÔNG CÓ LỐI RA" + ban icon) */
+      .reversal-card {
+        position: absolute;
+        top: 710px;
+        left: 100px;
+        width: 880px;
+        border-radius: 18px;
+        padding: 28px 34px;
+        border: 4px solid #ff6a1a;
+        box-shadow: 0 24px 60px rgba(20, 20, 20, 0.45);
+        z-index: 30;
+        will-change: transform, opacity;
+      }
+      .reversal-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 14px;
+      }
+      .reversal-badge {
+        font-size: 20px;
+        font-weight: 900;
+        padding: 5px 14px;
+        border-radius: 4px;
+        letter-spacing: 0.8px;
+      }
+      .reversal-status {
+        font-size: 20px;
+        font-weight: 900;
+        letter-spacing: 1px;
+      }
+      .reversal-body {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .reversal-text-col {
+        flex: 1;
+      }
+      .reversal-title {
+        font-size: 54px;
+        font-weight: 900;
+        line-height: 1.1;
+        letter-spacing: -1px;
+      }
+      .reversal-desc {
+        color: #e7e3d9;
+        font-size: 22px;
+        font-weight: 700;
+        margin-top: 8px;
+      }
+      .reversal-icon-col {
+        width: 104px;
+        height: 104px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-left: 20px;
+      }
+      .ban-icon-svg {
+        display: block;
+        transform-origin: center center;
+        will-change: transform;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s13"
+      data-width="1080"
+      data-height="1920"
+      data-duration="5.52"
+    >
+      <!-- Persistent Canvas Background & Brand Line -->
+      <div id="canvas-bg"></div>
+      <div id="brand-bar"></div>
+
+      <!-- Main Visual Scene Clip (0.00s -> 5.52s) -->
+      <section id="scene-map" class="clip" data-start="0" data-duration="5.52">
+        <!-- Editorial Header Pill -->
+        <div class="top-header-container">
+          <div class="top-badge hf-plate-ink">
+            <span class="pulse-dot"></span>
+            <span class="top-badge-text hf-text-light">BẢN ĐỒ TIÊU THOÁT NƯỚC</span>
+          </div>
+        </div>
+
+        <!-- Central Map Card with Shatter & Zoom-Out -->
+        <div id="map-card" class="map-card">
+          <!-- Continuous Base Image (Ken Burns Zoom-out 1.06 -> 1.0) -->
+          <div id="map-inner" class="map-inner">
+            <img
+              id="map-base-img"
+              src="assets/img-09-hcmc-paper-map-infographic.jpg"
+              alt="Bản đồ mạng lưới điểm xả nước TP.HCM"
+              class="map-img"
+            />
+          </div>
+
+          <!-- Shatter Entrance Pieces (0.00s -> 0.40s) -->
+          <div id="map-shatter-container" class="shatter-container" data-layout-allow-overflow="true">
+            <div class="shard shard-1">
+              <img src="assets/img-09-hcmc-paper-map-infographic.jpg" alt="" class="map-img" />
+            </div>
+            <div class="shard shard-2">
+              <img src="assets/img-09-hcmc-paper-map-infographic.jpg" alt="" class="map-img" />
+            </div>
+            <div class="shard shard-3">
+              <img src="assets/img-09-hcmc-paper-map-infographic.jpg" alt="" class="map-img" />
+            </div>
+            <div class="shard shard-4">
+              <img src="assets/img-09-hcmc-paper-map-infographic.jpg" alt="" class="map-img" />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Overlay 1: Thesis Callout "CÓ CỐNG THOÁT" (1.36s -> 3.56s) -->
+      <section id="overlay-thesis" class="clip" data-start="1.36" data-duration="2.20">
+        <!-- SVG Connector & Target Reticle -->
+        <svg
+          class="callout-svg"
+          viewBox="0 0 1080 1920"
+          style="position: absolute; inset: 0; width: 1080px; height: 1920px; pointer-events: none; z-index: 24;"
+        >
+          <path
+            id="callout-path"
+            d="M 630 805 L 725 805 L 775 690"
+            fill="none"
+            stroke="#FF6A1A"
+            stroke-width="4"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+          <circle id="callout-target" cx="775" cy="690" r="12" fill="#FF6A1A" stroke="#141414" stroke-width="4" />
+          <circle id="callout-pulse" cx="775" cy="690" r="24" fill="none" stroke="#FF6A1A" stroke-width="2.5" stroke-dasharray="5 5" />
+        </svg>
+
+        <!-- Thesis Annotation Badge -->
+        <div id="thesis-card" class="thesis-card hf-plate-ink">
+          <div class="thesis-badge hf-hl-orange">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#141414" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            <span>HẠ TẦNG HIỆN HỮU</span>
+          </div>
+          <div class="thesis-title hf-text-light">CÓ CỐNG THOÁT</div>
+          <div class="thesis-desc">Mạng lưới thu gom nước dọc tuyến</div>
+        </div>
+      </section>
+
+      <!-- Overlay 2 & 3: Reversal "KHÔNG CÓ LỐI RA" + ban icon (3.86s -> 5.52s) -->
+      <section id="overlay-reversal" class="clip" data-start="3.86" data-duration="1.66">
+        <div id="reversal-card" class="reversal-card hf-plate-ink">
+          <div class="reversal-header">
+            <div class="reversal-badge hf-hl-orange">NGHỊCH LÝ ĐIỂM XẢ</div>
+            <div class="reversal-status hf-plate-ink-orange">ĐẦU RA BỊ KHÓA</div>
+          </div>
+          <div class="reversal-body">
+            <div class="reversal-text-col">
+              <div class="reversal-title hf-text-light">KHÔNG CÓ LỐI RA</div>
+              <div class="reversal-desc">Cửa xả bị bít nghẽn • Nước không chỗ thoát</div>
+            </div>
+            <div class="reversal-icon-col">
+              <svg class="ban-icon-svg" viewBox="0 0 100 100" width="104" height="104">
+                <circle id="ban-ring" cx="50" cy="50" r="38" fill="none" stroke="#FF6A1A" stroke-width="9" stroke-linecap="round" />
+                <line id="ban-slash" x1="23" y1="23" x2="77" y2="77" stroke="#FF6A1A" stroke-width="9" stroke-linecap="round" />
+              </svg>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <script>
+      const tl = gsap.timeline({ paused: true });
+
+      // 1. Ken Burns Zoom-Out on Map (1.06x -> 1.0x across scene)
+      tl.fromTo("#map-inner", { scale: 1.06 }, { scale: 1.0, duration: 5.52, ease: "none" }, 0);
+
+      // Top Editorial Pill Reveal
+      tl.fromTo(".top-badge", { y: -30, opacity: 0 }, { y: 0, opacity: 1, duration: 0.5, ease: "power3.out" }, 0.1);
+
+      // 2. Shatter Entrance (Pieces fly into place 0.00s -> 0.40s)
+      tl.fromTo(".shard-1", { x: -110, y: -90, rotation: -8, scale: 1.18, opacity: 0 }, { x: 0, y: 0, rotation: 0, scale: 1, opacity: 1, duration: 0.40, ease: "power4.out" }, 0);
+      tl.fromTo(".shard-2", { x: 100, y: -110, rotation: 7, scale: 1.15, opacity: 0 }, { x: 0, y: 0, rotation: 0, scale: 1, opacity: 1, duration: 0.40, ease: "power4.out" }, 0);
+      tl.fromTo(".shard-3", { x: -95, y: 100, rotation: 6, scale: 1.16, opacity: 0 }, { x: 0, y: 0, rotation: 0, scale: 1, opacity: 1, duration: 0.40, ease: "power4.out" }, 0);
+      tl.fromTo(".shard-4", { x: 110, y: 90, rotation: -7, scale: 1.15, opacity: 0 }, { x: 0, y: 0, rotation: 0, scale: 1, opacity: 1, duration: 0.40, ease: "power4.out" }, 0);
+
+      // Settle from shatter to unified base image
+      tl.fromTo("#map-base-img", { opacity: 0 }, { opacity: 1, duration: 0.04 }, 0.40);
+      tl.fromTo("#map-shatter-container", { opacity: 1 }, { opacity: 0, duration: 0.04 }, 0.40);
+      tl.fromTo("#map-card", { scale: 0.985 }, { scale: 1.0, duration: 0.22, ease: "power2.out" }, 0.40);
+
+      // 3. Overlay 1: "CÓ CỐNG THOÁT" Entrance (starts at 1.36s)
+      tl.fromTo("#thesis-card", { scale: 0.82, opacity: 0, y: 24 }, { scale: 1, opacity: 1, y: 0, duration: 0.45, ease: "power3.out" }, 1.36);
+
+      const calloutPath = document.getElementById("callout-path");
+      if (calloutPath && typeof calloutPath.getTotalLength === "function") {
+        const pathLen = calloutPath.getTotalLength();
+        calloutPath.style.strokeDasharray = pathLen + "";
+        calloutPath.style.strokeDashoffset = pathLen + "";
+        tl.fromTo(calloutPath, { strokeDashoffset: pathLen }, { strokeDashoffset: 0, duration: 0.42, ease: "power2.out" }, 1.48);
+      }
+
+      tl.fromTo("#callout-target", { opacity: 0 }, { opacity: 1, duration: 0.25, ease: "power2.out" }, 1.62);
+      tl.fromTo("#callout-pulse", { opacity: 0 }, { opacity: 0.85, duration: 0.4, ease: "power2.out" }, 1.70);
+
+      // 4. Overlay 2: "KHÔNG CÓ LỐI RA" Reversal Punch (starts at 3.86s)
+      tl.fromTo("#reversal-card", { scale: 0.86, opacity: 0, y: 35 }, { scale: 1, opacity: 1, y: 0, duration: 0.42, ease: "power4.out" }, 3.86);
+
+      // 5. Overlay 3: "ban" Icon Progressive SVG Draw (starts at 4.36s)
+      const banRing = document.getElementById("ban-ring");
+      const banSlash = document.getElementById("ban-slash");
+      if (banRing && banSlash && typeof banRing.getTotalLength === "function") {
+        const ringLen = banRing.getTotalLength();
+        const slashLen = banSlash.getTotalLength();
+        banRing.style.strokeDasharray = ringLen + "";
+        banRing.style.strokeDashoffset = ringLen + "";
+        banSlash.style.strokeDasharray = slashLen + "";
+        banSlash.style.strokeDashoffset = slashLen + "";
+
+        tl.fromTo(banRing, { strokeDashoffset: ringLen }, { strokeDashoffset: 0, duration: 0.36, ease: "power2.out" }, 4.36);
+        tl.fromTo(banSlash, { strokeDashoffset: slashLen }, { strokeDashoffset: 0, duration: 0.26, ease: "power2.out" }, 4.60);
+        tl.fromTo(".ban-icon-svg", { scale: 1 }, { scale: 1.18, duration: 0.15, yoyo: true, repeat: 1, ease: "power2.out" }, 4.76);
+      }
+
+      // Mandatory registration of root paused timeline
+      window.__timelines["scene-s13"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

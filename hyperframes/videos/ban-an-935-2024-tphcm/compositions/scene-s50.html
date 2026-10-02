@@ -1,0 +1,532 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap"
+    />
+      <style>
+      /* hf-safe-colors (tất định từ style-tokens.json) */
+      .hf-text-ink { color: #141414; }
+      .hf-text-light { color: #f7f4ec; }
+      .hf-hl-orange { color: #141414; background-color: #ff6a1a; }
+      .hf-plate-ink { color: #f7f4ec; background-color: #141414; }
+      .hf-plate-ink-orange { color: #ff6a1a; background-color: #141414; }
+      .hf-plate-paper { color: #141414; background-color: #f5f0e4; }
+
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #141414;
+        color: #f7f4ec;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: #141414;
+      }
+
+      .clip {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+        z-index: 1;
+      }
+
+      /* Nền spotlight tối với vignette và lưới ô vuông Vox tinh tế nằm trong shot clip (z-index: 0) */
+      .spotlight-bg {
+        position: absolute;
+        inset: 0;
+        background-color: #141414;
+        background-image:
+          radial-gradient(circle at 50% 42%, rgba(42, 42, 42, 0.75) 0%, rgba(20, 20, 20, 0.96) 65%, #0d0d0d 100%),
+          linear-gradient(rgba(247, 244, 236, 0.04) 1.5px, transparent 1.5px),
+          linear-gradient(90deg, rgba(247, 244, 236, 0.04) 1.5px, transparent 1.5px);
+        background-size: 100% 100%, 84px 84px, 84px 84px;
+        z-index: 0;
+        pointer-events: none;
+      }
+
+      /* Thanh cam nhận diện thương hiệu cố định ở đáy khung hình */
+      .brand-bottom-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 14px;
+        background-color: #ff6a1a;
+        z-index: 10;
+      }
+
+      #camera-rig {
+        position: absolute;
+        inset: 0;
+        z-index: 2;
+        transform-origin: 50% 45%;
+      }
+
+      #content-flow {
+        position: absolute;
+        inset: 0;
+        padding: 170px 50px 0 50px; /* Safe zone: top 160+, bottom an toàn tránh vùng caption */
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+        align-items: center;
+        transform-origin: 50% 20%;
+      }
+
+      /* Tag tiêu đề hồ sơ vụ án */
+      .case-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        background: #1c1c1c;
+        border: 1.5px solid rgba(255, 106, 26, 0.5);
+        padding: 10px 22px;
+        border-radius: 6px;
+        margin-bottom: 22px;
+      }
+
+      .case-tag-square {
+        width: 10px;
+        height: 10px;
+        background-color: #ff6a1a;
+      }
+
+      .case-tag-text {
+        font-size: 22px;
+        font-weight: 700;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        color: #f7f4ec;
+      }
+
+      /* Vùng timeline 20 năm */
+      .timeline-container {
+        position: relative;
+        width: 100%;
+        max-width: 960px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin-bottom: 24px;
+      }
+
+      /* Mốc 2003 & 2024 */
+      .timeline-node {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        background: #1b1b1b;
+        border: 1.5px solid rgba(247, 244, 236, 0.16);
+        border-radius: 12px;
+        padding: 16px 24px;
+        z-index: 4;
+      }
+
+      .node-year-badge {
+        background: #282828;
+        border: 1.5px solid rgba(255, 106, 26, 0.6);
+        color: #f7f4ec;
+        font-size: 30px;
+        font-weight: 900;
+        padding: 8px 18px;
+        border-radius: 8px;
+        margin-right: 22px;
+        flex-shrink: 0;
+      }
+
+      .node-year-badge-dest {
+        background-color: #ff6a1a;
+        color: #141414;
+        border: 1.5px solid #ff6a1a;
+        font-size: 30px;
+        font-weight: 900;
+        padding: 8px 18px;
+        border-radius: 8px;
+        margin-right: 22px;
+        flex-shrink: 0;
+      }
+
+      .node-content {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .node-title {
+        font-size: 28px;
+        font-weight: 900;
+        color: #f7f4ec;
+        line-height: 1.25;
+      }
+
+      .node-sub {
+        font-size: 21px;
+        font-weight: 700;
+        color: #e7e3d9;
+        margin-top: 4px;
+      }
+
+      /* Trục nối dọc giữa 2 mốc thời gian */
+      .timeline-axis-wrap {
+        position: relative;
+        width: 100%;
+        height: 110px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .timeline-line {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 5px;
+        background-color: #ff6a1a;
+        transform-origin: 50% 0%;
+      }
+
+      /* Badge khoảng thời gian 20 năm ở trung tâm trục */
+      .axis-badge {
+        position: relative;
+        z-index: 5;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        background: #181818;
+        border: 2px solid #ff6a1a;
+        padding: 8px 22px;
+        border-radius: 30px;
+        box-shadow: 0 4px 18px rgba(0, 0, 0, 0.6);
+      }
+
+      .clock-icon-svg {
+        width: 28px;
+        height: 28px;
+        flex-shrink: 0;
+      }
+
+      .axis-badge-text {
+        font-size: 22px;
+        font-weight: 900;
+        letter-spacing: 1.5px;
+        color: #ff6a1a;
+        text-transform: uppercase;
+      }
+
+      /* Thẻ Punch-phrase "THIỆT HẠI 25 TỶ" */
+      .punch-card {
+        width: 100%;
+        max-width: 960px;
+        background-color: #ff6a1a;
+        border-radius: 14px;
+        padding: 26px 30px;
+        margin-bottom: 24px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      }
+
+      .punch-header-line {
+        font-size: 22px;
+        font-weight: 700;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        color: #141414;
+        margin-bottom: 6px;
+      }
+
+      .punch-headline {
+        font-size: 60px;
+        font-weight: 900;
+        line-height: 1.15;
+        color: #141414;
+        text-transform: uppercase;
+        margin: 0;
+      }
+
+      .punch-footer-line {
+        font-size: 22px;
+        font-weight: 700;
+        color: #141414;
+        margin-top: 8px;
+      }
+
+      /* Thẻ Label kết luận "HỆ LỤY HƠN 20 NĂM" */
+      .conclusion-card {
+        width: 100%;
+        max-width: 960px;
+        background: #1a1a1a;
+        border: 2px solid #ff6a1a;
+        border-radius: 14px;
+        padding: 24px 30px;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+      }
+
+      .conclusion-label {
+        font-size: 20px;
+        font-weight: 700;
+        letter-spacing: 2px;
+        color: #ff6a1a;
+        text-transform: uppercase;
+        margin-bottom: 6px;
+      }
+
+      .conclusion-headline {
+        font-size: 46px;
+        font-weight: 900;
+        line-height: 1.2;
+        color: #f7f4ec;
+        margin: 0;
+      }
+
+      .conclusion-sub {
+        font-size: 22px;
+        font-weight: 700;
+        color: #e7e3d9;
+        margin-top: 8px;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s50"
+      data-width="1080"
+      data-height="1920"
+      data-duration="8.88"
+      data-start="0"
+    >
+      <!-- Dải cam đáy khung hình đặc trưng phong cách Vox -->
+      <div class="brand-bottom-bar"></div>
+
+      <!-- Shot duy nhất của scene: S50-1 -->
+      <section id="shot-s50-1" class="clip" data-start="0" data-duration="8.88">
+        <!-- Nền spotlight tối nằm bên trong clip, z-index 0 phía sau nội dung -->
+        <div class="spotlight-bg"></div>
+
+        <div id="camera-rig">
+          <div id="content-flow">
+            <!-- Header hồ sơ pháp lý -->
+            <div id="tag-box" class="case-tag">
+              <div class="case-tag-square"></div>
+              <span class="case-tag-text">HẬU QUẢ PHÁP LÝ • TỔNG KẾT VỤ ÁN</span>
+            </div>
+
+            <!-- Khối Timeline 20 năm -->
+            <div class="timeline-container">
+              <!-- Mốc 1: Năm 2003 -->
+              <div id="node-2003" class="timeline-node">
+                <div class="node-year-badge">2003</div>
+                <div class="node-content">
+                  <div class="node-title">KHOẢN NỢ CŨ PHÁT SINH</div>
+                  <div class="node-sub">Hành vi sai phạm khởi nguồn vụ án</div>
+                </div>
+              </div>
+
+              <!-- Trục nối giữa 2003 và 2024 kèm icon clock -->
+              <div class="timeline-axis-wrap">
+                <div id="axis-line" class="timeline-line"></div>
+                <div id="clock-badge" class="axis-badge">
+                  <svg
+                    class="clock-icon-svg"
+                    viewBox="0 0 100 100"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <circle
+                      cx="50"
+                      cy="50"
+                      r="42"
+                      stroke="#FF6A1A"
+                      stroke-width="8"
+                    />
+                    <line
+                      id="clock-hour-hand"
+                      x1="50"
+                      y1="50"
+                      x2="50"
+                      y2="28"
+                      stroke="#FF6A1A"
+                      stroke-width="8"
+                      stroke-linecap="round"
+                    />
+                    <line
+                      id="clock-min-hand"
+                      x1="50"
+                      y1="50"
+                      x2="70"
+                      y2="50"
+                      stroke="#FF6A1A"
+                      stroke-width="7"
+                      stroke-linecap="round"
+                    />
+                  </svg>
+                  <span class="axis-badge-text">KÉO DÀI HƠN 20 NĂM</span>
+                </div>
+              </div>
+
+              <!-- Mốc 2: Năm 2024 -->
+              <div id="node-2024" class="timeline-node">
+                <div class="node-year-badge-dest">2024</div>
+                <div class="node-content">
+                  <div class="node-title">BẢN ÁN TÙ TUYÊN PHẠT</div>
+                  <div class="node-sub">Trách nhiệm hình sự sau hơn hai thập kỷ</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Thẻ Punch-phrase: THIỆT HẠI 25 TỶ -->
+            <div id="punch-card-box" class="punch-card">
+              <div class="punch-header-line">THIỆT HẠI PHÁT SINH BỔ SUNG</div>
+              <h1 class="punch-headline">THIỆT HẠI 25 TỶ</h1>
+              <div class="punch-footer-line">Khoản nợ cũ không mất đi mà nhân đôi gánh nặng</div>
+            </div>
+
+            <!-- Thẻ Label: HỆ LỤY HƠN 20 NĂM -->
+            <div id="conclusion-card-box" class="conclusion-card">
+              <div class="conclusion-label">KẾT CỤC BI KỊCH</div>
+              <h2 class="conclusion-headline">HỆ LỤY HƠN 20 NĂM</h2>
+              <div class="conclusion-sub">Bản án tù kéo dài hơn hai mươi năm sau hành vi sai phạm</div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <script>
+      const tl = gsap.timeline({ paused: true });
+
+      // Trạng thái khởi đầu ở t=0: các phần tử xuất hiện theo nhịp kịch bản
+      tl.set(
+        [
+          "#node-2003",
+          "#clock-badge",
+          "#node-2024",
+          "#punch-card-box",
+          "#conclusion-card-box",
+        ],
+        { opacity: 0 },
+        0,
+      );
+      tl.set("#axis-line", { scaleY: 0 }, 0);
+
+      // Camera motion: zoom-in chậm rãi trong toàn bộ 8.88s
+      tl.to(
+        "#camera-rig",
+        {
+          scale: 1.045,
+          duration: 8.88,
+          ease: "none",
+        },
+        0,
+      );
+
+      // Transition-in: wobble-drop tinh tế cho toàn bộ cụm nội dung chính
+      tl.fromTo(
+        "#content-flow",
+        { y: -45, rotation: -1.2, opacity: 0 },
+        { y: 0, rotation: 0, opacity: 1, duration: 0.7, ease: "power3.out" },
+        0.1,
+      );
+
+      // 1. Tag hồ sơ xuất hiện lúc 0.2s
+      tl.fromTo(
+        "#tag-box",
+        { opacity: 0, y: -16 },
+        { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" },
+        0.2,
+      );
+
+      // 2. Mốc 2003 xuất hiện lúc 0.35s
+      tl.fromTo(
+        "#node-2003",
+        { opacity: 0, y: -20, scale: 0.96 },
+        { opacity: 1, y: 0, scale: 1, duration: 0.55, ease: "power3.out" },
+        0.35,
+      );
+
+      // 3. Trục line kéo dài từ mốc 2003 xuống mốc 2024 (0.75s -> 1.70s)
+      tl.fromTo(
+        "#axis-line",
+        { scaleY: 0 },
+        { scaleY: 1, duration: 0.95, ease: "power2.inOut" },
+        0.75,
+      );
+
+      // 4. Icon clock + Badge 20 năm tại 1.77s (khớp chính xác atMs: 451860)
+      tl.fromTo(
+        "#clock-badge",
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.5, ease: "power3.out" },
+        1.77,
+      );
+
+      // Kim phút đồng hồ xoay diễn tả dòng thời gian 20 năm trôi qua
+      tl.fromTo(
+        "#clock-min-hand",
+        { rotation: 0, transformOrigin: "0% 50%" },
+        { rotation: 360, duration: 2.4, ease: "power1.inOut" },
+        1.85,
+      );
+
+      // 5. Mốc 2024 xuất hiện lúc 2.6s khi trục chạm tới đích
+      tl.fromTo(
+        "#node-2024",
+        { opacity: 0, y: 24, scale: 0.96 },
+        { opacity: 1, y: 0, scale: 1, duration: 0.6, ease: "power3.out" },
+        2.6,
+      );
+
+      // 6. Punch-phrase "THIỆT HẠI 25 TỶ" bùng nổ tại 4.33s (khớp chính xác atMs: 454420)
+      tl.fromTo(
+        "#punch-card-box",
+        { scale: 0.9, opacity: 0, y: 30 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.65, ease: "power3.out" },
+        4.33,
+      );
+
+      // Nhấn nhẹ tạo lực cho con số 25 tỷ
+      tl.to(
+        "#punch-card-box",
+        { scale: 1.02, duration: 0.2, ease: "power1.out" },
+        5.0,
+      );
+      tl.to(
+        "#punch-card-box",
+        { scale: 1.0, duration: 0.35, ease: "power2.inOut" },
+        5.2,
+      );
+
+      // 7. Label kết luận "HỆ LỤY HƠN 20 NĂM" tại 6.70s (khớp chính xác atMs: 456790)
+      tl.fromTo(
+        "#conclusion-card-box",
+        { opacity: 0, y: 30 },
+        { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" },
+        6.7,
+      );
+
+      // Đăng ký timeline gốc duy nhất
+      window.__timelines = window.__timelines || {};
+      window.__timelines["scene-s50"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

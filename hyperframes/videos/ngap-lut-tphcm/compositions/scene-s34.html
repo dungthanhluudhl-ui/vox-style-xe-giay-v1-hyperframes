@@ -1,0 +1,425 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap">
+      <style>
+    /* hf-safe-colors (tất định từ style-tokens.json) */
+    .hf-text-ink { color: #141414; }
+    .hf-text-light { color: #F7F4EC; }
+    .hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+    .hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+    .hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+    .hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #E7E3D9;
+      color: #141414;
+      font-family: "Be Vietnam Pro", sans-serif;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Root sized to 100% per HyperFrames composition contract (canvas dimensions from data attributes) */
+    #root {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #E7E3D9;
+    }
+
+    /* Standard Clip Layout */
+    .clip {
+      position: absolute;
+      inset: 0;
+    }
+
+    /* Background: Chart Variant (ruled horizontal lines + left tick markers) */
+    .chart-background {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    .chart-grid-pattern {
+      position: absolute;
+      inset: 0;
+      background-image: 
+        linear-gradient(rgba(20, 20, 20, 0.08) 1.5px, transparent 1.5px),
+        linear-gradient(90deg, rgba(20, 20, 20, 0.08) 1.5px, transparent 1.5px);
+      background-size: 84px 84px;
+    }
+
+    .chart-line {
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background-color: rgba(20, 20, 20, 0.28);
+    }
+
+    .chart-tick {
+      position: absolute;
+      left: 0;
+      top: -2px;
+      width: 32px;
+      height: 6px;
+      background-color: #FF6A1A;
+    }
+
+    .chart-line-1 { top: 20%; }
+    .chart-line-2 { top: 40%; }
+    .chart-line-3 { top: 60%; }
+    .chart-line-4 { top: 80%; }
+
+    /* Main Container (Safe Zone: top 160, bottom 530, left 40, right 40 -> max bottom Y = 1390px) */
+    .content-stage {
+      position: absolute;
+      top: 160px;
+      left: 48px;
+      right: 48px;
+      height: 1220px;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      justify-content: flex-start;
+      gap: 18px;
+    }
+
+    /* Header Bar */
+    .header-bar {
+      height: 58px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 3px solid #141414;
+      padding-bottom: 10px;
+      transform-origin: 50% 0%;
+      opacity: 0; /* Deterministic seek: hidden before entrance */
+    }
+
+    .header-tag {
+      background-color: #141414;
+      color: #F7F4EC;
+      font-weight: 900;
+      font-size: 20px;
+      padding: 6px 14px;
+      letter-spacing: 1.5px;
+      border-radius: 4px;
+    }
+
+    .header-meta {
+      font-weight: 900;
+      font-size: 20px;
+      color: #141414;
+      letter-spacing: 1px;
+    }
+
+    /* Diagram Hero Card */
+    .hero-diagram-frame {
+      position: relative;
+      height: 600px;
+      background-color: #F5F0E4;
+      border: 3.5px solid #141414;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 10px 10px 0px #141414;
+      transform-origin: 50% 50%;
+      opacity: 0; /* Deterministic seek: hidden before entrance */
+    }
+
+    .hero-image-wrapper {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+    }
+
+    .hero-image {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center 25%;
+    }
+
+    /* Solid Stamp Badge on Image */
+    .diagram-stamp {
+      position: absolute;
+      top: 18px;
+      left: 18px;
+      background-color: #141414;
+      color: #F7F4EC;
+      font-weight: 900;
+      font-size: 18px;
+      padding: 8px 14px;
+      letter-spacing: 1px;
+      border-radius: 6px;
+      border-left: 6px solid #FF6A1A;
+      z-index: 10;
+    }
+
+    /* Causal Chain Cards */
+    .cards-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      margin-top: 4px;
+    }
+
+    .chain-card {
+      position: relative;
+      height: 108px;
+      background-color: #141414;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      padding: 0 24px;
+      box-shadow: 6px 6px 0px rgba(255, 106, 26, 0.9);
+      border: 2px solid #141414;
+      transform-origin: 50% 50%;
+      opacity: 0; /* Deterministic seek: hidden in initial CSS before timeline activates */
+    }
+
+    .chain-index-box {
+      width: 76px;
+      height: 76px;
+      background-color: #FF6A1A;
+      color: #141414;
+      font-weight: 900;
+      font-size: 38px;
+      display: grid;
+      place-items: center;
+      border-radius: 8px;
+      flex-shrink: 0;
+      border: 2px solid #141414;
+    }
+
+    .chain-content {
+      margin-left: 24px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 4px;
+      flex-grow: 1;
+    }
+
+    .chain-title {
+      font-size: 34px;
+      font-weight: 900;
+      color: #F7F4EC;
+      letter-spacing: 0.5px;
+      line-height: 1.15;
+    }
+
+    .chain-sub {
+      font-size: 21px;
+      font-weight: 700;
+      color: #FF6A1A;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    /* Punch Phrase Banner */
+    .punch-phrase-container {
+      position: relative;
+      height: 114px;
+      background-color: #FF6A1A;
+      border: 3.5px solid #141414;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 24px;
+      box-shadow: 8px 8px 0px #141414;
+      transform-origin: 50% 50%;
+      margin-top: 4px;
+      opacity: 0; /* Deterministic seek: hidden in initial CSS before t=7.01s entrance */
+    }
+
+    .punch-phrase-text {
+      color: #141414;
+      font-size: 52px;
+      font-weight: 900;
+      letter-spacing: 1.5px;
+      text-align: center;
+      line-height: 1.2;
+    }
+
+    /* Signature Bottom Orange Bar */
+    .bottom-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 14px;
+      background-color: #FF6A1A;
+      z-index: 100;
+    }
+  </style>
+
+  <div
+    id="root"
+    data-composition-id="scene-s34"
+    data-width="1080"
+    data-height="1920"
+    data-duration="10.09"
+  >
+    <!-- Background: Chart variant with ruled lines and tick marks -->
+    <div class="chart-background">
+      <div class="chart-grid-pattern"></div>
+      <div class="chart-line chart-line-1"><div class="chart-tick"></div></div>
+      <div class="chart-line chart-line-2"><div class="chart-tick"></div></div>
+      <div class="chart-line chart-line-3"><div class="chart-tick"></div></div>
+      <div class="chart-line chart-line-4"><div class="chart-tick"></div></div>
+    </div>
+
+    <!-- Main Visual Scene Clip (0s to 10.09s) -->
+    <div class="clip" id="scene-s34" data-start="0" data-duration="10.09">
+      <div class="content-stage">
+        
+        <!-- Header Section -->
+        <div class="header-bar" id="header-bar">
+          <div class="header-tag">CHUỖI NGUYÊN NHÂN NGẬP</div>
+          <div class="header-meta">MÔ HÌNH KIỀNG 3 CHÂN</div>
+        </div>
+
+        <!-- Hero Diagram / Infographic Container -->
+        <div class="hero-diagram-frame" id="hero-frame">
+          <div class="diagram-stamp">SƠ ĐỒ TỔNG THỂ // IMG-08</div>
+          <div class="hero-image-wrapper">
+            <img
+              src="assets/img-08-flood-subsidence-causes-diagram.jpg"
+              alt="Sơ đồ nguyên nhân ngập lụt"
+              class="hero-image"
+              id="hero-img"
+            >
+          </div>
+        </div>
+
+        <!-- Overlays: Stack of Causal Elements -->
+        <div class="cards-stack">
+          <!-- Card 02: MƯA VÀ TRIỀU (atMs: 261500 -> 0.31s) -->
+          <div class="chain-card" id="card-02">
+            <div class="chain-index-box">02</div>
+            <div class="chain-content">
+              <div class="chain-title">02. MƯA VÀ TRIỀU</div>
+              <div class="chain-sub">(+) NƯỚC VÀO DỒN DẬP CÙNG LÚC</div>
+            </div>
+          </div>
+
+          <!-- Card 03: MẤT CHỖ CHỨA (atMs: 264500 -> 3.31s) -->
+          <div class="chain-card" id="card-03">
+            <div class="chain-index-box">03</div>
+            <div class="chain-content">
+              <div class="chain-title">03. MẤT CHỖ CHỨA</div>
+              <div class="chain-sub">(-) CHỖ CHỨA HẸP · (x) ĐƯỜNG THOÁT NGHẼN</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Punch Phrase: VÀO NHANH - RA KHÓ (atMs: 268200 -> 7.01s) -->
+        <div class="punch-phrase-container" id="punch-phrase">
+          <div class="punch-phrase-text">VÀO NHANH - RA KHÓ</div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Fixed Bottom Orange Bar -->
+    <div class="bottom-bar"></div>
+  </div>
+
+  <script>
+    const tl = gsap.timeline({ paused: true });
+
+    // Explicit baseline at t=0 for seek determinism across random frame access
+    tl.set("#header-bar", { opacity: 0, y: -30 }, 0);
+    tl.set("#hero-frame", { opacity: 0, scale: 0.94 }, 0);
+    tl.set("#card-02", { opacity: 0, scale: 0.86, y: -20 }, 0);
+    tl.set("#card-03", { opacity: 0, scale: 0.86, y: -20 }, 0);
+    tl.set("#punch-phrase", { opacity: 0, scale: 0.82, y: 30 }, 0);
+
+    // Entrance: Header & Hero Frame (Punch style arrival)
+    tl.fromTo("#header-bar", 
+      { y: -30, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.45, ease: "power3.out" },
+      0.05
+    );
+
+    tl.fromTo("#hero-frame",
+      { scale: 0.94, opacity: 0 },
+      { scale: 1, opacity: 1, duration: 0.55, ease: "power3.out" },
+      0.12
+    );
+
+    // Continuous camera pan along diagram
+    tl.fromTo("#hero-img",
+      { scale: 1.12, y: -20 },
+      { scale: 1.0, y: 25, duration: 9.8, ease: "power1.out" },
+      0.15
+    );
+
+    // BEAT 1: Overlay 02. MƯA VÀ TRIỀU (atMs: 261500 - 261190 = 310ms -> 0.31s)
+    tl.fromTo("#card-02",
+      { scale: 0.86, y: -20, opacity: 0 },
+      { scale: 1, y: 0, opacity: 1, duration: 0.5, ease: "power3.out" },
+      0.31
+    );
+
+    // BEAT 2: Overlay 03. MẤT CHỖ CHỨA (atMs: 264500 - 261190 = 3310ms -> 3.31s)
+    tl.fromTo("#card-03",
+      { scale: 0.86, y: -20, opacity: 0 },
+      { scale: 1, y: 0, opacity: 1, duration: 0.5, ease: "power3.out" },
+      3.31
+    );
+
+    // BEAT 3: Punch Phrase "VÀO NHANH - RA KHÓ" (atMs: 268200 - 261190 = 7010ms -> 7.01s)
+    tl.fromTo("#punch-phrase",
+      { scale: 0.82, y: 30, opacity: 0 },
+      { scale: 1, y: 0, opacity: 1, duration: 0.45, ease: "power3.out" },
+      7.01
+    );
+
+    // Dynamic emphasis pulse linking the elements at 7.5s (deterministic absolute values)
+    tl.to("#card-02", {
+      scale: 1.02,
+      duration: 0.2,
+      ease: "power2.out"
+    }, 7.5);
+    tl.to("#card-02", {
+      scale: 1.0,
+      duration: 0.2,
+      ease: "power2.in"
+    }, 7.7);
+
+    tl.to("#card-03", {
+      scale: 1.02,
+      duration: 0.2,
+      ease: "power2.out"
+    }, 7.75);
+    tl.to("#card-03", {
+      scale: 1.0,
+      duration: 0.2,
+      ease: "power2.in"
+    }, 7.95);
+
+    // Register paused timeline with HyperFrames runtime
+    window.__timelines = window.__timelines || {};
+    window.__timelines["scene-s34"] = tl;
+  </script>
+
+    </template>
+  </body>
+</html>

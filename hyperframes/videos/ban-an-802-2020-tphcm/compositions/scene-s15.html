@@ -1,0 +1,535 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+/* hf-safe-colors (tất định từ style-tokens.json) */
+.hf-text-ink { color: #141414; }
+.hf-text-light { color: #F7F4EC; }
+.hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+.hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+.hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+.hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+      /* Pre-defined WCAG Color Classes */
+      .hf-text-ink { color: #141414; }
+      .hf-text-light { color: #F7F4EC; }
+      .hf-hl-orange { background-color: #FF6A1A; color: #141414; }
+      .hf-plate-ink { background-color: #141414; color: #F7F4EC; }
+      .hf-plate-ink-orange { background-color: #141414; color: #FF6A1A; }
+      .hf-plate-paper { background-color: #F5F0E4; color: #141414; }
+
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background: #E7E3D9;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: #E7E3D9;
+      }
+
+      /* Base Full-Frame Clip Container with safe z-index over background */
+      .clip {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        z-index: 10;
+      }
+
+      /* Background Variants: Paper Grid + Spotlight Vignette */
+      .bg-base {
+        position: absolute;
+        inset: 0;
+        background-color: #E7E3D9;
+        z-index: 1;
+      }
+      .bg-grid {
+        position: absolute;
+        inset: 0;
+        background-image:
+          linear-gradient(to right, rgba(20, 20, 20, 0.2) 1.5px, transparent 1.5px),
+          linear-gradient(to bottom, rgba(20, 20, 20, 0.2) 1.5px, transparent 1.5px);
+        background-size: 84px 84px;
+        z-index: 2;
+        pointer-events: none;
+      }
+      .bg-spotlight {
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(circle at 50% 46%, transparent 35%, rgba(20, 20, 20, 0.25) 75%, rgba(20, 20, 20, 0.5) 100%);
+        z-index: 3;
+        pointer-events: none;
+      }
+
+      /* Persistent Brand Signature: Orange Bottom Bar */
+      .bottom-orange-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 16px;
+        background-color: #FF6A1A;
+        z-index: 90;
+      }
+
+      /* Shot 1 Main Clip Stacking Layer */
+      #shot-s15-1 {
+        z-index: 10;
+      }
+
+      /* Camera Shake / Parallax Rig */
+      #camera-rig {
+        position: absolute;
+        inset: 0;
+        transform-origin: 50% 45%;
+        will-change: transform;
+      }
+
+      /* Scene Top Context Badge */
+      #scene-header {
+        position: absolute;
+        left: 80px;
+        top: 180px;
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 22px;
+        background-color: #141414;
+        border: 3px solid #141414;
+        z-index: 15;
+      }
+      .header-pip {
+        width: 12px;
+        height: 12px;
+        background-color: #FF6A1A;
+        display: inline-block;
+        flex-shrink: 0;
+      }
+      .header-text {
+        font-size: 24px;
+        font-weight: 900;
+        letter-spacing: 2px;
+        color: #F7F4EC;
+        text-transform: uppercase;
+        line-height: 1;
+      }
+
+      /* Hero Visual Frame (920px x 800px, neatly inside safe band 160-1360) */
+      #hero-card {
+        position: absolute;
+        left: 80px;
+        top: 240px;
+        width: 920px;
+        height: 800px;
+        background-color: #141414;
+        border: 4px solid #141414;
+        box-shadow: 16px 20px 0px rgba(20, 20, 20, 0.35);
+        z-index: 11;
+        overflow: hidden;
+      }
+      .hero-image-wrap {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+      }
+      .hero-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center 30%;
+        display: block;
+      }
+      .hero-vignette {
+        position: absolute;
+        inset: 0;
+        box-shadow: inset 0 0 70px rgba(20, 20, 20, 0.45);
+        pointer-events: none;
+      }
+
+      /* Crime Scene Framing Corners */
+      .corner-bracket {
+        position: absolute;
+        width: 28px;
+        height: 28px;
+        border-color: #FF6A1A;
+        border-style: solid;
+        z-index: 15;
+        pointer-events: none;
+      }
+      .corner-tl { top: 16px; left: 16px; border-width: 4px 0 0 4px; }
+      .corner-tr { top: 16px; right: 16px; border-width: 4px 4px 0 0; }
+      .corner-bl { bottom: 16px; left: 16px; border-width: 0 0 4px 4px; }
+      .corner-br { bottom: 16px; right: 16px; border-width: 0 4px 4px 0; }
+
+      /* Tape Restriction Mechanism Layer */
+      #tape-assembly {
+        position: absolute;
+        left: 70px;
+        width: 780px;
+        top: 430px;
+        height: 80px;
+        z-index: 20;
+        transform-origin: 50% 50%;
+        will-change: transform;
+        opacity: 0;
+      }
+      .tape-half {
+        position: absolute;
+        top: 0;
+        width: 390px;
+        height: 80px;
+        background-color: #FF6A1A;
+        border-top: 4px solid #141414;
+        border-bottom: 4px solid #141414;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        will-change: transform;
+      }
+      #tape-left {
+        left: 0;
+        transform-origin: 0% 50%;
+        border-right: 2px dashed #141414;
+      }
+      #tape-right {
+        left: 390px;
+        transform-origin: 100% 50%;
+        border-left: 2px dashed #141414;
+      }
+      .tape-badge {
+        padding: 6px 18px;
+        background-color: #FF6A1A;
+        border: 3px solid #141414;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .tape-text {
+        font-size: 26px;
+        font-weight: 900;
+        letter-spacing: 3px;
+        color: #141414;
+        text-transform: uppercase;
+        line-height: 1;
+      }
+
+      /* Flash spark at the moment of tape rupture */
+      #tear-spark {
+        position: absolute;
+        left: 360px;
+        top: -10px;
+        width: 60px;
+        height: 100px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 25;
+        opacity: 0;
+        pointer-events: none;
+      }
+      .spark-svg {
+        width: 100%;
+        height: 100%;
+        fill: #FF6A1A;
+        filter: drop-shadow(0 0 6px #141414);
+      }
+
+      /* Concentric Distress Waves (Kêu cứu) */
+      #distress-soundwaves {
+        position: absolute;
+        left: 360px;
+        top: 220px;
+        width: 200px;
+        height: 200px;
+        pointer-events: none;
+        z-index: 18;
+      }
+      .soundwave-svg {
+        width: 100%;
+        height: 100%;
+        overflow: visible;
+      }
+      .wave-circle {
+        fill: none;
+        stroke: #FF6A1A;
+        stroke-width: 5;
+        transform-origin: 100px 100px;
+        opacity: 0;
+      }
+
+      /* Timed Overlays Area (Positioned safely at top: 1070px, ends at ~1215px, well above caption zone 1360px) */
+      .overlay-clip-layer {
+        z-index: 25;
+      }
+      .overlay-container {
+        position: absolute;
+        left: 80px;
+        right: 80px;
+        top: 1070px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+      }
+      .badge-row {
+        display: flex;
+        justify-content: center;
+      }
+      .action-badge {
+        padding: 6px 18px;
+        font-size: 24px;
+        font-weight: 900;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        border: 2px solid #141414;
+        background-color: #FF6A1A;
+        color: #141414;
+      }
+      .title-row {
+        padding: 14px 30px;
+        border: 4px solid #141414;
+        box-shadow: 10px 12px 0px rgba(20, 20, 20, 0.3);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        text-align: center;
+        background-color: #141414;
+      }
+      .title-text {
+        font-size: 52px;
+        font-weight: 900;
+        line-height: 1.2;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        color: #F7F4EC;
+      }
+      .punch-accent {
+        color: #FF6A1A;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s15"
+      data-start="0"
+      data-width="1080"
+      data-height="1920"
+      data-duration="7.92"
+    >
+      <!-- Background Layers (z-index 1-3, below clips) -->
+      <div class="bg-base"></div>
+      <div class="bg-grid"></div>
+      <div class="bg-spotlight"></div>
+
+      <!-- Signature Orange Bar at Bottom -->
+      <div class="bottom-orange-bar"></div>
+
+      <!-- Shot S15-1 Main Visual Elements -->
+      <section id="shot-s15-1" class="clip" data-start="0" data-duration="7.92">
+        <div id="camera-rig">
+          <!-- Crime Scene Case Header -->
+          <div id="scene-header" class="hf-plate-ink">
+            <span class="header-pip"></span>
+            <span class="header-text hf-text-light">DIỄN BIẾN HIỆN TRƯỜNG</span>
+          </div>
+
+          <!-- Hero Fight & Struggle Card -->
+          <div id="hero-card">
+            <div class="hero-image-wrap">
+              <img
+                src="assets/img-08-crime-scene-fight-paper-cutout.jpg"
+                alt="Hiện trường xô xát giằng co"
+                class="hero-image"
+              />
+              <div class="hero-vignette"></div>
+            </div>
+
+            <!-- Evidence Frame Accents -->
+            <div class="corner-bracket corner-tl"></div>
+            <div class="corner-bracket corner-tr"></div>
+            <div class="corner-bracket corner-bl"></div>
+            <div class="corner-bracket corner-br"></div>
+
+            <!-- Tape Binding & Struggle Mechanism -->
+            <div id="tape-assembly">
+              <div id="tape-left" class="tape-half">
+                <div class="tape-badge hf-hl-orange">
+                  <span class="tape-text hf-text-ink">KHỐNG CHẾ</span>
+                </div>
+              </div>
+              <div id="tape-right" class="tape-half">
+                <div class="tape-badge hf-hl-orange">
+                  <span class="tape-text hf-text-ink">BĂNG KEO</span>
+                </div>
+              </div>
+              <div id="tear-spark" data-layout-ignore="true">
+                <svg class="spark-svg" viewBox="0 0 60 100">
+                  <polygon points="30,0 36,35 60,50 36,65 30,100 24,65 0,50 24,35" />
+                </svg>
+              </div>
+            </div>
+
+            <!-- Distress Audio Signal Concentric Waves -->
+            <div id="distress-soundwaves" data-layout-ignore="true">
+              <svg class="soundwave-svg" viewBox="0 0 200 200">
+                <circle class="wave-circle wave-1" cx="100" cy="100" r="30" />
+                <circle class="wave-circle wave-2" cx="100" cy="100" r="55" />
+                <circle class="wave-circle wave-3" cx="100" cy="100" r="80" />
+              </svg>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Overlay 1: KHỐNG CHẾ BĂNG KEO (atMs: 125900 -> 1.0s, holdMs: 2200 -> 2.2s) -->
+      <section id="overlay-tape-clip" class="clip overlay-clip-layer" data-start="1.0" data-duration="2.2">
+        <div id="card-label-1" class="overlay-container" data-layout-allow-caption-zone="true">
+          <div class="badge-row">
+            <span class="action-badge hf-hl-orange">HÀNH VI PHẠM TỘI</span>
+          </div>
+          <div class="title-row hf-plate-ink">
+            <span class="title-text hf-text-light">KHỐNG CHẾ BĂNG KEO</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Overlay 2: NẠN NHÂN KÊU CỨU (atMs: 130620 -> 5.72s, holdMs: 2000 -> 2.2s) -->
+      <section id="overlay-sos-clip" class="clip overlay-clip-layer" data-start="5.72" data-duration="2.2">
+        <div id="card-label-2" class="overlay-container" data-layout-allow-caption-zone="true">
+          <div class="badge-row">
+            <span class="action-badge hf-hl-orange">TÌNH TIẾT ĐẢO CHIỀU</span>
+          </div>
+          <div class="title-row hf-plate-ink">
+            <span class="title-text hf-text-light">NẠN NHÂN</span>
+            <span class="title-text punch-accent">KÊU CỨU</span>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <script>
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true });
+
+      // 1. Entrance Animation: Strike entry of hero card and header (fast settle before t=0.3s)
+      tl.fromTo(
+        "#hero-card",
+        { y: -60, scale: 1.06, opacity: 0 },
+        { y: 0, scale: 1, opacity: 1, duration: 0.28, ease: "power4.out" },
+        0.02
+      );
+      tl.fromTo(
+        "#scene-header",
+        { y: -20, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.22, ease: "power3.out" },
+        0.05
+      );
+
+      // 2. Parallax Camera & Struggle Tension Motion (Deterministic absolute coordinates)
+      tl.to("#camera-rig", { x: -5, y: 3, rotation: -0.3, duration: 0.35, ease: "sine.inOut" }, 0.5);
+      tl.to("#camera-rig", { x: 4, y: -4, rotation: 0.3, duration: 0.4, ease: "sine.inOut" }, 0.85);
+      tl.to("#camera-rig", { x: -3, y: 4, rotation: -0.2, duration: 0.38, ease: "sine.inOut" }, 1.25);
+      tl.to("#camera-rig", { x: 5, y: -2, rotation: 0.3, duration: 0.42, ease: "sine.inOut" }, 1.63);
+      tl.to("#camera-rig", { x: -4, y: 3, rotation: -0.2, duration: 0.36, ease: "sine.inOut" }, 2.05);
+      tl.to("#camera-rig", { x: 3, y: -3, rotation: 0.2, duration: 0.4, ease: "sine.inOut" }, 2.41);
+      tl.to("#camera-rig", { x: -2, y: 2, rotation: -0.1, duration: 0.35, ease: "sine.inOut" }, 2.81);
+      tl.to("#camera-rig", { x: 0, y: 0, rotation: 0, duration: 0.3, ease: "sine.inOut" }, 3.16);
+
+      // Second wave of intense struggle
+      tl.to("#camera-rig", { x: -6, y: 5, rotation: -0.4, duration: 0.35, ease: "sine.inOut" }, 4.1);
+      tl.to("#camera-rig", { x: 6, y: -4, rotation: 0.4, duration: 0.38, ease: "sine.inOut" }, 4.45);
+      tl.to("#camera-rig", { x: -5, y: 4, rotation: -0.3, duration: 0.36, ease: "sine.inOut" }, 4.83);
+      tl.to("#camera-rig", { x: 7, y: -5, rotation: 0.5, duration: 0.35, ease: "sine.inOut" }, 5.19);
+
+      // Violent camera jerk when tape tears (at t = 5.72s)
+      tl.to("#camera-rig", { x: -14, y: 10, rotation: -1.0, duration: 0.12, ease: "power4.out" }, 5.72);
+      tl.to("#camera-rig", { x: 10, y: -8, rotation: 0.7, duration: 0.15, ease: "power2.out" }, 5.84);
+      tl.to("#camera-rig", { x: -5, y: 4, rotation: -0.3, duration: 0.25, ease: "power2.out" }, 5.99);
+      tl.to("#camera-rig", { x: 0, y: 0, rotation: 0, duration: 0.4, ease: "power3.out" }, 6.24);
+
+      // 3. Tape Assembly Mechanism Animation
+      // Tape clamps down onto the struggle scene at t = 1.0s
+      tl.fromTo(
+        "#tape-assembly",
+        { scaleY: 0, opacity: 0 },
+        { scaleY: 1, opacity: 1, duration: 0.28, ease: "power4.out" },
+        1.0
+      );
+
+      // Overlay 1: KHỐNG CHẾ BĂNG KEO enters firmly at 1.0s, settles, then fades before clip end
+      tl.fromTo(
+        "#card-label-1",
+        { y: 24, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.3, ease: "power3.out" },
+        1.0
+      );
+      tl.to(
+        "#card-label-1",
+        { opacity: 0, y: -12, duration: 0.18, ease: "power2.in" },
+        3.0
+      );
+
+      // 4. Climax: Kim tears tape free and screams for help at t = 5.72s
+      tl.to("#tape-left", { x: -60, rotation: -7, duration: 0.24, ease: "power4.out" }, 5.72);
+      tl.to("#tape-right", { x: 60, rotation: 7, duration: 0.24, ease: "power4.out" }, 5.72);
+
+      // Rupture spark burst
+      tl.fromTo(
+        "#tear-spark",
+        { scale: 0, opacity: 0 },
+        { scale: 1.3, opacity: 1, duration: 0.12, ease: "power4.out" },
+        5.72
+      );
+      tl.to("#tear-spark", { scale: 0.6, opacity: 0, duration: 0.2, ease: "power2.in" }, 5.84);
+
+      // Distress Soundwave concentric pulse (Kêu cứu signal)
+      tl.fromTo(
+        ".wave-1",
+        { scale: 0.2, opacity: 1 },
+        { scale: 2.2, opacity: 0, duration: 0.55, ease: "power2.out" },
+        5.72
+      );
+      tl.fromTo(
+        ".wave-2",
+        { scale: 0.2, opacity: 1 },
+        { scale: 2.2, opacity: 0, duration: 0.6, ease: "power2.out" },
+        5.88
+      );
+      tl.fromTo(
+        ".wave-3",
+        { scale: 0.2, opacity: 1 },
+        { scale: 2.2, opacity: 0, duration: 0.65, ease: "power2.out" },
+        6.04
+      );
+
+      // Overlay 2: NẠN NHÂN KÊU CỨU punch-phrase arrival
+      tl.fromTo(
+        "#card-label-2",
+        { scale: 0.9, y: 24, opacity: 0 },
+        { scale: 1, y: 0, opacity: 1, duration: 0.32, ease: "power4.out" },
+        5.72
+      );
+
+      // Register Seekable GSAP Timeline on window.__timelines
+      window.__timelines["scene-s15"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

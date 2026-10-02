@@ -1,0 +1,532 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+/* hf-safe-colors (tất định từ style-tokens.json) */
+.hf-text-ink { color: #141414; }
+.hf-text-light { color: #F7F4EC; }
+.hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+.hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+.hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+.hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #e7e3d9;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+      }
+
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: #e7e3d9;
+      }
+
+      /* Quy ước clip chuẩn HyperFrames: inset: 0 */
+      .clip {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+      }
+
+      /* Lưới nền kỹ thuật Vox Grid 84px */
+      .vox-grid-bg {
+        position: absolute;
+        inset: 0;
+        background-color: #e7e3d9;
+        background-size: 84px 84px;
+        background-image:
+          linear-gradient(to right, rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px),
+          linear-gradient(to bottom, rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px);
+        z-index: 1;
+      }
+
+      /* Dấu chữ thập góc khung hình (Corner Crosshairs) */
+      .corner-mark {
+        position: absolute;
+        width: 24px;
+        height: 24px;
+      }
+      .corner-tl { top: 60px; left: 60px; border-top: 3px solid #141414; border-left: 3px solid #141414; }
+      .corner-tr { top: 60px; right: 60px; border-top: 3px solid #141414; border-right: 3px solid #141414; }
+      .corner-bl { bottom: 80px; left: 60px; border-bottom: 3px solid #141414; border-left: 3px solid #141414; }
+      .corner-br { bottom: 80px; right: 60px; border-bottom: 3px solid #141414; border-right: 3px solid #141414; }
+
+      /* Khung ảnh trung tâm kiểu collage báo chí */
+      .editorial-frame {
+        position: absolute;
+        top: 180px;
+        left: 60px;
+        width: 960px;
+        height: 1180px;
+        overflow: hidden;
+        border: 4px solid #141414;
+        box-shadow: 14px 14px 0 #141414;
+        background-color: #141414;
+        border-radius: 4px;
+      }
+
+      .editorial-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+
+      /* Thẻ nhãn kỹ thuật đính trên ảnh */
+      .frame-tag-top {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        background-color: #141414;
+        color: #f7f4ec;
+        font-size: 18px;
+        font-weight: 900;
+        letter-spacing: 1.5px;
+        padding: 8px 16px;
+        border-left: 5px solid #ff6a1a;
+        border-radius: 2px;
+        z-index: 5;
+      }
+
+      /* Thẻ Punch phrase / Nhãn thông tin chính */
+      .punch-card {
+        position: absolute;
+        display: inline-flex;
+        align-items: center;
+        gap: 18px;
+        background-color: #141414;
+        border: 3px solid #141414;
+        border-left: 8px solid #ff6a1a;
+        box-shadow: 10px 10px 0 rgba(20, 20, 20, 0.4);
+        padding: 16px 26px;
+        border-radius: 4px;
+      }
+
+      .punch-card .punch-text {
+        font-size: 40px;
+        font-weight: 900;
+        color: #f7f4ec;
+        line-height: 1.2;
+        letter-spacing: -0.5px;
+      }
+
+      .icon-box {
+        width: 44px;
+        height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+
+      /* Tem quy chuẩn an ninh 11/9 */
+      .directive-badge {
+        position: absolute;
+        top: 1120px;
+        right: 100px;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        background-color: #ff6a1a;
+        border: 3px solid #141414;
+        box-shadow: 8px 8px 0 #141414;
+        padding: 14px 24px;
+        border-radius: 4px;
+      }
+
+      .badge-prefix {
+        font-size: 16px;
+        font-weight: 900;
+        color: #141414;
+        letter-spacing: 2px;
+        margin-bottom: 2px;
+      }
+
+      .badge-title {
+        font-size: 34px;
+        font-weight: 900;
+        color: #141414;
+        letter-spacing: -0.5px;
+      }
+
+      /* Sơ đồ vector cơ chế bảo vệ một chiều (Shot 2) */
+      .mechanism-strip {
+        position: absolute;
+        top: 1070px;
+        left: 60px;
+        width: 960px;
+        height: 180px;
+        background-color: #141414;
+        border: 4px solid #141414;
+        border-left: 8px solid #ff6a1a;
+        box-shadow: 12px 12px 0 rgba(20, 20, 20, 0.5);
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 32px;
+      }
+
+      .mech-col {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+      }
+
+      .mech-left {
+        width: 270px;
+      }
+
+      .mech-right {
+        width: 250px;
+        text-align: right;
+      }
+
+      .mech-label {
+        font-size: 22px;
+        font-weight: 900;
+        color: #f7f4ec;
+        letter-spacing: 0.5px;
+        margin-bottom: 4px;
+      }
+
+      .mech-label-cockpit {
+        font-size: 26px;
+        font-weight: 900;
+        color: #ff6a1a;
+        letter-spacing: 1px;
+        margin-bottom: 4px;
+      }
+
+      .mech-sub {
+        font-size: 16px;
+        font-weight: 700;
+        color: #e7e3d9;
+      }
+
+      .mech-center {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        width: 340px;
+      }
+
+      .mech-svg {
+        width: 320px;
+        height: 70px;
+      }
+
+      .barrier-tag {
+        margin-top: 4px;
+        background-color: #ff6a1a;
+        color: #141414;
+        font-size: 15px;
+        font-weight: 900;
+        letter-spacing: 1px;
+        padding: 3px 12px;
+        border-radius: 2px;
+        border: 2px solid #141414;
+      }
+
+      /* SVG Diagram overlay cho Shot 1 */
+      .diagram-svg {
+        position: absolute;
+        inset: 0;
+        width: 1080px;
+        height: 1920px;
+        pointer-events: none;
+      }
+
+      /* Thanh cam nhận diện Vox cố định ở đáy khung hình */
+      #bottom-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 1080px;
+        height: 12px;
+        background-color: #ff6a1a;
+        z-index: 100;
+      }
+
+      /* Class màu an toàn hỗ trợ chuẩn WCAG */
+      .hf-plate-ink {
+        background-color: #141414;
+        color: #f7f4ec;
+      }
+      .hf-hl-orange {
+        background-color: #ff6a1a;
+        color: #141414;
+      }
+      .hf-plate-paper {
+        background-color: #e7e3d9;
+        color: #141414;
+      }
+      .hf-text-ink {
+        color: #141414;
+      }
+      .hf-text-light {
+        color: #f7f4ec;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s07"
+      data-start="0"
+      data-width="1080"
+      data-height="1920"
+      data-duration="12.8"
+    >
+      <!-- LỚP NỀN TĨNH (z-index: 1) -->
+      <div id="vox-bg" class="vox-grid-bg">
+        <div class="corner-mark corner-tl"></div>
+        <div class="corner-mark corner-tr"></div>
+        <div class="corner-mark corner-bl"></div>
+        <div class="corner-mark corner-br"></div>
+      </div>
+
+      <!-- SHOT 1: HÌNH ẢNH TOÀN CẢNH CÁNH CỬA & CHỐT KHÓA (0.0s - 6.3s, z-index: 2) -->
+      <section id="shot-1" class="clip" data-start="0" data-duration="6.3" style="z-index: 2;">
+        <div id="shot-1-frame" class="editorial-frame">
+          <div class="frame-tag-top">CƠ CHẾ BẢO VỆ // BUỒNG LÁI</div>
+          <img
+            id="shot-1-img"
+            class="editorial-img"
+            src="assets/img-03-cockpit-security-door-keypad.jpg"
+            alt="Cánh cửa buồng lái bọc thép"
+            data-layout-allow-overflow="true"
+          />
+        </div>
+      </section>
+
+      <!-- SHOT 1 OVERLAY 1: CỬA THÉP KIÊN CỐ & ICON BAN (1.3s - 3.5s, z-index: 10) -->
+      <div id="shot-1-ov1" class="clip" data-start="1.3" data-duration="2.2" style="z-index: 10;">
+        <!-- Sơ đồ vector chỉ hướng vào ổ khóa két sắt -->
+        <svg class="diagram-svg" viewBox="0 0 1080 1920" fill="none">
+          <path
+            id="shot-1-diagram-line"
+            d="M 460 300 L 540 680"
+            stroke="#FF6A1A"
+            stroke-width="4"
+            stroke-linecap="round"
+            stroke-dasharray="450"
+            stroke-dashoffset="450"
+          />
+          <g id="shot-1-lock-point">
+            <circle cx="540" cy="680" r="16" fill="#FF6A1A" stroke="#141414" stroke-width="4" />
+            <circle cx="540" cy="680" r="30" fill="none" stroke="#FF6A1A" stroke-width="3" stroke-dasharray="6 6" />
+          </g>
+        </svg>
+
+        <!-- Thẻ punch phrase -->
+        <div id="shot-1-ov1-card" class="punch-card" style="top: 240px; left: 100px;">
+          <div class="icon-box">
+            <!-- Icon chuẩn: ban (cấm xâm nhập) -->
+            <svg width="44" height="44" viewBox="0 0 44 44" fill="none">
+              <circle cx="22" cy="22" r="17" stroke="#FF6A1A" stroke-width="4.5" />
+              <line x1="10" y1="10" x2="34" y2="34" stroke="#FF6A1A" stroke-width="4.5" stroke-linecap="round" />
+            </svg>
+          </div>
+          <div class="punch-text">CỬA THÉP KIÊN CỐ</div>
+        </div>
+      </div>
+
+      <!-- SHOT 1 OVERLAY 2: CHUẨN AN NINH 11/9 (4.4s - 6.2s, z-index: 10) -->
+      <div id="shot-1-ov2" class="clip" data-start="4.4" data-duration="1.8" style="z-index: 10;">
+        <div id="shot-1-ov2-card" class="directive-badge">
+          <span class="badge-prefix">QUY CHUẨN</span>
+          <span class="badge-title">CHUẨN AN NINH 11/9</span>
+        </div>
+      </div>
+
+      <!-- SHOT 2: CẬN CẢNH BÀN PHÍM VÀ CHỐT ĐIỆN TỬ (6.3s - 12.8s, z-index: 2) -->
+      <section id="shot-2" class="clip" data-start="6.3" data-duration="6.5" style="z-index: 2;">
+        <div id="shot-2-frame" class="editorial-frame">
+          <div class="frame-tag-top">BÀN PHÍM SỐ // KHÓA ĐIỆN TỬ</div>
+          <img
+            id="shot-2-img"
+            class="editorial-img"
+            src="assets/img-03-cockpit-security-door-keypad.jpg"
+            alt="Cận cảnh bàn phím số buồng lái"
+            data-layout-allow-overflow="true"
+          />
+        </div>
+      </section>
+
+      <!-- SHOT 2 OVERLAY: BẢO VỆ MỘT CHIỀU & SƠ ĐỒ CƠ CHẾ (8.3s - 10.5s, z-index: 10) -->
+      <div id="shot-2-ov1" class="clip" data-start="8.3" data-duration="2.2" style="z-index: 10;">
+        <!-- Thẻ punch phrase với icon check -->
+        <div id="shot-2-ov1-card" class="punch-card" style="top: 240px; left: 100px;">
+          <div class="icon-box">
+            <!-- Icon chuẩn: check -->
+            <svg width="44" height="44" viewBox="0 0 44 44" fill="none">
+              <circle cx="22" cy="22" r="17" stroke="#FF6A1A" stroke-width="4.5" />
+              <path d="M13 22L19 28L31 16" stroke="#FF6A1A" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </div>
+          <div class="punch-text">BẢO VỆ MỘT CHIỀU</div>
+        </div>
+
+        <!-- Dải sơ đồ vector minh họa cơ chế ngăn lực tác động từ khoang khách -->
+        <div id="shot-2-mechanism" class="mechanism-strip">
+          <div class="mech-col mech-left">
+            <div class="mech-label">KHOANG HÀNH KHÁCH</div>
+            <div class="mech-sub">Lực xâm nhập bên ngoài</div>
+          </div>
+
+          <div class="mech-center">
+            <svg class="mech-svg" viewBox="0 0 320 70" fill="none">
+              <!-- Mũi tên lực đẩy tiến tới vách ngăn -->
+              <path
+                id="shot-2-arrow-path"
+                d="M 20 35 L 140 35"
+                stroke="#FF6A1A"
+                stroke-width="4.5"
+                stroke-linecap="round"
+                stroke-dasharray="140"
+                stroke-dashoffset="140"
+              />
+              <path d="M 125 24 L 140 35 L 125 46" stroke="#FF6A1A" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" />
+
+              <!-- Vách ngăn thép / Chốt khóa cứng -->
+              <rect id="shot-2-barrier" x="156" y="8" width="14" height="54" rx="3" fill="#FF6A1A" />
+
+              <!-- Dấu X chặn đứng hoàn toàn lực đẩy -->
+              <path d="M 148 28 L 162 42 M 162 28 L 148 42" stroke="#141414" stroke-width="3.5" stroke-linecap="round" />
+
+              <!-- Vùng an toàn phía buồng lái -->
+              <circle cx="230" cy="35" r="18" fill="#141414" stroke="#FF6A1A" stroke-width="3" />
+              <path d="M 224 35 L 228 39 L 236 31" stroke="#FF6A1A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+            <div class="barrier-tag">KHÓA CỨNG</div>
+          </div>
+
+          <div class="mech-col mech-right">
+            <div class="mech-label-cockpit">BUỒNG LÁI</div>
+            <div class="mech-sub">Khu vực an toàn</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- THANH CHỮ KÝ THƯƠNG HIỆU MÀU CAM Ở ĐÁY KHUNG HÌNH (z-index: 100) -->
+      <div id="bottom-bar"></div>
+    </div>
+
+    <!-- SCRIPT CHÍNH XÂY DỰNG TIMELINE GSAP CHO HYPERFRAMES -->
+    <script>
+      // Khởi tạo timeline gốc dạng PAUSED theo hợp đồng HyperFrames
+      const tl = gsap.timeline({ paused: true });
+
+      // ==========================================
+      // SHOT 1: 0.0s -> 6.3s (unfold & zoom-in)
+      // ==========================================
+
+      // Hiệu ứng unfold (mở gập trang giấy theo phong cách biên tập Vox)
+      tl.fromTo(
+        "#shot-1-frame",
+        { scaleY: 0.25, scaleX: 0.9, rotationX: -25, opacity: 0, transformOrigin: "50% 0%" },
+        { scaleY: 1, scaleX: 1, rotationX: 0, opacity: 1, duration: 0.7, ease: "power3.out" },
+        0
+      );
+
+      // Camera chuyển động zoom chậm vào cơ chế ổ khóa (0s -> 6.3s)
+      tl.fromTo(
+        "#shot-1-img",
+        { scale: 1.0, transformOrigin: "50% 55%" },
+        { scale: 1.16, duration: 6.3, ease: "none" },
+        0
+      );
+
+      // Overlay 1 xuất hiện tại 1.3s: nhãn CỬA THÉP KIÊN CỐ & đường dẫn ổ khóa
+      tl.fromTo(
+        "#shot-1-ov1-card",
+        { x: -50, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.5, ease: "power3.out" },
+        1.3
+      );
+      tl.fromTo(
+        "#shot-1-diagram-line",
+        { strokeDashoffset: 450 },
+        { strokeDashoffset: 0, duration: 0.6, ease: "power2.out" },
+        1.4
+      );
+      tl.fromTo(
+        "#shot-1-lock-point",
+        { scale: 0, opacity: 0, transformOrigin: "540px 680px" },
+        { scale: 1, opacity: 1, duration: 0.4, ease: "power3.out" },
+        1.8
+      );
+
+      // Overlay 2 xuất hiện tại 4.4s: nhãn CHUẨN AN NINH 11/9
+      tl.fromTo(
+        "#shot-1-ov2-card",
+        { scale: 0.85, opacity: 0, transformOrigin: "100% 50%" },
+        { scale: 1, opacity: 1, duration: 0.45, ease: "power3.out" },
+        4.4
+      );
+
+      // ==========================================
+      // SHOT 2: 6.3s -> 12.8s (cut & pan-right)
+      // ==========================================
+
+      // Camera pan nhẹ từ trái sang phải tại cận cảnh bàn phím (6.3s -> 12.8s)
+      tl.fromTo(
+        "#shot-2-img",
+        { x: -45, scale: 1.45, transformOrigin: "48% 46%" },
+        { x: 45, scale: 1.45, duration: 6.5, ease: "none" },
+        6.3
+      );
+
+      // Overlay xuất hiện tại 8.3s: nhãn BẢO VỆ MỘT CHIỀU
+      tl.fromTo(
+        "#shot-2-ov1-card",
+        { x: -50, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.5, ease: "power3.out" },
+        8.3
+      );
+
+      // Dải sơ đồ vector cơ chế bảo vệ một chiều xuất hiện tại 8.5s
+      tl.fromTo(
+        "#shot-2-mechanism",
+        { y: 30, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.55, ease: "power3.out" },
+        8.5
+      );
+      tl.fromTo(
+        "#shot-2-arrow-path",
+        { strokeDashoffset: 140 },
+        { strokeDashoffset: 0, duration: 0.5, ease: "power2.out" },
+        8.8
+      );
+      tl.fromTo(
+        "#shot-2-barrier",
+        { scaleY: 0, opacity: 0, transformOrigin: "50% 50%" },
+        { scaleY: 1, opacity: 1, duration: 0.35, ease: "power3.out" },
+        9.1
+      );
+
+      // BẮT BUỘC: Đăng ký timeline duy nhất trên window.__timelines["scene-s07"]
+      window.__timelines = window.__timelines || {};
+      window.__timelines["scene-s07"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

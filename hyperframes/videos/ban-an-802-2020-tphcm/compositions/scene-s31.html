@@ -1,0 +1,388 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+/* hf-safe-colors (tất định từ style-tokens.json) */
+.hf-text-ink { color: #141414; }
+.hf-text-light { color: #F7F4EC; }
+.hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+.hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+.hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+.hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background: #e7e3d9;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: #e7e3d9;
+      }
+      .clip {
+        position: absolute;
+        inset: 0;
+      }
+
+      /* Background Chart Variant: Lưới ô vuông mờ + 4 đường kẻ ngang đậm + vạch cam mép trái */
+      .bg-chart {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background-image:
+          linear-gradient(rgba(20, 20, 20, 0.08) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(20, 20, 20, 0.08) 1px, transparent 1px);
+        background-size: 84px 84px;
+      }
+      .chart-line {
+        position: absolute;
+        left: 0;
+        width: 100%;
+        height: 2px;
+        background: rgba(20, 20, 20, 0.32);
+      }
+      .chart-tick {
+        position: absolute;
+        left: 0;
+        width: 28px;
+        height: 6px;
+        background: #ff6a1a;
+      }
+
+      /* Thanh cam nhận diện thương hiệu cố định mép đáy */
+      .bottom-accent-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 14px;
+        background: #ff6a1a;
+        z-index: 100;
+      }
+
+      /* Tờ tài liệu / Hồ sơ bào chữa (Unfold Document) */
+      .document-card {
+        position: absolute;
+        left: 80px;
+        top: 220px;
+        width: 920px;
+        height: 1110px;
+        background: #f5f0e4;
+        border: 3px solid #141414;
+        box-shadow: 16px 16px 0px #141414;
+        padding: 40px 44px;
+        display: flex;
+        flex-direction: column;
+        z-index: 10;
+        transform-origin: top center;
+      }
+
+      /* Kẹp giấy / Tape dán trang trí góc */
+      .corner-tape {
+        position: absolute;
+        top: -16px;
+        right: 48px;
+        width: 140px;
+        height: 32px;
+        background: #ff6a1a;
+        border: 2px solid #141414;
+        transform: rotate(3deg);
+        z-index: 12;
+      }
+
+      /* Header của tài liệu */
+      .doc-header {
+        margin-bottom: 24px;
+      }
+      .badge-category {
+        display: inline-block;
+        background: #ff6a1a;
+        color: #141414;
+        font-weight: 900;
+        font-size: 20px;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        padding: 6px 18px;
+        border: 2px solid #141414;
+        margin-bottom: 14px;
+      }
+      .doc-title {
+        margin: 0 0 10px 0;
+        font-size: 50px;
+        font-weight: 900;
+        line-height: 1.16;
+        color: #141414;
+        text-transform: uppercase;
+        letter-spacing: -0.5px;
+      }
+      .doc-subtitle {
+        margin: 0;
+        font-size: 22px;
+        font-weight: 700;
+        color: #141414;
+        letter-spacing: 0.5px;
+      }
+      .doc-divider {
+        margin-top: 22px;
+        height: 3px;
+        background: #141414;
+        width: 100%;
+      }
+
+      /* Danh sách 4 luận điểm bào chữa */
+      .list-container {
+        display: flex;
+        flex-direction: column;
+        gap: 22px;
+        margin-top: 14px;
+      }
+      .list-item {
+        position: relative;
+        background: #141414;
+        border-radius: 8px;
+        padding: 20px 24px;
+        display: flex;
+        align-items: center;
+        gap: 24px;
+        box-shadow: 6px 6px 0px #ff6a1a;
+        transform-origin: center center;
+        will-change: transform, opacity;
+      }
+      .item-badge {
+        flex-shrink: 0;
+        width: 60px;
+        height: 60px;
+        background: #ff6a1a;
+        color: #141414;
+        font-weight: 900;
+        font-size: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 6px;
+        border: 2px solid #141414;
+      }
+      .item-content {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+      .item-headline {
+        margin: 0;
+        font-size: 36px;
+        font-weight: 900;
+        line-height: 1.2;
+        color: #f7f4ec;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      .item-desc {
+        margin: 0;
+        font-size: 21px;
+        font-weight: 700;
+        color: #e7e3d9;
+        line-height: 1.3;
+      }
+
+      /* Con dấu mộc pháp đình / Đề nghị giảm nhẹ */
+      .doc-stamp {
+        position: absolute;
+        bottom: 34px;
+        right: 44px;
+        width: 220px;
+        height: 84px;
+        background: #141414;
+        border: 3px solid #ff6a1a;
+        border-radius: 8px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        transform-origin: center center;
+        box-shadow: 4px 4px 0px rgba(20, 20, 20, 0.4);
+        z-index: 15;
+      }
+      .stamp-label-top {
+        font-size: 13px;
+        font-weight: 900;
+        color: #e7e3d9;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+      }
+      .stamp-label-main {
+        font-size: 20px;
+        font-weight: 900;
+        color: #ff6a1a;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s31"
+      data-width="1080"
+      data-height="1920"
+      data-duration="8.99"
+    >
+      <section id="scene-s31" class="clip" data-start="0" data-duration="8.99">
+        <!-- Nền Chart Lines & Ticks -->
+        <div class="bg-chart">
+          <!-- 4 đường kẻ tại 20%, 40%, 60%, 80% chiều cao canvas -->
+          <div class="chart-line" style="top: 384px;"></div>
+          <div class="chart-tick" style="top: 382px;"></div>
+
+          <div class="chart-line" style="top: 768px;"></div>
+          <div class="chart-tick" style="top: 766px;"></div>
+
+          <div class="chart-line" style="top: 1152px;"></div>
+          <div class="chart-tick" style="top: 1150px;"></div>
+
+          <div class="chart-line" style="top: 1536px;"></div>
+          <div class="chart-tick" style="top: 1534px;"></div>
+        </div>
+
+        <!-- Lá đơn tài liệu bào chữa -->
+        <div id="doc-sheet" class="document-card">
+          <div class="corner-tape"></div>
+
+          <!-- Header tài liệu -->
+          <div id="doc-header" class="doc-header">
+            <div class="badge-category">Luật sư bào chữa • Phúc thẩm</div>
+            <h1 class="doc-title">Đề nghị Tòa xem xét</h1>
+            <p class="doc-subtitle">CÁC TÌNH TIẾT XIN GIẢM NHẸ HÌNH PHẠT</p>
+            <div class="doc-divider"></div>
+          </div>
+
+          <!-- Danh sách 4 luận điểm -->
+          <div class="list-container">
+            <!-- Luận điểm 1: 2.25s -->
+            <div id="item-1" class="list-item">
+              <div class="item-badge">01</div>
+              <div class="item-content">
+                <h2 class="item-headline">1. HỌC VẤN THẤP</h2>
+                <p class="item-desc">Bị cáo Thành có học vấn thấp</p>
+              </div>
+            </div>
+
+            <!-- Luận điểm 2: 3.26s -->
+            <div id="item-2" class="list-item">
+              <div class="item-badge">02</div>
+              <div class="item-content">
+                <h2 class="item-headline">2. GIA CẢNH KHÓ KHĂN</h2>
+                <p class="item-desc">Hoàn cảnh gia đình khó khăn</p>
+              </div>
+            </div>
+
+            <!-- Luận điểm 3: 4.16s -->
+            <div id="item-3" class="list-item">
+              <div class="item-badge">03</div>
+              <div class="item-content">
+                <h2 class="item-headline">3. CHA MẸ GIÀ YẾU</h2>
+                <p class="item-desc">Cha mẹ đã tuổi cao già yếu</p>
+              </div>
+            </div>
+
+            <!-- Luận điểm 4: 6.26s -->
+            <div id="item-4" class="list-item">
+              <div class="item-badge">04</div>
+              <div class="item-content">
+                <h2 class="item-headline">4. NUÔI DƯỠNG CON</h2>
+                <p class="item-desc">Gia đình đang nuôi dưỡng con chung</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Con dấu xác nhận -->
+          <div id="doc-stamp" class="doc-stamp">
+            <span class="stamp-label-top">Hồ sơ phúc thẩm</span>
+            <span class="stamp-label-main">Đề nghị giảm nhẹ</span>
+          </div>
+        </div>
+
+        <!-- Thanh cam đáy cố định -->
+        <div class="bottom-accent-bar"></div>
+      </section>
+    </div>
+
+    <script>
+      const tl = gsap.timeline({ paused: true });
+
+      // 1. Entrance animation cho lá đơn: Unfold mở từ trên xuống (t = 0.15s)
+      tl.fromTo(
+        "#doc-sheet",
+        { scaleY: 0.15, opacity: 0 },
+        { scaleY: 1, opacity: 1, duration: 0.65, ease: "power3.out" },
+        0.15
+      );
+
+      tl.fromTo(
+        "#doc-header",
+        { y: -24, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.45, ease: "power2.out" },
+        0.4
+      );
+
+      // 2. Luận điểm 1: 1. HỌC VẤN THẤP (t = 2.25s)
+      tl.fromTo(
+        "#item-1",
+        { scale: 0.85, y: 30, opacity: 0 },
+        { scale: 1, y: 0, opacity: 1, duration: 0.45, ease: "power3.out" },
+        2.25
+      );
+
+      // 3. Luận điểm 2: 2. GIA CẢNH KHÓ KHĂN (t = 3.26s)
+      tl.fromTo(
+        "#item-2",
+        { scale: 0.85, y: 30, opacity: 0 },
+        { scale: 1, y: 0, opacity: 1, duration: 0.45, ease: "power3.out" },
+        3.26
+      );
+
+      // 4. Luận điểm 3: 3. CHA MẸ GIÀ YẾU (t = 4.16s)
+      tl.fromTo(
+        "#item-3",
+        { scale: 0.85, y: 30, opacity: 0 },
+        { scale: 1, y: 0, opacity: 1, duration: 0.45, ease: "power3.out" },
+        4.16
+      );
+
+      // 5. Luận điểm 4: 4. NUÔI DƯỠNG CON (t = 6.26s)
+      tl.fromTo(
+        "#item-4",
+        { scale: 0.85, y: 30, opacity: 0 },
+        { scale: 1, y: 0, opacity: 1, duration: 0.45, ease: "power3.out" },
+        6.26
+      );
+
+      // 6. Con dấu xác nhận hạ cánh đóng dấu hồ sơ (t = 7.15s)
+      tl.fromTo(
+        "#doc-stamp",
+        { scale: 1.9, opacity: 0, rotation: 20 },
+        { scale: 1, opacity: 1, rotation: -7, duration: 0.4, ease: "power3.out" },
+        7.15
+      );
+
+      // Đăng ký timeline cho HyperFrames
+      window.__timelines = window.__timelines || {};
+      window.__timelines["scene-s31"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

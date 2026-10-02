@@ -1,0 +1,514 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap"
+    />
+      <style>
+/* hf-safe-colors (tất định từ style-tokens.json) */
+.hf-text-ink { color: #141414; }
+.hf-text-light { color: #F7F4EC; }
+.hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+.hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+.hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+.hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #e7e3d9;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      /* Composition Root */
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: #e7e3d9;
+        /* Vox Grid Pattern 84px */
+        background-image:
+          linear-gradient(rgba(20, 20, 20, 0.22) 1.5px, transparent 1.5px),
+          linear-gradient(90deg, rgba(20, 20, 20, 0.22) 1.5px, transparent 1.5px);
+        background-size: 84px 84px;
+      }
+
+      /* Base Clip Contract */
+      .clip {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+      }
+
+      /* Signature Bottom Orange Bar */
+      .bottom-orange-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 1080px;
+        height: 14px;
+        background-color: #ff6a1a;
+        z-index: 100;
+      }
+
+      /* Scene Header Bar */
+      .scene-header {
+        position: absolute;
+        top: 80px;
+        left: 60px;
+        right: 60px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 2px solid #141414;
+        padding-bottom: 14px;
+        z-index: 20;
+      }
+
+      .scene-tag {
+        font-size: 22px;
+        font-weight: 900;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        color: #141414;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .scene-tag::before {
+        content: "";
+        display: inline-block;
+        width: 12px;
+        height: 12px;
+        background-color: #ff6a1a;
+      }
+
+      .scene-code {
+        font-size: 18px;
+        font-weight: 700;
+        color: #141414;
+        letter-spacing: 1px;
+      }
+
+      /* Hero Visual Card (Crop sang nửa bên phải img-16: đô thị bê tông xám & miệng cống) */
+      .hero-frame {
+        position: absolute;
+        top: 170px;
+        left: 60px;
+        width: 960px;
+        height: 780px;
+        overflow: hidden;
+        border: 4px solid #141414;
+        border-radius: 12px;
+        background-color: #141414;
+        box-shadow: 0 24px 50px rgba(20, 20, 20, 0.28);
+      }
+
+      .hero-img-scaler {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        transform-origin: 80% 75%; /* Zoom tập trung vào miệng cống góc phải dưới */
+        will-change: transform;
+      }
+
+      .hero-img {
+        position: absolute;
+        top: 0;
+        left: -100%; /* Cắt bỏ nửa trái (vùng đất xanh), giữ trọn nửa phải (đô thị bê tông xám xịt) */
+        width: 200%;
+        height: 100%;
+        object-fit: cover;
+        object-position: right center;
+        display: block;
+      }
+
+      /* Technical Corner Marks on Frame */
+      .corner-mark {
+        position: absolute;
+        width: 20px;
+        height: 20px;
+        border-color: #ff6a1a;
+        pointer-events: none;
+        z-index: 10;
+      }
+      .cm-tl {
+        top: 14px;
+        left: 14px;
+        border-top: 3px solid #ff6a1a;
+        border-left: 3px solid #ff6a1a;
+      }
+      .cm-tr {
+        top: 14px;
+        right: 14px;
+        border-top: 3px solid #ff6a1a;
+        border-right: 3px solid #ff6a1a;
+      }
+      .cm-bl {
+        bottom: 14px;
+        left: 14px;
+        border-bottom: 3px solid #ff6a1a;
+        border-left: 3px solid #ff6a1a;
+      }
+      .cm-br {
+        bottom: 14px;
+        right: 14px;
+        border-bottom: 3px solid #ff6a1a;
+        border-right: 3px solid #ff6a1a;
+      }
+
+      /* Split Screen Sub-badge inside hero frame */
+      .frame-sub-tag {
+        position: absolute;
+        top: 16px;
+        right: 16px;
+        background: #141414;
+        border-left: 4px solid #ff6a1a;
+        padding: 6px 14px;
+        color: #f7f4ec;
+        font-size: 16px;
+        font-weight: 700;
+        letter-spacing: 1.5px;
+        z-index: 15;
+      }
+
+      /* SVG Diagram Layer */
+      .diagram-svg {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 8;
+        pointer-events: none;
+      }
+
+      /* Overlay 1: Label "BÊ TÔNG HÓA 90%" */
+      .label-card {
+        position: absolute;
+        top: 220px;
+        left: 90px;
+        background-color: #141414;
+        border-left: 10px solid #ff6a1a;
+        border-radius: 8px;
+        padding: 16px 26px;
+        box-shadow: 0 16px 36px rgba(0, 0, 0, 0.45);
+        z-index: 30;
+      }
+
+      .label-pre {
+        font-size: 16px;
+        font-weight: 700;
+        color: #ff6a1a;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        margin-bottom: 4px;
+      }
+
+      .label-main {
+        font-size: 42px;
+        font-weight: 900;
+        color: #f7f4ec;
+        letter-spacing: 0.5px;
+        line-height: 1.1;
+      }
+
+      .label-orange {
+        color: #ff6a1a;
+      }
+
+      /* Overlay 3: Warning Badge */
+      .warning-badge {
+        position: absolute;
+        top: 980px;
+        left: 60px;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        background-color: #141414;
+        border-left: 8px solid #ff6a1a;
+        border-radius: 8px;
+        padding: 14px 22px;
+        box-shadow: 0 12px 30px rgba(20, 20, 20, 0.25);
+        z-index: 40;
+      }
+
+      .warning-icon {
+        width: 36px;
+        height: 36px;
+        stroke: #ff6a1a;
+      }
+
+      .warning-text {
+        color: #ff6a1a;
+        font-size: 24px;
+        font-weight: 900;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+      }
+
+      /* Overlay 2: Punch Phrase "MẤT KHẢ NĂNG THẤM" */
+      .punch-card {
+        position: absolute;
+        top: 1075px;
+        left: 60px;
+        width: 960px;
+        background-color: #141414;
+        border-left: 16px solid #ff6a1a;
+        border-radius: 12px;
+        padding: 30px 42px;
+        box-shadow: 0 20px 44px rgba(20, 20, 20, 0.35);
+        z-index: 40;
+      }
+
+      .punch-sub {
+        font-size: 20px;
+        font-weight: 700;
+        color: #ff6a1a;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        margin-bottom: 8px;
+      }
+
+      .punch-text {
+        font-size: 60px;
+        font-weight: 900;
+        color: #f7f4ec;
+        line-height: 1.18;
+        letter-spacing: -0.5px;
+        text-transform: uppercase;
+      }
+    </style>
+
+    <!-- Root Composition: 1080x1920, 7.87s -->
+    <div
+      id="root"
+      data-composition-id="scene-s23"
+      data-width="1080"
+      data-height="1920"
+      data-duration="7.87"
+    >
+      <!-- Base Layout & Header -->
+      <header class="scene-header">
+        <div class="scene-tag">HỆ THỐNG THOÁT NƯỚC ĐÔ THỊ</div>
+        <div class="scene-code">PHÂN TÍCH // ĐÔ THỊ HÓA</div>
+      </header>
+
+      <!-- Shot S23-1 Main Scene Clip (0s -> 7.87s) -->
+      <section id="shot-s23" class="clip" data-start="0" data-duration="7.87">
+        <!-- Hero Visual Frame with Split Right Crop (Concrete Urban) -->
+        <div id="hero-frame" class="hero-frame">
+          <div id="hero-img-scaler" class="hero-img-scaler">
+            <img
+              id="hero-img"
+              class="hero-img"
+              src="assets/img-16-wetlands-vs-urban-drainage-split.jpg"
+              alt="Bê tông hóa đô thị và cống rãnh quá tải"
+            />
+          </div>
+
+          <!-- Technical Graphic Accents -->
+          <div class="corner-mark cm-tl"></div>
+          <div class="corner-mark cm-tr"></div>
+          <div class="corner-mark cm-bl"></div>
+          <div class="corner-mark cm-br"></div>
+          <div class="frame-sub-tag">BỀ MẶT BÊ TÔNG HÓA</div>
+
+          <!-- Flow / Drainage Vector Graphic Overlay -->
+          <svg class="diagram-svg" viewBox="0 0 960 780">
+            <!-- Runoff Flow Path across concrete surface toward drain -->
+            <path
+              id="runoff-path-1"
+              d="M 160 380 Q 420 490 730 630"
+              fill="none"
+              stroke="#FF6A1A"
+              stroke-width="5"
+              stroke-dasharray="14 10"
+              stroke-linecap="round"
+            />
+            <path
+              id="runoff-path-2"
+              d="M 280 300 Q 510 440 760 620"
+              fill="none"
+              stroke="#FF6A1A"
+              stroke-width="4"
+              stroke-dasharray="10 8"
+              stroke-linecap="round"
+            />
+            <!-- Target Reticle at Clogged Drain -->
+            <g id="drain-reticle" transform="translate(760, 630)">
+              <circle
+                r="40"
+                fill="none"
+                stroke="#FF6A1A"
+                stroke-width="3"
+                stroke-dasharray="6 4"
+              />
+              <circle r="14" fill="#FF6A1A" />
+              <line x1="-54" y1="0" x2="54" y2="0" stroke="#FF6A1A" stroke-width="2" />
+              <line x1="0" y1="-54" x2="0" y2="54" stroke="#FF6A1A" stroke-width="2" />
+            </g>
+          </svg>
+        </div>
+      </section>
+
+      <!-- Overlay 1: Label "BÊ TÔNG HÓA 90%" (start: 2.16s, duration: 2.20s -> ends: 4.36s) -->
+      <div
+        id="clip-overlay-label"
+        class="clip"
+        data-start="2.16"
+        data-duration="2.20"
+      >
+        <div id="label-card" class="label-card">
+          <div class="label-pre">TỶ LỆ PHỦ KÍN</div>
+          <div class="label-main">
+            BÊ TÔNG HÓA <span class="label-orange">90%</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Overlay 3: Icon Warning (start: 6.36s, duration: 1.51s -> holds to 7.87s) -->
+      <div
+        id="clip-overlay-warning"
+        class="clip"
+        data-start="6.36"
+        data-duration="1.51"
+      >
+        <div id="warning-badge" class="warning-badge">
+          <svg
+            class="warning-icon"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke-width="2.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path
+              d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"
+            />
+            <line x1="12" y1="9" x2="12" y2="13" />
+            <line x1="12" y1="17" x2="12.01" y2="17" />
+          </svg>
+          <span class="warning-text">CẢNH BÁO</span>
+        </div>
+      </div>
+
+      <!-- Overlay 2: Punch Phrase "MẤT KHẢ NĂNG THẤM" (start: 5.56s, duration: 2.31s -> holds to 7.87s) -->
+      <div
+        id="clip-overlay-punch"
+        class="clip"
+        data-start="5.56"
+        data-duration="2.31"
+      >
+        <div id="punch-card" class="punch-card">
+          <div class="punch-sub">HỆ QUẢ TRỰC TIẾP</div>
+          <div class="punch-text">MẤT KHẢ NĂNG THẤM</div>
+        </div>
+      </div>
+
+      <!-- Bottom Orange Accent Bar -->
+      <div class="bottom-orange-bar"></div>
+    </div>
+
+    <!-- GSAP seekable timeline registration -->
+    <script>
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true });
+
+      // 1. Initial Hero Frame entrance (grow transition, settle smoothly)
+      tl.fromTo(
+        "#hero-frame",
+        { scale: 0.88, opacity: 0 },
+        { scale: 1.0, opacity: 1, duration: 0.65, ease: "power3.out" },
+        0.05
+      );
+
+      // 2. Camera zoom-in: 1.0x to 1.08x focused on urban drainage
+      tl.fromTo(
+        "#hero-img-scaler",
+        { scale: 1.0 },
+        { scale: 1.08, duration: 7.87, ease: "none" },
+        0
+      );
+
+      // 3. Diagram vector animations (flow toward clogged drain)
+      const path1 = document.getElementById("runoff-path-1");
+      const path2 = document.getElementById("runoff-path-2");
+      const len1 = path1.getTotalLength();
+      const len2 = path2.getTotalLength();
+
+      path1.style.strokeDasharray = len1;
+      path1.style.strokeDashoffset = len1;
+      path2.style.strokeDasharray = len2;
+      path2.style.strokeDashoffset = len2;
+
+      tl.to(
+        "#runoff-path-1",
+        { strokeDashoffset: 0, duration: 0.9, ease: "power2.out" },
+        0.8
+      );
+      tl.to(
+        "#runoff-path-2",
+        { strokeDashoffset: 0, duration: 0.9, ease: "power2.out" },
+        1.1
+      );
+
+      // Reticle pulse at the drain
+      tl.fromTo(
+        "#drain-reticle",
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.5, ease: "power3.out" },
+        1.4
+      );
+
+      // 4. Overlay 1: Label "BÊ TÔNG HÓA 90%" (atMs 172800 -> 2.16s, hold 2.2s -> ends at 4.36s)
+      tl.fromTo(
+        "#label-card",
+        { y: 32, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.4, ease: "power3.out" },
+        2.16
+      );
+      tl.to(
+        "#label-card",
+        { opacity: 0, y: -16, duration: 0.25, ease: "power2.in" },
+        4.08
+      );
+
+      // 5. Overlay 2: Punch-phrase "MẤT KHẢ NĂNG THẤM" (atMs 176200 -> 5.56s)
+      tl.fromTo(
+        "#punch-card",
+        { y: 40, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.45, ease: "power3.out" },
+        5.56
+      );
+
+      // 6. Overlay 3: Icon Warning (atMs 177000 -> 6.36s)
+      tl.fromTo(
+        "#warning-badge",
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.4, ease: "power3.out" },
+        6.36
+      );
+
+      // Register master timeline
+      window.__timelines["scene-s23"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

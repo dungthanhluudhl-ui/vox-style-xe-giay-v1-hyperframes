@@ -1,0 +1,510 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+      /* hf-safe-colors (tất định từ style-tokens.json) */
+      .hf-text-ink { color: #141414; }
+      .hf-text-light { color: #F7F4EC; }
+      .hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+      .hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+      .hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+      .hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        width: 1080px;
+        height: 1920px;
+        background: #e7e3d9;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: #e7e3d9;
+      }
+      .clip {
+        position: absolute;
+        inset: 0;
+      }
+
+      /* NỀN BIẾN THỂ CHART: 4 ĐƯỜNG KẺ NGANG ĐẬM + TICK CAM MÉP TRÁI */
+      .chart-bg {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        z-index: 1;
+      }
+      .chart-line {
+        position: absolute;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: rgba(20, 20, 20, 0.22);
+      }
+      .chart-tick {
+        position: absolute;
+        left: 0;
+        width: 20px;
+        height: 6px;
+        background: #ff6a1a;
+        border-top: 1.5px solid #141414;
+        border-bottom: 1.5px solid #141414;
+        border-right: 1.5px solid #141414;
+      }
+
+      /* THANH CAM CHỮ KÝ Ở ĐÁY KHUNG HÌNH (STYLE DNA) */
+      .bottom-brand-bar {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 16px;
+        background: #ff6a1a;
+        z-index: 50;
+      }
+
+      /* KHỐI TIÊU ĐỀ CHÍNH (OVERLAY 1: "6 ĐIỂM QUAY ĐẦU") */
+      #header-box {
+        position: absolute;
+        top: 190px;
+        left: 60px;
+        right: 60px;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        z-index: 30;
+      }
+      .header-badge {
+        display: inline-flex;
+        align-items: center;
+        background: #ff6a1a;
+        color: #141414;
+        font-size: 58px;
+        font-weight: 900;
+        padding: 12px 32px;
+        border: 4px solid #141414;
+        box-shadow: 6px 6px 0px #141414;
+        text-transform: uppercase;
+        letter-spacing: -0.5px;
+      }
+
+      /* TRỤC TIMELINE */
+      .timeline-rail {
+        position: absolute;
+        left: 158px;
+        top: 370px;
+        width: 4px;
+        height: 820px;
+        background: #141414;
+        transform-origin: top center;
+        z-index: 2;
+      }
+
+      /* CON TRỎ BƯỚC CHÂN LƯỚT QUA */
+      #walker-marker {
+        position: absolute;
+        left: 135px;
+        top: 0px;
+        width: 50px;
+        height: 50px;
+        background: #ff6a1a;
+        border: 3px solid #141414;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        z-index: 15;
+        box-shadow: 3px 3px 0px #141414;
+      }
+      #walker-marker svg {
+        width: 26px;
+        height: 26px;
+        fill: #141414;
+      }
+
+      /* TỪNG TRẠM DỪNG (STATIONS) */
+      .station-row {
+        position: absolute;
+        left: 0;
+        right: 0;
+        height: 95px;
+        z-index: 10;
+      }
+      .station-node {
+        position: absolute;
+        left: 135px;
+        top: 22px;
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: #f5f0e4;
+        border: 3px solid #141414;
+        display: grid;
+        place-items: center;
+        box-sizing: border-box;
+        z-index: 5;
+      }
+      .station-node svg {
+        width: 22px;
+        height: 22px;
+        stroke: #141414;
+        stroke-width: 2.5;
+        fill: none;
+      }
+
+      .station-card {
+        position: absolute;
+        left: 215px;
+        top: 0px;
+        width: 805px;
+        height: 95px;
+        background: #f5f0e4;
+        border: 3px solid #141414;
+        border-radius: 10px;
+        box-shadow: 5px 5px 0px #141414;
+        display: flex;
+        align-items: center;
+        padding: 0 24px;
+        box-sizing: border-box;
+      }
+      .station-num-box {
+        width: 50px;
+        height: 50px;
+        background: #141414;
+        color: #f7f4ec;
+        border-radius: 6px;
+        display: grid;
+        place-items: center;
+        font-weight: 900;
+        font-size: 24px;
+        margin-right: 24px;
+        flex-shrink: 0;
+      }
+      .station-content {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        position: relative;
+        padding-right: 140px;
+      }
+      .station-title {
+        font-size: 32px;
+        font-weight: 900;
+        color: #141414;
+        text-transform: uppercase;
+        letter-spacing: -0.5px;
+        line-height: 1.15;
+      }
+
+      /* DẤU CHẤM TRUNG TÍNH CHO CÁC TRẠM KHÔNG CÓ TÊN (TRẠM 2, 3, 4) */
+      .neutral-track {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .neutral-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: #141414;
+        opacity: 0.3;
+      }
+
+      .stamp-pass {
+        position: absolute;
+        right: 22px;
+        top: 26px;
+        background: #ff6a1a;
+        border: 2.5px solid #141414;
+        color: #141414;
+        font-weight: 900;
+        font-size: 19px;
+        padding: 4px 14px;
+        border-radius: 4px;
+        letter-spacing: 1px;
+        box-shadow: 2px 2px 0px #141414;
+        transform-origin: center center;
+        opacity: 0;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s40"
+      data-start="0"
+      data-width="1080"
+      data-height="1920"
+      data-duration="9"
+    >
+      <!-- BIẾN THỂ NỀN CHART (CHART LINES & TICKS) -->
+      <div class="chart-bg">
+        <div class="chart-line" style="top: 384px;"><div class="chart-tick"></div></div>
+        <div class="chart-line" style="top: 768px;"><div class="chart-tick"></div></div>
+        <div class="chart-line" style="top: 1152px;"><div class="chart-tick"></div></div>
+        <div class="chart-line" style="top: 1536px;"><div class="chart-tick"></div></div>
+      </div>
+
+      <!-- SCENE CLIP -->
+      <div class="clip" data-start="0" data-duration="9">
+        <!-- TIÊU ĐỀ CHÍNH (OVERLAY 1: "6 ĐIỂM QUAY ĐẦU") -->
+        <div id="header-box">
+          <div class="header-badge">6 ĐIỂM QUAY ĐẦU</div>
+        </div>
+
+        <!-- TRỤC ĐƯỜNG DÀI TIMELINE -->
+        <div class="timeline-rail" id="rail-line"></div>
+
+        <!-- CON TRỎ BƯỚC CHÂN LƯỚT QUA -->
+        <div id="walker-marker">
+          <svg viewBox="0 0 24 24">
+            <path d="M12 4v13m0 0l-5-5m5 5l5-5" stroke="#141414" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+        </div>
+
+        <!-- TRẠM 1: LÚC CHUẨN BỊ (OVERLAY 2 TỪ SHOTLIST) -->
+        <div class="station-row" id="station-1" style="top: 390px;">
+          <div class="station-node" id="node-1">
+            <svg viewBox="0 0 24 24">
+              <path d="M9 14l-4-4 4-4" />
+              <path d="M5 10h11a4 4 0 110 8h-1" />
+            </svg>
+          </div>
+          <div class="station-card" id="card-1">
+            <div class="station-num-box">01</div>
+            <div class="station-content">
+              <span class="station-title">LÚC CHUẨN BỊ</span>
+            </div>
+            <div class="stamp-pass" id="stamp-1">BỎ QUA</div>
+          </div>
+        </div>
+
+        <!-- TRẠM 2: SỐ THỨ TỰ TRUNG TÍNH (KHÔNG CÓ NHÃN TEXT TỰ BỊA) -->
+        <div class="station-row" id="station-2" style="top: 525px;">
+          <div class="station-node" id="node-2">
+            <svg viewBox="0 0 24 24">
+              <path d="M9 14l-4-4 4-4" />
+              <path d="M5 10h11a4 4 0 110 8h-1" />
+            </svg>
+          </div>
+          <div class="station-card" id="card-2">
+            <div class="station-num-box">02</div>
+            <div class="station-content">
+              <div class="neutral-track">
+                <span class="neutral-dot"></span>
+                <span class="neutral-dot"></span>
+                <span class="neutral-dot"></span>
+                <span class="neutral-dot"></span>
+                <span class="neutral-dot"></span>
+              </div>
+            </div>
+            <div class="stamp-pass" id="stamp-2">BỎ QUA</div>
+          </div>
+        </div>
+
+        <!-- TRẠM 3: SỐ THỨ TỰ TRUNG TÍNH (KHÔNG CÓ NHÃN TEXT TỰ BỊA) -->
+        <div class="station-row" id="station-3" style="top: 660px;">
+          <div class="station-node" id="node-3">
+            <svg viewBox="0 0 24 24">
+              <path d="M9 14l-4-4 4-4" />
+              <path d="M5 10h11a4 4 0 110 8h-1" />
+            </svg>
+          </div>
+          <div class="station-card" id="card-3">
+            <div class="station-num-box">03</div>
+            <div class="station-content">
+              <div class="neutral-track">
+                <span class="neutral-dot"></span>
+                <span class="neutral-dot"></span>
+                <span class="neutral-dot"></span>
+                <span class="neutral-dot"></span>
+                <span class="neutral-dot"></span>
+              </div>
+            </div>
+            <div class="stamp-pass" id="stamp-3">BỎ QUA</div>
+          </div>
+        </div>
+
+        <!-- TRẠM 4: SỐ THỨ TỰ TRUNG TÍNH (KHÔNG CÓ NHÃN TEXT TỰ BỊA) -->
+        <div class="station-row" id="station-4" style="top: 795px;">
+          <div class="station-node" id="node-4">
+            <svg viewBox="0 0 24 24">
+              <path d="M9 14l-4-4 4-4" />
+              <path d="M5 10h11a4 4 0 110 8h-1" />
+            </svg>
+          </div>
+          <div class="station-card" id="card-4">
+            <div class="station-num-box">04</div>
+            <div class="station-content">
+              <div class="neutral-track">
+                <span class="neutral-dot"></span>
+                <span class="neutral-dot"></span>
+                <span class="neutral-dot"></span>
+                <span class="neutral-dot"></span>
+                <span class="neutral-dot"></span>
+              </div>
+            </div>
+            <div class="stamp-pass" id="stamp-4">BỎ QUA</div>
+          </div>
+        </div>
+
+        <!-- TRẠM 5: LÚC NGỒI CHỜ (OVERLAY 3 TỪ SHOTLIST) -->
+        <div class="station-row" id="station-5" style="top: 930px;">
+          <div class="station-node" id="node-5">
+            <svg viewBox="0 0 24 24">
+              <path d="M9 14l-4-4 4-4" />
+              <path d="M5 10h11a4 4 0 110 8h-1" />
+            </svg>
+          </div>
+          <div class="station-card" id="card-5">
+            <div class="station-num-box">05</div>
+            <div class="station-content">
+              <span class="station-title">LÚC NGỒI CHỜ</span>
+            </div>
+            <div class="stamp-pass" id="stamp-5">BỎ QUA</div>
+          </div>
+        </div>
+
+        <!-- TRẠM 6: KHI VÀO PHÒNG (OVERLAY 4 TỪ SHOTLIST) -->
+        <div class="station-row" id="station-6" style="top: 1065px;">
+          <div class="station-node" id="node-6">
+            <svg viewBox="0 0 24 24">
+              <path d="M9 14l-4-4 4-4" />
+              <path d="M5 10h11a4 4 0 110 8h-1" />
+            </svg>
+          </div>
+          <div class="station-card" id="card-6">
+            <div class="station-num-box">06</div>
+            <div class="station-content">
+              <span class="station-title">KHI VÀO PHÒNG</span>
+            </div>
+            <div class="stamp-pass" id="stamp-6">BỎ QUA</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- THANH CAM ĐÁY CỐ ĐỊNH -->
+      <div class="bottom-brand-bar"></div>
+    </div>
+
+    <script>
+      const tl = gsap.timeline({ paused: true });
+
+      // KHỞI TẠO TẤT ĐỊNH CHO T=0 BẰNG SET TUYỆT ĐỐI
+      gsap.set("#header-box", { y: -80, opacity: 0 });
+      gsap.set("#rail-line", { scaleY: 0 });
+      gsap.set("#walker-marker", { y: 350, opacity: 0, scale: 0 });
+
+      for (let i = 1; i <= 6; i++) {
+        gsap.set("#card-" + i, { x: 50, opacity: 0 });
+        gsap.set("#node-" + i, { scale: 0, opacity: 0 });
+        gsap.set("#stamp-" + i, { opacity: 0, scale: 2.2, rotation: -15 });
+      }
+
+      // 1. MỞ MÀN: HEADER (OVERLAY 1: "6 ĐIỂM QUAY ĐẦU" atMs 322950 -> ~0.37s)
+      tl.to(
+        "#header-box",
+        { y: 0, opacity: 1, duration: 0.45, ease: "power3.out" },
+        0.35,
+      );
+      tl.to(
+        "#rail-line",
+        { scaleY: 1, duration: 0.5, ease: "power2.out" },
+        0.5,
+      );
+
+      // CON TRỎ BƯỚC CHÂN XUẤT HIỆN TẠI ĐẦU TRỤC
+      tl.to(
+        "#walker-marker",
+        { opacity: 1, scale: 1, duration: 0.3, ease: "power3.out" },
+        0.7,
+      );
+
+      // 2. TRẠM 1: LÚC CHUẨN BỊ (OVERLAY 2: atMs 323860 -> ~1.28s)
+      tl.to("#card-1", { x: 0, opacity: 1, duration: 0.35, ease: "power3.out" }, 0.9);
+      tl.to("#node-1", { scale: 1, opacity: 1, duration: 0.3, ease: "power3.out" }, 0.9);
+      tl.to("#walker-marker", { y: 412, duration: 0.4, ease: "power2.inOut" }, 1.15);
+      tl.to("#node-1", { backgroundColor: "#FF6A1A", duration: 0.15 }, 1.4);
+      tl.to(
+        "#stamp-1",
+        { opacity: 1, scale: 1, rotation: -6, duration: 0.25, ease: "power4.out" },
+        1.45,
+      );
+
+      // 3. TRẠM 2: DẤU CHẤM / SỐ THỨ TỰ TRUNG TÍNH (~2.1s - 2.8s)
+      tl.to("#card-2", { x: 0, opacity: 1, duration: 0.35, ease: "power3.out" }, 2.1);
+      tl.to("#node-2", { scale: 1, opacity: 1, duration: 0.3, ease: "power3.out" }, 2.1);
+      tl.to("#walker-marker", { y: 547, duration: 0.4, ease: "power2.inOut" }, 2.35);
+      tl.to("#node-2", { backgroundColor: "#FF6A1A", duration: 0.15 }, 2.6);
+      tl.to(
+        "#stamp-2",
+        { opacity: 1, scale: 1, rotation: -6, duration: 0.25, ease: "power4.out" },
+        2.65,
+      );
+
+      // 4. TRẠM 3: DẤU CHẤM / SỐ THỨ TỰ TRUNG TÍNH (~3.3s - 4.0s)
+      tl.to("#card-3", { x: 0, opacity: 1, duration: 0.35, ease: "power3.out" }, 3.3);
+      tl.to("#node-3", { scale: 1, opacity: 1, duration: 0.3, ease: "power3.out" }, 3.3);
+      tl.to("#walker-marker", { y: 682, duration: 0.4, ease: "power2.inOut" }, 3.55);
+      tl.to("#node-3", { backgroundColor: "#FF6A1A", duration: 0.15 }, 3.8);
+      tl.to(
+        "#stamp-3",
+        { opacity: 1, scale: 1, rotation: -6, duration: 0.25, ease: "power4.out" },
+        3.85,
+      );
+
+      // 5. TRẠM 4: DẤU CHẤM / SỐ THỨ TỰ TRUNG TÍNH (~4.5s - 5.2s)
+      tl.to("#card-4", { x: 0, opacity: 1, duration: 0.35, ease: "power3.out" }, 4.5);
+      tl.to("#node-4", { scale: 1, opacity: 1, duration: 0.3, ease: "power3.out" }, 4.5);
+      tl.to("#walker-marker", { y: 817, duration: 0.4, ease: "power2.inOut" }, 4.75);
+      tl.to("#node-4", { backgroundColor: "#FF6A1A", duration: 0.15 }, 5.0);
+      tl.to(
+        "#stamp-4",
+        { opacity: 1, scale: 1, rotation: -6, duration: 0.25, ease: "power4.out" },
+        5.05,
+      );
+
+      // 6. TRẠM 5: LÚC NGỒI CHỜ (OVERLAY 3: atMs 328800 -> ~6.22s)
+      tl.to("#card-5", { x: 0, opacity: 1, duration: 0.35, ease: "power3.out" }, 5.8);
+      tl.to("#node-5", { scale: 1, opacity: 1, duration: 0.3, ease: "power3.out" }, 5.8);
+      tl.to("#walker-marker", { y: 952, duration: 0.4, ease: "power2.inOut" }, 6.05);
+      tl.to("#node-5", { backgroundColor: "#FF6A1A", duration: 0.15 }, 6.3);
+      tl.to(
+        "#stamp-5",
+        { opacity: 1, scale: 1, rotation: -6, duration: 0.25, ease: "power4.out" },
+        6.35,
+      );
+
+      // 7. TRẠM 6: KHI VÀO PHÒNG (OVERLAY 4: atMs 330350 -> ~7.77s)
+      tl.to("#card-6", { x: 0, opacity: 1, duration: 0.35, ease: "power3.out" }, 7.1);
+      tl.to("#node-6", { scale: 1, opacity: 1, duration: 0.3, ease: "power3.out" }, 7.1);
+      tl.to("#walker-marker", { y: 1087, duration: 0.4, ease: "power2.inOut" }, 7.55);
+      tl.to("#node-6", { backgroundColor: "#FF6A1A", duration: 0.15 }, 7.8);
+      tl.to(
+        "#stamp-6",
+        { opacity: 1, scale: 1, rotation: -6, duration: 0.25, ease: "power4.out" },
+        7.85,
+      );
+
+      // 8. BƯỚC CHÂN LƯỚT QUA ĐIỂM CUỐI CÙNG TIẾN VỀ PHÍA ĐÁY TRỤC
+      tl.to("#walker-marker", { y: 1210, duration: 0.45, ease: "power2.in" }, 8.2);
+
+      // ĐĂNG KÝ VÀO WINDOW.__TIMELINES CHO HYPERFRAMES
+      window.__timelines = window.__timelines || {};
+      window.__timelines["scene-s40"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

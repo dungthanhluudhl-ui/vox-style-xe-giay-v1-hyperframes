@@ -1,0 +1,726 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap">
+      <style>
+    /* hf-safe-colors (tất định từ style-tokens.json) */
+    .hf-text-ink { color: #141414; }
+    .hf-text-light { color: #F7F4EC; }
+    .hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+    .hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+    .hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+    .hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #E7E3D9;
+      color: #141414;
+      font-family: "Be Vietnam Pro", sans-serif;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    #root {
+      position: relative;
+      width: 1080px;
+      height: 1920px;
+      overflow: hidden;
+      background-color: #E7E3D9;
+    }
+
+    /* Lưới ô vuông 84px chuẩn Vox DNA */
+    .bg-grid {
+      position: absolute;
+      inset: 0;
+      background-image: 
+        linear-gradient(to right, rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px),
+        linear-gradient(to bottom, rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px);
+      background-size: 84px 84px;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    /* Thanh cam nhận diện thương hiệu cố định mép đáy */
+    .bottom-signature-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 1080px;
+      height: 14px;
+      background-color: #FF6A1A;
+      z-index: 90;
+    }
+
+    /* Lớp clip chuẩn HyperFrames (inset: 0) */
+    .clip {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+    }
+
+    /* Sân khấu chuyển động toàn cảnh (Camera motion: pan-left) */
+    #stage-camera {
+      position: absolute;
+      inset: 0;
+      z-index: 2;
+      will-change: transform;
+    }
+
+    /* ==========================================
+       KHU VỰC HEADER (Top Safe Zone: Y 170px - 310px)
+       ========================================== */
+    .header-zone {
+      position: absolute;
+      top: 170px;
+      left: 60px;
+      width: 960px;
+      z-index: 10;
+    }
+
+    .kicker-tag {
+      display: inline-flex;
+      align-items: center;
+      padding: 8px 18px;
+      background-color: #141414;
+      color: #FF6A1A;
+      font-size: 22px;
+      font-weight: 900;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      border-left: 6px solid #FF6A1A;
+      margin-bottom: 16px;
+    }
+
+    .title-row {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+    }
+
+    /* Huy hiệu Icon Check tự vẽ (atMs 1.15s) */
+    .seal-check-wrapper {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 72px;
+      height: 72px;
+      background-color: #FF6A1A;
+      border: 3px solid #141414;
+      box-shadow: 4px 4px 0px #141414;
+      flex-shrink: 0;
+    }
+
+    .check-svg {
+      width: 44px;
+      height: 44px;
+    }
+
+    .check-path {
+      fill: none;
+      stroke: #141414;
+      stroke-width: 6;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    /* Label 4 Trụ Cột Bảo Vệ (atMs 2.01s) */
+    .pillar-badge {
+      display: inline-flex;
+      align-items: center;
+      background-color: #141414;
+      color: #F7F4EC;
+      padding: 14px 28px;
+      border: 3px solid #141414;
+      font-size: 46px;
+      font-weight: 900;
+      letter-spacing: -0.5px;
+      text-transform: uppercase;
+    }
+
+    .pillar-badge .accent {
+      color: #FF6A1A;
+      margin-right: 14px;
+    }
+
+    /* ==========================================
+       KHU VỰC THÀNH TRÌ 4 TRỤ CỘT (Y 340px - 890px)
+       ========================================== */
+    .fortress-container {
+      position: absolute;
+      top: 340px;
+      left: 60px;
+      width: 960px;
+      height: 550px;
+      z-index: 5;
+    }
+
+    /* Xà nóc liên kết */
+    .fortress-roof {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 960px;
+      height: 52px;
+      background-color: #141414;
+      border: 3px solid #141414;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      transform-origin: top center;
+    }
+
+    .roof-label {
+      color: #F7F4EC;
+      font-size: 21px;
+      font-weight: 900;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    .roof-status {
+      display: flex;
+      align-items: center;
+      background-color: #FF6A1A;
+      color: #141414;
+      padding: 4px 14px;
+      font-size: 16px;
+      font-weight: 900;
+      letter-spacing: 1px;
+    }
+
+    /* Lưới 4 cột phân bố độc lập */
+    .pillars-grid {
+      position: absolute;
+      top: 52px;
+      left: 0;
+      width: 960px;
+      height: 442px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+
+    .pillar-col {
+      position: relative;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      transform-origin: bottom center;
+    }
+
+    .pillar-capital {
+      width: 100%;
+      height: 38px;
+      background-color: #F5F0E4;
+      border: 3px solid #141414;
+      border-top: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      font-weight: 900;
+      color: #141414;
+    }
+
+    .pillar-body {
+      flex: 1;
+      background-color: #F5F0E4;
+      border-left: 3px solid #141414;
+      border-right: 3px solid #141414;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 10px;
+      overflow: hidden;
+    }
+
+    .pillar-hatch {
+      position: absolute;
+      inset: 0;
+      background-image: repeating-linear-gradient(
+        -45deg,
+        rgba(20, 20, 20, 0.04),
+        rgba(20, 20, 20, 0.04) 10px,
+        transparent 10px,
+        transparent 20px
+      );
+      pointer-events: none;
+    }
+
+    .pillar-number {
+      font-size: 34px;
+      font-weight: 900;
+      color: #141414;
+      line-height: 1;
+      border-bottom: 4px solid #FF6A1A;
+      padding-bottom: 6px;
+      width: 100%;
+      text-align: center;
+      position: relative;
+      z-index: 2;
+    }
+
+    .pillar-title {
+      font-size: 21px;
+      font-weight: 900;
+      line-height: 1.25;
+      color: #141414;
+      text-align: center;
+      text-transform: uppercase;
+      position: relative;
+      z-index: 2;
+      margin: 8px 0;
+    }
+
+    .pillar-detail {
+      width: 100%;
+      padding: 8px 4px;
+      background-color: #141414;
+      color: #F7F4EC;
+      font-size: 14px;
+      font-weight: 700;
+      text-align: center;
+      letter-spacing: 0.5px;
+      position: relative;
+      z-index: 2;
+    }
+
+    .pillar-base {
+      width: 100%;
+      height: 38px;
+      background-color: #141414;
+      border: 3px solid #141414;
+      border-bottom: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #FF6A1A;
+      font-size: 15px;
+      font-weight: 900;
+      letter-spacing: 0.5px;
+    }
+
+    /* Móng nền vững chắc dưới cùng */
+    .fortress-foundation {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 960px;
+      height: 56px;
+      background-color: #141414;
+      border: 3px solid #141414;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      transform-origin: bottom center;
+    }
+
+    .foundation-label {
+      color: #F7F4EC;
+      font-size: 19px;
+      font-weight: 900;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+    }
+
+    .defense-indicator {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #FF6A1A;
+      font-size: 17px;
+      font-weight: 900;
+      letter-spacing: 1px;
+    }
+
+    .defense-led {
+      width: 12px;
+      height: 12px;
+      background-color: #FF6A1A;
+      border: 2px solid #F7F4EC;
+    }
+
+    /* ==========================================
+       HÀNG RÀO PHÒNG VỆ RIÊNG BIỆT (Y 915px - 963px)
+       Không đè lên bất kỳ phần tử cột nào
+       ========================================== */
+    .barrier-shield-line {
+      position: absolute;
+      top: 915px;
+      left: 60px;
+      width: 960px;
+      height: 48px;
+      background-color: #FF6A1A;
+      border: 3px solid #141414;
+      box-shadow: 4px 4px 0px #141414;
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      padding: 0 16px;
+      z-index: 8;
+      transform-origin: left center;
+    }
+
+    .barrier-item {
+      color: #141414;
+      font-size: 18px;
+      font-weight: 900;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* ==========================================
+       FLOW WARNING BOX (Y 985px - 1055px)
+       ========================================== */
+    .flow-warning-box {
+      position: absolute;
+      top: 985px;
+      left: 60px;
+      width: 960px;
+      height: 68px;
+      background-color: #F5F0E4;
+      border: 3px dashed #141414;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      z-index: 6;
+    }
+
+    .flow-text {
+      color: #141414;
+      font-size: 20px;
+      font-weight: 700;
+    }
+
+    .flow-tag {
+      background-color: #141414;
+      color: #F7F4EC;
+      padding: 6px 14px;
+      font-size: 16px;
+      font-weight: 900;
+      letter-spacing: 1px;
+    }
+
+    /* ==========================================
+       PUNCH PHRASE BOX (Y 1080px - 1235px)
+       An toàn tuyệt đối cách xa Caption Zone (>1390px)
+       ========================================== */
+    .punch-phrase-wrapper {
+      position: absolute;
+      top: 1080px;
+      left: 60px;
+      width: 960px;
+      z-index: 20;
+    }
+
+    .punch-card {
+      background-color: #141414;
+      border: 4px solid #141414;
+      box-shadow: 8px 8px 0px #FF6A1A;
+      padding: 22px 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .punch-subtext {
+      font-size: 18px;
+      font-weight: 900;
+      color: #FF6A1A;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    .punch-main {
+      font-size: 52px;
+      font-weight: 900;
+      line-height: 1.16;
+      color: #F7F4EC;
+      text-transform: uppercase;
+      letter-spacing: -0.5px;
+      margin: 0;
+    }
+
+    .punch-main .orange-hit {
+      color: #FF6A1A;
+    }
+  </style>
+
+  <div
+    id="root"
+    data-composition-id="scene-s41"
+    data-start="0"
+    data-width="1080"
+    data-height="1920"
+    data-duration="10"
+  >
+    <!-- Nền lưới toạ độ Vox DNA -->
+    <div class="bg-grid"></div>
+
+    <!-- Thanh cam cố định mép đáy -->
+    <div class="bottom-signature-bar"></div>
+
+    <!-- Clip cảnh duy nhất của Scene S41 (0s - 10s) -->
+    <div class="clip" data-start="0" data-duration="10">
+      <div id="stage-camera">
+
+        <!-- HEADER ZONE: Kicker + Title + Check Icon Seal -->
+        <div class="header-zone">
+          <div id="kicker-badge" class="kicker-tag">
+            <span>QUY ĐỊNH PHÁP LUẬT VỀ TÍN DỤNG</span>
+          </div>
+          <div class="title-row">
+            <div id="seal-icon" class="seal-check-wrapper">
+              <svg class="check-svg" viewBox="0 0 44 44">
+                <path id="check-path-element" class="check-path" d="M 8 23 L 18 33 L 36 12" />
+              </svg>
+            </div>
+            <div id="header-label" class="pillar-badge">
+              <span class="accent">4</span>TRỤ CỘT BẢO VỆ
+            </div>
+          </div>
+        </div>
+
+        <!-- FORTRESS ARCHITECTURE: DIAGRAM 4 TRỤ CỘT -->
+        <div class="fortress-container">
+          <!-- Xà nóc liên kết -->
+          <div id="fortress-roof" class="fortress-roof">
+            <span class="roof-label">HỆ THỐNG KIỂM SOÁT TÍN DỤNG</span>
+            <div class="roof-status">KIÊN CỐ</div>
+          </div>
+
+          <!-- Lưới 4 cột -->
+          <div class="pillars-grid">
+            <!-- Cột 1: Thẩm định -->
+            <div id="pillar-1" class="pillar-col">
+              <div class="pillar-capital">MÓNG 01</div>
+              <div class="pillar-body">
+                <div class="pillar-hatch"></div>
+                <div class="pillar-number">01</div>
+                <div class="pillar-title">THẨM<br>ĐỊNH</div>
+                <div class="pillar-detail">LỌC RỦI RO</div>
+              </div>
+              <div class="pillar-base">CHUẨN MỰC</div>
+            </div>
+
+            <!-- Cột 2: Tài sản bảo đảm -->
+            <div id="pillar-2" class="pillar-col">
+              <div class="pillar-capital">MÓNG 02</div>
+              <div class="pillar-body">
+                <div class="pillar-hatch"></div>
+                <div class="pillar-number">02</div>
+                <div class="pillar-title">TÀI SẢN<br>BẢO ĐẢM</div>
+                <div class="pillar-detail">THẾ CHẤP</div>
+              </div>
+              <div class="pillar-base">ĐỦ GIÁ TRỊ</div>
+            </div>
+
+            <!-- Cột 3: Khả năng trả nợ -->
+            <div id="pillar-3" class="pillar-col">
+              <div class="pillar-capital">MÓNG 03</div>
+              <div class="pillar-body">
+                <div class="pillar-hatch"></div>
+                <div class="pillar-number">03</div>
+                <div class="pillar-title">KHẢ NĂNG<br>TRẢ NỢ</div>
+                <div class="pillar-detail">DÒNG TIỀN</div>
+              </div>
+              <div class="pillar-base">THANH KHOẢN</div>
+            </div>
+
+            <!-- Cột 4: Mục đích sử dụng -->
+            <div id="pillar-4" class="pillar-col">
+              <div class="pillar-capital">MÓNG 04</div>
+              <div class="pillar-body">
+                <div class="pillar-hatch"></div>
+                <div class="pillar-number">04</div>
+                <div class="pillar-title">MỤC ĐÍCH<br>SỬ DỤNG</div>
+                <div class="pillar-detail">MINH BẠCH</div>
+              </div>
+              <div class="pillar-base">ĐÚNG HỒ SƠ</div>
+            </div>
+          </div>
+
+          <!-- Móng nền móng dưới cùng -->
+          <div id="fortress-foundation" class="fortress-foundation">
+            <div class="foundation-label">NỀN TẢNG AN TOÀN TÀI SẢN CỘNG ĐỒNG</div>
+            <div class="defense-indicator">
+              <div class="defense-led"></div>
+              <span>HÀNG RÀO PHÒNG VỆ</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- RÀO CHẮN BẢO VỆ CỦNG CỐ (Nằm độc lập bên dưới) -->
+        <div id="barrier-shield" class="barrier-shield-line">
+          <div class="barrier-item"><span>✕</span> PHÒNG TUỒN TIỀN</div>
+          <div class="barrier-item"><span>✕</span> CHẶN RÚT RUỘT</div>
+          <div class="barrier-item"><span>✕</span> KHÔNG ĐẢO NỢ</div>
+        </div>
+
+        <!-- FLOW WARNING BOX: Ngăn hành vi lấy tiền vá lỗ -->
+        <div id="flow-warning" class="flow-warning-box">
+          <div class="flow-text">Ý ĐỒ LẤY TIỀN NGƯỜI KHÁC VÁ VÀO LỖ NỢ</div>
+          <div class="flow-tag">BỊ CHẶN LẠI</div>
+        </div>
+
+        <!-- PUNCH PHRASE CUỐI CẢNH (Xuất hiện tại 7.17s) -->
+        <div id="punch-phrase-box" class="punch-phrase-wrapper">
+          <div class="punch-card">
+            <div class="punch-subtext">MỤC ĐÍCH TỐI THƯỢNG CỦA LUẬT</div>
+            <h1 class="punch-main">
+              <span class="orange-hit">CHẶN LẤY TIỀN</span> VÁ LỖ
+            </h1>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // BẮT BUỘC: Khởi tạo timeline chính ở trạng thái paused
+    const tl = gsap.timeline({ paused: true });
+
+    // Thiết lập độ dài nét vẽ SVG check
+    const checkPath = document.getElementById("check-path-element");
+    if (checkPath) {
+      const pathLength = checkPath.getTotalLength();
+      checkPath.style.strokeDasharray = pathLength;
+      checkPath.style.strokeDashoffset = pathLength;
+    }
+
+    // Gán trạng thái khởi tạo chính xác tuyệt đối (seek-safe)
+    gsap.set("#kicker-badge", { x: -30, opacity: 0 });
+    gsap.set("#seal-icon", { scale: 0, opacity: 0 });
+    gsap.set("#header-label", { y: -25, opacity: 0 });
+    gsap.set("#fortress-roof", { scaleY: 0, opacity: 0 });
+    gsap.set("#fortress-foundation", { scaleY: 0, opacity: 0 });
+    gsap.set(".pillar-col", { scaleY: 0, opacity: 0 });
+    gsap.set("#barrier-shield", { scaleX: 0, opacity: 0 });
+    gsap.set("#flow-warning", { y: 25, opacity: 0 });
+    gsap.set("#punch-phrase-box", { scale: 0.9, y: 30, opacity: 0 });
+
+    // ==========================================
+    // DIỄN HOẠ CHUYỂN ĐỘNG (0.0s -> 10.0s)
+    // ==========================================
+
+    // 1. Camera Motion: Pan nhẹ sang trái toàn cảnh
+    tl.fromTo("#stage-camera", 
+      { x: 20 }, 
+      { x: -15, duration: 10, ease: "none" }, 
+      0
+    );
+
+    // 2. Kicker mở đầu (0.2s)
+    tl.to("#kicker-badge", { 
+      x: 0, 
+      opacity: 1, 
+      duration: 0.5, 
+      ease: "power3.out" 
+    }, 0.2);
+
+    // 3. Unfold Kiến trúc nóc & Móng thành trì (0.4s - 0.9s)
+    tl.to("#fortress-roof", { 
+      scaleY: 1, 
+      opacity: 1, 
+      duration: 0.5, 
+      ease: "power2.out" 
+    }, 0.4);
+
+    tl.to("#fortress-foundation", { 
+      scaleY: 1, 
+      opacity: 1, 
+      duration: 0.5, 
+      ease: "power2.out" 
+    }, 0.5);
+
+    // 4. Mọc 4 trụ cột móng phòng thủ (0.65s - 1.4s, stagger)
+    tl.to(".pillar-col", { 
+      scaleY: 1, 
+      opacity: 1, 
+      duration: 0.6, 
+      stagger: 0.12, 
+      ease: "power3.out" 
+    }, 0.65);
+
+    // 5. Icon check xuất hiện tại 1.15s (shotlist atMs: 365150 - 364000 = 1.15s)
+    tl.to("#seal-icon", { 
+      scale: 1, 
+      opacity: 1, 
+      duration: 0.45, 
+      ease: "back.out(1.5)" 
+    }, 1.15);
+
+    // Nét check vẽ dần
+    tl.to("#check-path-element", { 
+      strokeDashoffset: 0, 
+      duration: 0.45, 
+      ease: "power2.out" 
+    }, 1.35);
+
+    // 6. Label "4 TRỤ CỘT BẢO VỆ" xuất hiện tại 2.01s (shotlist atMs: 366010 - 364000 = 2.01s)
+    tl.to("#header-label", { 
+      y: 0, 
+      opacity: 1, 
+      duration: 0.5, 
+      ease: "power3.out" 
+    }, 2.01);
+
+    // 7. Rào chắn phòng vệ củng cố giăng ngang (3.0s)
+    tl.to("#barrier-shield", { 
+      scaleX: 1, 
+      opacity: 1, 
+      duration: 0.6, 
+      ease: "power3.out" 
+    }, 3.0);
+
+    // 8. Box mô tả luồng ngăn chặn hành vi rút ruột (4.2s)
+    tl.to("#flow-warning", { 
+      y: 0, 
+      opacity: 1, 
+      duration: 0.5, 
+      ease: "power2.out" 
+    }, 4.2);
+
+    // 9. PUNCH-PHRASE: "CHẶN LẤY TIỀN VÁ LỖ" tại 7.17s (shotlist atMs: 371170 - 364000 = 7.17s)
+    tl.to("#punch-phrase-box", { 
+      scale: 1, 
+      y: 0, 
+      opacity: 1, 
+      duration: 0.55, 
+      ease: "power3.out" 
+    }, 7.17);
+
+    // Nhấn nhẹ dứt khoát khi chốt hạ luận điểm
+    tl.to("#punch-phrase-box", { 
+      scale: 1.02, 
+      duration: 0.12, 
+      yoyo: true, 
+      repeat: 1, 
+      ease: "power1.inOut" 
+    }, 7.72);
+
+    // BẮT BUỘC: Đăng ký timeline chính lên window.__timelines
+    window.__timelines["scene-s41"] = tl;
+  </script>
+
+    </template>
+  </body>
+</html>

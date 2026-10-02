@@ -1,0 +1,413 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap">
+      <style>
+/* hf-safe-colors (tất định từ style-tokens.json) */
+.hf-text-ink { color: #141414; }
+.hf-text-light { color: #F7F4EC; }
+.hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+.hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+.hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+.hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #E7E3D9;
+      color: #141414;
+      font-family: "Be Vietnam Pro", sans-serif;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Khung canvas chuẩn 1080x1920 */
+    #root {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #E7E3D9;
+    }
+
+    /* Quy ước bắt buộc: .clip dùng inset: 0 */
+    .clip {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    /* Nền lưới ô vuông chuẩn 84px của Vox Style */
+    .bg-grid {
+      position: absolute;
+      inset: 0;
+      background-size: 84px 84px;
+      background-image:
+        linear-gradient(to right, rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px),
+        linear-gradient(to bottom, rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px);
+      z-index: 1;
+    }
+
+    /* Thanh cam nhận diện thương hiệu cố định mép đáy */
+    #bottom-orange-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 12px;
+      background-color: #FF6A1A;
+      z-index: 100;
+    }
+
+    /* Header nhãn tài liệu Vox trong Safe Zone trên cùng */
+    .dossier-header {
+      position: absolute;
+      top: 175px;
+      left: 48px;
+      right: 48px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 20;
+    }
+
+    .dossier-tag {
+      background-color: #141414;
+      color: #F7F4EC;
+      font-size: 22px;
+      font-weight: 900;
+      letter-spacing: 2px;
+      padding: 8px 18px;
+      text-transform: uppercase;
+      border-left: 6px solid #FF6A1A;
+    }
+
+    .dossier-code {
+      background-color: #F5F0E4;
+      color: #141414;
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      padding: 6px 14px;
+      border: 1.5px solid #141414;
+    }
+
+    /* Khung hiển thị bản đồ collage */
+    .map-viewport {
+      position: absolute;
+      top: 260px;
+      left: 48px;
+      width: 984px;
+      height: 1110px;
+      z-index: 10;
+      overflow: hidden;
+      border: 3px solid #141414;
+      box-shadow: 14px 18px 0px rgba(20, 20, 20, 0.9);
+      background-color: #F5F0E4;
+    }
+
+    .map-inner {
+      position: absolute;
+      inset: -50px;
+      width: calc(100% + 100px);
+      height: calc(100% + 100px);
+      transform-origin: 52% 46%;
+      will-change: transform;
+    }
+
+    .map-image {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    /* Các chi tiết dán keo/băng dính đặc trưng paper-collage */
+    .tape-corner {
+      position: absolute;
+      width: 140px;
+      height: 38px;
+      background-color: rgba(245, 240, 228, 0.85);
+      border: 1.5px dashed rgba(20, 20, 20, 0.4);
+      z-index: 25;
+    }
+    .tape-top-left {
+      top: 242px;
+      left: 32px;
+      transform: rotate(-12deg);
+    }
+    .tape-bottom-right {
+      top: 1345px;
+      right: 32px;
+      transform: rotate(-8deg);
+    }
+
+    /* Bố cục overlay căn giữa an toàn */
+    .overlay-stage {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      z-index: 50;
+    }
+
+    /* Thẻ Plate Label 1 (DỒN NƯỚC CẤP TẬP) */
+    .label-box-1 {
+      position: absolute;
+      top: 320px;
+      left: 80px;
+      right: 80px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      z-index: 55;
+      will-change: transform, opacity;
+    }
+
+    /* Thẻ Plate Label 2 & Icon (KÊNH RẠCH BỊ LẤP) */
+    .label-box-2 {
+      position: absolute;
+      top: 1060px;
+      left: 80px;
+      right: 80px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      z-index: 55;
+      will-change: transform, opacity;
+    }
+
+    .badge-tab {
+      background-color: #FF6A1A;
+      color: #141414;
+      font-size: 22px;
+      font-weight: 900;
+      padding: 6px 18px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      box-shadow: 4px 4px 0px #141414;
+      margin-bottom: -4px;
+      z-index: 2;
+    }
+
+    /* Khối plate mực đen tương phản cao WCAG AAA (>16:1) */
+    .plate-ink {
+      background-color: #141414;
+      padding: 22px 32px;
+      border: 2px solid #141414;
+      box-shadow: 10px 12px 0px rgba(20, 20, 20, 0.85);
+      width: 100%;
+    }
+
+    .plate-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+    }
+
+    .punch-text {
+      color: #F7F4EC;
+      font-size: 56px;
+      font-weight: 900;
+      line-height: 1.25;
+      letter-spacing: -0.5px;
+      text-transform: uppercase;
+    }
+
+    /* Icon cảnh báo / Ban SVG tự vẽ */
+    .ban-icon-container {
+      width: 90px;
+      height: 90px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      will-change: transform, opacity;
+    }
+
+    .ban-svg {
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+    }
+
+    .ban-circle-path {
+      fill: none;
+      stroke: #FF6A1A;
+      stroke-width: 9;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .ban-slash-path {
+      fill: none;
+      stroke: #FF6A1A;
+      stroke-width: 9;
+      stroke-linecap: round;
+    }
+  </style>
+
+  <div
+    id="root"
+    data-composition-id="scene-s24"
+    data-width="1080"
+    data-height="1920"
+    data-start="0"
+    data-duration="7.82"
+  >
+    <!-- Lớp lưới nền giấy ngà Vox -->
+    <div class="bg-grid"></div>
+
+    <!-- Thanh dải cam cố định ở mép đáy khung hình -->
+    <div id="bottom-orange-bar"></div>
+
+    <!-- Header phong cách hồ sơ phân tích quy hoạch -->
+    <div class="dossier-header">
+      <div class="dossier-tag">HỒ SƠ HIỆN TRƯỜNG // ĐÔ THỊ HÓA</div>
+      <div class="dossier-code">S24 // THOÁT NƯỚC</div>
+    </div>
+
+    <!-- Shot chính: Bản đồ kênh rạch đô thị bị san lấp -->
+    <section id="shot-s24-1" class="clip" data-start="0" data-duration="7.82">
+      <!-- Dải băng dính dán viền collage -->
+      <div class="tape-corner tape-top-left"></div>
+      <div class="tape-corner tape-bottom-right"></div>
+
+      <!-- Khung bản đồ kèm chuyển động zoom-out chậm từ chi tiết các vết san lấp -->
+      <div class="map-viewport" data-layout-allow-overflow="true">
+        <div id="map-inner" class="map-inner">
+          <img
+            class="map-image"
+            src="assets/img-10-annotated-urban-map-collage.jpg"
+            alt="Bản đồ collage kênh rạch đô thị bị san lấp"
+          />
+        </div>
+      </div>
+    </section>
+
+    <!-- Overlay 1: DỒN NƯỚC CẤP TẬP (atMs: 180000 -> 1.49s, hold: 2.2s -> kết thúc 3.69s) -->
+    <div id="clip-overlay-1" class="clip overlay-stage" data-start="1.49" data-duration="2.2">
+      <div id="card-label-1" class="label-box-1">
+        <div class="badge-tab">CƠ CHẾ TẮC NGHẼN</div>
+        <div class="plate-ink">
+          <div class="punch-text">DỒN NƯỚC CẤP TẬP</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Overlay 2: KÊNH RẠCH BỊ LẤP (atMs: 183800 -> 5.29s, hold: 2.4s -> kết thúc 7.69s) -->
+    <div id="clip-overlay-2" class="clip overlay-stage" data-start="5.29" data-duration="2.4">
+      <div id="card-label-2" class="label-box-2">
+        <div class="badge-tab">THỰC TRẠNG SAN LẤP</div>
+        <div class="plate-ink">
+          <div class="plate-row">
+            <div class="punch-text">KÊNH RẠCH BỊ LẤP</div>
+            <!-- Icon Ban xuất hiện đồng bộ cùng nhịp cảnh báo -->
+            <div id="ban-icon-wrap" class="ban-icon-container">
+              <svg class="ban-svg" viewBox="0 0 100 100">
+                <circle id="ban-circle" class="ban-circle-path" cx="50" cy="50" r="42" />
+                <line id="ban-line" class="ban-slash-path" x1="22" y1="22" x2="78" y2="78" />
+              </svg>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // BẮT BUỘC: Khởi tạo timeline paused và đăng ký vào window.__timelines["scene-s24"]
+    window.__timelines = window.__timelines || {};
+    const tl = gsap.timeline({ paused: true });
+
+    // 1. Setup hiệu ứng tự vẽ SVG cho Icon Ban
+    const banCircle = document.getElementById("ban-circle");
+    const banLine = document.getElementById("ban-line");
+    if (banCircle && banLine) {
+      const circleLen = banCircle.getTotalLength();
+      const lineLen = banLine.getTotalLength();
+
+      banCircle.style.strokeDasharray = circleLen + " " + circleLen;
+      banCircle.style.strokeDashoffset = circleLen;
+
+      banLine.style.strokeDasharray = lineLen + " " + lineLen;
+      banLine.style.strokeDashoffset = lineLen;
+    }
+
+    // 2. Camera motion: zoom-through / zoom-out từ chi tiết vết cắt X ra toàn cảnh bản đồ
+    // Bắt đầu từ cận cảnh (scale 1.38, hơi lệch toạ độ) rồi chậm rãi zoom-out ra toàn cảnh (scale 1.0)
+    tl.fromTo(
+      "#map-inner",
+      { scale: 1.38, x: -36, y: -48 },
+      { scale: 1.0, x: 0, y: 0, duration: 7.82, ease: "sine.out" },
+      0
+    );
+
+    // 3. Overlay 1: "DỒN NƯỚC CẤP TẬP"
+    // Bắt đầu tại 1.49s, giữ đến ~3.30s rồi fade out nhẹ trước khi clip hết hạn tại 3.69s
+    tl.fromTo(
+      "#card-label-1",
+      { y: 35, opacity: 0, scale: 0.94 },
+      { y: 0, opacity: 1, scale: 1, duration: 0.45, ease: "power3.out" },
+      1.49
+    );
+    tl.to(
+      "#card-label-1",
+      { opacity: 0, y: -20, duration: 0.32, ease: "power2.in" },
+      3.32
+    );
+
+    // 4. Overlay 2: "KÊNH RẠCH BỊ LẤP"
+    // Bắt đầu tại 5.29s, giữ đến 7.35s rồi chuyển mượt
+    tl.fromTo(
+      "#card-label-2",
+      { y: 35, opacity: 0, scale: 0.94 },
+      { y: 0, opacity: 1, scale: 1, duration: 0.45, ease: "power3.out" },
+      5.29
+    );
+
+    // 5. Overlay Icon "ban" (atMs: 184200 -> 5.69s, hold: 1.5s -> kết thúc 7.19s)
+    tl.fromTo(
+      "#ban-icon-wrap",
+      { scale: 0, rotation: -45, opacity: 0 },
+      { scale: 1, rotation: 0, opacity: 1, duration: 0.38, ease: "power3.out" },
+      5.69
+    );
+
+    if (banCircle && banLine) {
+      tl.to(
+        "#ban-circle",
+        { strokeDashoffset: 0, duration: 0.45, ease: "power2.out" },
+        5.69
+      );
+      tl.to(
+        "#ban-line",
+        { strokeDashoffset: 0, duration: 0.35, ease: "power2.out" },
+        5.88
+      );
+    }
+
+    tl.to(
+      "#card-label-2",
+      { opacity: 0, y: -18, duration: 0.3, ease: "power2.in" },
+      7.35
+    );
+
+    // Đăng ký timeline cho HyperFrames seek renderer
+    window.__timelines["scene-s24"] = tl;
+  </script>
+
+    </template>
+  </body>
+</html>

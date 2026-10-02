@@ -1,0 +1,535 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+/* hf-safe-colors (tất định từ style-tokens.json) */
+.hf-text-ink { color: #141414; }
+.hf-text-light { color: #F7F4EC; }
+.hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+.hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+.hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+.hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #E7E3D9;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: #E7E3D9;
+      }
+
+      /* Base clip layer */
+      .clip {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+      }
+
+      /* 84px Grid Background Texture */
+      .grid-texture {
+        position: absolute;
+        inset: 0;
+        background-image:
+          linear-gradient(to right, rgba(20, 20, 20, 0.08) 1.5px, transparent 1.5px),
+          linear-gradient(to bottom, rgba(20, 20, 20, 0.08) 1.5px, transparent 1.5px);
+        background-size: 84px 84px;
+        pointer-events: none;
+      }
+
+      /* Chart Background Variant: 4 horizontal ruled lines at 20%, 40%, 60%, 80% */
+      .chart-grid {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+      }
+
+      .chart-line {
+        position: absolute;
+        left: 0;
+        right: 0;
+        height: 4px;
+        display: flex;
+        align-items: center;
+      }
+
+      .chart-tick {
+        width: 28px;
+        height: 4px;
+        background-color: #FF6A1A;
+        flex-shrink: 0;
+      }
+
+      .chart-rule {
+        flex: 1;
+        height: 2px;
+        background-color: rgba(20, 20, 20, 0.28);
+      }
+
+      /* Header Scene Meta Tag */
+      .header-meta {
+        position: absolute;
+        top: 200px;
+        left: 50px;
+        right: 50px;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        z-index: 10;
+      }
+
+      .meta-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        background-color: #141414;
+        color: #F7F4EC;
+        padding: 8px 18px;
+        border-radius: 6px;
+        font-size: 20px;
+        font-weight: 700;
+        letter-spacing: 1px;
+      }
+
+      .meta-dot {
+        width: 10px;
+        height: 10px;
+        background-color: #FF6A1A;
+        border-radius: 50%;
+      }
+
+      .meta-label {
+        font-size: 20px;
+        font-weight: 700;
+        color: #141414;
+        letter-spacing: 0.5px;
+      }
+
+      /* Central Hero Line Chart Card */
+      .chart-card-wrapper {
+        position: absolute;
+        top: 450px;
+        left: 50px;
+        width: 980px;
+        height: 590px;
+        background-color: #141414;
+        border: 4px solid #141414;
+        border-radius: 8px;
+        box-shadow: 14px 14px 0px #141414;
+        overflow: hidden;
+        z-index: 20;
+      }
+
+      .card-topbar {
+        height: 52px;
+        background-color: #141414;
+        border-bottom: 2px solid rgba(247, 244, 236, 0.15);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 20px;
+      }
+
+      .topbar-controls {
+        display: flex;
+        gap: 8px;
+      }
+
+      .topbar-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background-color: rgba(247, 244, 236, 0.35);
+      }
+
+      .topbar-dot.active {
+        background-color: #FF6A1A;
+      }
+
+      .topbar-title {
+        color: #F7F4EC;
+        font-size: 17px;
+        font-weight: 700;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+      }
+
+      .topbar-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        color: #FF6A1A;
+        font-size: 15px;
+        font-weight: 900;
+        letter-spacing: 0.5px;
+      }
+
+      .status-pulse {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background-color: #FF6A1A;
+      }
+
+      /* Image Pan Viewport */
+      .card-viewport {
+        position: relative;
+        width: 100%;
+        height: calc(100% - 52px);
+        overflow: hidden;
+        background-color: #0b0f14;
+      }
+
+      .chart-image-element {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 1120px;
+        height: 100%;
+        object-fit: cover;
+        transform-origin: center center;
+        will-change: transform;
+      }
+
+      /* Inflection Point Breakout Indicator */
+      .inflection-marker {
+        position: absolute;
+        right: 170px;
+        top: 150px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        pointer-events: none;
+        z-index: 30;
+      }
+
+      .marker-badge {
+        background-color: #FF6A1A;
+        color: #141414;
+        font-size: 18px;
+        font-weight: 900;
+        padding: 6px 14px;
+        border-radius: 4px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+        margin-bottom: 8px;
+        letter-spacing: 0.5px;
+      }
+
+      .marker-target {
+        width: 56px;
+        height: 56px;
+        border: 4px solid #FF6A1A;
+        border-radius: 50%;
+        background-color: rgba(255, 106, 26, 0.2);
+        display: grid;
+        place-items: center;
+      }
+
+      .marker-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background-color: #FF6A1A;
+      }
+
+      /* Overlay 1: Label ("KHÔNG DỊP LỄ TẾT") */
+      .overlay-label-box {
+        position: absolute;
+        top: 305px;
+        left: 50px;
+        width: 980px;
+        z-index: 40;
+      }
+
+      .label-card {
+        display: inline-flex;
+        align-items: center;
+        background-color: #141414;
+        border: 3px solid #141414;
+        border-radius: 6px;
+        box-shadow: 10px 10px 0px #FF6A1A;
+        overflow: hidden;
+      }
+
+      .label-flag {
+        width: 14px;
+        align-self: stretch;
+        background-color: #FF6A1A;
+      }
+
+      .label-content {
+        padding: 16px 28px;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      .label-kicker {
+        color: #FF6A1A;
+        font-size: 18px;
+        font-weight: 700;
+        letter-spacing: 1px;
+      }
+
+      .label-headline {
+        color: #F7F4EC;
+        font-size: 42px;
+        font-weight: 900;
+        letter-spacing: 1px;
+        margin: 0;
+        line-height: 1.15;
+      }
+
+      /* Overlay 2: Punch Phrase ("THẢO LUẬN TĂNG NHANH") */
+      .overlay-punch-box {
+        position: absolute;
+        top: 1100px;
+        left: 50px;
+        width: 980px;
+        z-index: 50;
+      }
+
+      .punch-card {
+        background-color: #141414;
+        border: 3px solid #141414;
+        border-radius: 8px;
+        box-shadow: 12px 12px 0px #FF6A1A;
+        padding: 24px 32px;
+      }
+
+      .punch-kicker-badge {
+        display: inline-block;
+        background-color: #FF6A1A;
+        color: #141414;
+        font-size: 19px;
+        font-weight: 900;
+        padding: 6px 14px;
+        border-radius: 4px;
+        letter-spacing: 1px;
+        margin-bottom: 12px;
+      }
+
+      .punch-phrase-text {
+        margin: 0;
+        font-size: 64px;
+        font-weight: 900;
+        line-height: 1.22;
+        letter-spacing: -0.5px;
+      }
+
+      .text-light {
+        color: #F7F4EC;
+      }
+
+      .text-orange {
+        color: #FF6A1A;
+      }
+
+      /* Permanent Bottom Accent Signature Bar */
+      .signature-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 16px;
+        background-color: #FF6A1A;
+        z-index: 999;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s21"
+      data-width="1080"
+      data-height="1920"
+      data-duration="5.88"
+    >
+      <!-- Shot S21-1 Base Visual Clip -->
+      <section id="shot-s21-1" class="clip" data-start="0" data-duration="5.88">
+        <!-- Background Grid Texture -->
+        <div class="grid-texture"></div>
+
+        <!-- Ruled Horizontal Chart Lines (at 20%, 40%, 60%, 80% height) -->
+        <div class="chart-grid">
+          <div class="chart-line" style="top: 384px;">
+            <div class="chart-tick"></div>
+            <div class="chart-rule"></div>
+          </div>
+          <div class="chart-line" style="top: 768px;">
+            <div class="chart-tick"></div>
+            <div class="chart-rule"></div>
+          </div>
+          <div class="chart-line" style="top: 1152px;">
+            <div class="chart-tick"></div>
+            <div class="chart-rule"></div>
+          </div>
+          <div class="chart-line" style="top: 1536px;">
+            <div class="chart-tick"></div>
+            <div class="chart-rule"></div>
+          </div>
+        </div>
+
+        <!-- Context Meta Tag at Top -->
+        <div id="scene-header" class="header-meta">
+          <div class="meta-pill">
+            <div class="meta-dot"></div>
+            <span>BẰNG CHỨNG DỮ LIỆU</span>
+          </div>
+          <span class="meta-label">// THEO DÕI XU HƯỚNG</span>
+        </div>
+
+        <!-- Hero Line Chart Card (img-33) -->
+        <div id="chart-card" class="chart-card-wrapper">
+          <div class="card-topbar">
+            <div class="topbar-controls">
+              <div class="topbar-dot active"></div>
+              <div class="topbar-dot"></div>
+              <div class="topbar-dot"></div>
+            </div>
+            <div class="topbar-title">Biểu Đồ Lượng Thảo Luận Mạng Xã Hội</div>
+            <div class="topbar-status">
+              <div class="status-pulse"></div>
+              <span>DỮ LIỆU THỰC</span>
+            </div>
+          </div>
+
+          <div class="card-viewport">
+            <img
+              id="chart-image"
+              class="chart-image-element"
+              src="assets/img-33-trend-data-line-chart.jpg"
+              alt="Line chart tracking discussion trend data"
+            />
+
+            <!-- Visual event inflection indicator -->
+            <div id="inflection-marker" class="inflection-marker">
+              <div class="marker-badge">BÙNG NỔ</div>
+              <div class="marker-target">
+                <div class="marker-dot"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Vox Signature Bottom Orange Bar -->
+        <div class="signature-bar"></div>
+      </section>
+
+      <!-- Overlay 1 Clip: Label "KHÔNG DỊP LỄ TẾT" -->
+      <div id="clip-overlay-1" class="clip" data-start="1.46" data-duration="2.64">
+        <div id="overlay-label-inner" class="overlay-label-box">
+          <div class="label-card">
+            <div class="label-flag"></div>
+            <div class="label-content">
+              <span class="label-kicker">THỜI ĐIỂM PHÁT HÀNH</span>
+              <h2 class="label-headline">KHÔNG DỊP LỄ TẾT</h2>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Overlay 2 Clip: Punch Phrase "THẢO LUẬN TĂNG NHANH" -->
+      <div id="clip-overlay-2" class="clip" data-start="4.64" data-duration="1.24">
+        <div id="overlay-punch-inner" class="overlay-punch-box">
+          <div class="punch-card">
+            <div class="punch-kicker-badge">BƯỚC NGOẶT DỮ LIỆU</div>
+            <h1 class="punch-phrase-text">
+              <span class="text-light">THẢO LUẬN </span>
+              <span class="text-orange">TĂNG NHANH</span>
+            </h1>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const tl = gsap.timeline({ paused: true });
+
+      // 0.05s: Ruled chart lines sweep across the canvas
+      tl.fromTo(
+        ".chart-line",
+        { scaleX: 0, opacity: 0, transformOrigin: "left center" },
+        { scaleX: 1, opacity: 1, duration: 0.5, stagger: 0.06, ease: "power2.out" },
+        0.05
+      );
+
+      // 0.10s: Scene header badge slides down
+      tl.fromTo(
+        "#scene-header",
+        { y: -24, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.45, ease: "power3.out" },
+        0.10
+      );
+
+      // 0.15s: Hero chart card rises into frame (transitionIn: rise)
+      tl.fromTo(
+        "#chart-card",
+        { y: 110, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.65, ease: "power3.out" },
+        0.15
+      );
+
+      // 0s -> 5.88s: Continuous smooth pan-right along chart line data (cameraMotion: pan-right)
+      tl.fromTo(
+        "#chart-image",
+        { x: -75, scale: 1.14 },
+        { x: 35, scale: 1.14, duration: 5.88, ease: "none" },
+        0
+      );
+
+      // 1.46s: Overlay 1 ("KHÔNG DỊP LỄ TẾT") arrives with confident entrance
+      tl.fromTo(
+        "#overlay-label-inner",
+        { y: 32, opacity: 0, scale: 0.95 },
+        { y: 0, opacity: 1, scale: 1, duration: 0.4, ease: "power3.out" },
+        1.46
+      );
+
+      // 3.00s: Inflection marker pops on the steep spike to anchor viewer attention
+      tl.fromTo(
+        "#inflection-marker",
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.45, ease: "back.out(1.6)" },
+        3.00
+      );
+
+      // 3.75s: Overlay 1 exits smoothly before punch phrase lands
+      tl.to(
+        "#overlay-label-inner",
+        { y: -18, opacity: 0, duration: 0.35, ease: "power2.in" },
+        3.75
+      );
+
+      // 4.64s: Overlay 2 ("THẢO LUẬN TĂNG NHANH") slams in as punch phrase
+      tl.fromTo(
+        "#overlay-punch-inner",
+        { y: 36, opacity: 0, scale: 0.92 },
+        { y: 0, opacity: 1, scale: 1, duration: 0.35, ease: "power4.out" },
+        4.64
+      );
+
+      // Framework contract: register paused timeline on main composition id
+      window.__timelines["scene-s21"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

@@ -1,0 +1,572 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+/* hf-safe-colors (tất định từ style-tokens.json) */
+.hf-text-ink { color: #141414; }
+.hf-text-light { color: #F7F4EC; }
+.hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+.hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+.hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+.hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #E7E3D9;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+      .clip {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+      }
+
+      /* Nền chart kẻ 4 vạch ngang + tick cam cạnh trái theo Style DNA */
+      .bg-chart {
+        position: absolute;
+        inset: 0;
+        background-color: #E7E3D9;
+        pointer-events: none;
+        z-index: 0;
+      }
+      .chart-grid-line {
+        position: absolute;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background-color: rgba(20, 20, 20, 0.32);
+      }
+      .chart-tick {
+        position: absolute;
+        left: 0;
+        top: -3px;
+        width: 24px;
+        height: 8px;
+        background-color: #FF6A1A;
+      }
+
+      /* Thanh cam nhận diện cố định mép đáy */
+      .bottom-orange-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 10px;
+        background-color: #FF6A1A;
+        z-index: 100;
+        pointer-events: none;
+      }
+
+      /* Khu vực tiêu đề phía trên */
+      .header-container {
+        position: absolute;
+        top: 180px;
+        left: 90px;
+        width: 900px;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        z-index: 10;
+      }
+      .header-badge {
+        display: inline-flex;
+        align-items: center;
+        background-color: #141414;
+        border-left: 6px solid #FF6A1A;
+        padding: 8px 18px;
+        margin-bottom: 14px;
+      }
+      .badge-text {
+        font-size: 22px;
+        font-weight: 900;
+        color: #FF6A1A;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+      }
+      .header-title {
+        font-size: 52px;
+        font-weight: 900;
+        color: #141414;
+        line-height: 1.16;
+        margin: 0;
+        text-transform: uppercase;
+        letter-spacing: -0.5px;
+      }
+
+      /* Khung bản đồ phân tích chính */
+      .map-frame {
+        position: absolute;
+        top: 360px;
+        left: 90px;
+        width: 900px;
+        height: 760px;
+        border: 4px solid #141414;
+        background-color: #141414;
+        overflow: hidden;
+        box-shadow: 0 16px 40px rgba(20, 20, 20, 0.25);
+        z-index: 10;
+      }
+      .map-inner {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        transform-origin: 50% 45%;
+      }
+      .map-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center;
+        display: block;
+      }
+
+      /* Góc ngắm kỹ thuật cartographic */
+      .corner-bracket {
+        position: absolute;
+        width: 20px;
+        height: 20px;
+        border-color: #FF6A1A;
+        pointer-events: none;
+        z-index: 5;
+      }
+      .corner-bracket.tl {
+        top: 12px;
+        left: 12px;
+        border-top: 3px solid #FF6A1A;
+        border-left: 3px solid #FF6A1A;
+      }
+      .corner-bracket.tr {
+        top: 12px;
+        right: 12px;
+        border-top: 3px solid #FF6A1A;
+        border-right: 3px solid #FF6A1A;
+      }
+      .corner-bracket.bl {
+        bottom: 12px;
+        left: 12px;
+        border-bottom: 3px solid #FF6A1A;
+        border-left: 3px solid #FF6A1A;
+      }
+      .corner-bracket.br {
+        bottom: 12px;
+        right: 12px;
+        border-bottom: 3px solid #FF6A1A;
+        border-right: 3px solid #FF6A1A;
+      }
+
+      .map-source-tag {
+        position: absolute;
+        bottom: 14px;
+        right: 14px;
+        background-color: #141414;
+        color: #E7E3D9;
+        font-size: 16px;
+        font-weight: 700;
+        padding: 4px 12px;
+        border: 1px solid rgba(231, 227, 217, 0.4);
+        z-index: 6;
+      }
+
+      /* Điểm ngập cảnh báo (flood markers) */
+      .flood-pin {
+        position: absolute;
+        width: 20px;
+        height: 20px;
+        margin-left: -10px;
+        margin-top: -10px;
+        pointer-events: none;
+        z-index: 7;
+      }
+      .pin-dot {
+        position: absolute;
+        top: 3px;
+        left: 3px;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background-color: #FF6A1A;
+        border: 2px solid #141414;
+      }
+      .pin-pulse {
+        position: absolute;
+        top: -6px;
+        left: -6px;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        border: 2px solid #FF6A1A;
+      }
+
+      /* Thước đo cao trình cắt ngang */
+      .elevation-datum {
+        position: absolute;
+        top: 480px;
+        left: 0;
+        right: 0;
+        height: 280px;
+        pointer-events: none;
+        z-index: 6;
+      }
+      .datum-line {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background-color: #FF6A1A;
+        box-shadow: 0 0 12px rgba(255, 106, 26, 0.9);
+      }
+      .datum-pill {
+        position: absolute;
+        top: -20px;
+        right: 24px;
+        background-color: #141414;
+        border: 2px solid #FF6A1A;
+        padding: 4px 14px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        border-radius: 4px;
+      }
+      .datum-icon {
+        color: #FF6A1A;
+        font-size: 13px;
+      }
+      .datum-label {
+        color: #F7F4EC;
+        font-size: 18px;
+        font-weight: 900;
+        letter-spacing: 1px;
+      }
+      .datum-shade {
+        position: absolute;
+        top: 3px;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(20, 20, 20, 0.35);
+        border-top: 1px dashed rgba(255, 106, 26, 0.5);
+      }
+
+      /* Các thẻ số liệu overlay tuần tự */
+      .data-card {
+        position: absolute;
+        top: 1160px;
+        left: 90px;
+        width: 900px;
+        height: 170px;
+        background-color: #141414;
+        border-left: 8px solid #FF6A1A;
+        padding: 20px 32px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        box-shadow: 0 16px 40px rgba(20, 20, 20, 0.4);
+      }
+      .card-col-left {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+      }
+      .card-meta {
+        font-size: 20px;
+        font-weight: 700;
+        color: #E7E3D9;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        margin-bottom: 6px;
+      }
+      .card-stat {
+        font-size: 56px;
+        font-weight: 900;
+        color: #FF6A1A;
+        line-height: 1.1;
+        letter-spacing: -0.5px;
+      }
+      .card-col-right {
+        display: flex;
+        align-items: center;
+      }
+      .card-pill {
+        background-color: #141414;
+        border: 2px solid #FF6A1A;
+        padding: 10px 18px;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .card-pill-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background-color: #FF6A1A;
+      }
+      .card-pill-text {
+        font-size: 22px;
+        font-weight: 700;
+        color: #F7F4EC;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s06"
+      data-width="1080"
+      data-height="1920"
+      data-duration="9.6"
+    >
+      <!-- Nền chart kỹ thuật với 4 vạch ngang và tick cam -->
+      <div id="bg-chart" class="bg-chart">
+        <div class="chart-grid-line" style="top: 384px;">
+          <div class="chart-tick"></div>
+        </div>
+        <div class="chart-grid-line" style="top: 768px;">
+          <div class="chart-tick"></div>
+        </div>
+        <div class="chart-grid-line" style="top: 1152px;">
+          <div class="chart-tick"></div>
+        </div>
+        <div class="chart-grid-line" style="top: 1536px;">
+          <div class="chart-tick"></div>
+        </div>
+      </div>
+
+      <!-- Cảnh chính hiển thị tiêu đề và bản đồ phân tích -->
+      <section id="scene-base" class="clip" data-start="0" data-duration="9.6">
+        <div class="header-container">
+          <div class="header-badge">
+            <span class="badge-text">BÁO CÁO PHÂN TÍCH</span>
+          </div>
+          <h1 class="header-title">ĐỊA HÌNH &amp; ĐIỂM NGẬP TP.HCM</h1>
+        </div>
+
+        <div id="map-frame" class="map-frame">
+          <div class="corner-bracket tl"></div>
+          <div class="corner-bracket tr"></div>
+          <div class="corner-bracket bl"></div>
+          <div class="corner-bracket br"></div>
+          <div class="map-source-tag">BẢN ĐỒ THỰC ĐỊA</div>
+
+          <div id="map-inner" class="map-inner">
+            <img
+              id="map-img"
+              class="map-img"
+              src="assets/img-07-hcmc-flooding-map-infographic.jpg"
+              alt="Bản đồ ngập lụt TP.HCM"
+            />
+
+            <!-- 5 điểm ngập phân tích nhấp nháy trên bản đồ -->
+            <div class="flood-pin" style="left: 450px; top: 360px;">
+              <div class="pin-pulse"></div>
+              <div class="pin-dot"></div>
+            </div>
+            <div class="flood-pin" style="left: 320px; top: 320px;">
+              <div class="pin-pulse"></div>
+              <div class="pin-dot"></div>
+            </div>
+            <div class="flood-pin" style="left: 580px; top: 280px;">
+              <div class="pin-pulse"></div>
+              <div class="pin-dot"></div>
+            </div>
+            <div class="flood-pin" style="left: 480px; top: 510px;">
+              <div class="pin-pulse"></div>
+              <div class="pin-dot"></div>
+            </div>
+            <div class="flood-pin" style="left: 360px; top: 480px;">
+              <div class="pin-pulse"></div>
+              <div class="pin-dot"></div>
+            </div>
+
+            <!-- Thước đo cao trình cắt ngang mức +1.5m -->
+            <div id="elevation-datum" class="elevation-datum">
+              <div class="datum-line"></div>
+              <div class="datum-pill">
+                <span class="datum-icon">&#9650;</span>
+                <span class="datum-label">CAO TRÌNH CHUẨN +1.5M</span>
+              </div>
+              <div class="datum-shade"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Overlay 1: 159 ĐIỂM NGẬP (2.52s -> 5.12s) -->
+      <section id="overlay-1-clip" class="clip" data-start="2.52" data-duration="2.60">
+        <div id="card-1-inner" class="data-card">
+          <div class="card-col-left">
+            <div class="card-meta">THỐNG KÊ HIỆN TRẠNG</div>
+            <div class="card-stat">159 ĐIỂM NGẬP</div>
+          </div>
+          <div class="card-col-right">
+            <div class="card-pill">
+              <span class="card-pill-dot"></span>
+              <span class="card-pill-text">GHI NHẬN THƯỜNG XUYÊN</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Overlay 2: 65% - 75% DIỆN TÍCH (5.25s -> 7.85s) -->
+      <section id="overlay-2-clip" class="clip" data-start="5.25" data-duration="2.60">
+        <div id="card-2-inner" class="data-card">
+          <div class="card-col-left">
+            <div class="card-meta">DIỆN TÍCH TỰ NHIÊN</div>
+            <div class="card-stat">65% - 75% DIỆN TÍCH</div>
+          </div>
+          <div class="card-col-right">
+            <div class="card-pill">
+              <span class="card-pill-dot"></span>
+              <span class="card-pill-text">CHÌM DƯỚI CAO TRÌNH</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Overlay 3: CAO TRÌNH < +1.5M (7.95s -> 9.60s) -->
+      <section id="overlay-3-clip" class="clip" data-start="7.95" data-duration="1.65">
+        <div id="card-3-inner" class="data-card">
+          <div class="card-col-left">
+            <div class="card-meta">MỨC ĐỘ NGUY CƠ</div>
+            <div class="card-stat">CAO TRÌNH &lt; +1.5M</div>
+          </div>
+          <div class="card-col-right">
+            <div class="card-pill">
+              <span class="card-pill-dot"></span>
+              <span class="card-pill-text">DƯỚI CHUẨN ĐÔ THỊ</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Thanh cam đáy cố định -->
+      <div class="bottom-orange-bar"></div>
+    </div>
+
+    <script>
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true });
+
+      // 1. Tiêu đề xuất hiện mượt mà
+      tl.fromTo(
+        ".header-badge",
+        { y: 20, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.5, ease: "power3.out" },
+        0.05
+      );
+      tl.fromTo(
+        ".header-title",
+        { y: 25, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.55, ease: "power3.out" },
+        0.15
+      );
+
+      // 2. Vào cảnh hiệu ứng bóc giấy (peel entrance)
+      tl.fromTo(
+        "#map-frame",
+        {
+          clipPath: "polygon(0 0, 0 0, 0 100%, 0 100%)",
+          rotation: -1.5,
+          scale: 0.96,
+          opacity: 0,
+        },
+        {
+          clipPath: "polygon(0 0, 100% 0, 100% 100%, 0 100%)",
+          rotation: 0,
+          scale: 1.0,
+          opacity: 1,
+          duration: 0.75,
+          ease: "power3.out",
+        },
+        0.2
+      );
+
+      // 3. Chuyển động máy quay Ken Burns zoom chậm 1.0x -> 1.07x
+      tl.fromTo(
+        "#map-img",
+        { scale: 1.0 },
+        { scale: 1.07, duration: 9.6, ease: "none" },
+        0
+      );
+
+      // 4. Các điểm ngập xuất hiện và nhấp nháy radar
+      tl.fromTo(
+        ".flood-pin",
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.4, stagger: 0.08, ease: "back.out(1.5)" },
+        2.3
+      );
+      tl.fromTo(
+        ".pin-pulse",
+        { scale: 0.8, opacity: 1 },
+        { scale: 2.4, opacity: 0, duration: 1.0, repeat: 4, stagger: 0.12, ease: "power2.out" },
+        2.52
+      );
+
+      // 5. Thẻ số liệu 1: 159 ĐIỂM NGẬP (2.52s -> 5.02s)
+      tl.fromTo(
+        "#card-1-inner",
+        { y: 30, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.45, ease: "power3.out" },
+        2.52
+      );
+      tl.to(
+        "#card-1-inner",
+        { y: -20, opacity: 0, duration: 0.3, ease: "power2.in" },
+        4.75
+      );
+
+      // 6. Thước đo cao trình cắt ngang xuất hiện
+      tl.fromTo(
+        "#elevation-datum",
+        { opacity: 0, y: 15 },
+        { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" },
+        5.25
+      );
+
+      // 7. Thẻ số liệu 2: 65% - 75% DIỆN TÍCH (5.32s -> 7.52s)
+      tl.fromTo(
+        "#card-2-inner",
+        { y: 30, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.45, ease: "power3.out" },
+        5.32
+      );
+      tl.to(
+        "#card-2-inner",
+        { y: -20, opacity: 0, duration: 0.3, ease: "power2.in" },
+        7.45
+      );
+
+      // 8. Thẻ số liệu 3: CAO TRÌNH < +1.5M (8.02s -> 9.52s)
+      tl.fromTo(
+        "#card-3-inner",
+        { y: 30, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.45, ease: "power3.out" },
+        8.02
+      );
+
+      // Đăng ký timeline gốc duy nhất
+      window.__timelines["scene-s06"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

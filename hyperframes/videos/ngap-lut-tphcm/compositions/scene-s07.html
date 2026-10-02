@@ -1,0 +1,492 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+/* hf-safe-colors (tất định từ style-tokens.json) */
+.hf-text-ink { color: #141414; }
+.hf-text-light { color: #F7F4EC; }
+.hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+.hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+.hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+.hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background: #e7e3d9;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+      .clip {
+        position: absolute;
+        inset: 0;
+      }
+
+      /* Style DNA tokens */
+      .bg-grid {
+        position: absolute;
+        inset: 0;
+        background-color: #e7e3d9;
+        background-image:
+          linear-gradient(to right, rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px),
+          linear-gradient(to bottom, rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px);
+        background-size: 84px 84px;
+      }
+
+      /* Fixed bottom orange signature bar */
+      .signature-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 12px;
+        background: #ff6a1a;
+        z-index: 100;
+      }
+
+      /* Safe WCAG color utility classes */
+      .hf-text-ink { color: #141414; }
+      .hf-text-light { color: #f7f4ec; }
+      .hf-hl-orange { background: #ff6a1a; color: #141414; }
+      .hf-plate-ink { background: #141414; color: #f7f4ec; }
+      .hf-plate-ink-orange { background: #141414; color: #ff6a1a; }
+      .hf-plate-paper { background: #e7e3d9; color: #141414; }
+
+      /* Map editorial card container */
+      .map-card-wrapper {
+        position: absolute;
+        top: 210px;
+        left: 60px;
+        width: 960px;
+        height: 1150px;
+        transform-origin: 50% 20%;
+      }
+
+      .card-header-bar {
+        width: 100%;
+        height: 64px;
+        background: #141414;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 24px;
+        border-bottom: 3px solid #ff6a1a;
+      }
+
+      .card-header-title {
+        font-size: 22px;
+        font-weight: 900;
+        color: #f7f4ec;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+      }
+
+      .card-header-tag {
+        font-size: 15px;
+        font-weight: 900;
+        background: #ff6a1a;
+        color: #141414;
+        padding: 4px 12px;
+        border-radius: 3px;
+        letter-spacing: 1px;
+      }
+
+      .map-viewport {
+        position: relative;
+        width: 100%;
+        height: 1086px;
+        background: #f5f0e4;
+        border: 3px solid #141414;
+        border-top: none;
+        box-shadow: 14px 14px 0px rgba(20, 20, 20, 0.95);
+        overflow: hidden;
+      }
+
+      .map-image-container {
+        position: absolute;
+        width: 122%;
+        height: 122%;
+        top: -11%;
+        left: -11%;
+        will-change: transform;
+      }
+
+      .map-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center 35%;
+        display: block;
+      }
+
+      /* SVG Diagram Overlay */
+      .diagram-svg-layer {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: 10;
+      }
+
+      /* Corner aesthetic markers */
+      .corner-tick {
+        position: absolute;
+        font-size: 20px;
+        font-weight: 900;
+        color: #141414;
+        opacity: 0.6;
+        user-select: none;
+      }
+      .tick-tl { top: 12px; left: 16px; }
+      .tick-tr { top: 12px; right: 16px; }
+      .tick-bl { bottom: 12px; left: 16px; }
+      .tick-br { bottom: 12px; right: 16px; }
+
+      /* River name callouts on map */
+      .river-label {
+        position: absolute;
+        font-size: 17px;
+        font-weight: 900;
+        color: #f7f4ec;
+        background: #141414;
+        padding: 4px 10px;
+        border-left: 3px solid #ff6a1a;
+        letter-spacing: 1px;
+        box-shadow: 4px 4px 0px rgba(0, 0, 0, 0.5);
+      }
+      #label-sg { top: 240px; left: 160px; }
+      #label-dn { top: 220px; right: 140px; }
+
+      /* Overlay Callout Cards */
+      .overlay-layer {
+        pointer-events: none;
+        z-index: 20;
+      }
+
+      .callout-plate {
+        position: absolute;
+        top: 1060px;
+        left: 100px;
+        width: 880px;
+        background: #141414;
+        border-left: 10px solid #ff6a1a;
+        padding: 26px 36px;
+        box-shadow: 12px 12px 0px rgba(20, 20, 20, 0.9);
+      }
+
+      .callout-badge {
+        display: inline-block;
+        font-size: 16px;
+        font-weight: 900;
+        background: #ff6a1a;
+        color: #141414;
+        padding: 6px 14px;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        margin-bottom: 12px;
+      }
+
+      .callout-headline {
+        margin: 0;
+        font-size: 54px;
+        font-weight: 900;
+        line-height: 1.18;
+        color: #f7f4ec;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .callout-subtitle {
+        margin-top: 10px;
+        font-size: 22px;
+        font-weight: 700;
+        color: #e7e3d9;
+        letter-spacing: 0.5px;
+      }
+
+      /* Pin Marker at Confluence */
+      .pin-wrapper {
+        position: absolute;
+        top: 790px;
+        left: 495px;
+        width: 90px;
+        height: 120px;
+        pointer-events: none;
+        z-index: 25;
+      }
+
+      .pin-pulse {
+        position: absolute;
+        top: 76px;
+        left: 15px;
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: rgba(255, 106, 26, 0.35);
+        border: 2px solid #ff6a1a;
+        transform: translate(-50%, -50%);
+      }
+
+      .pin-svg {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 60px;
+        height: 80px;
+        filter: drop-shadow(4px 4px 0px rgba(20, 20, 20, 0.8));
+      }
+
+      .pin-caption-tag {
+        position: absolute;
+        top: 885px;
+        left: 400px;
+        width: 280px;
+        background: #141414;
+        border: 2px solid #ff6a1a;
+        padding: 8px 16px;
+        text-align: center;
+        box-shadow: 6px 6px 0px rgba(0, 0, 0, 0.6);
+        z-index: 26;
+      }
+
+      .pin-caption-text {
+        margin: 0;
+        font-size: 20px;
+        font-weight: 900;
+        color: #f7f4ec;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s07"
+      data-width="1080"
+      data-height="1920"
+      data-duration="7.96"
+    >
+      <!-- Base Background Grid -->
+      <div class="bg-grid"></div>
+
+      <!-- Main Visual Scene Clip (0.00s -> 7.96s) -->
+      <section id="shot-main" class="clip" data-start="0" data-duration="7.96">
+        <!-- Map Editorial Card -->
+        <div id="map-card" class="map-card-wrapper">
+          <div class="card-header-bar">
+            <span class="card-header-title">HỆ THỐNG LƯU VỰC THỦY VĂN</span>
+            <span class="card-header-tag">BẢN ĐỒ // S07</span>
+          </div>
+
+          <div class="map-viewport">
+            <!-- Continuous downstream camera pan container -->
+            <div id="map-container" class="map-image-container">
+              <img
+                id="map-img"
+                class="map-img"
+                src="assets/img-06-saigon-dong-nai-river-map.jpg"
+                alt="Bản đồ lưu vực sông Sài Gòn - Đồng Nai"
+              />
+            </div>
+
+            <!-- Vector Diagram Converging Flow Lines -->
+            <svg class="diagram-svg-layer" viewBox="0 0 960 1086" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <marker id="flow-arrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                  <path d="M 0 1 L 10 5 L 0 9 z" fill="#FF6A1A" />
+                </marker>
+              </defs>
+              <!-- Sông Sài Gòn flow line -->
+              <path
+                id="flow-sg"
+                d="M 230 220 C 270 380, 360 560, 480 720"
+                fill="none"
+                stroke="#FF6A1A"
+                stroke-width="7"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                marker-end="url(#flow-arrow)"
+              />
+              <!-- Sông Đồng Nai flow line -->
+              <path
+                id="flow-dn"
+                d="M 730 230 C 670 410, 580 570, 520 720"
+                fill="none"
+                stroke="#FF6A1A"
+                stroke-width="7"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                marker-end="url(#flow-arrow)"
+              />
+            </svg>
+
+            <!-- Flow river tags -->
+            <div id="label-sg" class="river-label">S. SÀI GÒN</div>
+            <div id="label-dn" class="river-label">S. ĐỒNG NAI</div>
+
+            <!-- Framing corner ticks -->
+            <div class="corner-tick tick-tl">+</div>
+            <div class="corner-tick tick-tr">+</div>
+            <div class="corner-tick tick-bl">+</div>
+            <div class="corner-tick tick-br">+</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Overlay 1 Clip: "ĐỊA HÌNH VÙNG TRŨNG" (1.92s -> 3.92s) -->
+      <div id="clip-overlay-1" class="clip overlay-layer" data-start="1.92" data-duration="2.0">
+        <div id="callout-1" class="callout-plate">
+          <div class="callout-badge">ĐẶC ĐIỂM TỰ NHIÊN</div>
+          <h2 class="callout-headline">ĐỊA HÌNH VÙNG TRŨNG</h2>
+          <div class="callout-subtitle">CAO ĐỘ BỀ MẶT THẤP DẦN VỀ BIỂN</div>
+        </div>
+      </div>
+
+      <!-- Overlay 2 Clip: "HẠ LƯU HỆ SÔNG" (5.92s -> 7.96s) -->
+      <div id="clip-overlay-2" class="clip overlay-layer" data-start="5.92" data-duration="2.04">
+        <div id="callout-2" class="callout-plate">
+          <div class="callout-badge">ĐIỂM HỘI TỤ DÒNG CHẢY</div>
+          <h2 class="callout-headline">HẠ LƯU HỆ SÔNG</h2>
+          <div class="callout-subtitle">GIAO ĐIỂM SÔNG SÀI GÒN – ĐỒNG NAI</div>
+        </div>
+      </div>
+
+      <!-- Pin Marker Clip (6.42s -> 7.96s) -->
+      <div id="clip-pin" class="clip overlay-layer" data-start="6.42" data-duration="1.54">
+        <div id="pin-anchor" class="pin-wrapper">
+          <div id="pin-ripple" class="pin-pulse"></div>
+          <svg id="pin-svg-icon" class="pin-svg" viewBox="0 0 60 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path
+              d="M30 0C13.43 0 0 13.43 0 30C0 52.5 30 80 30 80C30 80 60 52.5 60 30C60 13.43 46.57 0 30 0Z"
+              fill="#FF6A1A"
+              stroke="#141414"
+              stroke-width="5"
+            />
+            <circle cx="30" cy="30" r="11" fill="#F7F4EC" stroke="#141414" stroke-width="4" />
+          </svg>
+        </div>
+        <div id="pin-tag" class="pin-caption-tag">
+          <p class="pin-caption-text">TP. HỒ CHÍ MINH</p>
+        </div>
+      </div>
+
+      <!-- Permanent Bottom Brand Signature Bar -->
+      <div class="signature-bar"></div>
+    </div>
+
+    <script>
+      const tl = gsap.timeline({ paused: true });
+
+      // Measure SVG path lengths for deterministic progressive drawing
+      const flowSg = document.getElementById("flow-sg");
+      const flowDn = document.getElementById("flow-dn");
+      let lenSg = 600;
+      let lenDn = 600;
+
+      if (flowSg && typeof flowSg.getTotalLength === "function") {
+        lenSg = flowSg.getTotalLength();
+        flowSg.style.strokeDasharray = lenSg;
+        flowSg.style.strokeDashoffset = lenSg;
+      }
+      if (flowDn && typeof flowDn.getTotalLength === "function") {
+        lenDn = flowDn.getTotalLength();
+        flowDn.style.strokeDasharray = lenDn;
+        flowDn.style.strokeDashoffset = lenDn;
+      }
+
+      // Initial visual states
+      gsap.set("#label-sg", { opacity: 0, y: 15 });
+      gsap.set("#label-dn", { opacity: 0, y: 15 });
+
+      // 1. Entrance: "wobble-drop" of the main map card (0.0s -> 0.75s)
+      tl.fromTo(
+        "#map-card",
+        { y: -110, rotation: -2.5, scale: 0.93, opacity: 0 },
+        { y: 0, rotation: 0, scale: 1, opacity: 1, duration: 0.75, ease: "power3.out" },
+        0
+      );
+
+      // 2. Camera Motion: Pan slowly downstream towards the delta/confluence (0.0s -> 7.96s)
+      tl.fromTo(
+        "#map-container",
+        { scale: 1.15, x: -25, y: -45 },
+        { scale: 1.26, x: 22, y: 35, duration: 7.96, ease: "none" },
+        0
+      );
+
+      // 3. Overlay 1: "ĐỊA HÌNH VÙNG TRŨNG" (1.92s -> 3.92s)
+      tl.fromTo(
+        "#callout-1",
+        { y: 40, opacity: 0, scale: 0.95 },
+        { y: 0, opacity: 1, scale: 1, duration: 0.45, ease: "power3.out" },
+        1.92
+      );
+      tl.to(
+        "#callout-1",
+        { y: -20, opacity: 0, duration: 0.35, ease: "power2.in" },
+        3.55
+      );
+
+      // 4. Diagrammatic Converging River Flow Draw (3.6s -> 5.5s)
+      if (flowSg) {
+        tl.to(flowSg, { strokeDashoffset: 0, duration: 1.4, ease: "power2.out" }, 3.6);
+      }
+      if (flowDn) {
+        tl.to(flowDn, { strokeDashoffset: 0, duration: 1.4, ease: "power2.out" }, 3.85);
+      }
+      tl.to("#label-sg", { opacity: 1, y: 0, duration: 0.4, ease: "power2.out" }, 3.8);
+      tl.to("#label-dn", { opacity: 1, y: 0, duration: 0.4, ease: "power2.out" }, 4.05);
+
+      // 5. Overlay 2: "HẠ LƯU HỆ SÔNG" (5.92s -> 7.96s)
+      tl.fromTo(
+        "#callout-2",
+        { y: 40, opacity: 0, scale: 0.95 },
+        { y: 0, opacity: 1, scale: 1, duration: 0.48, ease: "power3.out" },
+        5.92
+      );
+
+      // 6. Pin Icon: Drop & ripple at confluence (6.42s -> 7.96s)
+      tl.fromTo(
+        "#pin-svg-icon",
+        { y: -50, scale: 0, opacity: 0 },
+        { y: 0, scale: 1, opacity: 1, duration: 0.45, ease: "back.out(1.5)" },
+        6.42
+      );
+      tl.fromTo(
+        "#pin-ripple",
+        { scale: 0.2, opacity: 0.9 },
+        { scale: 2.2, opacity: 0, duration: 0.9, ease: "power2.out" },
+        6.58
+      );
+      tl.fromTo(
+        "#pin-tag",
+        { y: 15, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.35, ease: "power3.out" },
+        6.65
+      );
+
+      // Register seekable timeline with main composition id
+      window.__timelines = window.__timelines || {};
+      window.__timelines["scene-s07"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

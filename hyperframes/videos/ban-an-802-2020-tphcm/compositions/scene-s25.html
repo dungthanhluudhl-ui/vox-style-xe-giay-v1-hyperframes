@@ -1,0 +1,561 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap">
+      <style>
+/* hf-safe-colors (tất định từ style-tokens.json) */
+.hf-text-ink { color: #141414; }
+.hf-text-light { color: #F7F4EC; }
+.hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+.hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+.hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+.hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      width: 1080px;
+      height: 1920px;
+      overflow: hidden;
+      background-color: #E7E3D9;
+      font-family: "Be Vietnam Pro", sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    #root {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #E7E3D9;
+    }
+
+    .clip {
+      position: absolute;
+      inset: 0;
+    }
+
+    /* Background Variant: Chart (Ruled horizontal lines & orange ticks) */
+    .chart-background {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .chart-line {
+      position: absolute;
+      left: 0;
+      width: 100%;
+      height: 2px;
+      background-color: rgba(20, 20, 20, 0.22);
+    }
+
+    .chart-line-1 { top: 384px; }  /* 20% */
+    .chart-line-2 { top: 768px; }  /* 40% */
+    .chart-line-3 { top: 1152px; } /* 60% */
+    .chart-line-4 { top: 1536px; } /* 80% */
+
+    .chart-tick {
+      position: absolute;
+      left: 0;
+      width: 28px;
+      height: 6px;
+      background-color: #FF6A1A;
+    }
+
+    .chart-tick-1 { top: 382px; }
+    .chart-tick-2 { top: 766px; }
+    .chart-tick-3 { top: 1150px; }
+    .chart-tick-4 { top: 1534px; }
+
+    /* Scene Stage with 3D perspective for flip transition */
+    .stage-container {
+      position: absolute;
+      inset: 0;
+      perspective: 1200px;
+      z-index: 10;
+    }
+
+    /* Fixed Vox Orange Bottom Bar */
+    .vox-bottom-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 1080px;
+      height: 10px;
+      background-color: #FF6A1A;
+      z-index: 100;
+    }
+
+    /* Header Panel: Safe zone Y 170px - 300px (ẩn ban đầu bằng CSS) */
+    .header-panel {
+      position: absolute;
+      top: 172px;
+      left: 60px;
+      width: 960px;
+      background-color: #141414;
+      border-radius: 16px;
+      padding: 20px 28px;
+      box-shadow: 0 16px 36px rgba(20, 20, 20, 0.24);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      z-index: 40;
+      transform-origin: top center;
+      opacity: 0;
+    }
+
+    .header-tag-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .header-badge {
+      background-color: #FF6A1A;
+      color: #141414;
+      font-weight: 900;
+      font-size: 20px;
+      padding: 4px 14px;
+      border-radius: 6px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+    }
+
+    .header-subnote {
+      color: #E7E3D9;
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+
+    .header-title {
+      font-size: 46px;
+      font-weight: 900;
+      line-height: 1.25;
+      color: #F7F4EC;
+      text-transform: uppercase;
+      letter-spacing: -0.5px;
+    }
+
+    /* Hero Card (Image): Center area Y 330px - 1350px (ẩn ban đầu bằng CSS) */
+    .hero-card-wrapper {
+      position: absolute;
+      top: 336px;
+      left: 60px;
+      width: 960px;
+      height: 1010px;
+      transform-style: preserve-3d;
+      transform-origin: center center;
+      z-index: 20;
+      opacity: 0;
+    }
+
+    .hero-card-frame {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      background-color: #F5F0E4;
+      border: 4px solid #141414;
+      border-radius: 20px;
+      box-shadow: 16px 16px 0px #141414;
+      overflow: hidden;
+    }
+
+    .hero-image {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center 38%;
+      transform-origin: 50% 45%;
+    }
+
+    /* Icon Overlay: Scale Badge (ẩn ban đầu bằng CSS để tránh hiện ở t=0) */
+    .scale-badge-plate {
+      position: absolute;
+      top: 360px;
+      right: 84px;
+      background-color: #141414;
+      border: 3px solid #FF6A1A;
+      border-radius: 14px;
+      padding: 12px 18px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: 0 10px 24px rgba(20, 20, 20, 0.35);
+      z-index: 50;
+      transform-origin: top right;
+      opacity: 0;
+    }
+
+    .scale-svg {
+      width: 52px;
+      height: 52px;
+    }
+
+    .scale-svg path,
+    .scale-svg line {
+      stroke: #FF6A1A;
+      stroke-width: 4;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      fill: none;
+    }
+
+    .scale-badge-text {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .scale-badge-title {
+      font-size: 20px;
+      font-weight: 900;
+      color: #FF6A1A;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .scale-badge-desc {
+      font-size: 16px;
+      font-weight: 700;
+      color: #F7F4EC;
+    }
+
+    /* Overlay 1: Mức độ nguy hiểm (ẩn ban đầu bằng CSS để tránh hiện ở t=0) */
+    .factor-card-left {
+      position: absolute;
+      top: 960px;
+      left: 80px;
+      width: 450px;
+      background-color: #141414;
+      border: 3px solid #FF6A1A;
+      border-radius: 16px;
+      padding: 18px 22px;
+      box-shadow: 10px 12px 0px #141414, 0 16px 28px rgba(20, 20, 20, 0.4);
+      z-index: 60;
+      transform-origin: left center;
+      opacity: 0;
+    }
+
+    /* Overlay 2: Tình tiết giảm nhẹ (ẩn ban đầu bằng CSS để tránh hiện ở t=0) */
+    .factor-card-right {
+      position: absolute;
+      top: 610px;
+      right: 80px;
+      width: 450px;
+      background-color: #141414;
+      border: 3px solid #FF6A1A;
+      border-radius: 16px;
+      padding: 18px 22px;
+      box-shadow: -10px 12px 0px #141414, 0 16px 28px rgba(20, 20, 20, 0.4);
+      z-index: 60;
+      transform-origin: right center;
+      opacity: 0;
+    }
+
+    .factor-tag-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .factor-num-badge {
+      width: 38px;
+      height: 38px;
+      border-radius: 8px;
+      background-color: #FF6A1A;
+      color: #141414;
+      font-size: 22px;
+      font-weight: 900;
+      display: grid;
+      place-items: center;
+    }
+
+    .factor-sub-indicator {
+      font-size: 17px;
+      font-weight: 700;
+      color: #E7E3D9;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+    }
+
+    .factor-headline {
+      font-size: 27px;
+      font-weight: 900;
+      color: #FF6A1A;
+      line-height: 1.25;
+      text-transform: uppercase;
+      letter-spacing: -0.2px;
+      margin-bottom: 6px;
+    }
+
+    .factor-explain {
+      font-size: 19px;
+      font-weight: 700;
+      color: #F7F4EC;
+      line-height: 1.35;
+    }
+  </style>
+
+  <div
+    id="root"
+    data-composition-id="scene-s25"
+    data-start="0"
+    data-width="1080"
+    data-height="1920"
+    data-duration="7.44"
+  >
+    <!-- Background variant: Chart -->
+    <div class="chart-background">
+      <div class="chart-line chart-line-1"></div>
+      <div class="chart-tick chart-tick-1"></div>
+
+      <div class="chart-line chart-line-2"></div>
+      <div class="chart-tick chart-tick-2"></div>
+
+      <div class="chart-line chart-line-3"></div>
+      <div class="chart-tick chart-tick-3"></div>
+
+      <div class="chart-line chart-line-4"></div>
+      <div class="chart-tick chart-tick-4"></div>
+    </div>
+
+    <!-- Fixed Bottom Bar -->
+    <div class="vox-bottom-bar"></div>
+
+    <!-- Primary Timed Clip Container -->
+    <section id="shot-s25-1" class="clip" data-start="0" data-duration="7.44">
+      <div class="stage-container">
+
+        <!-- Top Header Panel: Punch phrase -->
+        <header id="header-panel" class="header-panel">
+          <div class="header-tag-row">
+            <span class="header-badge">PHÂN ĐỊNH</span>
+            <span class="header-subnote">HỘI ĐỒNG XÉT XỬ</span>
+          </div>
+          <h1 class="header-title">TÁCH BẠCH HAI PHƯƠNG DIỆN</h1>
+        </header>
+
+        <!-- Main Hero Collage Image (Scale of Justice) -->
+        <div id="hero-card-wrapper" class="hero-card-wrapper">
+          <div class="hero-card-frame">
+            <img
+              id="hero-img"
+              class="hero-image"
+              src="assets/img-06-justice-scale-legal-factors-weighing.jpg"
+              alt="Cán cân công lý cân đo mức độ nguy hiểm và tình tiết giảm nhẹ"
+            />
+          </div>
+        </div>
+
+        <!-- Overlay 1: Scale Drawing Icon Badge (at 0.51s) -->
+        <div id="scale-badge" class="scale-badge-plate">
+          <svg class="scale-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <!-- Vertical Stand -->
+            <path class="draw-path" d="M 50 16 L 50 84" />
+            <!-- Base Support -->
+            <path class="draw-path" d="M 28 84 L 72 84" />
+            <!-- Tilted Central Beam: Left heavier (lower), Right lighter (higher) -->
+            <path class="draw-path" d="M 16 54 L 84 32" />
+            <!-- Left Strings & Dish (Heavy) -->
+            <path class="draw-path" d="M 16 54 L 6 74" />
+            <path class="draw-path" d="M 16 54 L 26 74" />
+            <path class="draw-path" d="M 4 74 Q 16 82 28 74" />
+            <!-- Right Strings & Dish (Light) -->
+            <path class="draw-path" d="M 84 32 L 74 52" />
+            <path class="draw-path" d="M 84 32 L 94 52" />
+            <path class="draw-path" d="M 72 52 Q 84 60 96 52" />
+          </svg>
+          <div class="scale-badge-text">
+            <span class="scale-badge-title">CÁN CÂN CÔNG LÝ</span>
+            <span class="scale-badge-desc">Cân nhắc độc lập</span>
+          </div>
+        </div>
+
+        <!-- Overlay 2: Factor 1 - Mức độ nguy hiểm (at 1.96s) -->
+        <div id="factor-card-1" class="factor-card-left">
+          <div class="factor-tag-row">
+            <div class="factor-num-badge">1</div>
+            <div class="factor-sub-indicator">BƯỚC THỨ NHẤT</div>
+          </div>
+          <div class="factor-headline">MỨC ĐỘ NGUY HIỂM</div>
+          <div class="factor-explain">Tội danh & tính chất nguy hiểm của hành vi phạm tội</div>
+        </div>
+
+        <!-- Overlay 3: Factor 2 - Tình tiết giảm nhẹ (at 4.78s) -->
+        <div id="factor-card-2" class="factor-card-right">
+          <div class="factor-tag-row">
+            <div class="factor-num-badge">2</div>
+            <div class="factor-sub-indicator">BƯỚC THỨ HAI</div>
+          </div>
+          <div class="factor-headline">TÌNH TIẾT GIẢM NHẸ</div>
+          <div class="factor-explain">Cân nhắc các yếu tố giảm nhẹ khi quyết định hình phạt</div>
+        </div>
+
+      </div>
+    </section>
+  </div>
+
+  <script>
+    // Initialize SVG Path lengths for deterministic pen-trace draw
+    document.querySelectorAll(".draw-path").forEach((path) => {
+      const len = path.getTotalLength();
+      path.style.strokeDasharray = len + 1;
+      path.style.strokeDashoffset = len + 1;
+    });
+
+    // Create the single paused GSAP timeline required by HyperFrames
+    const tl = gsap.timeline({ paused: true });
+
+    // 1. Scene Entrance (Flip transition)
+    // Flip Card In with 3D perspective
+    tl.fromTo(
+      "#hero-card-wrapper",
+      {
+        rotationY: -38,
+        rotationX: 14,
+        scale: 0.88,
+        opacity: 0,
+        z: -120
+      },
+      {
+        rotationY: 0,
+        rotationX: 0,
+        scale: 1,
+        opacity: 1,
+        z: 0,
+        duration: 0.85,
+        ease: "power3.out"
+      },
+      0
+    );
+
+    // Header Slide-in
+    tl.fromTo(
+      "#header-panel",
+      {
+        y: -36,
+        opacity: 0
+      },
+      {
+        y: 0,
+        opacity: 1,
+        duration: 0.65,
+        ease: "power3.out"
+      },
+      0.15
+    );
+
+    // Continuous 4% Camera Zoom-In across 7.44s
+    tl.fromTo(
+      "#hero-img",
+      {
+        scale: 1.0
+      },
+      {
+        scale: 1.04,
+        duration: 7.44,
+        ease: "none"
+      },
+      0
+    );
+
+    // 2. Overlay 1: Scale Badge Entrance (atMs: 197090 -> 0.51s relative)
+    tl.fromTo(
+      "#scale-badge",
+      {
+        scale: 0,
+        opacity: 0
+      },
+      {
+        scale: 1,
+        opacity: 1,
+        duration: 0.5,
+        ease: "power3.out"
+      },
+      0.51
+    );
+
+    // Progressive SVG Path Draw for the scale icon
+    tl.to(
+      "#scale-badge .draw-path",
+      {
+        strokeDashoffset: 0,
+        duration: 0.8,
+        stagger: 0.08,
+        ease: "power2.out"
+      },
+      0.65
+    );
+
+    // 3. Overlay 2: Label 1 "MỨC ĐỘ NGUY HIỂM" (atMs: 198540 -> 1.96s relative)
+    tl.fromTo(
+      "#factor-card-1",
+      {
+        x: -50,
+        scale: 0.9,
+        opacity: 0
+      },
+      {
+        x: 0,
+        scale: 1,
+        opacity: 1,
+        duration: 0.55,
+        ease: "power3.out"
+      },
+      1.96
+    );
+
+    // 4. Overlay 3: Label 2 "TÌNH TIẾT GIẢM NHẸ" (atMs: 201360 -> 4.78s relative)
+    tl.fromTo(
+      "#factor-card-2",
+      {
+        x: 50,
+        scale: 0.9,
+        opacity: 0
+      },
+      {
+        x: 0,
+        scale: 1,
+        opacity: 1,
+        duration: 0.55,
+        ease: "power3.out"
+      },
+      4.78
+    );
+
+    // Subtle breathing highlight pulse on Factor 2 to draw attention to contrast
+    tl.fromTo(
+      "#factor-card-2",
+      {
+        borderColor: "#FF6A1A"
+      },
+      {
+        borderColor: "#F7F4EC",
+        duration: 0.35,
+        yoyo: true,
+        repeat: 1,
+        ease: "power1.inOut"
+      },
+      5.35
+    );
+
+    // Bind paused timeline to HyperFrames runtime registry
+    window.__timelines["scene-s25"] = tl;
+  </script>
+
+    </template>
+  </body>
+</html>

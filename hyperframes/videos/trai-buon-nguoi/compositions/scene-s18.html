@@ -1,0 +1,377 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+/* hf-safe-colors (tất định từ style-tokens.json) */
+.hf-text-ink { color: #141414; }
+.hf-text-light { color: #F7F4EC; }
+.hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+.hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+.hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+.hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: #0b0f14;
+      color: #F7F4EC;
+      font-family: "Be Vietnam Pro", sans-serif;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    #root {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #0b0f14;
+    }
+
+    /* Video wrapper - non-timed layer for camera pan/zoom */
+    #video-wrapper {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      pointer-events: none;
+      z-index: 1;
+      transform-origin: center center;
+      will-change: transform;
+    }
+
+    #vid-01 {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center center;
+      display: block;
+    }
+
+    /* Spotlight atmospheric vignette variant */
+    #spotlight-overlay {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: radial-gradient(
+        ellipse at 50% 45%,
+        rgba(15, 20, 26, 0.25) 0%,
+        rgba(15, 20, 26, 0.65) 55%,
+        rgba(10, 12, 14, 0.92) 100%
+      );
+      z-index: 2;
+    }
+
+    /* Subtle subtle CRT/scanline texture for hacker compound mood */
+    #compound-scanlines {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: repeating-linear-gradient(
+        0deg,
+        rgba(0, 0, 0, 0.12) 0px,
+        rgba(0, 0, 0, 0.12) 2px,
+        transparent 2px,
+        transparent 4px
+      );
+      z-index: 3;
+    }
+
+    /* Investigation targeting brackets at safe edges */
+    .investigation-grid {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 4;
+    }
+
+    .bracket {
+      position: absolute;
+      width: 32px;
+      height: 32px;
+      border-color: rgba(255, 106, 26, 0.45);
+      border-style: solid;
+      border-width: 0;
+    }
+
+    .bracket-tl {
+      top: 180px;
+      left: 50px;
+      border-top-width: 3px;
+      border-left-width: 3px;
+    }
+
+    .bracket-tr {
+      top: 180px;
+      right: 50px;
+      border-top-width: 3px;
+      border-right-width: 3px;
+    }
+
+    .bracket-bl {
+      bottom: 550px;
+      left: 50px;
+      border-bottom-width: 3px;
+      border-left-width: 3px;
+    }
+
+    .bracket-br {
+      bottom: 550px;
+      right: 50px;
+      border-bottom-width: 3px;
+      border-right-width: 3px;
+    }
+
+    /* Vox style signature bottom orange bar */
+    #signature-bottom-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 14px;
+      background-color: #FF6A1A;
+      z-index: 20;
+    }
+
+    /* Timed elements conventions */
+    .clip {
+      position: absolute;
+      inset: 0;
+      z-index: 10;
+      pointer-events: none;
+    }
+
+    /* Safe contrast utility classes */
+    .hf-text-ink { color: #141414; }
+    .hf-text-light { color: #F7F4EC; }
+    .hf-hl-orange { background-color: #FF6A1A; color: #141414; }
+    .hf-plate-ink { background-color: #141414; color: #F7F4EC; }
+    .hf-plate-ink-orange { background-color: #141414; color: #FF6A1A; }
+    .hf-plate-paper { background-color: #E7E3D9; color: #141414; }
+
+    /* Overlay 1 layout: SÀO HUYỆT CÔNG NGHỆ */
+    .overlay-center-container {
+      position: absolute;
+      top: 800px;
+      left: 60px;
+      right: 60px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .vox-dossier-plate {
+      position: relative;
+      background-color: #141414;
+      border-left: 14px solid #FF6A1A;
+      padding: 32px 42px;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.85);
+      border-radius: 4px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      max-width: 960px;
+      will-change: transform, opacity;
+    }
+
+    .card-meta-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .radar-icon-box {
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .meta-line {
+      height: 2px;
+      flex: 1;
+      background-color: rgba(255, 106, 26, 0.4);
+    }
+
+    .card-headline-text {
+      font-size: 64px;
+      font-weight: 900;
+      line-height: 1.18;
+      letter-spacing: -0.01em;
+      color: #F7F4EC;
+      text-transform: uppercase;
+    }
+
+    /* Overlay 2 layout: MẮC KẸT BÊN TRONG */
+    .overlay-bottom-container {
+      position: absolute;
+      top: 860px;
+      left: 60px;
+      right: 60px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .vox-impact-plate {
+      position: relative;
+      background-color: #141414;
+      padding: 34px 48px;
+      box-shadow: 0 24px 70px rgba(0, 0, 0, 0.9);
+      border-radius: 4px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      border-top: 6px solid #FF6A1A;
+      border-bottom: 6px solid #FF6A1A;
+      max-width: 960px;
+      will-change: transform, opacity;
+    }
+
+    .impact-headline-text {
+      font-size: 68px;
+      font-weight: 900;
+      line-height: 1.16;
+      letter-spacing: -0.01em;
+      color: #F7F4EC;
+      text-transform: uppercase;
+      text-align: center;
+    }
+
+    .impact-highlight {
+      color: #FF6A1A;
+    }
+  </style>
+
+  <div
+    id="root"
+    data-composition-id="scene-s18"
+    data-width="1080"
+    data-height="1920"
+    data-duration="7.44"
+    data-start="0"
+  >
+    <!-- Non-timed video container: scale and pan motion -->
+    <div id="video-wrapper">
+      <video
+        id="vid-01"
+        src="assets/vid-01-scam-center-cyber-crime.mp4"
+        muted
+        playsinline
+        data-start="0"
+        data-duration="7.44"
+        data-media-start="15"
+      ></video>
+    </div>
+
+    <!-- Spotlight atmospheric darkening overlay -->
+    <div id="spotlight-overlay"></div>
+
+    <!-- CRT visual texture -->
+    <div id="compound-scanlines"></div>
+
+    <!-- Technical survey brackets for documentary feel -->
+    <div class="investigation-grid">
+      <div class="bracket bracket-tl"></div>
+      <div class="bracket bracket-tr"></div>
+      <div class="bracket bracket-bl"></div>
+      <div class="bracket bracket-br"></div>
+    </div>
+
+    <!-- Signature bottom orange stripe -->
+    <div id="signature-bottom-bar"></div>
+
+    <!-- Clip 1: SÀO HUYỆT CÔNG NGHỆ (atMs: 120350, holdMs: 1800 -> 1.75s to 3.55s) -->
+    <section id="clip-1" class="clip" data-start="1.75" data-duration="1.8">
+      <div class="overlay-center-container">
+        <div id="card-1" class="vox-dossier-plate">
+          <div class="card-meta-row">
+            <div class="radar-icon-box">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#FF6A1A" stroke-width="2.5" stroke-linecap="round">
+                <circle cx="12" cy="12" r="10" stroke-dasharray="4 3" />
+                <circle cx="12" cy="12" r="4" />
+                <path d="M12 2v4M12 18v4M2 12h4M18 12h4" />
+              </svg>
+            </div>
+            <div class="meta-line"></div>
+          </div>
+          <div class="card-headline-text">SÀO HUYỆT CÔNG NGHỆ</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Clip 2: MẮC KẸT BÊN TRONG (atMs: 124880, holdMs: 1600 -> 6.28s to 7.44s) -->
+    <section id="clip-2" class="clip" data-start="6.28" data-duration="1.16">
+      <div class="overlay-bottom-container">
+        <div id="card-2" class="vox-impact-plate">
+          <div class="impact-headline-text">
+            <span class="impact-highlight">MẮC KẸT</span> BÊN TRONG
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    // HyperFrames deterministic paused timeline setup
+    const tl = gsap.timeline({ paused: true });
+
+    // Camera motion: zoom-through entrance into slow pan-right
+    // Settle from zoom-through at the beginning
+    tl.fromTo(
+      "#video-wrapper",
+      { scale: 1.28, x: 20 },
+      { scale: 1.12, x: 5, duration: 1.5, ease: "power2.out" },
+      0
+    );
+
+    // Continuous slow drift panning across boiler room screens
+    tl.to(
+      "#video-wrapper",
+      { scale: 1.2, x: -35, duration: 5.94, ease: "sine.inOut" },
+      1.5
+    );
+
+    // Overlay 1: SÀO HUYỆT CÔNG NGHỆ
+    // Entrance: smooth spring settle arrival at 1.75s
+    tl.fromTo(
+      "#card-1",
+      { scale: 0.86, opacity: 0, y: 35 },
+      { scale: 1, opacity: 1, y: 0, duration: 0.48, ease: "power3.out" },
+      1.75
+    );
+
+    // Exit: clean fade out before clip boundary at 3.25s
+    tl.to(
+      "#card-1",
+      { opacity: 0, y: -20, scale: 0.95, duration: 0.3, ease: "power2.in" },
+      3.25
+    );
+
+    // Overlay 2: MẮC KẸT BÊN TRONG
+    // Entrance: dramatic impact arrival at 6.28s
+    tl.fromTo(
+      "#card-2",
+      { scale: 1.16, opacity: 0, y: 25 },
+      { scale: 1, opacity: 1, y: 0, duration: 0.42, ease: "power4.out" },
+      6.28
+    );
+
+    // Register paused timeline to HyperFrames runtime
+    window.__timelines["scene-s18"] = tl;
+  </script>
+
+    </template>
+  </body>
+</html>

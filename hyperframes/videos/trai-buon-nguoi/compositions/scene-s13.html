@@ -1,0 +1,451 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+/* hf-safe-colors (tất định từ style-tokens.json) */
+.hf-text-ink { color: #141414; }
+.hf-text-light { color: #F7F4EC; }
+.hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+.hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+.hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+.hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #E7E3D9;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+
+      /* Base layout convention: never set fixed px width/height on .clip */
+      .clip {
+        position: absolute;
+        inset: 0;
+      }
+
+      /* Mandatory safe color utility classes */
+      .hf-text-ink {
+        color: #141414;
+      }
+      .hf-text-light {
+        color: #F7F4EC;
+      }
+      .hf-hl-orange {
+        background-color: #FF6A1A;
+        color: #141414;
+      }
+      .hf-plate-ink {
+        background-color: #141414;
+        color: #F7F4EC;
+      }
+      .hf-plate-ink-orange {
+        background-color: #141414;
+        color: #FF6A1A;
+      }
+      .hf-plate-paper {
+        background-color: #E7E3D9;
+        color: #141414;
+      }
+
+      /* Background: spotlight variant (radial vignette on paper grid) */
+      .bg-container {
+        position: absolute;
+        inset: 0;
+        background-color: #E7E3D9;
+        pointer-events: none;
+      }
+
+      .bg-grid {
+        position: absolute;
+        inset: 0;
+        background-image:
+          linear-gradient(to right, rgba(20, 20, 20, 0.16) 1.5px, transparent 1.5px),
+          linear-gradient(to bottom, rgba(20, 20, 20, 0.16) 1.5px, transparent 1.5px);
+        background-size: 84px 84px;
+      }
+
+      .bg-spotlight {
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(circle at 50% 48%, transparent 22%, rgba(20, 20, 20, 0.36) 100%);
+      }
+
+      /* Signature bottom orange bar */
+      .bottom-brand-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 12px;
+        background-color: #FF6A1A;
+        z-index: 90;
+      }
+
+      /* Hero collage frame: keeps sized within safe zone (160px - 1390px) */
+      #hero-strike-wrap {
+        position: absolute;
+        top: 150px;
+        left: 70px;
+        width: 940px;
+        height: 1440px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        transform-origin: 50% 50%;
+        will-change: transform, opacity;
+      }
+
+      #hero-img-box {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        border-radius: 12px;
+        overflow: hidden;
+        border: 3px solid #141414;
+        box-shadow: 0 24px 50px rgba(20, 20, 20, 0.35);
+        background-color: #141414;
+        transform-origin: 50% 60%;
+        will-change: transform;
+      }
+
+      #hero-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+
+      /* Technical diagram HUD vector layer */
+      #diagram-layer {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        z-index: 25;
+      }
+
+      .svg-caliper-line {
+        fill: none;
+        stroke: #141414;
+        stroke-width: 3;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
+      .svg-force-arrow {
+        fill: none;
+        stroke: #FF6A1A;
+        stroke-width: 4;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
+      .svg-bracket {
+        fill: none;
+        stroke: #141414;
+        stroke-width: 3.5;
+        stroke-linecap: square;
+      }
+
+      /* HUD Metadata Card (top safe zone) */
+      #hud-meta {
+        position: absolute;
+        top: 172px;
+        left: 92px;
+        z-index: 30;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .hud-pill {
+        padding: 6px 14px;
+        font-size: 18px;
+        font-weight: 900;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        border-radius: 4px;
+      }
+
+      .hud-tag {
+        background-color: #141414;
+        color: #F7F4EC;
+        padding: 6px 14px;
+        font-size: 18px;
+        font-weight: 700;
+        letter-spacing: 1px;
+        border-radius: 4px;
+      }
+
+      /* Overlay 1: Label "CHUYỂN HÓA TRẢI NGHIỆM" */
+      .overlay-label-pos {
+        position: absolute;
+        top: 250px;
+        left: 92px;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        z-index: 40;
+        will-change: transform, opacity;
+      }
+
+      .label-plate {
+        display: flex;
+        align-items: stretch;
+        background-color: #141414;
+        border-radius: 6px;
+        overflow: hidden;
+        box-shadow: 0 16px 36px rgba(20, 20, 20, 0.38);
+      }
+
+      .label-accent-bar {
+        width: 10px;
+        background-color: #FF6A1A;
+        flex-shrink: 0;
+      }
+
+      .label-text-box {
+        padding: 18px 28px;
+        display: flex;
+        align-items: center;
+      }
+
+      .label-text-content {
+        margin: 0;
+        font-size: 34px;
+        font-weight: 900;
+        letter-spacing: 1.5px;
+        line-height: 1.2;
+        color: #F7F4EC;
+        text-transform: uppercase;
+      }
+
+      /* Overlay 2: Punch-phrase "CƠ CHẾ LÒ XO" */
+      .overlay-punch-pos {
+        position: absolute;
+        top: 1160px;
+        left: 92px;
+        right: 92px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        z-index: 50;
+        will-change: transform, opacity;
+      }
+
+      .punch-kicker {
+        padding: 8px 24px;
+        font-size: 24px;
+        font-weight: 900;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        border-radius: 4px 4px 0 0;
+        align-self: flex-start;
+        box-shadow: 0 8px 20px rgba(20, 20, 20, 0.25);
+      }
+
+      .punch-plate {
+        width: 100%;
+        background-color: #141414;
+        padding: 24px 36px;
+        border-radius: 0 8px 8px 8px;
+        border-left: 12px solid #FF6A1A;
+        box-shadow: 0 20px 48px rgba(20, 20, 20, 0.45);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .punch-heading {
+        margin: 0;
+        font-size: 64px;
+        font-weight: 900;
+        line-height: 1.2;
+        letter-spacing: 3px;
+        color: #F7F4EC;
+        text-transform: uppercase;
+        text-align: center;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s13"
+      data-width="1080"
+      data-height="1920"
+      data-duration="7.52"
+    >
+      <!-- Base spotlight background -->
+      <div class="bg-container">
+        <div class="bg-grid"></div>
+        <div class="bg-spotlight"></div>
+      </div>
+
+      <!-- Main Scene Clip -->
+      <section id="scene-s13" class="clip" data-start="0" data-duration="7.52">
+        <!-- Hero Collage Container (Subject to entrance strike & slow camera zoom) -->
+        <div id="hero-strike-wrap">
+          <div id="hero-img-box">
+            <!-- Full color AI collage asset, untouched per DNA exception -->
+            <img
+              id="hero-img"
+              src="assets/img-14-trapped-deceived-paper-cutout-trap.jpg"
+              alt="Cơ chế nén lò xo dưới áp lực giám sát"
+            />
+          </div>
+        </div>
+
+        <!-- Technical Diagram Overlays (Force vectors, Calipers, Brackets) -->
+        <svg id="diagram-layer" viewBox="0 0 1080 1920" xmlns="http://www.w3.org/2000/svg">
+          <!-- Left Caliper & Force Vectors -->
+          <path id="caliper-left" class="svg-caliper-line svg-path" d="M 54 440 L 54 1160" />
+          <path id="tick-l-1" class="svg-caliper-line svg-path" d="M 44 440 L 64 440" />
+          <path id="tick-l-2" class="svg-caliper-line svg-path" d="M 44 800 L 64 800" />
+          <path id="tick-l-3" class="svg-caliper-line svg-path" d="M 44 1160 L 64 1160" />
+          <path id="arrow-down-l" class="svg-force-arrow svg-path" d="M 54 740 L 54 850 M 42 830 L 54 854 L 66 830" />
+
+          <!-- Right Caliper & Force Vectors -->
+          <path id="caliper-right" class="svg-caliper-line svg-path" d="M 1026 440 L 1026 1160" />
+          <path id="tick-r-1" class="svg-caliper-line svg-path" d="M 1016 440 L 1036 440" />
+          <path id="tick-r-2" class="svg-caliper-line svg-path" d="M 1016 800 L 1036 800" />
+          <path id="tick-r-3" class="svg-caliper-line svg-path" d="M 1016 1160 L 1036 1160" />
+          <path id="arrow-down-r" class="svg-force-arrow svg-path" d="M 1026 740 L 1026 850 M 1014 830 L 1026 854 L 1038 830" />
+
+          <!-- Compression Framing Brackets around the Spring Zone -->
+          <path id="bracket-top" class="svg-bracket svg-path" d="M 80 430 L 70 430 L 70 480" />
+          <path id="bracket-bottom" class="svg-bracket svg-path" d="M 80 1450 L 70 1450 L 70 1400" />
+        </svg>
+
+        <!-- Technical HUD Tag -->
+        <div id="hud-meta">
+          <div class="hud-pill hf-hl-orange">ÁP LỰC</div>
+          <div class="hud-tag">GIÁM SÁT 360°</div>
+        </div>
+      </section>
+
+      <!-- Overlay 1 Clip: Label "CHUYỂN HÓA TRẢI NGHIỆM" (at 2.18s, duration 1.80s) -->
+      <div id="overlay-1-clip" class="clip" data-start="2.18" data-duration="1.80">
+        <div id="overlay-1-card" class="overlay-label-pos">
+          <div class="label-plate">
+            <div class="label-accent-bar"></div>
+            <div class="label-text-box">
+              <span class="label-text-content">CHUYỂN HÓA TRẢI NGHIỆM</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Overlay 2 Clip: Punch-phrase "CƠ CHẾ LÒ XO" (at 6.41s, duration 1.11s) -->
+      <div id="overlay-2-clip" class="clip" data-start="6.41" data-duration="1.11">
+        <div id="overlay-2-card" class="overlay-punch-pos">
+          <div class="punch-kicker hf-hl-orange">LÊ HỒNG LÂM</div>
+          <div class="punch-plate">
+            <span class="punch-heading">CƠ CHẾ LÒ XO</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Fixed Signature Bottom Orange Bar -->
+      <div class="bottom-brand-bar"></div>
+    </div>
+
+    <script>
+      // Single seekable paused timeline registered on window.__timelines["scene-s13"]
+      const tl = gsap.timeline({ paused: true });
+
+      // Setup progressive SVG path drawing
+      document.querySelectorAll(".svg-path").forEach((p) => {
+        const len = p.getTotalLength();
+        p.style.strokeDasharray = `${len}`;
+        p.style.strokeDashoffset = `${len}`;
+      });
+
+      // 1. Entrance Animation: "strike" (Impactful downward drop with instant settle)
+      tl.fromTo(
+        "#hero-strike-wrap",
+        { y: -140, opacity: 0, scaleY: 1.08 },
+        { y: 0, opacity: 1, scaleY: 1.0, duration: 0.42, ease: "power4.out" },
+        0
+      );
+
+      // Micro-impact vibration on strike landing (t = 0.42s - 0.62s)
+      tl.to("#hero-strike-wrap", { y: 8, duration: 0.08, ease: "power1.in" }, 0.42);
+      tl.to("#hero-strike-wrap", { y: -3, duration: 0.06, ease: "power1.out" }, 0.50);
+      tl.to("#hero-strike-wrap", { y: 0, duration: 0.06, ease: "power2.out" }, 0.56);
+
+      // 2. Camera Motion: Continuous slow zoom-in focusing down into the spring compression
+      tl.fromTo(
+        "#hero-img-box",
+        { scale: 1.0 },
+        { scale: 1.10, duration: 7.52, ease: "none" },
+        0
+      );
+
+      // 3. Technical HUD entrance
+      tl.fromTo(
+        "#hud-meta",
+        { opacity: 0, x: -30 },
+        { opacity: 1, x: 0, duration: 0.5, ease: "power3.out" },
+        0.5
+      );
+
+      // 4. Diagram force vector paths progressive draw
+      tl.to("#caliper-left", { strokeDashoffset: 0, duration: 0.7, ease: "power2.out" }, 0.6);
+      tl.to("#caliper-right", { strokeDashoffset: 0, duration: 0.7, ease: "power2.out" }, 0.6);
+      tl.to("#bracket-top", { strokeDashoffset: 0, duration: 0.4, ease: "power2.out" }, 0.8);
+      tl.to("#bracket-bottom", { strokeDashoffset: 0, duration: 0.4, ease: "power2.out" }, 0.8);
+      tl.to("#tick-l-1", { strokeDashoffset: 0, duration: 0.25, ease: "none" }, 0.9);
+      tl.to("#tick-l-2", { strokeDashoffset: 0, duration: 0.25, ease: "none" }, 1.0);
+      tl.to("#tick-l-3", { strokeDashoffset: 0, duration: 0.25, ease: "none" }, 1.1);
+      tl.to("#tick-r-1", { strokeDashoffset: 0, duration: 0.25, ease: "none" }, 0.9);
+      tl.to("#tick-r-2", { strokeDashoffset: 0, duration: 0.25, ease: "none" }, 1.0);
+      tl.to("#tick-r-3", { strokeDashoffset: 0, duration: 0.25, ease: "none" }, 1.1);
+      tl.to("#arrow-down-l", { strokeDashoffset: 0, duration: 0.45, ease: "power2.out" }, 1.15);
+      tl.to("#arrow-down-r", { strokeDashoffset: 0, duration: 0.45, ease: "power2.out" }, 1.15);
+
+      // 5. Overlay 1 ("CHUYỂN HÓA TRẢI NGHIỆM") at 2.18s
+      tl.fromTo(
+        "#overlay-1-card",
+        { opacity: 0, x: -50 },
+        { opacity: 1, x: 0, duration: 0.45, ease: "power3.out" },
+        2.18
+      );
+      // Exit fade before clip duration ends (at 3.65s)
+      tl.to(
+        "#overlay-1-card",
+        { opacity: 0, y: -16, duration: 0.3, ease: "power2.in" },
+        3.65
+      );
+
+      // 6. Overlay 2 ("CƠ CHẾ LÒ XO") at 6.41s
+      tl.fromTo(
+        "#overlay-2-card",
+        { opacity: 0, y: 35, scale: 0.94 },
+        { opacity: 1, y: 0, scale: 1.0, duration: 0.42, ease: "power3.out" },
+        6.41
+      );
+
+      // Bind timeline synchronously to HyperFrames runtime registry
+      window.__timelines["scene-s13"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

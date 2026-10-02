@@ -1,0 +1,576 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap"
+    />
+      <style>
+/* hf-safe-colors (tất định từ style-tokens.json) */
+.hf-text-ink { color: #141414; }
+.hf-text-light { color: #F7F4EC; }
+.hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+.hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+.hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+.hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+      *, *::before, *::after {
+        box-sizing: border-box;
+      }
+      html, body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: #E7E3D9;
+        font-family: "Be Vietnam Pro", sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: #E7E3D9;
+      }
+
+      /* Base layout clips */
+      .clip {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+      }
+
+      /* Style tokens & contrast utilities */
+      .hf-text-ink {
+        color: #141414;
+      }
+      .hf-text-light {
+        color: #F7F4EC;
+      }
+      .hf-hl-orange {
+        background-color: #FF6A1A;
+        color: #141414;
+      }
+      .hf-plate-ink {
+        background-color: #141414;
+        color: #F7F4EC;
+      }
+      .hf-plate-ink-orange {
+        background-color: #141414;
+        color: #FF6A1A;
+      }
+      .hf-plate-paper {
+        background-color: #E7E3D9;
+        color: #141414;
+      }
+
+      /* Background layers (Spotlight variant) */
+      .bg-layer {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background-color: #E7E3D9;
+        background-image:
+          linear-gradient(to right, rgba(20, 20, 20, 0.16) 1.5px, transparent 1.5px),
+          linear-gradient(to bottom, rgba(20, 20, 20, 0.16) 1.5px, transparent 1.5px);
+        background-size: 84px 84px;
+      }
+      .bg-spotlight {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background: radial-gradient(circle at 50% 45%, transparent 28%, rgba(20, 20, 20, 0.36) 100%);
+      }
+
+      /* Camera & Content wrappers */
+      .camera-wrap {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        transform-origin: 50% 50%;
+      }
+      .shake-wrap, .sway-wrap {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+      }
+      .sway-wrap {
+        transform-origin: 50% 75%;
+      }
+      .scene-img {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center center;
+        display: block;
+      }
+
+      /* Strike graphic effects for Shot 1 */
+      .strike-flash {
+        position: absolute;
+        inset: 0;
+        background-color: #FF6A1A;
+        opacity: 0;
+        pointer-events: none;
+      }
+      .strike-svg, .dossier-svg {
+        position: absolute;
+        inset: 0;
+        width: 1080px;
+        height: 1920px;
+        pointer-events: none;
+      }
+
+      /* Overlay Layout (strictly within safe zone [160, 1390], above bottom 530px) */
+      .overlay-layout {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-end;
+        padding-bottom: 580px;
+        pointer-events: none;
+      }
+
+      /* Vox Annotation Cards */
+      .annotation-card {
+        position: relative;
+        display: flex;
+        align-items: stretch;
+        background-color: #141414;
+        border-radius: 12px;
+        overflow: hidden;
+        border: 2px solid rgba(255, 106, 26, 0.35);
+        box-shadow: 0 20px 48px rgba(0, 0, 0, 0.55);
+        max-width: 920px;
+      }
+      .card-edge-accent {
+        width: 10px;
+        background-color: #FF6A1A;
+        flex-shrink: 0;
+      }
+      .card-body {
+        padding: 18px 28px 18px 22px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .card-meta {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .meta-pill {
+        font-size: 19px;
+        font-weight: 900;
+        letter-spacing: 0.08em;
+        padding: 4px 12px;
+        border-radius: 4px;
+        display: inline-block;
+      }
+      .card-main {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
+      .card-icon-wrap {
+        width: 52px;
+        height: 52px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+      .warning-svg, .person-svg {
+        width: 48px;
+        height: 48px;
+      }
+      .card-title {
+        font-size: 46px;
+        font-weight: 900;
+        line-height: 1.22;
+        letter-spacing: -0.01em;
+        white-space: nowrap;
+      }
+
+      /* Fixed Brand Signature Bar */
+      .brand-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 10px;
+        background-color: #FF6A1A;
+        z-index: 1000;
+        pointer-events: none;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s04"
+      data-start="0"
+      data-width="1080"
+      data-height="1920"
+      data-duration="8.91"
+    >
+      <!-- Persistent Spotlight Background -->
+      <div class="bg-layer" aria-hidden="true"></div>
+      <div class="bg-spotlight" aria-hidden="true"></div>
+
+      <!-- SHOT 1: Cockpit Attack & Strike Entrance (0s - 5.2s) -->
+      <section
+        id="shot-1"
+        class="clip"
+        data-start="0"
+        data-duration="5.2"
+        data-track-index="0"
+      >
+        <div id="shot-1-camera" class="camera-wrap" data-layout-allow-overflow="true">
+          <div id="shot-1-shake" class="shake-wrap">
+            <img
+              class="scene-img"
+              src="assets/img-05-cockpit-pilot-knife-attack.jpg"
+              alt="Cảnh tấn công trong buồng lái"
+            />
+            <div id="strike-flash" class="strike-flash"></div>
+            <svg
+              class="strike-svg"
+              viewBox="0 0 1080 1920"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              data-layout-allow-overflow="true"
+            >
+              <line
+                id="strike-slash-1"
+                x1="940"
+                y1="240"
+                x2="140"
+                y2="1600"
+                stroke="#FF6A1A"
+                stroke-width="12"
+                stroke-linecap="round"
+              />
+              <line
+                id="strike-slash-2"
+                x1="970"
+                y1="260"
+                x2="170"
+                y2="1620"
+                stroke="#141414"
+                stroke-width="4"
+                stroke-dasharray="24 12"
+              />
+              <g id="strike-burst" transform="translate(540, 920)">
+                <circle r="46" fill="#FF6A1A" opacity="0.95" />
+                <path
+                  d="M-55 -55 L55 55 M55 -55 L-55 55"
+                  stroke="#141414"
+                  stroke-width="6"
+                  stroke-linecap="round"
+                />
+              </g>
+            </svg>
+          </div>
+        </div>
+      </section>
+
+      <!-- SHOT 1 OVERLAY: Hung khí trong buồng (2.8s - 5.0s) -->
+      <section
+        id="shot-1-overlay"
+        class="clip"
+        data-start="2.8"
+        data-duration="2.2"
+        data-track-index="1"
+      >
+        <div class="overlay-layout">
+          <div id="card-1" class="hf-plate-ink annotation-card">
+            <div class="card-edge-accent"></div>
+            <div class="card-body">
+              <div class="card-meta">
+                <span class="meta-pill hf-hl-orange">VỤ TẤN CÔNG</span>
+              </div>
+              <div class="card-main">
+                <div class="card-icon-wrap" id="icon-warning-wrap">
+                  <svg
+                    class="warning-svg"
+                    viewBox="0 0 44 44"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M22 4L42 38H2L22 4Z"
+                      fill="#FF6A1A"
+                      stroke="#FF6A1A"
+                      stroke-width="2"
+                      stroke-linejoin="round"
+                    />
+                    <path
+                      d="M22 16V26"
+                      stroke="#141414"
+                      stroke-width="3.5"
+                      stroke-linecap="round"
+                    />
+                    <circle cx="22" cy="32" r="2.2" fill="#141414" />
+                  </svg>
+                </div>
+                <div class="card-title hf-text-light">HUNG KHÍ TRONG BUỒNG</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SHOT 2: Captain Smit Profile Dossier (5.2s - 8.91s) -->
+      <section
+        id="shot-2"
+        class="clip"
+        data-start="5.2"
+        data-duration="3.71"
+        data-track-index="0"
+      >
+        <div id="shot-2-camera" class="camera-wrap" data-layout-allow-overflow="true">
+          <div id="shot-2-sway" class="sway-wrap">
+            <img
+              class="scene-img"
+              src="assets/img-11-pilot-profile-aviation-papercut.jpg"
+              alt="Chân dung cơ trưởng Smit Machchhar"
+            />
+            <svg
+              id="shot-2-dossier-marks"
+              class="dossier-svg"
+              viewBox="0 0 1080 1920"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              data-layout-allow-overflow="true"
+            >
+              <!-- Framing Corner Brackets -->
+              <path
+                d="M 120 260 L 80 260 L 80 340"
+                stroke="#FF6A1A"
+                stroke-width="5"
+                stroke-linecap="square"
+              />
+              <path
+                d="M 960 260 L 1000 260 L 1000 340"
+                stroke="#FF6A1A"
+                stroke-width="5"
+                stroke-linecap="square"
+              />
+              <path
+                d="M 80 1180 L 80 1260 L 120 1260"
+                stroke="#FF6A1A"
+                stroke-width="5"
+                stroke-linecap="square"
+              />
+              <path
+                d="M 1000 1180 L 1000 1260 L 960 1260"
+                stroke="#FF6A1A"
+                stroke-width="5"
+                stroke-linecap="square"
+              />
+              <!-- Identity Target Reticle -->
+              <circle
+                cx="540"
+                cy="680"
+                r="260"
+                stroke="rgba(255, 106, 26, 0.5)"
+                stroke-width="2.5"
+                stroke-dasharray="14 10"
+              />
+              <line x1="540" y1="390" x2="540" y2="440" stroke="#FF6A1A" stroke-width="3.5" />
+              <line x1="540" y1="920" x2="540" y2="970" stroke="#FF6A1A" stroke-width="3.5" />
+              <line x1="250" y1="680" x2="300" y2="680" stroke="#FF6A1A" stroke-width="3.5" />
+              <line x1="780" y1="680" x2="830" y2="680" stroke="#FF6A1A" stroke-width="3.5" />
+            </svg>
+          </div>
+        </div>
+      </section>
+
+      <!-- SHOT 2 OVERLAY: Cơ trưởng Smit (5.4s - 7.9s) -->
+      <section
+        id="shot-2-overlay"
+        class="clip"
+        data-start="5.4"
+        data-duration="2.5"
+        data-track-index="1"
+      >
+        <div class="overlay-layout">
+          <div id="card-2" class="hf-plate-ink annotation-card">
+            <div class="card-edge-accent"></div>
+            <div class="card-body">
+              <div class="card-meta">
+                <span class="meta-pill hf-hl-orange">ĐỊNH DANH NẠN NHÂN</span>
+              </div>
+              <div class="card-main">
+                <div class="card-icon-wrap" id="icon-person-wrap">
+                  <svg
+                    class="person-svg"
+                    viewBox="0 0 44 44"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <circle cx="22" cy="14" r="8" fill="#FF6A1A" />
+                    <path
+                      d="M8 38C8 30.5 14.2 24 22 24C29.8 24 36 30.5 36 38"
+                      fill="#FF6A1A"
+                    />
+                  </svg>
+                </div>
+                <div class="card-title hf-text-light">CƠ TRƯỞNG SMIT</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Signature bottom orange bar -->
+      <div class="brand-bar" aria-hidden="true"></div>
+    </div>
+
+    <script>
+      const tl = gsap.timeline({ paused: true });
+
+      // Path setup for SVG drawing
+      const slash1 = document.getElementById("strike-slash-1");
+      if (slash1) {
+        const len1 = slash1.getTotalLength ? slash1.getTotalLength() : 1600;
+        slash1.style.strokeDasharray = len1;
+        slash1.style.strokeDashoffset = len1;
+      }
+      const slash2 = document.getElementById("strike-slash-2");
+      if (slash2) {
+        const len2 = slash2.getTotalLength ? slash2.getTotalLength() : 1600;
+        slash2.style.strokeDasharray = len2;
+        slash2.style.strokeDashoffset = len2;
+      }
+
+      // ================= SHOT 1 (0.0s - 5.2s) =================
+      // Camera Zoom-in
+      tl.fromTo(
+        "#shot-1-camera",
+        { scale: 1.05 },
+        { scale: 1.22, duration: 5.2, ease: "power1.out" },
+        0
+      );
+
+      // Strike Entrance: impact shake on inner container
+      tl.fromTo(
+        "#shot-1-shake",
+        { x: -24, y: 14 },
+        { x: 0, y: 0, duration: 0.28, ease: "power3.out" },
+        0.04
+      );
+
+      // Strike Flash
+      tl.fromTo(
+        "#strike-flash",
+        { opacity: 0.45 },
+        { opacity: 0, duration: 0.35, ease: "power2.out" },
+        0.04
+      );
+
+      // Progressive slash lines
+      tl.to(
+        "#strike-slash-1",
+        { strokeDashoffset: 0, duration: 0.32, ease: "power3.out" },
+        0.04
+      );
+      tl.to(
+        "#strike-slash-2",
+        { strokeDashoffset: 0, duration: 0.32, ease: "power3.out" },
+        0.08
+      );
+
+      // Strike spark burst
+      tl.fromTo(
+        "#strike-burst",
+        { scale: 0, opacity: 1 },
+        { scale: 1.5, opacity: 0, duration: 0.38, ease: "power3.out" },
+        0.06
+      );
+
+      // Slash settles into subtle tension lines
+      tl.to(
+        ["#strike-slash-1", "#strike-slash-2"],
+        { opacity: 0.35, duration: 0.6, ease: "power1.out" },
+        0.5
+      );
+
+      // Shot 1 Overlay Card Entrance (at 2.8s)
+      tl.fromTo(
+        "#card-1",
+        { scale: 0.88, opacity: 0, y: 25 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.42, ease: "power3.out" },
+        2.8
+      );
+      tl.fromTo(
+        "#icon-warning-wrap",
+        { scale: 0, rotation: -12 },
+        { scale: 1, rotation: 0, duration: 0.36, ease: "back.out(1.5)" },
+        2.9
+      );
+
+      // Shot 1 Overlay Exit before clip boundary
+      tl.to(
+        "#card-1",
+        { opacity: 0, y: -16, duration: 0.22, ease: "power2.in" },
+        4.75
+      );
+
+      // ================= SHOT 2 (5.2s - 8.91s) =================
+      // Reticle and dossier markings reveal on cut
+      tl.fromTo(
+        "#shot-2-dossier-marks",
+        { opacity: 0, scale: 0.94 },
+        { opacity: 1, scale: 1, duration: 0.45, ease: "power3.out" },
+        5.25
+      );
+
+      // Camera Idle Sway (finite loop strictly within duration)
+      tl.fromTo(
+        "#shot-2-sway",
+        { rotation: -0.5, y: -4 },
+        { rotation: 0.5, y: 4, duration: 1.8, ease: "sine.inOut", yoyo: true, repeat: 1 },
+        5.2
+      );
+
+      // Shot 2 Overlay Card Entrance (at 5.4s)
+      tl.fromTo(
+        "#card-2",
+        { scale: 0.88, opacity: 0, y: 25 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.42, ease: "power3.out" },
+        5.4
+      );
+      tl.fromTo(
+        "#icon-person-wrap",
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.36, ease: "power3.out" },
+        5.5
+      );
+
+      // Shot 2 Overlay Exit before clip boundary
+      tl.to(
+        "#card-2",
+        { opacity: 0, y: -16, duration: 0.22, ease: "power2.in" },
+        7.65
+      );
+
+      // Register master timeline
+      window.__timelines["scene-s04"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

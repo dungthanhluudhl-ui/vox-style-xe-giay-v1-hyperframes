@@ -1,0 +1,789 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap"
+    />
+      <style>
+      /* hf-safe-colors (tất định từ style-tokens.json) */
+      .hf-text-ink { color: #141414; }
+      .hf-text-light { color: #f7f4ec; }
+      .hf-hl-orange { color: #141414; background-color: #ff6a1a; }
+      .hf-plate-ink { color: #f7f4ec; background-color: #141414; }
+      .hf-plate-ink-orange { color: #ff6a1a; background-color: #141414; }
+      .hf-plate-paper { color: #141414; background-color: #f5f0e4; }
+
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #e7e3d9;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      /* Khung gốc HyperFrames */
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: #e7e3d9;
+      }
+
+      /* Quy ước clip */
+      .clip {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+      }
+
+      /* Nền spotlight: lưới kỹ thuật kết hợp quầng tối cảnh báo */
+      .bg-grid {
+        position: absolute;
+        inset: 0;
+        background-size: 84px 84px;
+        background-image:
+          linear-gradient(to right, rgba(20, 20, 20, 0.16) 1.5px, transparent 1.5px),
+          linear-gradient(to bottom, rgba(20, 20, 20, 0.16) 1.5px, transparent 1.5px);
+        opacity: 0.9;
+      }
+
+      .bg-spotlight-vignette {
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(
+          circle at 50% 48%,
+          rgba(231, 227, 217, 0.2) 25%,
+          rgba(160, 153, 138, 0.5) 60%,
+          rgba(20, 20, 20, 0.75) 100%
+        );
+        pointer-events: none;
+      }
+
+      /* Thanh cam nhận diện cố định đáy khung hình */
+      .brand-bottom-bar {
+        position: absolute;
+        left: 0;
+        bottom: 0;
+        width: 100%;
+        height: 14px;
+        background-color: #ff6a1a;
+        z-index: 100;
+      }
+
+      /* Lớp hiệu ứng chuyển cảnh "peel" */
+      .peel-flap {
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 320px;
+        height: 320px;
+        background: linear-gradient(225deg, #141414 45%, #ff6a1a 50%, #f5f0e4 55%, transparent 60%);
+        transform-origin: top right;
+        pointer-events: none;
+        z-index: 90;
+      }
+
+      /* Dải nội dung hữu dụng: top 180px -> 1380px (tránh safe zone top 160 & bottom 530) */
+      .editorial-container {
+        position: absolute;
+        top: 180px;
+        left: 60px;
+        right: 60px;
+        height: 1200px;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+      }
+
+      /* 1. Header hành vi */
+      .phase-header {
+        width: 100%;
+        height: 80px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 24px;
+        border-radius: 8px;
+        border-left: 8px solid #ff6a1a;
+      }
+      .phase-title {
+        font-size: 26px;
+        font-weight: 900;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+      }
+      .phase-steps {
+        display: flex;
+        gap: 12px;
+      }
+      .step-chip {
+        padding: 6px 14px;
+        font-size: 20px;
+        font-weight: 900;
+        border-radius: 4px;
+      }
+      .chip-ink-muted {
+        background-color: #262626;
+        color: #f7f4ec;
+      }
+      .chip-orange-active {
+        background-color: #ff6a1a;
+        color: #141414;
+      }
+
+      /* 2. Visual Center: Dây buông vs Hai bàn tay siết bóp */
+      .visual-stage {
+        position: relative;
+        width: 100%;
+        height: 520px;
+        margin-top: 26px;
+        border-radius: 12px;
+        background-color: #f5f0e4;
+        border: 3px solid #141414;
+        box-shadow: 12px 12px 0px #141414;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+      }
+
+      .stage-grid-lines {
+        position: absolute;
+        inset: 0;
+        background-image:
+          linear-gradient(to right, rgba(20, 20, 20, 0.08) 1px, transparent 1px),
+          linear-gradient(to bottom, rgba(20, 20, 20, 0.08) 1px, transparent 1px);
+        background-size: 40px 40px;
+      }
+
+      /* Đồ họa tâm điểm tiếp xúc cổ (thuần vector, không chứa text) */
+      .choke-center {
+        position: absolute;
+        width: 140px;
+        height: 190px;
+        border: 3px dashed rgba(20, 20, 20, 0.35);
+        border-radius: 70px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        pointer-events: none;
+      }
+      .target-crosshair-h {
+        position: absolute;
+        width: 44px;
+        height: 3px;
+        background-color: rgba(20, 20, 20, 0.4);
+      }
+      .target-crosshair-v {
+        position: absolute;
+        width: 3px;
+        height: 44px;
+        background-color: rgba(20, 20, 20, 0.4);
+      }
+      .target-pulse-ring {
+        position: absolute;
+        width: 68px;
+        height: 68px;
+        border: 3px solid #ff6a1a;
+        border-radius: 50%;
+        opacity: 0.7;
+      }
+
+      /* Sợi dây thừng */
+      .rope-container {
+        position: absolute;
+        width: 360px;
+        height: 380px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transform-origin: center top;
+      }
+      .rope-svg {
+        width: 100%;
+        height: 100%;
+      }
+
+      /* Hai bàn tay siết bóp */
+      .hands-container {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+      }
+      .hand-left,
+      .hand-right {
+        position: absolute;
+        top: 80px;
+        width: 340px;
+        height: 340px;
+        transform-origin: center center;
+      }
+      .hand-left {
+        left: 20px;
+      }
+      .hand-right {
+        right: 20px;
+        transform: scaleX(-1);
+      }
+
+      /* Vòng tròn xung lực va chạm */
+      .impact-shockwave {
+        position: absolute;
+        width: 180px;
+        height: 180px;
+        border: 6px solid #ff6a1a;
+        border-radius: 50%;
+        pointer-events: none;
+        opacity: 0;
+      }
+
+      /* Overlay Con Dấu: "KHÔNG DỪNG LẠI" (atMs 142080 -> 1.99s) */
+      .stamp-label-wrap {
+        position: absolute;
+        top: 215px;
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        z-index: 40;
+        pointer-events: none;
+      }
+      .stamp-label {
+        background-color: #ff6a1a;
+        color: #141414;
+        font-size: 42px;
+        font-weight: 900;
+        padding: 14px 38px;
+        border-radius: 6px;
+        border: 4px solid #141414;
+        box-shadow: 8px 8px 0px #141414;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        transform-origin: center center;
+      }
+
+      /* 3. Đồ họa ECG Nhịp tim suy giảm & Tắt thở */
+      .ecg-monitor {
+        position: relative;
+        width: 100%;
+        height: 250px;
+        margin-top: 26px;
+        border-radius: 10px;
+        border: 3px solid #141414;
+        padding: 16px 24px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        box-shadow: 8px 8px 0px rgba(20, 20, 20, 0.4);
+      }
+      .ecg-topbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 2px solid rgba(247, 244, 236, 0.2);
+        padding-bottom: 8px;
+      }
+      .ecg-title {
+        font-size: 20px;
+        font-weight: 900;
+        letter-spacing: 1.5px;
+      }
+      .ecg-status-container {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        justify-content: flex-end;
+      }
+      .ecg-status-badge {
+        font-size: 18px;
+        font-weight: 900;
+        padding: 4px 12px;
+        border-radius: 4px;
+      }
+      #ecg-status-2 {
+        position: absolute;
+        right: 0;
+        border: 2px solid #ff6a1a;
+        white-space: nowrap;
+      }
+
+      .ecg-screen {
+        position: relative;
+        width: 100%;
+        height: 140px;
+        overflow: hidden;
+      }
+      .ecg-grid-lines {
+        position: absolute;
+        inset: 0;
+        background-image:
+          linear-gradient(to right, rgba(247, 244, 236, 0.08) 1px, transparent 1px),
+          linear-gradient(to bottom, rgba(247, 244, 236, 0.08) 1px, transparent 1px);
+        background-size: 24px 24px;
+      }
+      .ecg-svg {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+      }
+      .ecg-path-bg {
+        stroke: rgba(247, 244, 236, 0.15);
+        stroke-width: 3;
+        fill: none;
+      }
+      .ecg-path-live {
+        stroke: #ff6a1a;
+        stroke-width: 5;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        fill: none;
+      }
+      .ecg-cursor {
+        fill: #f7f4ec;
+        filter: drop-shadow(0 0 6px #ff6a1a);
+      }
+
+      /* 4. Punch Phrase: "BÓP CỔ ĐẾN CÙNG" (atMs 144610) */
+      .punch-phrase-wrapper {
+        position: relative;
+        width: 100%;
+        margin-top: 26px;
+        z-index: 50;
+      }
+      .punch-phrase-card {
+        width: 100%;
+        padding: 22px 28px;
+        border-radius: 10px;
+        border: 4px solid #ff6a1a;
+        box-shadow: 10px 10px 0px #141414;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 16px;
+      }
+      .punch-text-main {
+        font-size: 56px;
+        font-weight: 900;
+        line-height: 1.1;
+        letter-spacing: -0.5px;
+        text-transform: uppercase;
+      }
+      .punch-highlight-block {
+        display: inline-block;
+        padding: 6px 18px;
+        border-radius: 6px;
+        font-size: 56px;
+        font-weight: 900;
+        line-height: 1.1;
+        text-transform: uppercase;
+        border: 3px solid #141414;
+      }
+    </style>
+
+    <!-- Composition Root: 1080x1920, 7.54s -->
+    <div
+      id="root"
+      data-composition-id="scene-s17"
+      data-start="0"
+      data-width="1080"
+      data-height="1920"
+      data-duration="7.54"
+    >
+      <!-- Clip Scene S17 -->
+      <section id="scene-s17" class="clip" data-start="0" data-duration="7.54">
+        <!-- Nền spotlight & grid -->
+        <div class="bg-grid"></div>
+        <div class="bg-spotlight-vignette"></div>
+
+        <!-- Chuyển cảnh peel góc trên -->
+        <div id="peel-anim" class="peel-flap"></div>
+
+        <!-- Vùng dựng hình biên tập chính -->
+        <div class="editorial-container">
+          <!-- 1. Header hành vi -->
+          <div id="phase-header" class="phase-header hf-plate-ink">
+            <span class="phase-title hf-text-light">DIỄN BIẾN HÀNH VI</span>
+            <div class="phase-steps">
+              <span id="chip-step1" class="step-chip chip-orange-active">1. BUÔNG DÂY</span>
+              <span id="chip-step2" class="step-chip chip-ink-muted">2. SIẾT TAY</span>
+            </div>
+          </div>
+
+          <!-- 2. Visual Stage: Dây nới lỏng -> Bàn tay siết chặt -->
+          <div class="visual-stage">
+            <div class="stage-grid-lines"></div>
+
+            <!-- Vùng tâm tiếp xúc cổ (đồ họa vector kỹ thuật, không có text gây lỗi occlude) -->
+            <div id="target-neck" class="choke-center">
+              <div class="target-crosshair-h"></div>
+              <div class="target-crosshair-v"></div>
+              <div class="target-pulse-ring"></div>
+            </div>
+
+            <!-- Sóng xung kích áp lực -->
+            <div id="impact-wave" class="impact-shockwave"></div>
+
+            <!-- Sợi dây thừng (Rope Vector) -->
+            <div id="rope-graphic" class="rope-container">
+              <svg class="rope-svg" viewBox="0 0 300 360" fill="none">
+                <!-- Vòng dây thòng lọng -->
+                <path
+                  id="rope-loop"
+                  d="M150 20 L150 90 C100 100 50 150 50 220 C50 290 100 330 150 330 C200 330 250 290 250 220 C250 150 200 100 150 90"
+                  stroke="#141414"
+                  stroke-width="16"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+                <!-- Nút thắt cuộn dây -->
+                <rect
+                  id="rope-knot"
+                  x="130"
+                  y="85"
+                  width="40"
+                  height="45"
+                  rx="6"
+                  fill="#141414"
+                />
+                <!-- Vạch xoắn thừng minh họa -->
+                <path
+                  id="rope-strands"
+                  d="M135 95 L165 95 M135 107 L165 107 M135 119 L165 119"
+                  stroke="#e7e3d9"
+                  stroke-width="4"
+                  stroke-linecap="round"
+                />
+                <!-- Đoạn dây thả buông rơi -->
+                <path
+                  id="rope-tail"
+                  d="M150 130 C150 180 170 210 160 250"
+                  stroke="#141414"
+                  stroke-width="14"
+                  stroke-linecap="round"
+                  stroke-dasharray="8 6"
+                />
+              </svg>
+            </div>
+
+            <!-- Hai bàn tay vector lao vào siết bóp -->
+            <div class="hands-container">
+              <!-- Bàn tay trái -->
+              <svg id="hand-l" class="hand-left" viewBox="0 0 300 300" fill="none">
+                <!-- Bóng cam silhouette đặc (Vox cutout style) -->
+                <path
+                  d="M10 130 C40 130 90 110 140 120 C180 130 220 125 250 145 C258 152 254 168 240 172 C210 176 170 168 150 178 C190 184 235 190 240 202 C243 214 230 222 205 220 C175 218 150 212 135 222 C165 230 210 240 215 252 C218 264 200 270 175 264 C130 254 95 240 60 230 L10 220 Z"
+                  fill="#ff6a1a"
+                  transform="translate(10, 10)"
+                />
+                <!-- Bàn tay mực đen chính -->
+                <path
+                  d="M10 130 C40 130 90 110 140 120 C180 130 220 125 250 145 C258 152 254 168 240 172 C210 176 170 168 150 178 C190 184 235 190 240 202 C243 214 230 222 205 220 C175 218 150 212 135 222 C165 230 210 240 215 252 C218 264 200 270 175 264 C130 254 95 240 60 230 L10 220 Z"
+                  fill="#141414"
+                />
+                <!-- Khớp ngón gân guốc siết chặt -->
+                <path
+                  d="M160 142 L225 146 M155 192 L215 196 M145 236 L195 242"
+                  stroke="#e7e3d9"
+                  stroke-width="5"
+                  stroke-linecap="round"
+                />
+              </svg>
+
+              <!-- Bàn tay phải -->
+              <svg id="hand-r" class="hand-right" viewBox="0 0 300 300" fill="none">
+                <!-- Bóng cam silhouette đặc -->
+                <path
+                  d="M10 130 C40 130 90 110 140 120 C180 130 220 125 250 145 C258 152 254 168 240 172 C210 176 170 168 150 178 C190 184 235 190 240 202 C243 214 230 222 205 220 C175 218 150 212 135 222 C165 230 210 240 215 252 C218 264 200 270 175 264 C130 254 95 240 60 230 L10 220 Z"
+                  fill="#ff6a1a"
+                  transform="translate(10, 10)"
+                />
+                <!-- Bàn tay mực đen chính -->
+                <path
+                  d="M10 130 C40 130 90 110 140 120 C180 130 220 125 250 145 C258 152 254 168 240 172 C210 176 170 168 150 178 C190 184 235 190 240 202 C243 214 230 222 205 220 C175 218 150 212 135 222 C165 230 210 240 215 252 C218 264 200 270 175 264 C130 254 95 240 60 230 L10 220 Z"
+                  fill="#141414"
+                />
+                <path
+                  d="M160 142 L225 146 M155 192 L215 196 M145 236 L195 242"
+                  stroke="#e7e3d9"
+                  stroke-width="5"
+                  stroke-linecap="round"
+                />
+              </svg>
+            </div>
+
+            <!-- Overlay Con Dấu: "KHÔNG DỪNG LẠI" (atMs 142080 -> 1.99s) -->
+            <div class="stamp-label-wrap">
+              <div id="stamp-not-stop" class="stamp-label">KHÔNG DỪNG LẠI</div>
+            </div>
+          </div>
+
+          <!-- 3. ECG Monitor: Dòng xung tim suy kiệt -> Flatline -->
+          <div class="ecg-monitor hf-plate-ink">
+            <div class="ecg-topbar">
+              <span class="ecg-title hf-text-light">TÍN HIỆU SINH TỒN (ECG)</span>
+              <div class="ecg-status-container">
+                <span id="ecg-status-1" class="ecg-status-badge hf-hl-orange">ĐANG NGHẸT THỞ</span>
+                <span id="ecg-status-2" class="ecg-status-badge hf-plate-ink-orange">TẮT THỞ / FLATLINE</span>
+              </div>
+            </div>
+
+            <div class="ecg-screen">
+              <div class="ecg-grid-lines"></div>
+              <svg class="ecg-svg" viewBox="0 0 912 140">
+                <!-- Đường nền tham chiếu mờ -->
+                <path
+                  class="ecg-path-bg"
+                  d="M0 70 L140 70 L160 30 L180 115 L200 50 L220 70 L340 70 L360 45 L380 95 L400 60 L420 70 L540 70 L555 60 L570 80 L585 70 L912 70"
+                />
+                <!-- Đường điện tim thực tế quét qua thời gian -->
+                <path
+                  id="ecg-line"
+                  class="ecg-path-live"
+                  d="M0 70 L140 70 L160 30 L180 115 L200 50 L220 70 L340 70 L360 45 L380 95 L400 60 L420 70 L540 70 L555 60 L570 80 L585 70 L912 70"
+                />
+                <!-- Điểm trỏ quét phát sáng -->
+                <circle id="ecg-pointer" class="ecg-cursor" cx="0" cy="70" r="7" />
+              </svg>
+            </div>
+          </div>
+
+          <!-- 4. Punch Phrase: "BÓP CỔ ĐẾN CÙNG" (atMs 144610 -> 4.52s) -->
+          <div class="punch-phrase-wrapper">
+            <div id="punch-card" class="punch-phrase-card hf-plate-ink">
+              <span class="punch-text-main hf-text-light">BÓP CỔ</span>
+              <span class="punch-highlight-block hf-hl-orange">ĐẾN CÙNG</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Thanh cam đáy cố định -->
+        <div class="brand-bottom-bar"></div>
+      </section>
+    </div>
+
+    <!-- GSAP Master Timeline Script -->
+    <script>
+      const tl = gsap.timeline({ paused: true });
+
+      // Thiết lập trạng thái đo đạc SVG tĩnh
+      const ecgPath = document.getElementById("ecg-line");
+      const ecgLength = ecgPath.getTotalLength();
+      ecgPath.style.strokeDasharray = ecgLength;
+      ecgPath.style.strokeDashoffset = ecgLength;
+
+      // Setup khởi tạo các phần tử (fromTo explicit tránh desync seek)
+      gsap.set("#peel-anim", { scale: 1, opacity: 1 });
+      gsap.set("#stamp-not-stop", { scale: 0, opacity: 0, rotation: -8 });
+      gsap.set("#hand-l", { x: -340, opacity: 0 });
+      gsap.set("#hand-r", { x: 340, opacity: 0 });
+      gsap.set("#punch-card", { y: 60, opacity: 0 });
+      gsap.set("#impact-wave", { scale: 0.5, opacity: 0 });
+      gsap.set("#ecg-pointer", { cx: 0, cy: 70 });
+      gsap.set("#ecg-status-1", { opacity: 1 });
+      gsap.set("#ecg-status-2", { opacity: 0 });
+
+      // --- TIMELINE CHOREOGRAPHY ---
+
+      // Phase 0: Chuyển cảnh Peel (0.0s - 0.5s)
+      tl.to("#peel-anim", {
+        scale: 0,
+        opacity: 0,
+        duration: 0.5,
+        ease: "power2.inOut",
+      }, 0);
+
+      // Phase 1: Buông dây (0.0s - 1.8s)
+      // "Sau đó Thành buông dây ra..."
+      tl.to("#rope-loop", {
+        scale: 1.15,
+        transformOrigin: "center center",
+        duration: 1.2,
+        ease: "power2.out",
+      }, 0.3);
+      tl.to("#rope-knot", {
+        y: 35,
+        duration: 1.2,
+        ease: "power2.out",
+      }, 0.3);
+      tl.to("#rope-strands", {
+        y: 35,
+        duration: 1.2,
+        ease: "power2.out",
+      }, 0.3);
+      tl.to("#rope-graphic", {
+        y: 60,
+        opacity: 0.45,
+        duration: 1.3,
+        ease: "power2.inOut",
+      }, 0.5);
+
+      // Quét nhịp tim ban đầu (0.0s -> 1.99s): Đi qua đoạn có mạch
+      tl.to(ecgPath, {
+        strokeDashoffset: ecgLength * 0.72,
+        duration: 1.99,
+        ease: "none",
+      }, 0);
+      tl.to("#ecg-pointer", {
+        cx: 255,
+        cy: 70,
+        duration: 1.99,
+        ease: "none",
+      }, 0);
+
+      // Phase 2: Đột biến - KHÔNG DỪNG LẠI (atMs: 142080 -> 1.99s)
+      // "Nhưng mà không phải để dừng lại..."
+      tl.addLabel("reversal", 1.99);
+
+      // Đổi trạng thái header sang bước 2 (màu đặc đạt chuẩn WCAG)
+      tl.to("#chip-step1", {
+        backgroundColor: "#262626",
+        color: "#f7f4ec",
+        duration: 0.25,
+      }, "reversal");
+      tl.to("#chip-step2", {
+        backgroundColor: "#ff6a1a",
+        color: "#141414",
+        duration: 0.25,
+      }, "reversal");
+
+      // Đóng dấu stamp "KHÔNG DỪNG LẠI"
+      tl.fromTo(
+        "#stamp-not-stop",
+        { scale: 2.2, opacity: 0, rotation: -12 },
+        {
+          scale: 1,
+          opacity: 1,
+          rotation: -3,
+          duration: 0.35,
+          ease: "power4.out",
+        },
+        "reversal"
+      );
+
+      // Hai bàn tay lập tức ập vào siết chặt vùng cổ (1.99s - 2.5s)
+      // "Anh ta tiếp tục dùng hai tay bóp cổ..."
+      tl.fromTo(
+        "#hand-l",
+        { x: -340, opacity: 0 },
+        { x: 30, opacity: 1, duration: 0.45, ease: "power3.out" },
+        "reversal+=0.1"
+      );
+      tl.fromTo(
+        "#hand-r",
+        { x: 340, opacity: 0 },
+        { x: -30, opacity: 1, duration: 0.45, ease: "power3.out" },
+        "reversal+=0.1"
+      );
+
+      // Vòng dây bị nén ép hoàn toàn
+      tl.to("#rope-graphic", {
+        opacity: 0.15,
+        scale: 0.9,
+        duration: 0.4,
+      }, "reversal+=0.15");
+
+      // Xung lực va chạm khi hai bàn tay siết vào
+      tl.fromTo(
+        "#impact-wave",
+        { scale: 0.6, opacity: 1 },
+        { scale: 1.8, opacity: 0, duration: 0.5, ease: "power2.out" },
+        "reversal+=0.2"
+      );
+
+      // Rung siết bóp hữu hạn (deterministic)
+      tl.to("#hand-l", { x: 42, duration: 0.18, ease: "power1.inOut" }, 2.6);
+      tl.to("#hand-r", { x: -42, duration: 0.18, ease: "power1.inOut" }, 2.6);
+      tl.to("#hand-l", { x: 28, duration: 0.22, ease: "power1.inOut" }, 2.78);
+      tl.to("#hand-r", { x: -28, duration: 0.22, ease: "power1.inOut" }, 2.78);
+
+      tl.to("#hand-l", { x: 46, duration: 0.2, ease: "power1.inOut" }, 3.3);
+      tl.to("#hand-r", { x: -46, duration: 0.2, ease: "power1.inOut" }, 3.3);
+      tl.to("#hand-l", { x: 34, duration: 0.25, ease: "power1.inOut" }, 3.5);
+      tl.to("#hand-r", { x: -34, duration: 0.25, ease: "power1.inOut" }, 3.5);
+
+      // Quét nhịp tim suy giảm mạnh (1.99s -> 4.52s)
+      tl.to(ecgPath, {
+        strokeDashoffset: ecgLength * 0.38,
+        duration: 2.53,
+        ease: "none",
+      }, 1.99);
+      tl.to("#ecg-pointer", {
+        cx: 585,
+        cy: 70,
+        duration: 2.53,
+        ease: "none",
+      }, 1.99);
+
+      // Phase 3: Punch Phrase "BÓP CỔ ĐẾN CÙNG" & FLATLINE (atMs: 144610 -> 4.52s)
+      // "...cho đến khi Kim tắt thở."
+      tl.addLabel("punch", 4.52);
+
+      // Stamp mờ nhẹ nhường tiêu điểm cho punch phrase
+      tl.to("#stamp-not-stop", {
+        opacity: 0.4,
+        scale: 0.95,
+        duration: 0.4,
+        ease: "power2.out",
+      }, "punch");
+
+      // Thẻ punch-phrase bật lên mạnh mẽ
+      tl.fromTo(
+        "#punch-card",
+        { y: 70, opacity: 0, scale: 0.95 },
+        {
+          y: 0,
+          opacity: 1,
+          scale: 1,
+          duration: 0.45,
+          ease: "power3.out",
+        },
+        "punch"
+      );
+
+      // Chuyển đổi trạng thái badge tất định (không dùng callback)
+      tl.to("#ecg-status-1", {
+        opacity: 0,
+        duration: 0.25,
+      }, "punch+=0.15");
+      tl.to("#ecg-status-2", {
+        opacity: 1,
+        duration: 0.25,
+      }, "punch+=0.15");
+
+      // ECG duỗi thẳng hoàn toàn thành Flatline (4.52s -> 7.4s)
+      tl.to(ecgPath, {
+        strokeDashoffset: 0,
+        duration: 2.88,
+        ease: "none",
+      }, "punch");
+      tl.to("#ecg-pointer", {
+        cx: 910,
+        cy: 70,
+        duration: 2.88,
+        ease: "none",
+      }, "punch");
+
+      // Hai bàn tay giữ chặt cố định siết cứng đến hết scene
+      tl.to("#hand-l", { x: 50, duration: 0.8, ease: "power2.out" }, "punch");
+      tl.to("#hand-r", { x: -50, duration: 0.8, ease: "power2.out" }, "punch");
+
+      // Đăng ký timeline duy nhất trên window.__timelines
+      window.__timelines = window.__timelines || {};
+      window.__timelines["scene-s17"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

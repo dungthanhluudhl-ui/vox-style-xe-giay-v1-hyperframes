@@ -1,0 +1,738 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+/* hf-safe-colors (tất định từ style-tokens.json) */
+.hf-text-ink { color: #141414; }
+.hf-text-light { color: #F7F4EC; }
+.hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+.hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+.hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+.hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #141414;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      /* Khung canvas chuẩn 1080x1920 */
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: #e7e3d9;
+      }
+
+      /* Quy ước .clip định vị inset:0 */
+      .clip {
+        position: absolute;
+        inset: 0;
+      }
+
+      /* Lớp nền phong cách Spotlight & Grid theo Vox DNA */
+      .bg-layer {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+      }
+      .bg-grid {
+        position: absolute;
+        inset: 0;
+        background-image:
+          linear-gradient(to right, rgba(20, 20, 20, 0.22) 1.5px, transparent 1.5px),
+          linear-gradient(to bottom, rgba(20, 20, 20, 0.22) 1.5px, transparent 1.5px);
+        background-size: 84px 84px;
+        opacity: 0.65;
+      }
+      .bg-spotlight {
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(circle at 50% 46%, rgba(231, 227, 217, 0.1) 20%, rgba(20, 20, 20, 0.45) 68%, rgba(20, 20, 20, 0.8) 100%);
+      }
+
+      /* Thanh cam chữ ký cố định mép đáy */
+      .brand-bottom-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 16px;
+        background-color: #ff6a1a;
+        z-index: 100;
+      }
+
+      /* Camera motion wrapper bao phủ toàn scene */
+      #camera-container {
+        position: absolute;
+        inset: 0;
+        transform-origin: 540px 720px;
+        will-change: transform;
+      }
+
+      /* Safe Zone Header / Topic Badge (Y: 180px) */
+      .header-badge-wrap {
+        position: absolute;
+        top: 180px;
+        left: 60px;
+        right: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        z-index: 20;
+      }
+      .topic-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        background-color: #141414;
+        color: #f7f4ec;
+        font-size: 24px;
+        font-weight: 900;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        padding: 10px 22px;
+        border-radius: 4px;
+      }
+      .topic-tag-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background-color: #ff6a1a;
+      }
+      .case-num {
+        font-size: 24px;
+        font-weight: 900;
+        color: #141414;
+        background-color: #f5f0e4;
+        border: 2px solid #141414;
+        padding: 8px 18px;
+        border-radius: 4px;
+        letter-spacing: 1px;
+      }
+
+      /* Diagram Container Cán Cân (Y: 260px - 1080px) */
+      #diagram-area {
+        position: absolute;
+        top: 260px;
+        left: 60px;
+        width: 960px;
+        height: 820px;
+        z-index: 10;
+      }
+
+      /* SVG Diagram Cán Cân */
+      #scale-svg {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        overflow: visible;
+      }
+
+      /* Thẻ Label: "RÚT TIỀN NGÂN HÀNG" đặt phía trên góc trái (Y: 310px) có khoảng đệm an toàn lớn */
+      #label-cash-flow {
+        position: absolute;
+        top: 310px;
+        left: 60px;
+        z-index: 30;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .badge-cash {
+        background-color: #ff6a1a;
+        color: #141414;
+        font-size: 28px;
+        font-weight: 900;
+        letter-spacing: 1px;
+        padding: 14px 24px;
+        border-radius: 6px;
+        border: 3px solid #141414;
+        box-shadow: 6px 6px 0 #141414;
+        line-height: 1.2;
+      }
+
+      /* Thẻ Punch-phrase: "DÂN GÁNH ĐẤT ĐAI" đặt trong Safe Zone Y: 1140px - 1300px */
+      #punch-card {
+        position: absolute;
+        top: 1140px;
+        left: 60px;
+        right: 60px;
+        background-color: #141414;
+        border: 4px solid #ff6a1a;
+        border-radius: 12px;
+        padding: 24px 32px;
+        box-shadow: 10px 10px 0 rgba(20, 20, 20, 0.4);
+        z-index: 40;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+      }
+      .punch-eyebrow {
+        color: #ff6a1a;
+        font-size: 22px;
+        font-weight: 900;
+        letter-spacing: 3px;
+        text-transform: uppercase;
+        margin-bottom: 6px;
+      }
+      .punch-main-text {
+        color: #f7f4ec;
+        font-size: 66px;
+        font-weight: 900;
+        line-height: 1.15;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        margin: 0;
+      }
+
+      /* Flash/Strike Transition overlay */
+      #strike-overlay {
+        position: absolute;
+        inset: 0;
+        background-color: #ff6a1a;
+        opacity: 0;
+        pointer-events: none;
+        z-index: 999;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s19"
+      data-width="1080"
+      data-height="1920"
+      data-duration="9.9"
+    >
+      <!-- Background Variants: Spotlight + Grid -->
+      <div class="bg-layer bg-grid"></div>
+      <div class="bg-layer bg-spotlight"></div>
+
+      <!-- Strike Transition Overlay -->
+      <div id="strike-overlay"></div>
+
+      <!-- Shot chính S19-1: data-start="0" data-duration="9.9" -->
+      <section id="shot-s19" class="clip" data-start="0" data-duration="9.9">
+        <div id="camera-container">
+          <!-- Safe Zone Top Header (Topic tag) -->
+          <div class="header-badge-wrap" id="header-badge">
+            <div class="topic-tag">
+              <span class="topic-tag-dot"></span>
+              <span>CƠ CHẾ RỦI RO</span>
+            </div>
+            <div class="case-num">SỰ THẬT</div>
+          </div>
+
+          <!-- Diagram Cán Cân (Scale Diagram) -->
+          <div id="diagram-area">
+            <svg id="scale-svg" viewBox="0 0 960 820">
+              <defs>
+                <!-- Marker mũi tên cam bay lên cho luồng tiền rút -->
+                <marker
+                  id="arrow-cash"
+                  viewBox="0 0 10 10"
+                  refX="6"
+                  refY="5"
+                  markerWidth="8"
+                  markerHeight="8"
+                  orient="auto-start-reverse"
+                >
+                  <path d="M 0 1 L 8 5 L 0 9 z" fill="#FF6A1A" />
+                </marker>
+                <!-- Marker mũi tên đen đè nặng cho gánh nợ đất đai -->
+                <marker
+                  id="arrow-heavy"
+                  viewBox="0 0 10 10"
+                  refX="6"
+                  refY="5"
+                  markerWidth="8"
+                  markerHeight="8"
+                  orient="auto-start-reverse"
+                >
+                  <path d="M 0 1 L 8 5 L 0 9 z" fill="#141414" />
+                </marker>
+              </defs>
+
+              <!-- TRỤ CÁN CÂN (Central Fulcrum Pillar) -->
+              <g id="scale-base">
+                <polygon
+                  points="430,750 530,750 500,440 460,440"
+                  fill="#141414"
+                />
+                <rect
+                  x="370"
+                  y="750"
+                  width="220"
+                  height="22"
+                  rx="4"
+                  fill="#141414"
+                />
+                <circle
+                  cx="480"
+                  cy="440"
+                  r="32"
+                  fill="#E7E3D9"
+                  stroke="#141414"
+                  stroke-width="8"
+                />
+                <circle cx="480" cy="440" r="14" fill="#FF6A1A" />
+              </g>
+
+              <!-- THANH ĐÒN CÂN CHÍNH (Rotates around 480, 440) -->
+              <g id="beam">
+                <line
+                  x1="160"
+                  y1="440"
+                  x2="800"
+                  y2="440"
+                  stroke="#141414"
+                  stroke-width="16"
+                  stroke-linecap="round"
+                />
+                <circle
+                  cx="160"
+                  cy="440"
+                  r="12"
+                  fill="#FF6A1A"
+                  stroke="#141414"
+                  stroke-width="4"
+                />
+                <circle
+                  cx="800"
+                  cy="440"
+                  r="12"
+                  fill="#FF6A1A"
+                  stroke="#141414"
+                  stroke-width="4"
+                />
+              </g>
+
+              <!-- ĐĨA CÂN TRÁI (TIỀN NGÂN HÀNG) - Giữ thẳng đứng, di chuyển tịnh tiến theo đòn cân -->
+              <g id="left-pan">
+                <!-- Dây treo đĩa cân -->
+                <line
+                  x1="160"
+                  y1="440"
+                  x2="105"
+                  y2="590"
+                  stroke="#141414"
+                  stroke-width="4"
+                />
+                <line
+                  x1="160"
+                  y1="440"
+                  x2="215"
+                  y2="590"
+                  stroke="#141414"
+                  stroke-width="4"
+                />
+                <!-- Đĩa cân -->
+                <path
+                  d="M 90 590 Q 160 630 230 590 Z"
+                  fill="#F5F0E4"
+                  stroke="#141414"
+                  stroke-width="6"
+                />
+
+                <!-- HÀNG HÓA: CỌC TIỀN MINH HỌA DẠNG HÌNH KHỐI VECTOR NGUYÊN BẢN (KHÔNG CHỨA TEXT) -->
+                <g id="cash-bundle">
+                  <!-- Tệp tiền đáy -->
+                  <rect
+                    x="110"
+                    y="550"
+                    width="100"
+                    height="38"
+                    rx="4"
+                    fill="#D8D2C4"
+                    stroke="#141414"
+                    stroke-width="4"
+                  />
+                  <!-- Tệp tiền giữa -->
+                  <rect
+                    x="115"
+                    y="534"
+                    width="100"
+                    height="38"
+                    rx="4"
+                    fill="#E7E3D9"
+                    stroke="#141414"
+                    stroke-width="4"
+                  />
+                  <!-- Tệp tiền trên cùng -->
+                  <rect
+                    x="110"
+                    y="518"
+                    width="100"
+                    height="38"
+                    rx="4"
+                    fill="#F5F0E4"
+                    stroke="#141414"
+                    stroke-width="4"
+                  />
+                  <!-- Họa tiết chỉ viền tiền polymer -->
+                  <rect
+                    x="118"
+                    y="524"
+                    width="84"
+                    height="26"
+                    rx="2"
+                    fill="none"
+                    stroke="#141414"
+                    stroke-width="2"
+                    stroke-dasharray="4 2"
+                  />
+                  <ellipse
+                    cx="160"
+                    cy="537"
+                    rx="16"
+                    ry="9"
+                    fill="none"
+                    stroke="#FF6A1A"
+                    stroke-width="2.5"
+                  />
+                  <circle cx="160" cy="537" r="4" fill="#FF6A1A" />
+                  <!-- Đai giấy niêm phong cọc tiền màu cam -->
+                  <rect
+                    x="148"
+                    y="518"
+                    width="24"
+                    height="38"
+                    fill="#FF6A1A"
+                    stroke="#141414"
+                    stroke-width="3"
+                  />
+                </g>
+
+                <!-- Quỹ đạo mũi tên rút tiền bay vút lên góc trái -->
+                <path
+                  id="cash-flow-arrow"
+                  d="M 160 510 C 130 420, 80 360, 50 310"
+                  fill="none"
+                  stroke="#FF6A1A"
+                  stroke-width="6"
+                  stroke-dasharray="10 6"
+                  marker-end="url(#arrow-cash)"
+                />
+              </g>
+
+              <!-- ĐĨA CÂN PHẢI (SỔ ĐỎ / ĐẤT ĐAI CỦA DÂN) -->
+              <g id="right-pan">
+                <!-- Dây treo đĩa cân -->
+                <line
+                  x1="800"
+                  y1="440"
+                  x2="745"
+                  y2="590"
+                  stroke="#141414"
+                  stroke-width="4"
+                />
+                <line
+                  x1="800"
+                  y1="440"
+                  x2="855"
+                  y2="590"
+                  stroke="#141414"
+                  stroke-width="4"
+                />
+                <!-- Đĩa cân -->
+                <path
+                  d="M 730 590 Q 800 630 870 590 Z"
+                  fill="#141414"
+                  stroke="#141414"
+                  stroke-width="6"
+                />
+
+                <!-- HÀNG HÓA: SỔ ĐỎ THẾ CHẤP NẶNG NỀ -->
+                <g id="land-deed" transform="translate(735, 430)">
+                  <!-- Bìa sổ đỏ vững chắc màu mực viền cam chuẩn Vox DNA -->
+                  <rect
+                    x="0"
+                    y="0"
+                    width="130"
+                    height="160"
+                    rx="6"
+                    fill="#141414"
+                    stroke="#FF6A1A"
+                    stroke-width="4"
+                  />
+                  <!-- Ngôi sao / Quốc huy biểu tượng -->
+                  <circle cx="65" cy="40" r="16" fill="#FF6A1A" />
+                  <text
+                    x="65"
+                    y="85"
+                    font-size="16"
+                    font-weight="900"
+                    fill="#F7F4EC"
+                    text-anchor="middle"
+                  >
+                    SỔ ĐỎ
+                  </text>
+                  <text
+                    x="65"
+                    y="108"
+                    font-size="12"
+                    font-weight="700"
+                    fill="#FF6A1A"
+                    text-anchor="middle"
+                  >
+                    ĐẤT ĐAI
+                  </text>
+                  <!-- Con dấu thế chấp -->
+                  <rect
+                    x="15"
+                    y="122"
+                    width="100"
+                    height="26"
+                    rx="3"
+                    fill="#FF6A1A"
+                  />
+                  <text
+                    x="65"
+                    y="139"
+                    font-size="11"
+                    font-weight="900"
+                    fill="#141414"
+                    text-anchor="middle"
+                  >
+                    THẾ CHẤP NỢ
+                  </text>
+                </g>
+
+                <!-- Mũi tên lực đè nặng dìm đĩa cân xuống -->
+                <g id="downward-force">
+                  <line
+                    x1="800"
+                    y1="640"
+                    x2="800"
+                    y2="710"
+                    stroke="#141414"
+                    stroke-width="8"
+                    marker-end="url(#arrow-heavy)"
+                  />
+                </g>
+              </g>
+            </svg>
+          </div>
+
+          <!-- Label Shotlist: RÚT TIỀN NGÂN HÀNG (Xuất hiện atMs 156310 -> 4.21s) -->
+          <div id="label-cash-flow">
+            <div class="badge-cash">RÚT TIỀN NGÂN HÀNG</div>
+          </div>
+
+          <!-- Punch Phrase Shotlist: DÂN GÁNH ĐẤT ĐAI (Xuất hiện atMs 159030 -> 6.93s) -->
+          <div id="punch-card">
+            <div class="punch-eyebrow">HẬU QUẢ NGHIỆT NGÃ</div>
+            <h1 class="punch-main-text">DÂN GÁNH ĐẤT ĐAI</h1>
+          </div>
+        </div>
+      </section>
+
+      <!-- Thanh cam đáy cố định -->
+      <div class="brand-bottom-bar"></div>
+    </div>
+
+    <!-- GSAP Choreography Script -->
+    <script>
+      // Khởi tạo timeline GSAP duy nhất theo HyperFrames contract
+      const tl = gsap.timeline({ paused: true });
+
+      // Đăng ký đúng key "scene-s19" trùng khớp data-composition-id
+      window.__timelines = window.__timelines || {};
+      window.__timelines["scene-s19"] = tl;
+
+      // 1. TRANSITION IN: "strike" (0.0s - 0.3s)
+      tl.fromTo(
+        "#strike-overlay",
+        { opacity: 0.85 },
+        { opacity: 0, duration: 0.28, ease: "power2.out" },
+        0
+      );
+
+      // Camera motion: Zoom-in nhẹ nhàng xuyên suốt 9.9s tăng độ kịch tính
+      tl.fromTo(
+        "#camera-container",
+        { scale: 0.98, y: 12 },
+        { scale: 1.04, y: -8, duration: 9.9, ease: "none" },
+        0
+      );
+
+      // Header xuất hiện sắc bén
+      tl.fromTo(
+        "#header-badge",
+        { y: -30, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.5, ease: "power3.out" },
+        0.15
+      );
+
+      // Trụ cán cân hạ cánh vững chắc
+      tl.fromTo(
+        "#scale-base",
+        { scaleY: 0, transformOrigin: "480px 750px", opacity: 0 },
+        { scaleY: 1, opacity: 1, duration: 0.55, ease: "power4.out" },
+        0.15
+      );
+
+      // Thanh đòn cân xòe ra cân bằng ban đầu
+      tl.fromTo(
+        "#beam",
+        { scaleX: 0, transformOrigin: "480px 440px", opacity: 0 },
+        { scaleX: 1, opacity: 1, duration: 0.6, ease: "power3.out" },
+        0.3
+      );
+
+      // Hai đĩa cân rơi vào vị trí cân bằng
+      tl.fromTo(
+        "#left-pan",
+        { y: 40, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.5, ease: "power3.out" },
+        0.45
+      );
+      tl.fromTo(
+        "#right-pan",
+        { y: 40, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.5, ease: "power3.out" },
+        0.45
+      );
+
+      // Ẩn ban đầu các thành phần overlay chưa tới mốc thời gian
+      tl.set("#label-cash-flow", { opacity: 0, scale: 0.88, x: -30 }, 0);
+      tl.set("#cash-flow-arrow", { opacity: 0 }, 0);
+      tl.set("#punch-card", { opacity: 0, y: 40, scale: 0.94 }, 0);
+      tl.set("#downward-force", { opacity: 0, scaleY: 0 }, 0);
+
+      // 2. SCALE TILT (atMs: 154460 -> 2.36s): Cán cân nghiêng mạnh!
+      // Clockwise rotation (+14 deg):
+      // - Bên trái (Tiền) nhẹ bẫng vọt lên (y giảm 78px, x tăng 10px)
+      // - Bên phải (Đất đai) đè nặng chìm xuống (y tăng 78px, x giảm 10px)
+      tl.to(
+        "#beam",
+        {
+          rotation: 14,
+          transformOrigin: "480px 440px",
+          duration: 1.25,
+          ease: "power2.inOut",
+        },
+        2.36
+      );
+
+      tl.to(
+        "#left-pan",
+        {
+          y: -78,
+          x: 10,
+          duration: 1.25,
+          ease: "power2.inOut",
+        },
+        2.36
+      );
+
+      tl.to(
+        "#right-pan",
+        {
+          y: 78,
+          x: -10,
+          duration: 1.25,
+          ease: "power2.inOut",
+        },
+        2.36
+      );
+
+      // 3. LABEL XUẤT HIỆN (atMs: 156310 -> 4.21s): "RÚT TIỀN NGÂN HÀNG"
+      // Mũi tên cam bay vút hướng về phía badge
+      tl.to(
+        "#cash-flow-arrow",
+        { opacity: 1, duration: 0.35, ease: "power2.out" },
+        4.05
+      );
+
+      tl.fromTo(
+        "#label-cash-flow",
+        { opacity: 0, x: -30, scale: 0.88 },
+        { opacity: 1, x: 0, scale: 1, duration: 0.5, ease: "power3.out" },
+        4.21
+      );
+
+      // Rung nhẹ cọc tiền khi luồng tiền bị rút đi
+      tl.fromTo(
+        "#cash-bundle",
+        { y: 0 },
+        { y: -10, duration: 0.5, repeat: 1, yoyo: true, ease: "sine.inOut" },
+        4.35
+      );
+
+      // 4. PUNCH PHRASE (atMs: 159030 -> 6.93s): "DÂN GÁNH ĐẤT ĐAI"
+      // Cú đè quyết định: Cán cân nghiêng tối đa (+18 deg)
+      tl.to(
+        "#beam",
+        {
+          rotation: 18,
+          transformOrigin: "480px 440px",
+          duration: 0.35,
+          ease: "power4.out",
+        },
+        6.85
+      );
+      tl.to(
+        "#left-pan",
+        {
+          y: -100,
+          x: 15,
+          duration: 0.35,
+          ease: "power4.out",
+        },
+        6.85
+      );
+      tl.to(
+        "#right-pan",
+        {
+          y: 100,
+          x: -15,
+          duration: 0.35,
+          ease: "power4.out",
+        },
+        6.85
+      );
+
+      // Mũi tên đè nặng xuất hiện dứt khoát
+      tl.fromTo(
+        "#downward-force",
+        { opacity: 0, scaleY: 0, transformOrigin: "800px 640px" },
+        { opacity: 1, scaleY: 1, duration: 0.3, ease: "power2.out" },
+        6.88
+      );
+
+      // Thẻ Punch-phrase giáng xuống dứt khoát
+      tl.fromTo(
+        "#punch-card",
+        { opacity: 0, y: 40, scale: 0.94 },
+        { opacity: 1, y: 0, scale: 1, duration: 0.45, ease: "power3.out" },
+        6.93
+      );
+
+      // Rung nhẹ thẻ đất đai nhấn mạnh trọng lượng gánh nợ
+      tl.fromTo(
+        "#land-deed",
+        { scale: 1 },
+        { scale: 1.04, duration: 0.15, repeat: 1, yoyo: true, ease: "power2.out" },
+        6.95
+      );
+    </script>
+  
+    </template>
+  </body>
+</html>

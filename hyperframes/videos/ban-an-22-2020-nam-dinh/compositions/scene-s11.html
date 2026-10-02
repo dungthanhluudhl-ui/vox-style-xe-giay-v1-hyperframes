@@ -1,0 +1,502 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap"
+    />
+      <style>
+      /* hf-safe-colors (tất định từ style-tokens.json) */
+      .hf-text-ink { color: #141414; }
+      .hf-text-light { color: #F7F4EC; }
+      .hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+      .hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+      .hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+      .hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #e7e3d9;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+      .clip {
+        position: absolute;
+        inset: 0;
+      }
+
+      /* Lưới nền ô vuông 84px chuẩn Vox style DNA */
+      .bg-grid {
+        position: absolute;
+        inset: 0;
+        background-color: #e7e3d9;
+        background-image:
+          linear-gradient(rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px),
+          linear-gradient(90deg, rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px);
+        background-size: 84px 84px;
+        background-position: -1.5px -1.5px;
+      }
+
+      /* Biến thể spotlight: vignette tối nhẹ dồn sự chú ý vào giữa */
+      .spotlight-vignette {
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(
+          circle at 50% 48%,
+          rgba(231, 227, 217, 0) 35%,
+          rgba(20, 20, 20, 0.18) 75%,
+          rgba(20, 20, 20, 0.38) 100%
+        );
+        pointer-events: none;
+      }
+
+      /* Thanh cam nhận diện thương hiệu đáy màn hình */
+      .bottom-brand-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 1080px;
+        height: 14px;
+        background-color: #ff6a1a;
+        z-index: 100;
+      }
+
+      /* Header nhãn ngữ cảnh nằm trong safe zone (top >= 160px) */
+      .scene-header-tag {
+        position: absolute;
+        top: 165px;
+        left: 50px;
+        display: inline-flex;
+        align-items: center;
+        gap: 14px;
+        background-color: #141414;
+        padding: 12px 24px;
+        border-radius: 4px;
+        z-index: 40;
+      }
+      .tag-indicator {
+        width: 12px;
+        height: 12px;
+        background-color: #ff6a1a;
+        border-radius: 50%;
+      }
+      .tag-text {
+        color: #f7f4ec;
+        font-size: 24px;
+        font-weight: 900;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        margin: 0;
+      }
+
+      /* Khung ảnh collage trung tâm nằm trong usable band [160, 1390] */
+      .photo-card {
+        position: absolute;
+        left: 50px;
+        top: 235px;
+        width: 980px;
+        height: 1140px;
+        background-color: #141414;
+        border: 4px solid #141414;
+        box-shadow: 14px 14px 0px rgba(20, 20, 20, 0.88);
+        overflow: hidden;
+        z-index: 10;
+        transform-origin: 50% 50%;
+      }
+      .photo-card img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: 50% 28%;
+        display: block;
+        transform-origin: 45% 45%;
+      }
+      .photo-vignette {
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(
+          circle at 50% 45%,
+          rgba(0, 0, 0, 0) 30%,
+          rgba(20, 20, 20, 0.3) 70%,
+          rgba(20, 20, 20, 0.65) 100%
+        );
+        pointer-events: none;
+      }
+
+      /* SVG Diagram thước đo kích thước (Overlay 1) */
+      .measure-svg-layer {
+        position: absolute;
+        left: 50px;
+        top: 235px;
+        width: 980px;
+        height: 1140px;
+        z-index: 20;
+        pointer-events: none;
+      }
+      .diagram-stroke {
+        stroke: #ff6a1a;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        fill: none;
+      }
+
+      /* Tấm nền chứa thông số đo đạc cành cây */
+      .dimension-plate {
+        position: absolute;
+        left: 120px;
+        top: 760px;
+        background-color: #141414;
+        border: 3px solid #ff6a1a;
+        border-radius: 6px;
+        padding: 16px 26px;
+        box-shadow: 10px 10px 0px rgba(20, 20, 20, 0.95);
+        z-index: 25;
+        transform-origin: 0% 50%;
+      }
+      .dimension-sub {
+        font-size: 19px;
+        font-weight: 700;
+        color: #ff6a1a;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        margin-bottom: 4px;
+      }
+      .dimension-main {
+        font-size: 38px;
+        font-weight: 900;
+        color: #f7f4ec;
+        margin: 0;
+        white-space: nowrap;
+        letter-spacing: 0.5px;
+      }
+
+      /* Quỹ đạo ném văng và Stamp kết quả (Overlay 2) */
+      .trajectory-svg-layer {
+        position: absolute;
+        left: 50px;
+        top: 235px;
+        width: 980px;
+        height: 1140px;
+        z-index: 30;
+        pointer-events: none;
+      }
+
+      /* Stamp NÉM KHÔNG TRÚNG - thiết kế đơn khối chắc chắn */
+      .stamp-plate {
+        position: absolute;
+        left: 320px;
+        top: 1020px;
+        background-color: #ff6a1a;
+        border: 5px solid #141414;
+        padding: 20px 36px;
+        border-radius: 4px;
+        box-shadow: 12px 12px 0px #141414;
+        z-index: 35;
+        transform-origin: 50% 50%;
+      }
+      .stamp-main {
+        font-size: 50px;
+        font-weight: 900;
+        color: #141414;
+        margin: 0;
+        line-height: 1.1;
+        letter-spacing: 1px;
+        white-space: nowrap;
+      }
+    </style>
+
+    <!-- Root composition: portrait 1080x1920, tổng thời lượng 5.92s -->
+    <div
+      id="root"
+      data-composition-id="scene-s11"
+      data-width="1080"
+      data-height="1920"
+      data-duration="5.92"
+    >
+      <!-- Shot S11-1 (0s -> 5.92s) -->
+      <section id="shot-s11-1" class="clip" data-start="0" data-duration="5.92">
+        <!-- Lưới nền và vignette spotlight -->
+        <div class="bg-grid"></div>
+        <div class="spotlight-vignette"></div>
+
+        <!-- Tag tiêu đề ngữ cảnh an toàn trên đỉnh -->
+        <div id="header-tag" class="scene-header-tag">
+          <div class="tag-indicator"></div>
+          <p class="tag-text">Hành vi tại hiện trường</p>
+        </div>
+
+        <!-- Khung ảnh trung tâm thực hiện camera motion punch + zoom-in -->
+        <div id="photo-card" class="photo-card">
+          <img
+            id="hero-img"
+            src="assets/img-13-man-holding-stick-confronts-thieves.jpg"
+            alt="Người đàn ông cầm gậy gỗ"
+          />
+          <div class="photo-vignette"></div>
+        </div>
+      </section>
+
+      <!-- Overlay 1: Thanh đo kích thước 0.5m dọc theo cành cây (1.32s -> 3.52s, duration = 2.2s) -->
+      <div
+        id="overlay-dimension"
+        class="clip"
+        data-start="1.32"
+        data-duration="2.2"
+      >
+        <svg
+          class="measure-svg-layer"
+          viewBox="0 0 980 1140"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <!-- Đường gióng kỹ thuật 2 đầu đoạn cành cây -->
+          <line
+            id="ext-line-1"
+            class="diagram-stroke"
+            stroke-width="3"
+            x1="180"
+            y1="540"
+            x2="180"
+            y2="680"
+            pathLength="100"
+            stroke-dasharray="100"
+            stroke-dashoffset="100"
+          />
+          <line
+            id="ext-line-2"
+            class="diagram-stroke"
+            stroke-width="3"
+            x1="520"
+            y1="540"
+            x2="520"
+            y2="680"
+            pathLength="100"
+            stroke-dasharray="100"
+            stroke-dashoffset="100"
+          />
+          <!-- Đường thước đo kỹ thuật ngang nối 2 mút -->
+          <line
+            id="dim-main-line"
+            class="diagram-stroke"
+            stroke-width="5"
+            x1="180"
+            y1="620"
+            x2="520"
+            y2="620"
+            pathLength="100"
+            stroke-dasharray="100"
+            stroke-dashoffset="100"
+          />
+          <!-- Mũi tên và vạch chốt 2 đầu -->
+          <circle id="dim-point-1" cx="180" cy="620" r="7" fill="#FF6A1A" opacity="0" />
+          <circle id="dim-point-2" cx="520" cy="620" r="7" fill="#FF6A1A" opacity="0" />
+          <!-- Đường gióng dẫn xuống thẻ label -->
+          <polyline
+            id="dim-lead-line"
+            class="diagram-stroke"
+            stroke-width="3"
+            points="350,620 350,750 280,750"
+            pathLength="100"
+            stroke-dasharray="100"
+            stroke-dashoffset="100"
+          />
+        </svg>
+
+        <!-- Thẻ thông số: CÀNH CÂY 0.5 MÉT -->
+        <div id="dimension-box" class="dimension-plate">
+          <div class="dimension-sub">Vật chứng đo được</div>
+          <h2 class="dimension-main">CÀNH CÂY 0.5 MÉT</h2>
+        </div>
+      </div>
+
+      <!-- Overlay 2: Quỹ đạo ném văng và Stamp NÉM KHÔNG TRÚNG (4.85s -> 5.92s, duration = 1.07s) -->
+      <div
+        id="overlay-result"
+        class="clip"
+        data-start="4.85"
+        data-duration="1.07"
+      >
+        <svg
+          class="trajectory-svg-layer"
+          viewBox="0 0 980 1140"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <!-- Đường cong quỹ đạo ném parabol rơi xuống đất -->
+          <path
+            id="throw-arc"
+            class="diagram-stroke"
+            stroke-width="6"
+            stroke-dasharray="14 10"
+            d="M 360 610 Q 560 500 720 980"
+            pathLength="100"
+            stroke-dashoffset="100"
+          />
+          <!-- Mũi tên cắm xuống đất tại điểm rơi -->
+          <polygon
+            id="throw-arrow"
+            points="720,995 700,955 735,965"
+            fill="#FF6A1A"
+            opacity="0"
+          />
+          <!-- Vòng tròn va chạm rơi xuống đất -->
+          <ellipse
+            id="throw-impact"
+            cx="720"
+            cy="995"
+            rx="45"
+            ry="18"
+            fill="none"
+            stroke="#FF6A1A"
+            stroke-width="4"
+            opacity="0"
+          />
+        </svg>
+
+        <!-- Stamp: NÉM KHÔNG TRÚNG (đơn khối, tránh va chạm AABB layout check) -->
+        <div id="stamp-box" class="stamp-plate">
+          <h2 class="stamp-main">NÉM KHÔNG TRÚNG</h2>
+        </div>
+      </div>
+
+      <!-- Dải cam cố định viền đáy -->
+      <div class="bottom-brand-bar"></div>
+    </div>
+
+    <!-- Animation Runtime Logic -->
+    <script>
+      // Khởi tạo GSAP Timeline chính (bắt buộc paused: true)
+      const tl = gsap.timeline({ paused: true });
+
+      // 1. Entrance "punch" và Camera Motion (zoom-in nhẹ 1.05) trên ảnh
+      // Punch vào lúc t = 0 -> 0.45s
+      tl.fromTo(
+        "#photo-card",
+        { scale: 0.94, opacity: 0.3 },
+        { scale: 1.0, opacity: 1.0, duration: 0.45, ease: "power3.out" },
+        0
+      );
+
+      // Header tag xuất hiện mượt mà
+      tl.fromTo(
+        "#header-tag",
+        { y: -24, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.4, ease: "power3.out" },
+        0.15
+      );
+
+      // Camera motion zoom-in nhẹ từ 1.0 lên 1.06 xuyên suốt cảnh
+      tl.fromTo(
+        "#hero-img",
+        { scale: 1.0 },
+        { scale: 1.06, duration: 5.92, ease: "none" },
+        0
+      );
+
+      // 2. Chuyển động Overlay 1: Thước đo kỹ thuật 0.5 mét (bắt đầu tại 1.32s)
+      // Vẽ các đường gióng
+      tl.fromTo(
+        "#ext-line-1",
+        { strokeDashoffset: 100 },
+        { strokeDashoffset: 0, duration: 0.25, ease: "power2.out" },
+        1.32
+      );
+      tl.fromTo(
+        "#ext-line-2",
+        { strokeDashoffset: 100 },
+        { strokeDashoffset: 0, duration: 0.25, ease: "power2.out" },
+        1.38
+      );
+      // Vẽ thước đo ngang chính
+      tl.fromTo(
+        "#dim-main-line",
+        { strokeDashoffset: 100 },
+        { strokeDashoffset: 0, duration: 0.35, ease: "power2.out" },
+        1.45
+      );
+      // Điểm mút thước đo
+      tl.fromTo(
+        "#dim-point-1",
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.2, ease: "power3.out" },
+        1.55
+      );
+      tl.fromTo(
+        "#dim-point-2",
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.2, ease: "power3.out" },
+        1.65
+      );
+      // Đường dẫn xuống hộp thông số
+      tl.fromTo(
+        "#dim-lead-line",
+        { strokeDashoffset: 100 },
+        { strokeDashoffset: 0, duration: 0.25, ease: "power2.out" },
+        1.68
+      );
+      // Hộp thông số "CÀNH CÂY 0.5 MÉT" pop vào (smooth long-tail settle)
+      tl.fromTo(
+        "#dimension-box",
+        { scale: 0.82, opacity: 0, x: -16 },
+        { scale: 1.0, opacity: 1, x: 0, duration: 0.38, ease: "power3.out" },
+        1.75
+      );
+
+      // Thu hồi Overlay 1 trước khi hết slot (t = 3.32s)
+      tl.to(
+        "#dimension-box",
+        { opacity: 0, scale: 0.95, duration: 0.18, ease: "power2.in" },
+        3.32
+      );
+
+      // 3. Chuyển động Overlay 2: Quỹ đạo ném văng và Stamp (bắt đầu tại 4.85s)
+      // Đường bay vòng cung vút qua rồi rơi xuống đất
+      tl.fromTo(
+        "#throw-arc",
+        { strokeDashoffset: 100 },
+        { strokeDashoffset: 0, duration: 0.35, ease: "power2.out" },
+        4.85
+      );
+      // Mũi tên và vòng va chạm tiếp đất
+      tl.fromTo(
+        "#throw-arrow",
+        { opacity: 0, scale: 0.5 },
+        { opacity: 1, scale: 1, duration: 0.18, ease: "power3.out" },
+        5.05
+      );
+      tl.fromTo(
+        "#throw-impact",
+        { opacity: 0, scale: 0.3 },
+        { opacity: 1, scale: 1.2, duration: 0.25, ease: "power2.out" },
+        5.1
+      );
+      // Stamp "NÉM KHÔNG TRÚNG" đóng mạnh xuống
+      tl.fromTo(
+        "#stamp-box",
+        { scale: 1.35, opacity: 0, rotation: -8 },
+        { scale: 1.0, opacity: 1, rotation: -3, duration: 0.32, ease: "power3.out" },
+        5.12
+      );
+
+      // Đăng ký timeline cho HyperFrames seek engine
+      window.__timelines = window.__timelines || {};
+      window.__timelines["scene-s11"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

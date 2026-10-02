@@ -1,0 +1,534 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+/* hf-safe-colors (tất định từ style-tokens.json) */
+.hf-text-ink { color: #141414; }
+.hf-text-light { color: #F7F4EC; }
+.hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+.hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+.hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+.hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #F5F0E4;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: #F5F0E4;
+      }
+      .clip {
+        position: absolute;
+        inset: 0;
+      }
+
+      /* Thanh cam nhận diện thương hiệu ở đáy khung hình */
+      .brand-bottom-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 14px;
+        background-color: #FF6A1A;
+        z-index: 99;
+      }
+
+      /* Container chính nằm hoàn toàn trong Safe Zone (Y: 180 -> 1320) */
+      .stage-container {
+        position: absolute;
+        top: 180px;
+        left: 60px;
+        width: 960px;
+        height: 1140px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        perspective: 1200px;
+      }
+
+      /* ================= PHASE 1: TỪ CHỐI ≠ XÚC PHẠM ================= */
+      .phase-1 {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
+      }
+
+      /* Top Label / Overlay 1 */
+      .badge-label {
+        background-color: #141414;
+        color: #F7F4EC;
+        padding: 16px 36px;
+        border-radius: 999px;
+        font-size: 36px;
+        font-weight: 900;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        display: inline-flex;
+        align-items: center;
+        gap: 16px;
+        box-shadow: 0 10px 24px rgba(20, 20, 20, 0.12);
+      }
+      .badge-label .symbol-neq {
+        color: #FF6A1A;
+        font-size: 42px;
+      }
+
+      /* Diagram Split Container */
+      .split-board {
+        width: 100%;
+        margin-top: 40px;
+        display: flex;
+        flex-direction: column;
+        gap: 28px;
+        align-items: center;
+      }
+
+      .card-row {
+        width: 100%;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
+      }
+
+      .concept-card {
+        background-color: #E7E3D9;
+        border: 4px solid #141414;
+        border-radius: 24px;
+        padding: 32px 24px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        min-height: 420px;
+        justify-content: space-between;
+      }
+
+      .card-header-tag {
+        font-size: 22px;
+        font-weight: 900;
+        padding: 8px 18px;
+        border-radius: 8px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+
+      .card-header-tag.tag-wrong {
+        background-color: #141414;
+        color: #F7F4EC;
+      }
+
+      .card-header-tag.tag-right {
+        background-color: #FF6A1A;
+        color: #141414;
+      }
+
+      .card-title {
+        font-size: 48px;
+        font-weight: 900;
+        line-height: 1.2;
+        margin: 20px 0;
+        color: #141414;
+      }
+
+      /* Khối trạng thái dạng flex-row, biểu tượng bên cạnh chữ, không che khuất chữ */
+      .card-status {
+        width: 100%;
+        padding: 14px 16px;
+        border-radius: 12px;
+        font-size: 22px;
+        font-weight: 900;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+      }
+
+      .status-strike {
+        background-color: #141414;
+        color: #F7F4EC;
+      }
+
+      .status-affirm {
+        background-color: #FF6A1A;
+        color: #141414;
+      }
+
+      .status-icon {
+        flex-shrink: 0;
+      }
+
+      /* Khối thông điệp bổ trợ Phase 1 */
+      .sub-banner {
+        width: 100%;
+        background-color: #141414;
+        border-radius: 18px;
+        padding: 24px 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+      }
+      .sub-banner-text {
+        font-size: 28px;
+        font-weight: 900;
+        color: #F7F4EC;
+        letter-spacing: 0.5px;
+        line-height: 1.35;
+      }
+      .sub-banner-highlight {
+        color: #FF6A1A;
+      }
+
+      /* ================= PHASE 2: MẠNG SỐNG BẤT KHẢ XÂM ================= */
+      .phase-2 {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .shield-container {
+        width: 880px;
+        height: 800px;
+        border-radius: 36px;
+        background-color: #141414;
+        border: 4px solid #FF6A1A;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: 48px 40px;
+        position: relative;
+        box-shadow: 0 20px 50px rgba(20, 20, 20, 0.25);
+      }
+
+      .phase2-content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .shield-svg-icon {
+        margin-bottom: 20px;
+      }
+
+      .law-tag {
+        background-color: #FF6A1A;
+        color: #141414;
+        font-size: 26px;
+        font-weight: 900;
+        padding: 10px 24px;
+        border-radius: 8px;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        margin-bottom: 24px;
+      }
+
+      /* Punch phrase chính của Scene S39 */
+      .punch-headline {
+        margin: 0 0 24px 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .punch-line-1 {
+        font-size: 64px;
+        font-weight: 900;
+        color: #F7F4EC;
+        line-height: 1.15;
+        letter-spacing: -0.5px;
+        text-transform: uppercase;
+      }
+
+      .punch-line-2 {
+        font-size: 68px;
+        font-weight: 900;
+        color: #FF6A1A;
+        line-height: 1.15;
+        letter-spacing: -0.5px;
+        text-transform: uppercase;
+      }
+
+      .divider-line {
+        width: 220px;
+        height: 6px;
+        background-color: #FF6A1A;
+        border-radius: 3px;
+        margin-bottom: 28px;
+      }
+
+      .rule-clause {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .rule-clause-top {
+        font-size: 28px;
+        font-weight: 700;
+        color: #E7E3D9;
+        line-height: 1.35;
+      }
+
+      .rule-clause-bottom {
+        font-size: 32px;
+        font-weight: 900;
+        color: #F7F4EC;
+        line-height: 1.35;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s39"
+      data-start="0"
+      data-width="1080"
+      data-height="1920"
+      data-duration="12"
+    >
+      <!-- Clip toàn bộ scene 12s -->
+      <section id="scene-s39" class="clip" data-start="0" data-duration="12">
+        <div class="stage-container" id="stage">
+          <!-- PHASE 1: TỪ CHỐI ≠ XÚC PHẠM (0.0s -> 6.5s) -->
+          <div class="phase-1" id="phase1">
+            <!-- Overlay 1: TỪ CHỐI ≠ XÚC PHẠM -->
+            <div class="badge-label" id="badge-top">
+              <span>TỪ CHỐI</span>
+              <span class="symbol-neq">≠</span>
+              <span>XÚC PHẠM</span>
+            </div>
+
+            <div class="split-board">
+              <div class="card-row">
+                <!-- Cột trái: Nhận thức sai lầm -->
+                <div class="concept-card" id="card-left">
+                  <div class="card-header-tag tag-wrong">GÁN GHÉP SAI</div>
+                  <div class="card-title">XÚC PHẠM</div>
+                  <div class="card-status status-strike" id="status-left">
+                    <svg class="status-icon" viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#FF6A1A" stroke-width="3" stroke-linecap="round">
+                      <circle cx="12" cy="12" r="9" />
+                      <line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                    <span>KHÔNG ĐƯỢC TRẢ ĐŨA</span>
+                  </div>
+                </div>
+
+                <!-- Cột phải: Bản chất pháp lý chuẩn xác -->
+                <div class="concept-card" id="card-right">
+                  <div class="card-header-tag tag-right">BẢN CHẤT THẬT</div>
+                  <div class="card-title">QUYỀN TỰ DO</div>
+                  <div class="card-status status-affirm" id="status-right">
+                    <svg class="status-icon" viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#141414" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                    <span>TỰ DO Ý CHÍ</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Banner kết luận Phase 1 -->
+              <div class="sub-banner" id="phase1-banner">
+                <div class="sub-banner-text">
+                  TỪ CHỐI LÀ QUYỀN — <span class="sub-banner-highlight">KHÔNG PHẢI SỰ XÚC PHẠM</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- PHASE 2: MẠNG SỐNG BẤT KHẢ XÂM (6.5s -> 12.0s) -->
+          <div class="phase-2" id="phase2">
+            <div class="shield-container" id="shield-box">
+              <div class="phase2-content">
+                <svg
+                  class="shield-svg-icon"
+                  id="shield-svg"
+                  viewBox="0 0 24 24"
+                  width="72"
+                  height="72"
+                  fill="none"
+                  stroke="#FF6A1A"
+                  stroke-width="2.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path
+                    id="shield-path"
+                    d="M 12 2 L 4 5 L 4 11.09 C 4 16.14 7.41 20.85 12 22 C 16.59 20.85 20 16.14 20 11.09 L 20 5 Z"
+                  />
+                </svg>
+
+                <div class="law-tag" id="shield-tag">BẢO VỆ TUYỆT ĐỐI</div>
+
+                <!-- Overlay 2: Punch phrase -->
+                <h1 class="punch-headline" id="punch-headline">
+                  <span class="punch-line-1">MẠNG SỐNG</span>
+                  <span class="punch-line-2">BẤT KHẢ XÂM</span>
+                </h1>
+
+                <div class="divider-line" id="shield-divider"></div>
+
+                <div class="rule-clause" id="shield-clause">
+                  <div class="rule-clause-top">KHÔNG AI CÓ QUYỀN</div>
+                  <div class="rule-clause-bottom">ĐỊNH ĐOẠT TÍNH MẠNG NGƯỜI KHÁC</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Dải nhận diện thương hiệu cam ở mép dưới -->
+      <div class="brand-bottom-bar"></div>
+    </div>
+
+    <script>
+      // 1 paused timeline duy nhất cho composition
+      const tl = gsap.timeline({ paused: true });
+
+      // Setup đường stroke ban đầu cho SVG shield path draw
+      const shieldPath = document.getElementById("shield-path");
+      if (shieldPath) {
+        const len = shieldPath.getTotalLength();
+        shieldPath.style.strokeDasharray = len + "";
+        shieldPath.style.strokeDashoffset = len + "";
+      }
+
+      // --- 1. ENTRANCE FLIP CHO TOÀN BỘ STAGE (0.0s -> 0.6s) ---
+      tl.fromTo(
+        "#stage",
+        { opacity: 0, rotateX: 20, scale: 0.94 },
+        { opacity: 1, rotateX: 0, scale: 1, duration: 0.6, ease: "power3.out" },
+        0
+      );
+
+      // --- 2. OVERLAY 1: TỪ CHỐI ≠ XÚC PHẠM (bắt đầu lúc 0.5s) ---
+      tl.fromTo(
+        "#badge-top",
+        { y: -24, opacity: 0, scale: 0.9 },
+        { y: 0, opacity: 1, scale: 1, duration: 0.5, ease: "power3.out" },
+        0.5
+      );
+
+      // --- 3. DIAGRAM 2 CỘT SPLIT (từ 0.8s) ---
+      tl.fromTo(
+        "#card-left",
+        { x: -40, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.5, ease: "power3.out" },
+        0.8
+      );
+      tl.fromTo(
+        "#card-right",
+        { x: 40, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.5, ease: "power3.out" },
+        1.0
+      );
+
+      // Status pill xuất hiện tuần tự
+      tl.fromTo(
+        "#status-left",
+        { scale: 0.85, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.4, ease: "power2.out" },
+        1.6
+      );
+      tl.fromTo(
+        "#status-right",
+        { scale: 0.85, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.4, ease: "power2.out" },
+        1.9
+      );
+
+      // Banner kết luận Phase 1 (lúc 2.4s)
+      tl.fromTo(
+        "#phase1-banner",
+        { y: 24, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.5, ease: "power3.out" },
+        2.4
+      );
+
+      // --- 4. CHUYỂN TIẾP PHASE 1 SANG PHASE 2 (6.0s -> 6.8s) ---
+      tl.to(
+        "#phase1",
+        { opacity: 0, y: -30, scale: 0.96, duration: 0.5, ease: "power2.in" },
+        6.0
+      );
+
+      tl.fromTo(
+        "#phase2",
+        { opacity: 0, scale: 0.92, y: 30 },
+        { opacity: 1, scale: 1, y: 0, duration: 0.6, ease: "power3.out" },
+        6.5
+      );
+
+      // Vẽ nét viền icon chiếc khiên bảo vệ
+      if (shieldPath) {
+        tl.to(
+          "#shield-path",
+          { strokeDashoffset: 0, duration: 0.8, ease: "power2.out" },
+          6.8
+        );
+      }
+
+      tl.fromTo(
+        "#shield-tag",
+        { opacity: 0, y: -16 },
+        { opacity: 1, y: 0, duration: 0.4, ease: "power2.out" },
+        7.3
+      );
+
+      // --- 5. OVERLAY 2: PUNCH PHRASE "MẠNG SỐNG BẤT KHẢ XÂM" (8.07s) ---
+      tl.fromTo(
+        "#punch-headline",
+        { opacity: 0, scale: 0.9, y: 20 },
+        { opacity: 1, scale: 1, y: 0, duration: 0.6, ease: "power3.out" },
+        8.07
+      );
+
+      tl.fromTo(
+        "#shield-divider",
+        { scaleX: 0, opacity: 0 },
+        { scaleX: 1, opacity: 1, duration: 0.4, ease: "power2.out" },
+        8.6
+      );
+
+      tl.fromTo(
+        "#shield-clause",
+        { opacity: 0, y: 16 },
+        { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" },
+        8.9
+      );
+
+      // Giữ ổn định toàn bộ thông điệp sắc nét đến hết 12s
+
+      // Đăng ký timeline cho HyperFrames seek
+      window.__timelines["scene-s39"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

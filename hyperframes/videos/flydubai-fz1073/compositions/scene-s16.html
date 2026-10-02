@@ -1,0 +1,614 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap">
+      <style>
+    /* hf-safe-colors (tất định từ style-tokens.json) */
+    .hf-text-ink { color: #141414; }
+    .hf-text-light { color: #F7F4EC; }
+    .hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+    .hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+    .hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+    .hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+    * {
+      box-sizing: border-box;
+    }
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 1080px;
+      height: 1920px;
+      background-color: #E7E3D9;
+      font-family: "Be Vietnam Pro", sans-serif;
+      overflow: hidden;
+      color: #141414;
+    }
+
+    #root {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    .clip {
+      position: absolute;
+      inset: 0;
+    }
+
+    /* SIGNATURE BOTTOM ORANGE BAR */
+    #bottom-accent-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 1080px;
+      height: 10px;
+      background-color: #FF6A1A;
+      z-index: 9999;
+    }
+
+    /* CHART BACKGROUND VARIANT (Chỉ gồm nét kẻ kỹ thuật, KHÔNG chứa text DOM để tránh lỗi occluded & contrast) */
+    .chart-background {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .chart-line {
+      position: absolute;
+      left: 0;
+      width: 1080px;
+      height: 2px;
+      background-color: rgba(20, 20, 20, 0.28);
+    }
+    .chart-tick {
+      position: absolute;
+      left: 0;
+      width: 28px;
+      height: 6px;
+      background-color: #FF6A1A;
+      transform: translateY(-2px);
+    }
+
+    /* SHOT 1 LAYOUT */
+    #shot-1-container {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    #shot-1-badge {
+      position: absolute;
+      top: 220px;
+      left: 80px;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 14px 24px;
+      border: 3px solid #141414;
+      box-shadow: 6px 6px 0px #141414;
+    }
+
+    #shot-1-card {
+      position: absolute;
+      top: 320px;
+      left: 80px;
+      width: 920px;
+      height: 940px;
+      background-color: #F5F0E4;
+      border: 4px solid #141414;
+      box-shadow: 12px 16px 0px rgba(20, 20, 20, 0.95);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 24px;
+    }
+
+    .photo-frame {
+      position: relative;
+      width: 864px;
+      height: 760px;
+      overflow: hidden;
+      border: 3px solid #141414;
+      background-color: #141414;
+    }
+
+    .photo-frame img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center 30%;
+      display: block;
+    }
+
+    .card-caption-strip {
+      width: 864px;
+      height: 80px;
+      margin-top: 20px;
+      padding: 0 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border: 2px solid #141414;
+    }
+
+    /* TAPE DECORATIONS */
+    .collage-tape {
+      position: absolute;
+      width: 130px;
+      height: 38px;
+      background-color: rgba(231, 227, 217, 0.9);
+      border: 1px dashed rgba(20, 20, 20, 0.4);
+      z-index: 5;
+    }
+    .tape-top-left {
+      top: -18px;
+      left: 36px;
+      transform: rotate(-6deg);
+    }
+    .tape-top-right {
+      top: -18px;
+      right: 36px;
+      transform: rotate(8deg);
+    }
+
+    /* SHOT 2 LAYOUT */
+    #shot-2-camera {
+      position: absolute;
+      inset: 0;
+    }
+
+    /* PILOT CONTEXT HEADER */
+    #shot-2-context-card {
+      position: absolute;
+      top: 190px;
+      left: 80px;
+      width: 920px;
+      height: 140px;
+      border: 3px solid #141414;
+      box-shadow: 6px 6px 0px #141414;
+      display: flex;
+      align-items: center;
+      padding: 12px 20px;
+      gap: 20px;
+      z-index: 2;
+    }
+
+    .context-thumb {
+      width: 140px;
+      height: 110px;
+      border: 2px solid #141414;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    .context-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .context-details {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .pilot-tag {
+      display: inline-block;
+      width: fit-content;
+      padding: 4px 12px;
+      font-size: 15px;
+      font-weight: 900;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+    }
+
+    /* ATTITUDE INDICATOR (ADI) INSTRUMENT */
+    #attitude-instrument {
+      position: absolute;
+      top: 360px;
+      left: 230px;
+      width: 620px;
+      height: 620px;
+      z-index: 3;
+    }
+
+    /* DIGITAL READOUT OVERLAY (Đảm bảo contrast 16.8:1 trên nền mực đặc) */
+    #digital-gauge-box {
+      position: absolute;
+      top: 380px;
+      right: 250px;
+      width: 210px;
+      height: 74px;
+      padding: 8px 16px;
+      border: 3px solid #FF6A1A;
+      box-shadow: 4px 4px 0px #141414;
+      z-index: 4;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    /* SHOT 2 PUNCH PHRASE & SECONDARY LABEL */
+    #shot-2-punch {
+      position: absolute;
+      top: 1020px;
+      left: 80px;
+      width: 920px;
+      padding: 24px 32px;
+      border: 4px solid #141414;
+      box-shadow: 10px 10px 0px #FF6A1A;
+      z-index: 10;
+    }
+
+    #shot-2-label {
+      position: absolute;
+      top: 1220px;
+      left: 80px;
+      width: 920px;
+      padding: 16px 28px;
+      border: 3px solid #141414;
+      box-shadow: 8px 8px 0px #141414;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 11;
+    }
+  </style>
+
+  <div id="root" data-composition-id="scene-s16" data-width="1080" data-height="1920" data-duration="11.29">
+    
+    <!-- PERSISTENT CHART GRID BACKGROUND (Không có text DOM để triệt tiêu lỗi layout/contrast) -->
+    <div class="chart-background">
+      <div class="chart-line" style="top: 384px;"><div class="chart-tick"></div></div>
+      <div class="chart-line" style="top: 768px;"><div class="chart-tick"></div></div>
+      <div class="chart-line" style="top: 1152px;"><div class="chart-tick"></div></div>
+      <div class="chart-line" style="top: 1536px;"><div class="chart-tick"></div></div>
+    </div>
+
+    <!-- SIGNATURE BOTTOM ORANGE BAR -->
+    <div id="bottom-accent-bar"></div>
+
+    <!-- =================================================================== -->
+    <!-- SHOT 1: S16-1 (0.00s - 4.78s) - TỔ BAY TRỌNG THƯƠNG                -->
+    <!-- =================================================================== -->
+    <div id="shot-1" class="clip" data-start="0" data-duration="4.78">
+      <div id="shot-1-container">
+        
+        <!-- CALLOUT BADGE (Warning icon + Nhãn chuẩn shotlist) -->
+        <div id="shot-1-badge" class="hf-hl-orange">
+          <svg width="38" height="38" viewBox="0 0 42 42" fill="none">
+            <path id="warning-triangle" d="M21 4L39 36H3L21 4Z" stroke="#141414" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" />
+            <line x1="21" y1="15" x2="21" y2="25" stroke="#141414" stroke-width="3.5" stroke-linecap="round" />
+            <circle cx="21" cy="31" r="2" fill="#141414" />
+          </svg>
+          <span style="font-size: 30px; font-weight: 900; letter-spacing: 1px;">TỔ BAY TRỌNG THƯƠNG</span>
+        </div>
+
+        <!-- MAIN EVIDENCE PHOTO CARD -->
+        <div id="shot-1-card">
+          <div class="collage-tape tape-top-left"></div>
+          <div class="collage-tape tape-top-right"></div>
+          
+          <div class="photo-frame">
+            <img src="assets/img-14-injured-victims-emergency-treatment.png" alt="Tổ bay bị thương" />
+          </div>
+
+          <!-- Dải chú thích cố định rõ ràng, không bị stamp che khuất -->
+          <div class="card-caption-strip hf-plate-ink">
+            <span style="font-size: 22px; font-weight: 900; letter-spacing: 1.5px; text-transform: uppercase;">
+              HIỆN TRƯỜNG CẤP CỨU // TỔ LÁI DC-10
+            </span>
+            <span class="hf-hl-orange" style="font-size: 16px; font-weight: 900; padding: 6px 12px; letter-spacing: 1px;">
+              BÁO ĐỘNG ĐỎ
+            </span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- =================================================================== -->
+    <!-- SHOT 2: S16-2 (4.78s - 11.29s) - ĐỒ HỌA NGHIÊNG 140 ĐỘ              -->
+    <!-- =================================================================== -->
+    <div id="shot-2" class="clip" data-start="4.78" data-duration="6.51">
+      <div id="shot-2-camera">
+
+        <!-- CONTEXT CARD: CƠ PHÓ JIM TUCKER (Dùng nền #F5F0E4, badge cam chữ mực chuẩn WCAG) -->
+        <div id="shot-2-context-card" class="hf-plate-paper">
+          <div class="context-thumb">
+            <img src="assets/img-14-injured-victims-emergency-treatment.png" alt="Cơ phó cấp cứu" />
+          </div>
+          <div class="context-details">
+            <span class="pilot-tag hf-hl-orange">CƠ PHÓ JIM TUCKER</span>
+            <span style="font-size: 24px; font-weight: 900; color: #141414; line-height: 1.2;">QUYẾT ĐỊNH ĐIỀU KHIỂN SINH TỬ</span>
+          </div>
+        </div>
+
+        <!-- ATTITUDE INDICATOR (ADI) VECTOR INSTRUMENT -->
+        <div id="attitude-instrument">
+          <svg viewBox="0 0 620 620" width="620" height="620">
+            <defs>
+              <clipPath id="horizon-clip">
+                <circle cx="310" cy="310" r="230" />
+              </clipPath>
+            </defs>
+
+            <!-- Outer Instrument Bezel -->
+            <rect x="20" y="20" width="580" height="580" rx="40" fill="#F5F0E4" stroke="#141414" stroke-width="6" />
+            <!-- Mounting Screws -->
+            <circle cx="48" cy="48" r="8" fill="#141414" />
+            <circle cx="572" cy="48" r="8" fill="#141414" />
+            <circle cx="48" cy="572" r="8" fill="#141414" />
+            <circle cx="572" cy="572" r="8" fill="#141414" />
+
+            <!-- Circular Dial Outer Border -->
+            <circle cx="310" cy="310" r="252" fill="#E7E3D9" stroke="#141414" stroke-width="4" />
+
+            <!-- ANGLE TICK MARKS ON OUTER BEZEL (Các vạch thuần hình học, không chứa thẻ text) -->
+            <!-- 0 deg (Top) -->
+            <line x1="310" y1="58" x2="310" y2="82" stroke="#141414" stroke-width="5" />
+            <!-- 30 deg -->
+            <line x1="436" y1="91" x2="424" y2="112" stroke="#141414" stroke-width="3" />
+            <!-- 60 deg -->
+            <line x1="529" y1="184" x2="510" y2="195" stroke="#141414" stroke-width="3" />
+            <!-- 90 deg (Right) -->
+            <line x1="562" y1="310" x2="538" y2="310" stroke="#141414" stroke-width="5" />
+            <!-- 140 deg Target Angle Tick (Cam nhấn) -->
+            <line x1="472" y1="503" x2="453" y2="482" stroke="#FF6A1A" stroke-width="7" />
+            <!-- 180 deg (Bottom) -->
+            <line x1="310" y1="562" x2="310" y2="538" stroke="#141414" stroke-width="5" />
+
+            <!-- ROTATING ARTIFICIAL HORIZON SPHERE -->
+            <g clip-path="url(#horizon-clip)">
+              <g id="horizon-group">
+                <!-- Sky Hemisphere -->
+                <rect x="0" y="0" width="620" height="310" fill="#E7E3D9" />
+                <!-- Ground Hemisphere (Solid Ink) -->
+                <rect x="0" y="310" width="620" height="310" fill="#141414" />
+                <!-- Dividing Horizon Line -->
+                <line x1="0" y1="310" x2="620" y2="310" stroke="#FF6A1A" stroke-width="5" />
+                
+                <!-- Pitch Ladder Lines -->
+                <line x1="260" y1="265" x2="360" y2="265" stroke="#141414" stroke-width="3" />
+                <line x1="280" y1="220" x2="340" y2="220" stroke="#141414" stroke-width="3" />
+                <line x1="260" y1="355" x2="360" y2="355" stroke="#E7E3D9" stroke-width="3" stroke-dasharray="8 6" />
+                <line x1="280" y1="400" x2="340" y2="400" stroke="#E7E3D9" stroke-width="3" stroke-dasharray="8 6" />
+              </g>
+            </g>
+
+            <!-- ROTATING DC-10 AIRCRAFT VECTOR -->
+            <g id="dc10-group">
+              <!-- Fuselage Body -->
+              <ellipse cx="310" cy="310" rx="14" ry="70" fill="#141414" stroke="#FF6A1A" stroke-width="2.5" />
+              <!-- Wings (Swept) -->
+              <path d="M 310 290 L 160 330 L 160 345 L 310 325 L 460 345 L 460 330 Z" fill="#141414" stroke="#FF6A1A" stroke-width="2.5" />
+              <!-- Underwing Engines (Engine 1 and 3) -->
+              <rect x="215" y="325" width="16" height="34" rx="6" fill="#FF6A1A" stroke="#141414" stroke-width="2" />
+              <rect x="389" y="325" width="16" height="34" rx="6" fill="#FF6A1A" stroke="#141414" stroke-width="2" />
+              <!-- Horizontal Stabilizers -->
+              <path d="M 310 365 L 240 380 L 240 388 L 310 376 L 380 388 L 380 380 Z" fill="#141414" stroke="#FF6A1A" stroke-width="2" />
+              <!-- Tail Fin & Engine 2 (Signature DC-10 Trijet) -->
+              <circle cx="310" cy="362" r="10" fill="#FF6A1A" stroke="#141414" stroke-width="2" />
+              <!-- Center Reference Dot -->
+              <circle cx="310" cy="310" r="4" fill="#E7E3D9" />
+            </g>
+
+            <!-- FIXED AIRCRAFT RETICLE (Crosshairs) -->
+            <circle cx="310" cy="310" r="10" fill="none" stroke="#FF6A1A" stroke-width="3" />
+            <line x1="230" y1="310" x2="280" y2="310" stroke="#FF6A1A" stroke-width="4" />
+            <line x1="340" y1="310" x2="390" y2="310" stroke="#FF6A1A" stroke-width="4" />
+
+            <!-- SWEPT BANK ANGLE ARC (0 deg to 140 deg) -->
+            <path id="angle-arc" d="M 310 68 A 242 242 0 0 1 465.5 495.4" fill="none" stroke="#FF6A1A" stroke-width="8" stroke-linecap="round" />
+          </svg>
+        </div>
+
+        <!-- DIGITAL GAUGE READOUT (Độc lập, nền mực #141414, chữ kem #F7F4EC = 16.8:1) -->
+        <div id="digital-gauge-box" class="hf-plate-ink">
+          <div style="font-size: 13px; font-weight: 900; color: #FF6A1A; letter-spacing: 1.5px; text-transform: uppercase;">
+            GÓC NGHIÊNG
+          </div>
+          <div id="angle-readout" style="font-size: 32px; font-weight: 900; color: #F7F4EC; line-height: 1;">
+            0°
+          </div>
+        </div>
+
+        <!-- PUNCH PHRASE OVERLAY -->
+        <div id="shot-2-punch" class="hf-plate-ink">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+            <div style="font-size: 18px; font-weight: 900; color: #FF6A1A; letter-spacing: 2px; text-transform: uppercase;">
+              THAO TÁC CƠ ĐỘNG KHẨN NGUY // DC-10
+            </div>
+            <!-- FALL / GRAVITY VECTOR ICON -->
+            <svg id="fall-icon" width="34" height="34" viewBox="0 0 36 36" fill="none">
+              <path id="fall-arrow" d="M18 4V30M18 30L8 20M18 30L28 20" stroke="#FF6A1A" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </div>
+          <div style="font-size: 64px; font-weight: 900; color: #F7F4EC; line-height: 1.15; letter-spacing: -1px;">
+            NGHIÊNG 140 ĐỘ
+          </div>
+        </div>
+
+        <!-- SECONDARY LABEL (LẬT NGƯỢC THÂN TÀU) -->
+        <div id="shot-2-label" class="hf-hl-orange">
+          <div style="font-size: 32px; font-weight: 900; color: #141414; letter-spacing: 0.5px;">
+            LẬT NGƯỢC THÂN TÀU
+          </div>
+          <div style="font-size: 18px; font-weight: 900; color: #141414; border: 2px solid #141414; padding: 4px 12px; text-transform: uppercase;">
+            GIA TỐC QUẬT NGÃ HUNG THỦ
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // Build single paused timeline registered on window.__timelines["scene-s16"]
+    const tl = gsap.timeline({ paused: true });
+
+    // =========================================================================
+    // SHOT 1 CHOREOGRAPHY (0.00s - 4.78s)
+    // =========================================================================
+
+    // 1. Wobble-drop entrance for main evidence card
+    tl.fromTo(
+      "#shot-1-card",
+      { y: -140, rotation: 3.5, opacity: 0 },
+      { y: 0, rotation: -0.5, opacity: 1, duration: 0.7, ease: "power3.out" },
+      0.1
+    );
+
+    // 2. Warning badge entrance at 0.78s (atMs: 139500)
+    tl.fromTo(
+      "#shot-1-badge",
+      { scale: 0.8, opacity: 0, y: 24 },
+      { scale: 1, opacity: 1, y: 0, duration: 0.45, ease: "power3.out" },
+      0.78
+    );
+
+    // SVG warning icon path drawing
+    const triangle = document.getElementById("warning-triangle");
+    if (triangle) {
+      const len = triangle.getTotalLength();
+      triangle.style.strokeDasharray = len;
+      triangle.style.strokeDashoffset = len;
+      tl.to(triangle, { strokeDashoffset: 0, duration: 0.5, ease: "power2.out" }, 0.82);
+    }
+
+    // Subtle alive motion on Shot 1 card
+    tl.to("#shot-1-card", { rotation: 0.4, duration: 2.8, ease: "sine.inOut" }, 1.5);
+
+    // =========================================================================
+    // SHOT 2 CHOREOGRAPHY (4.78s - 11.29s)
+    // =========================================================================
+
+    // 1. Cut arrival of Shot 2 elements at 4.78s
+    tl.fromTo(
+      "#shot-2-context-card",
+      { y: -30, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.4, ease: "power3.out" },
+      4.78
+    );
+
+    tl.fromTo(
+      "#attitude-instrument",
+      { scale: 0.9, opacity: 0, y: 30 },
+      { scale: 1, opacity: 1, y: 0, duration: 0.5, ease: "power3.out" },
+      4.82
+    );
+
+    tl.fromTo(
+      "#digital-gauge-box",
+      { scale: 0.8, opacity: 0 },
+      { scale: 1, opacity: 1, duration: 0.4, ease: "power3.out" },
+      4.9
+    );
+
+    // Camera slow zoom across Shot 2
+    tl.fromTo(
+      "#shot-2-camera",
+      { scale: 1 },
+      { scale: 1.05, duration: 6.51, ease: "none" },
+      4.78
+    );
+
+    // Setup and prep arc path for banking draw
+    const angleArc = document.getElementById("angle-arc");
+    if (angleArc) {
+      const arcLen = angleArc.getTotalLength();
+      angleArc.style.strokeDasharray = arcLen;
+      angleArc.style.strokeDashoffset = arcLen;
+    }
+
+    // 2. THE 140-DEGREE ROLL MOTION (5.00s - 6.70s)
+    // Horizon and aircraft rotate in unison around dial center (310, 310)
+    gsap.set("#horizon-group", { transformOrigin: "310px 310px" });
+    gsap.set("#dc10-group", { transformOrigin: "310px 310px" });
+
+    tl.fromTo(
+      "#horizon-group",
+      { rotation: 0 },
+      { rotation: 140, duration: 1.7, ease: "power2.inOut" },
+      5.00
+    );
+
+    tl.fromTo(
+      "#dc10-group",
+      { rotation: 0 },
+      { rotation: 140, duration: 1.7, ease: "power2.inOut" },
+      5.00
+    );
+
+    if (angleArc) {
+      tl.to(
+        angleArc,
+        { strokeDashoffset: 0, duration: 1.7, ease: "power2.inOut" },
+        5.00
+      );
+    }
+
+    // Dynamic digital readout counter from 0 to 140 deg
+    const readoutObj = { val: 0 };
+    tl.to(
+      readoutObj,
+      {
+        val: 140,
+        duration: 1.7,
+        ease: "power2.inOut",
+        onUpdate: function () {
+          const el = document.getElementById("angle-readout");
+          if (el) {
+            el.textContent = Math.round(readoutObj.val) + "°";
+          }
+        }
+      },
+      5.00
+    );
+
+    // 3. Punch phrase "NGHIÊNG 140 ĐỘ" entrance at 5.78s (atMs: 144500)
+    tl.fromTo(
+      "#shot-2-punch",
+      { y: 40, opacity: 0, scale: 0.95 },
+      { y: 0, opacity: 1, scale: 1, duration: 0.45, ease: "power3.out" },
+      5.78
+    );
+
+    // Fall icon downward pulse
+    tl.fromTo(
+      "#fall-arrow",
+      { y: -10, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.35, ease: "power3.out" },
+      5.85
+    );
+
+    // 4. Secondary label "LẬT NGƯỢC THÂN TÀU" entrance at 8.08s (atMs: 146800)
+    tl.fromTo(
+      "#shot-2-label",
+      { y: 30, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.45, ease: "power3.out" },
+      8.08
+    );
+
+    // Subtle drift during hold
+    tl.to("#attitude-instrument", { y: -6, duration: 2.8, ease: "sine.inOut" }, 7.0);
+
+    // Register paused timeline to HyperFrames runtime
+    window.__timelines["scene-s16"] = tl;
+  </script>
+
+    </template>
+  </body>
+</html>

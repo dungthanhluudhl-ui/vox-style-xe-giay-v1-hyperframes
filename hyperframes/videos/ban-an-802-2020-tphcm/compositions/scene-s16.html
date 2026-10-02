@@ -1,0 +1,794 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap"
+    />
+      <style>
+      /* hf-safe-colors (tất định từ style-tokens.json) */
+      .hf-text-ink {
+        color: #141414;
+      }
+      .hf-text-light {
+        color: #f7f4ec;
+      }
+      .hf-hl-orange {
+        color: #141414;
+        background-color: #ff6a1a;
+      }
+      .hf-plate-ink {
+        color: #f7f4ec;
+        background-color: #141414;
+      }
+      .hf-plate-ink-orange {
+        color: #ff6a1a;
+        background-color: #141414;
+      }
+      .hf-plate-paper {
+        color: #141414;
+        background-color: #f5f0e4;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #e7e3d9;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+
+      .clip {
+        position: absolute;
+        inset: 0;
+      }
+
+      /* Nền Chart chuẩn Style DNA: 4 vạch kẻ ngang kèm mốc cam mép trái */
+      .chart-bg {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+      }
+
+      .chart-line {
+        position: absolute;
+        left: 0;
+        right: 0;
+        height: 1.5px;
+        background: rgba(20, 20, 20, 0.32);
+      }
+      .chart-line.l1 {
+        top: 384px;
+      } /* 20% */
+      .chart-line.l2 {
+        top: 768px;
+      } /* 40% */
+      .chart-line.l3 {
+        top: 1152px;
+      } /* 60% */
+      .chart-line.l4 {
+        top: 1536px;
+      } /* 80% */
+
+      .chart-tick {
+        position: absolute;
+        left: 0;
+        width: 24px;
+        height: 6px;
+        background: #ff6a1a;
+      }
+      .chart-tick.t1 {
+        top: 382px;
+      }
+      .chart-tick.t2 {
+        top: 765px;
+      }
+      .chart-tick.t3 {
+        top: 1149px;
+      }
+      .chart-tick.t4 {
+        top: 1533px;
+      }
+
+      /* Khung nhận diện thương hiệu đáy */
+      #brand-bottom-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 10px;
+        background: #ff6a1a;
+        z-index: 100;
+      }
+
+      /* Header hiện trường */
+      #header-container {
+        position: absolute;
+        top: 180px;
+        left: 60px;
+        right: 60px;
+        z-index: 10;
+      }
+
+      .header-eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        background: #141414;
+        color: #f7f4ec;
+        padding: 8px 18px;
+        border-radius: 4px;
+        font-size: 20px;
+        font-weight: 900;
+        letter-spacing: 2px;
+      }
+
+      .header-eyebrow .badge-orange {
+        background: #ff6a1a;
+        color: #141414;
+        padding: 2px 8px;
+        border-radius: 2px;
+        font-size: 16px;
+      }
+
+      .header-title {
+        margin: 16px 0 0 0;
+        font-size: 40px;
+        font-weight: 900;
+        color: #141414;
+        line-height: 1.25;
+        text-transform: uppercase;
+        letter-spacing: -0.5px;
+      }
+
+      /* Card sơ đồ kỹ thuật trung tâm */
+      #diagram-panel {
+        position: absolute;
+        top: 310px;
+        left: 60px;
+        width: 960px;
+        height: 870px;
+        background: #f5f0e4;
+        border: 2px solid rgba(20, 20, 20, 0.4);
+        border-radius: 8px;
+        z-index: 5;
+        overflow: hidden;
+      }
+
+      /* Lưới ô vuông 84px bên trong panel */
+      .panel-grid-pattern {
+        position: absolute;
+        inset: 0;
+        background-size: 84px 84px;
+        background-image:
+          linear-gradient(to right, rgba(20, 20, 20, 0.15) 1.5px, transparent 1.5px),
+          linear-gradient(to bottom, rgba(20, 20, 20, 0.15) 1.5px, transparent 1.5px);
+        pointer-events: none;
+      }
+
+      /* Dấu chữ thập kỹ thuật tại 4 góc */
+      .corner-mark {
+        position: absolute;
+        font-size: 24px;
+        font-weight: 900;
+        color: #141414;
+        line-height: 1;
+        pointer-events: none;
+      }
+      .cm-tl {
+        top: 12px;
+        left: 14px;
+      }
+      .cm-tr {
+        top: 12px;
+        right: 14px;
+      }
+      .cm-bl {
+        bottom: 12px;
+        left: 14px;
+      }
+      .cm-br {
+        bottom: 12px;
+        right: 14px;
+      }
+
+      /* Wrapper chứa chuyển động xoắn spiral */
+      #diagram-content {
+        position: absolute;
+        inset: 0;
+        transform-origin: 480px 450px;
+      }
+
+      /* Overlay 1: Nhãn DÂY ĐIỆN 90 CM */
+      #wire-label-badge {
+        position: absolute;
+        top: 40px;
+        left: 48px;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        background: #141414;
+        border: 2px solid #ff6a1a;
+        padding: 12px 24px;
+        border-radius: 6px;
+        z-index: 20;
+      }
+
+      .wire-label-icon {
+        width: 14px;
+        height: 14px;
+        background: #ff6a1a;
+        border-radius: 50%;
+      }
+
+      .wire-label-text {
+        font-size: 30px;
+        font-weight: 900;
+        color: #f7f4ec;
+        letter-spacing: 1px;
+      }
+
+      /* Thước đo kỹ thuật 90 cm */
+      #ruler-callout {
+        position: absolute;
+        top: 120px;
+        left: 48px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 20px;
+        font-weight: 700;
+        color: #141414;
+      }
+      .ruler-line {
+        width: 240px;
+        height: 2px;
+        background: #141414;
+        position: relative;
+      }
+      .ruler-line::before,
+      .ruler-line::after {
+        content: "";
+        position: absolute;
+        top: -6px;
+        width: 2px;
+        height: 14px;
+        background: #141414;
+      }
+      .ruler-line::before {
+        left: 0;
+      }
+      .ruler-line::after {
+        right: 0;
+      }
+
+      /* SVG Diagram */
+      #svg-canvas {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+      }
+
+      /* Trục trung tâm: đồng hồ và đếm thời gian */
+      #center-gauge-card {
+        position: absolute;
+        top: 310px;
+        left: 340px;
+        width: 280px;
+        height: 280px;
+        border-radius: 50%;
+        background: #141414;
+        box-shadow: 0 12px 32px rgba(20, 20, 20, 0.4);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 15;
+      }
+
+      #center-timer-text {
+        font-size: 54px;
+        font-weight: 900;
+        color: #f7f4ec;
+        letter-spacing: 2px;
+        line-height: 1;
+        margin-top: 6px;
+        font-variant-numeric: tabular-nums;
+      }
+
+      #center-timer-sub {
+        font-size: 18px;
+        font-weight: 700;
+        color: #ff6a1a;
+        letter-spacing: 3px;
+        margin-top: 8px;
+      }
+
+      #clock-icon-wrap {
+        width: 48px;
+        height: 48px;
+      }
+
+      /* Mũi tên siết lực */
+      .force-tag {
+        position: absolute;
+        background: #141414;
+        color: #ff6a1a;
+        font-size: 16px;
+        font-weight: 900;
+        padding: 4px 10px;
+        border-radius: 3px;
+        letter-spacing: 1px;
+      }
+      #force-tag-left {
+        top: 425px;
+        left: 110px;
+      }
+      #force-tag-right {
+        top: 425px;
+        right: 110px;
+      }
+
+      /* Punch Phrase: SIẾT CHẶT 5 PHÚT */
+      #punch-card {
+        position: absolute;
+        top: 1210px;
+        left: 60px;
+        right: 60px;
+        height: 140px;
+        background: #141414;
+        border-left: 14px solid #ff6a1a;
+        border-radius: 4px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding: 0 40px;
+        z-index: 25;
+      }
+
+      .punch-label {
+        font-size: 18px;
+        font-weight: 900;
+        color: #ff6a1a;
+        letter-spacing: 2.5px;
+        text-transform: uppercase;
+        margin-bottom: 6px;
+      }
+
+      .punch-headline {
+        margin: 0;
+        font-size: 60px;
+        font-weight: 900;
+        color: #f7f4ec;
+        line-height: 1.15;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s16"
+      data-width="1080"
+      data-height="1920"
+      data-duration="7.27"
+    >
+      <!-- Clip bao phủ toàn bộ thời lượng scene 7.27s -->
+      <div id="scene-clip" class="clip" data-start="0" data-duration="7.27">
+        <!-- Nền Chart chuẩn Style DNA: 4 đường kẻ ngang + vạch cam mép trái -->
+        <div class="chart-bg">
+          <div class="chart-line l1"></div>
+          <div class="chart-tick t1"></div>
+
+          <div class="chart-line l2"></div>
+          <div class="chart-tick t2"></div>
+
+          <div class="chart-line l3"></div>
+          <div class="chart-tick t3"></div>
+
+          <div class="chart-line l4"></div>
+          <div class="chart-tick t4"></div>
+        </div>
+
+        <!-- Header thông tin hiện trường -->
+        <div id="header-container">
+          <div class="header-eyebrow">
+            <span>SƠ ĐỒ THỰC NGHIỆM</span>
+            <span class="badge-orange">CƠ CHẾ TỬ VONG</span>
+          </div>
+          <h1 class="header-title">VẬT CHỨNG & HÀNH VI TẤN CÔNG</h1>
+        </div>
+
+        <!-- Khung kỹ thuật chính chứa sơ đồ -->
+        <div id="diagram-panel">
+          <div class="panel-grid-pattern"></div>
+          <div class="corner-mark cm-tl">+</div>
+          <div class="corner-mark cm-tr">+</div>
+          <div class="corner-mark cm-bl">+</div>
+          <div class="corner-mark cm-br">+</div>
+
+          <!-- Nội dung chuyển động dạng Spiral -->
+          <div id="diagram-content">
+            <!-- Overlay 1: Nhãn đo DÂY ĐIỆN 90 CM -->
+            <div id="wire-label-badge">
+              <div class="wire-label-icon"></div>
+              <span class="wire-label-text">DÂY ĐIỆN 90 CM</span>
+            </div>
+
+            <div id="ruler-callout">
+              <div class="ruler-line"></div>
+              <span>QUY CÁCH: 900 MM</span>
+            </div>
+
+            <!-- SVG Sơ đồ 2 vòng dây điện đồng tâm siết chặt -->
+            <svg
+              id="svg-canvas"
+              viewBox="0 0 960 870"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <!-- Đường đứt nét định vị vòng ngoài -->
+              <circle
+                cx="480"
+                cy="450"
+                r="280"
+                stroke="#141414"
+                stroke-width="2"
+                stroke-dasharray="8 8"
+                opacity="0.3"
+              />
+
+              <!-- Vòng siết 1 (ngoài) -->
+              <circle
+                id="wire-loop-outer"
+                cx="480"
+                cy="450"
+                r="250"
+                stroke="#141414"
+                stroke-width="16"
+                stroke-linecap="round"
+              />
+
+              <!-- Vòng siết 2 (trong) -->
+              <circle
+                id="wire-loop-inner"
+                cx="480"
+                cy="450"
+                r="175"
+                stroke="#141414"
+                stroke-width="16"
+                stroke-linecap="round"
+              />
+
+              <!-- Đoạn dây nối và thắt nút giao chéo -->
+              <path
+                id="wire-knot"
+                d="M 170 330 C 240 280, 360 210, 480 200 C 620 190, 730 310, 730 450 C 730 590, 620 700, 480 700 C 340 700, 230 590, 230 450 C 230 350, 310 275, 410 275 C 500 275, 655 350, 655 450"
+                stroke="#ff6a1a"
+                stroke-width="6"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+
+              <!-- Mũi tên vector chỉ lực siết hướng tâm -->
+              <g id="constriction-arrows">
+                <!-- Trái qua phải -->
+                <path
+                  d="M 160 450 L 260 450 M 240 435 L 260 450 L 240 465"
+                  stroke="#ff6a1a"
+                  stroke-width="5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+                <!-- Phải qua trái -->
+                <path
+                  d="M 800 450 L 700 450 M 720 435 L 700 450 L 720 465"
+                  stroke="#ff6a1a"
+                  stroke-width="5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+                <!-- Trên xuống dưới -->
+                <path
+                  d="M 480 130 L 480 230 M 465 210 L 480 230 L 495 210"
+                  stroke="#ff6a1a"
+                  stroke-width="5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+                <!-- Dưới lên trên -->
+                <path
+                  d="M 480 770 L 480 670 M 465 690 L 480 670 L 495 690"
+                  stroke="#ff6a1a"
+                  stroke-width="5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </g>
+
+              <!-- Vành tròn tiến độ thời gian đỏ dần -->
+              <circle
+                id="timer-progress-ring"
+                cx="480"
+                cy="450"
+                r="140"
+                stroke="#ff6a1a"
+                stroke-width="8"
+                stroke-linecap="round"
+                transform="rotate(-90 480 450)"
+              />
+            </svg>
+
+            <!-- Nhãn lực siết -->
+            <div id="force-tag-left" class="force-tag">LỰC SIẾT HƯỚNG TÂM</div>
+            <div id="force-tag-right" class="force-tag">2 VÒNG QUẤN CHẶT</div>
+
+            <!-- Tâm đo: Đồng hồ và bộ đếm thời gian -->
+            <div id="center-gauge-card">
+              <!-- Overlay 2: Icon clock vẽ tay chuẩn style tokens -->
+              <div id="clock-icon-wrap">
+                <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <circle
+                    id="clock-svg-rim"
+                    cx="24"
+                    cy="24"
+                    r="20"
+                    stroke="#ff6a1a"
+                    stroke-width="3.5"
+                  />
+                  <!-- Kim ngắn chỉ 5 giờ, kim dài chỉ 12 giờ -->
+                  <path
+                    id="clock-svg-hands"
+                    d="M 24 10 L 24 24 L 32 30"
+                    stroke="#ff6a1a"
+                    stroke-width="3.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </div>
+              <div id="center-timer-text">0<span id="timer-min">0</span>:00</div>
+              <div id="center-timer-sub">KÉO DÀI</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Overlay 3: Punch Phrase "SIẾT CHẶT 5 PHÚT" -->
+        <div id="punch-card">
+          <div class="punch-label">KẾT LUẬN GIÁM ĐỊNH // NGUYÊN NHÂN TỬ VONG</div>
+          <h2 class="punch-headline">SIẾT CHẶT 5 PHÚT</h2>
+        </div>
+
+        <!-- Thanh cam định vị thương hiệu ở đáy màn hình -->
+        <div id="brand-bottom-bar"></div>
+      </div>
+    </div>
+
+    <script>
+      // Khởi tạo GSAP Timeline chính (paused: true bắt buộc cho HyperFrames seek)
+      const tl = gsap.timeline({ paused: true });
+
+      // Thiết lập SVG stroke dash cho việc vẽ nét động chính xác
+      const outerCircle = document.getElementById("wire-loop-outer");
+      const innerCircle = document.getElementById("wire-loop-inner");
+      const wireKnot = document.getElementById("wire-knot");
+      const progressRing = document.getElementById("timer-progress-ring");
+      const clockRim = document.getElementById("clock-svg-rim");
+      const clockHands = document.getElementById("clock-svg-hands");
+
+      const knotLen = wireKnot ? wireKnot.getTotalLength() : 1800;
+      const handsLen = clockHands ? clockHands.getTotalLength() : 35;
+
+      // Chu vi hình tròn r=250 là 2*PI*250 = 1570.8
+      if (outerCircle) {
+        outerCircle.style.strokeDasharray = "1571";
+        outerCircle.style.strokeDashoffset = "1571";
+      }
+
+      // Chu vi hình tròn r=175 là 2*PI*175 = 1099.6
+      if (innerCircle) {
+        innerCircle.style.strokeDasharray = "1100";
+        innerCircle.style.strokeDashoffset = "1100";
+      }
+
+      if (wireKnot) {
+        wireKnot.style.strokeDasharray = knotLen;
+        wireKnot.style.strokeDashoffset = knotLen;
+      }
+
+      // Vành tiến độ r=140 là 2*PI*140 = 879.6
+      if (progressRing) {
+        progressRing.style.strokeDasharray = "880";
+        progressRing.style.strokeDashoffset = "880";
+      }
+
+      if (clockRim) {
+        clockRim.style.strokeDasharray = "130";
+        clockRim.style.strokeDashoffset = "130";
+      }
+      if (clockHands) {
+        clockHands.style.strokeDasharray = handsLen;
+        clockHands.style.strokeDashoffset = handsLen;
+      }
+
+      // 1. Giai đoạn vào cảnh: Entrance Spiral (t = 0.1s -> 1.0s)
+      tl.fromTo(
+        "#header-container",
+        { y: -30, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.6, ease: "power3.out" },
+        0.1,
+      );
+
+      tl.fromTo(
+        "#diagram-panel",
+        { scale: 0.94, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.7, ease: "power3.out" },
+        0.15,
+      );
+
+      // Chuyển động xoắn Spiral của cụm sơ đồ
+      tl.fromTo(
+        "#diagram-content",
+        { rotation: -60, scale: 0.82, opacity: 0 },
+        { rotation: 0, scale: 1, opacity: 1, duration: 1.1, ease: "power3.out" },
+        0.2,
+      );
+
+      // Vẽ các vòng dây điện (fromTo tường minh)
+      if (outerCircle) {
+        tl.fromTo(
+          outerCircle,
+          { strokeDashoffset: 1571 },
+          { strokeDashoffset: 0, duration: 1.0, ease: "power2.out" },
+          0.3,
+        );
+      }
+      if (innerCircle) {
+        tl.fromTo(
+          innerCircle,
+          { strokeDashoffset: 1100 },
+          { strokeDashoffset: 0, duration: 0.9, ease: "power2.out" },
+          0.5,
+        );
+      }
+      if (wireKnot) {
+        tl.fromTo(
+          wireKnot,
+          { strokeDashoffset: knotLen },
+          { strokeDashoffset: 0, duration: 0.8, ease: "power2.out" },
+          0.7,
+        );
+      }
+
+      // 2. Xuất hiện Overlay 1: "DÂY ĐIỆN 90 CM" (atMs: 133850 -> 1.03s)
+      tl.fromTo(
+        "#wire-label-badge",
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.45, ease: "power3.out" },
+        1.03,
+      );
+
+      tl.fromTo(
+        "#ruler-callout",
+        { opacity: 0, x: -20 },
+        { opacity: 1, x: 0, duration: 0.4, ease: "power2.out" },
+        1.15,
+      );
+
+      // 3. Cơ chế siết chặt: Các mũi tên lực hướng tâm và vòng trong siết hẹp lại (t = 2.0s -> 4.8s)
+      tl.fromTo(
+        "#constriction-arrows",
+        { opacity: 0, scale: 1.15 },
+        {
+          opacity: 1,
+          scale: 1,
+          transformOrigin: "480px 450px",
+          duration: 0.6,
+          ease: "power2.out",
+        },
+        2.0,
+      );
+
+      tl.fromTo(
+        ".force-tag",
+        { opacity: 0, y: 10 },
+        { opacity: 1, y: 0, duration: 0.4, stagger: 0.15, ease: "power2.out" },
+        2.2,
+      );
+
+      // Vòng tròn trong co hẹp lại thể hiện hành vi siết nghẹt (fromTo tường minh)
+      if (innerCircle) {
+        tl.fromTo(
+          innerCircle,
+          { scale: 1 },
+          {
+            scale: 0.88,
+            transformOrigin: "480px 450px",
+            duration: 1.6,
+            ease: "power2.inOut",
+          },
+          2.4,
+        );
+      }
+
+      // Vành tròn đo thời gian bắt đầu chạy đỏ dần quanh tâm (fromTo tường minh)
+      if (progressRing) {
+        tl.fromTo(
+          progressRing,
+          { strokeDashoffset: 880 },
+          { strokeDashoffset: 0, duration: 3.0, ease: "power1.inOut" },
+          2.2,
+        );
+      }
+
+      // Tăng số đo thời gian mô phỏng quá trình siết kéo dài 5 phút (nội suy innerText trực tiếp, hoàn toàn tất định)
+      tl.fromTo(
+        "#timer-min",
+        { innerText: 0 },
+        {
+          innerText: 5,
+          snap: { innerText: 1 },
+          duration: 2.8,
+          ease: "power2.inOut",
+        },
+        2.3,
+      );
+
+      // 4. Xuất hiện Overlay 2: icon "clock" (atMs: 137870 -> 5.05s)
+      tl.fromTo(
+        "#clock-icon-wrap",
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.32, ease: "power3.out" },
+        5.05,
+      );
+
+      if (clockRim) {
+        tl.fromTo(
+          clockRim,
+          { strokeDashoffset: 130 },
+          { strokeDashoffset: 0, duration: 0.3, ease: "power2.out" },
+          5.08,
+        );
+      }
+      if (clockHands) {
+        tl.fromTo(
+          clockHands,
+          { strokeDashoffset: handsLen },
+          { strokeDashoffset: 0, duration: 0.3, ease: "power2.out" },
+          5.12,
+        );
+      }
+
+      // 5. Xuất hiện Overlay 3: Punch Phrase "SIẾT CHẶT 5 PHÚT" (atMs: 138190 -> 5.37s)
+      tl.fromTo(
+        "#punch-card",
+        { y: 35, opacity: 0, scale: 0.96 },
+        { y: 0, opacity: 1, scale: 1, duration: 0.45, ease: "power3.out" },
+        5.37,
+      );
+
+      // Đăng ký timeline cho HyperFrames seek runtime
+      window.__timelines = window.__timelines || {};
+      window.__timelines["scene-s16"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

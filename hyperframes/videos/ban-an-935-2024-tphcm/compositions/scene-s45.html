@@ -1,0 +1,793 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+    /* hf-safe-colors (tất định từ style-tokens.json) */
+    .hf-text-ink { color: #141414; }
+    .hf-text-light { color: #F7F4EC; }
+    .hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+    .hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+    .hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+    .hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      margin: 0;
+      padding: 0;
+      background: #141414;
+      font-family: "Be Vietnam Pro", sans-serif;
+      color: #141414;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+    #root {
+      position: relative;
+      width: 1080px;
+      height: 1920px;
+      overflow: hidden;
+      background: #F5F0E4; /* variant: card */
+    }
+
+    /* Quy tắc contract .clip: position absolute; inset 0 */
+    .clip {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+    }
+
+    /* Camera motion wrapper */
+    #camera-stage {
+      position: absolute;
+      inset: 0;
+      transform-origin: 540px 800px;
+    }
+
+    /* Họa tiết cấu trúc kỹ thuật nhẹ cho variant card */
+    .card-border-line {
+      position: absolute;
+      background: rgba(20, 20, 20, 0.16);
+      pointer-events: none;
+    }
+    .cbl-top { top: 120px; left: 60px; right: 60px; height: 1.5px; }
+    .cbl-left { top: 120px; bottom: 480px; left: 60px; width: 1.5px; }
+    .cbl-right { top: 120px; bottom: 480px; right: 60px; width: 1.5px; }
+    .cbl-bottom { bottom: 480px; left: 60px; right: 60px; height: 1.5px; }
+
+    .cross-mark {
+      position: absolute;
+      width: 16px;
+      height: 16px;
+      pointer-events: none;
+    }
+    .cross-mark::before, .cross-mark::after {
+      content: "";
+      position: absolute;
+      background: rgba(20, 20, 20, 0.4);
+    }
+    .cross-mark::before { top: 7px; left: 0; width: 16px; height: 2px; }
+    .cross-mark::after { top: 0; left: 7px; width: 2px; height: 16px; }
+
+    /* Thanh cam nhận diện thương hiệu cố định mép đáy */
+    #brand-bar-bottom {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 14px;
+      background: #FF6A1A;
+      z-index: 100;
+    }
+
+    /* HEADER SECTION (Safe Zone: y=170px -> y=300px) */
+    #header-group {
+      position: absolute;
+      top: 170px;
+      left: 80px;
+      right: 80px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      z-index: 20;
+    }
+
+    .badge-court {
+      font-size: 26px;
+      font-weight: 900;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #141414; /* WCAG 16.2:1 trên #F5F0E4 */
+      margin-bottom: 14px;
+    }
+
+    /* Overlay 1: PHÚC THẨM 26/09/2024 */
+    #verdict-date-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      background: #141414;
+      padding: 12px 32px;
+      border-radius: 999px;
+      box-shadow: 4px 4px 0px rgba(20, 20, 20, 0.2);
+    }
+    #verdict-date-badge span {
+      font-size: 30px;
+      font-weight: 900;
+      color: #F7F4EC; /* WCAG 16.8:1 trên #141414 */
+      letter-spacing: 1.5px;
+    }
+    #verdict-date-badge .orange-dot {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #FF6A1A;
+    }
+
+    /* DIAGRAM & DATA BOARD (Safe Zone: y=320px -> y=1160px) */
+    #main-diagram-card {
+      position: absolute;
+      top: 320px;
+      left: 60px;
+      right: 60px;
+      height: 840px;
+      background: #FAF7F0;
+      border: 3px solid #141414;
+      border-radius: 20px;
+      box-shadow: 12px 12px 0px #141414;
+      overflow: hidden;
+      z-index: 10;
+    }
+
+    /* Phía trên card: icon Cán cân công lý + Lý do giảm nhẹ */
+    #card-top-bar {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 130px;
+      border-bottom: 2px solid rgba(20, 20, 20, 0.15);
+      background: #F1ECE0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 40px;
+      z-index: 5;
+    }
+
+    .reason-tag-wrapper {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .reason-label {
+      font-size: 20px;
+      font-weight: 900;
+      color: #141414; /* WCAG > 14:1 trên #F1ECE0 */
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .reason-badge {
+      display: inline-block;
+      background: #141414;
+      color: #F7F4EC; /* WCAG 16.8:1 trên #141414 */
+      font-size: 24px;
+      font-weight: 900;
+      padding: 6px 14px;
+      border-radius: 6px;
+      letter-spacing: 0.5px;
+    }
+
+    /* SVG cán cân công lý tự vẽ nét */
+    #scale-icon-container {
+      width: 90px;
+      height: 90px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transform-origin: 50% 30%;
+    }
+    #scale-icon-svg {
+      width: 84px;
+      height: 84px;
+    }
+    #scale-icon-svg path,
+    #scale-icon-svg line,
+    #scale-icon-svg circle {
+      stroke: #141414;
+      stroke-width: 5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      fill: none;
+    }
+    #scale-icon-svg .accent-stroke {
+      stroke: #FF6A1A;
+    }
+
+    /* Đường kẻ ngang tham chiếu kỹ thuật (Technical dashed guides) */
+    .horizontal-guides {
+      position: absolute;
+      top: 130px;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      pointer-events: none;
+      z-index: 1;
+    }
+    .h-guide {
+      position: absolute;
+      left: 140px;
+      right: 40px;
+      height: 0;
+      border-top: 2px dashed rgba(20, 20, 20, 0.15);
+    }
+    .h-guide-accent {
+      border-top: 2px dashed rgba(255, 106, 26, 0.5);
+    }
+
+    /* Khu vực đo án phạt (Diagram 4 cột cân đối) */
+    #diagram-content {
+      position: absolute;
+      top: 130px;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      display: flex;
+      padding: 30px 40px;
+      justify-content: space-between;
+      align-items: flex-start;
+      z-index: 2;
+    }
+
+    /* Cột Thước Đo (Ruler Column - background cố định #FAF7F0, contrast tuyệt đối) */
+    .ruler-col {
+      width: 110px;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      z-index: 2;
+    }
+
+    .ruler-title {
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      font-size: 19px;
+      font-weight: 900;
+      color: #141414; /* WCAG 17.1:1 trên #FAF7F0 */
+      letter-spacing: 1px;
+      margin-bottom: 16px;
+      padding-right: 22px;
+    }
+
+    .ruler-track {
+      height: 420px;
+      position: relative;
+      width: 100%;
+    }
+
+    .ruler-mark {
+      position: absolute;
+      right: 0;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 8px;
+      transform: translateY(-50%);
+    }
+
+    .ruler-val {
+      font-size: 20px;
+      font-weight: 900;
+      color: #141414; /* WCAG 17.1:1 trên #FAF7F0 */
+      line-height: 1;
+    }
+
+    .ruler-val-tag {
+      font-size: 18px;
+      font-weight: 900;
+      color: #141414; /* WCAG 6.4:1 trên #FF6A1A */
+      background: #FF6A1A;
+      padding: 3px 6px;
+      border-radius: 4px;
+      line-height: 1;
+    }
+
+    .ruler-tick {
+      width: 14px;
+      height: 3px;
+      background: #141414;
+    }
+
+    .ruler-tick.tick-highlight {
+      background: #FF6A1A;
+      height: 4px;
+      width: 18px;
+    }
+
+    /* Cột Án Sơ Thẩm & Án Phúc Thẩm */
+    .pillar-col {
+      width: 220px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+      z-index: 2;
+    }
+
+    .pillar-title {
+      font-size: 22px;
+      font-weight: 900;
+      color: #141414; /* WCAG 17.1:1 trên #FAF7F0 */
+      margin-bottom: 16px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      height: 44px;
+      display: flex;
+      align-items: center;
+    }
+
+    .pillar-title-badge {
+      font-size: 22px;
+      font-weight: 900;
+      color: #141414; /* WCAG 6.4:1 trên #FF6A1A */
+      background: #FF6A1A;
+      padding: 4px 14px;
+      border-radius: 6px;
+      margin-bottom: 16px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      display: inline-flex;
+      align-items: center;
+      height: 44px;
+    }
+
+    .pillar-track {
+      width: 170px;
+      height: 420px;
+      background: #E5DFD1;
+      border: 3px solid #141414;
+      border-radius: 12px;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      overflow: hidden;
+      box-shadow: 4px 4px 0px rgba(20, 20, 20, 0.15);
+    }
+
+    /* Khối bar sơ thẩm (đầy 100% = 3 năm) */
+    #bar-initial {
+      width: 100%;
+      height: 100%;
+      background: #141414;
+      transform-origin: 50% 100%;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Khối bar phúc thẩm (co rút từ 100% xuống 50% = 1 năm 6 tháng) */
+    #bar-appealed {
+      width: 100%;
+      height: 100%;
+      background: #141414;
+      transform-origin: 50% 100%;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Phần bị cắt giảm (hiển thị gạch chéo viền cam) */
+    #reduction-cut-zone {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 50%;
+      background: repeating-linear-gradient(
+        45deg,
+        rgba(255, 106, 26, 0.25),
+        rgba(255, 106, 26, 0.25) 10px,
+        rgba(255, 106, 26, 0.08) 10px,
+        rgba(255, 106, 26, 0.08) 20px
+      );
+      border-bottom: 3px dashed #FF6A1A;
+      opacity: 0;
+      z-index: 2;
+    }
+
+    .pillar-value-box {
+      margin-top: 16px;
+      text-align: center;
+      min-height: 80px;
+    }
+    .main-val-text {
+      font-size: 38px;
+      font-weight: 900;
+      color: #141414; /* WCAG 17.1:1 trên #FAF7F0 */
+      line-height: 1.15;
+    }
+    .sub-val-text {
+      font-size: 20px;
+      font-weight: 700;
+      color: #141414; /* WCAG 17.1:1 trên #FAF7F0 */
+      margin-top: 4px;
+    }
+
+    /* Cột nối giữa: Mũi tên tụt giảm 50% */
+    #transition-delta-col {
+      width: 180px;
+      margin-top: 60px; /* Căn thẳng hàng với các track (44px title + 16px gap) */
+      height: 420px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      position: relative;
+      z-index: 2;
+    }
+
+    .arrow-down-icon {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: #FF6A1A;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 4px 4px 0px #141414;
+    }
+    .arrow-down-icon svg {
+      width: 28px;
+      height: 28px;
+      stroke: #141414;
+      stroke-width: 4.5;
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    #reduction-badge-pill {
+      background: #141414;
+      padding: 12px 18px;
+      border-radius: 10px;
+      text-align: center;
+      box-shadow: 4px 4px 0px #FF6A1A;
+    }
+    .reduction-rate {
+      font-size: 26px;
+      font-weight: 900;
+      color: #FF6A1A; /* WCAG 6.4:1 trên #141414 */
+      line-height: 1.2;
+    }
+    .reduction-desc {
+      font-size: 19px;
+      font-weight: 700;
+      color: #F7F4EC; /* WCAG 16.8:1 trên #141414 */
+      margin-top: 2px;
+    }
+
+    /* PUNCH PHRASE (Overlay 3: GIẢM CÒN 18 THÁNG TÙ) */
+    /* Safe Zone: y=1200px -> y=1320px, an toàn tuyệt đối với caption band ở bottom: 374px */
+    #punch-phrase-wrapper {
+      position: absolute;
+      top: 1200px;
+      left: 60px;
+      right: 60px;
+      display: flex;
+      justify-content: center;
+      z-index: 50;
+      transform-origin: 50% 50%;
+    }
+
+    #punch-phrase-plate {
+      width: 100%;
+      max-width: 960px;
+      background: #FF6A1A;
+      border: 4px solid #141414;
+      border-radius: 16px;
+      padding: 20px 24px;
+      text-align: center;
+      box-shadow: 10px 10px 0px #141414;
+      transform-origin: 50% 50%;
+    }
+
+    #punch-phrase-text {
+      font-size: 52px;
+      font-weight: 900;
+      line-height: 1.25;
+      color: #141414; /* WCAG 6.4:1 trên cam #FF6A1A */
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+  </style>
+
+  <div
+    id="root"
+    data-composition-id="scene-s45"
+    data-width="1080"
+    data-height="1920"
+    data-duration="8.32"
+  >
+    <!-- Scene S45: 8.32s -->
+    <section id="scene-s45" class="clip" data-start="0" data-duration="8.32">
+      <!-- Toàn bộ sân khấu chịu điều khiển zoom-out của camera -->
+      <div id="camera-stage">
+        
+        <!-- Đường nét kỹ thuật phong cách card hồ sơ pháp lý -->
+        <div class="card-border-line cbl-top"></div>
+        <div class="card-border-line cbl-left"></div>
+        <div class="card-border-line cbl-right"></div>
+        <div class="card-border-line cbl-bottom"></div>
+        <div class="cross-mark" style="top: 112px; left: 52px;"></div>
+        <div class="cross-mark" style="top: 112px; right: 52px;"></div>
+        <div class="cross-mark" style="bottom: 472px; left: 52px;"></div>
+        <div class="cross-mark" style="bottom: 472px; right: 52px;"></div>
+
+        <!-- HEADER SECTION -->
+        <header id="header-group">
+          <div class="badge-court">TÒA ÁN NHÂN DÂN CẤP CAO TẠI TP.HCM</div>
+          <!-- Overlay 1: PHÚC THẨM 26/09/2024 (atMs: 401290 -> relative: 0.61s) -->
+          <div id="verdict-date-badge">
+            <span class="orange-dot"></span>
+            <span>PHÚC THẨM 26/09/2024</span>
+          </div>
+        </header>
+
+        <!-- MAIN DIAGRAM CARD: THƯỚC ĐO ÁN PHẠT SỤT GIẢM -->
+        <div id="main-diagram-card">
+          <!-- Card Top Bar: Icon Cán Cân + Nhãn Khắc Phục Hậu Quả -->
+          <div id="card-top-bar">
+            <div class="reason-tag-wrapper">
+              <span class="reason-label">Tình tiết xem xét</span>
+              <span class="reason-badge">KHẮC PHỤC HẬU QUẢ</span>
+            </div>
+
+            <!-- Overlay 2: Icon scale (atMs: 403630 -> relative: 2.95s) -->
+            <div id="scale-icon-container">
+              <svg id="scale-icon-svg" viewBox="0 0 100 100">
+                <!-- Cột đứng -->
+                <line x1="50" y1="20" x2="50" y2="82" id="scale-stem" />
+                <line x1="30" y1="82" x2="70" y2="82" id="scale-base" />
+                <circle cx="50" cy="20" r="5" id="scale-pivot" class="accent-stroke" />
+                <!-- Đòn cân nghiêng nhẹ biểu thị xem xét giảm án -->
+                <line x1="18" y1="36" x2="82" y2="30" id="scale-beam" class="accent-stroke" />
+                <!-- Đĩa cân trái -->
+                <line x1="18" y1="36" x2="10" y2="58" id="scale-string-l1" />
+                <line x1="18" y1="36" x2="26" y2="58" id="scale-string-l2" />
+                <path d="M 6 58 Q 18 68 30 58 Z" id="scale-pan-l" />
+                <!-- Đĩa cân phải -->
+                <line x1="82" y1="30" x2="74" y2="52" id="scale-string-r1" />
+                <line x1="82" y1="30" x2="90" y2="52" id="scale-string-r2" />
+                <path d="M 70 52 Q 82 62 94 52 Z" id="scale-pan-r" />
+              </svg>
+            </div>
+          </div>
+
+          <!-- Các đường gióng ngang tham chiếu kỹ thuật -->
+          <div class="horizontal-guides">
+            <div class="h-guide" style="top: 90px;"></div>
+            <div class="h-guide" style="top: 230px;"></div>
+            <div class="h-guide h-guide-accent" style="top: 300px;"></div>
+            <div class="h-guide" style="top: 370px;"></div>
+            <div class="h-guide" style="top: 510px;"></div>
+          </div>
+
+          <!-- Nội dung so sánh án phạt: Thước đo + Sơ thẩm + Delta + Phúc thẩm -->
+          <div id="diagram-content">
+            
+            <!-- Cột 1: Thước đo (Ruler Column, nền #FAF7F0, màu mực #141414) -->
+            <div class="ruler-col">
+              <div class="ruler-title">MỨC ÁN</div>
+              <div class="ruler-track">
+                <div class="ruler-mark" style="top: 0;">
+                  <span class="ruler-val">3 NĂM</span>
+                  <div class="ruler-tick"></div>
+                </div>
+                <div class="ruler-mark" style="top: 140px;">
+                  <span class="ruler-val">2 NĂM</span>
+                  <div class="ruler-tick"></div>
+                </div>
+                <div class="ruler-mark" style="top: 210px;">
+                  <span class="ruler-val-tag">1.5N</span>
+                  <div class="ruler-tick tick-highlight"></div>
+                </div>
+                <div class="ruler-mark" style="top: 280px;">
+                  <span class="ruler-val">1 NĂM</span>
+                  <div class="ruler-tick"></div>
+                </div>
+                <div class="ruler-mark" style="top: 420px;">
+                  <span class="ruler-val">0</span>
+                  <div class="ruler-tick"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Cột 2: Án Sơ Thẩm -->
+            <div class="pillar-col" id="col-initial">
+              <div class="pillar-title">ÁN SƠ THẨM</div>
+              <div class="pillar-track">
+                <div id="bar-initial"></div>
+              </div>
+              <div class="pillar-value-box">
+                <div class="main-val-text">3 NĂM</div>
+                <div class="sub-val-text">36 tháng tù</div>
+              </div>
+            </div>
+
+            <!-- Cột 3: Mũi tên tụt giảm và Badge % -->
+            <div id="transition-delta-col">
+              <div class="arrow-down-icon">
+                <svg viewBox="0 0 24 24">
+                  <line x1="12" y1="5" x2="12" y2="19"></line>
+                  <polyline points="19 12 12 19 5 12"></polyline>
+                </svg>
+              </div>
+              <div id="reduction-badge-pill">
+                <div class="reduction-rate">GIẢM 50%</div>
+                <div class="reduction-desc">-18 THÁNG</div>
+              </div>
+            </div>
+
+            <!-- Cột 4: Án Phúc Thẩm -->
+            <div class="pillar-col" id="col-appealed">
+              <div class="pillar-title-badge">ÁN PHÚC THẨM</div>
+              <div class="pillar-track">
+                <div id="reduction-cut-zone"></div>
+                <div id="bar-appealed"></div>
+              </div>
+              <div class="pillar-value-box">
+                <div id="val-box-appealed">
+                  <div class="main-val-text">1.5 NĂM</div>
+                  <div class="sub-val-text">18 tháng tù</div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Overlay 3: Punch Phrase (atMs: 406690 -> relative: 6.01s) -->
+        <div id="punch-phrase-wrapper">
+          <div id="punch-phrase-plate">
+            <h1 id="punch-phrase-text">GIẢM CÒN 18 THÁNG TÙ</h1>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Thanh cam cố định nhận diện thương hiệu đáy màn hình -->
+      <div id="brand-bar-bottom"></div>
+    </section>
+  </div>
+
+  <script>
+    // Chuẩn bị đường vẽ SVG icon cán cân (SVG path drawing)
+    const scalePaths = document.querySelectorAll("#scale-icon-svg path, #scale-icon-svg line");
+    scalePaths.forEach((p) => {
+      const len = p.getTotalLength ? p.getTotalLength() : 80;
+      p.style.strokeDasharray = len + "";
+      p.style.strokeDashoffset = len + "";
+    });
+
+    // BẮT BUỘC: Khởi tạo duy nhất 1 GSAP timeline paused và gán vào window.__timelines["scene-s45"]
+    const tl = gsap.timeline({ paused: true });
+
+    // 0.0s - 8.32s: Camera zoom-out tinh tế theo shotlist ("cameraMotion": "zoom-out")
+    tl.fromTo(
+      "#camera-stage",
+      { scale: 1.04 },
+      { scale: 1.0, duration: 8.32, ease: "none" },
+      0
+    );
+
+    // 0.0s - 0.7s: Scene transitionIn: "grow"
+    tl.fromTo(
+      "#main-diagram-card",
+      { scale: 0.9, opacity: 0, y: 30 },
+      { scale: 1.0, opacity: 1, y: 0, duration: 0.7, ease: "power3.out" },
+      0.1
+    );
+    tl.fromTo(
+      "#header-group",
+      { opacity: 0, y: -20 },
+      { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" },
+      0.2
+    );
+
+    // 0.61s: Overlay 1 - PHÚC THẨM 26/09/2024 xuất hiện dứt khoát
+    tl.fromTo(
+      "#verdict-date-badge",
+      { scale: 0, opacity: 0 },
+      { scale: 1, opacity: 1, duration: 0.5, ease: "power3.out" },
+      0.61
+    );
+
+    // 0.8s - 1.6s: Cột mốc sơ thẩm và ban đầu phúc thẩm dâng lên đầy đủ
+    tl.fromTo(
+      "#bar-initial",
+      { scaleY: 0 },
+      { scaleY: 1, duration: 0.8, ease: "power2.out" },
+      0.8
+    );
+    tl.fromTo(
+      "#bar-appealed",
+      { scaleY: 0 },
+      { scaleY: 1, duration: 0.8, ease: "power2.out" },
+      0.9
+    );
+
+    // 2.95s: Overlay 2 - Icon "scale" tự vẽ nét và hiện lý do giảm nhẹ
+    tl.to(
+      scalePaths,
+      { strokeDashoffset: 0, duration: 0.7, ease: "power2.out", stagger: 0.04 },
+      2.95
+    );
+    tl.fromTo(
+      "#scale-icon-container",
+      { rotation: -12, scale: 0.8 },
+      { rotation: 0, scale: 1, duration: 0.6, ease: "power3.out" },
+      2.95
+    );
+
+    // 4.2s - 5.4s: Mũi tên xuất hiện và cột án phúc thẩm RÚT NGẮN TỤT TỪ 3 NĂM XUỐNG 1.5 NĂM (50% chiều cao)
+    tl.fromTo(
+      ".arrow-down-icon",
+      { scale: 0, opacity: 0 },
+      { scale: 1, opacity: 1, duration: 0.4, ease: "power3.out" },
+      4.2
+    );
+    tl.to(
+      "#bar-appealed",
+      { scaleY: 0.5, duration: 1.2, ease: "power3.inOut" },
+      4.2
+    );
+
+    // Hiện vùng bị cắt giảm
+    tl.to(
+      "#reduction-cut-zone",
+      { opacity: 1, duration: 0.4, ease: "power2.out" },
+      4.6
+    );
+
+    // Hiện badge "GIẢM 50% (-18 THÁNG)"
+    tl.fromTo(
+      "#reduction-badge-pill",
+      { scale: 0, opacity: 0 },
+      { scale: 1, opacity: 1, duration: 0.5, ease: "power3.out" },
+      4.8
+    );
+
+    // Hiển thị chỉ số án phúc thẩm 1.5 NĂM (18 tháng tù) khi bar rút đến mốc
+    tl.fromTo(
+      "#val-box-appealed",
+      { opacity: 0, y: 10 },
+      { opacity: 1, y: 0, duration: 0.4, ease: "power2.out" },
+      4.8
+    );
+
+    // 6.01s: Overlay 3 - Punch Phrase "GIẢM CÒN 18 THÁNG TÙ" xuất hiện hoành tráng
+    tl.fromTo(
+      "#punch-phrase-wrapper",
+      { scale: 0.85, opacity: 0, y: 25 },
+      { scale: 1.0, opacity: 1, y: 0, duration: 0.55, ease: "power3.out" },
+      6.01
+    );
+
+    // Đăng ký timeline chính thức cho HyperFrames render engine
+    window.__timelines = window.__timelines || {};
+    window.__timelines["scene-s45"] = tl;
+  </script>
+
+    </template>
+  </body>
+</html>

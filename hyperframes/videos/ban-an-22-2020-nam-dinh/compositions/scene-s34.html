@@ -1,0 +1,606 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+/* hf-safe-colors (tất định từ style-tokens.json) */
+.hf-text-ink { color: #141414; }
+.hf-text-light { color: #F7F4EC; }
+.hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+.hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+.hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+.hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        background: #E7E3D9;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: #E7E3D9;
+      }
+
+      .clip { position: absolute; inset: 0; }
+
+      /* Chart background: rules and ticks, without labels behind the diagram. */
+      .chart-grid {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+      }
+
+      .chart-line {
+        position: absolute;
+        left: 20px;
+        right: 0;
+        height: 2px;
+        background: rgba(20, 20, 20, 0.32);
+        transform-origin: left center;
+      }
+
+      .chart-tick {
+        position: absolute;
+        left: -20px;
+        top: -1px;
+        width: 20px;
+        height: 4px;
+        background: #FF6A1A;
+        transform-origin: left center;
+      }
+
+      .brand-bottom-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 12px;
+        background: #FF6A1A;
+        z-index: 100;
+      }
+
+      .scene-container {
+        position: absolute;
+        inset: 0;
+        padding: 160px 60px 530px;
+      }
+
+      .header-section {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        margin-bottom: 28px;
+        z-index: 2;
+      }
+
+      .kicker-row {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+      }
+
+      .kicker-tag {
+        padding: 6px 14px;
+        border-radius: 4px;
+        background: #141414;
+        color: #F7F4EC;
+        font-size: 18px;
+        font-weight: 900;
+        letter-spacing: 1.8px;
+      }
+
+      .kicker-sub {
+        font-size: 20px;
+        font-weight: 700;
+      }
+
+      .headline-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        gap: 12px;
+      }
+
+      .main-title {
+        max-width: 640px;
+        margin: 0;
+        font-size: 54px;
+        font-weight: 900;
+        line-height: 1.12;
+      }
+
+      .badge-phan-hoa {
+        flex-shrink: 0;
+        padding: 10px 18px;
+        border: 2.5px solid #141414;
+        border-radius: 4px;
+        background: #FF6A1A;
+        box-shadow: 4px 4px 0 #141414;
+        color: #141414;
+        font-size: 22px;
+        font-weight: 900;
+        white-space: nowrap;
+      }
+
+      .diagram-stage {
+        position: relative;
+        width: 100%;
+        height: 760px;
+        margin-top: 10px;
+        transform-origin: 50% 45%;
+      }
+
+      .axis-gauge {
+        position: absolute;
+        left: 0;
+        top: 10px;
+        height: 620px;
+        width: 44px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .axis-arrow {
+        width: 0;
+        height: 0;
+        border-left: 8px solid transparent;
+        border-right: 8px solid transparent;
+        border-bottom: 14px solid #141414;
+      }
+
+      .axis-track {
+        flex: 1;
+        width: 4px;
+        margin-top: 6px;
+        background: #141414;
+      }
+
+      .axis-text-wrap {
+        position: absolute;
+        left: 20px;
+        top: 50%;
+        width: 300px;
+        transform: rotate(-90deg);
+        transform-origin: left center;
+        white-space: nowrap;
+      }
+
+      .axis-text {
+        color: #141414;
+        font-size: 15px;
+        font-weight: 900;
+        letter-spacing: 1px;
+      }
+
+      .tiers-container {
+        position: absolute;
+        left: 60px;
+        right: 0;
+        top: 0;
+        height: 640px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+
+      .tier-card {
+        position: relative;
+        display: flex;
+        align-items: center;
+        height: 140px;
+        padding: 0 24px;
+        border: 2.5px solid #141414;
+        border-radius: 6px;
+        background: #F5F0E4;
+        box-shadow: 4px 4px 0 #141414;
+      }
+
+      .tier-num-box {
+        display: flex;
+        flex: 0 0 52px;
+        align-items: center;
+        justify-content: center;
+        width: 52px;
+        height: 52px;
+        margin-right: 22px;
+        border-radius: 4px;
+        background: #141414;
+        color: #F7F4EC;
+        font-size: 26px;
+        font-weight: 900;
+      }
+
+      .tier-info {
+        display: flex;
+        flex: 1;
+        flex-direction: column;
+        gap: 4px;
+        min-width: 0;
+      }
+
+      .tier-act {
+        color: #141414;
+        font-size: 28px;
+        font-weight: 900;
+        line-height: 1.2;
+      }
+
+      .tier-consequence {
+        color: #141414;
+        font-size: 20px;
+        font-weight: 700;
+      }
+
+      .tier-pill {
+        flex-shrink: 0;
+        padding: 8px 12px;
+        border: 1.5px solid #141414;
+        border-radius: 4px;
+        color: #141414;
+        font-size: 16px;
+        font-weight: 900;
+        white-space: nowrap;
+      }
+
+      #tier-2 .tier-pill { background: #FF6A1A; }
+
+      #tier-3,
+      #tier-4 {
+        border-color: #141414;
+        background: #141414;
+        box-shadow: 5px 5px 0 #FF6A1A;
+      }
+
+      #tier-3 .tier-num-box,
+      #tier-4 .tier-num-box {
+        background: #FF6A1A;
+        color: #141414;
+      }
+
+      #tier-3 .tier-act,
+      #tier-4 .tier-act,
+      #tier-3 .tier-consequence,
+      #tier-4 .tier-consequence {
+        color: #F7F4EC;
+      }
+
+      #tier-3 .tier-pill {
+        border: 2px solid #FF6A1A;
+        color: #FF6A1A;
+      }
+
+      #tier-4 {
+        height: 150px;
+        border: 3.5px solid #FF6A1A;
+        box-shadow: 6px 6px 0 #FF6A1A;
+      }
+
+      #tier-4 .tier-act { font-size: 29px; }
+
+      #tier-4 .tier-pill {
+        border-color: #FF6A1A;
+        background: #FF6A1A;
+        color: #141414;
+      }
+
+      /* The two shot callouts use the space below the stairs, not the tier cards. */
+      #callout-low-severity,
+      #overlay-nem-gach {
+        position: absolute;
+        top: 662px;
+        right: 0;
+        z-index: 3;
+        height: 80px;
+        display: flex;
+        align-items: center;
+      }
+
+      #callout-low-severity {
+        padding: 12px 22px;
+        border-left: 6px solid #FF6A1A;
+        border-radius: 0 4px 4px 0;
+        background: #141414;
+        box-shadow: 5px 5px 0 rgba(20, 20, 20, 0.4);
+        color: #F7F4EC;
+        font-size: 22px;
+        font-weight: 900;
+      }
+
+      #overlay-nem-gach {
+        gap: 16px;
+        padding: 12px 20px;
+        border: 3px solid #141414;
+        border-radius: 4px;
+        background: #FF6A1A;
+        box-shadow: 6px 6px 0 #141414;
+        color: #141414;
+      }
+
+      .stamp-icon {
+        display: flex;
+        flex: 0 0 44px;
+        align-items: center;
+        justify-content: center;
+        width: 44px;
+        height: 44px;
+      }
+
+      .stamp-main {
+        font-size: 26px;
+        font-weight: 900;
+      }
+
+      #overlay-hau-qua {
+        position: relative;
+        z-index: 2;
+        display: flex;
+        align-items: center;
+        gap: 24px;
+        min-height: 116px;
+        margin-top: 24px;
+        padding: 20px 28px;
+        border: 3px solid #FF6A1A;
+        border-radius: 6px;
+        background: #141414;
+        box-shadow: 6px 6px 0 #FF6A1A;
+      }
+
+      .scale-icon-box {
+        display: flex;
+        flex: 0 0 64px;
+        align-items: center;
+        justify-content: center;
+        width: 64px;
+        height: 64px;
+      }
+
+      .conclusion-text {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      .conclusion-kicker {
+        color: #FF6A1A;
+        font-size: 17px;
+        font-weight: 900;
+        letter-spacing: 1px;
+      }
+
+      .conclusion-main {
+        color: #F7F4EC;
+        font-size: 36px;
+        font-weight: 900;
+        line-height: 1.15;
+      }
+
+      .conclusion-sub {
+        color: #F7F4EC;
+        font-size: 18px;
+        font-weight: 700;
+      }
+    </style>
+
+    <div id="root" data-composition-id="scene-s34" data-start="0" data-width="1080" data-height="1920" data-fps="30" data-duration="14.04">
+      <div class="chart-grid" aria-hidden="true">
+        <div class="chart-line" style="top: 20%"><div class="chart-tick"></div></div>
+        <div class="chart-line" style="top: 40%"><div class="chart-tick"></div></div>
+        <div class="chart-line" style="top: 60%"><div class="chart-tick"></div></div>
+        <div class="chart-line" style="top: 80%"><div class="chart-tick"></div></div>
+      </div>
+
+      <section id="scene-s34" class="clip" data-start="0" data-duration="14.04">
+        <div class="scene-container">
+          <div id="header-block" class="header-section">
+            <div class="kicker-row">
+              <span class="kicker-tag">NGUYÊN TẮC XỬ LÝ</span>
+              <span class="kicker-sub">Cùng một trận xô xát</span>
+            </div>
+            <div class="headline-row">
+              <h1 class="main-title">TRÁCH NHIỆM PHÁP LÝ TỪNG NGƯỜI</h1>
+              <div id="badge-phan-hoa" class="badge-phan-hoa">TRÁCH NHIỆM PHÂN HOÁ</div>
+            </div>
+          </div>
+
+          <div id="diagram-stage" class="diagram-stage">
+            <div class="axis-gauge" aria-hidden="true">
+              <div class="axis-arrow"></div>
+              <div id="axis-line" class="axis-track"></div>
+              <div id="axis-label" class="axis-text-wrap">
+                <span class="axis-text">MỨC ĐỘ HẬU QUẢ TĂNG DẦN</span>
+              </div>
+            </div>
+
+            <div class="tiers-container">
+              <div id="tier-1" class="tier-card">
+                <div class="tier-num-box">1</div>
+                <div class="tier-info">
+                  <div class="tier-act">XÔ ĐẨY NHAU</div>
+                  <div class="tier-consequence">Nhắc nhở</div>
+                </div>
+                <div class="tier-pill">NHẮC NHỞ</div>
+              </div>
+
+              <div id="tier-2" class="tier-card">
+                <div class="tier-num-box">2</div>
+                <div class="tier-info">
+                  <div class="tier-act">NÉM KHÔNG TRÚNG</div>
+                  <div class="tier-consequence">Phạt tiền hành chính</div>
+                </div>
+                <div class="tier-pill">PHẠT TIỀN</div>
+              </div>
+
+              <div id="tier-3" class="tier-card">
+                <div class="tier-num-box">3</div>
+                <div class="tier-info">
+                  <div class="tier-act">GÂY THƯƠNG NHẸ</div>
+                  <div class="tier-consequence">Xem xét thương tích thực tế</div>
+                </div>
+                <div class="tier-pill">RANH GIỚI</div>
+              </div>
+
+              <div id="tier-4" class="tier-card">
+                <div class="tier-num-box">4</div>
+                <div class="tier-info">
+                  <div class="tier-act">NÉM GẠCH TRÚNG (30%)</div>
+                  <div class="tier-consequence">Truy tố hình sự</div>
+                </div>
+                <div class="tier-pill">HÌNH SỰ</div>
+              </div>
+            </div>
+
+            <div id="callout-low-severity">XÔ ĐẨY / NÉM TRƯỢT</div>
+
+            <div id="overlay-nem-gach">
+              <div class="stamp-icon" aria-hidden="true">
+                <svg viewBox="0 0 44 44" width="40" height="40" fill="none">
+                  <path d="M22 5 L41 38 H3 Z" fill="#141414" stroke="#141414" stroke-width="3" stroke-linejoin="round" />
+                  <path d="M22 17 V26" stroke="#FF6A1A" stroke-width="4" stroke-linecap="round" />
+                  <circle cx="22" cy="32" r="2.2" fill="#FF6A1A" />
+                </svg>
+              </div>
+              <span class="stamp-main">NÉM GẠCH 30%</span>
+            </div>
+          </div>
+
+          <div id="overlay-hau-qua">
+            <div class="scale-icon-box" aria-hidden="true">
+              <svg id="scale-icon" viewBox="0 0 54 54" width="54" height="54" fill="none">
+                <path d="M27 6 V48 M16 48 H38" stroke="#FF6A1A" stroke-width="4" stroke-linecap="round" />
+                <path d="M8 15 H46" stroke="#F7F4EC" stroke-width="4" stroke-linecap="round" />
+                <path d="M8 15 L4 30 M8 15 L12 30 M2 30 H14" stroke="#F7F4EC" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M46 15 L42 30 M46 15 L50 30 M40 30 H52" stroke="#F7F4EC" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+            </div>
+            <div class="conclusion-text">
+              <span class="conclusion-kicker">CĂN CỨ XEM XÉT</span>
+              <span class="conclusion-main">XÉT THEO HẬU QUẢ</span>
+              <span class="conclusion-sub">Hành vi và thương tích của từng người</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="brand-bottom-bar" aria-hidden="true"></div>
+    </div>
+
+    <script>
+      const tl = gsap.timeline({ paused: true });
+
+      tl.fromTo(".chart-line", { scaleX: 0, opacity: 0 }, {
+        scaleX: 1, opacity: 1, duration: 0.6, stagger: 0.06, ease: "power2.out"
+      }, 0.05);
+      tl.fromTo(".chart-tick", { scaleX: 0 }, {
+        scaleX: 1, duration: 0.35, stagger: 0.06, ease: "power2.out"
+      }, 0.1);
+
+      /* Shot 1: the first two levels establish that conduct differs. */
+      tl.fromTo("#header-block",
+        { y: -90, opacity: 0, rotation: -2.5 },
+        { y: 0, opacity: 1, rotation: 0, duration: 0.75, ease: "power3.out" },
+        0.15
+      );
+      tl.fromTo("#axis-line",
+        { scaleY: 0 },
+        { scaleY: 1, duration: 0.75, ease: "power3.out", transformOrigin: "bottom center" },
+        0.3
+      );
+      tl.fromTo("#axis-label",
+        { opacity: 0, y: 15 },
+        { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" },
+        0.6
+      );
+      tl.fromTo("#tier-1",
+        { x: -80, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.6, ease: "power3.out" },
+        0.65
+      );
+      tl.fromTo("#tier-2",
+        { x: -80, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.6, ease: "power3.out" },
+        1.1
+      );
+      tl.fromTo("#tier-3",
+        { opacity: 0, y: 30 },
+        { opacity: 0.25, y: 0, duration: 0.5, ease: "power2.out" },
+        1.3
+      );
+      tl.fromTo("#tier-4",
+        { opacity: 0, y: 30 },
+        { opacity: 0.25, y: 0, duration: 0.5, ease: "power2.out" },
+        1.45
+      );
+      tl.fromTo("#badge-phan-hoa",
+        { scale: 0, opacity: 0, rotation: 4 },
+        { scale: 1, opacity: 1, rotation: -1, duration: 0.5, ease: "power3.out" },
+        2.09
+      );
+      tl.fromTo("#callout-low-severity",
+        { scale: 0.8, opacity: 0, x: 50 },
+        { scale: 1, opacity: 1, x: 0, duration: 0.45, ease: "power3.out" },
+        3.43
+      );
+      tl.to("#tier-1, #tier-2", {
+        x: 6, duration: 0.2, yoyo: true, repeat: 1, ease: "power1.inOut"
+      }, 3.5);
+      tl.to("#callout-low-severity", {
+        opacity: 0, x: 20, duration: 0.3, ease: "power2.in"
+      }, 5.4);
+
+      /* Shot 2: reveal the higher levels, then anchor the conclusion. */
+      tl.to("#diagram-stage", {
+        scale: 1.03, y: -16, duration: 0.7, ease: "power2.out"
+      }, 5.81);
+      tl.to("#tier-3", {
+        opacity: 1, duration: 0.45, ease: "power3.out"
+      }, 5.95);
+      tl.to("#tier-4", {
+        opacity: 1, duration: 0.35, ease: "power4.out"
+      }, 6.7);
+      tl.fromTo("#tier-4",
+        { scale: 0.95 },
+        { scale: 1.02, duration: 0.3, yoyo: true, repeat: 1, ease: "power2.out" },
+        6.8
+      );
+      tl.fromTo("#overlay-nem-gach",
+        { scale: 1.3, opacity: 0, rotation: -5 },
+        { scale: 1, opacity: 1, rotation: 0, duration: 0.45, ease: "power4.out" },
+        7.91
+      );
+      tl.to("#tier-4", {
+        borderColor: "#F7F4EC", duration: 0.2, yoyo: true, repeat: 2, ease: "power1.inOut"
+      }, 8.1);
+      tl.to("#overlay-nem-gach", {
+        opacity: 0, duration: 0.3, ease: "power2.in"
+      }, 10.6);
+      tl.fromTo("#overlay-hau-qua",
+        { y: 60, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.55, ease: "power3.out" },
+        11.36
+      );
+      tl.fromTo("#scale-icon",
+        { rotation: -12, transformOrigin: "50% 25%" },
+        { rotation: 0, duration: 0.65, ease: "power3.out" },
+        11.5
+      );
+
+      window.__timelines["scene-s34"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

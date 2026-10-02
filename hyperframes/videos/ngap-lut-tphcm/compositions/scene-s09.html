@@ -1,0 +1,518 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap">
+      <style>
+    /* hf-safe-colors (tất định từ style-tokens.json) */
+    .hf-text-ink { color: #141414; }
+    .hf-text-light { color: #F7F4EC; }
+    .hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+    .hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+    .hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+    .hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+    * {
+      box-sizing: border-box;
+      user-select: none;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #E7E3D9;
+      color: #141414;
+      font-family: "Be Vietnam Pro", sans-serif;
+      overflow: hidden;
+    }
+
+    #root {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #E7E3D9;
+    }
+
+    .clip {
+      position: absolute;
+      inset: 0;
+    }
+
+    /* Cột thước đo cao độ thủy văn lề trái (Chart Gauge Axis) */
+    .gauge-axis-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 170px;
+      height: 1920px;
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    .gauge-mark-group {
+      position: absolute;
+      left: 0;
+      width: 170px;
+      height: 36px;
+      transform: translateY(-50%);
+    }
+
+    .chart-tick-label {
+      position: absolute;
+      left: 30px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 96px;
+      text-align: right;
+      font-size: 24px;
+      font-weight: 900;
+      line-height: 1;
+      color: #141414;
+      letter-spacing: 0.5px;
+    }
+
+    .chart-tick {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 22px;
+      height: 3px;
+      background-color: #FF6A1A;
+    }
+
+    /* Đường kẻ ngang biểu đồ mở rộng sau khung diagram */
+    .chart-grid-line {
+      position: absolute;
+      left: 170px;
+      right: 48px;
+      height: 1.5px;
+      background-color: rgba(20, 20, 20, 0.2);
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    /* Header trạm quan trắc Phú An - Nhà Bè */
+    .station-header {
+      position: absolute;
+      top: 175px;
+      left: 48px;
+      right: 48px;
+      height: 112px;
+      border-radius: 8px;
+      padding: 16px 28px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      box-shadow: 6px 6px 0 rgba(20, 20, 20, 0.25);
+      z-index: 20;
+    }
+
+    .station-sub {
+      font-size: 20px;
+      font-weight: 700;
+      color: #FF6A1A;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    .station-title {
+      font-size: 34px;
+      font-weight: 900;
+      color: #F7F4EC;
+      letter-spacing: -0.5px;
+    }
+
+    /* Khung chứa ảnh cắt lớp địa tầng (img-15) */
+    .diagram-frame {
+      position: absolute;
+      top: 310px;
+      left: 170px;
+      width: 862px;
+      height: 1050px;
+      border: 3px solid #141414;
+      background-color: #F5F0E4;
+      overflow: hidden;
+      box-shadow: 10px 10px 0 rgba(20, 20, 20, 0.25);
+      z-index: 5;
+    }
+
+    .diagram-img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transform-origin: 50% 30%;
+    }
+
+    /* Cột đo thủy triều dâng vọt */
+    .water-meter-container {
+      position: absolute;
+      left: 190px;
+      top: 310px;
+      width: 32px;
+      height: 1050px;
+      z-index: 15;
+      pointer-events: none;
+    }
+
+    .water-meter-track {
+      position: absolute;
+      left: 6px;
+      top: 280px;
+      width: 20px;
+      height: 690px;
+      background-color: rgba(20, 20, 20, 0.35);
+      border-radius: 4px;
+      overflow: hidden;
+      border: 2px solid #141414;
+    }
+
+    .water-meter-fill {
+      position: absolute;
+      left: 0;
+      bottom: 0;
+      width: 100%;
+      height: 100%;
+      background-color: #FF6A1A;
+      transform-origin: bottom center;
+      transform: scaleY(0);
+    }
+
+    /* Vạch chỉ thị đỉnh triều +1.8m */
+    .peak-indicator-line {
+      position: absolute;
+      left: 170px;
+      width: 862px;
+      top: 590px;
+      height: 4px;
+      border-top: 4px dashed #FF6A1A;
+      z-index: 18;
+      transform-origin: left center;
+      opacity: 0;
+    }
+
+    /* Overlay 1: Bán nhật triều đều */
+    .badge-tide-type {
+      position: absolute;
+      top: 440px;
+      left: 250px;
+      padding: 22px 32px;
+      border-radius: 6px;
+      border: 3px solid #141414;
+      box-shadow: 8px 8px 0 #141414;
+      z-index: 25;
+      opacity: 0;
+    }
+
+    .badge-tide-main {
+      font-size: 38px;
+      font-weight: 900;
+      color: #141414;
+      line-height: 1.1;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .badge-tide-desc {
+      margin-top: 8px;
+      font-size: 20px;
+      font-weight: 700;
+      color: #141414;
+      letter-spacing: 0.5px;
+    }
+
+    /* Overlay 2: Triều đỉnh +1.8M */
+    .data-peak-card {
+      position: absolute;
+      top: 470px;
+      right: 70px;
+      padding: 24px 30px;
+      border-radius: 8px;
+      border: 3px solid #FF6A1A;
+      box-shadow: 10px 10px 0 rgba(20, 20, 20, 0.45);
+      z-index: 30;
+      opacity: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .data-peak-label {
+      font-size: 19px;
+      font-weight: 700;
+      color: #F7F4EC;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    .data-peak-val {
+      font-size: 58px;
+      font-weight: 900;
+      color: #FF6A1A;
+      line-height: 1;
+      letter-spacing: -0.5px;
+    }
+
+    /* Overlay 3: Icon Rise SVG */
+    .icon-rise-container {
+      position: absolute;
+      top: 630px;
+      right: 70px;
+      width: 140px;
+      height: 140px;
+      border-radius: 8px;
+      border: 2px solid #FF6A1A;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 32;
+      opacity: 0;
+      box-shadow: 6px 6px 0 rgba(20, 20, 20, 0.35);
+    }
+
+    .icon-rise-svg {
+      width: 90px;
+      height: 90px;
+    }
+
+    /* Thanh cam nhận diện cố định ở mép đáy */
+    .brand-bottom-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 14px;
+      background-color: #FF6A1A;
+      z-index: 100;
+    }
+  </style>
+
+  <div
+    id="root"
+    data-composition-id="scene-s09"
+    data-start="0"
+    data-width="1080"
+    data-height="1920"
+    data-duration="8.88"
+  >
+    <!-- Clip chính cho toàn bộ thời lượng scene S09 -->
+    <div id="scene-s09" class="clip" data-start="0" data-duration="8.88">
+
+      <!-- Cột trục thước đo cao độ thủy văn (Lề trái, hoàn toàn không bị ảnh che khuất) -->
+      <div class="gauge-axis-container">
+        <!-- Vạch +2.0m -->
+        <div class="gauge-mark-group" style="top: 490px;">
+          <div class="chart-tick-label hf-text-ink">+2.0m</div>
+          <div class="chart-tick"></div>
+        </div>
+
+        <!-- Vạch +1.8m (Mốc triều đỉnh) -->
+        <div class="gauge-mark-group" style="top: 590px;">
+          <div class="chart-tick-label"><span class="hf-hl-orange" style="padding: 2px 6px; border-radius: 4px; display: inline-block;">+1.8m</span></div>
+          <div class="chart-tick" style="background-color: #FF6A1A; width: 28px;"></div>
+        </div>
+
+        <!-- Vạch +1.5m -->
+        <div class="gauge-mark-group" style="top: 740px;">
+          <div class="chart-tick-label hf-text-ink">+1.5m</div>
+          <div class="chart-tick"></div>
+        </div>
+
+        <!-- Vạch +1.0m -->
+        <div class="gauge-mark-group" style="top: 990px;">
+          <div class="chart-tick-label hf-text-ink">+1.0m</div>
+          <div class="chart-tick"></div>
+        </div>
+
+        <!-- Vạch 0.0m (Chuẩn mực nước) -->
+        <div class="gauge-mark-group" style="top: 1280px;">
+          <div class="chart-tick-label hf-text-ink">0.0m</div>
+          <div class="chart-tick" style="background-color: #141414;"></div>
+        </div>
+      </div>
+
+      <!-- Đường kẻ ngang lưới biểu đồ -->
+      <div class="chart-grid-line" style="top: 490px;"></div>
+      <div class="chart-grid-line" style="top: 590px; background-color: rgba(255, 106, 26, 0.45); height: 2px;"></div>
+      <div class="chart-grid-line" style="top: 740px;"></div>
+      <div class="chart-grid-line" style="top: 990px;"></div>
+      <div class="chart-grid-line" style="top: 1280px; height: 2px; background-color: rgba(20, 20, 20, 0.45);"></div>
+
+      <!-- Header trạm Phú An - Nhà Bè -->
+      <div id="station-header" class="station-header hf-plate-ink">
+        <div class="station-sub">MẠNG LƯỚI QUAN TRẮC THỦY VĂN</div>
+        <div class="station-title">TRẠM PHÚ AN — NHÀ BÈ</div>
+      </div>
+
+      <!-- Khung hình minh họa sơ đồ địa tầng & triều dâng (img-15) -->
+      <div id="diagram-frame" class="diagram-frame">
+        <img
+          id="diagram-img"
+          class="diagram-img"
+          src="assets/img-15-drainage-tide-cross-section-diagram.jpg"
+          alt="Sơ đồ cắt lớp địa tầng và triều dâng"
+        >
+      </div>
+
+      <!-- Cột đo thủy triều dâng vọt -->
+      <div class="water-meter-container">
+        <div class="water-meter-track">
+          <div id="water-meter-fill" class="water-meter-fill"></div>
+        </div>
+      </div>
+
+      <!-- Đường chỉ thị mốc triều đỉnh +1.8m -->
+      <div id="peak-indicator-line" class="peak-indicator-line"></div>
+
+      <!-- Overlay 1: Bán nhật triều đều (atMs: 61500 -> 2.54s) -->
+      <div id="badge-tide-type" class="badge-tide-type hf-hl-orange">
+        <div class="badge-tide-main">BÁN NHẬT TRIỀU ĐỀU</div>
+        <div class="badge-tide-desc">TRIỀU DÂNG 2 LẦN MỖI NGÀY</div>
+      </div>
+
+      <!-- Overlay 2: Triều đỉnh +1.8M (atMs: 65200 -> 6.24s) -->
+      <div id="data-peak-card" class="data-peak-card hf-plate-ink">
+        <div class="data-peak-label">CẢNH BÁO MỰC NƯỚC</div>
+        <div id="peak-number" class="data-peak-val">TRIỀU ĐỈNH +1.8M</div>
+      </div>
+
+      <!-- Overlay 3: Icon "rise" tự vẽ SVG (atMs: 66000 -> 7.04s) -->
+      <div id="icon-rise-container" class="icon-rise-container hf-plate-ink">
+        <svg class="icon-rise-svg" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <!-- Đường mũi tên dâng vọt tự vẽ -->
+          <path
+            id="rise-path-line"
+            d="M 20 80 L 50 50 L 65 65 L 85 25"
+            stroke="#FF6A1A"
+            stroke-width="8"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+          <path
+            id="rise-path-arrow"
+            d="M 65 25 L 85 25 L 85 45"
+            stroke="#FF6A1A"
+            stroke-width="8"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
+      </div>
+
+      <!-- Dải cam chữ ký thương hiệu ở đáy khung hình -->
+      <div class="brand-bottom-bar"></div>
+
+    </div>
+  </div>
+
+  <script>
+    // Chuẩn bị SVG đường vẽ icon rise
+    const linePath = document.getElementById("rise-path-line");
+    const arrowPath = document.getElementById("rise-path-arrow");
+    const lineLen = linePath.getTotalLength();
+    const arrowLen = arrowPath.getTotalLength();
+
+    linePath.style.strokeDasharray = lineLen;
+    linePath.style.strokeDashoffset = lineLen;
+    arrowPath.style.strokeDasharray = arrowLen;
+    arrowPath.style.strokeDashoffset = arrowLen;
+
+    // Timeline GSAP seekable cho HyperFrames
+    const tl = gsap.timeline({ paused: true });
+
+    // 0.0s - 0.8s: Entrance Animation "rise" cho toàn cảnh
+    tl.fromTo(
+      "#station-header",
+      { y: -40, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.6, ease: "power3.out" },
+      0.15
+    );
+
+    tl.fromTo(
+      "#diagram-frame",
+      { y: 70, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.8, ease: "power3.out" },
+      0.2
+    );
+
+    // Camera zoom-in chậm hướng lên đỉnh cột đo triều cường (0.5s - 8.8s)
+    tl.fromTo(
+      "#diagram-img",
+      { scale: 1.0, y: 0 },
+      { scale: 1.08, y: -25, duration: 8.3, ease: "none" },
+      0.5
+    );
+
+    // 2.54s (atMs: 61500): Overlay 1 "BÁN NHẬT TRIỀU ĐỀU" xuất hiện (hold 2.0s đến 4.54s)
+    tl.fromTo(
+      "#badge-tide-type",
+      { scale: 0.85, opacity: 0, y: 25 },
+      { scale: 1, opacity: 1, y: 0, duration: 0.45, ease: "power3.out" },
+      2.54
+    );
+
+    tl.to(
+      "#badge-tide-type",
+      { opacity: 0, y: -20, duration: 0.35, ease: "power2.in" },
+      4.54
+    );
+
+    // 5.6s: Cột đo thủy triều tự vẽ dâng vọt lên
+    tl.fromTo(
+      "#water-meter-fill",
+      { scaleY: 0 },
+      { scaleY: 1, duration: 1.1, ease: "power2.out" },
+      5.6
+    );
+
+    // 6.1s: Vạch chỉ thị đỉnh triều +1.8m xuất hiện vạch ngang
+    tl.fromTo(
+      "#peak-indicator-line",
+      { opacity: 0, scaleX: 0 },
+      { opacity: 1, scaleX: 1, duration: 0.5, ease: "power3.out" },
+      6.1
+    );
+
+    // 6.24s (atMs: 65200): Overlay 2 "TRIỀU ĐỈNH +1.8M" xuất hiện
+    tl.fromTo(
+      "#data-peak-card",
+      { scale: 0.8, opacity: 0, y: 30 },
+      { scale: 1, opacity: 1, y: 0, duration: 0.5, ease: "power3.out" },
+      6.24
+    );
+
+    // 7.04s (atMs: 66000): Overlay 3 Icon "rise" xuất hiện & tự vẽ mũi tên dâng
+    tl.fromTo(
+      "#icon-rise-container",
+      { scale: 0.7, opacity: 0 },
+      { scale: 1, opacity: 1, duration: 0.35, ease: "power3.out" },
+      7.04
+    );
+
+    tl.to(
+      "#rise-path-line",
+      { strokeDashoffset: 0, duration: 0.45, ease: "power2.out" },
+      7.15
+    );
+
+    tl.to(
+      "#rise-path-arrow",
+      { strokeDashoffset: 0, duration: 0.3, ease: "power2.out" },
+      7.55
+    );
+
+    // Đăng ký timeline cho HyperFrames runtime
+    window.__timelines["scene-s09"] = tl;
+  </script>
+
+    </template>
+  </body>
+</html>

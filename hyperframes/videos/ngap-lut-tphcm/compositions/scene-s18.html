@@ -1,0 +1,469 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+/* hf-safe-colors (tất định từ style-tokens.json) */
+.hf-text-ink { color: #141414; }
+.hf-text-light { color: #F7F4EC; }
+.hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+.hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+.hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+.hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #E7E3D9;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+
+      /* Quy ước clip bắt buộc: absolute inset: 0 */
+      .clip {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+      }
+
+      /* Nền spotlight đặc trưng Vox: lưới ô vuông 84px + radial vignette tối dần về 4 góc */
+      .bg-spotlight {
+        position: absolute;
+        inset: 0;
+        background-color: #E7E3D9;
+        background-image:
+          radial-gradient(circle at 50% 46%, rgba(20, 20, 20, 0) 30%, rgba(20, 20, 20, 0.42) 100%),
+          linear-gradient(rgba(20, 20, 20, 0.22) 1.5px, transparent 1.5px),
+          linear-gradient(90deg, rgba(20, 20, 20, 0.22) 1.5px, transparent 1.5px);
+        background-size: 100% 100%, 84px 84px, 84px 84px;
+        z-index: 1;
+      }
+
+      /* Dải cam mép đáy cố định - chữ ký thị giác Vox */
+      .bottom-brand-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 10px;
+        background-color: #FF6A1A;
+        z-index: 100;
+      }
+
+      /* Tiêu đề kỹ thuật đầu cảnh (Editorial label) */
+      .scene-header {
+        position: absolute;
+        top: 175px;
+        left: 80px;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        z-index: 10;
+      }
+      .scene-tag {
+        background-color: #141414;
+        color: #FF6A1A;
+        font-size: 22px;
+        font-weight: 900;
+        padding: 6px 14px;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        border-radius: 4px;
+      }
+      .scene-subtag {
+        color: #141414;
+        font-size: 22px;
+        font-weight: 700;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+      }
+
+      /* Viewport chứa ảnh minh hoạ cắt lớp sụt lún địa chất TP.HCM */
+      .image-card-container {
+        position: absolute;
+        top: 240px;
+        left: 80px;
+        width: 920px;
+        height: 890px;
+        background-color: #F5F0E4;
+        border: 3.5px solid #141414;
+        border-radius: 14px;
+        overflow: hidden;
+        box-shadow: 0 24px 50px rgba(20, 20, 20, 0.3);
+        z-index: 5;
+      }
+      .hero-image {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center 30%;
+        display: block;
+      }
+
+      /* Lớp phủ kỹ thuật diagram trên ảnh */
+      .diagram-overlay-layer {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+      }
+
+      /* Thước đo vạch mức bên hông */
+      .level-gauge-left, .level-gauge-right {
+        position: absolute;
+        top: 120px;
+        bottom: 120px;
+        width: 24px;
+        border-left: 2px dashed rgba(20, 20, 20, 0.5);
+      }
+      .level-gauge-left { left: 24px; }
+      .level-gauge-right { right: 24px; border-left: none; border-right: 2px dashed rgba(20, 20, 20, 0.5); }
+
+      /* Card Overlay 1: ĐẤT TỤT THẤP */
+      .overlay-badge-land {
+        position: absolute;
+        top: 310px;
+        left: 110px;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+        z-index: 20;
+      }
+      .plate-land {
+        background-color: #141414;
+        color: #F7F4EC;
+        padding: 16px 26px;
+        border-radius: 8px;
+        border-left: 8px solid #FF6A1A;
+        box-shadow: 0 12px 30px rgba(20, 20, 20, 0.45);
+      }
+      .plate-land-title {
+        font-size: 38px;
+        font-weight: 900;
+        letter-spacing: 0.5px;
+        line-height: 1.1;
+      }
+      .indicator-land {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background-color: #141414;
+        padding: 8px 16px;
+        border-radius: 6px;
+        color: #FF6A1A;
+        font-size: 22px;
+        font-weight: 700;
+      }
+
+      /* Card Overlay 2: SÔNG DÂNG CAO */
+      .overlay-badge-river {
+        position: absolute;
+        top: 310px;
+        right: 110px;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 8px;
+        z-index: 20;
+      }
+      .plate-river {
+        background-color: #141414;
+        color: #F7F4EC;
+        padding: 16px 26px;
+        border-radius: 8px;
+        border-right: 8px solid #FF6A1A;
+        box-shadow: 0 12px 30px rgba(20, 20, 20, 0.45);
+        text-align: right;
+      }
+      .plate-river-title {
+        font-size: 38px;
+        font-weight: 900;
+        letter-spacing: 0.5px;
+        line-height: 1.1;
+      }
+      .indicator-river {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background-color: #141414;
+        padding: 8px 16px;
+        border-radius: 6px;
+        color: #FF6A1A;
+        font-size: 22px;
+        font-weight: 700;
+      }
+
+      /* Diagram thể hiện khoảng chênh cao thu hẹp / triệt tiêu độ dốc */
+      .slope-diagram-box {
+        position: absolute;
+        top: 730px;
+        left: 110px;
+        width: 860px;
+        z-index: 25;
+      }
+      .slope-status-plate {
+        background-color: #141414;
+        border: 2px solid #FF6A1A;
+        border-radius: 8px;
+        padding: 18px 24px;
+        color: #F7F4EC;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-shadow: 0 14px 32px rgba(20, 20, 20, 0.4);
+      }
+      .slope-status-text {
+        font-size: 28px;
+        font-weight: 900;
+        letter-spacing: 0.5px;
+      }
+      .slope-status-sub {
+        font-size: 22px;
+        font-weight: 700;
+        color: #FF6A1A;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      /* Punch Phrase cuối cảnh: MẤT ĐỘ DỐC THOÁT */
+      .punch-phrase-wrapper {
+        position: absolute;
+        top: 1165px;
+        left: 80px;
+        width: 920px;
+        z-index: 30;
+      }
+      .punch-phrase-card {
+        background-color: #141414;
+        border-radius: 12px;
+        padding: 34px 40px;
+        box-shadow: 0 26px 55px rgba(20, 20, 20, 0.55);
+        border: 3px solid #141414;
+        position: relative;
+        overflow: hidden;
+      }
+      .punch-phrase-stripe {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 8px;
+        background-color: #FF6A1A;
+      }
+      .punch-phrase-sub {
+        color: #FF6A1A;
+        font-size: 24px;
+        font-weight: 900;
+        letter-spacing: 2.5px;
+        text-transform: uppercase;
+        margin-bottom: 12px;
+      }
+      .punch-phrase-title {
+        color: #F7F4EC;
+        font-size: 64px;
+        font-weight: 900;
+        line-height: 1.22;
+        letter-spacing: -0.5px;
+        text-transform: uppercase;
+        margin: 0;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s18"
+      data-width="1080"
+      data-height="1920"
+      data-duration="8.97"
+    >
+      <!-- Lớp nền spotlight toàn scene -->
+      <div class="bg-spotlight"></div>
+      <div class="bottom-brand-bar"></div>
+
+      <!-- SHOT CHÍNH S18-1: Nền tảng mô hình cắt lớp địa chất TP.HCM -->
+      <section id="shot-s18-base" class="clip" data-start="0" data-duration="8.97">
+        <!-- Tiêu đề kỹ thuật phân tích cơ chế -->
+        <div class="scene-header" id="scene-header">
+          <span class="scene-tag">CƠ CHẾ</span>
+          <span class="scene-subtag">TRIỆT TIÊU ĐỘ DỐC THOÁT NƯỚC</span>
+        </div>
+
+        <!-- Khung tranh chứa hình ảnh cắt lớp sụt lún địa chất -->
+        <div class="image-card-container" id="image-card">
+          <img
+            id="hero-img"
+            class="hero-image"
+            src="assets/img-03-hcmc-land-subsidence-diagram.jpg"
+            alt="Mặt cắt địa chất và sụt lún TP.HCM"
+          />
+
+          <!-- Lớp phủ kỹ thuật đồ hoạ -->
+          <div class="diagram-overlay-layer">
+            <div class="level-gauge-left"></div>
+            <div class="level-gauge-right"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- OVERLAY 1: ĐẤT TỤT THẤP (bắt đầu lúc 1.3s theo shotlist) -->
+      <div id="clip-overlay-land" class="clip" data-start="1.3" data-duration="5.4">
+        <div class="overlay-badge-land" id="badge-land">
+          <div class="plate-land">
+            <div class="plate-land-title">ĐẤT TỤT THẤP</div>
+          </div>
+          <div class="indicator-land" id="indicator-land-box">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <path d="M12 4V20M12 20L5 13M12 20L19 13" stroke="#FF6A1A" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span>NỀN LÚN XUỐNG</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- OVERLAY 2: SÔNG DÂNG CAO (bắt đầu lúc 3.3s theo shotlist) -->
+      <div id="clip-overlay-river" class="clip" data-start="3.3" data-duration="3.4">
+        <div class="overlay-badge-river" id="badge-river">
+          <div class="plate-river">
+            <div class="plate-river-title">SÔNG DÂNG CAO</div>
+          </div>
+          <div class="indicator-river" id="indicator-river-box">
+            <span>TRIỀU CƯỜNG DÂNG</span>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <path d="M12 20V4M12 4L5 11M12 4L19 11" stroke="#FF6A1A" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- DIAGRAM OVERLAY: THU HẸP KHOẢNG CHÊNH CAO (xuất hiện lúc 4.8s) -->
+      <div id="clip-overlay-mechanism" class="clip" data-start="4.8" data-duration="1.9">
+        <div class="slope-diagram-box" id="slope-box">
+          <div class="slope-status-plate">
+            <span class="slope-status-text">CHÊNH LỆCH ĐỘ CAO</span>
+            <span class="slope-status-sub">
+              <span>ĐANG BỊ THU HẸP</span>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="12" r="9" stroke="#FF6A1A" stroke-width="2.5"/>
+                <path d="M12 8V12L15 15" stroke="#FF6A1A" stroke-width="2.5" stroke-linecap="round"/>
+              </svg>
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- PUNCH PHRASE CUỐI CẢNH: MẤT ĐỘ DỐC THOÁT (bắt đầu lúc 6.8s theo shotlist) -->
+      <div id="clip-punch-phrase" class="clip" data-start="6.8" data-duration="2.17">
+        <div class="punch-phrase-wrapper" id="punch-card-wrap">
+          <div class="punch-phrase-card">
+            <div class="punch-phrase-stripe" id="punch-stripe"></div>
+            <div class="punch-phrase-sub">HỆ QUẢ ĐỊA CHẤT</div>
+            <h1 class="punch-phrase-title">MẤT ĐỘ DỐC THOÁT</h1>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SCRIPT CHÍNH ĐIỀU KHIỂN GSAP TIMELINE (SEEK-SAFE, DETERMINISTIC) -->
+    <script>
+      // Đăng ký timeline gốc paused duy nhất theo hợp đồng HyperFrames
+      const tl = gsap.timeline({ paused: true });
+
+      // 1. BEAT 0s: Entrance peel mở khung tranh + Ken Burns zoom nhẹ 1.0x -> 1.07x
+      tl.fromTo(
+        "#scene-header",
+        { opacity: 0, y: -20 },
+        { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" },
+        0.1
+      );
+
+      // Peel effect: cuộn mở từ trên xuống
+      tl.fromTo(
+        "#image-card",
+        { scaleY: 0.15, opacity: 0, transformOrigin: "top center" },
+        { scaleY: 1, opacity: 1, duration: 0.85, ease: "power3.out" },
+        0.05
+      );
+
+      // Ken Burns zoom-in tinh tế xuyên suốt thời lượng scene
+      tl.fromTo(
+        "#hero-img",
+        { scale: 1.0, transformOrigin: "48% 60%" },
+        { scale: 1.07, duration: 8.97, ease: "none" },
+        0
+      );
+
+      // 2. BEAT 1.3s: Label "ĐẤT TỤT THẤP" xuất hiện kèm mũi tên chỉ xuống
+      tl.fromTo(
+        "#badge-land",
+        { x: -50, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.5, ease: "power3.out" },
+        1.3
+      );
+      tl.fromTo(
+        "#indicator-land-box",
+        { y: -16, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.35, ease: "power2.out" },
+        1.5
+      );
+
+      // 3. BEAT 3.3s: Label "SÔNG DÂNG CAO" xuất hiện kèm mũi tên chỉ lên
+      tl.fromTo(
+        "#badge-river",
+        { x: 50, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.5, ease: "power3.out" },
+        3.3
+      );
+      tl.fromTo(
+        "#indicator-river-box",
+        { y: 16, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.35, ease: "power2.out" },
+        3.5
+      );
+
+      // 4. BEAT 4.8s: Chỉ báo khoảng chênh cao thu hẹp
+      tl.fromTo(
+        "#slope-box",
+        { scale: 0.9, opacity: 0, y: 15 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.45, ease: "power3.out" },
+        4.8
+      );
+
+      // 5. BEAT 6.8s: Punch phrase "MẤT ĐỘ DỐC THOÁT" landing dứt khoát
+      tl.fromTo(
+        "#punch-card-wrap",
+        { scale: 0.88, opacity: 0, y: 35 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.55, ease: "power3.out" },
+        6.8
+      );
+      tl.fromTo(
+        "#punch-stripe",
+        { scaleX: 0, transformOrigin: "left center" },
+        { scaleX: 1, duration: 0.4, ease: "power2.out" },
+        7.1
+      );
+
+      // Gắn timeline vào window.__timelines với key chính xác "scene-s18"
+      window.__timelines["scene-s18"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

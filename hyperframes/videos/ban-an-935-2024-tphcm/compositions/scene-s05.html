@@ -1,0 +1,712 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+/* hf-safe-colors (tất định từ style-tokens.json) */
+.hf-text-ink { color: #141414; }
+.hf-text-light { color: #F7F4EC; }
+.hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+.hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+.hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+.hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background: #E7E3D9;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: #E7E3D9;
+        /* Lưới ô vuông 84px chuẩn Vox DNA */
+        background-image:
+          linear-gradient(to right, rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px),
+          linear-gradient(to bottom, rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px);
+        background-size: 84px 84px;
+      }
+
+      /* Quy ước clip của HyperFrames: absolute inset 0 */
+      .clip {
+        position: absolute;
+        inset: 0;
+      }
+
+      /* Camera frame hỗ trợ cameraMotion pan-left */
+      #camera-frame {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+      }
+
+      /* Safe-zone content wrapper (top: 170px, bottom: 540px) */
+      .content-wrapper {
+        position: absolute;
+        top: 170px;
+        left: 40px;
+        right: 40px;
+        bottom: 540px;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+        gap: 24px;
+      }
+
+      /* Header hồ sơ lưu trữ */
+      .archive-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding-bottom: 14px;
+        border-bottom: 2px solid #141414;
+      }
+      .archive-badge-group {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .tag-orange {
+        background: #FF6A1A;
+        color: #141414;
+        font-weight: 900;
+        font-size: 20px;
+        padding: 6px 14px;
+        border-radius: 2px;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+      }
+      .archive-title {
+        font-size: 26px;
+        font-weight: 900;
+        color: #141414;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+      }
+      .archive-ref {
+        font-size: 18px;
+        font-weight: 700;
+        color: #141414;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+      }
+
+      /* Thẻ dossier dùng card variant #F5F0E4 */
+      .dossier-card {
+        background: #F5F0E4;
+        border: 2px solid #141414;
+        box-shadow: 6px 6px 0px #141414;
+        padding: 24px 28px;
+        position: relative;
+        overflow: hidden;
+      }
+
+      /* Card 1: Timeline rewind 2003-2004 */
+      #timeline-card {
+        height: 380px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        transform-origin: center center;
+      }
+      .card-top-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .card-tag-dark {
+        background: #141414;
+        color: #FF6A1A;
+        font-size: 18px;
+        font-weight: 900;
+        padding: 5px 12px;
+        border-radius: 2px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      .card-meta-text {
+        font-size: 18px;
+        font-weight: 700;
+        color: #141414;
+        letter-spacing: 0.5px;
+      }
+
+      .timeline-hero-row {
+        display: flex;
+        align-items: center;
+        gap: 28px;
+      }
+      .clock-wrapper {
+        width: 120px;
+        height: 120px;
+        flex-shrink: 0;
+        background: #E7E3D9;
+        border: 2px solid #141414;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        position: relative;
+        box-shadow: 3px 3px 0px #141414;
+      }
+      .clock-svg {
+        width: 100px;
+        height: 100px;
+      }
+
+      .hero-text-block {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+      .hero-sublabel {
+        font-size: 20px;
+        font-weight: 700;
+        color: #141414;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+      .punch-phrase {
+        font-size: 80px;
+        font-weight: 900;
+        line-height: 1.05;
+        color: #141414;
+        margin: 0;
+        letter-spacing: -2px;
+      }
+      .rewind-indicator {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: #FF6A1A;
+        color: #141414;
+        font-weight: 900;
+        font-size: 19px;
+        padding: 4px 12px;
+        border-radius: 2px;
+        width: fit-content;
+        margin-top: 4px;
+      }
+
+      /* Thanh thước đo timeline chuẩn theo 2003-2004 */
+      .ruler-container {
+        border-top: 2px dashed rgba(20, 20, 20, 0.4);
+        padding-top: 14px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        position: relative;
+      }
+      .ruler-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        z-index: 2;
+      }
+      .ruler-pin {
+        width: 14px;
+        height: 14px;
+        background: #FF6A1A;
+        border: 2px solid #141414;
+        border-radius: 50%;
+      }
+      .ruler-year {
+        font-size: 22px;
+        font-weight: 900;
+        color: #141414;
+        letter-spacing: 0.5px;
+      }
+      .ruler-status {
+        font-size: 14px;
+        font-weight: 700;
+        color: #141414;
+        background: #E7E3D9;
+        padding: 2px 10px;
+        border: 1.5px solid #141414;
+        border-radius: 2px;
+        text-transform: uppercase;
+      }
+      .ruler-segment {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+        flex: 1;
+        padding: 0 20px;
+        position: relative;
+        transform-origin: center center;
+      }
+      .ruler-segment-line {
+        width: 100%;
+        height: 3px;
+        background: #FF6A1A;
+      }
+      .ruler-span-label {
+        font-size: 14px;
+        font-weight: 900;
+        color: #141414;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+      }
+
+      /* Card 2: Bản đồ hành chính tối giản TP.HCM */
+      #map-card {
+        height: 570px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        position: relative;
+      }
+      .map-svg-area {
+        position: relative;
+        width: 100%;
+        height: 420px;
+        background: #E7E3D9;
+        border: 2px solid #141414;
+        overflow: hidden;
+      }
+      .map-vector {
+        width: 100%;
+        height: 100%;
+        display: block;
+      }
+
+      /* Overlay nhãn TP. HỒ CHÍ MINH */
+      .map-overlay-banner {
+        position: absolute;
+        bottom: 24px;
+        left: 24px;
+        background: #141414;
+        padding: 14px 22px;
+        border-radius: 2px;
+        box-shadow: 4px 4px 0px #FF6A1A;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        z-index: 10;
+      }
+      .banner-headline {
+        font-size: 38px;
+        font-weight: 900;
+        color: #FF6A1A; /* 6.4:1 contrast trên nền #141414 */
+        margin: 0;
+        line-height: 1.1;
+        letter-spacing: 0.5px;
+      }
+      .banner-subtext {
+        font-size: 19px;
+        font-weight: 700;
+        color: #F7F4EC; /* 16.8:1 contrast trên nền #141414 */
+        margin: 0;
+        letter-spacing: 0.5px;
+      }
+
+      /* Pin icon trên bản đồ - định vị bằng margin để tránh xung đột GSAP transform */
+      .pin-target {
+        position: absolute;
+        top: 180px;
+        left: 540px;
+        width: 48px;
+        height: 54px;
+        margin-left: -24px;
+        margin-top: -54px;
+        z-index: 20;
+        pointer-events: none;
+        transform-origin: 24px 54px;
+      }
+      .pin-ripple {
+        position: absolute;
+        top: 180px;
+        left: 540px;
+        width: 40px;
+        height: 40px;
+        margin-left: -20px;
+        margin-top: -20px;
+        border: 3px solid #FF6A1A;
+        border-radius: 50%;
+        opacity: 0;
+        pointer-events: none;
+        transform-origin: center center;
+      }
+
+      /* Thanh cam nhận diện cố định ở đáy khung hình */
+      .brand-bottom-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 14px;
+        background: #FF6A1A;
+        z-index: 999;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s05"
+      data-width="1080"
+      data-height="1920"
+      data-duration="7.26"
+    >
+      <!-- Clip toàn cảnh S05 (tổng thời lượng: 7.26s) -->
+      <section id="scene-s05" class="clip" data-start="0" data-duration="7.26">
+        <!-- Khung cameraMotion: pan-left -->
+        <div id="camera-frame">
+          <div class="content-wrapper">
+            <!-- Header hồ sơ điều tra -->
+            <div id="archive-header" class="archive-header">
+              <div class="archive-badge-group">
+                <span class="tag-orange">Hồ sơ tư liệu</span>
+                <span class="archive-title">Quỹ Tín Dụng Trung Ương</span>
+              </div>
+              <span class="archive-ref">CHI NHÁNH TP.HCM</span>
+            </div>
+
+            <!-- Card 1: Timeline lùi thời gian về 2003 - 2004 -->
+            <div id="timeline-card" class="dossier-card">
+              <div class="card-top-row">
+                <span class="card-tag-dark">Mốc Thời Gian</span>
+                <span class="card-meta-text">TƯ LIỆU VỤ ÁN</span>
+              </div>
+
+              <div class="timeline-hero-row">
+                <!-- Clock Icon Overlay (atMs: 40700 -> 0.96s) -->
+                <div class="clock-wrapper" id="clock-container">
+                  <svg class="clock-svg" viewBox="0 0 100 100">
+                    <!-- Vòng tròn đồng hồ -->
+                    <circle
+                      id="clock-dial"
+                      cx="50"
+                      cy="50"
+                      r="40"
+                      fill="none"
+                      stroke="#141414"
+                      stroke-width="4"
+                    />
+                    <!-- Vạch 12, 3, 6, 9 -->
+                    <line x1="50" y1="14" x2="50" y2="20" stroke="#141414" stroke-width="3" stroke-linecap="round" />
+                    <line x1="86" y1="50" x2="80" y2="50" stroke="#141414" stroke-width="3" stroke-linecap="round" />
+                    <line x1="50" y1="86" x2="50" y2="80" stroke="#141414" stroke-width="3" stroke-linecap="round" />
+                    <line x1="14" y1="50" x2="20" y2="50" stroke="#141414" stroke-width="3" stroke-linecap="round" />
+                    <!-- Kim giờ -->
+                    <line
+                      id="hour-hand"
+                      x1="50"
+                      y1="50"
+                      x2="50"
+                      y2="28"
+                      stroke="#141414"
+                      stroke-width="4"
+                      stroke-linecap="round"
+                    />
+                    <!-- Kim phút -->
+                    <line
+                      id="minute-hand"
+                      x1="50"
+                      y1="50"
+                      x2="50"
+                      y2="18"
+                      stroke="#FF6A1A"
+                      stroke-width="3.5"
+                      stroke-linecap="round"
+                    />
+                    <!-- Trục tâm -->
+                    <circle cx="50" cy="50" r="4.5" fill="#FF6A1A" />
+                  </svg>
+                </div>
+
+                <div class="hero-text-block">
+                  <span class="hero-sublabel">Thời điểm sự việc</span>
+                  <h1 class="punch-phrase" id="year-headline">2003 — 2004</h1>
+                  <div class="rewind-indicator" id="rewind-badge">
+                    <span>◀ LÙI NGƯỢC THỜI GIAN</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Thước đo timeline bám sát mốc 2003 - 2004 trong hồ sơ -->
+              <div class="ruler-container" id="timeline-ruler">
+                <div class="ruler-item" id="ruler-2003">
+                  <div class="ruler-pin"></div>
+                  <span class="ruler-year">2003</span>
+                  <span class="ruler-status">KHỞI ĐẦU</span>
+                </div>
+                <div class="ruler-segment" id="ruler-segment">
+                  <div class="ruler-segment-line"></div>
+                  <span class="ruler-span-label">GIAI ĐOẠN XẢY RA VỤ VIỆC</span>
+                </div>
+                <div class="ruler-item" id="ruler-2004">
+                  <div class="ruler-pin"></div>
+                  <span class="ruler-year">2004</span>
+                  <span class="ruler-status">TIẾP DIỄN</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Card 2: Bản đồ hành chính tối giản TP.HCM -->
+            <div id="map-card" class="dossier-card">
+              <div class="card-top-row">
+                <span class="card-tag-dark">Địa Điểm Xảy Ra Sự Việc</span>
+                <span class="card-meta-text">SƠ ĐỒ CHI NHÁNH</span>
+              </div>
+
+              <div class="map-svg-area">
+                <!-- SVG bản đồ hành chính vector cách điệu TP.HCM -->
+                <svg class="map-vector" viewBox="0 0 940 420" xmlns="http://www.w3.org/2000/svg">
+                  <!-- Lưới tọa độ bản đồ -->
+                  <defs>
+                    <pattern id="map-grid" width="60" height="60" patternUnits="userSpaceOnUse">
+                      <path d="M 60 0 L 0 0 0 60" fill="none" stroke="rgba(20,20,20,0.12)" stroke-width="1" />
+                    </pattern>
+                  </defs>
+                  <rect width="100%" height="100%" fill="url(#map-grid)" />
+
+                  <!-- Đồ họa ranh giới địa bàn cách điệu -->
+                  <polygon
+                    points="80,90 280,60 410,110 360,280 190,340 90,260"
+                    fill="none"
+                    stroke="#141414"
+                    stroke-width="2"
+                    stroke-dasharray="6 4"
+                  />
+                  <polygon
+                    points="360,280 520,210 680,240 640,380 430,390"
+                    fill="none"
+                    stroke="#141414"
+                    stroke-width="2"
+                    stroke-dasharray="6 4"
+                  />
+                  <polygon
+                    points="410,110 650,80 790,140 680,240 520,210"
+                    fill="none"
+                    stroke="#141414"
+                    stroke-width="2"
+                    stroke-dasharray="6 4"
+                  />
+                  <polygon
+                    points="680,240 860,190 900,320 780,380 640,380"
+                    fill="none"
+                    stroke="#141414"
+                    stroke-width="2"
+                    stroke-dasharray="6 4"
+                  />
+
+                  <!-- Tuyến sông Sài Gòn đặc trưng -->
+                  <path
+                    id="river-path"
+                    d="M 240,10 C 310,70 380,140 490,160 C 580,180 620,130 700,210 C 760,270 730,340 760,410"
+                    fill="none"
+                    stroke="#141414"
+                    stroke-width="5"
+                    stroke-linecap="round"
+                  />
+                  <!-- Kênh đào / nhánh phụ màu cam nhận diện -->
+                  <path
+                    id="canal-path"
+                    d="M 490,160 C 440,230 380,250 320,310"
+                    fill="none"
+                    stroke="#FF6A1A"
+                    stroke-width="3"
+                    stroke-linecap="round"
+                    stroke-dasharray="4 4"
+                  />
+
+                  <!-- Điểm mốc radar tại vị trí chi nhánh -->
+                  <circle cx="540" cy="180" r="8" fill="#141414" />
+                  <circle cx="540" cy="180" r="16" fill="none" stroke="#FF6A1A" stroke-width="2" />
+                  <line x1="510" y1="180" x2="570" y2="180" stroke="#141414" stroke-width="1.5" />
+                  <line x1="540" y1="150" x2="540" y2="210" stroke="#141414" stroke-width="1.5" />
+                </svg>
+
+                <!-- Sóng radar lan tỏa khi ghim cắm xuống -->
+                <div class="pin-ripple" id="pin-ripple"></div>
+
+                <!-- Pin Icon Overlay (atMs: 45500 -> 5.76s) -->
+                <div class="pin-target" id="pin-target">
+                  <svg width="48" height="54" viewBox="0 0 48 54" fill="none">
+                    <path
+                      d="M24 0C10.7452 0 0 10.7452 0 24C0 39 24 54 24 54C24 54 48 39 48 24C48 10.7452 37.2548 0 24 0Z"
+                      fill="#FF6A1A"
+                      stroke="#141414"
+                      stroke-width="3"
+                    />
+                    <circle cx="24" cy="24" r="9" fill="#141414" />
+                  </svg>
+                </div>
+
+                <!-- Label Overlay TP. HỒ CHÍ MINH (atMs: 43240 -> 3.50s) -->
+                <div class="map-overlay-banner" id="map-banner">
+                  <h2 class="banner-headline">TP. HỒ CHÍ MINH</h2>
+                  <p class="banner-subtext">CHI NHÁNH QUỸ TÍN DỤNG TRUNG ƯƠNG</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Thanh cam đáy khung hình nhận diện thương hiệu cố định -->
+        <div class="brand-bottom-bar"></div>
+      </section>
+    </div>
+
+    <!-- Animation Orchestration GSAP -->
+    <script>
+      // Đảm bảo window.__timelines tồn tại
+      window.__timelines = window.__timelines || {};
+
+      // Setup đường vẽ SVG cho đồng hồ và sông
+      const dial = document.getElementById("clock-dial");
+      if (dial) {
+        const dialLen = dial.getTotalLength();
+        dial.style.strokeDasharray = dialLen;
+        dial.style.strokeDashoffset = dialLen;
+      }
+      const river = document.getElementById("river-path");
+      if (river) {
+        const riverLen = river.getTotalLength();
+        river.style.strokeDasharray = riverLen;
+        river.style.strokeDashoffset = riverLen;
+      }
+
+      // Tạo timeline chính PAUSED
+      const tl = gsap.timeline({ paused: true });
+
+      // 1. Camera pan-left chuyển động nhẹ toàn cảnh (cameraMotion: pan-left)
+      tl.fromTo(
+        "#camera-frame",
+        { x: 30 },
+        { x: -30, duration: 7.26, ease: "none" },
+        0
+      );
+
+      // 2. Entrance transition: flip thẻ hồ sơ (transitionIn: flip)
+      tl.fromTo(
+        "#archive-header",
+        { y: -30, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.5, ease: "power3.out" },
+        0.1
+      );
+
+      tl.fromTo(
+        "#timeline-card",
+        { rotationY: -75, opacity: 0, scale: 0.94, transformPerspective: 1200 },
+        { rotationY: 0, opacity: 1, scale: 1, duration: 0.75, ease: "power3.out" },
+        0.2
+      );
+
+      // 3. Clock overlay xuất hiện (atMs: 40700 -> 0.96s)
+      // Vòng đồng hồ tự vẽ stroke + kim quay ngược thời gian
+      tl.to(
+        "#clock-dial",
+        { strokeDashoffset: 0, duration: 0.8, ease: "power2.out" },
+        0.96
+      );
+
+      // Đặt tâm xoay kim đồng hồ tại trục (50px, 50px)
+      gsap.set("#hour-hand, #minute-hand", {
+        transformOrigin: "50px 50px"
+      });
+
+      tl.fromTo(
+        "#minute-hand",
+        { rotation: 0 },
+        { rotation: -1080, duration: 2.2, ease: "power2.inOut" },
+        0.96
+      );
+
+      tl.fromTo(
+        "#hour-hand",
+        { rotation: 0 },
+        { rotation: -360, duration: 2.2, ease: "power2.inOut" },
+        0.96
+      );
+
+      // Dòng chữ 2003-2004 xuất hiện đồng bộ
+      tl.fromTo(
+        "#year-headline",
+        { scale: 0.85, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.6, ease: "power3.out" },
+        1.1
+      );
+
+      tl.fromTo(
+        "#rewind-badge",
+        { x: -20, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.45, ease: "power3.out" },
+        1.35
+      );
+
+      // Thước timeline hiển thị giai đoạn 2003 - 2004
+      tl.fromTo(
+        "#ruler-2003, #ruler-2004",
+        { scale: 0.8, opacity: 0 },
+        { scale: 1, opacity: 1, stagger: 0.2, duration: 0.5, ease: "power3.out" },
+        1.5
+      );
+      tl.fromTo(
+        "#ruler-segment",
+        { scaleX: 0, opacity: 0 },
+        { scaleX: 1, opacity: 1, duration: 0.55, ease: "power2.out" },
+        1.6
+      );
+
+      // 4. Card bản đồ xuất hiện từ phía dưới
+      tl.fromTo(
+        "#map-card",
+        { y: 50, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.7, ease: "power3.out" },
+        2.8
+      );
+
+      // Tuyến sông Sài Gòn tự vẽ dần
+      tl.to(
+        "#river-path",
+        { strokeDashoffset: 0, duration: 1.1, ease: "power2.out" },
+        3.0
+      );
+
+      // 5. Overlay Label: "TP. HỒ CHÍ MINH" (atMs: 43240 -> 3.50s)
+      tl.fromTo(
+        "#map-banner",
+        { x: -40, opacity: 0, scale: 0.95 },
+        { x: 0, opacity: 1, scale: 1, duration: 0.55, ease: "power3.out" },
+        3.50
+      );
+
+      // 6. Overlay Icon: "pin" ghim vị trí (atMs: 45500 -> 5.76s)
+      tl.fromTo(
+        "#pin-target",
+        { y: -50, scale: 0, opacity: 0 },
+        { y: 0, scale: 1, opacity: 1, duration: 0.45, ease: "power3.out" },
+        5.76
+      );
+
+      // Sóng radar lan tỏa từ mũi ghim
+      tl.fromTo(
+        "#pin-ripple",
+        { scale: 0.2, opacity: 1 },
+        { scale: 3, opacity: 0, duration: 0.85, ease: "power2.out" },
+        5.95
+      );
+
+      // Đăng ký timeline cho HyperFrames
+      window.__timelines["scene-s05"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

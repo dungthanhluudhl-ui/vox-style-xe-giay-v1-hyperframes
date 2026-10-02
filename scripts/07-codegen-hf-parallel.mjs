@@ -20,7 +20,7 @@
 //   `scripts/07-codegen.hf.router.mjs --scenes=SNN --issue-file=...`, trong khi scene khác vẫn
 //   tiếp tục chạy song song.
 //
-// Usage: node scripts/07-codegen-hf-parallel.mjs --video=<slug> --scenes=S01,S02,S03,... [--concurrency=10]
+// Usage: node scripts/07-codegen-hf-parallel.mjs --video=<slug> --scenes=S01,S02,S03,... [--concurrency=20]
 import { spawn } from "node:child_process";
 import { getVideoSlug } from "./lib/video-paths.mjs";
 import { syncRootHf } from "./lib/sync-root-hf-lib.mjs";
@@ -39,7 +39,7 @@ const concurrencyArg = process.argv.find((a) => a.startsWith("--concurrency="));
 // 16 scene, 15/16 PASS, 0 lỗi mạng/timeout với 9router). Đây là LẦN ĐẦU áp dụng mức này cho
 // nhánh HyperFrames — quy mô 13-16 scene thật vẫn là rủi ro mở đã ghi nhận trong kế hoạch di trú
 // (planning/style-dna-integration.md và memory dự án), theo dõi qua kết quả TỔNG KẾT bên dưới.
-const CONCURRENCY = concurrencyArg ? parseInt(concurrencyArg.split("=")[1], 10) : 10;
+const CONCURRENCY = concurrencyArg ? parseInt(concurrencyArg.split("=")[1], 10) : 20;
 const MAX_AUTO_RELAUNCH = 1;
 // Mã thoát 2 của 07 = verify PASS nhưng reviewer không khả dụng (lỗi hạ tầng đã chờ/thử lại vẫn hỏng) →
 // chạy lại CHỈ review trên code đã PASS (--review-only), không sinh lại cả scene (bài học 2026-09-26:

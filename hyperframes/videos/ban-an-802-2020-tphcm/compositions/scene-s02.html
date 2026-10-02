@@ -1,0 +1,539 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap">
+      <style>
+/* hf-safe-colors (tất định từ style-tokens.json) */
+.hf-text-ink { color: #141414; }
+.hf-text-light { color: #F7F4EC; }
+.hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+.hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+.hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+.hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #E7E3D9;
+      color: #141414;
+      font-family: "Be Vietnam Pro", sans-serif;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    #root {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    /* Quy ước bắt buộc: .clip dùng inset: 0, không set width/height px cứng */
+    .clip {
+      position: absolute;
+      inset: 0;
+    }
+
+    /* Nền lưới 84px chuẩn Vox DNA */
+    .bg-grid {
+      position: absolute;
+      inset: 0;
+      background-color: #E7E3D9;
+      background-image:
+        linear-gradient(to right, rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px),
+        linear-gradient(to bottom, rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px);
+      background-size: 84px 84px;
+      z-index: 1;
+    }
+
+    /* Khung nội dung chính trong dải an toàn (usable band 160px - 1390px) */
+    .main-canvas {
+      position: absolute;
+      top: 160px;
+      left: 60px;
+      width: 960px;
+      height: 1220px;
+      z-index: 5;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Header chủ đề sơ đồ nhân quả */
+    .header-bar {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      padding-bottom: 16px;
+      border-bottom: 3px solid #141414;
+      margin-bottom: 24px;
+    }
+
+    .header-tag {
+      background-color: #141414;
+      color: #F7F4EC;
+      font-size: 20px;
+      font-weight: 900;
+      padding: 6px 14px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    .header-title {
+      font-size: 34px;
+      font-weight: 900;
+      color: #141414;
+      line-height: 1.1;
+      text-transform: uppercase;
+      letter-spacing: -0.5px;
+    }
+
+    /* Danh sách 3 mắt xích nhân quả */
+    .chain-container {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      height: 1100px;
+      position: relative;
+    }
+
+    /* Thẻ mắt xích chuẩn phong cách thẻ collage */
+    .chain-step {
+      position: relative;
+      width: 100%;
+      background-color: #F5F0E4;
+      border: 3px solid #141414;
+      box-shadow: 6px 6px 0px #141414;
+      padding: 24px 28px;
+      display: flex;
+      align-items: center;
+      gap: 28px;
+      z-index: 10;
+    }
+
+    .step-1 {
+      height: 270px;
+    }
+
+    .step-2 {
+      height: 310px;
+      margin-top: 50px;
+    }
+
+    .step-3 {
+      height: 310px;
+      margin-top: 50px;
+      background-color: #141414;
+      border: 3px solid #141414;
+      box-shadow: 6px 6px 0px #FF6A1A;
+      color: #F7F4EC;
+    }
+
+    /* Icon và hình ảnh minh họa bên trái mỗi thẻ */
+    .step-visual {
+      width: 220px;
+      height: 220px;
+      flex-shrink: 0;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: #E7E3D9;
+      border: 2px solid #141414;
+    }
+
+    .step-3 .step-visual {
+      background-color: #242424;
+      border: 2px solid #FF6A1A;
+    }
+
+    /* Phần thông tin bên phải */
+    .step-info {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .step-index-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .step-badge {
+      background-color: #141414;
+      color: #F7F4EC;
+      font-size: 18px;
+      font-weight: 900;
+      padding: 4px 10px;
+    }
+
+    .step-3 .step-badge {
+      background-color: #FF6A1A;
+      color: #141414;
+    }
+
+    .step-category {
+      font-size: 20px;
+      font-weight: 900;
+      color: #141414;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .step-3 .step-category {
+      color: #FF6A1A;
+    }
+
+    .step-main-text {
+      font-size: 32px;
+      font-weight: 900;
+      color: #141414;
+      line-height: 1.25;
+    }
+
+    .step-3 .step-main-text {
+      color: #F7F4EC;
+    }
+
+    /* Label overlay theo yêu cầu shotlist */
+    .overlay-pill-container {
+      margin-top: 6px;
+      height: 48px;
+      display: flex;
+      align-items: center;
+    }
+
+    .overlay-pill {
+      background-color: #FF6A1A;
+      color: #141414;
+      font-size: 22px;
+      font-weight: 900;
+      padding: 6px 16px;
+      border: 2px solid #141414;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      display: inline-block;
+      box-shadow: 3px 3px 0px #141414;
+    }
+
+    /* Đường nối vector SVG giữa các bước */
+    .flow-connector {
+      position: absolute;
+      left: 138px;
+      width: 60px;
+      z-index: 5;
+    }
+
+    .connector-1-2 {
+      top: 268px;
+      height: 54px;
+    }
+
+    .connector-2-3 {
+      top: 628px;
+      height: 54px;
+    }
+
+    /* Dải màu cam thương hiệu luôn cố định ở mép dưới cùng */
+    .bottom-brand-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 1080px;
+      height: 10px;
+      background-color: #FF6A1A;
+      z-index: 100;
+    }
+  </style>
+
+  <div id="root" data-composition-id="scene-s02" data-width="1080" data-height="1920" data-duration="9.54">
+    <!-- Nền kẻ lưới ô vuông 84px chuẩn Vox style -->
+    <div class="bg-grid"></div>
+
+    <!-- Cảnh chính toàn màn hình -->
+    <section class="clip" data-start="0" data-duration="9.54">
+      <div class="main-canvas" id="mainCanvas">
+        <!-- Header tiêu đề cấu trúc nhân quả -->
+        <div class="header-bar" id="headerBar">
+          <div>
+            <div class="header-tag">HỒ SƠ TỐ TỤNG</div>
+            <h1 class="header-title" style="margin-top: 6px;">DIỄN TIẾN NHÂN QUẢ</h1>
+          </div>
+          <div style="font-size: 20px; font-weight: 900; color: #141414; border-left: 2px solid #141414; padding-left: 12px;">
+            3 MẮT XÍCH
+          </div>
+        </div>
+
+        <!-- Khung 3 mắt xích -->
+        <div class="chain-container">
+
+          <!-- BƯỚC 1: Ly hôn & chối từ nối lại -->
+          <div class="chain-step step-1" id="step1">
+            <div class="step-visual">
+              <svg width="180" height="180" viewBox="0 0 180 180" fill="none">
+                <!-- Tờ đơn ly hôn rách đôi -->
+                <rect x="35" y="25" width="110" height="130" fill="#F5F0E4" stroke="#141414" stroke-width="3"/>
+                <!-- Đường rách đứt gãy ở giữa -->
+                <path d="M90 25 L85 55 L95 85 L85 115 L90 155" stroke="#141414" stroke-width="3" stroke-dasharray="4 4"/>
+                <line x1="50" y1="45" x2="80" y2="45" stroke="#141414" stroke-width="3" stroke-linecap="round"/>
+                <line x1="50" y1="65" x2="78" y2="65" stroke="#141414" stroke-width="3" stroke-linecap="round"/>
+                <line x1="102" y1="45" x2="130" y2="45" stroke="#141414" stroke-width="3" stroke-linecap="round"/>
+                <line x1="102" y1="65" x2="128" y2="65" stroke="#141414" stroke-width="3" stroke-linecap="round"/>
+                <!-- Dấu chéo đỏ/cam lớn chốt hạ -->
+                <path id="crossLine1" d="M45 40 L135 140" stroke="#FF6A1A" stroke-width="6" stroke-linecap="round"/>
+                <path id="crossLine2" d="M135 40 L45 140" stroke="#FF6A1A" stroke-width="6" stroke-linecap="round"/>
+              </svg>
+            </div>
+            <div class="step-info">
+              <div class="step-index-row">
+                <span class="step-badge">01</span>
+                <span class="step-category">KHỞI NGUYÊN</span>
+              </div>
+              <div class="step-main-text">Hôn nhân đổ vỡ, người cũ khước từ hàn gắn</div>
+              <div class="overlay-pill-container">
+                <!-- Overlay label atMs: 9580 -> scene local 2.68s -->
+                <div class="overlay-pill" id="labelReject">CHỐI TỪ NỐI LẠI</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- CONNECTOR 1 -> 2 -->
+          <svg class="flow-connector connector-1-2" viewBox="0 0 60 54" fill="none">
+            <line id="connLine1" x1="30" y1="0" x2="30" y2="42" stroke="#141414" stroke-width="4" stroke-linecap="round"/>
+            <polygon id="connArrow1" points="20,38 30,50 40,38" fill="#141414"/>
+          </svg>
+
+          <!-- BƯỚC 2: Chuẩn bị hung khí (Dây điện & Băng keo) + Warning icon -->
+          <div class="chain-step step-2" id="step2">
+            <div class="step-visual">
+              <svg width="200" height="200" viewBox="0 0 200 200" fill="none">
+                <!-- Minh họa cuộn dây điện màu đen viền cam -->
+                <circle cx="75" cy="85" r="45" stroke="#141414" stroke-width="7" fill="none"/>
+                <circle cx="75" cy="85" r="32" stroke="#FF6A1A" stroke-width="5" fill="none"/>
+                <circle cx="75" cy="85" r="18" stroke="#141414" stroke-width="6" fill="#F5F0E4"/>
+                <path d="M115 95 C135 110, 140 145, 110 165 C95 175, 70 170, 60 160" stroke="#141414" stroke-width="5" stroke-linecap="round" fill="none"/>
+                <!-- Cuộn băng keo công nghiệp -->
+                <ellipse cx="140" cy="130" rx="36" ry="24" fill="#141414"/>
+                <ellipse cx="140" cy="124" rx="36" ry="24" fill="#E7E3D9" stroke="#141414" stroke-width="3"/>
+                <ellipse cx="140" cy="124" rx="20" ry="13" fill="#141414"/>
+                <ellipse cx="140" cy="120" rx="20" ry="13" fill="#F5F0E4" stroke="#141414" stroke-width="2"/>
+                <path d="M106 130 L115 155" stroke="#FF6A1A" stroke-width="4" stroke-linecap="round"/>
+              </svg>
+            </div>
+            <div class="step-info">
+              <div class="step-index-row">
+                <span class="step-badge">02</span>
+                <span class="step-category">CHUẨN BỊ TRƯỚC</span>
+                <!-- Overlay icon warning atMs: 12270 -> scene local 5.37s -->
+                <div id="warningIconWrap" style="display: inline-flex; align-items: center; margin-left: 8px;">
+                  <svg width="34" height="34" viewBox="0 0 34 34" fill="none">
+                    <polygon points="17,3 32,29 2,29" fill="#FF6A1A" stroke="#141414" stroke-width="2"/>
+                    <line x1="17" y1="11" x2="17" y2="20" stroke="#141414" stroke-width="3" stroke-linecap="round"/>
+                    <circle cx="17" cy="25" r="1.8" fill="#141414"/>
+                  </svg>
+                </div>
+              </div>
+              <div class="step-main-text">Thủ sẵn dây điện và cuộn băng keo</div>
+              <div class="overlay-pill-container">
+                <!-- Overlay label atMs: 12920 -> scene local 6.02s -->
+                <div class="overlay-pill" id="labelWeapons">CHUẨN BỊ HUNG KHÍ</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- CONNECTOR 2 -> 3 -->
+          <svg class="flow-connector connector-2-3" viewBox="0 0 60 54" fill="none">
+            <line id="connLine2" x1="30" y1="0" x2="30" y2="42" stroke="#FF6A1A" stroke-width="5" stroke-linecap="round"/>
+            <polygon id="connArrow2" points="18,36 30,50 42,36" fill="#FF6A1A"/>
+          </svg>
+
+          <!-- BƯỚC 3: Rình rập ra tay nhắm vào bóng người đơn độc -->
+          <div class="chain-step step-3" id="step3">
+            <div class="step-visual">
+              <svg width="200" height="200" viewBox="0 0 200 200" fill="none">
+                <!-- Tâm ngắm / Crosshair theo dõi -->
+                <circle id="targetRing" cx="100" cy="100" r="70" stroke="#FF6A1A" stroke-width="2" stroke-dasharray="6 6" fill="none"/>
+                <line x1="100" y1="15" x2="100" y2="35" stroke="#FF6A1A" stroke-width="3"/>
+                <line x1="100" y1="165" x2="100" y2="185" stroke="#FF6A1A" stroke-width="3"/>
+                <line x1="15" y1="100" x2="35" y2="100" stroke="#FF6A1A" stroke-width="3"/>
+                <line x1="165" y1="100" x2="185" y2="100" stroke="#FF6A1A" stroke-width="3"/>
+                <!-- Silhouette bóng người phụ nữ đơn độc -->
+                <circle cx="100" cy="70" r="18" fill="#F7F4EC"/>
+                <path d="M72 135 C72 100, 82 92, 100 92 C118 92, 128 100, 128 135 Z" fill="#F7F4EC"/>
+                <!-- Dấu chấm cảnh báo đỏ cam ngay tim ngắm -->
+                <circle cx="100" cy="100" r="4" fill="#FF6A1A"/>
+              </svg>
+            </div>
+            <div class="step-info">
+              <div class="step-index-row">
+                <span class="step-badge">03</span>
+                <span class="step-category">CƠ HỘI RA TAY</span>
+              </div>
+              <div class="step-main-text">Ngồi rình chờ nạn nhân ở một mình</div>
+              <div class="overlay-pill-container">
+                <div class="overlay-pill" id="labelAction" style="background-color: #141414; color: #FF6A1A; border-color: #FF6A1A;">
+                  MỤC TIÊU ĐƠN ĐỘC
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- Dải cam cố định chân trang chuẩn Vox Style DNA -->
+    <div class="bottom-brand-bar"></div>
+  </div>
+
+  <script>
+    // Khởi tạo GSAP timeline seekable ở trạng thái paused bắt buộc cho HyperFrames
+    const tl = gsap.timeline({ paused: true });
+
+    // Đăng ký đúng composition ID "scene-s02"
+    window.__timelines = window.__timelines || {};
+    window.__timelines["scene-s02"] = tl;
+
+    // Chuẩn bị các stroke SVG tự vẽ (dasharray / dashoffset)
+    const cross1 = document.getElementById("crossLine1");
+    const cross2 = document.getElementById("crossLine2");
+    const len1 = cross1.getTotalLength();
+    const len2 = cross2.getTotalLength();
+    cross1.style.strokeDasharray = len1;
+    cross1.style.strokeDashoffset = len1;
+    cross2.style.strokeDasharray = len2;
+    cross2.style.strokeDashoffset = len2;
+
+    const cLine1 = document.getElementById("connLine1");
+    const cLine2 = document.getElementById("connLine2");
+    const lenC1 = cLine1.getTotalLength();
+    const lenC2 = cLine2.getTotalLength();
+    cLine1.style.strokeDasharray = lenC1;
+    cLine1.style.strokeDashoffset = lenC1;
+    cLine2.style.strokeDasharray = lenC2;
+    cLine2.style.strokeDashoffset = lenC2;
+
+    // --- TIMELINE ORCHESTRATION ---
+
+    // 0.0s - 0.6s: TransitionIn "rise" toàn bộ Canvas vào khung hình
+    tl.fromTo(
+      "#mainCanvas",
+      { y: 50, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.6, ease: "power3.out" },
+      0
+    );
+
+    // 0.2s - 0.7s: Header trượt nhẹ vào vị trí
+    tl.fromTo(
+      "#headerBar",
+      { y: -20, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.5, ease: "power2.out" },
+      0.2
+    );
+
+    // 0.4s: BƯỚC 1 xuất hiện vững chãi
+    tl.fromTo(
+      "#step1",
+      { y: 30, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.55, ease: "power3.out" },
+      0.4
+    );
+
+    // 0.8s: Vẽ dấu gạch chéo đổ vỡ ly hôn
+    tl.to(cross1, { strokeDashoffset: 0, duration: 0.35, ease: "power2.out" }, 0.8);
+    tl.to(cross2, { strokeDashoffset: 0, duration: 0.35, ease: "power2.out" }, 0.95);
+
+    // 2.68s (khớp mốc atMs: 9580ms so với startMs: 6900ms): Label "CHỐI TỪ NỐI LẠI"
+    tl.fromTo(
+      "#labelReject",
+      { scale: 0.8, opacity: 0 },
+      { scale: 1, opacity: 1, duration: 0.4, ease: "back.out(1.5)" },
+      2.68
+    );
+
+    // 4.2s: Vẽ connector 1 -> 2 nối tiếp nhịp kể
+    tl.to(cLine1, { strokeDashoffset: 0, duration: 0.4, ease: "none" }, 4.2);
+    tl.fromTo(
+      "#connArrow1",
+      { opacity: 0, scale: 0.5 },
+      { opacity: 1, scale: 1, duration: 0.2, ease: "power2.out" },
+      4.55
+    );
+
+    // 4.6s: BƯỚC 2 xuất hiện (Chuẩn bị hung khí)
+    tl.fromTo(
+      "#step2",
+      { y: 30, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.55, ease: "power3.out" },
+      4.6
+    );
+
+    // 5.37s (khớp mốc atMs: 12270ms so với startMs: 6900ms): Icon "warning" pop-in
+    tl.fromTo(
+      "#warningIconWrap",
+      { scale: 0, opacity: 0, rotation: -15 },
+      { scale: 1, opacity: 1, rotation: 0, duration: 0.4, ease: "back.out(1.7)" },
+      5.37
+    );
+
+    // 6.02s (khớp mốc atMs: 12920ms so với startMs: 6900ms): Label "CHUẨN BỊ HUNG KHÍ"
+    tl.fromTo(
+      "#labelWeapons",
+      { scale: 0.8, opacity: 0 },
+      { scale: 1, opacity: 1, duration: 0.45, ease: "back.out(1.5)" },
+      6.02
+    );
+
+    // 6.9s: Vẽ connector 2 -> 3 (Mũi tên chốt hạ hướng xuống bước 3)
+    tl.to(cLine2, { strokeDashoffset: 0, duration: 0.4, ease: "none" }, 6.9);
+    tl.fromTo(
+      "#connArrow2",
+      { opacity: 0, scale: 0.5 },
+      { opacity: 1, scale: 1, duration: 0.2, ease: "power2.out" },
+      7.25
+    );
+
+    // 7.3s: BƯỚC 3 xuất hiện với tông nền mực đe dọa
+    tl.fromTo(
+      "#step3",
+      { y: 30, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.55, ease: "power3.out" },
+      7.3
+    );
+
+    // 7.7s: Tâm ngắm thu hẹp tập trung vào nạn nhân đơn độc
+    tl.fromTo(
+      "#targetRing",
+      { scale: 1.25, opacity: 0, transformOrigin: "100px 100px" },
+      { scale: 1, opacity: 1, duration: 0.5, ease: "power3.out" },
+      7.7
+    );
+
+    // 8.1s: Badge mục tiêu xuất hiện chốt hạ toàn cảnh kế hoạch
+    tl.fromTo(
+      "#labelAction",
+      { scale: 0.85, opacity: 0 },
+      { scale: 1, opacity: 1, duration: 0.4, ease: "power2.out" },
+      8.1
+    );
+
+    // Nhịp thở nhẹ nhàng cho tâm ngắm (đảm bảo không chết khung hình nhưng vẫn tất định)
+    tl.to("#targetRing", { rotation: 90, transformOrigin: "100px 100px", duration: 1.44, ease: "none" }, 8.1);
+  </script>
+
+    </template>
+  </body>
+</html>

@@ -1,0 +1,469 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap"
+    />
+      <style>
+/* hf-safe-colors (tất định từ style-tokens.json) */
+.hf-text-ink { color: #141414; }
+.hf-text-light { color: #F7F4EC; }
+.hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+.hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+.hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+.hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        width: 1080px;
+        height: 1920px;
+        background-color: #e7e3d9;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+      .clip {
+        position: absolute;
+        inset: 0;
+      }
+
+      /* Background Spotlight Variant */
+      #bg-spotlight {
+        position: absolute;
+        inset: 0;
+        background-color: #e7e3d9;
+        background-image:
+          radial-gradient(
+            circle at 50% 42%,
+            rgba(231, 227, 217, 0.2) 0%,
+            rgba(20, 20, 20, 0.45) 65%,
+            rgba(20, 20, 20, 0.85) 100%
+          ),
+          linear-gradient(rgba(20, 20, 20, 0.22) 1.5px, transparent 1.5px),
+          linear-gradient(90deg, rgba(20, 20, 20, 0.22) 1.5px, transparent 1.5px);
+        background-size: 100% 100%, 84px 84px, 84px 84px;
+        z-index: 1;
+      }
+
+      /* Stage & 3D Perspective */
+      #scene-stage {
+        position: absolute;
+        inset: 0;
+        perspective: 1400px;
+        transform-style: preserve-3d;
+        z-index: 2;
+      }
+
+      /* Hero Collage Frame (9:16 safe usable band Y: 160 -> 1390) */
+      #hero-frame {
+        position: absolute;
+        top: 210px;
+        left: 60px;
+        width: 960px;
+        height: 1120px;
+        background-color: #141414;
+        border: 4px solid #141414;
+        box-shadow: 0 28px 60px rgba(0, 0, 0, 0.45);
+        overflow: hidden;
+        transform-origin: 50% 50%;
+      }
+
+      /* Hero Split Image */
+      #hero-img-wrap {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+      }
+      #hero-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center;
+        display: block;
+        transform-origin: 50% 50%;
+      }
+
+      /* Central Split Divider / Tear Accents */
+      #split-line {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 50%;
+        width: 3px;
+        background-color: rgba(255, 106, 26, 0.85);
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.6);
+        z-index: 5;
+        transform: translateX(-50%);
+      }
+      .split-notch {
+        position: absolute;
+        left: 50%;
+        width: 18px;
+        height: 4px;
+        background-color: #ff6a1a;
+        transform: translateX(-50%);
+        z-index: 6;
+      }
+      #notch-top {
+        top: 40px;
+      }
+      #notch-mid {
+        top: 50%;
+      }
+      #notch-bot {
+        bottom: 40px;
+      }
+
+      /* Corner Brackets for Vox Editorial Collage */
+      .bracket {
+        position: absolute;
+        width: 24px;
+        height: 24px;
+        border-color: #ff6a1a;
+        border-style: solid;
+        z-index: 7;
+        pointer-events: none;
+      }
+      #br-tl {
+        top: 14px;
+        left: 14px;
+        border-width: 4px 0 0 4px;
+      }
+      #br-tr {
+        top: 14px;
+        right: 14px;
+        border-width: 4px 4px 0 0;
+      }
+      #br-bl {
+        bottom: 14px;
+        left: 14px;
+        border-width: 0 0 4px 4px;
+      }
+      #br-br {
+        bottom: 14px;
+        right: 14px;
+        border-width: 0 4px 4px 0;
+      }
+
+      /* Overlay 1: Label "BẢN TIN PHẲNG LÌ" */
+      #overlay-label-clip {
+        z-index: 10;
+        pointer-events: none;
+      }
+      #label-news {
+        position: absolute;
+        top: 260px;
+        left: 90px;
+        background-color: #141414;
+        border-left: 8px solid #ff6a1a;
+        padding: 16px 26px;
+        border-radius: 4px;
+        box-shadow: 0 16px 36px rgba(0, 0, 0, 0.5);
+        transform-origin: 0% 50%;
+      }
+      #label-news span {
+        color: #f7f4ec;
+        font-size: 38px;
+        font-weight: 900;
+        letter-spacing: 1px;
+        line-height: 1.2;
+        text-transform: uppercase;
+        display: block;
+      }
+
+      /* Overlay 2: Icon "doc" Card */
+      #overlay-icon-clip {
+        z-index: 11;
+        pointer-events: none;
+      }
+      #doc-card {
+        position: absolute;
+        top: 1040px;
+        right: 90px;
+        width: 150px;
+        height: 150px;
+        background-color: #141414;
+        border: 3px solid #ff6a1a;
+        border-radius: 18px;
+        box-shadow: 0 20px 45px rgba(0, 0, 0, 0.55);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transform-origin: 50% 50%;
+      }
+      #doc-svg {
+        width: 96px;
+        height: 96px;
+      }
+
+      /* Vox Fixed Brand Bar at Canvas Bottom */
+      #brand-bottom-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 14px;
+        background-color: #ff6a1a;
+        z-index: 100;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s12"
+      data-width="1080"
+      data-height="1920"
+      data-duration="6.04"
+    >
+      <!-- Shot Visual Stage (Track 0) -->
+      <section
+        id="shot-main"
+        class="clip"
+        data-start="0"
+        data-duration="6.04"
+        data-track-index="0"
+      >
+        <div id="bg-spotlight"></div>
+
+        <div id="scene-stage">
+          <div id="hero-frame">
+            <div id="hero-img-wrap">
+              <img
+                id="hero-img"
+                src="assets/img-20-media-vs-dark-reality-split.jpg"
+                alt="Bản tin thời sự phẳng lì đối đầu đường hầm rạp chiếu"
+              />
+            </div>
+
+            <!-- Central Split Seam -->
+            <div id="split-line"></div>
+            <div id="notch-top" class="split-notch"></div>
+            <div id="notch-mid" class="split-notch"></div>
+            <div id="notch-bot" class="split-notch"></div>
+
+            <!-- Corner Framing -->
+            <div id="br-tl" class="bracket"></div>
+            <div id="br-tr" class="bracket"></div>
+            <div id="br-bl" class="bracket"></div>
+            <div id="br-br" class="bracket"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Overlay 1: Label at 0.96s (Track 1) -->
+      <div
+        id="overlay-label-clip"
+        class="clip"
+        data-start="0.96"
+        data-duration="1.8"
+        data-track-index="1"
+      >
+        <div id="label-news">
+          <span>BẢN TIN PHẲNG LÌ</span>
+        </div>
+      </div>
+
+      <!-- Overlay 2: "doc" Icon at 4.17s (Track 2) -->
+      <div
+        id="overlay-icon-clip"
+        class="clip"
+        data-start="4.17"
+        data-duration="1.87"
+        data-track-index="2"
+      >
+        <div id="doc-card">
+          <svg
+            id="doc-svg"
+            viewBox="0 0 100 100"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <!-- Document Outline -->
+            <path
+              class="doc-stroke"
+              d="M 24 14 L 62 14 L 78 30 L 78 86 L 24 86 Z"
+              stroke="#FF6A1A"
+              stroke-width="5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+            <!-- Folded Flap -->
+            <path
+              class="doc-stroke"
+              d="M 62 14 L 62 30 L 78 30"
+              stroke="#FF6A1A"
+              stroke-width="5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+            <!-- Text Content Lines -->
+            <path
+              class="doc-stroke"
+              d="M 34 46 L 68 46"
+              stroke="#F7F4EC"
+              stroke-width="4.5"
+              stroke-linecap="round"
+            />
+            <path
+              class="doc-stroke"
+              d="M 34 58 L 68 58"
+              stroke="#F7F4EC"
+              stroke-width="4.5"
+              stroke-linecap="round"
+            />
+            <path
+              class="doc-stroke"
+              d="M 34 70 L 52 70"
+              stroke="#F7F4EC"
+              stroke-width="4.5"
+              stroke-linecap="round"
+            />
+          </svg>
+        </div>
+      </div>
+
+      <!-- Persistent Brand Bottom Bar -->
+      <div id="brand-bottom-bar"></div>
+    </div>
+
+    <script>
+      // Single paused GSAP Timeline for HyperFrames
+      const tl = gsap.timeline({ paused: true });
+
+      // Setup SVG paths for progressive draw
+      const docPaths = document.querySelectorAll("#doc-svg .doc-stroke");
+      docPaths.forEach((path) => {
+        const len = path.getTotalLength();
+        path.style.strokeDasharray = len;
+        path.style.strokeDashoffset = len;
+      });
+
+      // 1. Entrance: 3D Flip transition in (Phase 1, 0.0s -> 0.85s)
+      tl.fromTo(
+        "#hero-frame",
+        {
+          rotationY: -42,
+          scale: 0.9,
+          opacity: 0,
+        },
+        {
+          rotationY: 0,
+          scale: 1,
+          opacity: 1,
+          duration: 0.85,
+          ease: "power3.out",
+        },
+        0
+      );
+
+      // 2. Camera Motion: Pan right across split screen (0.0s -> 6.04s)
+      tl.fromTo(
+        "#hero-img",
+        {
+          x: 75,
+          scale: 1.18,
+        },
+        {
+          x: -75,
+          scale: 1.2,
+          duration: 6.04,
+          ease: "sine.inOut",
+        },
+        0
+      );
+
+      // Subtle ambient angle settle
+      tl.fromTo(
+        "#hero-frame",
+        { rotationZ: -0.6 },
+        {
+          rotationZ: 0.6,
+          duration: 5.19,
+          ease: "sine.inOut",
+        },
+        0.85
+      );
+
+      // 3. Overlay 1: "BẢN TIN PHẲNG LÌ" (data-start 0.96s -> exit at ~2.45s)
+      tl.fromTo(
+        "#label-news",
+        {
+          x: -70,
+          opacity: 0,
+          scale: 0.92,
+        },
+        {
+          x: 0,
+          opacity: 1,
+          scale: 1,
+          duration: 0.45,
+          ease: "power3.out",
+        },
+        0.96
+      );
+
+      tl.to(
+        "#label-news",
+        {
+          x: -25,
+          opacity: 0,
+          duration: 0.3,
+          ease: "power2.in",
+        },
+        2.45
+      );
+
+      // 4. Overlay 2: "doc" icon pop entrance & progressive SVG path draw (4.17s)
+      tl.fromTo(
+        "#doc-card",
+        {
+          scale: 0,
+          opacity: 0,
+        },
+        {
+          scale: 1,
+          opacity: 1,
+          duration: 0.45,
+          ease: "power3.out",
+        },
+        4.17
+      );
+
+      // Progressive SVG path draw
+      docPaths.forEach((path, idx) => {
+        const len = path.getTotalLength();
+        tl.fromTo(
+          path,
+          { strokeDashoffset: len },
+          {
+            strokeDashoffset: 0,
+            duration: 0.42,
+            ease: "power2.out",
+          },
+          4.3 + idx * 0.08
+        );
+      });
+
+      // Register master timeline on window.__timelines
+      window.__timelines["scene-s12"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

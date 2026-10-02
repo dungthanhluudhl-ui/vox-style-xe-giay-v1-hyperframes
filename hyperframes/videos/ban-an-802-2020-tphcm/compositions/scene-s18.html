@@ -1,0 +1,750 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap"
+    />
+      <style>
+/* hf-autofix contrast (tất định, màu palette) */
+.hf-cfix-s18-1 { color: #141414 !important; }
+
+      /* hf-safe-colors (tất định từ style-tokens.json) */
+      .hf-text-ink { color: #141414; }
+      .hf-text-light { color: #F7F4EC; }
+      .hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+      .hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+      .hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+      .hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #e7e3d9;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+      #root {
+        position: relative;
+        width: 1080px;
+        height: 1920px;
+        background-color: #e7e3d9;
+        overflow: hidden;
+      }
+
+      /* Background Grid ô vuông 84px đúng Vox DNA */
+      .bg-grid {
+        position: absolute;
+        inset: 0;
+        background-size: 84px 84px;
+        background-image:
+          linear-gradient(to right, rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px),
+          linear-gradient(to bottom, rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px);
+        pointer-events: none;
+        z-index: 1;
+      }
+
+      /* Vignette góc tạo chiều sâu hồ sơ điều tra */
+      .bg-vignette {
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(circle at 50% 50%, transparent 65%, rgba(20, 20, 20, 0.08) 100%);
+        pointer-events: none;
+        z-index: 2;
+      }
+
+      /* Định nghĩa .clip chuẩn HyperFrames với inset: 0 */
+      .clip {
+        position: absolute;
+        inset: 0;
+      }
+
+      /* Dải cam cố định đáy khung hình (Vox Signature Bottom Bar) */
+      .bottom-brand-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 16px;
+        background-color: #ff6a1a;
+        z-index: 99;
+      }
+
+      /* Top Header: Nhãn phân loại điều tra (Cố định trong safe zone y: 190) */
+      .header-tracker {
+        position: absolute;
+        top: 190px;
+        left: 80px;
+        right: 80px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        z-index: 20;
+      }
+      .tracker-badge {
+        background-color: #141414;
+        color: #ff6a1a;
+        font-weight: 900;
+        font-size: 24px;
+        letter-spacing: 2px;
+        padding: 8px 18px;
+        border-radius: 6px;
+        text-transform: uppercase;
+      }
+      .tracker-rule {
+        flex: 1;
+        height: 3px;
+        background-color: rgba(20, 20, 20, 0.4);
+      }
+      .tracker-step {
+        font-weight: 900;
+        font-size: 24px;
+        color: #141414;
+        letter-spacing: 1.5px;
+      }
+
+      /* Vùng hiển thị Punch Label (y: 275px - 385px) */
+      .label-zone {
+        position: absolute;
+        top: 275px;
+        left: 80px;
+        right: 80px;
+        height: 110px;
+        display: flex;
+        align-items: center;
+        z-index: 30;
+      }
+
+      /* Label 1: PHI TANG HUNG KHÍ (Nền mực đặc #141414, chữ trắng #F7F4EC & cam #FF6A1A) */
+      #label-evidence {
+        position: absolute;
+        left: 0;
+        display: inline-flex;
+        align-items: center;
+        background-color: #141414;
+        padding: 18px 38px;
+        border-radius: 12px;
+        box-shadow: 0 12px 28px rgba(20, 20, 20, 0.22);
+        opacity: 0;
+      }
+      .label-text-white {
+        color: #f7f4ec;
+        font-size: 52px;
+        font-weight: 900;
+        letter-spacing: 1.5px;
+      }
+      .label-text-orange {
+        color: #ff6a1a;
+        font-size: 52px;
+        font-weight: 900;
+        letter-spacing: 1.5px;
+        margin-left: 14px;
+      }
+
+      /* Label 2: RỜI HIỆN TRƯỜNG (Nền cam #FF6A1A, chữ mực #141414) */
+      #label-escape {
+        position: absolute;
+        left: 0;
+        display: inline-flex;
+        align-items: center;
+        background-color: #ff6a1a;
+        padding: 18px 38px;
+        border-radius: 12px;
+        box-shadow: 0 12px 28px rgba(255, 106, 26, 0.28);
+        opacity: 0;
+      }
+      .label-text-ink {
+        color: #141414;
+        font-size: 52px;
+        font-weight: 900;
+        letter-spacing: 1.5px;
+      }
+      .label-icon-arrow {
+        margin-left: 18px;
+        width: 44px;
+        height: 44px;
+        fill: #141414;
+      }
+
+      /* SÂN KHẤU TRỰC QUAN CHÍNH (Stage Area y: 420px -> 1360px trong usable band) */
+      #camera-rig {
+        position: absolute;
+        top: 420px;
+        left: 0;
+        width: 1080px;
+        height: 940px;
+        z-index: 15;
+        will-change: transform;
+      }
+
+      /* Cụm Thùng Hàng và Vật Chứng (Căn giữa sạch bằng left: 250px cho width: 580px, không dùng CSS transform) */
+      #evidence-box-group {
+        position: absolute;
+        left: 250px;
+        top: 40px;
+        width: 580px;
+        height: 520px;
+        will-change: transform, opacity;
+      }
+
+      /* Cặp vật chứng: Dây điện & Băng keo lơ lửng rồi rơi */
+      #floating-items {
+        position: absolute;
+        top: -120px;
+        left: 0;
+        width: 580px;
+        height: 240px;
+        pointer-events: none;
+      }
+
+      .evidence-card {
+        position: absolute;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        will-change: transform, opacity;
+      }
+      #wire-item {
+        left: 90px;
+        top: 0;
+      }
+      #tape-item {
+        right: 90px;
+        top: 20px;
+      }
+      .evidence-tag {
+        margin-top: 10px;
+        background-color: #141414;
+        color: #f7f4ec;
+        font-weight: 900;
+        font-size: 22px;
+        letter-spacing: 1px;
+        padding: 4px 14px;
+        border-radius: 4px;
+      }
+
+      /* Thùng hàng Carton (Đường nét rõ ràng, nền giấy kem #F5F0E4) */
+      .carton-box {
+        position: absolute;
+        bottom: 0;
+        left: 50px;
+        width: 480px;
+        height: 380px;
+      }
+
+      /* Dấu mộc ĐÃ PHI TANG đóng lên thùng (Nền mực đặc #141414, viền & chữ cam #FF6A1A đạt chuẩn WCAG 6.4:1) */
+      #box-stamp {
+        position: absolute;
+        top: 150px;
+        left: 85px;
+        border: 5px dashed #ff6a1a;
+        background-color: #141414;
+        color: #ff6a1a;
+        font-weight: 900;
+        font-size: 38px;
+        letter-spacing: 3px;
+        padding: 10px 24px;
+        border-radius: 8px;
+        opacity: 0;
+        pointer-events: none;
+        box-shadow: 0 8px 24px rgba(20, 20, 20, 0.4);
+      }
+
+      /* Cụm Tẩu Thoát & Mũi Tên Rời Đi (Phase 2) */
+      #escape-group {
+        position: absolute;
+        inset: 0;
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      /* Thông số kỹ thuật đo đạc đường tẩu thoát */
+      .escape-metric {
+        position: absolute;
+        bottom: 40px;
+        right: 90px;
+        text-align: right;
+      }
+      .escape-metric-val {
+        font-size: 40px;
+        font-weight: 900;
+        color: #141414;
+      }
+      .escape-metric-tag {
+        display: inline-block;
+        margin-top: 6px;
+        font-size: 18px;
+        font-weight: 900;
+        background-color: #141414;
+        color: #ff6a1a;
+        padding: 4px 12px;
+        border-radius: 4px;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+      }
+    </style>
+
+    <!-- Root Composition -->
+    <div
+      id="root"
+      data-composition-id="scene-s18"
+      data-width="1080"
+      data-height="1920"
+      data-duration="5.29"
+    >
+      <!-- Background Grid & Vignette -->
+      <div class="bg-grid"></div>
+      <div class="bg-vignette"></div>
+
+      <!-- Main Clip Container -->
+      <section id="scene-s18" class="clip" data-start="0" data-duration="5.29">
+        <!-- Top Tracker: Nhãn giai đoạn điều tra -->
+        <div class="header-tracker">
+          <div class="tracker-badge">HỒ SƠ HIỆN TRƯỜNG</div>
+          <div class="tracker-rule"></div>
+          <div class="tracker-step">GIAI ĐOẠN: TẨU THOÁT</div>
+        </div>
+
+        <!-- Label Zone: Vùng xuất hiện tuần tự các nhãn nhấn -->
+        <div class="label-zone" data-layout-allow-overlap="true">
+          <!-- Label 1: PHI TANG HUNG KHÍ (atMs 148860 -> offset 1.23s, hold 2.2s -> hết lúc 3.43s) -->
+          <div id="label-evidence">
+            <span class="label-text-white">PHI TANG</span>
+            <span class="label-text-orange">HUNG KHÍ</span>
+          </div>
+
+          <!-- Label 2: RỜI HIỆN TRƯỜNG (atMs 151410 -> offset 3.78s, hold 1.8s -> hết scene) -->
+          <div id="label-escape">
+            <span class="label-text-ink">RỜI HIỆN TRƯỜNG</span>
+            <svg class="label-icon-arrow" viewBox="0 0 24 24">
+              <path d="M5 13h11.86l-5.43 5.43 1.42 1.42L21.14 12l-8.29-7.85-1.42 1.42 5.43 5.43H5v2z" />
+            </svg>
+          </div>
+        </div>
+
+        <!-- Sân khấu trực quan động (Camera Rig điều khiển pan-right) -->
+        <div id="camera-rig">
+          <!-- Phase 1: Thùng hàng carton & vật chứng -->
+          <div id="evidence-box-group">
+            <!-- Cặp vật chứng rơi vào thùng -->
+            <div id="floating-items">
+              <!-- Vật chứng 1: Dây điện -->
+              <div id="wire-item" class="evidence-card">
+                <svg width="150" height="150" viewBox="0 0 150 150" fill="none">
+                  <!-- Phích cắm đen nét đậm -->
+                  <rect x="20" y="25" width="34" height="24" rx="4" fill="#141414" />
+                  <rect x="26" y="15" width="6" height="10" fill="#FF6A1A" />
+                  <rect x="42" y="15" width="6" height="10" fill="#FF6A1A" />
+                  <!-- Dây uốn lượn màu đen dày -->
+                  <path
+                    d="M37 49 C37 90, 75 80, 85 110 C92 130, 125 115, 120 70 C115 35, 75 40, 70 85 C66 115, 100 135, 130 130"
+                    stroke="#141414"
+                    stroke-width="9"
+                    stroke-linecap="round"
+                  />
+                  <!-- Đầu nối đồng cam -->
+                  <circle cx="130" cy="130" r="6" fill="#FF6A1A" />
+                </svg>
+                <div class="evidence-tag">DÂY ĐIỆN</div>
+              </div>
+
+              <!-- Vật chứng 2: Cuộn băng keo -->
+              <div id="tape-item" class="evidence-card">
+                <svg width="150" height="150" viewBox="0 0 150 150" fill="none">
+                  <!-- Cuộn băng keo góc nghiêng isometric -->
+                  <ellipse cx="75" cy="65" rx="55" ry="34" fill="#141414" stroke="#141414" stroke-width="4" />
+                  <path
+                    d="M20 65 v28 c0 19 25 34 55 34 s55 -15 55 -34 v-28"
+                    fill="#141414"
+                  />
+                  <!-- Lõi tròn bên trong màu cam nổi bật -->
+                  <ellipse cx="75" cy="65" rx="30" ry="18" fill="#F5F0E4" stroke="#FF6A1A" stroke-width="8" />
+                  <!-- Mép băng dính kéo dài -->
+                  <path
+                    d="M130 75 L145 110 L125 125"
+                    stroke="#FF6A1A"
+                    stroke-width="7"
+                    stroke-linecap="round"
+                  />
+                </svg>
+                <div class="evidence-tag">BĂNG KEO</div>
+              </div>
+            </div>
+
+            <!-- Thùng hàng carton -->
+            <div class="carton-box">
+              <svg width="480" height="380" viewBox="0 0 480 380" fill="none">
+                <!-- Thân thùng: nền màu bìa #F5F0E4, viền mực #141414 dày 6px -->
+                <rect
+                  x="20"
+                  y="100"
+                  width="440"
+                  height="260"
+                  rx="8"
+                  fill="#F5F0E4"
+                  stroke="#141414"
+                  stroke-width="6"
+                />
+                <!-- Đường kẻ phân tách cạnh thùng tạo góc 3D phẳng -->
+                <line x1="240" y1="100" x2="240" y2="360" stroke="#141414" stroke-width="5" />
+                
+                <!-- Nhãn dán trên thân thùng -->
+                <rect
+                  x="50"
+                  y="180"
+                  width="150"
+                  height="100"
+                  rx="4"
+                  fill="#FFFFFF"
+                  stroke="#141414"
+                  stroke-width="4"
+                />
+                <!-- Mã vạch hàng gửi -->
+                <line x1="68" y1="200" x2="68" y2="245" stroke="#141414" stroke-width="4" />
+                <line x1="78" y1="200" x2="78" y2="245" stroke="#141414" stroke-width="2" />
+                <line x1="88" y1="200" x2="88" y2="245" stroke="#141414" stroke-width="6" />
+                <line x1="104" y1="200" x2="104" y2="245" stroke="#141414" stroke-width="3" />
+                <line x1="116" y1="200" x2="116" y2="245" stroke="#141414" stroke-width="5" />
+                <line x1="130" y1="200" x2="130" y2="245" stroke="#141414" stroke-width="2" />
+                <line x1="142" y1="200" x2="142" y2="245" stroke="#141414" stroke-width="7" />
+                <line x1="160" y1="200" x2="160" y2="245" stroke="#141414" stroke-width="4" />
+                <line x1="172" y1="200" x2="172" y2="245" stroke="#141414" stroke-width="3" />
+                
+                <!-- Icon cảnh báo hàng cần chú ý -->
+                <path
+                  d="M165 260 a12 12 0 0 1 24 0 v10 h-24 z M177 270 v6 a3 3 0 0 0 6 0"
+                  fill="#FF6A1A"
+                  stroke="#FF6A1A"
+                  stroke-width="2"
+                />
+
+                <!-- Nắp thùng Trái (Left Flap): điều khiển bằng GSAP -->
+                <g id="flap-left">
+                  <polygon
+                    points="20,100 240,100 210,35 20,35"
+                    fill="#E7E3D9"
+                    stroke="#141414"
+                    stroke-width="6"
+                    stroke-linejoin="round"
+                  />
+                </g>
+
+                <!-- Nắp thùng Phải (Right Flap): điều khiển bằng GSAP -->
+                <g id="flap-right">
+                  <polygon
+                    points="240,100 460,100 460,35 270,35"
+                    fill="#E7E3D9"
+                    stroke="#141414"
+                    stroke-width="6"
+                    stroke-linejoin="round"
+                  />
+                </g>
+
+                <!-- Băng keo dán niêm phong thùng hàng (điều khiển qua GSAP fromTo) -->
+                <rect
+                  id="box-tape"
+                  x="200"
+                  y="90"
+                  width="80"
+                  height="190"
+                  fill="#FF6A1A"
+                  stroke="#141414"
+                  stroke-width="4"
+                />
+              </svg>
+
+              <!-- Dấu mộc ĐÃ PHI TANG -->
+              <div class="hf-cfix-s18-1" id="box-stamp">ĐÃ PHI TANG</div>
+            </div>
+          </div>
+
+          <!-- Phase 2: Mũi tên cam & Hình bóng rời hiện trường -->
+          <div id="escape-group" data-layout-allow-overflow="true">
+            <!-- Mũi tên cam vector chỉ hướng ra khỏi khung hình -->
+            <svg width="1080" height="600" viewBox="0 0 1080 600" fill="none" style="position: absolute; top: 120px; left: 0;">
+              <!-- Đường đứt nét định hướng tẩu thoát -->
+              <path
+                d="M140 380 C320 380, 480 320, 680 320 C820 320, 920 300, 1060 300"
+                stroke="rgba(20,20,20,0.35)"
+                stroke-width="5"
+                stroke-dasharray="14 12"
+              />
+              
+              <!-- Mũi tên cam lớn biểu thị hướng rút lui -->
+              <path
+                id="escape-arrow-path"
+                d="M320 340 L840 340"
+                stroke="#FF6A1A"
+                stroke-width="24"
+                stroke-linecap="square"
+              />
+              <polygon
+                id="escape-arrow-head"
+                points="830,300 930,340 830,380"
+                fill="#FF6A1A"
+                stroke="#141414"
+                stroke-width="6"
+                stroke-linejoin="round"
+              />
+
+              <!-- Vạch khoảng cách kỹ thuật / HUD -->
+              <line x1="320" y1="400" x2="320" y2="425" stroke="#141414" stroke-width="4" />
+              <line x1="930" y1="400" x2="930" y2="425" stroke="#141414" stroke-width="4" />
+              <line x1="320" y1="412" x2="930" y2="412" stroke="#141414" stroke-width="3" stroke-dasharray="8 6" />
+              <text x="560" y="445" font-family="'Be Vietnam Pro', sans-serif" font-weight="900" font-size="22" fill="#141414" text-anchor="middle">
+                KHOẢNG CÁCH RỜI HIỆN TRƯỜNG // HƯỚNG RA NGOÀI
+              </text>
+            </svg>
+
+            <!-- Bóng người tẩu thoát (Silhouette Cutout + Drop Shadow cam #FF6A1A đặc chuẩn DNA §2) -->
+            <div
+              id="escape-figure"
+              data-layout-allow-overflow="true"
+              style="position: absolute; top: 140px; left: 480px; width: 340px; height: 420px; will-change: transform;"
+            >
+              <svg width="340" height="420" viewBox="0 0 340 420" fill="none">
+                <!-- Silhouette Bóng Cam đặc lệch 14px (không mờ) -->
+                <g transform="translate(14, 14)" fill="#FF6A1A">
+                  <circle cx="210" cy="55" r="32" />
+                  <path d="M175 90 L235 90 L210 200 L160 190 Z" />
+                  <path d="M225 105 L285 145 L270 160 L215 125 Z" />
+                  <path d="M175 105 L135 155 L120 145 L165 100 Z" />
+                  <path d="M205 195 L275 285 L260 380 L235 380 L250 295 L190 205 Z" />
+                  <path d="M170 195 L125 270 L80 270 L80 250 L115 250 L150 195 Z" />
+                </g>
+
+                <!-- Silhouette Chính Màu Đen Mực #141414 -->
+                <g fill="#141414">
+                  <circle cx="210" cy="55" r="32" />
+                  <!-- Mũ che mặt -->
+                  <path d="M185 45 Q210 30 245 42 L260 52 L230 52 Z" />
+                  <path d="M175 90 L235 90 L210 200 L160 190 Z" />
+                  <!-- Chi tiết cổ áo -->
+                  <path d="M175 90 L195 120 L220 90 Z" fill="#E7E3D9" />
+                  <path d="M225 105 L285 145 L270 160 L215 125 Z" />
+                  <path d="M175 105 L135 155 L120 145 L165 100 Z" />
+                  <path d="M205 195 L275 285 L260 380 L235 380 L250 295 L190 205 Z" />
+                  <path d="M170 195 L125 270 L80 270 L80 250 L115 250 L150 195 Z" />
+                </g>
+              </svg>
+            </div>
+
+            <!-- Thông số hiển thị góc phải -->
+            <div class="escape-metric">
+              <div class="escape-metric-val">KHÔNG DẤU VẾT</div>
+              <div class="escape-metric-tag">HÀNH VI TẨU THOÁT HOÀN TẤT</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Signature Orange Bar at Bottom -->
+      <div class="bottom-brand-bar"></div>
+    </div>
+
+    <!-- GSAP Seekable Timeline Script -->
+    <script>
+      window.__timelines = window.__timelines || {};
+
+      // Tạo timeline paused duy nhất cho composition "scene-s18"
+      const tl = gsap.timeline({ paused: true });
+
+      // ==========================================
+      // KHỞI TẠO TRẠNG THÁI TẤT ĐỊNH (t = 0)
+      // ==========================================
+      tl.set("#flap-left", { rotation: -35, transformOrigin: "20px 100px" }, 0);
+      tl.set("#flap-right", { rotation: 35, transformOrigin: "460px 100px" }, 0);
+      tl.set("#box-tape", { scaleY: 0, opacity: 0, transformOrigin: "240px 90px" }, 0);
+      tl.set("#box-stamp", { scale: 2.0, opacity: 0, rotation: -16 }, 0);
+
+      // ==========================================
+      // GIAI ĐOẠN 1: THẢ VẬT CHỨNG & ĐÓNG NẮP THÙNG (0.0s - 3.4s)
+      // ==========================================
+
+      // 1. Scene Entrance (Rise Transition)
+      tl.fromTo(
+        "#scene-s18",
+        { y: 36, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.5, ease: "power3.out" },
+        0.05
+      );
+
+      // 2. Thùng hàng xuất hiện vững chãi (Không xung đột CSS transform)
+      tl.fromTo(
+        "#evidence-box-group",
+        { scale: 0.9, opacity: 0, y: 40 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.55, ease: "power3.out" },
+        0.15
+      );
+
+      // 3. Vật chứng rơi vào trong thùng carton
+      // Dây điện rơi xuống và thu nhỏ lọt vào trong thùng
+      tl.to(
+        "#wire-item",
+        {
+          y: 280,
+          scale: 0.35,
+          opacity: 0,
+          rotation: 22,
+          duration: 0.65,
+          ease: "power2.in",
+        },
+        0.45
+      );
+
+      // Cuộn băng keo rơi tiếp theo sau 0.15s
+      tl.to(
+        "#tape-item",
+        {
+          y: 280,
+          scale: 0.35,
+          opacity: 0,
+          rotation: -18,
+          duration: 0.65,
+          ease: "power2.in",
+        },
+        0.6
+      );
+
+      // 4. Label 1: "PHI TANG HUNG KHÍ" xuất hiện tại t = 1.23s (đúng 148860ms)
+      tl.fromTo(
+        "#label-evidence",
+        { y: 24, opacity: 0, scale: 0.96 },
+        { y: 0, opacity: 1, scale: 1, duration: 0.45, ease: "power3.out" },
+        1.23
+      );
+
+      // 5. Nắp thùng carton đóng gập lại kín (t = 1.35s - 1.8s)
+      tl.to(
+        "#flap-left",
+        {
+          rotation: 0,
+          duration: 0.45,
+          ease: "power3.inOut",
+        },
+        1.35
+      );
+      tl.to(
+        "#flap-right",
+        {
+          rotation: 0,
+          duration: 0.45,
+          ease: "power3.inOut",
+        },
+        1.45
+      );
+
+      // 6. Dải băng dính cam dán niêm phong thùng (t = 1.85s - 2.25s)
+      tl.fromTo(
+        "#box-tape",
+        { scaleY: 0, opacity: 1, transformOrigin: "240px 90px" },
+        { scaleY: 1, opacity: 1, duration: 0.4, ease: "power2.out" },
+        1.85
+      );
+
+      // 7. Đóng mộc "ĐÃ PHI TANG" lên thùng (t = 2.2s)
+      tl.fromTo(
+        "#box-stamp",
+        { scale: 2.0, opacity: 0, rotation: -16 },
+        { scale: 1, opacity: 1, rotation: -8, duration: 0.35, ease: "power4.out" },
+        2.2
+      );
+
+      // 8. Label 1 ẩn đi tại t = 3.15s (holdMs = 2200ms -> kết thúc ~3.43s)
+      tl.to(
+        "#label-evidence",
+        {
+          opacity: 0,
+          y: -16,
+          autoAlpha: 0,
+          duration: 0.28,
+          ease: "power2.in",
+        },
+        3.15
+      );
+
+      // ==========================================
+      // GIAI ĐOẠN 2: MŨI TÊN & RỜI KHỎI HIỆN TRƯỜNG (3.25s - 5.29s)
+      // ==========================================
+
+      // 9. Thùng hàng trượt sang trái, mờ dần làm nền
+      tl.to(
+        "#evidence-box-group",
+        {
+          x: -160,
+          opacity: 0.25,
+          scale: 0.88,
+          duration: 0.8,
+          ease: "power2.inOut",
+        },
+        3.25
+      );
+
+      // 10. Kích hoạt cụm Tẩu thoát (Phase 2)
+      tl.to(
+        "#escape-group",
+        {
+          opacity: 1,
+          duration: 0.35,
+          ease: "power1.out",
+        },
+        3.35
+      );
+
+      // 11. Mũi tên cam vẽ vút sang phải
+      tl.fromTo(
+        "#escape-arrow-path",
+        { scaleX: 0, transformOrigin: "320px 340px" },
+        { scaleX: 1, duration: 0.5, ease: "power3.out" },
+        3.45
+      );
+      tl.fromTo(
+        "#escape-arrow-head",
+        { x: -100, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.35, ease: "power3.out" },
+        3.7
+      );
+
+      // 12. Bóng người lao nhanh về phía mép phải khung hình
+      tl.fromTo(
+        "#escape-figure",
+        { x: -60, opacity: 0 },
+        { x: 260, opacity: 1, duration: 1.45, ease: "power2.inOut" },
+        3.5
+      );
+
+      // 13. Label 2: "RỜI HIỆN TRƯỜNG" xuất hiện tại t = 3.78s (đúng 151410ms)
+      tl.fromTo(
+        "#label-escape",
+        { y: 24, opacity: 0, scale: 0.96 },
+        { y: 0, opacity: 1, scale: 1, duration: 0.45, ease: "power3.out" },
+        3.78
+      );
+
+      // 14. Camera Rig pan sang phải (dịch chuyển nội dung sân khấu sang trái nhẹ)
+      tl.to(
+        "#camera-rig",
+        {
+          x: -50,
+          duration: 3.29,
+          ease: "none",
+        },
+        2.0
+      );
+
+      // Đăng ký timeline chính thức cho HyperFrames
+      window.__timelines["scene-s18"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

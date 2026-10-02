@@ -1,0 +1,637 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap">
+      <style>
+    /* hf-safe-colors (tất định từ style-tokens.json) */
+    .hf-text-ink { color: #141414; }
+    .hf-text-light { color: #F7F4EC; }
+    .hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+    .hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+    .hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+    .hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      padding: 0;
+      width: 1080px;
+      height: 1920px;
+      overflow: hidden;
+      background-color: #E7E3D9;
+      font-family: "Be Vietnam Pro", sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    #root {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+    .clip {
+      position: absolute;
+      inset: 0;
+    }
+
+    /* Style DNA: Background Variant Spotlight (radial vignette tối cho cảnh hệ quả) */
+    .bg-spotlight {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 50% 42%, #E7E3D9 0%, #C9C4B7 50%, #2B2824 82%, #141414 100%);
+      z-index: 1;
+    }
+    .bg-grid {
+      position: absolute;
+      inset: 0;
+      background-size: 84px 84px;
+      background-image: 
+        linear-gradient(to right, rgba(20, 20, 20, 0.18) 1.5px, transparent 1.5px),
+        linear-gradient(to bottom, rgba(20, 20, 20, 0.18) 1.5px, transparent 1.5px);
+      z-index: 2;
+      opacity: 0.65;
+    }
+
+    /* Lớp content chính */
+    .stage-content {
+      position: absolute;
+      inset: 0;
+      z-index: 10;
+    }
+
+    /* Header phân tích điều tra (Safe zone top: 160px) */
+    .scene-header {
+      position: absolute;
+      top: 175px;
+      left: 60px;
+      right: 60px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 20;
+    }
+    .header-badge {
+      background-color: #141414;
+      color: #F7F4EC;
+      padding: 10px 22px;
+      font-weight: 900;
+      font-size: 24px;
+      letter-spacing: 2px;
+      border-left: 6px solid #FF6A1A;
+    }
+    .header-tag {
+      background-color: #F5F0E4;
+      color: #141414;
+      border: 2px solid #141414;
+      padding: 8px 18px;
+      font-weight: 700;
+      font-size: 20px;
+      letter-spacing: 1px;
+    }
+
+    /* Sơ đồ nấc thang sụp đổ (Diagram & Flow) */
+    .steps-container {
+      position: absolute;
+      top: 265px;
+      left: 60px;
+      width: 960px;
+      height: 535px;
+      z-index: 15;
+    }
+    
+    /* Đường SVG kết nối kỹ thuật phía sau thẻ */
+    .connector-svg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 1;
+    }
+    .connector-svg path {
+      fill: none;
+      stroke: #141414;
+      stroke-width: 4px;
+      stroke-dasharray: 8 8;
+    }
+
+    /* Bậc thang: dạng phiến card kỹ thuật có bóng nhị phân */
+    .step-card {
+      position: absolute;
+      width: 420px;
+      height: 96px;
+      background-color: #F5F0E4;
+      border: 3.5px solid #141414;
+      box-shadow: 7px 7px 0px #141414;
+      padding: 14px 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      transform-origin: 50% 50%;
+      z-index: 5;
+    }
+    .step-num {
+      font-size: 16px;
+      font-weight: 900;
+      color: #141414;
+      letter-spacing: 1.5px;
+      margin-bottom: 3px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .step-title {
+      font-size: 26px;
+      font-weight: 900;
+      color: #141414;
+      line-height: 1.15;
+    }
+
+    /* Vị trí cụ thể của 4 bậc thang (so le nhịp nhàng) */
+    #step-1 { top: 20px;  left: 150px; }
+    #step-2 { top: 150px; left: 500px; }
+    #step-3 { top: 280px; left: 150px; }
+    #step-4 { top: 410px; left: 500px; }
+
+    /* Con trỏ định vị bước chân (đặt ngoài mép card, không che chữ) */
+    .step-pointer {
+      position: absolute;
+      width: 60px;
+      height: 60px;
+      background-color: #FF6A1A;
+      border: 3.5px solid #141414;
+      border-radius: 50%;
+      box-shadow: 4px 4px 0px #141414;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #141414;
+      font-size: 26px;
+      font-weight: 900;
+      z-index: 10;
+      transform-origin: 50% 50%;
+      pointer-events: none;
+      top: 0;
+      left: 0;
+    }
+    .pointer-icon {
+      margin-left: 3px;
+      line-height: 1;
+    }
+
+    /* Overlay 1: Label "ĐI THÊM MỘT BƯỚC" (atMs: 2.14s) */
+    .label-wrapper {
+      position: absolute;
+      top: 830px;
+      left: 60px;
+      right: 60px;
+      display: flex;
+      justify-content: center;
+      z-index: 30;
+      transform-origin: 50% 50%;
+    }
+    .label-badge {
+      background-color: #FF6A1A;
+      color: #141414;
+      border: 4px solid #141414;
+      box-shadow: 8px 8px 0px #141414;
+      padding: 16px 38px;
+      font-size: 38px;
+      font-weight: 900;
+      letter-spacing: 2px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .label-arrow {
+      font-size: 36px;
+      line-height: 1;
+    }
+
+    /* Khung song sắt dập xuống (Prison Bars) */
+    .jail-bars-assembly {
+      position: absolute;
+      top: 230px;
+      left: 50px;
+      right: 50px;
+      height: 750px;
+      z-index: 25;
+      pointer-events: none;
+    }
+    .jail-frame {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      justify-content: space-between;
+    }
+    .jail-beam-top, .jail-beam-bottom {
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 38px;
+      background-color: #141414;
+      border: 3px solid #141414;
+      box-shadow: 0 5px 0 rgba(0,0,0,0.4);
+      z-index: 2;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+    }
+    .jail-beam-top { top: 0; }
+    .jail-beam-bottom { bottom: 0; }
+    .beam-rivet {
+      width: 16px;
+      height: 16px;
+      background-color: #FF6A1A;
+      border: 2px solid #141414;
+      border-radius: 50%;
+    }
+    .jail-bar {
+      width: 26px;
+      height: 100%;
+      background: linear-gradient(to right, #141414 0%, #303030 40%, #141414 100%);
+      border-left: 2px solid #3d3d3d;
+      border-right: 2px solid #0a0a0a;
+      box-shadow: 6px 0 10px rgba(0,0,0,0.5);
+    }
+
+    /* Overlay 2: Punch Phrase "KHÔNG THỂ QUAY LẠI" (atMs: 4.24s) */
+    .punch-wrapper {
+      position: absolute;
+      top: 1020px;
+      left: 50px;
+      right: 50px;
+      z-index: 40;
+      transform-origin: 50% 50%;
+      opacity: 0;
+    }
+    .punch-card {
+      background-color: #141414;
+      border: 5px solid #FF6A1A;
+      box-shadow: 12px 12px 0px rgba(20, 20, 20, 0.9);
+      padding: 36px 30px;
+      text-align: center;
+    }
+    .punch-eyebrow {
+      color: #FF6A1A;
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: 3px;
+      margin-bottom: 12px;
+      text-transform: uppercase;
+    }
+    .punch-headline {
+      color: #F7F4EC;
+      font-size: 64px;
+      font-weight: 900;
+      line-height: 1.15;
+      letter-spacing: 1px;
+      margin: 0;
+      text-transform: uppercase;
+    }
+    .punch-subbar {
+      margin-top: 20px;
+      height: 6px;
+      background-color: #FF6A1A;
+      width: 100%;
+    }
+
+    /* Chữ ký thị giác Style DNA: Dải cam mép dưới cùng (fixed, z-index cao nhất) */
+    .bottom-brand-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 10px;
+      background-color: #FF6A1A;
+      z-index: 100;
+    }
+  </style>
+
+  <div id="root" data-composition-id="scene-s41" data-width="1080" data-height="1920" data-duration="6.25">
+    
+    <!-- Shot S41-1 (startMs: 331580, endMs: 337830 -> 6.25s) -->
+    <div id="shot-s41-1" class="clip" data-start="0" data-duration="6.25">
+      
+      <!-- Nền Spotlight và Lưới Grid -->
+      <div class="bg-spotlight"></div>
+      <div class="bg-grid"></div>
+
+      <!-- Toàn bộ nội dung đồ họa tương tác -->
+      <div id="scene-stage" class="stage-content">
+        
+        <!-- Header thông tin phân tích -->
+        <div id="scene-header" class="scene-header">
+          <div class="header-badge">HỒ SƠ TỐ TỤNG // GIAI ĐOẠN 04</div>
+          <div class="header-tag">ĐIỂM GÃY BƯỚC ĐI</div>
+        </div>
+
+        <!-- Sơ đồ con đường nấc thang -->
+        <div class="steps-container">
+          <!-- Đường nét đứt nối các bậc -->
+          <svg class="connector-svg" viewBox="0 0 960 535">
+            <path id="path-1-2" d="M 570 68 L 500 198" />
+            <path id="path-2-3" d="M 500 198 L 570 328" />
+            <path id="path-3-4" d="M 570 328 L 500 458" />
+          </svg>
+
+          <!-- Bậc thang 1 -->
+          <div id="step-1" class="step-card">
+            <div class="step-num"><span>▪</span> CƠ HỘI 01 // BƯỚC ĐẦU</div>
+            <div class="step-title">DỪNG LẠI TẠI CHỖ</div>
+          </div>
+
+          <!-- Bậc thang 2 -->
+          <div id="step-2" class="step-card">
+            <div class="step-num"><span>▪</span> CƠ HỘI 02 // CÂN NHẮC</div>
+            <div class="step-title">THƯƠNG LƯỢNG RÚT</div>
+          </div>
+
+          <!-- Bậc thang 3 -->
+          <div id="step-3" class="step-card">
+            <div class="step-num"><span>▪</span> CƠ HỘI 03 // ĐIỂM GÃY</div>
+            <div class="step-title">QUAY ĐẦU TỰ THÚ</div>
+          </div>
+
+          <!-- Bậc thang 4 -->
+          <div id="step-4" class="step-card">
+            <div class="step-num"><span>▪</span> CƠ HỘI CUỐI // ĐƯỜNG CÙNG</div>
+            <div class="step-title">NGĂN CHẶN HẬU QUẢ</div>
+          </div>
+
+          <!-- Con trỏ bước chân (đặt bên ngoài lề card, không che khuất chữ) -->
+          <div id="tracker" class="step-pointer">
+            <span class="pointer-icon">▶</span>
+          </div>
+        </div>
+
+        <!-- Overlay 1: Label "ĐI THÊM MỘT BƯỚC" (atMs: 333720 -> relative 2.14s) -->
+        <div id="overlay-label" class="label-wrapper">
+          <div class="label-badge">
+            <span class="label-arrow">▶</span>
+            <span>ĐI THÊM MỘT BƯỚC</span>
+          </div>
+        </div>
+
+        <!-- Khung song sắt nhà tù sập xuống -->
+        <div id="jail-bars" class="jail-bars-assembly">
+          <div class="jail-frame">
+            <div class="jail-beam-top">
+              <div class="beam-rivet"></div>
+              <div class="beam-rivet"></div>
+              <div class="beam-rivet"></div>
+              <div class="beam-rivet"></div>
+              <div class="beam-rivet"></div>
+              <div class="beam-rivet"></div>
+              <div class="beam-rivet"></div>
+              <div class="beam-rivet"></div>
+            </div>
+            <div class="jail-bar"></div>
+            <div class="jail-bar"></div>
+            <div class="jail-bar"></div>
+            <div class="jail-bar"></div>
+            <div class="jail-bar"></div>
+            <div class="jail-bar"></div>
+            <div class="jail-bar"></div>
+            <div class="jail-bar"></div>
+            <div class="jail-bar"></div>
+            <div class="jail-beam-bottom">
+              <div class="beam-rivet"></div>
+              <div class="beam-rivet"></div>
+              <div class="beam-rivet"></div>
+              <div class="beam-rivet"></div>
+              <div class="beam-rivet"></div>
+              <div class="beam-rivet"></div>
+              <div class="beam-rivet"></div>
+              <div class="beam-rivet"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Overlay 2: Punch Phrase "KHÔNG THỂ QUAY LẠI" (atMs: 335820 -> relative 4.24s) -->
+        <div id="overlay-punch" class="punch-wrapper">
+          <div class="punch-card">
+            <div class="punch-eyebrow">KẾT CỤC TẤT YẾU // CỬA ĐÃ KHÓA</div>
+            <h1 class="punch-headline">KHÔNG THỂ QUAY LẠI</h1>
+            <div class="punch-subbar"></div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Dải cam đáy khung hình (Visual Brand Signature) -->
+      <div class="bottom-brand-bar"></div>
+
+    </div>
+  </div>
+
+  <script>
+    // Đăng ký đúng 1 timeline gốc PAUSED trên window.__timelines["scene-s41"]
+    const tl = gsap.timeline({ paused: true });
+
+    // Khởi tạo trạng thái ban đầu của các phần tử (không xung đột CSS transform)
+    gsap.set("#scene-header", { opacity: 0, y: -30 });
+    gsap.set(".step-card", { opacity: 0, scale: 0.85 });
+    gsap.set(".connector-svg path", { opacity: 0 });
+    gsap.set("#tracker", { opacity: 0, scale: 0, x: 65, y: 38 });
+    gsap.set("#overlay-label", { opacity: 0, scale: 0.6, y: 30 });
+    gsap.set("#jail-bars", { y: -1100 });
+    gsap.set("#overlay-punch", { opacity: 0, scale: 0.85, y: 40 });
+
+    // ==========================================
+    // PHASE 1: ENTRANCE & ESTABLISHING (0.0s - 1.2s)
+    // ==========================================
+    // Header xuất hiện
+    tl.to("#scene-header", {
+      opacity: 1,
+      y: 0,
+      duration: 0.45,
+      ease: "power3.out"
+    }, 0.1);
+
+    // 4 bậc thang stagger vào vị trí
+    tl.to(".step-card", {
+      opacity: 1,
+      scale: 1,
+      duration: 0.5,
+      stagger: 0.1,
+      ease: "power3.out"
+    }, 0.25);
+
+    // Đường line kết nối hiển thị phía sau
+    tl.to(".connector-svg path", {
+      opacity: 0.8,
+      duration: 0.4,
+      ease: "power2.out"
+    }, 0.55);
+
+    // Con trỏ định vị bước chân xuất hiện bên ngoài Bậc 1 (không đè chữ)
+    tl.to("#tracker", {
+      opacity: 1,
+      scale: 1,
+      duration: 0.35,
+      ease: "power3.out"
+    }, 0.65);
+
+    // ==========================================
+    // PHASE 2: ĐI THÊM BƯỚC & NẤC THANG SỤP ĐỔ (1.2s - 3.4s)
+    // ==========================================
+    
+    // Nhảy sang Bậc 2: thu nhỏ thoát khỏi Bậc 1 và pop tại Bậc 2 (tránh cắt ngang text)
+    tl.to("#tracker", {
+      scale: 0,
+      opacity: 0,
+      duration: 0.12,
+      ease: "power2.in"
+    }, 1.20);
+    tl.set("#tracker", { x: 415, y: 168 }, 1.33);
+    tl.to("#tracker", {
+      scale: 1,
+      opacity: 1,
+      duration: 0.22,
+      ease: "power3.out"
+    }, 1.34);
+
+    // Bậc 1 sụp đổ (shatter and drop down)
+    tl.to("#step-1", {
+      y: 220,
+      rotation: -18,
+      opacity: 0,
+      duration: 0.42,
+      ease: "power2.in"
+    }, 1.45);
+    tl.to("#path-1-2", { opacity: 0, duration: 0.2 }, 1.45);
+
+    // Nhảy sang Bậc 3: thu nhỏ và pop tại lề ngoài Bậc 3
+    tl.to("#tracker", {
+      scale: 0,
+      opacity: 0,
+      duration: 0.12,
+      ease: "power2.in"
+    }, 1.80);
+    tl.set("#tracker", { x: 65, y: 298 }, 1.93);
+    tl.to("#tracker", {
+      scale: 1,
+      opacity: 1,
+      duration: 0.22,
+      ease: "power3.out"
+    }, 1.94);
+
+    // Bậc 2 sụp đổ
+    tl.to("#step-2", {
+      y: 230,
+      rotation: 20,
+      opacity: 0,
+      duration: 0.42,
+      ease: "power2.in"
+    }, 2.05);
+    tl.to("#path-2-3", { opacity: 0, duration: 0.2 }, 2.05);
+
+    // OVERLAY 1: "ĐI THÊM MỘT BƯỚC" (atMs: 2.14s)
+    tl.to("#overlay-label", {
+      opacity: 1,
+      scale: 1,
+      y: 0,
+      duration: 0.36,
+      ease: "power3.out"
+    }, 2.14);
+
+    // Nhảy sang Bậc 4: thu nhỏ và pop tại lề ngoài Bậc 4
+    tl.to("#tracker", {
+      scale: 0,
+      opacity: 0,
+      duration: 0.12,
+      ease: "power2.in"
+    }, 2.60);
+    tl.set("#tracker", { x: 415, y: 428 }, 2.73);
+    tl.to("#tracker", {
+      scale: 1,
+      opacity: 1,
+      duration: 0.22,
+      ease: "power3.out"
+    }, 2.74);
+
+    // Bậc 3 sụp đổ
+    tl.to("#step-3", {
+      y: 240,
+      rotation: -24,
+      opacity: 0,
+      duration: 0.42,
+      ease: "power2.in"
+    }, 2.85);
+    tl.to("#path-3-4", { opacity: 0, duration: 0.2 }, 2.85);
+
+    // ==========================================
+    // PHASE 3: SỤP ĐỔ TOÀN BỘ & SONG SẮT DẬP XUỐNG (3.35s - 4.24s)
+    // ==========================================
+    
+    // Bậc 4 cảnh báo chuyển cam rồi sụp nốt (không còn đường lui)
+    tl.to("#step-4", {
+      backgroundColor: "#FF6A1A",
+      duration: 0.25,
+      ease: "power1.in"
+    }, 3.35);
+
+    tl.to("#step-4", {
+      y: 260,
+      rotation: 28,
+      opacity: 0,
+      duration: 0.45,
+      ease: "power2.in"
+    }, 3.65);
+
+    // Con trỏ hẫng chân rơi xuống vực thẳm
+    tl.to("#tracker", {
+      y: 650,
+      opacity: 0,
+      duration: 0.35,
+      ease: "power2.in"
+    }, 3.70);
+
+    // Overlay 1 rút đi nhường chỗ cho kết cục dập xuống
+    tl.to("#overlay-label", {
+      opacity: 0,
+      scale: 0.9,
+      duration: 0.25,
+      ease: "power2.in"
+    }, 3.85);
+
+    // SONG SẮT NHÀ TÙ DẬP SẬP XUỐNG (3.92s - 4.18s)
+    tl.to("#jail-bars", {
+      y: 0,
+      duration: 0.26,
+      ease: "power4.in"
+    }, 3.92);
+
+    // Rung chấn va chạm mạnh khi song sắt chạm đáy (chuỗi fromTo tường minh, hoàn toàn tất định)
+    tl.fromTo("#scene-stage", { y: 0 }, { y: 18, duration: 0.05, ease: "power2.out" }, 4.18);
+    tl.fromTo("#scene-stage", { y: 18 }, { y: -12, duration: 0.05, ease: "power1.inOut" }, 4.23);
+    tl.fromTo("#scene-stage", { y: -12 }, { y: 7, duration: 0.04, ease: "power1.inOut" }, 4.28);
+    tl.fromTo("#scene-stage", { y: 7 }, { y: -3, duration: 0.04, ease: "power1.inOut" }, 4.32);
+    tl.fromTo("#scene-stage", { y: -3 }, { y: 0, duration: 0.04, ease: "power1.out" }, 4.36);
+
+    // ==========================================
+    // PHASE 4: PUNCH PHRASE "KHÔNG THỂ QUAY LẠI" (4.24s - 6.25s)
+    // ==========================================
+    tl.to("#overlay-punch", {
+      opacity: 1,
+      scale: 1,
+      y: 0,
+      duration: 0.35,
+      ease: "power3.out"
+    }, 4.24);
+
+    // Đăng ký timeline cho HyperFrames seek engine
+    window.__timelines = window.__timelines || {};
+    window.__timelines["scene-s41"] = tl;
+  </script>
+
+    </template>
+  </body>
+</html>

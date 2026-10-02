@@ -1,0 +1,671 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap"
+    />
+      <style>
+/* hf-safe-colors (tất định từ style-tokens.json) */
+.hf-text-ink { color: #141414; }
+.hf-text-light { color: #F7F4EC; }
+.hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+.hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+.hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+.hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+      :root {
+        --bg-card: #f5f0e4;
+        --bg-paper: #e7e3d9;
+        --ink: #141414;
+        --orange: #ff6a1a;
+        --on-dark: #f7f4ec;
+        --grid-line: rgba(20, 20, 20, 0.32);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: var(--bg-card);
+        color: var(--ink);
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: var(--bg-card);
+      }
+
+      .clip {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+      }
+
+      .camera-frame {
+        position: absolute;
+        inset: 0;
+        transform-origin: 540px 700px;
+        will-change: transform;
+      }
+
+      /* Fixed brand bottom bar */
+      #bottom-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 10px;
+        background-color: var(--orange);
+        z-index: 100;
+      }
+
+      /* Scene Header Tracker */
+      #header-block {
+        position: absolute;
+        top: 175px;
+        left: 60px;
+        right: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-bottom: 2px solid var(--ink);
+        padding-bottom: 16px;
+        z-index: 10;
+      }
+
+      .header-pill {
+        background-color: var(--ink);
+        color: var(--on-dark);
+        font-size: 18px;
+        font-weight: 900;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        padding: 8px 16px;
+        border-radius: 4px;
+      }
+
+      .header-meta {
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--ink);
+        letter-spacing: 1px;
+        text-transform: uppercase;
+      }
+
+      /* SVG Diagram Wiring */
+      #diagram-svg {
+        position: absolute;
+        inset: 0;
+        width: 1080px;
+        height: 1920px;
+        pointer-events: none;
+        z-index: 2;
+      }
+
+      .flow-path {
+        fill: none;
+        stroke: var(--ink);
+        stroke-width: 4px;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
+      .flow-path-sub {
+        fill: none;
+        stroke: var(--ink);
+        stroke-width: 3px;
+        stroke-dasharray: 6 6;
+      }
+
+      /* Level 1: Root Node */
+      #root-card {
+        position: absolute;
+        top: 300px;
+        left: 290px;
+        width: 500px;
+        height: 130px;
+        background-color: var(--ink);
+        border: 3px solid var(--ink);
+        border-top: 8px solid var(--orange);
+        box-shadow: 8px 8px 0px rgba(20, 20, 20, 0.15);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        padding: 16px;
+        z-index: 10;
+        transform-origin: 50% 50%;
+      }
+
+      .root-tag {
+        display: inline-block;
+        background-color: var(--orange);
+        color: var(--ink);
+        font-size: 15px;
+        font-weight: 900;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        padding: 4px 10px;
+        border-radius: 2px;
+        margin-bottom: 8px;
+      }
+
+      .root-title {
+        color: var(--on-dark);
+        font-size: 34px;
+        font-weight: 900;
+        letter-spacing: 1px;
+        margin: 0;
+        text-transform: uppercase;
+      }
+
+      /* Level 2: Branch Nodes */
+      .branch-node {
+        position: absolute;
+        top: 590px;
+        width: 290px;
+        height: 135px;
+        background-color: var(--bg-paper);
+        border: 3px solid var(--ink);
+        box-shadow: 6px 6px 0px rgba(20, 20, 20, 0.12);
+        padding: 14px 16px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        z-index: 10;
+        transform-origin: 50% 0%;
+      }
+
+      #node-left {
+        left: 60px;
+      }
+
+      #node-center {
+        left: 395px;
+      }
+
+      #node-right {
+        left: 730px;
+      }
+
+      .node-badge {
+        display: inline-block;
+        align-self: flex-start;
+        background-color: var(--orange);
+        color: var(--ink);
+        font-size: 14px;
+        font-weight: 900;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        padding: 3px 8px;
+        border-radius: 2px;
+      }
+
+      .node-title {
+        font-size: 22px;
+        font-weight: 900;
+        color: var(--ink);
+        margin: 4px 0 0 0;
+        text-transform: uppercase;
+        line-height: 1.25;
+      }
+
+      .node-desc {
+        font-size: 15px;
+        font-weight: 700;
+        color: var(--ink);
+        margin: 0;
+        opacity: 0.85;
+      }
+
+      /* Level 3: Consolidated Matrix Card */
+      #matrix-card {
+        position: absolute;
+        top: 810px;
+        left: 60px;
+        width: 960px;
+        height: 175px;
+        background-color: var(--bg-paper);
+        border: 3px solid var(--ink);
+        box-shadow: 6px 6px 0px rgba(20, 20, 20, 0.12);
+        padding: 20px 24px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        z-index: 10;
+      }
+
+      .matrix-info {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        max-width: 680px;
+      }
+
+      .matrix-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .matrix-tag {
+        background-color: var(--ink);
+        color: var(--orange);
+        font-size: 15px;
+        font-weight: 900;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        padding: 4px 10px;
+        border-radius: 2px;
+      }
+
+      .matrix-title {
+        font-size: 26px;
+        font-weight: 900;
+        color: var(--ink);
+        text-transform: uppercase;
+        margin: 0;
+      }
+
+      .matrix-pills {
+        display: flex;
+        gap: 10px;
+      }
+
+      .matrix-item {
+        background-color: var(--ink);
+        color: var(--on-dark);
+        font-size: 15px;
+        font-weight: 700;
+        padding: 8px 14px;
+        border-radius: 4px;
+        text-transform: uppercase;
+      }
+
+      /* Icon Overlay "rise" */
+      #icon-rise-wrapper {
+        position: relative;
+        width: 120px;
+        height: 120px;
+        background-color: var(--ink);
+        border: 3px solid var(--orange);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 4px 4px 0px rgba(20, 20, 20, 0.2);
+        transform-origin: 50% 50%;
+        flex-shrink: 0;
+      }
+
+      #icon-rise-svg {
+        width: 64px;
+        height: 64px;
+      }
+
+      .rise-path {
+        fill: none;
+        stroke: var(--orange);
+        stroke-width: 5;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
+      .rise-head {
+        fill: var(--orange);
+      }
+
+      .icon-label {
+        font-size: 11px;
+        font-weight: 900;
+        color: var(--on-dark);
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        margin-top: 4px;
+      }
+
+      /* Punch-Phrase Overlay Card */
+      #punch-card {
+        position: absolute;
+        top: 1040px;
+        left: 60px;
+        width: 960px;
+        height: 220px;
+        background-color: var(--ink);
+        border: 3px solid var(--ink);
+        box-shadow: 10px 10px 0px rgba(255, 106, 26, 0.35);
+        padding: 28px 36px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        z-index: 20;
+        transform-origin: 50% 50%;
+      }
+
+      #punch-accent-bar {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 8px;
+        background-color: var(--orange);
+        transform-origin: 0% 50%;
+      }
+
+      .punch-kicker {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 8px;
+      }
+
+      .punch-badge {
+        background-color: var(--orange);
+        color: var(--ink);
+        font-size: 16px;
+        font-weight: 900;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        padding: 4px 10px;
+        border-radius: 2px;
+      }
+
+      .punch-label {
+        color: var(--orange);
+        font-size: 18px;
+        font-weight: 700;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+      }
+
+      #punch-title {
+        color: var(--on-dark);
+        font-size: 64px;
+        font-weight: 900;
+        line-height: 1.15;
+        letter-spacing: 1px;
+        margin: 0;
+        text-transform: uppercase;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s13"
+      data-width="1080"
+      data-height="1920"
+      data-duration="5.47"
+    >
+      <div id="scene-clip" class="clip" data-start="0" data-duration="5.47">
+        <div class="camera-frame">
+          <!-- Header Tracker -->
+          <div id="header-block">
+            <div class="header-pill">GIAI ĐOẠN 02 // CHUỖI NHÂN QUẢ</div>
+            <div class="header-meta">CƠ CHẾ PHÂN NHÁNH</div>
+          </div>
+
+          <!-- SVG Flow Connections -->
+          <svg id="diagram-svg" viewBox="0 0 1080 1920">
+            <!-- Level 1 to Level 2 connectors -->
+            <path
+              id="path-left"
+              class="flow-path"
+              d="M 540 430 C 540 510, 205 520, 205 590"
+            />
+            <path
+              id="path-center"
+              class="flow-path"
+              d="M 540 430 L 540 590"
+            />
+            <path
+              id="path-right"
+              class="flow-path"
+              d="M 540 430 C 540 510, 875 520, 875 590"
+            />
+
+            <!-- Level 2 to Level 3 connectors -->
+            <path
+              id="path-sub-left"
+              class="flow-path-sub flow-path"
+              d="M 205 725 C 205 765, 360 770, 360 810"
+            />
+            <path
+              id="path-sub-center"
+              class="flow-path-sub flow-path"
+              d="M 540 725 L 540 810"
+            />
+            <path
+              id="path-sub-right"
+              class="flow-path-sub flow-path"
+              d="M 875 725 C 875 765, 720 770, 720 810"
+            />
+          </svg>
+
+          <!-- Level 1: Root Node -->
+          <div id="root-card">
+            <span class="root-tag">NÚT THẮT KHỞI ĐIỂM</span>
+            <h1 class="root-title">BÀI TOÁN NỢ CŨ</h1>
+          </div>
+
+          <!-- Level 2: Branch Nodes -->
+          <div id="node-left" class="branch-node">
+            <span class="node-badge">NHÁNH 01</span>
+            <div class="node-title">ĐẢO NỢ KỸ THUẬT</div>
+            <p class="node-desc">Tạo cam kết tín dụng mới</p>
+          </div>
+
+          <div id="node-center" class="branch-node">
+            <span class="node-badge">NHÁNH 02</span>
+            <div class="node-title">KHOẢN VAY MỚI</div>
+            <p class="node-desc">Kéo giãn áp lực thanh khoản</p>
+          </div>
+
+          <div id="node-right" class="branch-node">
+            <span class="node-badge">NHÁNH 03</span>
+            <div class="node-title">BẢO LÃNH CHÉO</div>
+            <p class="node-desc">Mở rộng chuỗi mắc xích</p>
+          </div>
+
+          <!-- Level 3: Consolidated Matrix Card -->
+          <div id="matrix-card">
+            <div class="matrix-info">
+              <div class="matrix-header">
+                <span class="matrix-tag">HỆ LUỴ TĂNG KÉP</span>
+                <h2 class="matrix-title">MA TRẬN PHÂN NHÁNH</h2>
+              </div>
+              <div class="matrix-pills">
+                <div class="matrix-item">QUY MÔ MỞ RỘNG</div>
+                <div class="matrix-item">RỦI RO TÍCH TỤ</div>
+                <div class="matrix-item">SAI PHẠM TINH VI</div>
+              </div>
+            </div>
+
+            <!-- Icon vocabulary "rise" overlay (at 1.37s) -->
+            <div id="icon-rise-wrapper">
+              <svg
+                id="icon-rise-svg"
+                viewBox="0 0 100 100"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <!-- Baseline and tick -->
+                <line
+                  x1="15"
+                  y1="85"
+                  x2="85"
+                  y2="85"
+                  stroke="rgba(247, 244, 236, 0.4)"
+                  stroke-width="3"
+                />
+                <!-- Surging trendline -->
+                <path
+                  id="rise-line"
+                  class="rise-path"
+                  d="M 20 78 L 42 58 L 58 66 L 80 26"
+                />
+                <!-- Arrowhead -->
+                <polygon
+                  id="rise-head"
+                  class="rise-head"
+                  points="70,22 84,24 80,38"
+                />
+              </svg>
+              <span class="icon-label">TĂNG VỌT</span>
+            </div>
+          </div>
+
+          <!-- Punch-Phrase Overlay Card (at 2.38s) -->
+          <div id="punch-card">
+            <div id="punch-accent-bar"></div>
+            <div class="punch-kicker">
+              <span class="punch-badge">HỆ QUẢ TẤT YẾU</span>
+              <span class="punch-label">VÒNG XOÁY SAI PHẠM MỚI</span>
+            </div>
+            <h2 id="punch-title">NỢ CŨ ĐẺ NỢ MỚI</h2>
+          </div>
+        </div>
+
+        <!-- Fixed bottom brand line -->
+        <div id="bottom-bar"></div>
+      </div>
+    </div>
+
+    <script>
+      const tl = gsap.timeline({ paused: true });
+
+      // Measure all SVG paths to prepare stroke-draw animation
+      const paths = document.querySelectorAll(".flow-path");
+      paths.forEach(function (p) {
+        const len = Math.ceil(p.getTotalLength()) || 400;
+        p.style.strokeDasharray = len;
+        p.style.strokeDashoffset = len;
+      });
+
+      const riseLine = document.querySelector("#rise-line");
+      if (riseLine) {
+        const rLen = Math.ceil(riseLine.getTotalLength()) || 100;
+        riseLine.style.strokeDasharray = rLen;
+        riseLine.style.strokeDashoffset = rLen;
+      }
+
+      // Camera slow zoom-in
+      tl.fromTo(
+        ".camera-frame",
+        { scale: 1 },
+        { scale: 1.05, duration: 5.47, ease: "none" },
+        0
+      );
+
+      // Header block entrance
+      tl.fromTo(
+        "#header-block",
+        { opacity: 0, y: -24 },
+        { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" },
+        0.1
+      );
+
+      // Wobble-drop entrance for root card (0.15s - 0.75s)
+      tl.fromTo(
+        "#root-card",
+        { y: -180, scale: 0.85, opacity: 0, rotation: -6 },
+        { y: 0, scale: 1, opacity: 1, rotation: 0, duration: 0.55, ease: "power3.out" },
+        0.15
+      );
+      // Subtle organic settle wobble
+      tl.to("#root-card", { rotation: 2.5, duration: 0.12, ease: "sine.inOut" }, 0.55);
+      tl.to("#root-card", { rotation: 0, duration: 0.18, ease: "sine.out" }, 0.67);
+
+      // Primary branch lines self-draw (0.65s - 1.25s)
+      tl.to("#path-left", { strokeDashoffset: 0, duration: 0.5, ease: "power2.out" }, 0.65);
+      tl.to("#path-center", { strokeDashoffset: 0, duration: 0.4, ease: "power2.out" }, 0.72);
+      tl.to("#path-right", { strokeDashoffset: 0, duration: 0.5, ease: "power2.out" }, 0.78);
+
+      // Level 2 branch cards pop in (0.95s - 1.35s)
+      tl.fromTo(
+        ".branch-node",
+        { scale: 0, opacity: 0, y: -16 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.4, stagger: 0.1, ease: "power3.out" },
+        0.95
+      );
+
+      // Sub-connectors self-draw down to matrix card (1.2s - 1.6s)
+      tl.to("#path-sub-left", { strokeDashoffset: 0, duration: 0.4, ease: "power2.out" }, 1.2);
+      tl.to("#path-sub-center", { strokeDashoffset: 0, duration: 0.35, ease: "power2.out" }, 1.25);
+      tl.to("#path-sub-right", { strokeDashoffset: 0, duration: 0.4, ease: "power2.out" }, 1.3);
+
+      // Level 3 Matrix card appearance (1.35s)
+      tl.fromTo(
+        "#matrix-card",
+        { opacity: 0, y: 25 },
+        { opacity: 1, y: 0, duration: 0.45, ease: "power3.out" },
+        1.35
+      );
+
+      // Overlay 1: Icon "rise" entrance (specified at 106930ms -> 1.37s)
+      tl.fromTo(
+        "#icon-rise-wrapper",
+        { scale: 0, opacity: 0, rotation: -12 },
+        { scale: 1, opacity: 1, rotation: 0, duration: 0.4, ease: "power3.out" },
+        1.37
+      );
+      tl.to(
+        "#rise-line",
+        { strokeDashoffset: 0, duration: 0.45, ease: "power2.out" },
+        1.55
+      );
+      tl.fromTo(
+        "#rise-head",
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.2, ease: "power2.out" },
+        1.85
+      );
+
+      // Matrix items stagger pop (1.55s)
+      tl.fromTo(
+        ".matrix-item",
+        { opacity: 0, y: 10 },
+        { opacity: 1, y: 0, duration: 0.3, stagger: 0.08, ease: "power2.out" },
+        1.55
+      );
+
+      // Overlay 2: Punch-phrase "NỢ CŨ ĐẺ NỢ MỚI" entrance (specified at 107940ms -> 2.38s)
+      tl.fromTo(
+        "#punch-card",
+        { scale: 0.88, opacity: 0, y: 40 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.5, ease: "power3.out" },
+        2.38
+      );
+      tl.fromTo(
+        "#punch-accent-bar",
+        { scaleX: 0 },
+        { scaleX: 1, duration: 0.4, ease: "power2.out" },
+        2.52
+      );
+      tl.fromTo(
+        "#punch-title",
+        { opacity: 0, y: 14 },
+        { opacity: 1, y: 0, duration: 0.38, ease: "power2.out" },
+        2.58
+      );
+
+      // Assign timeline to HyperFrames runtime registry
+      window.__timelines = window.__timelines || {};
+      window.__timelines["scene-s13"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

@@ -1,0 +1,501 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap">
+      <style>
+/* hf-safe-colors (tất định từ style-tokens.json) */
+.hf-text-ink { color: #141414; }
+.hf-text-light { color: #F7F4EC; }
+.hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+.hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+.hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+.hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: #E7E3D9;
+      color: #141414;
+      font-family: "Be Vietnam Pro", sans-serif;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    #root {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #E7E3D9;
+    }
+
+    .clip {
+      position: absolute;
+      inset: 0;
+    }
+
+    /* Lưới nền Vox chuẩn 84px */
+    .grid-canvas {
+      position: absolute;
+      inset: 0;
+      background-image: 
+        linear-gradient(to right, rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px),
+        linear-gradient(to bottom, rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px);
+      background-size: 84px 84px;
+      z-index: 1;
+    }
+
+    /* Quản lý Stacking Context chặt chẽ theo lớp hiển thị */
+    #scene-bg {
+      z-index: 10;
+    }
+
+    #scene-label {
+      z-index: 50;
+    }
+
+    #scene-punch {
+      z-index: 60;
+    }
+
+    /* Khung ảnh phong cách cắt dán báo chí / collage */
+    .stage-container {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      perspective: 1400px;
+    }
+
+    .photo-frame {
+      position: relative;
+      width: 1000px;
+      height: 1720px;
+      background-color: #141414;
+      border: 8px solid #141414;
+      box-shadow: 0 24px 60px rgba(20, 20, 20, 0.45);
+      overflow: hidden;
+      transform-origin: center center;
+    }
+
+    .photo-pan-viewport {
+      position: absolute;
+      inset: -40px -140px -40px -40px;
+      overflow: hidden;
+    }
+
+    .photo-asset {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center center;
+      display: block;
+      transform-origin: center center;
+    }
+
+    /* Chi tiết băng dán Washi thủ công ở các góc ảnh */
+    .washi-tape-top-left {
+      position: absolute;
+      top: -18px;
+      left: 40px;
+      width: 160px;
+      height: 44px;
+      background-color: #F5F0E4;
+      border: 2px dashed rgba(20, 20, 20, 0.4);
+      transform: rotate(-4deg);
+      z-index: 5;
+    }
+
+    .washi-tape-bottom-right {
+      position: absolute;
+      bottom: -16px;
+      right: 50px;
+      width: 170px;
+      height: 44px;
+      background-color: #F5F0E4;
+      border: 2px dashed rgba(20, 20, 20, 0.4);
+      transform: rotate(3deg);
+      z-index: 5;
+    }
+
+    /* Dải tem đánh dấu thể loại pháp lý */
+    .editorial-stamp {
+      position: absolute;
+      top: 40px;
+      right: 40px;
+      background-color: #FF6A1A;
+      color: #141414;
+      padding: 10px 22px;
+      font-size: 24px;
+      font-weight: 900;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      box-shadow: 4px 6px 0 #141414;
+      border: 2px solid #141414;
+      z-index: 6;
+      transform: rotate(2deg);
+    }
+
+    /* Vùng chứa Overlays */
+    .overlay-wrapper {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+    }
+
+    /* Label: CHƯA CẦN VÀO TRẠI */
+    .label-container {
+      position: absolute;
+      top: 380px;
+      left: 60px;
+      right: 60px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      transform-origin: top left;
+    }
+
+    .label-badge {
+      display: inline-block;
+      background-color: #FF6A1A;
+      color: #141414;
+      font-size: 26px;
+      font-weight: 900;
+      text-transform: uppercase;
+      padding: 10px 24px;
+      border: 3px solid #141414;
+      box-shadow: 4px 4px 0 #141414;
+      margin-bottom: 12px;
+    }
+
+    .label-card {
+      width: 100%;
+      background-color: #141414;
+      padding: 28px 36px;
+      border-radius: 6px;
+      border-left: 12px solid #FF6A1A;
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.4);
+    }
+
+    .label-headline {
+      font-size: 58px;
+      font-weight: 900;
+      line-height: 1.25;
+      color: #F7F4EC;
+      text-transform: uppercase;
+      letter-spacing: -0.5px;
+    }
+
+    .label-subline {
+      margin-top: 10px;
+      font-size: 24px;
+      font-weight: 700;
+      line-height: 1.35;
+      color: #E7E3D9;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* Punch phrase: 60 THÁNG THỬ THÁCH kèm icon clock */
+    .punch-container {
+      position: absolute;
+      top: 860px;
+      left: 60px;
+      right: 60px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      transform-origin: center center;
+    }
+
+    .punch-card {
+      width: 100%;
+      background-color: #141414;
+      border: 4px solid #141414;
+      border-radius: 12px;
+      box-shadow: 8px 12px 0 #FF6A1A, 0 24px 50px rgba(0, 0, 0, 0.5);
+      padding: 38px 40px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .punch-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 24px;
+      width: 100%;
+      border-bottom: 2px solid rgba(247, 244, 236, 0.2);
+      padding-bottom: 18px;
+    }
+
+    .clock-icon-svg {
+      width: 56px;
+      height: 56px;
+      display: block;
+      flex-shrink: 0;
+    }
+
+    .punch-tagline {
+      font-size: 28px;
+      font-weight: 900;
+      color: #FF6A1A;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .punch-banner-orange {
+      background-color: #FF6A1A;
+      padding: 12px 28px;
+      border: 3px solid #141414;
+      box-shadow: 4px 4px 0 #F7F4EC;
+      margin-bottom: 14px;
+      display: inline-block;
+    }
+
+    .punch-banner-text {
+      font-size: 78px;
+      font-weight: 900;
+      line-height: 1.1;
+      color: #141414;
+      text-transform: uppercase;
+      letter-spacing: -1px;
+    }
+
+    .punch-secondary-text {
+      font-size: 64px;
+      font-weight: 900;
+      line-height: 1.15;
+      color: #F7F4EC;
+      text-transform: uppercase;
+      letter-spacing: -0.5px;
+    }
+
+    /* Thanh cam thương hiệu cố định mép dưới cùng */
+    #brand-bar-bottom {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 16px;
+      background-color: #FF6A1A;
+      z-index: 100;
+    }
+  </style>
+
+  <div
+    id="root"
+    data-composition-id="scene-s28"
+    data-width="1080"
+    data-height="1920"
+    data-duration="11.49"
+  >
+    <!-- Lớp lưới nền giấy đặc trưng Vox -->
+    <div class="grid-canvas"></div>
+
+    <!-- Cảnh 1: Hiển thị ảnh chàng trai với hiệu ứng unfold & pan-left (0s -> 11.49s) -->
+    <section id="scene-bg" class="clip" data-start="0" data-duration="11.49">
+      <div class="stage-container">
+        <div id="photo-frame-target" class="photo-frame">
+          <div class="washi-tape-top-left"></div>
+          <div class="washi-tape-bottom-right"></div>
+          <div class="editorial-stamp">ÁN TREO</div>
+
+          <div class="photo-pan-viewport">
+            <img
+              id="photo-pan-target"
+              class="photo-asset"
+              src="assets/img-10-probation-period-suspended-sentence.jpg"
+              alt="Người chấp hành án treo ngoài cộng đồng"
+            >
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Overlay 1: Label CHƯA CẦN VÀO TRẠI (3.52s -> 5.92s, duration 2.4s) -->
+    <section id="scene-label" class="clip" data-start="3.52" data-duration="2.4">
+      <div class="overlay-wrapper">
+        <div id="label-target" class="label-container">
+          <div class="label-badge">TÒA NHẬN ĐỊNH</div>
+          <div class="label-card">
+            <div class="label-headline">CHƯA CẦN VÀO TRẠI</div>
+            <div class="label-subline">HƯỞNG ÁN TREO TẠI ĐỊA PHƯƠNG</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Overlay 2: Punch-phrase 60 THÁNG THỬ THÁCH (10.68s -> 11.49s, duration 0.81s) -->
+    <section id="scene-punch" class="clip" data-start="10.68" data-duration="0.81">
+      <div class="overlay-wrapper">
+        <div id="punch-target" class="punch-container">
+          <div class="punch-card">
+            <div class="punch-header">
+              <!-- SVG icon clock tự vẽ nét phong cách đồ họa Vox -->
+              <svg class="clock-icon-svg" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle id="clock-rim" cx="32" cy="32" r="26" stroke="#FF6A1A" stroke-width="5" stroke-linecap="round" />
+                <path id="clock-hands" d="M32 18 V32 L42 38" stroke="#F7F4EC" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+              <div class="punch-tagline">THỜI GIAN THỬ THÁCH</div>
+            </div>
+
+            <div class="punch-banner-orange">
+              <div class="punch-banner-text">60 THÁNG</div>
+            </div>
+            <div class="punch-secondary-text">THỬ THÁCH</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Thanh cam cố định mép đáy nhận diện thương hiệu -->
+    <div id="brand-bar-bottom"></div>
+  </div>
+
+  <script>
+    // Chuẩn bị các stroke của icon SVG để sẵn sàng draw animation
+    const clockRim = document.getElementById("clock-rim");
+    const clockHands = document.getElementById("clock-hands");
+    if (clockRim && clockHands) {
+      const rimLen = clockRim.getTotalLength();
+      clockRim.style.strokeDasharray = rimLen;
+      clockRim.style.strokeDashoffset = rimLen;
+
+      const handsLen = clockHands.getTotalLength();
+      clockHands.style.strokeDasharray = handsLen;
+      clockHands.style.strokeDashoffset = handsLen;
+    }
+
+    // Khởi tạo GSAP Timeline chính và duy nhất (seekable & paused)
+    const tl = gsap.timeline({ paused: true });
+
+    // 1. Phối cảnh Unfold cho khung ảnh ở t = 0s
+    tl.fromTo(
+      "#photo-frame-target",
+      {
+        scale: 0.86,
+        rotationX: 18,
+        opacity: 0,
+        transformOrigin: "50% 50%"
+      },
+      {
+        scale: 1,
+        rotationX: 0,
+        opacity: 1,
+        duration: 1.1,
+        ease: "power3.out"
+      },
+      0
+    );
+
+    // 2. Camera Motion: Pan chậm sang trái toàn cảnh từ t = 0s đến 11.49s
+    tl.fromTo(
+      "#photo-pan-target",
+      {
+        x: 60,
+        scale: 1.08
+      },
+      {
+        x: -80,
+        scale: 1.15,
+        duration: 11.49,
+        ease: "none"
+      },
+      0
+    );
+
+    // 3. Overlay 1: Entrance cho Label "CHƯA CẦN VÀO TRẠI" tại 3.52s
+    tl.fromTo(
+      "#label-target",
+      {
+        y: 60,
+        opacity: 0,
+        scale: 0.94
+      },
+      {
+        y: 0,
+        opacity: 1,
+        scale: 1,
+        duration: 0.55,
+        ease: "power3.out"
+      },
+      3.52
+    );
+
+    // Exit mượt mà cho Label trước khi hết thời hạn hold (5.52s -> 5.87s)
+    tl.to(
+      "#label-target",
+      {
+        y: -30,
+        opacity: 0,
+        duration: 0.35,
+        ease: "power2.in"
+      },
+      5.52
+    );
+
+    // 4. Overlay 2: Entrance cho Punch-phrase "60 THÁNG THỬ THÁCH" tại 10.68s
+    tl.fromTo(
+      "#punch-target",
+      {
+        scale: 0.88,
+        y: 45,
+        opacity: 0
+      },
+      {
+        scale: 1,
+        y: 0,
+        opacity: 1,
+        duration: 0.45,
+        ease: "power3.out"
+      },
+      10.68
+    );
+
+    // Vẽ kim và viền đồng hồ bằng hiệu ứng stroke draw
+    if (clockRim && clockHands) {
+      tl.to(
+        "#clock-rim",
+        {
+          strokeDashoffset: 0,
+          duration: 0.45,
+          ease: "power2.out"
+        },
+        10.72
+      );
+      tl.to(
+        "#clock-hands",
+        {
+          strokeDashoffset: 0,
+          duration: 0.4,
+          ease: "power2.out"
+        },
+        10.82
+      );
+    }
+
+    // Đăng ký timeline chính lên window theo hợp đồng HyperFrames
+    window.__timelines = window.__timelines || {};
+    window.__timelines["scene-s28"] = tl;
+  </script>
+
+    </template>
+  </body>
+</html>

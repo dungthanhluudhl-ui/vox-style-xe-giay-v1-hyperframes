@@ -1,0 +1,692 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+/* hf-autofix contrast (tất định, màu palette) */
+.hf-cfix-s21-1 { color: #141414 !important; }
+.hf-cfix-s21-2 { color: #141414 !important; }
+
+/* hf-safe-colors (tất định từ style-tokens.json) */
+.hf-text-ink { color: #141414; }
+.hf-text-light { color: #F7F4EC; }
+.hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+.hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+.hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+.hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background: #E7E3D9;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+      .clip {
+        position: absolute;
+        inset: 0;
+      }
+
+      /* Camera & Canvas Layout */
+      #camera-wrapper {
+        position: absolute;
+        inset: 0;
+        transform-origin: 50% 45%;
+      }
+
+      /* Background Grid (Style Tokens: 84px grid, rgba(20,20,20,0.32)) */
+      .bg-grid {
+        position: absolute;
+        inset: 0;
+        background-color: #E7E3D9;
+        background-image:
+          linear-gradient(rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px),
+          linear-gradient(90deg, rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px);
+        background-size: 84px 84px;
+        background-position: -1.5px -1.5px;
+      }
+
+      /* Fixed Signature Orange Bottom Bar */
+      .signature-orange-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 14px;
+        background: #FF6A1A;
+        z-index: 999;
+      }
+
+      /* Safe Zone Header (y: 180px - 330px) */
+      .header-container {
+        position: absolute;
+        top: 180px;
+        left: 60px;
+        right: 60px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        z-index: 20;
+      }
+      .meta-tag-row {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+      }
+      .badge-category {
+        display: inline-block;
+        background: #141414;
+        color: #F7F4EC;
+        font-size: 20px;
+        font-weight: 900;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        padding: 6px 16px;
+        border-radius: 6px;
+      }
+      .badge-case-id {
+        font-size: 20px;
+        font-weight: 700;
+        color: #141414;
+        letter-spacing: 1.5px;
+      }
+      .main-title {
+        margin: 0;
+        font-size: 58px;
+        font-weight: 900;
+        line-height: 1.2;
+        color: #141414;
+        letter-spacing: -1px;
+        text-transform: uppercase;
+      }
+      .sub-title {
+        margin: 0;
+        font-size: 26px;
+        font-weight: 700;
+        color: #141414;
+        opacity: 0.85;
+      }
+
+      /* Technical Diagram Frame (y: 350px - 1340px) */
+      .diagram-box {
+        position: absolute;
+        top: 360px;
+        left: 60px;
+        width: 960px;
+        height: 980px;
+        background: #F5F0E4;
+        border: 2px solid #141414;
+        box-shadow: 0 16px 40px rgba(20, 20, 20, 0.08);
+        border-radius: 8px;
+        z-index: 10;
+        overflow: hidden;
+      }
+
+      /* Blueprint Grid Inside Card */
+      .diagram-inner-grid {
+        position: absolute;
+        inset: 0;
+        background-image:
+          linear-gradient(rgba(20, 20, 20, 0.12) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(20, 20, 20, 0.12) 1px, transparent 1px);
+        background-size: 42px 42px;
+      }
+
+      /* Corner Technical L-brackets */
+      .corner-mark {
+        position: absolute;
+        width: 22px;
+        height: 22px;
+        border-color: #141414;
+        border-style: solid;
+        pointer-events: none;
+      }
+      .corner-tl { top: 10px; left: 10px; border-width: 3px 0 0 3px; }
+      .corner-tr { top: 10px; right: 10px; border-width: 3px 3px 0 0; }
+      .corner-bl { bottom: 10px; left: 10px; border-width: 0 0 3px 3px; }
+      .corner-br { bottom: 10px; right: 10px; border-width: 0 3px 3px 0; }
+
+      /* Technical SVG Visual Layer */
+      .diagram-svg-canvas {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+      }
+
+      /* Forensic Coordinate Label */
+      .spec-watermark {
+        position: absolute;
+        top: 20px;
+        right: 24px;
+        font-size: 18px;
+        font-weight: 700;
+        letter-spacing: 1px;
+        color: #141414;
+        opacity: 0.6;
+      }
+
+      /* Forensic Overlays Container */
+      .overlays-layer {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+      }
+
+      /* Overlay 1: VẬT CỨNG CÓ CẠNH (atMs: 190780 -> t=1.13s) */
+      #label-hard-object {
+        position: absolute;
+        top: 140px;
+        left: 40px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        opacity: 0;
+        transform-origin: 0% 50%;
+      }
+      .plate-orange-lead {
+        background: #FF6A1A;
+        color: #141414;
+        padding: 10px 20px;
+        border-radius: 6px;
+        font-size: 32px;
+        font-weight: 900;
+        letter-spacing: 0.5px;
+        border: 2px solid #141414;
+        display: inline-block;
+      }
+      .sub-spec-ink {
+        background: #141414;
+        color: #F7F4EC;
+        padding: 4px 14px;
+        border-radius: 4px;
+        font-size: 19px;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        width: fit-content;
+      }
+
+      /* Target Zone: VÙNG MẶT HIỂM YẾU */
+      #label-target-zone {
+        position: absolute;
+        top: 130px;
+        right: 40px;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 6px;
+        opacity: 0;
+        transform-origin: 100% 50%;
+      }
+      .plate-ink-target {
+        background: #141414;
+        color: #F7F4EC;
+        padding: 10px 20px;
+        border-radius: 6px;
+        font-size: 28px;
+        font-weight: 900;
+        letter-spacing: 0.5px;
+        border: 2px solid #FF6A1A;
+      }
+      .tag-vital-zone {
+        background: #FF6A1A;
+        color: #141414;
+        font-size: 18px;
+        font-weight: 900;
+        padding: 4px 12px;
+        border-radius: 4px;
+        width: fit-content;
+      }
+
+      /* Overlay 2: CỰ LY RẤT GẦN (atMs: 194830 -> t=5.18s) */
+      #label-close-range {
+        position: absolute;
+        top: 350px;
+        left: 280px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+        opacity: 0;
+        transform-origin: 50% 50%;
+      }
+      .plate-range-alert {
+        background: #FF6A1A;
+        color: #141414;
+        font-size: 34px;
+        font-weight: 900;
+        padding: 10px 26px;
+        border-radius: 8px;
+        border: 2px solid #141414;
+        box-shadow: 0 8px 24px rgba(255, 106, 26, 0.35);
+        white-space: nowrap;
+      }
+      .range-sub-metric {
+        background: #141414;
+        color: #F7F4EC;
+        font-size: 19px;
+        font-weight: 700;
+        padding: 4px 16px;
+        border-radius: 4px;
+        letter-spacing: 1px;
+      }
+
+      /* Synthesis Logic Row (Bottom of Diagram Box) */
+      .synthesis-section {
+        position: absolute;
+        bottom: 24px;
+        left: 30px;
+        right: 30px;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+
+      .conditions-flow {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 18px;
+        background: #E7E3D9;
+        border: 2px solid #141414;
+        border-radius: 6px;
+        opacity: 0;
+      }
+      .cond-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 2px;
+      }
+      .cond-step {
+        font-size: 14px;
+        font-weight: 700;
+        color: #141414;
+        opacity: 0.7;
+      }
+      .cond-name {
+        font-size: 20px;
+        font-weight: 900;
+        color: #141414;
+      }
+      .cond-operator {
+        font-size: 28px;
+        font-weight: 900;
+        color: #FF6A1A;
+      }
+
+      /* Overlay 3: HUNG KHÍ NGUY HIỂM (atMs: 198720 -> t=9.07s) */
+      #stamp-dangerous-weapon {
+        background: #141414;
+        border: 4px solid #FF6A1A;
+        border-radius: 10px;
+        padding: 20px 24px;
+        display: flex;
+        align-items: center;
+        gap: 22px;
+        box-shadow: 0 12px 32px rgba(20, 20, 20, 0.4);
+        opacity: 0;
+        transform-origin: 50% 50%;
+      }
+      .warning-icon-wrapper {
+        width: 76px;
+        height: 76px;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .stamp-content {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+      .stamp-headline {
+        margin: 0;
+        font-size: 46px;
+        font-weight: 900;
+        color: #FF6A1A;
+        letter-spacing: 0.5px;
+        line-height: 1.1;
+      }
+      .stamp-subline {
+        margin: 0;
+        font-size: 21px;
+        font-weight: 700;
+        color: #F7F4EC;
+        letter-spacing: 0.5px;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s21"
+      data-start="0"
+      data-width="1080"
+      data-height="1920"
+      data-duration="10.47"
+    >
+      <section id="scene-s21" class="clip" data-start="0" data-duration="10.47">
+        <div id="camera-wrapper">
+          <!-- Background Grid -->
+          <div class="bg-grid"></div>
+
+          <!-- Header Safe-zone Context -->
+          <div class="header-container" id="header-block">
+            <div class="meta-tag-row">
+              <span class="badge-category">GIÁM ĐỊNH KỸ THUẬT</span>
+              <span class="badge-case-id">SƠ ĐỒ HÌNH SỰ #21</span>
+            </div>
+            <h1 class="main-title">CƠ CHẾ TÁC ĐỘNG</h1>
+            <p class="sub-title">Mô hình thực nghiệm hiện trường & cấu thành định khung</p>
+          </div>
+
+          <!-- Forensic Technical Diagram Card -->
+          <div class="diagram-box" id="diagram-card">
+            <div class="diagram-inner-grid"></div>
+            <div class="corner-mark corner-tl"></div>
+            <div class="corner-mark corner-tr"></div>
+            <div class="corner-mark corner-bl"></div>
+            <div class="corner-mark corner-br"></div>
+            <div class="spec-watermark">QUỸ ĐẠO: TRỰC DIỆN • GÓC 0°</div>
+
+            <!-- SVG Visual Diagram Elements -->
+            <svg class="diagram-svg-canvas" viewBox="0 0 960 980" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <!-- Grid Scale Ticks -->
+              <path d="M 60 480 L 900 480" stroke="#141414" stroke-width="1" stroke-dasharray="4 6" opacity="0.3" />
+              <path d="M 240 100 L 240 600" stroke="#141414" stroke-width="1" stroke-dasharray="4 6" opacity="0.3" />
+              <path d="M 720 100 L 720 600" stroke="#141414" stroke-width="1" stroke-dasharray="4 6" opacity="0.3" />
+
+              <!-- Dimension Measure Line (Cự ly rất gần) -->
+              <g id="dimension-group" opacity="0">
+                <line x1="220" y1="330" x2="220" y2="430" stroke="#141414" stroke-width="3" stroke-linecap="round" />
+                <line x1="720" y1="330" x2="720" y2="430" stroke="#141414" stroke-width="3" stroke-linecap="round" />
+                <!-- Horizontal double-arrow measure line -->
+                <path
+                  id="dimension-line"
+                  d="M 226 380 L 714 380"
+                  stroke="#141414"
+                  stroke-width="3"
+                  stroke-dasharray="8 6"
+                />
+                <polygon points="236,373 222,380 236,387" fill="#141414" />
+                <polygon points="704,373 718,380 704,387" fill="#141414" />
+              </g>
+
+              <!-- Trajectory Vector Arrow (Đường ném trực diện) -->
+              <g id="trajectory-group" opacity="0">
+                <path
+                  id="trajectory-path"
+                  d="M 230 460 L 710 460"
+                  stroke="#FF6A1A"
+                  stroke-width="6"
+                  stroke-linecap="round"
+                />
+                <polygon id="trajectory-arrowhead" points="726,460 702,448 708,460 702,472" fill="#FF6A1A" />
+                <!-- Impact burst dots -->
+                <circle cx="730" cy="460" r="14" stroke="#FF6A1A" stroke-width="3" stroke-dasharray="4 4" fill="none" />
+              </g>
+
+              <!-- Left Object: Vật Cứng Có Cạnh (Viên gạch/đá góc nhọn axonometric) -->
+              <g id="brick-object-group" opacity="0" transform="translate(90, 400)">
+                <!-- Isometric sharp edge brick block -->
+                <!-- Top Face -->
+                <polygon points="40,20 130,0 160,30 70,50" fill="#E7E3D9" stroke="#141414" stroke-width="3.5" stroke-linejoin="round" />
+                <!-- Left Face -->
+                <polygon points="40,20 70,50 70,120 40,90" fill="#141414" stroke="#141414" stroke-width="3.5" stroke-linejoin="round" />
+                <!-- Right Front Face (Highlighted impact side) -->
+                <polygon points="70,50 160,30 160,100 70,120" fill="#F5F0E4" stroke="#141414" stroke-width="3.5" stroke-linejoin="round" />
+                <!-- Sharp Edge Highlight (Orange indicator) -->
+                <polyline points="70,50 160,30" stroke="#FF6A1A" stroke-width="6" stroke-linecap="round" />
+                <!-- Corner callout circle -->
+                <circle cx="160" cy="30" r="8" fill="#FF6A1A" stroke="#141414" stroke-width="2.5" />
+                <path d="M 160 30 L 195 10" stroke="#141414" stroke-width="2" />
+                <text x="200" y="15" font-family="'Be Vietnam Pro', sans-serif" font-size="14" font-weight="900" fill="#141414">CẠNH SẮC</text>
+              </g>
+
+              <!-- Right Target: Silhouette Đầu & Vùng Mặt -->
+              <g id="head-target-group" opacity="0" transform="translate(680, 360)">
+                <!-- Human profile outline facing left -->
+                <path
+                  d="M 120 200 C 130 150 140 110 130 70 C 120 30 90 0 40 0 C 0 0 -20 20 -30 50 C -35 65 -35 80 -30 95 C -25 105 -15 110 -25 125 C -35 140 -25 155 -15 160 C -25 175 -20 185 0 190 C 20 195 30 210 30 230 L 130 230 Z"
+                  fill="#E7E3D9"
+                  stroke="#141414"
+                  stroke-width="3.5"
+                  stroke-linejoin="round"
+                />
+                <!-- Vital Face Zone Bounding Box (Target Box) -->
+                <rect
+                  id="target-crosshair-box"
+                  x="-45"
+                  y="65"
+                  width="85"
+                  height="115"
+                  rx="6"
+                  fill="none"
+                  stroke="#FF6A1A"
+                  stroke-width="3"
+                  stroke-dasharray="6 4"
+                />
+                <!-- Crosshair reticle ticks -->
+                <line x1="-55" y1="122" x2="-35" y2="122" stroke="#FF6A1A" stroke-width="3" />
+                <line x1="30" y1="122" x2="50" y2="122" stroke="#FF6A1A" stroke-width="3" />
+                <line x1="-3" y1="55" x2="-3" y2="75" stroke="#FF6A1A" stroke-width="3" />
+                <line x1="-3" y1="170" x2="-3" y2="190" stroke="#FF6A1A" stroke-width="3" />
+                <!-- Impact Center Cross -->
+                <circle cx="-3" cy="122" r="5" fill="#FF6A1A" />
+              </g>
+            </svg>
+
+            <!-- HTML Forensic Overlays -->
+            <div class="overlays-layer">
+              <!-- Overlay 1: VẬT CỨNG CÓ CẠNH (Shotlist: 1.13s, hold 2.0s) -->
+              <div id="label-hard-object">
+                <span class="plate-orange-lead">VẬT CỨNG CÓ CẠNH</span>
+                <span class="sub-spec-ink">KHỐI LƯỢNG ĐẶC • GÓC SẮC TỔN THƯƠNG</span>
+              </div>
+
+              <!-- Vital Area Tag (Target) -->
+              <div id="label-target-zone">
+                <span class="plate-ink-target">VÙNG MẶT HIỂM YẾU</span>
+                <span class="tag-vital-zone">VÙNG TRỌNG YẾU CƠ THỂ</span>
+              </div>
+
+              <!-- Overlay 2: CỰ LY RẤT GẦN (Shotlist: 5.18s, hold 2.0s) -->
+              <div id="label-close-range">
+                <span class="plate-range-alert">CỰ LY RẤT GẦN</span>
+                <span class="range-sub-metric">KHOẢNG CÁCH GẦN • KHÔNG THỂ PHẢN XẠ</span>
+              </div>
+
+              <!-- Synthesis & Conclusion Block (Shotlist Overlay 3: 9.07s) -->
+              <div class="synthesis-section">
+                <!-- 3 Element Formula Chain -->
+                <div class="conditions-flow" id="conditions-chain">
+                  <div class="cond-item">
+                    <span class="cond-step">YẾU TỐ 01</span>
+                    <span class="cond-name">VẬT CỨNG CÓ CẠNH</span>
+                  </div>
+                  <span class="cond-operator hf-cfix-s21-1">+</span>
+                  <div class="cond-item">
+                    <span class="cond-step">YẾU TỐ 02</span>
+                    <span class="cond-name">CỰ LY RẤT GẦN</span>
+                  </div>
+                  <span class="cond-operator hf-cfix-s21-2">+</span>
+                  <div class="cond-item">
+                    <span class="cond-step">YẾU TỐ 03</span>
+                    <span class="cond-name">VÙNG MẶT HIỂM YẾU</span>
+                  </div>
+                </div>
+
+                <!-- Overlay 3: HUNG KHÍ NGUY HIỂM with Warning Icon (Shotlist: 9.07s, hold 2.2s) -->
+                <div id="stamp-dangerous-weapon">
+                  <div class="warning-icon-wrapper" id="warning-icon">
+                    <svg width="68" height="68" viewBox="0 0 68 68" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <!-- Warning Triangle (Orange fill on ink plate) -->
+                      <polygon points="34,6 64,58 4,58" fill="#FF6A1A" stroke="#FF6A1A" stroke-width="2" stroke-linejoin="round" />
+                      <!-- Exclamation Mark Inside (Ink color on orange) -->
+                      <rect x="31" y="24" width="6" height="18" rx="3" fill="#141414" />
+                      <circle cx="34" cy="49" r="3.5" fill="#141414" />
+                    </svg>
+                  </div>
+                  <div class="stamp-content">
+                    <h2 class="stamp-headline">HUNG KHÍ NGUY HIỂM</h2>
+                    <p class="stamp-subline">TÌNH TIẾT ĐỊNH KHUNG TĂNG NẶNG HÌNH SỰ</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Fixed bottom orange bar -->
+        <div class="signature-orange-bar"></div>
+      </section>
+    </div>
+
+    <!-- GSAP Seekable Timeline Script -->
+    <script>
+      const tl = gsap.timeline({ paused: true });
+      window.__timelines = window.__timelines || {};
+      window.__timelines["scene-s21"] = tl;
+
+      // 0. Setup initial path strokes for SVG animation
+      const trajPath = document.getElementById("trajectory-path");
+      if (trajPath) {
+        const pathLen = trajPath.getTotalLength();
+        trajPath.style.strokeDasharray = pathLen;
+        trajPath.style.strokeDashoffset = pathLen;
+      }
+
+      // 1. Entrance: "unfold" transition & slow forensic camera zoom-in (0.0s - 10.47s)
+      tl.fromTo(
+        "#camera-wrapper",
+        { scaleY: 0.94, opacity: 0 },
+        { scaleY: 1, opacity: 1, duration: 0.65, ease: "power2.out" },
+        0.0
+      );
+      tl.fromTo(
+        "#camera-wrapper",
+        { scale: 1.0 },
+        { scale: 1.045, duration: 10.47, ease: "none" },
+        0.0
+      );
+
+      // 2. Establishing technical frame & header (0.2s - 0.9s)
+      tl.fromTo(
+        "#header-block",
+        { y: -30, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.6, ease: "power3.out" },
+        0.2
+      );
+      tl.fromTo(
+        "#diagram-card",
+        { scale: 0.96, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.65, ease: "power3.out" },
+        0.35
+      );
+
+      // Target head profile & target zone tag arrive (0.6s - 1.1s)
+      tl.fromTo(
+        "#head-target-group",
+        { opacity: 0, x: 40 },
+        { opacity: 1, x: 0, duration: 0.6, ease: "power2.out" },
+        0.65
+      );
+      tl.fromTo(
+        "#label-target-zone",
+        { opacity: 0, x: 30 },
+        { opacity: 1, x: 0, duration: 0.5, ease: "power3.out" },
+        0.85
+      );
+
+      // 3. SHOTLIST OVERLAY 1: "VẬT CỨNG CÓ CẠNH" (atMs: 190780 -> t = 1.13s, hold 2.0s)
+      tl.fromTo(
+        "#brick-object-group",
+        { opacity: 0, scale: 0.8, x: -30 },
+        { opacity: 1, scale: 1, x: 0, duration: 0.55, ease: "power3.out" },
+        1.0
+      );
+      tl.fromTo(
+        "#label-hard-object",
+        { opacity: 0, y: -20, scale: 0.88 },
+        { opacity: 1, y: 0, scale: 1, duration: 0.5, ease: "power3.out" },
+        1.13
+      );
+
+      // 4. Trajectory line trace & dimension measurement group (3.6s - 5.0s)
+      tl.to(
+        "#trajectory-group",
+        { opacity: 1, duration: 0.3, ease: "power1.out" },
+        3.6
+      );
+      if (trajPath) {
+        tl.to(
+          "#trajectory-path",
+          { strokeDashoffset: 0, duration: 0.85, ease: "power2.out" },
+          3.7
+        );
+      }
+      tl.fromTo(
+        "#dimension-group",
+        { opacity: 0, y: -15 },
+        { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" },
+        4.4
+      );
+
+      // Pulse impact reticle on target face
+      tl.fromTo(
+        "#target-crosshair-box",
+        { strokeWidth: 3 },
+        { strokeWidth: 6, duration: 0.25, yoyo: true, repeat: 1, ease: "power1.inOut" },
+        4.6
+      );
+
+      // 5. SHOTLIST OVERLAY 2: "CỰ LY RẤT GẦN" (atMs: 194830 -> t = 5.18s, hold 2.0s)
+      tl.fromTo(
+        "#label-close-range",
+        { opacity: 0, scale: 0.75, y: -20 },
+        { opacity: 1, scale: 1, y: 0, duration: 0.5, ease: "power3.out" },
+        5.18
+      );
+
+      // 6. Synthesis chain: Logic synthesis box appears (7.2s - 8.5s)
+      tl.fromTo(
+        "#conditions-chain",
+        { opacity: 0, y: 20 },
+        { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" },
+        7.3
+      );
+
+      // 7. SHOTLIST OVERLAY 3: "HUNG KHÍ NGUY HIỂM" (atMs: 198720 -> t = 9.07s, hold 2.2s)
+      tl.fromTo(
+        "#stamp-dangerous-weapon",
+        { opacity: 0, scale: 1.25, y: 30 },
+        { opacity: 1, scale: 1, y: 0, duration: 0.45, ease: "power4.out" },
+        9.07
+      );
+      tl.fromTo(
+        "#warning-icon",
+        { rotation: -18, scale: 0.6 },
+        { rotation: 0, scale: 1, duration: 0.4, ease: "back.out(2)" },
+        9.12
+      );
+    </script>
+  
+    </template>
+  </body>
+</html>

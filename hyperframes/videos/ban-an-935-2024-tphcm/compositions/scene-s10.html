@@ -1,0 +1,530 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap">
+      <style>
+    /* hf-safe-colors (chuẩn WCAG theo style-tokens.json) */
+    .hf-text-ink { color: #141414; }
+    .hf-text-light { color: #F7F4EC; }
+    .hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+    .hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+    .hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+    .hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: #E7E3D9;
+      color: #141414;
+      font-family: "Be Vietnam Pro", sans-serif;
+      overflow: hidden;
+      width: 1080px;
+      height: 1920px;
+      margin: 0;
+    }
+
+    #root {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #E7E3D9;
+    }
+
+    /* Quy ước bắt buộc của HyperFrames: .clip inset 0 */
+    .clip {
+      position: absolute;
+      inset: 0;
+    }
+
+    /* Nền chart: 4 đường kẻ ngang cố định tại 20/40/60/80% + vạch cam mép trái */
+    .bg-chart-layer {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background-image: 
+        linear-gradient(to right, rgba(20, 20, 20, 0.08) 1.5px, transparent 1.5px),
+        linear-gradient(to bottom, rgba(20, 20, 20, 0.08) 1.5px, transparent 1.5px);
+      background-size: 84px 84px;
+    }
+
+    .chart-horizontal-line {
+      position: absolute;
+      left: 0;
+      width: 1080px;
+      height: 2px;
+      background-color: rgba(20, 20, 20, 0.28);
+    }
+
+    .chart-tick-mark {
+      position: absolute;
+      left: 0;
+      width: 24px;
+      height: 6px;
+      background-color: #FF6A1A;
+      transform: translateY(-2px);
+    }
+
+    /* Container chung cho chuyển động spiral + pan-left của camera */
+    #scene-container {
+      position: absolute;
+      inset: 0;
+      transform-origin: 540px 960px;
+      will-change: transform;
+    }
+
+    /* Thanh cam thương hiệu cố định mép đáy */
+    #bottom-accent-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 1080px;
+      height: 16px;
+      background-color: #FF6A1A;
+      z-index: 100;
+    }
+
+    /* Header khu vực safe-zone trên */
+    #header-group {
+      position: absolute;
+      top: 170px;
+      left: 70px;
+      width: 940px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 16px;
+    }
+
+    .badge-sub {
+      background-color: #141414;
+      color: #F7F4EC;
+      font-size: 26px;
+      font-weight: 700;
+      padding: 8px 22px;
+      border-radius: 6px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+    }
+
+    .headline-punch {
+      background-color: #FF6A1A;
+      color: #141414;
+      font-size: 58px;
+      font-weight: 900;
+      line-height: 1.25;
+      padding: 12px 28px;
+      border: 4px solid #141414;
+      box-shadow: 8px 8px 0px #141414;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    /* Khối thẻ A (Bên A - Lô đất bị đem bán) */
+    #card-a {
+      position: absolute;
+      top: 360px;
+      left: 70px;
+      width: 940px;
+      height: 310px;
+      background-color: #F5F0E4;
+      border: 4px solid #141414;
+      box-shadow: 8px 8px 0px #141414;
+      padding: 32px 36px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      will-change: transform, opacity;
+    }
+
+    .card-top-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .card-meta-label {
+      font-size: 24px;
+      font-weight: 700;
+      color: #141414;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .status-pill-clean {
+      background-color: #FF6A1A;
+      color: #141414;
+      font-size: 22px;
+      font-weight: 900;
+      padding: 6px 18px;
+      border: 2.5px solid #141414;
+      border-radius: 4px;
+      text-transform: uppercase;
+    }
+
+    .card-title-main {
+      font-size: 44px;
+      font-weight: 900;
+      color: #141414;
+      line-height: 1.2;
+    }
+
+    .card-desc {
+      font-size: 26px;
+      font-weight: 700;
+      color: #141414;
+      opacity: 0.9;
+      border-left: 5px solid #141414;
+      padding-left: 14px;
+    }
+
+    /* Mũi tên luân chuyển gán nợ giữa hai thẻ */
+    #flow-arrow-svg {
+      position: absolute;
+      top: 670px;
+      left: 70px;
+      width: 940px;
+      height: 220px;
+      pointer-events: none;
+      z-index: 5;
+    }
+
+    /* Overlay 3: TÍNH KẾ GÁN NỢ (xuất hiện tại 4.58s = offset atMs 85620) */
+    #overlay-gan-no {
+      position: absolute;
+      top: 730px;
+      left: 280px;
+      width: 520px;
+      height: 90px;
+      background-color: #FF6A1A;
+      border: 4px solid #141414;
+      box-shadow: 8px 8px 0px #141414;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 20;
+      transform: rotate(-3deg);
+      will-change: transform, opacity;
+    }
+
+    .stamp-text {
+      color: #141414;
+      font-size: 34px;
+      font-weight: 900;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+    }
+
+    /* Khối thẻ B (Công ty khác & Khoản nợ cũ tại Quỹ) */
+    #card-b {
+      position: absolute;
+      top: 890px;
+      left: 70px;
+      width: 940px;
+      height: 390px;
+      background-color: #F5F0E4;
+      border: 4px solid #141414;
+      box-shadow: 8px 8px 0px #141414;
+      padding: 32px 36px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      will-change: transform, opacity;
+    }
+
+    /* Overlay 1: KHOẢN NỢ QUÁ HẠN (atMs 82350 -> offset 1.31s) */
+    #overlay-no-qua-han {
+      background-color: #141414;
+      border: 3px solid #FF6A1A;
+      border-radius: 8px;
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 4px 4px 0px rgba(20, 20, 20, 0.4);
+      margin-top: 10px;
+      will-change: transform, opacity;
+    }
+
+    .debt-badge-text {
+      color: #FF6A1A;
+      font-size: 32px;
+      font-weight: 900;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    /* Overlay 2: Icon "fall" (atMs 84230 -> offset 3.19s) */
+    #icon-fall-wrap {
+      width: 54px;
+      height: 54px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: #FF6A1A;
+      border-radius: 6px;
+      border: 2px solid #141414;
+      will-change: transform, opacity;
+    }
+
+    .fall-icon-svg {
+      width: 36px;
+      height: 36px;
+    }
+  </style>
+
+  <div
+    id="root"
+    data-composition-id="scene-s10"
+    data-width="1080"
+    data-height="1920"
+    data-duration="7.09"
+  >
+    <!-- Scene Clip cho shot S10-1 (thời lượng 7.09s = 88130 - 81040) -->
+    <section id="scene-s10" class="clip" data-start="0" data-duration="7.09">
+      
+      <!-- Nền chart: 4 đường kẻ ngang tại 20%, 40%, 60%, 80% chiều cao canvas -->
+      <div class="bg-chart-layer">
+        <div class="chart-horizontal-line" style="top: 384px;">
+          <div class="chart-tick-mark"></div>
+        </div>
+        <div class="chart-horizontal-line" style="top: 768px;">
+          <div class="chart-tick-mark"></div>
+        </div>
+        <div class="chart-horizontal-line" style="top: 1152px;">
+          <div class="chart-tick-mark"></div>
+        </div>
+        <div class="chart-horizontal-line" style="top: 1536px;">
+          <div class="chart-tick-mark"></div>
+        </div>
+      </div>
+
+      <!-- Container chính với chuyển động spiral và pan-left -->
+      <div id="scene-container">
+        
+        <!-- Header tiêu đề khu vực safe-zone trên -->
+        <div id="header-group">
+          <div class="badge-sub">QUAN HỆ NGHỊCH LÝ</div>
+          <div class="headline-punch">GÁN NỢ TRÁI KHOÁY</div>
+        </div>
+
+        <!-- Khối thẻ Bên A: Lô đất đem ra tìm cách bán -->
+        <div id="card-a">
+          <div class="card-top-row">
+            <span class="card-meta-label">BÊN A • CHỦ TÀI SẢN</span>
+            <span class="status-pill-clean">LÔ ĐẤT BÊN A</span>
+          </div>
+          <div class="card-title-main">TÀI SẢN BỊ ĐEM BÁN</div>
+          <div class="card-desc">Đem ra tìm cách bán để xử lý các khoản nợ cũ</div>
+        </div>
+
+        <!-- Mũi tên Flow Diagram nối từ Card A sang Card B -->
+        <svg id="flow-arrow-svg" viewBox="0 0 940 220" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path
+            id="flow-path-line"
+            d="M 240 10 C 240 110, 160 120, 160 210"
+            stroke="#141414"
+            stroke-width="6"
+            stroke-dasharray="8 8"
+            stroke-linecap="round"
+          />
+          <path
+            id="flow-path-main"
+            d="M 700 10 C 700 90, 780 110, 780 200"
+            stroke="#141414"
+            stroke-width="8"
+            stroke-linecap="round"
+          />
+          <polygon
+            id="flow-arrow-head"
+            points="765,195 780,218 795,195"
+            fill="#FF6A1A"
+            stroke="#141414"
+            stroke-width="3"
+          />
+        </svg>
+
+        <!-- Overlay 3: TÍNH KẾ GÁN NỢ (offset 4.58s) -->
+        <div id="overlay-gan-no">
+          <span class="stamp-text">TÍNH KẾ GÁN NỢ</span>
+        </div>
+
+        <!-- Khối thẻ Bên B: Công ty khác & Khoản nợ quá hạn tại Quỹ -->
+        <div id="card-b">
+          <div class="card-top-row">
+            <span class="card-meta-label">CÔNG TY KHÁC • TẠI QUỸ</span>
+            <span style="font-size: 22px; font-weight: 700; color: #141414; opacity: 0.7;">ĐỐI TƯỢNG B</span>
+          </div>
+          
+          <div class="card-title-main">XỬ LÝ NỢ CŨ CỦA BÊN B</div>
+
+          <!-- Overlay 1 & 2 bên trong Card B: KHOẢN NỢ QUÁ HẠN + ICON FALL -->
+          <div id="overlay-no-qua-han">
+            <span class="debt-badge-text">KHOẢN NỢ QUÁ HẠN</span>
+            
+            <!-- Icon "fall" (Overlay 2 - offset 3.19s) -->
+            <div id="icon-fall-wrap">
+              <svg class="fall-icon-svg" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path
+                  id="fall-path"
+                  d="M 5 7 L 14 16 L 20 12 L 27 23"
+                  stroke="#141414"
+                  stroke-width="3.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+                <path
+                  id="fall-head"
+                  d="M 21 23 H 27 V 17"
+                  stroke="#141414"
+                  stroke-width="3.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Dải cam thương hiệu ở mép đáy khung hình -->
+      <div id="bottom-accent-bar"></div>
+
+    </section>
+  </div>
+
+  <script>
+    // Khởi tạo GSAP Timeline với trạng thái PAUSED (bắt buộc theo hợp đồng HyperFrames)
+    const tl = gsap.timeline({ paused: true });
+
+    // Đo độ dài đường nét SVG để vẽ hoạt ảnh stroke chính xác
+    const flowMain = document.getElementById("flow-path-main");
+    const flowLength = flowMain ? flowMain.getTotalLength() : 300;
+    if (flowMain) {
+      flowMain.style.strokeDasharray = flowLength;
+      flowMain.style.strokeDashoffset = flowLength;
+    }
+
+    const fallPath = document.getElementById("fall-path");
+    const fallLength = fallPath ? fallPath.getTotalLength() : 80;
+    if (fallPath) {
+      fallPath.style.strokeDasharray = fallLength;
+      fallPath.style.strokeDashoffset = fallLength;
+    }
+
+    // 1. Entrance Animation: transitionIn = "spiral"
+    tl.fromTo(
+      "#scene-container",
+      { scale: 0.88, rotation: -3.5, opacity: 0 },
+      { scale: 1, rotation: 0, opacity: 1, duration: 0.85, ease: "power3.out" },
+      0
+    );
+
+    // 2. Camera Motion: "pan-left" (trôi camera sang trái từ t=0 đến t=7.09)
+    tl.to(
+      "#scene-container",
+      { x: -26, duration: 7.09, ease: "none" },
+      0
+    );
+
+    // 3. Header punch xuất hiện
+    tl.fromTo(
+      "#header-group",
+      { y: 30, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.6, ease: "power3.out" },
+      0.15
+    );
+
+    // 4. Card A (Tài sản bên A) xuất hiện
+    tl.fromTo(
+      "#card-a",
+      { y: 50, scale: 0.94, opacity: 0 },
+      { y: 0, scale: 1, opacity: 1, duration: 0.65, ease: "power3.out" },
+      0.35
+    );
+
+    // 5. Card B (Nợ quá hạn bên B) xuất hiện
+    tl.fromTo(
+      "#card-b",
+      { y: 50, scale: 0.94, opacity: 0 },
+      { y: 0, scale: 1, opacity: 1, duration: 0.65, ease: "power3.out" },
+      0.75
+    );
+
+    // 6. Vẽ đường nối luân chuyển Flow Arrow giữa Card A và Card B
+    tl.to(
+      "#flow-path-main",
+      { strokeDashoffset: 0, duration: 0.65, ease: "power2.out" },
+      0.95
+    );
+    tl.fromTo(
+      "#flow-arrow-head",
+      { scale: 0, opacity: 0, transformOrigin: "780px 200px" },
+      { scale: 1, opacity: 1, duration: 0.35, ease: "power3.out" },
+      1.35
+    );
+
+    // 7. Overlay 1: "KHOẢN NỢ QUÁ HẠN" (atMs 82350 -> offset = 1.31s)
+    tl.fromTo(
+      "#overlay-no-qua-han",
+      { scale: 0.8, opacity: 0, y: 15 },
+      { scale: 1, opacity: 1, y: 0, duration: 0.5, ease: "power3.out" },
+      1.31
+    );
+
+    // 8. Overlay 2: Icon "fall" (atMs 84230 -> offset = 3.19s)
+    tl.fromTo(
+      "#icon-fall-wrap",
+      { scale: 0, opacity: 0, rotation: -25 },
+      { scale: 1, opacity: 1, rotation: 0, duration: 0.45, ease: "power3.out" },
+      3.19
+    );
+    tl.to(
+      "#fall-path",
+      { strokeDashoffset: 0, duration: 0.4, ease: "power2.out" },
+      3.35
+    );
+    tl.fromTo(
+      "#fall-head",
+      { opacity: 0, scale: 0 },
+      { opacity: 1, scale: 1, duration: 0.25, ease: "power3.out" },
+      3.65
+    );
+
+    // 9. Overlay 3: Stamp "TÍNH KẾ GÁN NỢ" (atMs 85620 -> offset = 4.58s)
+    tl.fromTo(
+      "#overlay-gan-no",
+      { scale: 1.45, opacity: 0, rotation: -12 },
+      { scale: 1, opacity: 1, rotation: -3, duration: 0.45, ease: "power4.out" },
+      4.58
+    );
+
+    // 10. Chuyển động ambient sway hữu hạn giữ nhịp thị giác
+    tl.to(
+      "#card-a",
+      { y: -6, duration: 2.0, ease: "sine.inOut", yoyo: true, repeat: 2 },
+      1.2
+    );
+    tl.to(
+      "#card-b",
+      { y: 5, duration: 2.2, ease: "sine.inOut", yoyo: true, repeat: 2 },
+      1.4
+    );
+
+    // Bắt buộc: Đăng ký timeline duy nhất trên window.__timelines["scene-s10"]
+    window.__timelines = window.__timelines || {};
+    window.__timelines["scene-s10"] = tl;
+  </script>
+
+    </template>
+  </body>
+</html>

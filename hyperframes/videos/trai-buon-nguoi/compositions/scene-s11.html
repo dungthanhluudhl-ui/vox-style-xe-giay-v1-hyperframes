@@ -1,0 +1,454 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap">
+      <style>
+    /* hf-safe-colors (tất định từ style-tokens.json) */
+    .hf-text-ink { color: #141414; }
+    .hf-text-light { color: #F7F4EC; }
+    .hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+    .hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+    .hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+    .hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: #E7E3D9;
+      color: #141414;
+      font-family: "Be Vietnam Pro", sans-serif;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    #root {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #E7E3D9;
+    }
+
+    /* Quy ước layout chuẩn HyperFrames: inset 0 */
+    .clip {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    /* Nền lưới chuẩn Vox DNA: ô 84px, nét rgba(20,20,20,0.32) */
+    .grid-canvas {
+      position: absolute;
+      inset: 0;
+      background-color: #E7E3D9;
+      background-image:
+        linear-gradient(to right, rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px),
+        linear-gradient(to bottom, rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px);
+      background-size: 84px 84px;
+    }
+
+    /* Thanh cam đáy khung hình - visual signature của Vox DNA */
+    .bottom-orange-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 14px;
+      background-color: #FF6A1A;
+      z-index: 100;
+    }
+
+    /* Top metadata tag trong safe-zone */
+    .meta-tag-wrapper {
+      position: absolute;
+      top: 180px;
+      left: 60px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      z-index: 10;
+    }
+
+    .meta-bullet {
+      width: 14px;
+      height: 14px;
+      background-color: #FF6A1A;
+      border: 2px solid #141414;
+    }
+
+    .meta-text {
+      font-size: 24px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: #141414;
+      background-color: #F5F0E4;
+      padding: 6px 16px;
+      border: 2px solid #141414;
+      box-shadow: 4px 4px 0px #141414;
+    }
+
+    /* Main Hero Frame: chứa tranh cắt giấy img-27 (gọn gàng trong band y: 250px -> 1030px) */
+    .hero-perspective-container {
+      position: absolute;
+      top: 250px;
+      left: 60px;
+      width: 960px;
+      height: 780px;
+      perspective: 1400px;
+    }
+
+    .hero-card {
+      width: 100%;
+      height: 100%;
+      background-color: #141414;
+      border: 4px solid #141414;
+      box-shadow: 12px 12px 0px rgba(20, 20, 20, 0.25);
+      overflow: hidden;
+      position: relative;
+      transform-origin: top center;
+      will-change: transform, opacity;
+    }
+
+    .hero-img-viewport {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .hero-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      will-change: transform;
+    }
+
+    /* Diagram overlay trên ảnh: Crosshair định vị áo mưa */
+    .diagram-crosshair {
+      position: absolute;
+      top: 360px;
+      left: 310px;
+      width: 44px;
+      height: 44px;
+      pointer-events: none;
+    }
+
+    /* Container cho các overlay card: đặt tại top: 1060px (kết thúc ở ~1220px, hoàn toàn trên usable band 1390px và ngoài caption band) */
+    .overlay-stage {
+      position: absolute;
+      left: 60px;
+      width: 960px;
+      top: 1060px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      pointer-events: none;
+    }
+
+    /* Card 1: SẢN PHẨM PHÙ HỢP */
+    .card-product {
+      width: 100%;
+      background-color: #141414;
+      border: 4px solid #141414;
+      border-radius: 4px;
+      box-shadow: 10px 10px 0px #FF6A1A;
+      padding: 24px 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      will-change: transform, opacity;
+    }
+
+    .badge-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .status-badge {
+      background-color: #FF6A1A;
+      color: #141414;
+      font-size: 20px;
+      font-weight: 900;
+      text-transform: uppercase;
+      padding: 4px 12px;
+      letter-spacing: 1px;
+    }
+
+    .sub-indicator {
+      font-size: 20px;
+      font-weight: 700;
+      color: #F7F4EC;
+      letter-spacing: 1px;
+    }
+
+    .punch-text {
+      font-size: 52px;
+      font-weight: 900;
+      line-height: 1.2;
+      color: #F7F4EC;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* Card 2: ĐỀ TÀI CHƯA ĐỦ */
+    .card-reversal {
+      width: 100%;
+      background-color: #141414;
+      border: 4px solid #FF6A1A;
+      border-radius: 4px;
+      box-shadow: 10px 10px 0px #141414;
+      padding: 24px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      will-change: transform, opacity;
+    }
+
+    .reversal-content {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .reversal-tag {
+      display: inline-block;
+      align-self: flex-start;
+      background-color: #FF6A1A;
+      color: #141414;
+      font-size: 20px;
+      font-weight: 900;
+      text-transform: uppercase;
+      padding: 4px 12px;
+      letter-spacing: 1.5px;
+    }
+
+    .reversal-title {
+      font-size: 54px;
+      font-weight: 900;
+      line-height: 1.2;
+      color: #FF6A1A;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .icon-box {
+      width: 96px;
+      height: 96px;
+      background-color: #F5F0E4;
+      border: 3px solid #141414;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      box-shadow: 6px 6px 0px #FF6A1A;
+    }
+
+    .warning-svg {
+      width: 58px;
+      height: 58px;
+    }
+  </style>
+
+  <div id="root" data-composition-id="scene-s11" data-start="0" data-width="1080" data-height="1920" data-duration="5.12">
+    <!-- Nền lưới ngà cố định -->
+    <div class="grid-canvas"></div>
+
+    <!-- Thanh cam cố định nhận diện thương hiệu Vox -->
+    <div class="bottom-orange-bar"></div>
+
+    <!-- Clip 1: Toàn cảnh thiết lập Hero Card và ảnh phố áo mưa (0s -> 5.12s) -->
+    <section id="scene-hero" class="clip" data-start="0" data-duration="5.12">
+      <!-- Tag góc trên -->
+      <div id="meta-tag" class="meta-tag-wrapper">
+        <div class="meta-bullet"></div>
+        <div class="meta-text">QUY LUẬT KINH DOANH</div>
+      </div>
+
+      <!-- Khung ảnh chính hiệu ứng unfold -->
+      <div class="hero-perspective-container">
+        <div id="hero-unfold-card" class="hero-card">
+          <div class="hero-img-viewport">
+            <img
+              id="hero-camera-img"
+              class="hero-img"
+              src="assets/img-27-paper-cutout-street-raincoat-seller.jpg"
+              alt="Người bán áo mưa trên phố ngày mưa"
+            >
+          </div>
+
+          <!-- Crosshair định vị chi tiết áo mưa vàng -->
+          <svg id="diagram-marker" class="diagram-crosshair" viewBox="0 0 44 44" fill="none">
+            <circle cx="22" cy="22" r="16" stroke="#FF6A1A" stroke-width="4" />
+            <circle cx="22" cy="22" r="4" fill="#FF6A1A" />
+            <line x1="22" y1="0" x2="22" y2="10" stroke="#FF6A1A" stroke-width="3" />
+            <line x1="22" y1="34" x2="22" y2="44" stroke="#FF6A1A" stroke-width="3" />
+            <line x1="0" y1="22" x2="10" y2="22" stroke="#FF6A1A" stroke-width="3" />
+            <line x1="34" y1="22" x2="44" y2="22" stroke="#FF6A1A" stroke-width="3" />
+          </svg>
+        </div>
+      </div>
+    </section>
+
+    <!-- Clip 2: Overlay nhãn "SẢN PHẨM PHÙ HỢP" (1.51s -> 3.31s, hold ~1.6s) -->
+    <section id="scene-overlay-1" class="clip" data-start="1.51" data-duration="1.8" data-layout-allow-caption-zone>
+      <div class="overlay-stage">
+        <div id="card-product-node" class="card-product">
+          <div class="badge-row">
+            <span class="status-badge">ĐIỀU KIỆN CẦN</span>
+            <span class="sub-indicator">TẠO SỰ HẤP DẪN</span>
+          </div>
+          <h2 class="punch-text">SẢN PHẨM PHÙ HỢP</h2>
+        </div>
+      </div>
+    </section>
+
+    <!-- Clip 3: Overlay nhãn "ĐỀ TÀI CHƯA ĐỦ" (3.56s -> 5.12s, hold ~1.56s) -->
+    <section id="scene-overlay-2" class="clip" data-start="3.56" data-duration="1.56" data-layout-allow-caption-zone>
+      <div class="overlay-stage">
+        <div id="card-reversal-node" class="card-reversal">
+          <div class="reversal-content">
+            <span class="reversal-tag">NGHỊCH LÝ ĐỀ TÀI</span>
+            <h2 class="reversal-title">ĐỀ TÀI CHƯA ĐỦ</h2>
+          </div>
+          <div class="icon-box">
+            <svg class="warning-svg" viewBox="0 0 48 48" fill="none">
+              <path
+                id="warning-triangle"
+                d="M24 6L44 40H4L24 6Z"
+                stroke="#141414"
+                stroke-width="4.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <line
+                id="warning-excl-top"
+                x1="24"
+                y1="18"
+                x2="24"
+                y2="28"
+                stroke="#FF6A1A"
+                stroke-width="5"
+                stroke-linecap="round"
+              />
+              <circle
+                id="warning-excl-dot"
+                cx="24"
+                cy="34"
+                r="2.5"
+                fill="#FF6A1A"
+              />
+            </svg>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    // Khởi tạo Timeline GSAP đồng bộ Seekable cho HyperFrames
+    const tl = gsap.timeline({ paused: true });
+    window.__timelines = window.__timelines || {};
+    window.__timelines["scene-s11"] = tl;
+
+    // Chuẩn bị các nét vẽ SVG icon warning
+    const warningPath = document.getElementById("warning-triangle");
+    if (warningPath) {
+      const len = warningPath.getTotalLength();
+      warningPath.style.strokeDasharray = len;
+      warningPath.style.strokeDashoffset = len;
+    }
+
+    // 1. Phách mở đầu (t=0.0s -> 1.0s): Unfold Card + Camera Motion
+    tl.fromTo(
+      "#meta-tag",
+      { y: -30, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.5, ease: "power3.out" },
+      0.1
+    );
+
+    // Hiệu ứng "unfold" mở từ trên xuống
+    tl.fromTo(
+      "#hero-unfold-card",
+      { rotationX: -50, opacity: 0, scaleY: 0.7 },
+      { rotationX: 0, opacity: 1, scaleY: 1, duration: 0.85, ease: "power3.out" },
+      0.15
+    );
+
+    // Camera pan nhẹ sang ngang từ người bán sang dòng người, scale 1.08x
+    tl.fromTo(
+      "#hero-camera-img",
+      { scale: 1.08, x: 20 },
+      { scale: 1.08, x: -30, duration: 5.12, ease: "none" },
+      0
+    );
+
+    // Crosshair định vị áo mưa nở ra
+    tl.fromTo(
+      "#diagram-marker",
+      { scale: 0, opacity: 0 },
+      { scale: 1, opacity: 1, duration: 0.45, ease: "power2.out" },
+      0.8
+    );
+
+    // 2. Phách 1: Nhãn "SẢN PHẨM PHÙ HỢP" (t=1.51s, hold 1.6s)
+    tl.fromTo(
+      "#card-product-node",
+      { y: 30, opacity: 0, scale: 0.96 },
+      { y: 0, opacity: 1, scale: 1, duration: 0.45, ease: "power3.out" },
+      1.51
+    );
+
+    // Thu nhỏ / fade out êm đềm trước khi sang phách phản biện
+    tl.to(
+      "#card-product-node",
+      { opacity: 0, y: -15, duration: 0.25, ease: "power2.in" },
+      3.15
+    );
+
+    // 3. Phách 2: Đảo chiều "ĐỀ TÀI CHƯA ĐỦ" (t=3.56s -> hết scene)
+    tl.fromTo(
+      "#card-reversal-node",
+      { y: 30, opacity: 0, scale: 0.95 },
+      { y: 0, opacity: 1, scale: 1, duration: 0.5, ease: "power3.out" },
+      3.56
+    );
+
+    // Vẽ tam giác cảnh báo SVG
+    if (warningPath) {
+      tl.to(
+        warningPath,
+        { strokeDashoffset: 0, duration: 0.45, ease: "power2.out" },
+        3.7
+      );
+    }
+
+    tl.fromTo(
+      "#warning-excl-top",
+      { opacity: 0, scaleY: 0 },
+      { opacity: 1, scaleY: 1, transformOrigin: "bottom center", duration: 0.25, ease: "power2.out" },
+      4.0
+    );
+
+    tl.fromTo(
+      "#warning-excl-dot",
+      { scale: 0, opacity: 0 },
+      { scale: 1, opacity: 1, transformOrigin: "center center", duration: 0.2, ease: "power3.out" },
+      4.15
+    );
+  </script>
+
+    </template>
+  </body>
+</html>

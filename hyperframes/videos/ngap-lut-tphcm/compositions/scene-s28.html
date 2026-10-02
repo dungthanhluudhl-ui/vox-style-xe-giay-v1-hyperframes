@@ -1,0 +1,482 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+/* hf-safe-colors (tất định từ style-tokens.json) */
+.hf-text-ink { color: #141414; }
+.hf-text-light { color: #F7F4EC; }
+.hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+.hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+.hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+.hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #E7E3D9;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+      .clip {
+        position: absolute;
+        inset: 0;
+      }
+
+      /* NỀN BIẾN THỂ CHART: 4 ĐƯỜNG KẺ NGANG ĐẬM + VẠCH CHIA CAM (KHÔNG DÙNG TEXT GÂY LỖI CONTRAST/COLLISION) */
+      .chart-bg {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        z-index: 1;
+      }
+      .chart-line {
+        position: absolute;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background-color: rgba(20, 20, 20, 0.28);
+      }
+      .chart-line-1 { top: 384px; }  /* 20% canvas */
+      .chart-line-2 { top: 768px; }  /* 40% canvas */
+      .chart-line-3 { top: 1152px; } /* 60% canvas */
+      .chart-line-4 { top: 1536px; } /* 80% canvas */
+
+      .chart-tick {
+        position: absolute;
+        left: 0;
+        width: 24px;
+        height: 4px;
+        background-color: #FF6A1A;
+      }
+      .chart-tick-1 { top: 383px; }
+      .chart-tick-2 { top: 767px; }
+      .chart-tick-3 { top: 1151px; }
+      .chart-tick-4 { top: 1535px; }
+
+      /* HEADER TRÊN SAFE ZONE (Y: 175px - 280px) */
+      .header-wrap {
+        position: absolute;
+        top: 175px;
+        left: 60px;
+        right: 60px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        align-items: flex-start;
+        z-index: 10;
+      }
+      .category-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background-color: #FF6A1A;
+        color: #141414;
+        font-size: 16px;
+        font-weight: 900;
+        padding: 6px 14px;
+        border-radius: 4px;
+        letter-spacing: 1px;
+      }
+      .category-badge-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background-color: #141414;
+      }
+      .punch-headline {
+        margin: 0;
+        font-size: 48px;
+        font-weight: 900;
+        line-height: 1.25;
+        color: #141414;
+        letter-spacing: -0.5px;
+      }
+
+      /* KHUNG SƠ ĐỒ ĐƯỜNG CỐNG CẮT LỚP (IMG-17) NẰM GỌN TRONG SAFE ZONE */
+      .diagram-container {
+        position: absolute;
+        top: 310px;
+        left: 75px;
+        width: 930px;
+        height: 1020px;
+        background-color: #141414;
+        border: 3px solid #141414;
+        border-radius: 8px;
+        box-shadow: 12px 12px 0px #141414;
+        overflow: hidden;
+        z-index: 5;
+      }
+      .diagram-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+        transform-origin: center center;
+      }
+      .diagram-overlay-grid {
+        position: absolute;
+        inset: 0;
+        background-image: 
+          linear-gradient(to right, rgba(255, 106, 26, 0.08) 1px, transparent 1px),
+          linear-gradient(to bottom, rgba(255, 106, 26, 0.08) 1px, transparent 1px);
+        background-size: 40px 40px;
+        pointer-events: none;
+        z-index: 2;
+      }
+      .diagram-corner-tag {
+        position: absolute;
+        top: 16px;
+        right: 16px;
+        background-color: #141414;
+        border: 1px solid #FF6A1A;
+        color: #F7F4EC;
+        font-size: 13px;
+        font-weight: 700;
+        padding: 5px 12px;
+        border-radius: 3px;
+        letter-spacing: 1px;
+        z-index: 3;
+      }
+
+      /* 3 CỤM THÔNG SỐ DATA OVERLAYS (TẤM NỀN MỰC ĐẶC #141414, ĐẠT 100% WCAG AA) */
+      .data-card {
+        position: absolute;
+        background-color: #141414;
+        border: 2px solid #FF6A1A;
+        border-radius: 6px;
+        padding: 16px 20px;
+        box-shadow: 8px 8px 0px rgba(20, 20, 20, 0.85);
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        transform-origin: 50% 50%;
+        z-index: 20;
+      }
+
+      .card-tag {
+        align-self: flex-start;
+        background-color: #FF6A1A;
+        color: #141414;
+        font-size: 13px;
+        font-weight: 900;
+        padding: 3px 8px;
+        border-radius: 3px;
+        letter-spacing: 0.5px;
+      }
+
+      .card-metric-row {
+        display: flex;
+        align-items: baseline;
+        gap: 8px;
+      }
+      .card-num {
+        font-size: 54px;
+        font-weight: 900;
+        line-height: 1;
+        color: #FF6A1A;
+        letter-spacing: -1px;
+      }
+      .card-unit {
+        font-size: 26px;
+        font-weight: 900;
+        line-height: 1;
+        color: #F7F4EC;
+      }
+      .card-label {
+        font-size: 22px;
+        font-weight: 700;
+        color: #F7F4EC;
+        letter-spacing: 1px;
+        margin: 0;
+      }
+
+      /* ĐỊNH VỊ 3 CỤM SỐ LIỆU ĐẢM BẢO KHÔNG CHỒNG LẤN NHAU */
+      #data-card-1 {
+        top: 370px;
+        left: 105px;
+        width: 430px;
+      }
+      #data-card-2 {
+        top: 650px;
+        left: 490px;
+        width: 440px;
+      }
+      #data-card-3 {
+        top: 930px;
+        left: 105px;
+        width: 430px;
+      }
+
+      /* CONNECTOR ĐIỂM CHỈ THỊ */
+      .connector-dot {
+        position: absolute;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background-color: #FF6A1A;
+        box-shadow: 0 0 0 4px rgba(255, 106, 26, 0.35);
+        z-index: 15;
+      }
+      .connector-line {
+        position: absolute;
+        height: 2px;
+        background-color: #FF6A1A;
+        transform-origin: 0% 50%;
+        z-index: 14;
+      }
+
+      /* CON DẤU STAMP: "NGHE RẤT LỚN" (KẾT THÚC Ở Y: 1235PX, CÁCH SAFE ZONE ĐÁY 1390PX TẬN 155PX) */
+      .verdict-stamp {
+        position: absolute;
+        top: 1140px;
+        left: 490px;
+        width: 440px;
+        background-color: #141414;
+        border: 3px solid #FF6A1A;
+        border-radius: 6px;
+        padding: 14px 18px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        box-shadow: 10px 10px 0px rgba(20, 20, 20, 0.85);
+        z-index: 25;
+        transform-origin: 50% 50%;
+      }
+      .verdict-text {
+        font-size: 38px;
+        font-weight: 900;
+        color: #FF6A1A;
+        letter-spacing: 1px;
+        margin: 0;
+        text-transform: uppercase;
+        line-height: 1.1;
+      }
+      .verdict-sub {
+        font-size: 14px;
+        font-weight: 700;
+        color: #F7F4EC;
+        letter-spacing: 2px;
+        margin: 0;
+        line-height: 1.2;
+      }
+
+      /* THANH CAM NHẬN DIỆN THƯƠNG HIỆU Ở ĐÁY KHUNG HÌNH (STYLE DNA §1) */
+      #brand-bottom-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 10px;
+        background-color: #FF6A1A;
+        z-index: 100;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s28"
+      data-width="1080"
+      data-height="1920"
+      data-duration="7.16"
+      data-start="0"
+    >
+      <!-- NỀN BIẾN THỂ CHART CỐ ĐỊNH THEO STYLE TOKENS -->
+      <div class="chart-bg">
+        <div class="chart-line chart-line-1"></div>
+        <div class="chart-line chart-line-2"></div>
+        <div class="chart-line chart-line-3"></div>
+        <div class="chart-line chart-line-4"></div>
+
+        <div class="chart-tick chart-tick-1"></div>
+        <div class="chart-tick chart-tick-2"></div>
+        <div class="chart-tick chart-tick-3"></div>
+        <div class="chart-tick chart-tick-4"></div>
+      </div>
+
+      <!-- SHOT CHÍNH S28-1: PHỦ TOÀN BỘ SCENE TỪ 0 ĐẾN 7.16S -->
+      <section id="shot-s28" class="clip" data-start="0" data-duration="7.16">
+        <!-- HEADER PHÍA TRÊN SAFE ZONE -->
+        <header class="header-wrap" id="header-block">
+          <div class="category-badge">
+            <span class="category-badge-dot"></span>
+            <span>BÁO CÁO THỰC TRẠNG</span>
+          </div>
+          <h1 class="punch-headline">QUY MÔ HỆ THỐNG NGẦM</h1>
+        </header>
+
+        <!-- KHUNG SƠ ĐỒ ĐƯỜNG CỐNG CẮT LỚP (IMG-17) -->
+        <div class="diagram-container" id="diagram-frame">
+          <img
+            class="diagram-image"
+            id="diagram-img"
+            src="assets/img-17-underground-sewer-system-diagram.jpg"
+            alt="Sơ đồ hệ thống cống ngầm TP.HCM"
+          />
+          <div class="diagram-overlay-grid"></div>
+          <div class="diagram-corner-tag">SƠ ĐỒ HẠ TẦNG NGẦM</div>
+        </div>
+
+        <!-- CỤM SỐ LIỆU 1 (atMs: 215600 -> t = 1.2s) -->
+        <div class="connector-dot" id="dot-1" style="top: 440px; left: 565px;"></div>
+        <div class="connector-line" id="line-1" style="top: 445px; left: 535px; width: 30px;"></div>
+        <div class="data-card" id="data-card-1">
+          <span class="card-tag">HẠ TẦNG THOÁT NƯỚC</span>
+          <div class="card-metric-row">
+            <span class="card-num">7.200</span>
+            <span class="card-unit">KM</span>
+          </div>
+          <p class="card-label">ĐƯỜNG CỐNG</p>
+        </div>
+
+        <!-- CỤM SỐ LIỆU 2 (atMs: 217600 -> t = 3.2s) -->
+        <div class="connector-dot" id="dot-2" style="top: 720px; left: 460px;"></div>
+        <div class="connector-line" id="line-2" style="top: 725px; left: 460px; width: 30px;"></div>
+        <div class="data-card" id="data-card-2">
+          <span class="card-tag">ĐIỂM KẾT NỐI VÀ TIẾP NHẬN</span>
+          <div class="card-metric-row">
+            <span class="card-num">319.000</span>
+          </div>
+          <p class="card-label">HẦM GA</p>
+        </div>
+
+        <!-- CỤM SỐ LIỆU 3 (atMs: 219300 -> t = 4.9s) -->
+        <div class="connector-dot" id="dot-3" style="top: 1000px; left: 565px;"></div>
+        <div class="connector-line" id="line-3" style="top: 1005px; left: 535px; width: 30px;"></div>
+        <div class="data-card" id="data-card-3">
+          <span class="card-tag">CỬA THOÁT RA KÊNH RẠCH</span>
+          <div class="card-metric-row">
+            <span class="card-num">1.600</span>
+          </div>
+          <p class="card-label">CỬA XẢ</p>
+        </div>
+
+        <!-- CON DẤU ĐÁNH GIÁ (t = 5.4s, giữ 1.76s đến hết scene >= 1.6s) -->
+        <div class="verdict-stamp" id="verdict-stamp">
+          <p class="verdict-text">NGHE RẤT LỚN</p>
+          <p class="verdict-sub">QUY MÔ HẠ TẦNG KỶ LỤC</p>
+        </div>
+      </section>
+
+      <!-- THANH CAM CỐ ĐỊNH Ở ĐÁY KHUNG HÌNH (STYLE DNA §1) -->
+      <div id="brand-bottom-bar"></div>
+    </div>
+
+    <script>
+      // ĐĂNG KÝ DUY NHẤT 1 TIMELINE GỐC PAUSED CHO MAIN
+      const tl = gsap.timeline({ paused: true });
+
+      // 1. ENTRANCE: KHỞI TẠO BỐ CỤC CHUNG (t = 0.05s -> 0.6s)
+      tl.fromTo(
+        "#header-block",
+        { y: -30, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.5, ease: "power3.out" },
+        0.05
+      );
+
+      tl.fromTo(
+        "#diagram-frame",
+        { scale: 0.96, opacity: 0, y: 20 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.6, ease: "power3.out" },
+        0.15
+      );
+
+      // Ảnh bên trong diagram zoom nhẹ 1.0 -> 1.05x theo đúng assetTreatment
+      tl.fromTo(
+        "#diagram-img",
+        { scale: 1.0 },
+        { scale: 1.05, duration: 7.0, ease: "sine.out" },
+        0.2
+      );
+
+      // 2. CỤM 1: 7.200 KM ĐƯỜNG CỐNG (atMs 215600 tương đối scene là 1.2s)
+      tl.fromTo(
+        "#data-card-1",
+        { scale: 0, opacity: 0, y: 15 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.45, ease: "power3.out" },
+        1.2
+      );
+      tl.fromTo(
+        "#dot-1",
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.3, ease: "power2.out" },
+        1.35
+      );
+      tl.fromTo(
+        "#line-1",
+        { scaleX: 0, opacity: 0 },
+        { scaleX: 1, opacity: 1, duration: 0.3, ease: "power2.out" },
+        1.35
+      );
+
+      // 3. CỤM 2: 319.000 HẦM GA (atMs 217600 tương đối scene là 3.2s)
+      tl.fromTo(
+        "#data-card-2",
+        { scale: 0, opacity: 0, y: 15 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.45, ease: "power3.out" },
+        3.2
+      );
+      tl.fromTo(
+        "#dot-2",
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.3, ease: "power2.out" },
+        3.35
+      );
+      tl.fromTo(
+        "#line-2",
+        { scaleX: 0, opacity: 0 },
+        { scaleX: 1, opacity: 1, duration: 0.3, ease: "power2.out" },
+        3.35
+      );
+
+      // 4. CỤM 3: 1.600 CỬA XẢ (atMs 219300 tương đối scene là 4.9s)
+      tl.fromTo(
+        "#data-card-3",
+        { scale: 0, opacity: 0, y: 15 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.45, ease: "power3.out" },
+        4.9
+      );
+      tl.fromTo(
+        "#dot-3",
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.3, ease: "power2.out" },
+        5.05
+      );
+      tl.fromTo(
+        "#line-3",
+        { scaleX: 0, opacity: 0 },
+        { scaleX: 1, opacity: 1, duration: 0.3, ease: "power2.out" },
+        5.05
+      );
+
+      // 5. CON DẤU: "NGHE RẤT LỚN" (t = 5.4s, đập xuống punch với góc nghiêng -4deg, giữ 1.76s đến hết scene)
+      tl.fromTo(
+        "#verdict-stamp",
+        { scale: 1.4, opacity: 0, rotation: 10 },
+        { scale: 1, opacity: 1, rotation: -4, duration: 0.38, ease: "power4.out" },
+        5.4
+      );
+
+      // GẮN VÀO WINDOW THEO ĐÚNG CONTRACT HYPERFRAMES
+      window.__timelines["scene-s28"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

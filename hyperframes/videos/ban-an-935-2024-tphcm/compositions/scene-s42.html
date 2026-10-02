@@ -1,0 +1,451 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+      /* hf-safe-colors (tất định từ style-tokens.json) */
+      .hf-text-ink { color: #141414; }
+      .hf-text-light { color: #F7F4EC; }
+      .hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+      .hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+      .hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+      .hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #E7E3D9;
+        font-family: "Be Vietnam Pro", sans-serif;
+        color: #141414;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      /* Root composition */
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+
+      /* Background spotlight variant */
+      .bg-layer {
+        position: absolute;
+        inset: 0;
+        background-color: #E7E3D9;
+        background-image: 
+          linear-gradient(to right, rgba(20, 20, 20, 0.08) 1.5px, transparent 1.5px),
+          linear-gradient(to bottom, rgba(20, 20, 20, 0.08) 1.5px, transparent 1.5px);
+        background-size: 84px 84px;
+      }
+
+      .bg-spotlight {
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(circle at 50% 46%, rgba(20, 20, 20, 0) 25%, rgba(20, 20, 20, 0.38) 100%);
+        pointer-events: none;
+      }
+
+      /* Signature bottom bar */
+      .brand-bottom-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 10px;
+        background-color: #FF6A1A;
+        z-index: 100;
+      }
+
+      /* Base clip container */
+      .clip {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+      }
+
+      /* Camera motion wrapper */
+      #camera {
+        position: absolute;
+        inset: 0;
+        transform-origin: 50% 48%;
+      }
+
+      /* Document Stage & Layout */
+      .stage-container {
+        position: absolute;
+        top: 240px;
+        left: 60px;
+        width: 960px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      /* Main Judicial Document Card */
+      .doc-card {
+        width: 100%;
+        background-color: #F5F0E4;
+        border: 3px solid #141414;
+        border-radius: 6px;
+        box-shadow: 0 20px 48px rgba(20, 20, 20, 0.28);
+        padding: 44px 44px 38px 44px;
+        position: relative;
+        transform-origin: 50% 30%;
+      }
+
+      /* Header */
+      .doc-header {
+        text-align: center;
+        border-bottom: 2px solid #141414;
+        padding-bottom: 22px;
+        margin-bottom: 24px;
+        position: relative;
+      }
+
+      .court-doc-title {
+        font-size: 40px;
+        font-weight: 900;
+        text-transform: uppercase;
+        color: #141414;
+        letter-spacing: 1px;
+        margin: 0;
+      }
+
+      /* Defendant Details */
+      .meta-box {
+        position: relative;
+        padding: 6px 0 22px 0;
+        border-bottom: 2px dashed rgba(20, 20, 20, 0.32);
+      }
+
+      .meta-line {
+        display: flex;
+        align-items: baseline;
+      }
+
+      .meta-label {
+        font-size: 26px;
+        font-weight: 700;
+        color: #141414;
+        width: 140px;
+        flex-shrink: 0;
+      }
+
+      .meta-value {
+        font-size: 36px;
+        font-weight: 900;
+        color: #141414;
+        letter-spacing: 0.5px;
+      }
+
+      /* Overlay 1: Stamp - Vai Trò Chủ Mưu Chính */
+      .stamp-container {
+        position: absolute;
+        top: 110px;
+        right: 28px;
+        z-index: 20;
+        transform-origin: 50% 50%;
+        opacity: 0;
+      }
+
+      .verdict-stamp {
+        background-color: #FF6A1A;
+        border: 4px solid #141414;
+        border-radius: 4px;
+        padding: 12px 24px;
+        box-shadow: 0 8px 24px rgba(20, 20, 20, 0.35);
+        display: inline-block;
+      }
+
+      .verdict-stamp-text {
+        font-size: 28px;
+        font-weight: 900;
+        color: #141414;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        white-space: nowrap;
+      }
+
+      /* Overlay 2: Dossier Panel with Doc SVG Icon */
+      .evidence-section {
+        margin-top: 26px;
+        background-color: #E7E3D9;
+        border: 2px solid #141414;
+        border-radius: 6px;
+        padding: 24px 28px;
+        display: flex;
+        align-items: center;
+        gap: 28px;
+        position: relative;
+        opacity: 0;
+      }
+
+      .doc-icon-wrapper {
+        flex-shrink: 0;
+        width: 84px;
+        height: 100px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .evidence-content {
+        flex: 1;
+      }
+
+      .evidence-title {
+        font-size: 34px;
+        font-weight: 900;
+        color: #141414;
+        line-height: 1.25;
+      }
+
+      .signature-row {
+        margin-top: 12px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
+
+      .signature-caption {
+        font-size: 20px;
+        font-weight: 700;
+        color: #141414;
+      }
+
+      .signature-svg {
+        width: 190px;
+        height: 44px;
+      }
+
+      /* Overlay 3: Punch Phrase Card (Trách nhiệm 24,925 Tỷ) */
+      .punch-plate {
+        margin-top: 28px;
+        background-color: #141414;
+        border-radius: 6px;
+        padding: 34px 32px 30px 32px;
+        text-align: center;
+        box-shadow: 0 16px 36px rgba(20, 20, 20, 0.35);
+        position: relative;
+        transform-origin: 50% 50%;
+        opacity: 0;
+      }
+
+      .punch-headline {
+        font-size: 52px;
+        font-weight: 900;
+        color: #FF6A1A;
+        line-height: 1.2;
+        letter-spacing: 0.5px;
+        margin: 0;
+      }
+
+      .punch-underline {
+        width: 220px;
+        height: 6px;
+        background-color: #FF6A1A;
+        margin: 18px auto 0 auto;
+        transform-origin: 50% 50%;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s42"
+      data-start="0"
+      data-width="1080"
+      data-height="1920"
+      data-duration="10.37"
+    >
+      <!-- Background texture with spotlight vignette -->
+      <div class="bg-layer"></div>
+      <div class="bg-spotlight"></div>
+
+      <!-- Main Camera container -->
+      <div id="camera">
+        <!-- Timed clip representing Shot S42-1 -->
+        <section class="clip" data-start="0" data-duration="10.37">
+          <div class="stage-container">
+            
+            <!-- Judicial Document Card -->
+            <div id="doc-card" class="doc-card">
+              <!-- Header -->
+              <div id="court-header" class="doc-header">
+                <div class="court-doc-title">Phán Quyết Phúc Thẩm</div>
+              </div>
+
+              <!-- Defendant Meta -->
+              <div id="meta-rows" class="meta-box">
+                <div class="meta-line">
+                  <span class="meta-label">Bị cáo:</span>
+                  <span class="meta-value">MINH HÙNG</span>
+                </div>
+              </div>
+
+              <!-- Overlay 1: Stamp Label (at 2.24s) -->
+              <div id="stamp-wrapper" class="stamp-container">
+                <div id="verdict-stamp" class="verdict-stamp">
+                  <div class="verdict-stamp-text">VAI TRÒ CHỦ MƯU CHÍNH</div>
+                </div>
+              </div>
+
+              <!-- Overlay 2: Dossier Panel with Doc SVG Icon (at 4.73s) -->
+              <div id="dossier-panel" class="evidence-section">
+                <div class="doc-icon-wrapper">
+                  <!-- Self-drawing SVG Document Icon -->
+                  <svg id="svg-doc" class="icon-doc" viewBox="0 0 100 120" width="80" height="96" fill="none" stroke="#141414" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+                    <path class="doc-path" id="doc-outline" d="M 20 10 L 65 10 L 85 30 L 85 110 L 20 110 Z" />
+                    <path class="doc-path" id="doc-fold" d="M 65 10 L 65 30 L 85 30" />
+                    <path class="doc-path" id="doc-line-1" d="M 32 48 L 73 48" />
+                    <path class="doc-path" id="doc-line-2" d="M 32 68 L 73 68" />
+                    <path class="doc-path" id="doc-line-3" d="M 32 88 L 56 88" />
+                  </svg>
+                </div>
+                <div class="evidence-content">
+                  <div class="evidence-title">Trực Tiếp Ký Duyệt 83 Hồ Sơ</div>
+                  <div class="signature-row">
+                    <span class="signature-caption">Chữ ký duyệt:</span>
+                    <svg class="signature-svg" viewBox="0 0 200 50" fill="none" stroke="#141414" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round">
+                      <path id="sig-stroke" d="M 10 35 C 30 10, 45 42, 60 15 C 75 40, 90 20, 110 32 C 130 15, 140 38, 160 22 C 175 35, 185 18, 195 28" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Overlay 3: Punch Phrase Card (at 7.66s) -->
+              <div id="punch-plate" class="punch-plate">
+                <h1 id="punch-title" class="punch-headline">TRÁCH NHIỆM 24,925 TỶ</h1>
+                <div id="punch-line" class="punch-underline"></div>
+              </div>
+
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- Persistent Brand Bottom Bar -->
+      <div class="brand-bottom-bar"></div>
+    </div>
+
+    <script>
+      // Setup SVG progressive drawing initial stroke offsets
+      const docPaths = document.querySelectorAll(".doc-path");
+      docPaths.forEach((path) => {
+        const len = path.getTotalLength();
+        path.style.strokeDasharray = len;
+        path.style.strokeDashoffset = len;
+      });
+
+      const sigStroke = document.getElementById("sig-stroke");
+      if (sigStroke) {
+        const sigLen = sigStroke.getTotalLength();
+        sigStroke.style.strokeDasharray = sigLen;
+        sigStroke.style.strokeDashoffset = sigLen;
+      }
+
+      // Build single paused GSAP Timeline for HyperFrames seek engine
+      const tl = gsap.timeline({ paused: true });
+
+      // Camera motion: slow, tense push-in documentary effect across the whole 10.37s
+      tl.to("#camera", {
+        scale: 1.055,
+        duration: 10.37,
+        ease: "sine.out"
+      }, 0);
+
+      // 0.0s: TransitionIn "punch" - Document slams onto screen
+      tl.fromTo(
+        "#doc-card",
+        { scale: 1.15, opacity: 0, y: -24 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.55, ease: "power4.out" },
+        0.1
+      );
+
+      tl.fromTo(
+        "#court-header",
+        { opacity: 0, y: 16 },
+        { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" },
+        0.35
+      );
+
+      tl.fromTo(
+        "#meta-rows",
+        { opacity: 0, y: 16 },
+        { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" },
+        0.55
+      );
+
+      // Overlay 1: "VAI TRÒ CHỦ MƯU CHÍNH" at 2.24s (376300ms - 374060ms)
+      tl.fromTo(
+        "#stamp-wrapper",
+        { opacity: 0, scale: 2.2, rotation: 16 },
+        { opacity: 1, scale: 1, rotation: -4, duration: 0.35, ease: "power4.in" },
+        2.24
+      );
+
+      // Overlay 2: "doc" icon + 83 dossiers at 4.73s (378790ms - 374060ms)
+      tl.fromTo(
+        "#dossier-panel",
+        { opacity: 0, y: 24 },
+        { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" },
+        4.73
+      );
+
+      // Self-drawing doc icon paths
+      tl.to(
+        ".doc-path",
+        {
+          strokeDashoffset: 0,
+          duration: 0.6,
+          stagger: 0.08,
+          ease: "power2.out"
+        },
+        4.95
+      );
+
+      // Rapid signature trace
+      tl.to(
+        "#sig-stroke",
+        {
+          strokeDashoffset: 0,
+          duration: 0.75,
+          ease: "power1.inOut"
+        },
+        5.25
+      );
+
+      // Overlay 3: Punch Phrase "TRÁCH NHIỆM 24,925 TỶ" at 7.66s (381720ms - 374060ms)
+      tl.fromTo(
+        "#punch-plate",
+        { opacity: 0, scale: 0.92, y: 28 },
+        { opacity: 1, scale: 1, y: 0, duration: 0.55, ease: "power4.out" },
+        7.66
+      );
+
+      // Underline highlight bar expansion
+      tl.fromTo(
+        "#punch-line",
+        { scaleX: 0 },
+        { scaleX: 1, duration: 0.45, ease: "power3.out" },
+        7.95
+      );
+
+      // Hold through scene completion (10.37s)
+
+      // Register root timeline on window.__timelines
+      window.__timelines = window.__timelines || {};
+      window.__timelines["scene-s42"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

@@ -1,0 +1,548 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap">
+      <style>
+/* hf-safe-colors (tất định từ style-tokens.json) */
+.hf-text-ink { color: #141414; }
+.hf-text-light { color: #F7F4EC; }
+.hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+.hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+.hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+.hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      width: 1080px;
+      height: 1920px;
+      overflow: hidden;
+      background-color: #E7E3D9;
+      font-family: "Be Vietnam Pro", sans-serif;
+      color: #141414;
+    }
+
+    #root {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #E7E3D9;
+    }
+
+    .clip {
+      position: absolute;
+      inset: 0;
+    }
+
+    /* Fixed bottom brand bar */
+    #bottom-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 12px;
+      background-color: #FF6A1A;
+      z-index: 100;
+    }
+
+    /* Strike in transition overlay */
+    #strike-line {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 8px;
+      background-color: #FF6A1A;
+      transform-origin: left center;
+      z-index: 90;
+      opacity: 0;
+    }
+
+    /* Safe content band */
+    #content-zone {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 1080px;
+      height: 1920px;
+    }
+
+    /* Scene header */
+    #header-container {
+      position: absolute;
+      top: 200px;
+      left: 80px;
+      width: 920px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .header-badge {
+      background-color: #141414;
+      color: #F7F4EC;
+      font-size: 24px;
+      font-weight: 900;
+      letter-spacing: 2px;
+      padding: 12px 24px;
+      border-radius: 6px;
+      text-transform: uppercase;
+    }
+
+    .header-sub {
+      font-size: 24px;
+      font-weight: 700;
+      color: #141414;
+      letter-spacing: 1px;
+    }
+
+    /* Chart horizontal ruled lines */
+    .ruler-group {
+      position: absolute;
+      left: 80px;
+      width: 920px;
+      height: 4px;
+      display: flex;
+      align-items: center;
+    }
+
+    .ruler-tick {
+      width: 20px;
+      height: 4px;
+      background-color: #FF6A1A;
+      flex-shrink: 0;
+    }
+
+    .ruler-line {
+      flex: 1;
+      height: 1.5px;
+      background-color: rgba(20, 20, 20, 0.32);
+      margin-left: 12px;
+    }
+
+    /* Main Chart Columns container */
+    #chart-area {
+      position: absolute;
+      top: 440px;
+      left: 80px;
+      width: 920px;
+      height: 640px;
+    }
+
+    /* The central stacked bar */
+    #bar-frame {
+      position: absolute;
+      top: 0;
+      left: 100px;
+      width: 240px;
+      height: 640px;
+      border: 4px solid #141414;
+      background-color: #F5F0E4;
+      overflow: hidden;
+      transform-origin: bottom center;
+    }
+
+    /* Lower segment: 1,25 tỷ (27.1% of 640px = 174px) */
+    #bar-lower {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 174px;
+      background-color: #141414;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+    }
+
+    .bar-lower-val {
+      color: #F7F4EC;
+      font-size: 32px;
+      font-weight: 900;
+      line-height: 1.1;
+    }
+
+    .bar-lower-lbl {
+      color: #F7F4EC;
+      font-size: 16px;
+      font-weight: 700;
+      margin-top: 4px;
+      text-transform: uppercase;
+    }
+
+    /* Upper segment: 3,36 tỷ (72.9% of 640px = 466px) */
+    #bar-upper {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 466px;
+      background-color: #FF6A1A;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+    }
+
+    .bar-upper-val {
+      color: #141414;
+      font-size: 42px;
+      font-weight: 900;
+      line-height: 1.1;
+    }
+
+    .bar-upper-lbl {
+      color: #141414;
+      font-size: 18px;
+      font-weight: 900;
+      margin-top: 6px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    /* Slice cut indicator */
+    #cut-laser {
+      position: absolute;
+      top: 464px;
+      left: 80px;
+      width: 280px;
+      height: 4px;
+      background-color: #FF6A1A;
+      box-shadow: 0 0 10px #FF6A1A;
+      z-index: 20;
+      opacity: 0;
+      transform-origin: left center;
+    }
+
+    /* Side callout cards */
+    #card-total {
+      position: absolute;
+      top: 40px;
+      left: 380px;
+      width: 500px;
+      background-color: #141414;
+      border-radius: 12px;
+      padding: 24px 28px;
+      box-sizing: border-box;
+      opacity: 0;
+    }
+
+    .card-total-tag {
+      color: #FF6A1A;
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      margin-bottom: 6px;
+    }
+
+    .card-total-title {
+      color: #F7F4EC;
+      font-size: 38px;
+      font-weight: 900;
+      line-height: 1.2;
+    }
+
+    #card-lower {
+      position: absolute;
+      top: 480px;
+      left: 380px;
+      width: 500px;
+      background-color: #F5F0E4;
+      border: 3px solid #141414;
+      border-radius: 12px;
+      padding: 22px 28px;
+      box-sizing: border-box;
+      opacity: 0;
+    }
+
+    .card-lower-tag {
+      color: #141414;
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .card-lower-title {
+      color: #141414;
+      font-size: 38px;
+      font-weight: 900;
+      line-height: 1.2;
+    }
+
+    /* Punch-phrase bottom banner */
+    #punch-card {
+      position: absolute;
+      top: 1140px;
+      left: 80px;
+      width: 920px;
+      background-color: #FF6A1A;
+      border: 4px solid #141414;
+      border-radius: 16px;
+      padding: 24px 32px;
+      box-sizing: border-box;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      opacity: 0;
+      transform-origin: center center;
+    }
+
+    .punch-content {
+      flex: 1;
+    }
+
+    .punch-title {
+      font-size: 46px;
+      font-weight: 900;
+      color: #141414;
+      line-height: 1.2;
+    }
+
+    .punch-sub {
+      font-size: 20px;
+      font-weight: 700;
+      color: #141414;
+      text-transform: uppercase;
+      margin-top: 6px;
+      letter-spacing: 1px;
+    }
+
+    /* SVG icon fall */
+    #icon-fall-box {
+      width: 84px;
+      height: 84px;
+      margin-left: 20px;
+      flex-shrink: 0;
+      opacity: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .icon-fall-svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    .path-fall {
+      fill: none;
+      stroke: #141414;
+      stroke-width: 7;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+  </style>
+
+  <div id="root" data-composition-id="scene-s32" data-start="0" data-width="1080" data-height="1920" data-duration="9.38">
+    <!-- Camera Rig -->
+    <div id="camera-rig" class="clip" data-start="0" data-duration="9.38">
+      
+      <!-- Top strike accent -->
+      <div id="strike-line"></div>
+
+      <div id="content-zone">
+        
+        <!-- Header -->
+        <div id="header-container">
+          <div class="header-badge">BÓC TÁCH DÒNG TIỀN</div>
+          <div class="header-sub">CƠ CẤU KHOẢN VAY</div>
+        </div>
+
+        <!-- Ruled chart lines (chart background variant) -->
+        <div class="ruler-group" style="top: 440px;">
+          <div class="ruler-tick"></div>
+          <div class="ruler-line"></div>
+        </div>
+
+        <div class="ruler-group" style="top: 653px;">
+          <div class="ruler-tick"></div>
+          <div class="ruler-line"></div>
+        </div>
+
+        <div class="ruler-group" style="top: 866px;">
+          <div class="ruler-tick"></div>
+          <div class="ruler-line"></div>
+        </div>
+
+        <div class="ruler-group" style="top: 1080px;">
+          <div class="ruler-tick"></div>
+          <div class="ruler-line" style="background-color: #141414; height: 3px;"></div>
+        </div>
+
+        <!-- Chart visualization -->
+        <div id="chart-area">
+          
+          <!-- Stacked pillar -->
+          <div id="bar-frame">
+            <!-- Upper portion (3.36 tỷ) -->
+            <div id="bar-upper">
+              <div class="bar-upper-val">3,36 TỶ</div>
+              <div class="bar-upper-lbl">TRÁI PHÉP</div>
+            </div>
+
+            <!-- Lower portion (1.25 tỷ) -->
+            <div id="bar-lower">
+              <div class="bar-lower-val">1,25 TỶ</div>
+              <div class="bar-lower-lbl">DÂN NHẬN</div>
+            </div>
+          </div>
+
+          <!-- Cutting line -->
+          <div id="cut-laser"></div>
+
+          <!-- Overlay 1: TỔNG VAY: 4,61 TỶ -->
+          <div id="card-total">
+            <div class="card-total-tag">TỔNG HỢP ĐỒNG</div>
+            <div class="card-total-title">TỔNG VAY: 4,61 TỶ</div>
+          </div>
+
+          <!-- Overlay 2: DÂN NHẬN: 1,25 TỶ -->
+          <div id="card-lower">
+            <div class="card-lower-tag">THỰC TẾ CHI TRẢ</div>
+            <div class="card-lower-title">DÂN NHẬN: 1,25 TỶ</div>
+          </div>
+
+        </div>
+
+        <!-- Overlay 3 & 4: Punch-phrase + Icon fall -->
+        <div id="punch-card">
+          <div class="punch-content">
+            <div class="punch-title">VAY TRÁI PHÉP: 3,36 TỶ</div>
+            <div class="punch-sub">SAI PHẠM LIÊN QUAN</div>
+          </div>
+
+          <div id="icon-fall-box">
+            <svg class="icon-fall-svg" viewBox="0 0 100 100">
+              <path class="path-fall" id="fall-plunge" d="M 18 24 L 46 44 L 62 32 L 84 80" />
+              <path class="path-fall" id="fall-arrow" d="M 64 78 L 84 80 L 82 58" />
+              <path class="path-fall" id="fall-spark" d="M 28 14 L 20 28 L 32 32" />
+            </svg>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- Fixed Bottom Accent Bar -->
+    <div id="bottom-bar"></div>
+  </div>
+
+  <script>
+    // Setup SVG stroke length for progressive drawing
+    const paths = document.querySelectorAll(".path-fall");
+    paths.forEach(function(p) {
+      const len = p.getTotalLength();
+      p.style.strokeDasharray = len;
+      p.style.strokeDashoffset = len;
+    });
+
+    // Main seekable paused timeline
+    const tl = gsap.timeline({ paused: true });
+
+    // 0.00s -> 9.38s: Subtle camera drift (pan-left)
+    tl.fromTo("#chart-area", { x: 8 }, { x: -8, duration: 9.38, ease: "none" }, 0);
+
+    // 0.00s -> 0.45s: Strike-in entrance
+    tl.fromTo("#strike-line", 
+      { scaleX: 0, opacity: 1 }, 
+      { scaleX: 1, opacity: 1, duration: 0.35, ease: "power4.out" }, 
+      0
+    );
+    tl.to("#strike-line", { opacity: 0, duration: 0.2, ease: "power1.out" }, 0.35);
+
+    tl.fromTo("#header-container", 
+      { y: -30, opacity: 0 }, 
+      { y: 0, opacity: 1, duration: 0.5, ease: "power3.out" }, 
+      0.15
+    );
+
+    tl.fromTo(".ruler-group", 
+      { scaleX: 0, opacity: 0 }, 
+      { scaleX: 1, opacity: 1, duration: 0.6, stagger: 0.08, ease: "power2.out", transformOrigin: "left center" }, 
+      0.2
+    );
+
+    // 0.90s (atMs: 282520): Overlay 1 - TỔNG VAY: 4,61 TỶ
+    tl.fromTo("#bar-frame", 
+      { scaleY: 0 }, 
+      { scaleY: 1, duration: 0.75, ease: "power3.out" }, 
+      0.90
+    );
+
+    tl.fromTo("#card-total", 
+      { x: 30, opacity: 0 }, 
+      { x: 0, opacity: 1, duration: 0.55, ease: "power3.out" }, 
+      0.90
+    );
+
+    // 3.77s (atMs: 285390): Overlay 2 - DÂN NHẬN: 1,25 TỶ
+    // Laser cut line slices through bar
+    tl.fromTo("#cut-laser", 
+      { scaleX: 0, opacity: 1 }, 
+      { scaleX: 1, opacity: 1, duration: 0.25, ease: "power4.out" }, 
+      3.77
+    );
+
+    // Lower bar activates with dark contrast
+    tl.fromTo("#bar-lower", 
+      { opacity: 0, y: 15 }, 
+      { opacity: 1, y: 0, duration: 0.4, ease: "power2.out" }, 
+      3.85
+    );
+
+    // Overlay 2 card pops in
+    tl.fromTo("#card-lower", 
+      { x: 30, opacity: 0 }, 
+      { x: 0, opacity: 1, duration: 0.5, ease: "power3.out" }, 
+      3.77
+    );
+
+    tl.to("#cut-laser", { opacity: 0, duration: 0.3 }, 4.15);
+
+    // 7.01s (atMs: 288630): Overlay 3 - Punch-phrase VAY TRÁI PHÉP: 3,36 TỶ
+    // Upper bar lights up in orange
+    tl.fromTo("#bar-upper", 
+      { opacity: 0, scale: 0.96 }, 
+      { opacity: 1, scale: 1, duration: 0.4, ease: "power3.out" }, 
+      7.01
+    );
+
+    // Punch phrase stamps down firmly
+    tl.fromTo("#punch-card", 
+      { scale: 0.88, opacity: 0, y: 25 }, 
+      { scale: 1, opacity: 1, y: 0, duration: 0.5, ease: "power4.out" }, 
+      7.01
+    );
+
+    // 7.86s (atMs: 289480): Overlay 4 - Icon "fall"
+    tl.fromTo("#icon-fall-box", 
+      { scale: 0.4, opacity: 0 }, 
+      { scale: 1, opacity: 1, duration: 0.35, ease: "power3.out" }, 
+      7.86
+    );
+
+    tl.to("#fall-plunge", { strokeDashoffset: 0, duration: 0.45, ease: "power2.out" }, 7.86);
+    tl.to("#fall-arrow", { strokeDashoffset: 0, duration: 0.25, ease: "power2.out" }, 8.15);
+    tl.to("#fall-spark", { strokeDashoffset: 0, duration: 0.2, ease: "power2.out" }, 8.35);
+
+    // Register paused timeline with HyperFrames runtime
+    window.__timelines = window.__timelines || {};
+    window.__timelines["scene-s32"] = tl;
+  </script>
+
+    </template>
+  </body>
+</html>

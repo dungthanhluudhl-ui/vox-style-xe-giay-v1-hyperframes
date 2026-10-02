@@ -1,0 +1,478 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+    /* hf-safe-colors (tất định từ style-tokens.json) */
+    .hf-text-ink { color: #141414; }
+    .hf-text-light { color: #F7F4EC; }
+    .hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+    .hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+    .hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+    .hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+    /* Reset & Base Setup */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      margin: 0;
+      background: #141414;
+      color: #F7F4EC;
+      font-family: "Be Vietnam Pro", sans-serif;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+    #root {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #141414;
+    }
+    .clip {
+      position: absolute;
+      inset: 0;
+    }
+
+    /* Background Layers: Spotlight & Technical Grid */
+    .bg-base {
+      position: absolute;
+      inset: 0;
+      background-color: #141414;
+    }
+    .bg-grid {
+      position: absolute;
+      inset: 0;
+      background-image: 
+        linear-gradient(to right, rgba(247, 244, 236, 0.05) 1.5px, transparent 1.5px),
+        linear-gradient(to bottom, rgba(247, 244, 236, 0.05) 1.5px, transparent 1.5px);
+      background-size: 84px 84px;
+    }
+    .bg-spotlight {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 50% 42%, rgba(255, 106, 26, 0.12) 0%, rgba(20, 20, 20, 0.55) 50%, rgba(10, 10, 10, 0.95) 85%);
+      pointer-events: none;
+    }
+
+    /* Camera Rig (Subtle continuous cinematic zoom) */
+    #camera-rig {
+      position: absolute;
+      inset: 0;
+      transform-origin: 50% 45%;
+      will-change: transform;
+    }
+
+    /* Scene Content Wrapper */
+    #scene-content {
+      position: absolute;
+      inset: 0;
+      will-change: transform, opacity;
+    }
+
+    /* Slot 1: Case Label Badge */
+    #case-badge {
+      position: absolute;
+      top: 210px;
+      left: 0;
+      right: 0;
+      margin: 0 auto;
+      width: fit-content;
+      height: 52px;
+      background-color: #FF6A1A;
+      color: #141414;
+      font-weight: 900;
+      font-size: 28px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 32px;
+      border-radius: 6px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+      z-index: 10;
+    }
+
+    /* Slot 2: SVG Icon (Money) */
+    #money-icon-box {
+      position: absolute;
+      top: 295px;
+      left: 0;
+      right: 0;
+      margin: 0 auto;
+      width: 180px;
+      height: 180px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10;
+    }
+    .money-svg {
+      width: 180px;
+      height: 180px;
+      overflow: visible;
+    }
+
+    /* Slot 3: Loss Counter Panel */
+    #counter-panel {
+      position: absolute;
+      top: 505px;
+      left: 60px;
+      right: 60px;
+      height: 250px;
+      background-color: #141414;
+      border: 2px solid rgba(255, 106, 26, 0.35);
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 32px;
+      box-sizing: border-box;
+      z-index: 10;
+    }
+    #counter-subhead {
+      font-weight: 700;
+      font-size: 24px;
+      letter-spacing: 3px;
+      color: #E7E3D9;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+      text-align: center;
+      line-height: 1.3;
+    }
+    #counter-display {
+      font-weight: 900;
+      font-size: 74px;
+      color: #FF6A1A;
+      letter-spacing: -1px;
+      line-height: 1.1;
+      text-align: center;
+      margin-bottom: 10px;
+      font-variant-numeric: tabular-nums;
+      will-change: transform;
+    }
+    #counter-words {
+      font-weight: 900;
+      font-size: 30px;
+      color: #F7F4EC;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      text-align: center;
+      line-height: 1.2;
+    }
+
+    /* Slot 4: Punch Phrase Card */
+    #punch-card {
+      position: absolute;
+      top: 795px;
+      left: 60px;
+      right: 60px;
+      height: 240px;
+      background-color: #141414;
+      border: 3px solid #FF6A1A;
+      border-radius: 14px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 32px;
+      box-sizing: border-box;
+      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.65);
+      z-index: 10;
+    }
+    #punch-accent-bar {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 6px;
+      background-color: #FF6A1A;
+      transform-origin: 0% 50%;
+    }
+    .punch-line-1 {
+      font-weight: 900;
+      font-size: 42px;
+      letter-spacing: 4px;
+      color: #F7F4EC;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+      text-align: center;
+      line-height: 1.2;
+    }
+    .punch-line-2 {
+      font-weight: 900;
+      font-size: 76px;
+      letter-spacing: 2px;
+      color: #FF6A1A;
+      text-transform: uppercase;
+      text-align: center;
+      line-height: 1.1;
+    }
+
+    /* Signature Bottom Orange Bar */
+    .bottom-orange-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 8px;
+      background-color: #FF6A1A;
+      z-index: 99;
+    }
+  </style>
+
+  <div
+    id="root"
+    data-composition-id="scene-s34"
+    data-width="1080"
+    data-height="1920"
+    data-duration="8"
+  >
+    <div id="scene-s34" class="clip" data-start="0" data-duration="8">
+      <!-- Background Layers -->
+      <div class="bg-base"></div>
+      <div class="bg-grid"></div>
+      <div class="bg-spotlight"></div>
+
+      <!-- Camera Rig (Cinematic zoom-in motion) -->
+      <div id="camera-rig">
+        <!-- Scene Content Wrapper -->
+        <div id="scene-content">
+          <!-- Slot 1: Case Label Badge (atMs: 300050) -->
+          <div id="case-badge">KHỞI TỐ VỤ ÁN</div>
+
+          <!-- Slot 2: SVG Icon Money (atMs: 298550) -->
+          <div id="money-icon-box">
+            <svg
+              id="money-icon-svg"
+              class="money-svg"
+              viewBox="0 0 200 200"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <!-- Outer technical radar ring -->
+              <circle
+                id="money-ring"
+                cx="100"
+                cy="100"
+                r="86"
+                fill="none"
+                stroke="#FF6A1A"
+                stroke-width="1.5"
+                stroke-dasharray="6 6"
+                opacity="0.35"
+              />
+              <!-- Banknote outer rect -->
+              <path
+                id="bill-body"
+                class="draw-path"
+                d="M 43 65 L 157 65 A 8 8 0 0 1 165 73 L 165 132 A 8 8 0 0 1 157 140 L 43 140 A 8 8 0 0 1 35 132 L 35 73 A 8 8 0 0 1 43 65 Z"
+                fill="none"
+                stroke="#FF6A1A"
+                stroke-width="5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <!-- Banknote center circle -->
+              <circle
+                id="bill-circle"
+                class="draw-path"
+                cx="100"
+                cy="102.5"
+                r="18"
+                fill="none"
+                stroke="#F7F4EC"
+                stroke-width="3.5"
+                stroke-linecap="round"
+              />
+              <!-- Center currency mark -->
+              <path
+                id="bill-symbol"
+                class="draw-path"
+                d="M 95 94 L 95 111 M 95 102 C 95 97 106 97 106 102 C 106 107 95 107 95 107 M 91 97 L 101 97"
+                fill="none"
+                stroke="#FF6A1A"
+                stroke-width="3"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <!-- Corner accents -->
+              <path
+                id="bill-corner-l"
+                class="draw-path"
+                d="M 45 77 L 55 77 M 45 77 L 45 87"
+                fill="none"
+                stroke="#F7F4EC"
+                stroke-width="2.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <path
+                id="bill-corner-r"
+                class="draw-path"
+                d="M 155 128 L 145 128 M 155 128 L 155 118"
+                fill="none"
+                stroke="#F7F4EC"
+                stroke-width="2.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <!-- Downward loss vector -->
+              <path
+                id="bill-arrow"
+                class="draw-path"
+                d="M 136 60 L 166 90 M 166 90 L 150 90 M 166 90 L 166 74"
+                fill="none"
+                stroke="#FF6A1A"
+                stroke-width="4.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </div>
+
+          <!-- Slot 3: Counter Panel (Evidence of loss) -->
+          <div id="counter-panel">
+            <div id="counter-subhead">SỐ TIỀN CHƯA THU HỒI ĐƯỢC</div>
+            <div id="counter-display">-0 đ</div>
+            <div id="counter-words">24 TỶ 925 TRIỆU ĐỒNG</div>
+          </div>
+
+          <!-- Slot 4: Punch Phrase Card (atMs: 302550) -->
+          <div id="punch-card">
+            <div id="punch-accent-bar"></div>
+            <div class="punch-line-1">THẤT THOÁT</div>
+            <div class="punch-line-2">24,925 TỶ</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Signature Orange Bottom Bar -->
+      <div class="bottom-orange-bar"></div>
+    </div>
+  </div>
+
+  <script>
+    // Create master paused timeline
+    const tl = gsap.timeline({ paused: true });
+
+    // Setup progressive SVG path drawing
+    const drawPaths = document.querySelectorAll(".draw-path");
+    drawPaths.forEach((p) => {
+      const len = p.getTotalLength();
+      p.style.strokeDasharray = len;
+      p.style.strokeDashoffset = len;
+    });
+
+    // Pure deterministic number formatter (e.g. 24925000000 -> 24.925.000.000)
+    function formatVND(num) {
+      return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    }
+
+    const counterDisplay = document.getElementById("counter-display");
+    const counterState = { val: 0 };
+
+    // 1. Entrance punch at t=0
+    tl.fromTo(
+      "#scene-content",
+      { scale: 1.07, opacity: 0 },
+      { scale: 1.0, opacity: 1, duration: 0.5, ease: "power3.out" },
+      0
+    );
+
+    // 2. Camera rig continuous cinematic zoom-in
+    tl.to(
+      "#camera-rig",
+      { scale: 1.04, duration: 7.5, ease: "sine.inOut" },
+      0.5
+    );
+
+    // 3. Counter panel entry
+    tl.fromTo(
+      "#counter-panel",
+      { opacity: 0, y: 30 },
+      { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" },
+      0.3
+    );
+
+    // 4. Counter run from 0 to 24,925,000,000 (starts at 0.75s, settles at 3.25s)
+    tl.to(
+      counterState,
+      {
+        val: 24925000000,
+        duration: 2.5,
+        ease: "power2.out",
+        onUpdate: () => {
+          counterDisplay.textContent = `-${formatVND(Math.floor(counterState.val))} đ`;
+        },
+      },
+      0.75
+    );
+
+    // 5. Money Icon Stroke Draw (atMs: 298550 -> 1.55s relative)
+    tl.fromTo(
+      "#money-icon-box",
+      { opacity: 0, scale: 0.8 },
+      { opacity: 1, scale: 1, duration: 0.45, ease: "power3.out" },
+      1.55
+    );
+    drawPaths.forEach((p) => {
+      tl.to(
+        p,
+        { strokeDashoffset: 0, duration: 0.85, ease: "power2.out" },
+        1.65
+      );
+    });
+
+    // 6. Case Badge KHỞI TỐ VỤ ÁN lands (atMs: 300050 -> 3.05s relative)
+    tl.fromTo(
+      "#case-badge",
+      { scale: 0, opacity: 0 },
+      { scale: 1, opacity: 1, duration: 0.45, ease: "power3.out" },
+      3.05
+    );
+
+    // 7. Counter hit punch and sub-detail reveal at 3.3s
+    tl.fromTo(
+      "#counter-display",
+      { scale: 1 },
+      { scale: 1.06, duration: 0.15, yoyo: true, repeat: 1, ease: "power2.out" },
+      3.25
+    );
+    tl.fromTo(
+      "#counter-words",
+      { opacity: 0, y: 12 },
+      { opacity: 1, y: 0, duration: 0.4, ease: "power3.out" },
+      3.4
+    );
+
+    // 8. Punch Phrase "THẤT THOÁT 24,925 TỶ" lands (atMs: 302550 -> 5.55s relative)
+    tl.fromTo(
+      "#punch-card",
+      { scale: 0.85, opacity: 0, y: 35 },
+      { scale: 1, opacity: 1, y: 0, duration: 0.5, ease: "power3.out" },
+      5.55
+    );
+    tl.fromTo(
+      "#punch-accent-bar",
+      { scaleX: 0 },
+      { scaleX: 1, duration: 0.45, ease: "power2.out" },
+      5.65
+    );
+
+    // Synchronously register timeline for HyperFrames engine
+    window.__timelines["scene-s34"] = tl;
+  </script>
+
+    </template>
+  </body>
+</html>

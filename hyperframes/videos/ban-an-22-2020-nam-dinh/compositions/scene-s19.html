@@ -1,0 +1,468 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap">
+      <style>
+    /* hf-safe-colors (tất định từ style-tokens.json) */
+    .hf-text-ink { color: #141414; }
+    .hf-text-light { color: #F7F4EC; }
+    .hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+    .hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+    .hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+    .hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #E7E3D9;
+      font-family: "Be Vietnam Pro", sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    #root {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #E7E3D9;
+    }
+
+    .clip {
+      position: absolute;
+      inset: 0;
+    }
+
+    /* Lưới nền kỹ thuật 84px */
+    .grid-layer {
+      position: absolute;
+      inset: 0;
+      background-image: 
+        linear-gradient(to right, rgba(20, 20, 20, 0.14) 1.5px, transparent 1.5px),
+        linear-gradient(to bottom, rgba(20, 20, 20, 0.14) 1.5px, transparent 1.5px);
+      background-size: 84px 84px;
+      pointer-events: none;
+    }
+
+    /* Vignette spotlight cho cảnh án lệ / bước ngoặt */
+    .spotlight-vignette {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 50% 50%, rgba(20, 20, 20, 0) 40%, rgba(20, 20, 20, 0.28) 100%);
+      pointer-events: none;
+    }
+
+    /* Thanh thương hiệu cam cố định ở mép dưới */
+    .bottom-brand-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 16px;
+      background-color: #FF6A1A;
+      z-index: 100;
+    }
+
+    /* Peel transition container */
+    #peel-container {
+      position: absolute;
+      inset: 0;
+      will-change: clip-path;
+    }
+
+    /* Rung chấn khi con dấu nện xuống */
+    #shake-wrapper {
+      position: absolute;
+      inset: 0;
+      will-change: transform;
+    }
+
+    /* Header bảng kết luận giám định */
+    .header-panel {
+      position: absolute;
+      top: 180px;
+      left: 70px;
+      right: 70px;
+      background-color: #F5F0E4;
+      border: 3px solid #141414;
+      border-radius: 8px;
+      padding: 22px 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      box-shadow: 6px 6px 0px #141414;
+    }
+
+    .header-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background-color: #141414;
+      color: #F7F4EC;
+      padding: 6px 14px;
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      align-self: flex-start;
+      border-radius: 4px;
+    }
+
+    .header-badge-dot {
+      width: 10px;
+      height: 10px;
+      background-color: #FF6A1A;
+      border-radius: 50%;
+    }
+
+    .header-title {
+      font-size: 36px;
+      font-weight: 900;
+      color: #141414;
+      line-height: 1.25;
+      letter-spacing: -0.5px;
+    }
+
+    /* Panel sơ đồ kỹ thuật vật chứng */
+    .diagram-panel {
+      position: absolute;
+      top: 350px;
+      left: 70px;
+      right: 70px;
+      height: 510px;
+      background-color: #F5F0E4;
+      border: 3px solid #141414;
+      border-radius: 8px;
+      box-shadow: 6px 6px 0px #141414;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .diagram-svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    /* Badge phân loại ban đầu */
+    .initial-status-badge {
+      position: absolute;
+      top: 24px;
+      right: 28px;
+      background-color: #141414;
+      border-radius: 4px;
+      padding: 8px 18px;
+      display: inline-flex;
+      align-items: center;
+      z-index: 10;
+    }
+
+    .initial-status-text {
+      color: #F7F4EC;
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .status-strike-line {
+      position: absolute;
+      top: 50%;
+      left: 10px;
+      right: 10px;
+      height: 3.5px;
+      background-color: #FF6A1A;
+      transform: translateY(-50%) scaleX(0);
+      transform-origin: left center;
+      z-index: 12;
+    }
+
+    /* Con dấu pháp lý PUNCH-PHRASE: HUNG KHÍ NGUY HIỂM */
+    .stamp-container {
+      position: absolute;
+      top: 910px;
+      left: 70px;
+      right: 70px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      opacity: 0;
+      transform-origin: 50% 50%;
+      will-change: transform, opacity;
+      z-index: 20;
+    }
+
+    .legal-stamp {
+      width: 100%;
+      background-color: #141414;
+      border: 5px solid #FF6A1A;
+      border-radius: 12px;
+      padding: 26px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.45);
+      position: relative;
+    }
+
+    .stamp-inner-border {
+      position: absolute;
+      inset: 8px;
+      border: 2px dashed rgba(255, 106, 26, 0.65);
+      border-radius: 6px;
+      pointer-events: none;
+    }
+
+    .stamp-content {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      z-index: 2;
+    }
+
+    .stamp-warning-icon {
+      flex-shrink: 0;
+      width: 48px;
+      height: 48px;
+    }
+
+    .stamp-main-phrase {
+      color: #FF6A1A;
+      font-size: 54px;
+      font-weight: 900;
+      line-height: 1.15;
+      letter-spacing: 2px;
+      text-align: center;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    /* Nhãn chuyển biến LABEL: BẢN CHẤT THAY ĐỔI */
+    .status-container {
+      position: absolute;
+      top: 1140px;
+      left: 100px;
+      right: 100px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      opacity: 0;
+      will-change: transform, opacity;
+      z-index: 20;
+    }
+
+    .status-plate {
+      background-color: #FF6A1A;
+      border: 4px solid #141414;
+      border-radius: 8px;
+      padding: 16px 36px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      box-shadow: 6px 6px 0px #141414;
+    }
+
+    .status-text {
+      font-size: 32px;
+      font-weight: 900;
+      color: #141414;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .shift-arrow-svg {
+      width: 32px;
+      height: 32px;
+      display: block;
+      flex-shrink: 0;
+    }
+  </style>
+
+  <div
+    id="root"
+    data-composition-id="scene-s19"
+    data-width="1080"
+    data-height="1920"
+    data-duration="7.35"
+  >
+    <!-- Background tĩnh -->
+    <div class="grid-layer"></div>
+    <div class="spotlight-vignette"></div>
+
+    <!-- Clip nội dung shot S19-1 -->
+    <div id="shot-clip" class="clip" data-start="0" data-duration="7.35">
+      <div id="peel-container">
+        <div id="shake-wrapper">
+          
+          <!-- Header hồ sơ vật chứng -->
+          <div id="header-box" class="header-panel">
+            <div class="header-badge">
+              <span class="header-badge-dot"></span>
+              <span>KẾT LUẬN TỐ TỤNG</span>
+            </div>
+            <div class="header-title">XÁC ĐỊNH TÍNH CHẤT VẬT CHỨNG</div>
+          </div>
+
+          <!-- Sơ đồ kỹ thuật viên gạch xây tường -->
+          <div id="diagram-box" class="diagram-panel">
+            <!-- Badge trạng thái ban đầu -->
+            <div id="initial-status" class="initial-status-badge">
+              <span class="initial-status-text">PHÂN LOẠI: VẬT LIỆU XÂY DỰNG</span>
+              <div id="initial-status-strike" class="status-strike-line"></div>
+            </div>
+
+            <svg class="diagram-svg" viewBox="0 0 940 510" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <!-- Nhãn góc kỹ thuật -->
+              <text x="36" y="46" font-family="'Be Vietnam Pro', sans-serif" font-size="18" font-weight="700" fill="#141414" letter-spacing="1">ĐỐI TƯỢNG: VIÊN GẠCH XÂY DỰNG</text>
+              <line x1="36" y1="58" x2="380" y2="58" stroke="#141414" stroke-width="2" />
+
+              <!-- Bản vẽ Isometric viên gạch -->
+              <g id="brick-drawing" transform="translate(180, 85)">
+                <!-- Mặt trước viên gạch -->
+                <polygon points="120,200 440,200 440,310 120,310" fill="#D8D2C4" stroke="#141414" stroke-width="3.5" stroke-linejoin="round" />
+                
+                <!-- Mặt bên phải viên gạch -->
+                <polygon points="440,200 560,120 560,230 440,310" fill="#C4BDB0" stroke="#141414" stroke-width="3.5" stroke-linejoin="round" />
+                
+                <!-- Mặt trên viên gạch -->
+                <polygon points="120,200 240,120 560,120 440,200" fill="#EAE5D8" stroke="#141414" stroke-width="3.5" stroke-linejoin="round" />
+                
+                <!-- Hai lỗ gạch isometric -->
+                <ellipse cx="290" cy="160" rx="34" ry="16" transform="rotate(-15 290 160)" fill="#B5ADA0" stroke="#141414" stroke-width="2.5" />
+                <ellipse cx="410" cy="155" rx="34" ry="16" transform="rotate(-15 410 155)" fill="#B5ADA0" stroke="#141414" stroke-width="2.5" />
+
+                <!-- Đường đo kích thước kỹ thuật -->
+                <!-- Chiều dài -->
+                <line x1="120" y1="335" x2="440" y2="335" stroke="#141414" stroke-width="2" stroke-dasharray="4 4" />
+                <line x1="120" y1="322" x2="120" y2="345" stroke="#141414" stroke-width="2" />
+                <line x1="440" y1="322" x2="440" y2="345" stroke="#141414" stroke-width="2" />
+                <text x="210" y="362" font-family="'Be Vietnam Pro', sans-serif" font-size="16" font-weight="700" fill="#141414">CHIỀU DÀI TIÊU CHUẨN</text>
+
+                <!-- Chiều cao -->
+                <line x1="585" y1="120" x2="585" y2="230" stroke="#141414" stroke-width="2" stroke-dasharray="4 4" />
+                <line x1="575" y1="120" x2="595" y2="120" stroke="#141414" stroke-width="2" />
+                <line x1="575" y1="230" x2="595" y2="230" stroke="#141414" stroke-width="2" />
+                <text x="605" y="180" font-family="'Be Vietnam Pro', sans-serif" font-size="16" font-weight="700" fill="#141414">CHIỀU CAO</text>
+              </g>
+            </svg>
+          </div>
+
+          <!-- Con dấu pháp lý PUNCH-PHRASE: HUNG KHÍ NGUY HIỂM (xuất hiện atMs: 172810 -> t = 2.96s) -->
+          <div id="stamp-target" class="stamp-container">
+            <div class="legal-stamp">
+              <div class="stamp-inner-border"></div>
+              <div class="stamp-content">
+                <!-- Icon warning chuẩn Vox -->
+                <svg class="stamp-warning-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 2L1 21H23L12 2Z" fill="#FF6A1A" stroke="#FF6A1A" stroke-width="2" stroke-linejoin="round" />
+                  <line x1="12" y1="9" x2="12" y2="14" stroke="#141414" stroke-width="2.5" stroke-linecap="round" />
+                  <circle cx="12" cy="18" r="1.5" fill="#141414" />
+                </svg>
+                <div class="stamp-main-phrase">HUNG KHÍ NGUY HIỂM</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Nhãn chuyển biến LABEL: BẢN CHẤT THAY ĐỔI (xuất hiện atMs: 176330 -> t = 6.48s) -->
+          <div id="status-target" class="status-container">
+            <div class="status-plate">
+              <svg class="shift-arrow-svg" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="#141414" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+              <span class="status-text">BẢN CHẤT THAY ĐỔI</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- Thanh cam nhận diện cố định ở mép dưới -->
+    <div class="bottom-brand-bar"></div>
+  </div>
+
+  <script>
+    // Khởi tạo Timeline GSAP tất định, paused: true
+    const tl = gsap.timeline({ paused: true });
+
+    // 1. Giai đoạn 0.0s - 0.6s: Peel Transition In
+    // Lật mở hồ sơ vụ án từ trái sang phải, giữ opacity 1 tuyệt đối để màu tương phản luôn đạt chuẩn
+    tl.fromTo("#peel-container",
+      { clipPath: "polygon(0% 0%, 0% 0%, 0% 100%, 0% 100%)" },
+      { clipPath: "polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)", duration: 0.6, ease: "power2.out" },
+      0
+    );
+
+    // Di chuyển vào nhẹ nhàng của Header và Diagram theo nhịp bóc hồ sơ
+    tl.fromTo("#header-box",
+      { x: -30 },
+      { x: 0, duration: 0.5, ease: "power3.out" },
+      0.1
+    );
+
+    tl.fromTo("#diagram-box",
+      { x: -20 },
+      { x: 0, duration: 0.55, ease: "power3.out" },
+      0.15
+    );
+
+    // Nét vẽ isometric viên gạch mở rộng nhẹ vào vị trí chuẩn
+    tl.fromTo("#brick-drawing",
+      { scale: 0.94, transformOrigin: "50% 50%" },
+      { scale: 1, duration: 0.6, ease: "power3.out" },
+      0.25
+    );
+
+    // 2. Giai đoạn 2.96s (atMs: 172810): PUNCH-PHRASE "HUNG KHÍ NGUY HIỂM"
+    // Con dấu pháp lý nện dứt khoát xuống tài liệu
+    const stampAt = 2.96;
+    tl.fromTo("#stamp-target",
+      { opacity: 0, scale: 1.15, rotation: -8 },
+      { opacity: 1, scale: 1, rotation: -3, duration: 0.26, ease: "power4.in" },
+      stampAt
+    );
+
+    // Rung chấn màn hình (screen shake) ngay tại thời điểm va chạm (2.96 + 0.26 = 3.22s)
+    const impactAt = 3.22;
+    tl.to("#shake-wrapper", { x: -14, y: 10, duration: 0.04, ease: "none" }, impactAt);
+    tl.to("#shake-wrapper", { x: 12, y: -8, duration: 0.04, ease: "none" }, impactAt + 0.04);
+    tl.to("#shake-wrapper", { x: -8, y: 6, duration: 0.04, ease: "none" }, impactAt + 0.08);
+    tl.to("#shake-wrapper", { x: 6, y: -4, duration: 0.04, ease: "none" }, impactAt + 0.12);
+    tl.to("#shake-wrapper", { x: 0, y: 0, duration: 0.06, ease: "power2.out" }, impactAt + 0.16);
+
+    // Phản lực nhẹ trên khung sơ đồ viên gạch
+    tl.to("#diagram-box", { scale: 0.988, duration: 0.06, yoyo: true, repeat: 1, transformOrigin: "50% 50%" }, impactAt);
+
+    // Gạch chéo và ẩn phân loại cũ "VẬT LIỆU XÂY DỰNG"
+    tl.to("#initial-status-strike", { scaleX: 1, duration: 0.15, ease: "power2.out" }, impactAt);
+    tl.to("#initial-status", { opacity: 0, duration: 0.2, ease: "power2.in" }, impactAt + 0.15);
+
+    // 3. Giai đoạn 6.48s (atMs: 176330): LABEL "BẢN CHẤT THAY ĐỔI"
+    // Xuất hiện dứt khoát xác nhận bước ngoặt pháp lý
+    const labelAt = 6.48;
+    tl.fromTo("#status-target",
+      { opacity: 0, y: 24 },
+      { opacity: 1, y: 0, duration: 0.4, ease: "power3.out" },
+      labelAt
+    );
+
+    // Đăng ký timeline gốc duy nhất cho HyperFrames runtime
+    window.__timelines["scene-s19"] = tl;
+  </script>
+
+    </template>
+  </body>
+</html>

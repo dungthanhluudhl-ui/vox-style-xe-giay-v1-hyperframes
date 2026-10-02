@@ -1,0 +1,617 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+    /* hf-safe-colors (tất định từ style-tokens.json) */
+    .hf-text-ink { color: #141414; }
+    .hf-text-light { color: #F7F4EC; }
+    .hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+    .hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+    .hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+    .hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: #E7E3D9;
+      color: #141414;
+      font-family: "Be Vietnam Pro", sans-serif;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Bắt buộc: Canvas chuẩn 1080x1920 */
+    #root {
+      position: relative;
+      width: 1080px;
+      height: 1920px;
+      overflow: hidden;
+      background-color: #E7E3D9;
+      background-image:
+        linear-gradient(rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px),
+        linear-gradient(90deg, rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px);
+      background-size: 84px 84px;
+    }
+
+    /* Thanh cam đáy khung hình - Chữ ký thị giác Vox */
+    #vox-bottom-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 8px;
+      background-color: #FF6A1A;
+      z-index: 500;
+    }
+
+    /* Quy ước Clip chuẩn: inset: 0, không đặt cứng px height */
+    .clip {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+    }
+
+    /* ==============================================================
+       SHOT 1 (S18-1): LIỆT KÊ 3 CÔNG NĂNG SINH HOẠT NGUYÊN BẢN
+       ============================================================== */
+    .s1-container {
+      position: absolute;
+      top: 180px;
+      left: 50px;
+      width: 980px;
+    }
+
+    .s1-header-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 20px;
+      background-color: #141414;
+      color: #F7F4EC;
+      border-radius: 8px;
+      font-size: 20px;
+      font-weight: 900;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      box-shadow: 4px 4px 0px #FF6A1A;
+      margin-bottom: 20px;
+    }
+
+    .s1-header-pip {
+      width: 12px;
+      height: 12px;
+      background-color: #FF6A1A;
+      border-radius: 2px;
+    }
+
+    .s1-frame {
+      position: relative;
+      width: 980px;
+      height: 640px;
+      border-radius: 16px;
+      border: 3px solid #141414;
+      box-shadow: 10px 10px 0px #141414;
+      background-color: #141414;
+      overflow: hidden;
+      margin-bottom: 24px;
+    }
+
+    .s1-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transform-origin: center center;
+    }
+
+    /* 3 thẻ nhãn công năng sinh hoạt */
+    .s1-cards-list {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      width: 100%;
+    }
+
+    .s1-item-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 76px;
+      padding: 0 24px;
+      background-color: #141414;
+      border: 2px solid #141414;
+      border-radius: 12px;
+      box-shadow: 6px 6px 0px rgba(20, 20, 20, 0.4);
+    }
+
+    .s1-item-left {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+    }
+
+    .s1-item-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 44px;
+      height: 38px;
+      padding: 0 10px;
+      background-color: #FF6A1A;
+      color: #141414;
+      font-size: 18px;
+      font-weight: 900;
+      border-radius: 6px;
+    }
+
+    .s1-item-text {
+      font-size: 28px;
+      font-weight: 900;
+      color: #F7F4EC;
+      letter-spacing: 0.5px;
+    }
+
+    .s1-item-role {
+      font-size: 18px;
+      font-weight: 700;
+      color: #FF6A1A;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    /* ==============================================================
+       SHOT 2 (S18-2): CẬN CẢNH VIÊN GẠCH, CHUYỂN HOÁ CÔNG NĂNG
+       ============================================================== */
+    .s2-spotlight-bg {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 50% 48%, rgba(231,227,217,0.15) 0%, rgba(20,20,20,0.4) 100%);
+      pointer-events: none;
+    }
+
+    .s2-container {
+      position: absolute;
+      top: 180px;
+      left: 50px;
+      width: 980px;
+    }
+
+    /* Khung ảnh cận cảnh viên gạch - không chứa overlays */
+    .s2-frame {
+      position: relative;
+      width: 980px;
+      height: 640px;
+      border-radius: 16px;
+      border: 4px solid #141414;
+      box-shadow: 12px 12px 0px #FF6A1A;
+      background-color: #141414;
+      overflow: hidden;
+      margin-bottom: 24px;
+    }
+
+    .s2-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: 50% 85%;
+      display: block;
+      transform-origin: 50% 85%;
+    }
+
+    /* Reticle hồng tâm kỹ thuật nhắm mục tiêu */
+    .s2-reticle {
+      position: absolute;
+      top: 200px;
+      left: 370px;
+      width: 240px;
+      height: 240px;
+      pointer-events: none;
+      z-index: 5;
+    }
+
+    /* Thẻ cảnh báo hành vi tấn công (NÉM VÀO MẶT) - đặt ngoài frame, độc lập */
+    .s2-alert-card {
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      height: 100px;
+      padding: 0 24px;
+      background-color: #141414;
+      border: 3px solid #FF6A1A;
+      border-radius: 14px;
+      box-shadow: 8px 8px 0px rgba(20, 20, 20, 0.4);
+      margin-bottom: 20px;
+    }
+
+    .s2-alert-content {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .s2-alert-icon-wrap {
+      width: 56px;
+      height: 56px;
+      background-color: #FF6A1A;
+      border-radius: 10px;
+      display: grid;
+      place-items: center;
+      flex-shrink: 0;
+    }
+
+    .s2-alert-titles {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .s2-alert-sub {
+      font-size: 15px;
+      font-weight: 900;
+      color: #FF6A1A;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+    }
+
+    .s2-alert-main {
+      font-size: 38px;
+      font-weight: 900;
+      color: #F7F4EC;
+      line-height: 1.1;
+      letter-spacing: 0.5px;
+    }
+
+    /* Thẻ phân tích chuyển hoá công năng */
+    .s2-transform-card {
+      width: 100%;
+      padding: 20px 24px;
+      background-color: #141414;
+      border: 3px solid #141414;
+      border-radius: 14px;
+      box-shadow: 8px 8px 0px rgba(20, 20, 20, 0.4);
+    }
+
+    .s2-tf-header {
+      display: flex;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+
+    .s2-tf-title {
+      font-size: 26px;
+      font-weight: 900;
+      color: #F7F4EC;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .s2-tf-flow {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .s2-flow-box-prev {
+      flex: 1;
+      padding: 14px 16px;
+      background-color: #242424;
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      border-left: 4px solid #888888;
+    }
+
+    .s2-flow-sub {
+      font-size: 13px;
+      font-weight: 700;
+      color: #E7E3D9;
+      text-transform: uppercase;
+    }
+
+    .s2-flow-val-prev {
+      font-size: 20px;
+      font-weight: 900;
+      color: #E7E3D9;
+      text-decoration: line-through;
+      text-decoration-color: #FF6A1A;
+      text-decoration-thickness: 3px;
+    }
+
+    .s2-flow-arrow {
+      font-size: 32px;
+      font-weight: 900;
+      color: #FF6A1A;
+      flex-shrink: 0;
+    }
+
+    .s2-flow-box-next {
+      flex: 1.25;
+      padding: 14px 16px;
+      background-color: #FF6A1A;
+      color: #141414;
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      box-shadow: 0px 4px 14px rgba(255, 106, 26, 0.4);
+    }
+
+    .s2-flow-sub-next {
+      font-size: 13px;
+      font-weight: 900;
+      color: #141414;
+      text-transform: uppercase;
+      opacity: 0.9;
+    }
+
+    .s2-flow-val-next {
+      font-size: 22px;
+      font-weight: 900;
+      color: #141414;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+  </style>
+
+  <div
+    id="root"
+    data-composition-id="scene-s18"
+    data-width="1080"
+    data-height="1920"
+    data-duration="14.88"
+  >
+    <!-- Thanh cam đáy cố định -->
+    <div id="vox-bottom-bar"></div>
+
+    <!-- ==============================================================
+         SHOT 1: SO SÁNH 3 DỤNG CỤ SINH HOẠT (0s -> 7.84s)
+         ============================================================== -->
+    <div id="shot-1" class="clip" data-start="0" data-duration="7.84">
+      <div class="s1-container">
+        <!-- Header Tag -->
+        <div id="s1-header" class="s1-header-tag">
+          <div class="s1-header-pip"></div>
+          <span>Mục Đích Sử Dụng Ban Đầu</span>
+        </div>
+
+        <!-- Khung ảnh pan chậm 3 vật dụng -->
+        <div id="s1-frame" class="s1-frame" data-layout-allow-overflow="true">
+          <img
+            id="s1-img"
+            class="s1-img"
+            src="assets/img-03-dangerous-weapon-definition-diagram.jpg"
+            alt="Đồ hoạ so sánh 3 dụng cụ dao bếp, búa, gạch"
+          />
+        </div>
+
+        <!-- Danh sách nhãn xuất hiện lần lượt theo lời thoại -->
+        <div class="s1-cards-list">
+          <div id="s1-item-1" class="s1-item-row">
+            <div class="s1-item-left">
+              <span class="s1-item-badge">01</span>
+              <span class="s1-item-text">DAO: NẤU ĂN</span>
+            </div>
+            <span class="s1-item-role">Đồ Dùng Bếp</span>
+          </div>
+
+          <div id="s1-item-2" class="s1-item-row">
+            <div class="s1-item-left">
+              <span class="s1-item-badge">02</span>
+              <span class="s1-item-text">BÚA: ĐÓNG ĐINH</span>
+            </div>
+            <span class="s1-item-role">Dụng Cụ Sửa Chữa</span>
+          </div>
+
+          <div id="s1-item-3" class="s1-item-row">
+            <div class="s1-item-left">
+              <span class="s1-item-badge">03</span>
+              <span class="s1-item-text">GẠCH: XÂY TƯỜNG</span>
+            </div>
+            <span class="s1-item-role">Vật Liệu Xây Dựng</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==============================================================
+         SHOT 2: CẬN CẢNH GẠCH & CHUYỂN HOÁ CÔNG NĂNG (7.84s -> 14.88s)
+         ============================================================== -->
+    <div id="shot-2" class="clip" data-start="7.84" data-duration="7.04">
+      <div class="s2-spotlight-bg"></div>
+
+      <div class="s2-container">
+        <!-- Khung cận cảnh viên gạch -->
+        <div id="s2-frame" class="s2-frame" data-layout-allow-overflow="true">
+          <img
+            id="s2-img"
+            class="s2-img"
+            src="assets/img-03-dangerous-weapon-definition-diagram.jpg"
+            alt="Cận cảnh viên gạch chuyển hoá thành hung khí"
+          />
+
+          <!-- Reticle mục tiêu cự ly gần -->
+          <svg id="s2-reticle" class="s2-reticle" viewBox="0 0 240 240" fill="none">
+            <path d="M 20 50 L 20 20 L 50 20" stroke="#FF6A1A" stroke-width="4" stroke-linecap="square"/>
+            <path d="M 190 20 L 220 20 L 220 50" stroke="#FF6A1A" stroke-width="4" stroke-linecap="square"/>
+            <path d="M 20 190 L 20 220 L 50 220" stroke="#FF6A1A" stroke-width="4" stroke-linecap="square"/>
+            <path d="M 190 220 L 220 220 L 220 190" stroke="#FF6A1A" stroke-width="4" stroke-linecap="square"/>
+            <circle cx="120" cy="120" r="48" stroke="#FF6A1A" stroke-width="2" stroke-dasharray="6 6"/>
+            <line x1="120" y1="40" x2="120" y2="65" stroke="#FF6A1A" stroke-width="3"/>
+            <line x1="120" y1="175" x2="120" y2="200" stroke="#FF6A1A" stroke-width="3"/>
+            <line x1="40" y1="120" x2="65" y2="120" stroke="#FF6A1A" stroke-width="3"/>
+            <line x1="175" y1="120" x2="200" y2="120" stroke="#FF6A1A" stroke-width="3"/>
+            <circle cx="120" cy="120" r="4" fill="#FF6A1A"/>
+          </svg>
+        </div>
+
+        <!-- Overlay 1: Cảnh báo NÉM VÀO MẶT + icon warning -->
+        <div id="s2-alert-card" class="s2-alert-card">
+          <div class="s2-alert-content">
+            <div id="s2-warn-icon" class="s2-alert-icon-wrap">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
+                <path d="M12 2L1 21H23L12 2Z" fill="#141414"/>
+                <path d="M12 9V14" stroke="#FF6A1A" stroke-width="2.5" stroke-linecap="round"/>
+                <circle cx="12" cy="18" r="1.25" fill="#FF6A1A"/>
+              </svg>
+            </div>
+            <div class="s2-alert-titles">
+              <span class="s2-alert-sub">Hành Vi Tấn Công</span>
+              <span class="s2-alert-main">NÉM VÀO MẶT</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Overlay 2: CHUYỂN HOÁ CÔNG NĂNG sang HUNG KHÍ NGUY HIỂM -->
+        <div id="s2-transform-card" class="s2-transform-card">
+          <div class="s2-tf-header">
+            <span class="s2-tf-title">CHUYỂN HOÁ CÔNG NĂNG</span>
+          </div>
+          <div class="s2-tf-flow">
+            <div class="s2-flow-box-prev">
+              <span class="s2-flow-sub">Mục Đích Ban Đầu</span>
+              <span class="s2-flow-val-prev">VẬT LIỆU XÂY DỰNG</span>
+            </div>
+            <div class="s2-flow-arrow">➔</div>
+            <div id="s2-stamp" class="s2-flow-box-next">
+              <span class="s2-flow-sub-next">Xác Định Pháp Lý</span>
+              <span class="s2-flow-val-next">HUNG KHÍ NGUY HIỂM</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Khởi tạo Timeline đơn, bắt buộc paused: true
+    const tl = gsap.timeline({ paused: true });
+
+    // ================================================================
+    // SHOT 1 CHOREOGRAPHY (0.0s -> 7.84s)
+    // ================================================================
+
+    // Grow in khung ảnh và pan chậm từ trái sang phải
+    tl.fromTo(
+      "#s1-frame",
+      { scale: 0.94, opacity: 0 },
+      { scale: 1, opacity: 1, duration: 0.6, ease: "power3.out" },
+      0.05
+    );
+
+    tl.fromTo(
+      "#s1-header",
+      { y: -20, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.45, ease: "power2.out" },
+      0.15
+    );
+
+    // Pan camera từ trái sang phải
+    tl.fromTo(
+      "#s1-img",
+      { x: -45, scale: 1.12 },
+      { x: 35, scale: 1.16, duration: 7.84, ease: "none" },
+      0.0
+    );
+
+    // Overlay 1: "DAO: NẤU ĂN" (atMs: 155350 -> local 0.38s)
+    tl.fromTo(
+      "#s1-item-1",
+      { y: 24, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.45, ease: "power3.out" },
+      0.38
+    );
+
+    // Overlay 2: "BÚA: ĐÓNG ĐINH" (atMs: 158240 -> local 3.27s)
+    tl.fromTo(
+      "#s1-item-2",
+      { y: 24, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.45, ease: "power3.out" },
+      3.27
+    );
+
+    // Overlay 3: "GẠCH: XÂY TƯỜNG" (atMs: 160820 -> local 5.85s)
+    tl.fromTo(
+      "#s1-item-3",
+      { y: 24, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.45, ease: "power3.out" },
+      5.85
+    );
+
+    // ================================================================
+    // SHOT 2 CHOREOGRAPHY (7.84s -> 14.88s)
+    // ================================================================
+
+    // Transition In "punch": Zoom đột ngột vào cận cảnh viên gạch
+    tl.fromTo(
+      "#s2-frame",
+      { scale: 1.12, opacity: 0 },
+      { scale: 1, opacity: 1, duration: 0.35, ease: "expo.out" },
+      7.84
+    );
+
+    // Zoom-in liên tục tạo sự căng thẳng
+    tl.fromTo(
+      "#s2-img",
+      { scale: 1.95, y: 0 },
+      { scale: 2.2, y: -20, duration: 7.04, ease: "power1.out" },
+      7.84
+    );
+
+    // Reticle tâm ngắm khóa vào mục tiêu
+    tl.fromTo(
+      "#s2-reticle",
+      { scale: 0.4, opacity: 0, rotation: -30 },
+      { scale: 1, opacity: 1, rotation: 0, duration: 0.5, ease: "power3.out" },
+      8.05
+    );
+
+    // Overlay 1: "NÉM VÀO MẶT" + icon warning (atMs: 164550 -> global 9.58s)
+    tl.fromTo(
+      "#s2-alert-card",
+      { y: 24, opacity: 0, scale: 0.95 },
+      { y: 0, opacity: 1, scale: 1, duration: 0.4, ease: "power4.out" },
+      9.58
+    );
+
+    tl.fromTo(
+      "#s2-warn-icon",
+      { scale: 0.4, rotation: -20 },
+      { scale: 1, rotation: 0, duration: 0.35, ease: "power3.out" },
+      9.65
+    );
+
+    // Overlay 2: "CHUYỂN HOÁ CÔNG NĂNG" (atMs: 168560 -> global 13.59s)
+    tl.fromTo(
+      "#s2-transform-card",
+      { y: 24, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.4, ease: "power3.out" },
+      13.59
+    );
+
+    // Con dấu pháp lý "HUNG KHÍ NGUY HIỂM" đóng dứt khoát
+    tl.fromTo(
+      "#s2-stamp",
+      { scale: 1.25, opacity: 0 },
+      { scale: 1, opacity: 1, duration: 0.28, ease: "power4.out" },
+      13.82
+    );
+
+    // Đăng ký timeline duy nhất lên runtime HyperFrames
+    window.__timelines = window.__timelines || {};
+    window.__timelines["scene-s18"] = tl;
+  </script>
+
+    </template>
+  </body>
+</html>

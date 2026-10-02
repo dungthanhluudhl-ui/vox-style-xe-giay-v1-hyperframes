@@ -1,0 +1,493 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+      /* hf-safe-colors (tất định từ style-tokens.json) */
+      .hf-text-ink { color: #141414; }
+      .hf-text-light { color: #F7F4EC; }
+      .hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+      .hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+      .hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+      .hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        padding: 0;
+        background: #141414;
+        overflow: hidden;
+        font-family: "Be Vietnam Pro", sans-serif;
+      }
+
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: #e7e3d9;
+      }
+
+      /* Quy ước clip chuẩn HyperFrames: inset: 0 toàn khung */
+      .clip {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+      }
+
+      /* Nền ô vuông 84px chuẩn Vox DNA + biến thể spotlight vignette */
+      .bg-layer {
+        position: absolute;
+        inset: 0;
+        background-color: #e7e3d9;
+        background-image:
+          linear-gradient(to right, rgba(20, 20, 20, 0.22) 1.5px, transparent 1.5px),
+          linear-gradient(to bottom, rgba(20, 20, 20, 0.22) 1.5px, transparent 1.5px);
+        background-size: 84px 84px;
+      }
+
+      .spotlight-vignette {
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(ellipse at 50% 45%, rgba(20, 20, 20, 0) 30%, rgba(20, 20, 20, 0.38) 100%);
+      }
+
+      /* Dải cam nhận diện thương hiệu cố định mép đáy */
+      .brand-bottom-bar {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 12px;
+        background-color: #ff6a1a;
+        z-index: 50;
+      }
+
+      /* Khung cắt dán giấy tư liệu (Collage Paper Frame) */
+      .paper-frame {
+        position: absolute;
+        top: 170px;
+        left: 60px;
+        width: 960px;
+        height: 1200px;
+        background-color: #f5f0e4;
+        border: 3px solid #141414;
+        box-shadow: 14px 18px 0px #141414;
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        transform-origin: 15% 10%;
+        will-change: transform, opacity;
+      }
+
+      .paper-header {
+        height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 8px 10px 8px;
+        border-bottom: 2px solid #141414;
+        margin-bottom: 12px;
+      }
+
+      .doc-badge {
+        background-color: #141414;
+        color: #f7f4ec;
+        font-size: 20px;
+        font-weight: 900;
+        letter-spacing: 2px;
+        padding: 4px 14px;
+        border-radius: 4px;
+        display: inline-block;
+      }
+
+      .doc-meta {
+        color: #141414;
+        font-size: 18px;
+        font-weight: 700;
+        letter-spacing: 1px;
+      }
+
+      .image-viewport {
+        position: relative;
+        width: 100%;
+        flex: 1;
+        overflow: hidden;
+        border: 2px solid #141414;
+        background-color: #141414;
+      }
+
+      #hero-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center top;
+        display: block;
+        transform-origin: 50% 20%;
+        will-change: transform;
+      }
+
+      /* Tấm phủ song sắt ẩn dụ phía trước ảnh */
+      .bars-shadow-overlay {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background: repeating-linear-gradient(
+          90deg,
+          rgba(20, 20, 20, 0.4) 0px,
+          rgba(20, 20, 20, 0.4) 22px,
+          transparent 22px,
+          transparent 120px
+        );
+      }
+
+      /* Định vị phần tử con bên trong clip độc lập (tránh can thiệp .clip inset:0) */
+      .overlay-pos-1 {
+        position: absolute;
+        top: 670px;
+        left: 90px;
+      }
+
+      .overlay-pos-2 {
+        position: absolute;
+        top: 810px;
+        left: 170px;
+      }
+
+      .overlay-center-wrapper {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
+        padding-top: 610px;
+      }
+
+      /* Step 1: Bị lừa • Bị nhốt (Nền mực đặc, chữ kem, viền cam) */
+      .plate-ink-step {
+        background-color: #141414;
+        border: 3px solid #ff6a1a;
+        box-shadow: 10px 10px 0px rgba(20, 20, 20, 0.85);
+        padding: 20px 36px;
+        display: inline-flex;
+        align-items: center;
+        gap: 16px;
+        will-change: transform, opacity;
+      }
+
+      .plate-ink-step .step-bullet {
+        color: #ff6a1a;
+        font-size: 28px;
+        line-height: 1;
+      }
+
+      .plate-ink-step .step-text {
+        color: #f7f4ec;
+        font-size: 46px;
+        font-weight: 900;
+        letter-spacing: 1.5px;
+        white-space: nowrap;
+      }
+
+      /* Step 2: Bị đánh • Làm nhục (Nền cam đặc, chữ mực) */
+      .plate-orange-step {
+        background-color: #ff6a1a;
+        border: 3px solid #141414;
+        box-shadow: 10px 10px 0px #141414;
+        padding: 20px 36px;
+        display: inline-flex;
+        align-items: center;
+        gap: 16px;
+        will-change: transform, opacity;
+      }
+
+      .plate-orange-step .step-bullet {
+        color: #141414;
+        font-size: 28px;
+        line-height: 1;
+      }
+
+      .plate-orange-step .step-text {
+        color: #141414;
+        font-size: 46px;
+        font-weight: 900;
+        letter-spacing: 1.5px;
+        white-space: nowrap;
+      }
+
+      /* Step 3: Icon BAN - Muốn chạy thì bị chặn */
+      .ban-card {
+        background-color: #141414;
+        border: 4px solid #ff6a1a;
+        box-shadow: 14px 14px 0px rgba(20, 20, 20, 0.95);
+        padding: 32px 48px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 18px;
+        border-radius: 8px;
+        will-change: transform, opacity;
+      }
+
+      .ban-svg {
+        width: 140px;
+        height: 140px;
+        display: block;
+      }
+
+      .ban-circle {
+        fill: none;
+        stroke: #ff6a1a;
+        stroke-width: 14;
+      }
+
+      .ban-slash {
+        fill: none;
+        stroke: #ff6a1a;
+        stroke-width: 14;
+        stroke-linecap: round;
+      }
+
+      .ban-caption {
+        color: #f7f4ec;
+        font-size: 52px;
+        font-weight: 900;
+        letter-spacing: 3px;
+        text-align: center;
+        white-space: nowrap;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s14"
+      data-width="1080"
+      data-height="1920"
+      data-duration="7.6"
+    >
+      <!-- Background Grid & Spotlight Vignette -->
+      <div class="clip" id="bg-clip" data-start="0" data-duration="7.6">
+        <div class="bg-layer"></div>
+        <div class="spotlight-vignette"></div>
+      </div>
+
+      <!-- Main Photo Collage (A-roll/B-roll Image Presentation) -->
+      <section class="clip" id="scene-hero" data-start="0" data-duration="7.6">
+        <div class="paper-frame" id="paper-frame">
+          <div class="paper-header">
+            <span class="doc-badge">ĐỊA ĐIỂM GIAM GIỮ</span>
+            <span class="doc-meta">KHU VỰC CÁCH LY // #S14</span>
+          </div>
+          <div class="image-viewport">
+            <img
+              id="hero-img"
+              src="assets/img-13-victims-trapped-illegal-detention.jpg"
+              alt="Nan nhan bi giam giu trai phep"
+            />
+            <div class="bars-shadow-overlay"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Overlay 1: BỊ LỪA • BỊ NHỐT (atMs: 95880 -> 1.92s, hold 2.1s) -->
+      <div class="clip" id="clip-step-1" data-start="1.92" data-duration="2.1">
+        <div class="overlay-pos-1">
+          <div class="plate-ink-step" id="step-1-card">
+            <span class="step-bullet">■</span>
+            <span class="step-text">BỊ LỪA • BỊ NHỐT</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Overlay 2: BỊ ĐÁNH • LÀM NHỤC (atMs: 98070 -> 4.11s, hold 2.0s) -->
+      <div class="clip" id="clip-step-2" data-start="4.11" data-duration="2.0">
+        <div class="overlay-pos-2">
+          <div class="plate-orange-step" id="step-2-card">
+            <span class="step-bullet">■</span>
+            <span class="step-text">BỊ ĐÁNH • LÀM NHỤC</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Overlay 3: Icon BAN & BỊ CHẶN (atMs: 100900 -> 6.94s, hold to end) -->
+      <div class="clip overlay-center-wrapper" id="clip-step-3" data-start="6.94" data-duration="0.66">
+        <div class="ban-card" id="ban-card">
+          <svg class="ban-svg" viewBox="0 0 160 160">
+            <circle class="ban-circle" id="ban-circle-path" cx="80" cy="80" r="62" />
+            <line class="ban-slash" id="ban-slash-path" x1="36" y1="36" x2="124" y2="124" />
+          </svg>
+          <div class="ban-caption">BỊ CHẶN</div>
+        </div>
+      </div>
+
+      <!-- Thanh cam đáy cố định nhận diện thương hiệu Vox -->
+      <div class="brand-bottom-bar"></div>
+    </div>
+
+    <script>
+      // Setup Progressive SVG Stroke Paths for the "ban" icon
+      const circlePath = document.getElementById("ban-circle-path");
+      const slashPath = document.getElementById("ban-slash-path");
+      if (circlePath && slashPath) {
+        const cLen = circlePath.getTotalLength ? circlePath.getTotalLength() : 390;
+        const sLen = slashPath.getTotalLength ? slashPath.getTotalLength() : 125;
+        circlePath.style.strokeDasharray = `${cLen}`;
+        circlePath.style.strokeDashoffset = `${cLen}`;
+        slashPath.style.strokeDasharray = `${sLen}`;
+        slashPath.style.strokeDashoffset = `${sLen}`;
+      }
+
+      // Khởi tạo Timeline HyperFrames chính thức
+      const tl = gsap.timeline({ paused: true });
+
+      // 1. Transition in "peel" cho khung giấy tư liệu (0.0s -> 0.70s)
+      tl.fromTo(
+        "#paper-frame",
+        {
+          rotation: -3.5,
+          rotationY: 8,
+          transformPerspective: 1200,
+          y: 60,
+          scale: 0.94,
+          opacity: 0,
+        },
+        {
+          rotation: 0,
+          rotationY: 0,
+          y: 0,
+          scale: 1,
+          opacity: 1,
+          duration: 0.7,
+          ease: "power3.out",
+        },
+        0
+      );
+
+      // 2. Camera Motion: Pan dọc từ ánh đèn trần xuống ánh mắt sau song sắt & Zoom in chậm (0.0s -> 7.6s)
+      tl.fromTo(
+        "#hero-img",
+        {
+          scale: 1.02,
+          y: 0,
+        },
+        {
+          scale: 1.15,
+          y: -95,
+          duration: 7.6,
+          ease: "none",
+        },
+        0
+      );
+
+      // 3. Overlay 1: BỊ LỪA • BỊ NHỐT (Bắt đầu tại 1.92s)
+      tl.fromTo(
+        "#step-1-card",
+        {
+          scale: 0.85,
+          opacity: 0,
+          y: 35,
+        },
+        {
+          scale: 1,
+          opacity: 1,
+          y: 0,
+          duration: 0.42,
+          ease: "power3.out",
+        },
+        1.92
+      );
+
+      // 4. Overlay 1 kết thúc mượt mà trước khi clip đóng (3.82s -> 4.00s)
+      tl.to(
+        "#step-1-card",
+        {
+          opacity: 0,
+          y: -15,
+          duration: 0.18,
+          ease: "power2.in",
+        },
+        3.82
+      );
+
+      // 5. Overlay 2: BỊ ĐÁNH • LÀM NHỤC (Bắt đầu tại 4.11s)
+      tl.fromTo(
+        "#step-2-card",
+        {
+          scale: 1.2,
+          opacity: 0,
+          y: 25,
+        },
+        {
+          scale: 1,
+          opacity: 1,
+          y: 0,
+          duration: 0.38,
+          ease: "power4.out",
+        },
+        4.11
+      );
+
+      // 6. Overlay 2 kết thúc trước khi clip đóng (5.88s -> 6.08s)
+      tl.to(
+        "#step-2-card",
+        {
+          opacity: 0,
+          y: -15,
+          duration: 0.2,
+          ease: "power2.in",
+        },
+        5.88
+      );
+
+      // 7. Overlay 3: Icon BAN & Chữ "BỊ CHẶN" (Bắt đầu tại 6.94s, kết thúc dứt khoát)
+      tl.fromTo(
+        "#ban-card",
+        {
+          scale: 0.7,
+          opacity: 0,
+        },
+        {
+          scale: 1,
+          opacity: 1,
+          duration: 0.26,
+          ease: "power4.out",
+        },
+        6.94
+      );
+
+      // Tự vẽ nét tròn và nét gạch chéo dứt khoát của icon "ban"
+      tl.to(
+        "#ban-circle-path",
+        {
+          strokeDashoffset: 0,
+          duration: 0.22,
+          ease: "power2.out",
+        },
+        6.98
+      );
+
+      tl.to(
+        "#ban-slash-path",
+        {
+          strokeDashoffset: 0,
+          duration: 0.18,
+          ease: "power2.out",
+        },
+        7.10
+      );
+
+      // Đăng ký timeline cho seekable render của HyperFrames
+      window.__timelines = window.__timelines || {};
+      window.__timelines["scene-s14"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

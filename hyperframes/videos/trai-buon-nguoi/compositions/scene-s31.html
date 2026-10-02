@@ -1,0 +1,453 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+/* hf-safe-colors (tất định từ style-tokens.json) */
+.hf-text-ink { color: #141414; }
+.hf-text-light { color: #F7F4EC; }
+.hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+.hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+.hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+.hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background: #F5F0E4;
+      color: #141414;
+      font-family: "Be Vietnam Pro", sans-serif;
+      overflow: hidden;
+      width: 1080px;
+      height: 1920px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    #root {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #F5F0E4;
+    }
+
+    .clip {
+      position: absolute;
+      inset: 0;
+    }
+
+    /* Thanh cam nhận diện Vox cố định mép đáy */
+    .bottom-orange-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 16px;
+      background-color: #FF6A1A;
+      z-index: 100;
+    }
+
+    /* Nền texture dạng card kẻ ô mờ 84px */
+    .card-grid-pattern {
+      position: absolute;
+      inset: 0;
+      background-image: 
+        linear-gradient(rgba(20, 20, 20, 0.05) 1.5px, transparent 1.5px),
+        linear-gradient(90deg, rgba(20, 20, 20, 0.05) 1.5px, transparent 1.5px);
+      background-size: 84px 84px;
+      pointer-events: none;
+    }
+
+    /* Camera layer cho hiệu ứng zoom-in chậm */
+    #scene-camera {
+      position: absolute;
+      inset: 0;
+      transform-origin: 540px 750px;
+    }
+
+    /* Header khu vực an toàn (Y: 180px - 300px) */
+    .header-zone {
+      position: absolute;
+      top: 180px;
+      left: 60px;
+      right: 60px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 12px;
+      z-index: 20;
+    }
+
+    .meta-badge {
+      background-color: #141414;
+      color: #F7F4EC;
+      font-size: 22px;
+      font-weight: 700;
+      padding: 6px 18px;
+      border-radius: 4px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      display: inline-block;
+    }
+
+    .main-title {
+      font-size: 54px;
+      font-weight: 900;
+      line-height: 1.22;
+      color: #141414;
+      text-transform: uppercase;
+      letter-spacing: -0.5px;
+    }
+
+    /* Bìa tài liệu kịch bản (Y: 310px - 1350px) */
+    #document-wrapper {
+      position: absolute;
+      top: 310px;
+      left: 60px;
+      width: 960px;
+      height: 1040px;
+      background-color: #E7E3D9;
+      border: 3px solid #141414;
+      box-shadow: 12px 12px 0px #141414;
+      border-radius: 4px;
+      z-index: 10;
+      overflow: hidden;
+      transform-origin: center top;
+    }
+
+    .doc-strip-top {
+      height: 44px;
+      background-color: #141414;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      color: #F7F4EC;
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: 1px;
+    }
+
+    .doc-body {
+      position: relative;
+      width: 100%;
+      height: 996px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    /* Khung ảnh synopsis phim */
+    .synopsis-frame {
+      position: relative;
+      width: 100%;
+      height: 430px;
+      background-color: #FFFFFF;
+      border: 2px solid #141414;
+      overflow: hidden;
+    }
+
+    .synopsis-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center top;
+      display: block;
+    }
+
+    /* Lớp SVG vẽ bút khoanh vùng annotations */
+    .svg-draw-layer {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 25;
+    }
+
+    .scribble-stroke {
+      fill: none;
+      stroke: #FF6A1A;
+      stroke-width: 7;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    /* Danh sách 3 hạt sạn kịch bản theo shotlist */
+    .critique-list {
+      position: relative;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      z-index: 30;
+    }
+
+    .critique-row {
+      position: relative;
+      width: 100%;
+      background-color: #F5F0E4;
+      border: 2px solid #141414;
+      box-shadow: 4px 4px 0px #141414;
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 120px;
+    }
+
+    .critique-left {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      align-items: flex-start;
+    }
+
+    .tag-primary {
+      background-color: #FF6A1A;
+      color: #141414;
+      font-size: 27px;
+      font-weight: 900;
+      padding: 6px 14px;
+      border: 2px solid #141414;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      display: inline-block;
+    }
+
+    .tag-sub {
+      background-color: #141414;
+      color: #F7F4EC;
+      font-size: 19px;
+      font-weight: 700;
+      padding: 4px 12px;
+      text-transform: uppercase;
+      display: inline-block;
+    }
+
+    .critique-right-badge {
+      background-color: #141414;
+      color: #FF6A1A;
+      font-size: 19px;
+      font-weight: 900;
+      padding: 8px 14px;
+      border: 2px solid #FF6A1A;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      display: inline-block;
+      text-align: right;
+    }
+
+    /* Lớp tem nhãn ghim ở góc */
+    .corner-stamp {
+      position: absolute;
+      right: 28px;
+      top: 28px;
+      background-color: #141414;
+      color: #FF6A1A;
+      font-size: 18px;
+      font-weight: 900;
+      padding: 6px 12px;
+      border: 2px dashed #FF6A1A;
+      letter-spacing: 1px;
+      transform: rotate(4deg);
+      z-index: 26;
+      display: inline-block;
+    }
+  </style>
+
+  <div
+    id="root"
+    data-composition-id="scene-s31"
+    data-width="1080"
+    data-height="1920"
+    data-duration="9.61"
+  >
+    <!-- Thanh màu cam cố định của Vox Style DNA -->
+    <div class="bottom-orange-bar"></div>
+
+    <section id="shot-s31" class="clip" data-start="0" data-duration="9.61">
+      <div class="card-grid-pattern"></div>
+
+      <div id="scene-camera">
+        <!-- Khu vực tiêu đề hồ sơ -->
+        <header class="header-zone" id="header-zone">
+          <div class="meta-badge">HỒ SƠ GIỚI PHÊ BÌNH</div>
+          <h1 class="main-title">MỔ XẺ HẠT SẠN KỊCH BẢN</h1>
+        </header>
+
+        <!-- Khối tài liệu tóm tắt kịch bản -->
+        <div id="document-wrapper">
+          <div class="doc-strip-top">
+            <span>CGV SYNOPSIS // AUDIT-REPORT</span>
+            <span>MÃ: SCRIPT-31</span>
+          </div>
+
+          <div class="doc-body">
+            <!-- Ảnh synopsis và SVG khoanh vùng bút cam/đỏ -->
+            <div class="synopsis-frame">
+              <img
+                src="assets/img-26-trai-buon-nguoi-movie-synopsis.jpg"
+                alt="Bản tóm tắt kịch bản phim Trại buôn người"
+                class="synopsis-img"
+              />
+
+              <div class="corner-stamp" id="stamp-mark">ĐIỂM TRỪ</div>
+
+              <svg
+                class="svg-draw-layer"
+                viewBox="0 0 912 430"
+                data-layout-allow-overflow="true"
+              >
+                <!-- Vòng 1 khoanh dàn nhân vật phía trái -->
+                <path
+                  id="circle-char"
+                  class="scribble-stroke"
+                  d="M 60,70 C 40,160 55,300 170,335 C 285,370 340,280 330,170 C 320,70 190,45 80,75"
+                />
+                <!-- Vòng 2 khoanh chi tiết công nghệ lừa đảo phía phải -->
+                <path
+                  id="circle-tech"
+                  class="scribble-stroke"
+                  d="M 430,120 C 410,210 420,330 670,350 C 890,370 900,260 885,160 C 870,70 690,60 450,110"
+                />
+              </svg>
+            </div>
+
+            <!-- Danh sách các hạt sạn kịch bản -->
+            <div class="critique-list">
+              <!-- Hạt sạn 1 (Shotlist Overlay 1: 1.38s) -->
+              <div class="critique-row" id="row-char">
+                <div class="critique-left">
+                  <span class="tag-primary">NHÂN VẬT ÔM ĐỒM</span>
+                  <span class="tag-sub">TÂM LÝ CHƯA ĐÀO SÂU</span>
+                </div>
+                <div class="critique-right-badge">QUÁ NHIỀU TUYẾN</div>
+              </div>
+
+              <!-- Hạt sạn 2 (Shotlist Overlay 2: 6.73s) -->
+              <div class="critique-row" id="row-tech">
+                <div class="critique-left">
+                  <span class="tag-primary">LỖI LOGIC TÌNH TIẾT</span>
+                  <span class="tag-sub">CÔNG NGHỆ THIẾU THUYẾT PHỤC</span>
+                </div>
+                <div class="critique-right-badge">KÉM CHÂN THỰC</div>
+              </div>
+
+              <!-- Hạt sạn 3 (Shotlist Overlay 3: 8.88s) -->
+              <div class="critique-row" id="row-pace">
+                <div class="critique-left">
+                  <span class="tag-primary">NHỊP PHIM BỊ CHẬM</span>
+                  <span class="tag-sub">HỒI TƯỞNG KÉO DÀI</span>
+                </div>
+                <div class="critique-right-badge">GIẢM KỊCH TÍNH</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    // Khởi tạo GSAP Timeline ở trạng thái paused theo hợp đồng HyperFrames
+    const tl = gsap.timeline({ paused: true });
+
+    // Thiết lập độ dài nét vẽ cho các path SVG khoanh vùng
+    const pathChar = document.getElementById("circle-char");
+    const pathTech = document.getElementById("circle-tech");
+
+    const lenChar = pathChar.getTotalLength();
+    pathChar.style.strokeDasharray = lenChar;
+    pathChar.style.strokeDashoffset = lenChar;
+
+    const lenTech = pathTech.getTotalLength();
+    pathTech.style.strokeDasharray = lenTech;
+    pathTech.style.strokeDashoffset = lenTech;
+
+    // 1. Camera Zoom-in chậm xuyên suốt 9.61s (1.0x -> 1.05x)
+    tl.fromTo(
+      "#scene-camera",
+      { scale: 1.0 },
+      { scale: 1.05, duration: 9.61, ease: "none" },
+      0
+    );
+
+    // 2. Entrance Unfold: Trang tài liệu lật mở từ trên xuống
+    tl.fromTo(
+      "#header-zone",
+      { opacity: 0, y: -24 },
+      { opacity: 1, y: 0, duration: 0.55, ease: "power2.out" },
+      0.1
+    );
+
+    tl.fromTo(
+      "#document-wrapper",
+      { scaleY: 0.15, opacity: 0 },
+      { scaleY: 1, opacity: 1, duration: 0.75, ease: "power3.out" },
+      0.2
+    );
+
+    tl.fromTo(
+      "#stamp-mark",
+      { scale: 0, opacity: 0, rotation: 20 },
+      { scale: 1, opacity: 1, rotation: 4, duration: 0.45, ease: "power3.out" },
+      0.75
+    );
+
+    // 3. Khởi tạo trạng thái ban đầu của các critique row (ẩn sẵn bằng fromTo)
+    // Overlay 1: NHÂN VẬT ÔM ĐỒM (atMs: 217490 -> 1.38s)
+    tl.fromTo(
+      "#row-char",
+      { opacity: 0, y: 24, scale: 0.96 },
+      { opacity: 1, y: 0, scale: 1, duration: 0.5, ease: "power3.out" },
+      1.38
+    );
+
+    tl.to(
+      "#circle-char",
+      { strokeDashoffset: 0, duration: 0.75, ease: "power2.out" },
+      1.45
+    );
+
+    // 4. Overlay 2: LỖI LOGIC TÌNH TIẾT (atMs: 222840 -> 6.73s)
+    tl.fromTo(
+      "#row-tech",
+      { opacity: 0, y: 24, scale: 0.96 },
+      { opacity: 1, y: 0, scale: 1, duration: 0.5, ease: "power3.out" },
+      6.73
+    );
+
+    tl.to(
+      "#circle-tech",
+      { strokeDashoffset: 0, duration: 0.75, ease: "power2.out" },
+      6.8
+    );
+
+    // 5. Overlay 3: NHỊP PHIM BỊ CHẬM (atMs: 224990 -> 8.88s)
+    tl.fromTo(
+      "#row-pace",
+      { opacity: 0, y: 24, scale: 0.96 },
+      { opacity: 1, y: 0, scale: 1, duration: 0.45, ease: "power3.out" },
+      8.88
+    );
+
+    // Đăng ký timeline cho HyperFrames runtime engine
+    window.__timelines = window.__timelines || {};
+    window.__timelines["scene-s31"] = tl;
+  </script>
+
+    </template>
+  </body>
+</html>

@@ -1,0 +1,482 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap">
+      <style>
+    /* hf-safe-colors (tất định từ style-tokens.json) */
+    .hf-text-ink { color: #141414; }
+    .hf-text-light { color: #F7F4EC; }
+    .hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+    .hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+    .hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+    .hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      background-color: #E7E3D9;
+      color: #141414;
+      font-family: "Be Vietnam Pro", sans-serif;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    #root {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      background-color: #E7E3D9;
+      /* Nền lưới ô vuông 84px chuẩn Vox-style DNA */
+      background-image: 
+        linear-gradient(to right, rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px),
+        linear-gradient(to bottom, rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px);
+      background-size: 84px 84px;
+      overflow: hidden;
+    }
+
+    /* .clip bắt buộc theo HyperFrames convention (inset: 0) */
+    .clip {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    /* Thanh cam nhận diện thương hiệu cố định mép đáy */
+    #bottom-accent-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 16px;
+      background-color: #FF6A1A;
+      z-index: 999;
+    }
+
+    /* Header thông tin đầu trang */
+    .scene-header {
+      position: absolute;
+      top: 190px;
+      left: 60px;
+      right: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 2.5px solid #141414;
+      padding-bottom: 16px;
+      z-index: 10;
+    }
+
+    .header-category {
+      font-size: 26px;
+      font-weight: 900;
+      color: #141414;
+      text-transform: uppercase;
+      letter-spacing: 2.5px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .header-category::before {
+      content: "";
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      background-color: #FF6A1A;
+      border: 2px solid #141414;
+    }
+
+    .header-doc-id {
+      font-size: 22px;
+      font-weight: 700;
+      color: #141414;
+      letter-spacing: 1px;
+    }
+
+    /* Vùng chứa Overlay 1 & 2 (Top slot) */
+    .top-badge-container {
+      position: absolute;
+      top: 290px;
+      left: 60px;
+      right: 60px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 20;
+    }
+
+    /* Overlay 1: KHÔNG MIỄN PHÍ (Badge cam viền đen, chữ mực 6.4:1 contrast) */
+    #overlay-1-box {
+      background-color: #FF6A1A;
+      border: 3.5px solid #141414;
+      box-shadow: 6px 6px 0px #141414;
+      border-radius: 10px;
+      padding: 16px 36px;
+      display: flex;
+      align-items: center;
+      gap: 18px;
+    }
+
+    .badge-icon {
+      width: 44px;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .badge-icon svg {
+      width: 100%;
+      height: 100%;
+      stroke: #141414;
+      fill: none;
+      stroke-width: 3.5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .overlay-1-text {
+      font-size: 44px;
+      font-weight: 900;
+      color: #141414;
+      letter-spacing: 1.5px;
+      line-height: 1.1;
+    }
+
+    /* Overlay 2: VI PHẠM TỪ 2 LẦN (Thẻ mực chữ cam 6.4:1 contrast) */
+    #overlay-2-box {
+      background-color: #141414;
+      border: 3.5px solid #FF6A1A;
+      box-shadow: 6px 6px 0px rgba(255, 106, 26, 0.45);
+      border-radius: 10px;
+      padding: 18px 40px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .overlay-2-sub {
+      font-size: 20px;
+      font-weight: 700;
+      color: #F7F4EC;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+
+    .overlay-2-text {
+      font-size: 46px;
+      font-weight: 900;
+      color: #FF6A1A;
+      letter-spacing: 2px;
+      line-height: 1.1;
+    }
+
+    /* Thẻ tài liệu doc-03 (Bản án gốc) - tách wrapper để nhận camera zoom độc lập */
+    #doc-card-wrapper {
+      position: absolute;
+      top: 480px;
+      left: 50px;
+      width: 980px;
+      perspective: 1200px;
+      transform-origin: center center;
+      z-index: 15;
+    }
+
+    #doc-card {
+      width: 100%;
+      background-color: #F5F0E4;
+      border: 3.5px solid #141414;
+      border-radius: 12px;
+      box-shadow: 10px 10px 0px rgba(20, 20, 20, 0.85);
+      padding: 24px;
+      transform-origin: center center;
+    }
+
+    .doc-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 2px solid rgba(20, 20, 20, 0.25);
+      padding-bottom: 14px;
+      margin-bottom: 18px;
+    }
+
+    .doc-card-title {
+      font-size: 20px;
+      font-weight: 900;
+      color: #141414;
+      letter-spacing: 1px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .doc-card-tag {
+      background-color: #141414;
+      color: #F7F4EC;
+      font-size: 16px;
+      font-weight: 700;
+      padding: 4px 12px;
+      border-radius: 4px;
+      letter-spacing: 1px;
+    }
+
+    .doc-image-frame {
+      width: 100%;
+      background-color: #FFFFFF;
+      border: 2px solid #141414;
+      border-radius: 6px;
+      overflow: hidden;
+      display: block;
+    }
+
+    .doc-image-frame img {
+      width: 100%;
+      height: auto;
+      display: block;
+      object-fit: contain;
+    }
+
+    /* Đường nối chỉ dẫn SVG Diagram - canh giữa qua left:0; right:0; margin:auto */
+    #diagram-connector {
+      position: absolute;
+      top: 410px;
+      left: 0;
+      right: 0;
+      margin: 0 auto;
+      width: 120px;
+      height: 80px;
+      z-index: 18;
+      pointer-events: none;
+    }
+
+    /* Overlay 3: Punch-phrase BUỘC CHẤP HÀNH TÙ */
+    #punch-card-container {
+      position: absolute;
+      top: 1040px;
+      left: 60px;
+      right: 60px;
+      display: flex;
+      justify-content: center;
+      z-index: 30;
+    }
+
+    #punch-card {
+      width: 100%;
+      background-color: #141414;
+      border: 4px solid #FF6A1A;
+      box-shadow: 10px 10px 0px #FF6A1A;
+      border-radius: 14px;
+      padding: 34px 28px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      transform-origin: center center;
+    }
+
+    .punch-prefix {
+      font-size: 24px;
+      font-weight: 700;
+      color: #FF6A1A;
+      text-transform: uppercase;
+      letter-spacing: 3px;
+    }
+
+    .punch-title {
+      font-size: 66px;
+      font-weight: 900;
+      color: #F7F4EC;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      line-height: 1.25;
+      text-align: center;
+    }
+  </style>
+
+  <div
+    id="root"
+    data-composition-id="scene-s30"
+    data-start="0"
+    data-width="1080"
+    data-height="1920"
+    data-duration="11.62"
+  >
+    <!-- Thanh viền cam nhận diện thương hiệu cố định mép đáy -->
+    <div id="bottom-accent-bar"></div>
+
+    <!-- Clip 1: Nền & Header cố định suốt scene (0s -> 11.62s) -->
+    <section id="clip-header" class="clip" data-start="0" data-duration="11.62">
+      <div class="scene-header">
+        <div class="header-category">ĐIỀU KIỆN ÁN TREO</div>
+        <div class="header-doc-id">BẢN ÁN SỐ 22/2020/HS-ST</div>
+      </div>
+    </section>
+
+    <!-- Clip 2: Thẻ tài liệu trích lục bản án gốc doc-03 (0s -> 11.62s) -->
+    <section id="clip-document" class="clip" data-start="0" data-duration="11.62">
+      <div id="doc-card-wrapper">
+        <div id="doc-card">
+          <div class="doc-card-header">
+            <div class="doc-card-title">
+              <span>TRÍCH LỤC BẢN ÁN HÌNH SỰ (TRANG 6)</span>
+            </div>
+            <div class="doc-card-tag">TÀI LIỆU GỐC</div>
+          </div>
+          <div class="doc-image-frame">
+            <img
+              src="assets/doc-03-verdict.png"
+              alt="Bản án hình sự số 22/2020/HS-ST trang 6"
+              width="1081"
+              height="310"
+            />
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Clip 3: Overlay 1 - "KHÔNG MIỄN PHÍ" (atMs: 282460 -> local 1.23s, hold 2.0s) -->
+    <div id="clip-overlay-1" class="clip" data-start="1.23" data-duration="2.7">
+      <div class="top-badge-container">
+        <div id="overlay-1-box">
+          <div class="badge-icon">
+            <svg viewBox="0 0 24 24">
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+              <line x1="12" y1="9" x2="12" y2="13"/>
+              <line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+          </div>
+          <span class="overlay-1-text">KHÔNG MIỄN PHÍ</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Clip 4: Overlay 2 - "VI PHẠM TỪ 2 LẦN" + Đường dẫn Diagram (atMs: 286170 -> local 4.94s, hold 2.4s) -->
+    <div id="clip-overlay-2" class="clip" data-start="4.94" data-duration="3.7">
+      <div class="top-badge-container">
+        <div id="overlay-2-box">
+          <span class="overlay-2-sub">ĐIỀU KIỆN RÀNG BUỘC</span>
+          <span class="overlay-2-text">VI PHẠM TỪ 2 LẦN</span>
+        </div>
+      </div>
+      <svg id="diagram-connector" viewBox="0 0 120 80">
+        <path
+          id="connector-path"
+          d="M 60 0 L 60 70 M 50 60 L 60 72 L 70 60"
+          fill="none"
+          stroke="#FF6A1A"
+          stroke-width="5"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+      </svg>
+    </div>
+
+    <!-- Clip 5: Overlay 3 - Punch-phrase "BUỘC CHẤP HÀNH TÙ" (atMs: 290870 -> local 9.64s, hold 2.2s -> hết scene) -->
+    <div id="clip-overlay-3" class="clip" data-start="9.64" data-duration="1.98">
+      <div id="punch-card-container">
+        <div id="punch-card">
+          <span class="punch-prefix">HẬU QUẢ PHÁP LÝ</span>
+          <span class="punch-title">BUỘC CHẤP HÀNH TÙ</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Chuẩn bị SVG đường dẫn diagram
+    const pathEl = document.getElementById("connector-path");
+    if (pathEl) {
+      const len = pathEl.getTotalLength ? pathEl.getTotalLength() : 120;
+      pathEl.style.strokeDasharray = (len + 10).toString();
+      pathEl.style.strokeDashoffset = (len + 10).toString();
+    }
+
+    // Đăng ký timeline gốc paused duy nhất
+    const tl = gsap.timeline({ paused: true });
+
+    // 1. Camera zoom: áp dụng riêng trên #doc-card-wrapper suốt thời gian shot (0 -> 11.62s)
+    tl.fromTo(
+      "#doc-card-wrapper",
+      { scale: 1 },
+      { scale: 1.03, duration: 11.62, ease: "none" },
+      0
+    );
+
+    // 2. Entrance thẻ tài liệu bản án: chỉ tween rotationX, y, opacity trên #doc-card (không tween scale)
+    tl.fromTo(
+      "#doc-card",
+      { rotationX: -26, y: 70, opacity: 0 },
+      { rotationX: 0, y: 0, opacity: 1, duration: 0.75, ease: "power3.out" },
+      0.2
+    );
+
+    // 3. Overlay 1 ("KHÔNG MIỄN PHÍ" lúc 1.23s)
+    tl.fromTo(
+      "#overlay-1-box",
+      { scale: 0.7, opacity: 0, y: -24 },
+      { scale: 1, opacity: 1, y: 0, duration: 0.45, ease: "power3.out" },
+      1.23
+    );
+    // Overlay 1 fade out opacity trước khi hết clip
+    tl.to(
+      "#overlay-1-box",
+      { opacity: 0, duration: 0.3, ease: "power2.in" },
+      3.55
+    );
+
+    // 4. Overlay 2 ("VI PHẠM TỪ 2 LẦN" lúc 4.94s)
+    tl.fromTo(
+      "#overlay-2-box",
+      { scale: 0.75, opacity: 0, y: -24 },
+      { scale: 1, opacity: 1, y: 0, duration: 0.45, ease: "power3.out" },
+      4.94
+    );
+
+    // Vẽ mũi tên connector trỏ vào bản án
+    tl.to(
+      "#connector-path",
+      { strokeDashoffset: 0, duration: 0.5, ease: "power2.out" },
+      5.25
+    );
+
+    // Overlay 2 & diagram fade out opacity trước khi punch phrase xuất hiện
+    tl.to(
+      "#overlay-2-box",
+      { opacity: 0, duration: 0.35, ease: "power2.in" },
+      8.2
+    );
+    tl.to(
+      "#connector-path",
+      { opacity: 0, duration: 0.35, ease: "power2.in" },
+      8.2
+    );
+
+    // 5. Punch phrase "BUỘC CHẤP HÀNH TÙ" lúc 9.64s (Impact punch đanh thép)
+    tl.fromTo(
+      "#punch-card",
+      { scale: 1.2, opacity: 0, y: 35 },
+      { scale: 1, opacity: 1, y: 0, duration: 0.38, ease: "power4.out" },
+      9.64
+    );
+
+    // Gán timeline gốc cho HyperFrames
+    window.__timelines["scene-s30"] = tl;
+  </script>
+
+    </template>
+  </body>
+</html>

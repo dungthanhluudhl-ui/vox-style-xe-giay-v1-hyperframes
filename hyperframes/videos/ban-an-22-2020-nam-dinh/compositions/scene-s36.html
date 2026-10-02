@@ -1,0 +1,539 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap"
+    />
+      <style>
+/* hf-safe-colors (tất định từ style-tokens.json) */
+.hf-text-ink { color: #141414; }
+.hf-text-light { color: #F7F4EC; }
+.hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+.hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+.hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+.hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #e7e3d9;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      /* Composition root */
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+
+      /* Shared clip convention */
+      .clip {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+      }
+
+      /* Background paper grid: 84px cells, nét mực 1.5px mờ */
+      .paper-grid {
+        position: absolute;
+        inset: 0;
+        background-color: #e7e3d9;
+        background-image:
+          linear-gradient(rgba(20, 20, 20, 0.16) 1.5px, transparent 1.5px),
+          linear-gradient(90deg, rgba(20, 20, 20, 0.16) 1.5px, transparent 1.5px);
+        background-size: 84px 84px;
+        background-position: center top;
+        z-index: 1;
+      }
+
+      /* Thanh cam nhận diện thương hiệu cố định mép đáy */
+      .brand-bottom-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 1080px;
+        height: 16px;
+        background-color: #ff6a1a;
+        z-index: 999;
+      }
+
+      /* Wrapper chuyển động camera zoom nhẹ toàn cảnh */
+      .camera-viewport {
+        position: absolute;
+        inset: 0;
+        z-index: 2;
+        transform-origin: 540px 750px;
+      }
+
+      /* Lớp bố cục chính chứa nội dung (nằm gọn trong safe zone y: 160px -> 1390px) */
+      .scene-stage {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 1080px;
+        height: 1920px;
+      }
+
+      /* Header điều tra: nhãn thể loại và punch banner */
+      .header-block {
+        position: absolute;
+        top: 170px;
+        left: 70px;
+        width: 940px;
+      }
+
+      .category-pill {
+        display: inline-block;
+        background-color: #141414;
+        color: #f7f4ec;
+        font-size: 22px;
+        font-weight: 900;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        padding: 6px 18px;
+        border-radius: 4px;
+        margin-bottom: 12px;
+      }
+
+      .punch-banner {
+        display: inline-block;
+        background-color: #ff6a1a;
+        color: #141414;
+        font-size: 64px;
+        font-weight: 900;
+        line-height: 1.25;
+        letter-spacing: -0.5px;
+        padding: 14px 28px;
+        border: 4px solid #141414;
+        box-shadow: 6px 6px 0px #141414;
+        text-transform: uppercase;
+        transform-origin: left center;
+      }
+
+      /* Trục thời gian đứng (Timeline Spine) */
+      .timeline-axis {
+        position: absolute;
+        top: 400px;
+        left: 126px;
+        width: 4px;
+        height: 800px;
+        background-color: #141414;
+        transform-origin: top center;
+        z-index: 10;
+      }
+
+      /* Node chung trên trục thời gian */
+      .timeline-node {
+        position: absolute;
+        left: 108px;
+        width: 880px;
+        display: flex;
+        align-items: flex-start;
+        z-index: 20;
+      }
+
+      /* Bullet marker đánh số trên trục */
+      .node-marker {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background-color: #141414;
+        color: #f7f4ec;
+        border: 3px solid #141414;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 22px;
+        font-weight: 900;
+        flex-shrink: 0;
+        margin-top: 18px;
+        margin-right: 24px;
+        box-shadow: 2px 2px 0px rgba(20, 20, 20, 0.4);
+      }
+
+      .node-marker.highlight-orange {
+        background-color: #ff6a1a;
+        color: #141414;
+        border-color: #141414;
+      }
+
+      /* Card nội dung của node */
+      .node-card {
+        flex: 1;
+        background-color: #f5f0e4;
+        border: 3px solid #141414;
+        box-shadow: 5px 5px 0px #141414;
+        padding: 16px 24px;
+        border-radius: 6px;
+      }
+
+      .node-title {
+        font-size: 32px;
+        font-weight: 900;
+        color: #141414;
+        line-height: 1.25;
+        margin: 0 0 6px 0;
+      }
+
+      .node-desc {
+        font-size: 24px;
+        font-weight: 700;
+        color: #141414;
+        line-height: 1.3;
+        margin: 0;
+      }
+
+      /* Toạ độ y từng node */
+      #node-1 {
+        top: 390px;
+      }
+
+      #node-2 {
+        top: 525px;
+      }
+
+      #node-3 {
+        top: 660px;
+      }
+
+      #node-4 {
+        top: 840px;
+      }
+
+      #node-5 {
+        top: 975px;
+      }
+
+      /* Card 3: Xô vữa với stamp điểm nổ */
+      .stamp-container {
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        margin-top: 10px;
+      }
+
+      .stamp-alert {
+        background-color: #ff6a1a;
+        color: #141414;
+        font-size: 24px;
+        font-weight: 900;
+        padding: 6px 14px;
+        border: 2px solid #141414;
+        box-shadow: 3px 3px 0px #141414;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        transform-origin: center center;
+      }
+
+      /* Card 5: Hỗn chiến bùng nổ - Phong cách nền mực tương phản tối */
+      .card-climax {
+        background-color: #141414;
+        border: 4px solid #ff6a1a;
+        box-shadow: 6px 6px 0px rgba(255, 106, 26, 0.45);
+        padding: 20px 28px;
+      }
+
+      .climax-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 8px;
+      }
+
+      .climax-title {
+        font-size: 40px;
+        font-weight: 900;
+        color: #ff6a1a;
+        letter-spacing: -0.5px;
+        margin: 0;
+        text-transform: uppercase;
+      }
+
+      .climax-desc {
+        font-size: 26px;
+        font-weight: 700;
+        color: #f7f4ec;
+        margin: 0 0 12px 0;
+        line-height: 1.35;
+      }
+
+      .climax-badge {
+        display: inline-block;
+        background-color: #ff6a1a;
+        color: #141414;
+        font-size: 20px;
+        font-weight: 900;
+        padding: 5px 14px;
+        border-radius: 4px;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+      }
+
+      /* Biểu tượng đám đông SVG (Icon Crowd - Vox vocabulary) */
+      .crowd-icon-svg {
+        width: 60px;
+        height: 60px;
+        flex-shrink: 0;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s36"
+      data-width="1080"
+      data-height="1920"
+      data-duration="9.89"
+    >
+      <!-- Scene Clip: thời lượng 9.89s tương ứng 337350ms - 347240ms -->
+      <section id="scene-s36" class="clip" data-start="0" data-duration="9.89">
+        <!-- Nền giấy lưới ô vuông 84px -->
+        <div class="paper-grid"></div>
+
+        <!-- Khung nhìn camera zoom nhẹ -->
+        <div class="camera-viewport">
+          <div class="scene-stage">
+            <!-- Header: Thể loại + Nhãn 1 "NGUYÊN NHÂN RẤT NHỎ" -->
+            <div class="header-block">
+              <div class="category-pill" id="cat-pill">HỒI TƯỞNG • CHUỖI NHÂN QUẢ</div>
+              <div>
+                <div class="punch-banner" id="punch-title">NGUYÊN NHÂN RẤT NHỎ</div>
+              </div>
+            </div>
+
+            <!-- Trục thời gian thẳng đứng nối các mắt xích -->
+            <div class="timeline-axis" id="timeline-spine"></div>
+
+            <!-- Mắt xích 1: Va chạm xe máy -->
+            <div class="timeline-node" id="node-1">
+              <div class="node-marker" id="marker-1">1</div>
+              <div class="node-card" id="card-1">
+                <div class="node-title">01 • VA CHẠM XE MÁY</div>
+                <div class="node-desc">Mâu thuẫn hàng xóm nhỏ nhặt nơi đầu ngõ</div>
+              </div>
+            </div>
+
+            <!-- Mắt xích 2: Lời qua tiếng lại -->
+            <div class="timeline-node" id="node-2">
+              <div class="node-marker" id="marker-2">2</div>
+              <div class="node-card" id="card-2">
+                <div class="node-title">02 • LỜI QUA TIẾNG LẠI</div>
+                <div class="node-desc">Cự cãi gay gắt, không ai chịu nhường ai</div>
+              </div>
+            </div>
+
+            <!-- Mắt xích 3: Hất xô vữa (Nhãn 2 "MỘT XÔ VỮA ĐỔ") -->
+            <div class="timeline-node" id="node-3">
+              <div class="node-marker highlight-orange" id="marker-3">3</div>
+              <div class="node-card" id="card-3">
+                <div class="node-title">03 • HẤT XÔ VỮA RA NGÕ</div>
+                <div class="node-desc">Hành động bộc phát biến cãi vã thành bạo lực</div>
+                <div class="stamp-container">
+                  <div class="stamp-alert" id="stamp-mortar">MỘT XÔ VỮA ĐỔ</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Mắt xích 4: Đuổi đánh -->
+            <div class="timeline-node" id="node-4">
+              <div class="node-marker" id="marker-4">4</div>
+              <div class="node-card" id="card-4">
+                <div class="node-title">04 • CUỘC ĐUỔI ĐÁNH</div>
+                <div class="node-desc">Rượt đuổi qua các khúc quanh con ngõ</div>
+              </div>
+            </div>
+
+            <!-- Mắt xích 5: Hỗn chiến bùng nổ (Nhãn 3 + Icon Crowd) -->
+            <div class="timeline-node" id="node-5">
+              <div class="node-marker highlight-orange" id="marker-5">5</div>
+              <div class="node-card card-climax" id="card-5">
+                <div class="climax-header">
+                  <div class="climax-title" id="climax-text">HỖN CHIẾN BÙNG NỔ</div>
+                  <!-- SVG Icon Crowd chuẩn phong cách điều tra Vox -->
+                  <svg
+                    class="crowd-icon-svg"
+                    id="crowd-icon"
+                    viewBox="0 0 64 64"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <!-- Đầu người phía sau -->
+                    <circle cx="18" cy="20" r="7.5" stroke="#F7F4EC" stroke-width="3" fill="#141414" />
+                    <circle cx="46" cy="20" r="7.5" stroke="#F7F4EC" stroke-width="3" fill="#141414" />
+                    <!-- Đầu người trung tâm phía trước -->
+                    <circle cx="32" cy="16" r="8.5" stroke="#FF6A1A" stroke-width="3.5" fill="#141414" />
+                    <!-- Thân người phía sau -->
+                    <path d="M6 50 C6 38, 30 38, 30 50" stroke="#F7F4EC" stroke-width="3" stroke-linecap="round" />
+                    <path d="M34 50 C34 38, 58 38, 58 50" stroke="#F7F4EC" stroke-width="3" stroke-linecap="round" />
+                    <!-- Thân người trung tâm phía trước -->
+                    <path d="M16 54 C16 40, 48 40, 48 54" stroke="#FF6A1A" stroke-width="3.5" stroke-linecap="round" />
+                  </svg>
+                </div>
+                <div class="climax-desc">Người nhà hai bên chạy ra tiếp ứng</div>
+                <div class="climax-badge" id="climax-badge">HAI GIA ĐÌNH LAO VÀO NHAU</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Thanh cam đáy cố định nhận diện thương hiệu -->
+        <div class="brand-bottom-bar"></div>
+      </section>
+    </div>
+
+    <script>
+      // Đăng ký đúng 1 GSAP timeline paused cho composition root
+      const tl = gsap.timeline({ paused: true });
+
+      // 1. Camera zoom-in vi mô xuyên suốt 9.89s (chuyển động nền sống động, không dead-air)
+      tl.fromTo(
+        ".camera-viewport",
+        { scale: 1 },
+        { scale: 1.04, duration: 9.89, ease: "none" },
+        0
+      );
+
+      // 2. Chuyển động vào cảnh "rise" cho khung sân khấu tổng
+      tl.fromTo(
+        ".scene-stage",
+        { y: 40, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.6, ease: "power3.out" },
+        0
+      );
+
+      // 3. Category Pill vào cảnh
+      tl.fromTo(
+        "#cat-pill",
+        { y: -20, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.5, ease: "power2.out" },
+        0.2
+      );
+
+      // 4. Trục thời gian đứng lớn dần từ trên xuống
+      tl.fromTo(
+        "#timeline-spine",
+        { scaleY: 0 },
+        { scaleY: 1, duration: 8.5, ease: "none" },
+        0.5
+      );
+
+      // 5. Mốc 1.53s: Nhãn "NGUYÊN NHÂN RẤT NHỎ" (atMs 338880 -> 1.53s)
+      tl.fromTo(
+        "#punch-title",
+        { scale: 0.82, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.55, ease: "power3.out" },
+        1.53
+      );
+
+      // Node 1 xuất hiện đồng bộ cùng luận điểm mở đầu
+      tl.fromTo(
+        "#marker-1",
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.4, ease: "power3.out" },
+        1.53
+      );
+      tl.fromTo(
+        "#card-1",
+        { x: -30, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.5, ease: "power3.out" },
+        1.65
+      );
+
+      // 6. Mắt xích 2: Lời qua tiếng lại (xuất hiện ở 2.9s)
+      tl.fromTo(
+        "#marker-2",
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.4, ease: "power3.out" },
+        2.9
+      );
+      tl.fromTo(
+        "#card-2",
+        { x: -30, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.5, ease: "power3.out" },
+        3.02
+      );
+
+      // 7. Mắt xích 3 chuẩn bị xuất hiện trước mốc xô vữa
+      tl.fromTo(
+        "#marker-3",
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.4, ease: "power3.out" },
+        5.2
+      );
+      tl.fromTo(
+        "#card-3",
+        { x: -30, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.5, ease: "power3.out" },
+        5.32
+      );
+
+      // Mốc 6.07s: Nhãn "MỘT XÔ VỮA ĐỔ" đập mạnh vào mắt người xem (atMs 343420 -> 6.07s)
+      tl.fromTo(
+        "#stamp-mortar",
+        { scale: 1.8, opacity: 0, rotation: -6 },
+        { scale: 1, opacity: 1, rotation: 0, duration: 0.45, ease: "power3.out" },
+        6.07
+      );
+
+      // 8. Mắt xích 4: Cuộc đuổi đánh (xuất hiện ở 7.15s)
+      tl.fromTo(
+        "#marker-4",
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.4, ease: "power3.out" },
+        7.15
+      );
+      tl.fromTo(
+        "#card-4",
+        { x: -30, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.5, ease: "power3.out" },
+        7.27
+      );
+
+      // 9. Mốc 8.16s: Nhãn "HỖN CHIẾN BÙNG NỔ" + Icon Crowd (atMs 345510 -> 8.16s)
+      tl.fromTo(
+        "#marker-5",
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.35, ease: "power3.out" },
+        8.16
+      );
+      tl.fromTo(
+        "#card-5",
+        { scale: 0.9, opacity: 0, y: 25 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.55, ease: "power3.out" },
+        8.16
+      );
+      tl.fromTo(
+        "#crowd-icon",
+        { scale: 0, opacity: 0, rotation: -15 },
+        { scale: 1, opacity: 1, rotation: 0, duration: 0.5, ease: "power3.out" },
+        8.28
+      );
+      tl.fromTo(
+        "#climax-badge",
+        { opacity: 0, y: 10 },
+        { opacity: 1, y: 0, duration: 0.4, ease: "power2.out" },
+        8.45
+      );
+
+      // Gán timeline duy nhất vào window.__timelines
+      window.__timelines["scene-s36"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

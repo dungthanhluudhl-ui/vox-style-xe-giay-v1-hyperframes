@@ -1,0 +1,365 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+    /* hf-safe-colors (tất định từ style-tokens.json) */
+    .hf-text-ink { color: #141414; }
+    .hf-text-light { color: #F7F4EC; }
+    .hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+    .hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+    .hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+    .hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #0d0f12;
+      color: #141414;
+      font-family: "Be Vietnam Pro", sans-serif;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    #root {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #E7E3D9;
+    }
+
+    .clip {
+      position: absolute;
+      inset: 0;
+    }
+
+    /* Grid nền ngà đặc trưng Vox */
+    .bg-grid {
+      position: absolute;
+      inset: 0;
+      background-color: #E7E3D9;
+      background-image:
+        linear-gradient(to right, rgba(20, 20, 20, 0.16) 1.5px, transparent 1.5px),
+        linear-gradient(to bottom, rgba(20, 20, 20, 0.16) 1.5px, transparent 1.5px);
+      background-size: 84px 84px;
+    }
+
+    /* Biến thể Spotlight: radial vignette tối nhẹ viền */
+    .bg-spotlight {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 50% 45%, transparent 35%, rgba(20, 20, 20, 0.28) 100%);
+      pointer-events: none;
+    }
+
+    /* Thanh cam nhận diện cố định ở mép dưới cùng */
+    #bottom-accent-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 14px;
+      background-color: #FF6A1A;
+      z-index: 999;
+    }
+
+    /* Khối thẻ tài liệu trích lục bản án (doc-03) */
+    .doc-stage {
+      position: absolute;
+      top: 240px;
+      left: 43px;
+      width: 994px;
+    }
+
+    #doc-card {
+      width: 100%;
+      background-color: #F5F0E4;
+      border: 3.5px solid #141414;
+      border-radius: 8px;
+      box-shadow: 10px 10px 0px rgba(20, 20, 20, 0.22);
+      overflow: hidden;
+      transform-origin: 50% 50%;
+    }
+
+    .doc-card-bar {
+      height: 8px;
+      background-color: #FF6A1A;
+      width: 100%;
+    }
+
+    .doc-card-body {
+      padding: 24px;
+      background-color: #F5F0E4;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    #doc-img {
+      width: 100%;
+      height: auto;
+      display: block;
+      border-radius: 2px;
+    }
+
+    /* Container cho các overlay đặt trong usable band an toàn */
+    .overlays-stage {
+      position: absolute;
+      top: 590px;
+      left: 43px;
+      width: 994px;
+      pointer-events: none;
+    }
+
+    /* Cụm Overlay 1 & 2: Bản án sơ thẩm (3.5s - 6.12s) */
+    #verdict-container {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .verdict-tag-wrap {
+      display: flex;
+    }
+
+    .verdict-tag {
+      background-color: #FF6A1A;
+      color: #141414;
+      font-size: 30px;
+      font-weight: 900;
+      letter-spacing: 2px;
+      padding: 10px 24px;
+      border-radius: 4px;
+      border: 3px solid #141414;
+      text-transform: uppercase;
+      box-shadow: 6px 6px 0px rgba(20, 20, 20, 0.18);
+    }
+
+    .verdict-plate {
+      background-color: #141414;
+      padding: 32px 40px;
+      border-radius: 8px;
+      box-shadow: 10px 10px 0px rgba(20, 20, 20, 0.25);
+      display: flex;
+      align-items: center;
+      gap: 28px;
+      transform-origin: 50% 50%;
+    }
+
+    .verdict-stripe {
+      width: 12px;
+      height: 78px;
+      background-color: #FF6A1A;
+      border-radius: 3px;
+      flex-shrink: 0;
+      transform-origin: 50% 0%;
+    }
+
+    .verdict-title {
+      font-size: 70px;
+      font-weight: 900;
+      color: #F7F4EC;
+      line-height: 1.15;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    /* Cụm Overlay 3: Đơn kháng cáo (6.67s - 8.87s) */
+    #appeal-container {
+      width: 100%;
+    }
+
+    .appeal-card {
+      width: 100%;
+      background-color: #F5F0E4;
+      border: 3.5px solid #141414;
+      border-radius: 8px;
+      box-shadow: 10px 10px 0px rgba(20, 20, 20, 0.22);
+      padding: 44px 32px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .appeal-stamp {
+      background-color: #FF6A1A;
+      border: 4px solid #141414;
+      border-radius: 6px;
+      padding: 6px;
+      box-shadow: 8px 8px 0px rgba(20, 20, 20, 0.2);
+      display: inline-block;
+      transform-origin: 50% 50%;
+    }
+
+    .stamp-inner {
+      border: 2.5px dashed #141414;
+      padding: 18px 48px;
+      border-radius: 4px;
+    }
+
+    .appeal-text {
+      font-size: 54px;
+      font-weight: 900;
+      color: #141414;
+      letter-spacing: 3px;
+      display: block;
+      text-transform: uppercase;
+      line-height: 1.1;
+      text-align: center;
+    }
+  </style>
+
+  <div
+    id="root"
+    data-composition-id="scene-s30"
+    data-width="1080"
+    data-height="1920"
+    data-duration="9.24"
+  >
+    <!-- Clip 1: Nền Vox Grid + Spotlight Vignette -->
+    <div id="clip-bg" class="clip" data-start="0" data-duration="9.24">
+      <div class="bg-grid"></div>
+      <div class="bg-spotlight"></div>
+    </div>
+
+    <!-- Clip 2: Thẻ tài liệu bản án chính thống doc-03 -->
+    <div id="clip-doc" class="clip" data-start="0" data-duration="9.24">
+      <div class="doc-stage">
+        <div id="doc-card">
+          <div class="doc-card-bar"></div>
+          <div class="doc-card-body">
+            <img
+              id="doc-img"
+              src="assets/doc-03-law.png"
+              alt="Trích dẫn bản án sơ thẩm"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Clip 3: Overlay 1 & 2 - ĐIỀU 123 ĐIỂM Q + ĐỘNG CƠ ĐÊ HÈN -->
+    <div id="clip-verdict" class="clip" data-start="3.5" data-duration="3.0">
+      <div class="overlays-stage">
+        <div id="verdict-container">
+          <div class="verdict-tag-wrap">
+            <span class="verdict-tag">ĐIỀU 123 ĐIỂM Q</span>
+          </div>
+          <div class="verdict-plate">
+            <div class="verdict-stripe"></div>
+            <h1 class="verdict-title">ĐỘNG CƠ ĐÊ HÈN</h1>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Clip 4: Overlay 3 - ĐƠN KHÁNG CÁO -->
+    <div id="clip-appeal" class="clip" data-start="6.67" data-duration="2.5">
+      <div class="overlays-stage">
+        <div id="appeal-container">
+          <div class="appeal-card">
+            <div class="appeal-stamp">
+              <div class="stamp-inner">
+                <span class="appeal-text">ĐƠN KHÁNG CÁO</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Thanh cam thương hiệu cố định mép đáy -->
+    <div id="bottom-accent-bar"></div>
+  </div>
+
+  <script>
+    window.__timelines = window.__timelines || {};
+    const tl = gsap.timeline({ paused: true });
+
+    // 1. Zoom-through entrance của thẻ tài liệu bản án (0.0s -> 0.7s)
+    tl.fromTo(
+      "#doc-card",
+      { scale: 0.88, opacity: 0, y: 35 },
+      { scale: 1.0, opacity: 1, y: 0, duration: 0.7, ease: "power3.out" },
+      0
+    );
+
+    // Camera slow zoom-in 3% xuyên suốt cảnh (0.7s -> 9.24s)
+    tl.to(
+      "#doc-card",
+      { scale: 1.03, duration: 8.54, ease: "none" },
+      0.7
+    );
+
+    // 2. Overlay 1: Label "ĐIỀU 123 ĐIỂM Q" xuất hiện tại 3.5s
+    tl.fromTo(
+      ".verdict-tag",
+      { y: 24, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.4, ease: "power3.out" },
+      3.5
+    );
+
+    // 3. Overlay 2: Punch phrase "ĐỘNG CƠ ĐÊ HÈN" xuất hiện tại 3.92s
+    tl.fromTo(
+      ".verdict-plate",
+      { scale: 0.94, y: 32, opacity: 0 },
+      { scale: 1.0, y: 0, opacity: 1, duration: 0.48, ease: "power4.out" },
+      3.92
+    );
+
+    tl.fromTo(
+      ".verdict-stripe",
+      { scaleY: 0 },
+      { scaleY: 1, duration: 0.32, ease: "power2.out" },
+      4.05
+    );
+
+    // Exit cụm bản án sơ thẩm tại 6.12s
+    tl.to(
+      "#verdict-container",
+      { y: -20, opacity: 0, duration: 0.3, ease: "power2.in" },
+      6.12
+    );
+
+    // 4. Overlay 3: ĐƠN KHÁNG CÁO xuất hiện tại 6.67s
+    tl.fromTo(
+      ".appeal-card",
+      { y: 36, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.45, ease: "power3.out" },
+      6.67
+    );
+
+    // Stamp "ĐƠN KHÁNG CÁO" đóng dấu quyết liệt tại 6.95s
+    tl.fromTo(
+      ".appeal-stamp",
+      { scale: 1.45, opacity: 0, rotation: -16 },
+      { scale: 1.0, opacity: 1, rotation: -4, duration: 0.38, ease: "power3.out" },
+      6.95
+    );
+
+    // Exit cụm đơn kháng cáo tại 8.87s
+    tl.to(
+      "#appeal-container",
+      { y: -16, opacity: 0, duration: 0.32, ease: "power2.in" },
+      8.87
+    );
+
+    // Đăng ký timeline chính thức cho HyperFrames runtime
+    window.__timelines["scene-s30"] = tl;
+  </script>
+
+    </template>
+  </body>
+</html>

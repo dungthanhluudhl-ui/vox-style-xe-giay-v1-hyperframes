@@ -1,0 +1,635 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+/* hf-safe-colors (tất định từ style-tokens.json) */
+.hf-text-ink { color: #141414; }
+.hf-text-light { color: #F7F4EC; }
+.hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+.hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+.hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+.hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+      *, *::before, *::after {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #E7E3D9;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: #E7E3D9;
+      }
+
+      /* Quy ước clip chuẩn của HyperFrames: inset: 0, absolute */
+      .clip {
+        position: absolute;
+        inset: 0;
+      }
+
+      /* Nền lưới ô vuông 84px chuẩn Vox DNA */
+      .bg-grid {
+        position: absolute;
+        inset: 0;
+        background-size: 84px 84px;
+        background-image:
+          linear-gradient(to right, rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px),
+          linear-gradient(to bottom, rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px);
+        pointer-events: none;
+        z-index: 1;
+      }
+
+      /* Thanh cam nhận diện thương hiệu cố định mép đáy */
+      .bottom-brand-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 12px;
+        background-color: #FF6A1A;
+        z-index: 99;
+      }
+
+      /* Container chính của scene */
+      #scene-container {
+        position: absolute;
+        inset: 0;
+        z-index: 10;
+        will-change: transform, opacity;
+      }
+
+      /* Header Tag: Top Safezone (Y: 180px - 280px) */
+      .header-plate {
+        position: absolute;
+        top: 180px;
+        left: 60px;
+        right: 60px;
+        height: 100px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 28px;
+        background-color: #141414;
+        border-radius: 12px;
+        box-shadow: 8px 8px 0px rgba(20, 20, 20, 0.3);
+        z-index: 30;
+        will-change: transform, opacity;
+      }
+      .header-title-wrap {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
+      .header-accent-bar {
+        width: 8px;
+        height: 48px;
+        background-color: #FF6A1A;
+        border-radius: 4px;
+      }
+      .header-title {
+        margin: 0;
+        font-size: 40px;
+        font-weight: 900;
+        color: #F7F4EC;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+      }
+      .header-tag {
+        background-color: #FF6A1A;
+        color: #141414;
+        font-size: 20px;
+        font-weight: 900;
+        padding: 8px 16px;
+        border-radius: 6px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      /* Khung bản đồ phong cách Collage (Y: 310px - 1170px) */
+      .map-card-wrapper {
+        position: absolute;
+        top: 310px;
+        left: 60px;
+        width: 960px;
+        height: 860px;
+        z-index: 20;
+      }
+      .map-frame {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        background-color: #F5F0E4;
+        border: 4px solid #141414;
+        border-radius: 16px;
+        box-shadow: 14px 14px 0px #141414;
+        overflow: hidden;
+      }
+
+      /* Băng dính giấy phong cách collage */
+      .tape-decoration {
+        position: absolute;
+        top: -14px;
+        left: 80px;
+        width: 140px;
+        height: 36px;
+        background-color: #D6CEBE;
+        border: 2px solid #141414;
+        box-shadow: 4px 4px 0px rgba(20, 20, 20, 0.2);
+        transform: rotate(-3deg);
+        z-index: 25;
+      }
+      .tape-decoration-right {
+        position: absolute;
+        top: -14px;
+        right: 80px;
+        width: 140px;
+        height: 36px;
+        background-color: #D6CEBE;
+        border: 2px solid #141414;
+        box-shadow: 4px 4px 0px rgba(20, 20, 20, 0.2);
+        transform: rotate(4deg);
+        z-index: 25;
+      }
+
+      /* Viewport ảnh bản đồ cho camera zoom-out */
+      .map-viewport {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+      }
+      .map-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+        transform-origin: center center;
+        will-change: transform;
+      }
+
+      /* Lớp SVG đồ họa dòng chảy và ranh giới */
+      .map-svg-overlay {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: 2;
+      }
+
+      /* Huy hiệu vị trí & cao độ */
+      .map-elevation-badge {
+        position: absolute;
+        background-color: #141414;
+        border: 2px solid #FF6A1A;
+        border-radius: 8px;
+        padding: 8px 16px;
+        box-shadow: 6px 6px 0px rgba(20, 20, 20, 0.4);
+        z-index: 5;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        will-change: transform, opacity;
+      }
+      .badge-upstream {
+        top: 40px;
+        right: 40px;
+      }
+      .badge-downstream {
+        bottom: 50px;
+        left: 50px;
+      }
+      .badge-label {
+        font-size: 16px;
+        font-weight: 700;
+        color: #F7F4EC;
+        text-transform: uppercase;
+      }
+      .badge-value {
+        font-size: 22px;
+        font-weight: 900;
+        color: #FF6A1A;
+      }
+
+      /* Icon Pin container */
+      .pin-container {
+        position: absolute;
+        bottom: 120px;
+        left: 170px;
+        width: 90px;
+        height: 90px;
+        z-index: 6;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        will-change: transform, opacity;
+      }
+      .pin-svg {
+        width: 80px;
+        height: 80px;
+      }
+
+      /* Banner Punch-phrase: Nằm hoàn toàn trong dải an toàn (Y: 1200px - 1340px) */
+      .punch-phrase-plate {
+        position: absolute;
+        top: 1200px;
+        left: 60px;
+        width: 960px;
+        height: 140px;
+        background-color: #141414;
+        border: 4px solid #FF6A1A;
+        border-radius: 14px;
+        box-shadow: 10px 10px 0px rgba(20, 20, 20, 0.4);
+        padding: 16px 36px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        z-index: 30;
+        will-change: transform, opacity;
+      }
+      .punch-subtext {
+        font-size: 22px;
+        font-weight: 700;
+        color: #F7F4EC;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        margin-bottom: 6px;
+      }
+      .punch-maintext {
+        font-size: 58px;
+        font-weight: 900;
+        color: #FF6A1A;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        line-height: 1.1;
+      }
+    </style>
+
+    <!-- Composition Root (1080x1920 @ 30fps, tổng độ dài 8.53s) -->
+    <div
+      id="root"
+      data-composition-id="scene-s38"
+      data-start="0"
+      data-width="1080"
+      data-height="1920"
+      data-duration="8.53"
+    >
+      <!-- Nền lưới Vox -->
+      <div class="bg-grid"></div>
+
+      <!-- Khung cảnh chính dạng clip duy nhất bao quát toàn scene -->
+      <section class="clip" id="scene-s38" data-start="0" data-duration="8.53">
+        <div id="scene-container">
+          
+          <!-- Băng dán trang trí collage -->
+          <div class="tape-decoration"></div>
+          <div class="tape-decoration-right"></div>
+
+          <!-- Header / Tag Overlay: "QUY HOẠCH LƯU VỰC" (atMs: 294500, rel: 0.55s) -->
+          <div class="header-plate" id="header-plate">
+            <div class="header-title-wrap">
+              <div class="header-accent-bar"></div>
+              <h1 class="header-title">QUY HOẠCH LƯU VỰC</h1>
+            </div>
+            <div class="header-tag">SÀI GÒN - ĐỒNG NAI</div>
+          </div>
+
+          <!-- Khung bản đồ lưu vực sông -->
+          <div class="map-card-wrapper" id="map-card">
+            <div class="map-frame">
+              
+              <!-- Viewport chứa hình ảnh gốc img-06 cho chuyển động zoom-out chậm -->
+              <div class="map-viewport">
+                <img
+                  id="map-img"
+                  class="map-image"
+                  src="assets/img-06-saigon-dong-nai-river-map.jpg"
+                  alt="Bản đồ lưu vực sông Sài Gòn - Đồng Nai"
+                />
+              </div>
+
+              <!-- Lớp SVG biểu diễn dòng chảy tự nhiên và ranh giới hành chính bị xóa nhòa -->
+              <svg class="map-svg-overlay" viewBox="0 0 960 860" xmlns="http://www.w3.org/2000/svg">
+                <!-- Nhóm các đường ranh giới hành chính nét đứt (bị mờ dần và tan biến khi nước chảy) -->
+                <g id="admin-boundaries">
+                  <!-- Ranh giới phân chia khu vực 1 -->
+                  <path
+                    class="boundary-path"
+                    d="M 120 280 L 380 340 L 520 240 L 760 300"
+                    fill="none"
+                    stroke="#141414"
+                    stroke-width="3"
+                    stroke-dasharray="10 8"
+                  />
+                  <!-- Ranh giới phân chia khu vực 2 -->
+                  <path
+                    class="boundary-path"
+                    d="M 320 180 L 460 480 L 360 680"
+                    fill="none"
+                    stroke="#141414"
+                    stroke-width="3"
+                    stroke-dasharray="10 8"
+                  />
+                  <!-- Ranh giới phân chia khu vực 3 -->
+                  <path
+                    class="boundary-path"
+                    d="M 460 480 L 780 560 L 880 720"
+                    fill="none"
+                    stroke="#141414"
+                    stroke-width="3"
+                    stroke-dasharray="10 8"
+                  />
+                  <!-- Text tag ghi chú ranh giới hành chính -->
+                  <g id="boundary-tags">
+                    <rect x="210" y="275" width="170" height="28" rx="6" fill="#141414" />
+                    <text x="295" y="294" fill="#F7F4EC" font-size="12" font-weight="700" text-anchor="middle">RANH GIỚI HÀNH CHÍNH</text>
+
+                    <rect x="580" y="495" width="170" height="28" rx="6" fill="#141414" />
+                    <text x="665" y="514" fill="#F7F4EC" font-size="12" font-weight="700" text-anchor="middle">ĐỊA GIỚI PHÂN CẮT</text>
+                  </g>
+                </g>
+
+                <!-- Nhóm các dòng chảy tự do (tuôn trào từ thượng nguồn đổ xuống hạ lưu) -->
+                <g id="natural-flows">
+                  <!-- Dòng chính sông Đồng Nai -->
+                  <path
+                    id="flow-dongnai"
+                    d="M 860 120 C 760 220 620 260 540 380 C 470 480 500 580 430 700 C 390 770 340 820 280 860"
+                    fill="none"
+                    stroke="#FF6A1A"
+                    stroke-width="10"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                  <!-- Dòng phụ lưu sông Sài Gòn hòa vào hạ lưu -->
+                  <path
+                    id="flow-saigon"
+                    d="M 280 140 C 330 260 360 360 420 460 C 460 530 460 620 420 720"
+                    fill="none"
+                    stroke="#FF6A1A"
+                    stroke-width="8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                  <!-- Các luồng nước phụ tỏa đều theo độ cao -->
+                  <path
+                    id="flow-branch-1"
+                    d="M 680 180 C 580 290 540 390 490 470"
+                    fill="none"
+                    stroke="#141414"
+                    stroke-width="5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                  <path
+                    id="flow-branch-2"
+                    d="M 440 540 C 360 620 310 700 240 760"
+                    fill="none"
+                    stroke="#141414"
+                    stroke-width="6"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </g>
+
+                <!-- Mũi tên chỉ hướng dốc dòng chảy -->
+                <g id="flow-arrows" opacity="0">
+                  <polygon points="536,396 544,374 524,380" fill="#FF6A1A" />
+                  <polygon points="426,716 434,694 414,700" fill="#FF6A1A" />
+                  <polygon points="276,856 284,834 264,840" fill="#FF6A1A" />
+                </g>
+              </svg>
+
+              <!-- Thước đo cao độ: Thượng nguồn (vùng cao) -->
+              <div class="map-elevation-badge badge-upstream" id="badge-upstream">
+                <span class="badge-label">ĐỘ CAO ĐỊA HÌNH</span>
+                <span class="badge-value">VÙNG CAO (THƯỢNG LƯU)</span>
+              </div>
+
+              <!-- Thước đo cao độ: Hạ lưu (vùng trũng) -->
+              <div class="map-elevation-badge badge-downstream" id="badge-downstream">
+                <span class="badge-label">ĐIỂM TỤ NƯỚC TỰ NHIÊN</span>
+                <span class="badge-value">VÙNG TRŨNG (HẠ LƯU)</span>
+              </div>
+
+              <!-- Icon Pin định vị cao độ chuẩn style-tokens -->
+              <div class="pin-container" id="elevation-pin">
+                <svg class="pin-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                  <!-- Đường viền pin tự vẽ -->
+                  <path
+                    id="pin-body"
+                    d="M 50 14 C 34 14 22 26 22 42 C 22 62 50 86 50 86 C 50 86 78 62 78 42 C 78 26 66 14 50 14 Z"
+                    fill="#141414"
+                    stroke="#FF6A1A"
+                    stroke-width="6"
+                    stroke-linejoin="round"
+                  />
+                  <!-- Chấm tròn tâm pin -->
+                  <circle id="pin-center" cx="50" cy="40" r="10" fill="#FF6A1A" />
+                </svg>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- Banner Punch-phrase: "NƯỚC THEO ĐỘ CAO" (atMs: 299500, rel: 5.55s) -->
+          <div class="punch-phrase-plate" id="punch-phrase">
+            <div class="punch-subtext">NƯỚC KHÔNG ĐỌC BẢN ĐỒ</div>
+            <div class="punch-maintext">NƯỚC THEO ĐỘ CAO</div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- Dải cam đáy khung hình nhận diện thương hiệu -->
+      <div class="bottom-brand-bar"></div>
+    </div>
+
+    <!-- Script Animation GSAP Timeline (Seek-safe, Deterministic) -->
+    <script>
+      // Đăng ký đúng 1 timeline gốc paused theo HyperFrames Core Contract
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true });
+
+      // Thiết lập đo độ dài thực tế cho các SVG stroke (stroke-dasharray / stroke-dashoffset)
+      const flowDongNai = document.getElementById("flow-dongnai");
+      const flowSaiGon = document.getElementById("flow-saigon");
+      const flowBranch1 = document.getElementById("flow-branch-1");
+      const flowBranch2 = document.getElementById("flow-branch-2");
+      const pinBody = document.getElementById("pin-body");
+
+      const lenDongNai = flowDongNai ? flowDongNai.getTotalLength() : 1000;
+      const lenSaiGon = flowSaiGon ? flowSaiGon.getTotalLength() : 800;
+      const lenBranch1 = flowBranch1 ? flowBranch1.getTotalLength() : 500;
+      const lenBranch2 = flowBranch2 ? flowBranch2.getTotalLength() : 500;
+      const lenPin = pinBody ? pinBody.getTotalLength() : 300;
+
+      // Khởi tạo trạng thái ban đầu cho các nét vẽ SVG
+      if (flowDongNai) {
+        flowDongNai.style.strokeDasharray = lenDongNai + " " + lenDongNai;
+        flowDongNai.style.strokeDashoffset = lenDongNai;
+      }
+      if (flowSaiGon) {
+        flowSaiGon.style.strokeDasharray = lenSaiGon + " " + lenSaiGon;
+        flowSaiGon.style.strokeDashoffset = lenSaiGon;
+      }
+      if (flowBranch1) {
+        flowBranch1.style.strokeDasharray = lenBranch1 + " " + lenBranch1;
+        flowBranch1.style.strokeDashoffset = lenBranch1;
+      }
+      if (flowBranch2) {
+        flowBranch2.style.strokeDasharray = lenBranch2 + " " + lenBranch2;
+        flowBranch2.style.strokeDashoffset = lenBranch2;
+      }
+      if (pinBody) {
+        pinBody.style.strokeDasharray = lenPin + " " + lenPin;
+        pinBody.style.strokeDashoffset = lenPin;
+      }
+
+      // 1. Scene Entrance: rise nhẹ từ Y=30 lên Y=0 (0.0s - 0.5s)
+      tl.fromTo(
+        "#scene-container",
+        { y: 30, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.5, ease: "power3.out" },
+        0
+      );
+
+      // 2. Camera Motion: Zoom-out chậm toàn cảnh lưu vực từ 1.08x về 1.0x (0.0s - 8.53s)
+      tl.fromTo(
+        "#map-img",
+        { scale: 1.08 },
+        { scale: 1.0, duration: 8.53, ease: "none" },
+        0
+      );
+
+      // 3. Header Label "QUY HOẠCH LƯU VỰC": xuất hiện lúc 0.55s (294500ms)
+      tl.fromTo(
+        "#header-plate",
+        { y: -20, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.5, ease: "power3.out" },
+        0.55
+      );
+
+      // Thước đo cao độ vùng cao thượng lưu xuất hiện lúc 0.8s
+      tl.fromTo(
+        "#badge-upstream",
+        { x: 30, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.45, ease: "power3.out" },
+        0.8
+      );
+
+      // 4. Các đường ranh giới hành chính rung nhẹ hiển thị lúc 1.0s
+      tl.fromTo(
+        "#admin-boundaries",
+        { opacity: 0 },
+        { opacity: 1, duration: 0.6, ease: "power2.out" },
+        1.0
+      );
+
+      // 5. Dòng chảy tự nhiên bắt đầu vẽ uốn lượn xuyên qua các khu vực (1.5s - 3.8s)
+      tl.to(
+        "#flow-dongnai",
+        { strokeDashoffset: 0, duration: 2.2, ease: "power2.out" },
+        1.5
+      );
+      tl.to(
+        "#flow-saigon",
+        { strokeDashoffset: 0, duration: 1.8, ease: "power2.out" },
+        1.8
+      );
+      tl.to(
+        "#flow-branch-1",
+        { strokeDashoffset: 0, duration: 1.4, ease: "power2.out" },
+        2.2
+      );
+      tl.to(
+        "#flow-branch-2",
+        { strokeDashoffset: 0, duration: 1.4, ease: "power2.out" },
+        2.5
+      );
+      tl.to(
+        "#flow-arrows",
+        { opacity: 1, duration: 0.4, ease: "power1.out" },
+        3.0
+      );
+
+      // 6. Header Label giữ 2.4s (đến 2.95s), sau đó mờ dần ở 3.2s
+      tl.to(
+        "#header-plate",
+        { y: -15, opacity: 0, duration: 0.4, ease: "power2.in" },
+        3.2
+      );
+
+      // 7. Visual Relationship: "Các đường ranh giới hành chính nét đứt bị xóa tan" (3.4s - 4.6s)
+      tl.to(
+        "#admin-boundaries",
+        { opacity: 0, duration: 0.8, ease: "power2.inOut" },
+        3.5
+      );
+
+      // Dòng nước phát sáng và tỏa rộng khi ranh giới biến mất
+      tl.to(
+        "#flow-dongnai",
+        { strokeWidth: 14, duration: 0.6, ease: "power2.out" },
+        4.0
+      );
+      tl.to(
+        "#flow-saigon",
+        { strokeWidth: 11, duration: 0.6, ease: "power2.out" },
+        4.1
+      );
+
+      // 8. Xuất hiện huy hiệu điểm tụ nước vùng trũng (hạ lưu) lúc 4.8s
+      tl.fromTo(
+        "#badge-downstream",
+        { x: -30, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.5, ease: "power3.out" },
+        4.8
+      );
+
+      // 9. Punch-phrase: "NƯỚC THEO ĐỘ CAO" xuất hiện tại 5.55s (299500ms)
+      tl.fromTo(
+        "#punch-phrase",
+        { y: 35, opacity: 0, scale: 0.96 },
+        { y: 0, opacity: 1, scale: 1.0, duration: 0.55, ease: "power3.out" },
+        5.55
+      );
+
+      // 10. Icon "pin" định vị độ dốc/điểm trũng xuất hiện tại 6.05s (300000ms, holdMs: 1500)
+      tl.fromTo(
+        "#elevation-pin",
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.4, ease: "power3.out" },
+        6.05
+      );
+      tl.to(
+        "#pin-body",
+        { strokeDashoffset: 0, duration: 0.5, ease: "power2.out" },
+        6.05
+      );
+      tl.fromTo(
+        "#pin-center",
+        { scale: 0 },
+        { scale: 1, transformOrigin: "50% 50%", duration: 0.3, ease: "power3.out" },
+        6.35
+      );
+
+      // Gắn timeline vào window.__timelines["scene-s38"] để HyperFrames seek từng frame
+      window.__timelines["scene-s38"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

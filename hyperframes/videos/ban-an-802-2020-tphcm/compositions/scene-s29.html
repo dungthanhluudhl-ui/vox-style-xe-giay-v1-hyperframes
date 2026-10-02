@@ -1,0 +1,678 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+/* hf-safe-colors (tất định từ style-tokens.json) */
+.hf-text-ink { color: #141414; }
+.hf-text-light { color: #F7F4EC; }
+.hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+.hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+.hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+.hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #F5F0E4;
+        color: #141414;
+        font-family: 'Be Vietnam Pro', sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: #F5F0E4;
+      }
+      .clip {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+      }
+
+      /* Editorial card background framing */
+      .card-frame {
+        position: absolute;
+        inset: 32px;
+        border: 2px solid rgba(20, 20, 20, 0.16);
+        pointer-events: none;
+      }
+      .corner-mark {
+        position: absolute;
+        width: 18px;
+        height: 18px;
+      }
+      .corner-tl { top: -2px; left: -2px; border-top: 5px solid #141414; border-left: 5px solid #141414; }
+      .corner-tr { top: -2px; right: -2px; border-top: 5px solid #141414; border-right: 5px solid #141414; }
+      .corner-bl { bottom: -2px; left: -2px; border-bottom: 5px solid #141414; border-left: 5px solid #141414; }
+      .corner-br { bottom: -2px; right: -2px; border-bottom: 5px solid #141414; border-right: 5px solid #141414; }
+
+      /* Scene Container inside Safe-zone (Y: 160 -> 1390) */
+      #scene-container {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 1080px;
+        height: 1920px;
+        transform-origin: 540px 960px;
+      }
+
+      /* Zone 1: Header (Y: 180 -> 290) */
+      .header-zone {
+        position: absolute;
+        top: 180px;
+        left: 60px;
+        right: 60px;
+        border-bottom: 2px solid rgba(20, 20, 20, 0.24);
+        padding-bottom: 14px;
+      }
+      .header-meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+      }
+      .badge-category {
+        display: inline-block;
+        font-size: 15px;
+        font-weight: 900;
+        letter-spacing: 2px;
+        padding: 5px 14px;
+        border-radius: 4px;
+      }
+      .header-index {
+        font-size: 15px;
+        font-weight: 700;
+        letter-spacing: 1.5px;
+        color: #141414;
+      }
+      .header-title {
+        font-size: 40px;
+        font-weight: 900;
+        margin: 0;
+        line-height: 1.2;
+        letter-spacing: 0.5px;
+      }
+
+      /* Zone 2: Overlay 1 Clip - Docket Tag (Y: 310 -> 440) */
+      .docket-container {
+        position: absolute;
+        top: 310px;
+        left: 60px;
+        right: 60px;
+      }
+      .docket-card {
+        background-color: #141414;
+        border-left: 8px solid #FF6A1A;
+        border-radius: 8px;
+        padding: 18px 26px;
+        box-shadow: 0 10px 24px rgba(20, 20, 20, 0.16);
+      }
+      .docket-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 6px;
+      }
+      .docket-pill {
+        display: inline-block;
+        font-size: 14px;
+        font-weight: 900;
+        letter-spacing: 1.5px;
+        padding: 4px 10px;
+        border-radius: 4px;
+      }
+      .docket-label {
+        font-size: 15px;
+        font-weight: 700;
+        letter-spacing: 1px;
+        color: #E7E3D9;
+      }
+      .docket-title {
+        font-size: 38px;
+        font-weight: 900;
+        color: #F7F4EC;
+        margin: 0;
+        letter-spacing: 0.5px;
+      }
+      .docket-desc {
+        font-size: 18px;
+        font-weight: 700;
+        color: #FF6A1A;
+        margin-top: 6px;
+      }
+
+      /* Zone 3: Hero Arena (Y: 460 -> 1100, height: 640px) */
+      .hero-zone {
+        position: absolute;
+        top: 460px;
+        left: 60px;
+        width: 960px;
+        height: 640px;
+      }
+
+      /* Panel 3A: Granite Monument Slab (Y-rel: 0 -> 280) */
+      .monument-slab {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 960px;
+        height: 280px;
+        background-color: #141414;
+        border-radius: 12px;
+        padding: 22px 28px;
+        box-shadow: 0 16px 36px rgba(20, 20, 20, 0.28);
+      }
+      .slab-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid rgba(247, 244, 236, 0.18);
+        padding-bottom: 10px;
+        margin-bottom: 16px;
+      }
+      .slab-meta-left {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .dot-active {
+        width: 10px;
+        height: 10px;
+        background-color: #FF6A1A;
+        border-radius: 50%;
+      }
+      .meta-text {
+        font-size: 15px;
+        font-weight: 700;
+        letter-spacing: 2px;
+        color: #E7E3D9;
+      }
+      .slab-badge {
+        font-size: 14px;
+        font-weight: 900;
+        letter-spacing: 1px;
+        padding: 3px 12px;
+        border-radius: 4px;
+      }
+
+      /* Chiseled Crime Title Box (Y-rel: 70 -> 200) */
+      .carved-plate {
+        background-color: #0A0A0A;
+        border: 2px solid rgba(255, 106, 26, 0.4);
+        border-radius: 8px;
+        padding: 16px 20px;
+        text-align: center;
+      }
+      .carved-title {
+        font-size: 54px;
+        font-weight: 900;
+        color: #F7F4EC;
+        letter-spacing: 2px;
+        margin: 0;
+        line-height: 1.15;
+        text-shadow: 3px 3px 0px #000000;
+      }
+      .slab-footer {
+        margin-top: 14px;
+        text-align: center;
+      }
+      .status-text {
+        font-size: 16px;
+        font-weight: 700;
+        color: #E7E3D9;
+        letter-spacing: 0.5px;
+      }
+
+      /* Panel 3B: Eraser Action Track (Y-rel: 300 -> 630, height: 330px) */
+      .action-track {
+        position: absolute;
+        top: 300px;
+        left: 0;
+        width: 960px;
+        height: 330px;
+        background-color: #1A1A1A;
+        border-radius: 12px;
+        padding: 16px 24px;
+        box-shadow: 0 12px 28px rgba(20, 20, 20, 0.2);
+        border: 2px dashed rgba(247, 244, 236, 0.2);
+      }
+      .track-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+      }
+      .track-tag {
+        font-size: 14px;
+        font-weight: 900;
+        letter-spacing: 1.5px;
+        color: #FF6A1A;
+      }
+      .track-sub {
+        font-size: 13px;
+        font-weight: 700;
+        color: #F7F4EC;
+      }
+
+      /* Non-text Physical Ink Groove Rail (Y-rel inside track: 50 -> 74) */
+      .rail-bar {
+        position: relative;
+        width: 100%;
+        height: 24px;
+        background-color: #0A0A0A;
+        border: 2px solid #FF6A1A;
+        border-radius: 12px;
+        overflow: hidden;
+      }
+      .rail-core {
+        position: absolute;
+        top: 6px;
+        left: 8px;
+        right: 8px;
+        height: 8px;
+        background-color: #FF6A1A;
+        border-radius: 4px;
+      }
+
+      /* Eraser Assembly (Y-rel inside track: 86 -> 166, height: 80px) */
+      .eraser-assembly {
+        position: absolute;
+        top: 86px;
+        left: 330px;
+        width: 300px;
+        height: 80px;
+      }
+      .eraser-group {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        transform-origin: 50px 40px;
+      }
+      .eraser-body {
+        display: flex;
+        align-items: center;
+        filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.5));
+      }
+      .rubber-tip {
+        width: 48px;
+        height: 72px;
+        background-color: #E7E3D9;
+        border: 3px solid #141414;
+        border-right: none;
+        border-radius: 10px 0 0 10px;
+      }
+      .eraser-sleeve {
+        width: 204px;
+        height: 80px;
+        background-color: #FF6A1A;
+        border: 3px solid #141414;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+      .sleeve-title {
+        font-size: 26px;
+        font-weight: 900;
+        letter-spacing: 2px;
+        color: #141414;
+      }
+      .rubber-tail {
+        width: 48px;
+        height: 72px;
+        background-color: #E7E3D9;
+        border: 3px solid #141414;
+        border-left: none;
+        border-radius: 0 10px 10px 0;
+      }
+
+      /* Friction Crumbs Zone (Y-rel inside track: 170 -> 190) */
+      .crumbs-container {
+        position: absolute;
+        top: 170px;
+        left: 310px;
+        width: 340px;
+        height: 24px;
+        pointer-events: none;
+      }
+      .crumb {
+        position: absolute;
+        width: 9px;
+        height: 6px;
+        background-color: #E7E3D9;
+        border: 1px solid #141414;
+        border-radius: 2px;
+        opacity: 0;
+      }
+      .crumb-1 { left: 40px; }
+      .crumb-2 { left: 110px; }
+      .crumb-3 { left: 190px; }
+      .crumb-4 { left: 260px; }
+
+      /* Stamp Reject Indicator (Y-rel inside track: 200 -> 256) */
+      .stamp-rejected {
+        position: absolute;
+        top: 200px;
+        left: 280px;
+        width: 400px;
+        background-color: #141414;
+        border: 3px solid #FF6A1A;
+        padding: 8px 16px;
+        border-radius: 6px;
+        text-align: center;
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+      }
+      .stamp-text {
+        font-size: 22px;
+        font-weight: 900;
+        letter-spacing: 2px;
+        color: #FF6A1A;
+        white-space: nowrap;
+      }
+
+      /* Track Status at Bottom (Y-rel inside track: 275 -> 310) */
+      .track-status {
+        position: absolute;
+        top: 275px;
+        left: 24px;
+        right: 24px;
+        text-align: center;
+        font-size: 15px;
+        font-weight: 700;
+        color: #E7E3D9;
+        letter-spacing: 0.5px;
+      }
+
+      /* Zone 4: Overlay 2 Clip - Punch Phrase (Y: 1130 -> 1360) */
+      .punch-container {
+        position: absolute;
+        top: 1130px;
+        left: 60px;
+        right: 60px;
+      }
+      .punch-card {
+        background-color: #141414;
+        border: 4px solid #141414;
+        border-top: 8px solid #FF6A1A;
+        border-radius: 12px;
+        padding: 30px 24px;
+        text-align: center;
+        box-shadow: 0 18px 36px rgba(20, 20, 20, 0.24);
+      }
+      .punch-tag {
+        display: inline-block;
+        font-size: 15px;
+        font-weight: 900;
+        letter-spacing: 2px;
+        padding: 5px 16px;
+        border-radius: 4px;
+        margin-bottom: 12px;
+      }
+      .punch-title {
+        font-size: 66px;
+        font-weight: 900;
+        color: #F7F4EC;
+        margin: 0;
+        line-height: 1.22;
+        letter-spacing: 0.5px;
+      }
+      .punch-footer {
+        font-size: 22px;
+        font-weight: 700;
+        color: #FF6A1A;
+        margin-top: 12px;
+        letter-spacing: 1.2px;
+      }
+
+      /* Fixed bottom brand bar */
+      #brand-bottom-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 1080px;
+        height: 12px;
+        background-color: #FF6A1A;
+        z-index: 100;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s29"
+      data-start="0"
+      data-width="1080"
+      data-height="1920"
+      data-duration="7.4"
+    >
+      <!-- Base Layer: Framing & Header & Hero Monument & Action Track (7.4s) -->
+      <section id="scene-base" class="clip" data-start="0" data-duration="7.4" data-track-index="0">
+        <div class="card-frame">
+          <div class="corner-mark corner-tl"></div>
+          <div class="corner-mark corner-tr"></div>
+          <div class="corner-mark corner-bl"></div>
+          <div class="corner-mark corner-br"></div>
+        </div>
+
+        <div id="scene-container">
+          <!-- Zone 1: Header -->
+          <div class="header-zone">
+            <div class="header-meta">
+              <span class="badge-category hf-hl-orange">NGUYÊN TẮC LƯỢNG HÌNH</span>
+              <span class="header-index">ĐỊNH NGHĨA PHÁP LÝ</span>
+            </div>
+            <h2 class="header-title hf-text-ink">TÌNH TIẾT GIẢM NHẸ</h2>
+          </div>
+
+          <!-- Zone 3: Hero Arena -->
+          <div class="hero-zone">
+            <!-- 3A: Permanent Granite Monument -->
+            <div id="monument-slab" class="monument-slab">
+              <div class="slab-header">
+                <div class="slab-meta-left">
+                  <div class="dot-active"></div>
+                  <span class="meta-text">HỒ SƠ CẤU THÀNH TỘI PHẠM</span>
+                </div>
+                <span class="slab-badge hf-hl-orange">BẤT BIẾN</span>
+              </div>
+
+              <div class="carved-plate">
+                <h3 id="carved-title" class="carved-title">HÀNH VI GIẾT NGƯỜI</h3>
+              </div>
+
+              <div class="slab-footer">
+                <span class="status-text">✓ HÀNH VI ĐÃ HOÀN THÀNH — KHÔNG THỂ BỊ XOÁ BỎ</span>
+              </div>
+            </div>
+
+            <!-- 3B: Eraser Action Track -->
+            <div id="action-track" class="action-track">
+              <div class="track-header">
+                <span class="track-tag">ẨN DỤ TẨY XÓA PHÁP LÝ</span>
+                <span class="track-sub">GIẢM NHẸ KHÔNG THAY ĐỔI TỘI DANH</span>
+              </div>
+
+              <!-- Graphic Rail Bar (Non-text) -->
+              <div class="rail-bar">
+                <div class="rail-core"></div>
+              </div>
+
+              <!-- Mechanical Eraser Assembly -->
+              <div id="eraser-assembly" class="eraser-assembly">
+                <div id="eraser-group" class="eraser-group">
+                  <div class="eraser-body">
+                    <div class="rubber-tip"></div>
+                    <div class="eraser-sleeve">
+                      <span class="sleeve-title">GIẢM NHẸ</span>
+                    </div>
+                    <div class="rubber-tail"></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Crumbs of Friction -->
+              <div class="crumbs-container">
+                <div class="crumb crumb-1"></div>
+                <div class="crumb crumb-2"></div>
+                <div class="crumb crumb-3"></div>
+                <div class="crumb crumb-4"></div>
+              </div>
+
+              <!-- Reject Stamp -->
+              <div id="stamp-rejected" class="stamp-rejected">
+                <span class="stamp-text">KHÔNG THỂ XÓA BỎ</span>
+              </div>
+
+              <!-- Fixed Track Status -->
+              <div class="track-status">
+                <span>✓ DÒNG MỰC TỘI PHẠM VẪN NGUYÊN VẸN TRÊN HỒ SƠ</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Zone 2: Overlay 1 Clip - HOÀN CẢNH PHẠM TỘI (2.26s -> 4.56s) -->
+      <section id="overlay-label-clip" class="clip" data-start="2.26" data-duration="2.3" data-track-index="1">
+        <div class="docket-container">
+          <div id="docket-card" class="docket-card">
+            <div class="docket-header">
+              <span class="docket-pill hf-hl-orange">TÒA ÁN CÂN NHẮC THÊM</span>
+              <span class="docket-label">CĂN CỨ LƯỢNG HÌNH</span>
+            </div>
+            <h3 class="docket-title">HOÀN CẢNH PHẠM TỘI</h3>
+            <div class="docket-desc">ĐỂ QUYẾT ĐỊNH HÌNH PHẠT CHO PHÙ HỢP</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Zone 4: Overlay 2 Clip - KHÔNG PHẢI CỤC TẨY (4.85s -> 7.4s) -->
+      <section id="overlay-punch-clip" class="clip" data-start="4.85" data-duration="2.55" data-track-index="2">
+        <div class="punch-container">
+          <div id="punch-card" class="punch-card">
+            <span class="punch-tag hf-hl-orange">KẾT LUẬN PHÁP LÝ</span>
+            <h1 class="punch-title">KHÔNG PHẢI CỤC TẨY</h1>
+            <div class="punch-footer">HÀNH VI PHẠM TỘI VẪN NGUYÊN VẸN</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Permanent Bottom Brand Signature -->
+      <div id="brand-bottom-bar"></div>
+    </div>
+
+    <script>
+      const tl = gsap.timeline({ paused: true });
+
+      // Phase 1: Scene Entrance Punch (t = 0s)
+      tl.fromTo(
+        "#scene-container",
+        { scale: 1.12, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.38, ease: "power4.out" },
+        0
+      );
+
+      // Camera shudder on landing
+      tl.to("#scene-container", { x: -5, duration: 0.04, ease: "none" }, 0.38);
+      tl.to("#scene-container", { x: 5, duration: 0.04, ease: "none" }, 0.42);
+      tl.to("#scene-container", { x: -2, duration: 0.04, ease: "none" }, 0.46);
+      tl.to("#scene-container", { x: 0, duration: 0.04, ease: "none" }, 0.50);
+
+      // Slab & Track entrance
+      tl.fromTo(
+        "#monument-slab",
+        { y: 24, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.4, ease: "power3.out" },
+        0.3
+      );
+      tl.fromTo(
+        "#carved-title",
+        { scale: 0.95, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.4, ease: "power3.out" },
+        0.45
+      );
+      tl.fromTo(
+        "#action-track",
+        { y: 20, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.4, ease: "power3.out" },
+        0.5
+      );
+
+      // Resting state for later elements
+      gsap.set("#eraser-assembly", { opacity: 0 });
+      gsap.set("#stamp-rejected", { opacity: 0, scale: 1.8 });
+
+      // Phase 2: Overlay 1 Entrance at 2.26s ("HOÀN CẢNH PHẠM TỘI")
+      tl.fromTo(
+        "#docket-card",
+        { y: -24, opacity: 0, scale: 0.97 },
+        { y: 0, opacity: 1, scale: 1, duration: 0.34, ease: "power3.out" },
+        2.26
+      );
+      tl.to(
+        "#docket-card",
+        { y: -14, opacity: 0, duration: 0.2, ease: "power2.in" },
+        4.25
+      );
+
+      // Phase 3: Eraser Drop & Aggressive Scrubbing along the Rail
+      tl.fromTo(
+        "#eraser-assembly",
+        { opacity: 0, y: -110, rotation: 22 },
+        { opacity: 1, y: 0, rotation: -8, duration: 0.35, ease: "power3.out" },
+        3.35
+      );
+
+      // Scrubbing motion back and forth
+      tl.to("#eraser-group", { x: -140, rotation: -16, duration: 0.16, ease: "power1.inOut" }, 3.70);
+      tl.to("#eraser-group", { x: 140, rotation: 12, duration: 0.18, ease: "power1.inOut" }, 3.86);
+      tl.to("#eraser-group", { x: -130, rotation: -14, duration: 0.16, ease: "power1.inOut" }, 4.04);
+      tl.to("#eraser-group", { x: 130, rotation: 10, duration: 0.16, ease: "power1.inOut" }, 4.20);
+      tl.to("#eraser-group", { x: -90, rotation: -10, duration: 0.15, ease: "power1.inOut" }, 4.36);
+      tl.to("#eraser-group", { x: 70, rotation: 6, duration: 0.15, ease: "power1.inOut" }, 4.51);
+      tl.to("#eraser-group", { x: 0, rotation: -4, duration: 0.20, ease: "power2.out" }, 4.66);
+
+      // Friction crumbs scatter
+      tl.fromTo(
+        ".crumb",
+        { opacity: 0, scale: 0 },
+        { opacity: 0.8, scale: 1, duration: 0.12, stagger: 0.05 },
+        3.85
+      );
+      tl.to(".crumb-1", { x: -30, y: 15, duration: 0.4, ease: "power2.out" }, 4.0);
+      tl.to(".crumb-2", { x: -10, y: 18, duration: 0.4, ease: "power2.out" }, 4.1);
+      tl.to(".crumb-3", { x: 20, y: 16, duration: 0.4, ease: "power2.out" }, 4.2);
+      tl.to(".crumb-4", { x: 35, y: 14, duration: 0.4, ease: "power2.out" }, 4.3);
+
+      // Phase 4: Overlay 2 Entrance at 4.85s ("KHÔNG PHẢI CỤC TẨY")
+      tl.fromTo(
+        "#punch-card",
+        { scale: 1.2, opacity: 0, y: 35 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.36, ease: "power4.out" },
+        4.85
+      );
+
+      // Reject Stamp slams in at 5.1s
+      tl.fromTo(
+        "#stamp-rejected",
+        { scale: 1.8, opacity: 0, rotation: -14 },
+        { scale: 1, opacity: 1, rotation: -3, duration: 0.24, ease: "power3.out" },
+        5.1
+      );
+
+      // Register timeline
+      window.__timelines["scene-s29"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

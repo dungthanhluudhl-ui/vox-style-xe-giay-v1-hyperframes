@@ -1,0 +1,756 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap"
+    />
+      <style>
+      /* hf-safe-colors (tất định từ style-tokens.json) */
+      .hf-text-ink { color: #141414; }
+      .hf-text-light { color: #F7F4EC; }
+      .hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+      .hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+      .hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+      .hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        width: 1080px;
+        height: 1920px;
+        background-color: #e7e3d9;
+        font-family: "Be Vietnam Pro", sans-serif;
+        color: #141414;
+        overflow: hidden;
+      }
+
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: #e7e3d9;
+        background-image:
+          linear-gradient(rgba(20, 20, 20, 0.22) 1.5px, transparent 1.5px),
+          linear-gradient(90deg, rgba(20, 20, 20, 0.22) 1.5px, transparent 1.5px);
+        background-size: 84px 84px;
+        background-position: -1px -1px;
+      }
+
+      .clip {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+      }
+
+      /* Mandatory Vox Style Signatures */
+      .bottom-orange-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 1080px;
+        height: 12px;
+        background-color: #ff6a1a;
+        z-index: 100;
+      }
+
+      /* Scene Container */
+      #scene-stage {
+        position: absolute;
+        inset: 0;
+        transform-origin: 50% 45%;
+      }
+
+      /* Header Card (Safe band Y: 170 - 310) */
+      .header-card {
+        position: absolute;
+        top: 170px;
+        left: 50px;
+        width: 980px;
+        height: 140px;
+        background: #f5f0e4;
+        border: 3px solid #141414;
+        border-radius: 18px;
+        box-shadow: 8px 8px 0px #141414;
+        padding: 16px 28px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        z-index: 20;
+      }
+
+      .badge-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 8px;
+      }
+
+      .category-pill {
+        background-color: #ff6a1a;
+        color: #141414;
+        font-weight: 900;
+        font-size: 19px;
+        letter-spacing: 0.5px;
+        padding: 5px 14px;
+        border-radius: 6px;
+        text-transform: uppercase;
+        display: inline-block;
+      }
+
+      .sub-indicator {
+        font-weight: 700;
+        font-size: 18px;
+        color: #141414;
+        letter-spacing: 0.2px;
+      }
+
+      .header-title {
+        margin: 0;
+        font-size: 46px;
+        font-weight: 900;
+        line-height: 1.2;
+        color: #141414;
+        text-transform: uppercase;
+      }
+
+      /* Diagram Viewport (Safe band Y: 340 - 1200) */
+      .diagram-viewport {
+        position: absolute;
+        top: 340px;
+        left: 50px;
+        width: 980px;
+        height: 860px;
+        background: #f5f0e4;
+        border: 3px solid #141414;
+        border-radius: 20px;
+        box-shadow: 10px 10px 0px #141414;
+        overflow: hidden;
+        z-index: 10;
+      }
+
+      /* Static Diagram HUD Frame (Direct child of viewport - never moves with camera) */
+      .diagram-hud {
+        position: absolute;
+        top: 16px;
+        left: 24px;
+        right: 24px;
+        height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        z-index: 15;
+      }
+
+      .zone-badge {
+        background: #141414;
+        color: #f7f4ec;
+        font-size: 17px;
+        font-weight: 900;
+        padding: 6px 16px;
+        border-radius: 6px;
+        letter-spacing: 0.5px;
+        box-shadow: 3px 3px 0px rgba(255, 106, 26, 0.85);
+      }
+
+      .axis-badge {
+        background: #ff6a1a;
+        color: #141414;
+        font-size: 16px;
+        font-weight: 900;
+        padding: 5px 14px;
+        border-radius: 6px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border: 2px solid #141414;
+        box-shadow: 2px 2px 0px #141414;
+      }
+
+      /* Carrier that handles smooth zoom-out from Tuấn to full crowd */
+      #camera-carrier {
+        position: absolute;
+        inset: 0;
+        transform-origin: 295px 372px; /* Centered precisely on Tuấn's initial resting position */
+        z-index: 5;
+      }
+
+      /* Center dashed divider axis */
+      .center-axis {
+        position: absolute;
+        top: 75px;
+        bottom: 25px;
+        left: 490px;
+        width: 2px;
+        border-left: 2px dashed rgba(20, 20, 20, 0.4);
+      }
+
+      /* Zone Clusters (visual background panels only, no text) */
+      .zone-panel {
+        position: absolute;
+        top: 75px;
+        bottom: 25px;
+        width: 430px;
+        border: 2px dashed rgba(20, 20, 20, 0.55);
+        border-radius: 16px;
+        background: rgba(231, 227, 217, 0.45);
+      }
+
+      .zone-left {
+        left: 24px;
+      }
+
+      .zone-right {
+        right: 24px;
+      }
+
+      /* Subject Nodes */
+      .node {
+        position: absolute;
+        border: 3px solid #141414;
+        border-radius: 12px;
+        padding: 10px 16px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        transform-origin: 50% 50%;
+        box-shadow: 5px 5px 0px #141414;
+        z-index: 8;
+      }
+
+      .node-name {
+        font-size: 22px;
+        font-weight: 900;
+        line-height: 1.1;
+      }
+
+      .node-role {
+        font-size: 13px;
+        font-weight: 700;
+        margin-top: 3px;
+        text-transform: uppercase;
+      }
+
+      /* Tuấn: Primary Hero Subject */
+      .node-hero {
+        left: 170px;
+        top: 320px;
+        width: 250px;
+        height: 104px;
+        background: #ff6a1a;
+        color: #141414;
+        border: 4px solid #141414;
+        box-shadow: 7px 7px 0px #141414;
+        z-index: 10;
+      }
+
+      .node-hero .node-name {
+        font-size: 32px;
+      }
+
+      .node-hero .node-role {
+        font-size: 14px;
+        background: #141414;
+        color: #f7f4ec;
+        padding: 2px 8px;
+        border-radius: 4px;
+      }
+
+      /* Secondary Participants (Dark cards with orange accent) */
+      .node-dark {
+        background: #141414;
+        color: #f7f4ec;
+        width: 200px;
+        height: 80px;
+        opacity: 0;
+        visibility: hidden;
+      }
+
+      .node-dark .node-role {
+        color: #ff6a1a;
+      }
+
+      /* Spatial Placement */
+      #node-a1 {
+        left: 45px;
+        top: 110px;
+      }
+      #node-a2 {
+        left: 45px;
+        top: 480px;
+      }
+      #node-a3 {
+        left: 170px;
+        top: 650px;
+      }
+
+      #node-b1 {
+        right: 45px;
+        top: 110px;
+      }
+      #node-b2 {
+        right: 170px;
+        top: 320px;
+      }
+      #node-b3 {
+        right: 45px;
+        top: 480px;
+      }
+      #node-b4 {
+        right: 170px;
+        top: 650px;
+      }
+
+      /* SVG Dynamic Clash Vectors */
+      .svg-canvas {
+        position: absolute;
+        inset: 0;
+        width: 980px;
+        height: 860px;
+        pointer-events: none;
+        z-index: 6;
+      }
+
+      .clash-line {
+        fill: none;
+        stroke: #141414;
+        stroke-width: 4;
+        stroke-linecap: round;
+        stroke-dasharray: 8 6;
+      }
+
+      .clash-vector-orange {
+        fill: none;
+        stroke: #ff6a1a;
+        stroke-width: 5;
+        stroke-linecap: round;
+      }
+
+      /* Clash Center Burst */
+      .clash-core {
+        position: absolute;
+        left: 450px;
+        top: 332px;
+        width: 80px;
+        height: 80px;
+        background: #ff6a1a;
+        border: 3px solid #141414;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 4px 4px 0px #141414;
+        z-index: 7;
+        transform-origin: 50% 50%;
+        opacity: 0;
+        visibility: hidden;
+      }
+
+      .clash-core svg {
+        width: 44px;
+        height: 44px;
+        fill: #141414;
+      }
+
+      /* Overlays Slot (Safe band Y: 1220 - 1360) */
+      .overlay-badge-slot {
+        position: absolute;
+        top: 1220px;
+        left: 50px;
+        width: 980px;
+        height: 130px;
+        z-index: 30;
+      }
+
+      .overlay-banner {
+        position: absolute;
+        inset: 0;
+        background: #141414;
+        border: 3px solid #ff6a1a;
+        border-radius: 18px;
+        box-shadow: 8px 8px 0px #141414;
+        padding: 16px 28px;
+        display: flex;
+        align-items: center;
+        gap: 24px;
+        opacity: 0;
+        visibility: hidden;
+        transform-origin: 50% 50%;
+      }
+
+      .overlay-icon-wrap {
+        width: 76px;
+        height: 76px;
+        background: #ff6a1a;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        border: 2px solid #141414;
+      }
+
+      .overlay-icon-wrap svg {
+        width: 48px;
+        height: 48px;
+        fill: #141414;
+      }
+
+      .overlay-content {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+      }
+
+      .overlay-label {
+        font-size: 17px;
+        font-weight: 700;
+        color: #ff6a1a;
+        letter-spacing: 0.8px;
+        text-transform: uppercase;
+        margin-bottom: 4px;
+      }
+
+      .overlay-headline {
+        font-size: 38px;
+        font-weight: 900;
+        color: #f7f4ec;
+        line-height: 1.15;
+        text-transform: uppercase;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s32"
+      data-start="0"
+      data-width="1080"
+      data-height="1920"
+      data-duration="8.18"
+    >
+      <div id="scene" class="clip" data-start="0" data-duration="8.18">
+        <div id="scene-stage">
+          <!-- Header Area -->
+          <div class="header-card" id="header-box">
+            <div class="badge-row">
+              <span class="category-pill">HỒ SƠ HIỆN TRƯỜNG</span>
+              <span class="sub-indicator">TÌNH TIẾT XÁC MINH</span>
+            </div>
+            <h1 class="header-title">VỤ XÔ XÁT KHÔNG CHỈ CÓ TUẤN</h1>
+          </div>
+
+          <!-- Main Technical Diagram Viewport -->
+          <div class="diagram-viewport">
+            <!-- Static Viewport HUD (Positioned safely below header-box, never moves under zoom) -->
+            <div class="diagram-hud">
+              <div class="zone-badge">PHÍA BÊN A (CÓ TUẤN)</div>
+              <div class="axis-badge">VÙNG XUNG ĐỘT</div>
+              <div class="zone-badge">PHÍA BÊN B (ĐỐI ĐẦU)</div>
+            </div>
+
+            <!-- Dynamic Camera Carrier (Zooms out from focus on Tuấn to full bilateral crowd) -->
+            <div id="camera-carrier">
+              <!-- Center Axis Divider -->
+              <div class="center-axis"></div>
+
+              <!-- Zone Panels -->
+              <div class="zone-panel zone-left" id="zone-box-a"></div>
+              <div class="zone-panel zone-right" id="zone-box-b"></div>
+
+              <!-- SVG Connection Vectors -->
+              <svg class="svg-canvas" viewBox="0 0 980 860">
+                <path
+                  id="path-clash-1"
+                  class="clash-vector-orange"
+                  d="M 370 355 L 450 372 L 600 355"
+                />
+                <path
+                  id="path-clash-2"
+                  class="clash-line"
+                  d="M 245 150 L 450 340 L 735 150"
+                />
+                <path
+                  id="path-clash-3"
+                  class="clash-line"
+                  d="M 245 520 L 530 400 L 735 520"
+                />
+                <path
+                  id="path-clash-4"
+                  class="clash-vector-orange"
+                  d="M 370 690 L 490 420 L 610 690"
+                />
+              </svg>
+
+              <!-- Central Clash Burst Core -->
+              <div class="clash-core" id="clash-center">
+                <svg viewBox="0 0 24 24">
+                  <path
+                    d="M12 2L14.4 8.6L21.5 9.1L16 13.7L17.8 20.6L12 16.8L6.2 20.6L8 13.7L2.5 9.1L9.6 8.6L12 2Z"
+                  />
+                </svg>
+              </div>
+
+              <!-- Subjects on Left (Side A) -->
+              <div class="node node-hero" id="node-tuan">
+                <span class="node-name">TUẤN</span>
+                <span class="node-role">ĐỐI TƯỢNG XÁC MINH</span>
+              </div>
+
+              <div class="node node-dark" id="node-a1">
+                <span class="node-name">NGƯỜI A1</span>
+                <span class="node-role">HÀNH VI ĐÁNH NHAU</span>
+              </div>
+
+              <div class="node node-dark" id="node-a2">
+                <span class="node-name">NGƯỜI A2</span>
+                <span class="node-role">THAM GIA ẨU ĐẢ</span>
+              </div>
+
+              <div class="node node-dark" id="node-a3">
+                <span class="node-name">NGƯỜI A3</span>
+                <span class="node-role">THAM GIA XÔ XÁT</span>
+              </div>
+
+              <!-- Subjects on Right (Side B) -->
+              <div class="node node-dark" id="node-b1">
+                <span class="node-name">NGƯỜI B1</span>
+                <span class="node-role">PHÍA ĐỐI PHƯƠNG</span>
+              </div>
+
+              <div class="node node-dark" id="node-b2">
+                <span class="node-name">NGƯỜI B2</span>
+                <span class="node-role">HÀNH VI ĐÁNH NHAU</span>
+              </div>
+
+              <div class="node node-dark" id="node-b3">
+                <span class="node-name">NGƯỜI B3</span>
+                <span class="node-role">THAM GIA ẨU ĐẢ</span>
+              </div>
+
+              <div class="node node-dark" id="node-b4">
+                <span class="node-name">NGƯỜI B4</span>
+                <span class="node-role">HÀNH VI ĐÁNH NHAU</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bottom Overlay Milestones -->
+          <div class="overlay-badge-slot">
+            <!-- Overlay 1: ẨU ĐẢ NHIỀU NGƯỜI (atMs: 300460 -> 2.11s, holdMs: 2200) -->
+            <div class="overlay-banner" id="overlay-1">
+              <div class="overlay-icon-wrap">
+                <!-- SVG Crowd Icon -->
+                <svg viewBox="0 0 24 24">
+                  <path
+                    d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"
+                  />
+                </svg>
+              </div>
+              <div class="overlay-content">
+                <span class="overlay-label">DIỄN BIẾN THỰC TẾ</span>
+                <span class="overlay-headline">ẨU ĐẢ NHIỀU NGƯỜI</span>
+              </div>
+            </div>
+
+            <!-- Overlay 2: CẢ HAI BÊN THAM GIA (atMs: 304430 -> 6.08s, holdMs: 2000) -->
+            <div class="overlay-banner" id="overlay-2">
+              <div class="overlay-icon-wrap">
+                <!-- SVG Dual / Opposing Arrows Icon -->
+                <svg viewBox="0 0 24 24">
+                  <path
+                    d="M6.99 11L3 15l3.99 4v-3H14v-2H6.99v-3zM21 9l-3.99-4v3H10v2h7.01v3L21 9z"
+                  />
+                </svg>
+              </div>
+              <div class="overlay-content">
+                <span class="overlay-label">KẾT QUẢ XÁC MINH</span>
+                <span class="overlay-headline">CẢ HAI BÊN THAM GIA</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Mandatory Bottom Brand Stripe -->
+        <div class="bottom-orange-bar"></div>
+      </div>
+    </div>
+
+    <script>
+      const tl = gsap.timeline({ paused: true });
+
+      // Measure SVG path lengths for clean stroke draws
+      const clashPaths = [
+        document.getElementById("path-clash-1"),
+        document.getElementById("path-clash-2"),
+        document.getElementById("path-clash-3"),
+        document.getElementById("path-clash-4"),
+      ];
+
+      clashPaths.forEach((p) => {
+        if (p) {
+          const len = p.getTotalLength();
+          p.style.strokeDasharray = len + "";
+          p.style.strokeDashoffset = len + "";
+        }
+      });
+
+      // 1. Entrance (Transition In: grow, duration: 0.55s)
+      tl.fromTo(
+        "#scene-stage",
+        { scale: 0.94, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.55, ease: "power3.out" },
+        0.05
+      );
+
+      tl.fromTo(
+        "#header-box",
+        { y: -30, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.5, ease: "power3.out" },
+        0.1
+      );
+
+      // Hero Node "TUẤN" enters first (t = 0.2s)
+      tl.fromTo(
+        "#node-tuan",
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.5, ease: "power3.out" },
+        0.2
+      );
+
+      // 2. Camera Motion: Zoom-out (revealing that Tuấn is just one participant among many)
+      // Carrier starts zoomed in on Tuấn (scale 1.35) and pulls out to 1.0
+      tl.fromTo(
+        "#camera-carrier",
+        { scale: 1.35 },
+        { scale: 1.0, duration: 1.35, ease: "power2.inOut" },
+        0.8
+      );
+
+      // As camera zooms out, zone perimeters pop in
+      tl.fromTo(
+        ["#zone-box-a", "#zone-box-b"],
+        { opacity: 0, scale: 0.96 },
+        { opacity: 1, scale: 1, duration: 0.45, ease: "power2.out" },
+        1.05
+      );
+
+      // Staggered arrival of crowd participants on Side A
+      tl.fromTo(
+        ["#node-a1", "#node-a2", "#node-a3"],
+        { scale: 0, autoAlpha: 0, y: 15 },
+        {
+          scale: 1,
+          autoAlpha: 1,
+          y: 0,
+          duration: 0.45,
+          stagger: 0.12,
+          ease: "power3.out",
+        },
+        1.2
+      );
+
+      // Staggered arrival of opposing participants on Side B
+      tl.fromTo(
+        ["#node-b1", "#node-b2", "#node-b3", "#node-b4"],
+        { scale: 0, autoAlpha: 0, y: 15 },
+        {
+          scale: 1,
+          autoAlpha: 1,
+          y: 0,
+          duration: 0.45,
+          stagger: 0.12,
+          ease: "power3.out",
+        },
+        1.4
+      );
+
+      // Clash Core burst pop at center
+      tl.fromTo(
+        "#clash-center",
+        { scale: 0, autoAlpha: 0, rotation: -45 },
+        { scale: 1, autoAlpha: 1, rotation: 0, duration: 0.5, ease: "power3.out" },
+        1.75
+      );
+
+      // SVG Clash paths trace across the opposing sides
+      clashPaths.forEach((p, idx) => {
+        if (p) {
+          tl.to(
+            p,
+            { strokeDashoffset: 0, duration: 0.65, ease: "power2.out" },
+            1.85 + idx * 0.1
+          );
+        }
+      });
+
+      // 3. Overlay 1: "ẨU ĐẢ NHIỀU NGƯỜI" (atMs: 300460 -> 2.11s, holdMs: 2200 -> ends ~4.31s)
+      tl.fromTo(
+        "#overlay-1",
+        { y: 35, autoAlpha: 0, scale: 0.95 },
+        { y: 0, autoAlpha: 1, scale: 1, duration: 0.45, ease: "power3.out" },
+        2.11
+      );
+
+      // Exit Overlay 1 cleanly before Overlay 2
+      tl.to(
+        "#overlay-1",
+        { y: -20, autoAlpha: 0, duration: 0.35, ease: "power2.in" },
+        4.31
+      );
+
+      // Mid-scene visual reinforcement: dynamic pulses on mutual aggression vectors
+      tl.to(
+        "#clash-center",
+        { scale: 1.15, duration: 0.25, yoyo: true, repeat: 1, ease: "sine.inOut" },
+        4.8
+      );
+
+      tl.fromTo(
+        ["#node-a1", "#node-a2", "#node-a3", "#node-b1", "#node-b2", "#node-b3", "#node-b4"],
+        { borderColor: "#141414" },
+        {
+          borderColor: "#ff6a1a",
+          duration: 0.3,
+          stagger: 0.06,
+          repeat: 1,
+          yoyo: true,
+          ease: "power1.out",
+        },
+        5.1
+      );
+
+      // 4. Overlay 2: "CẢ HAI BÊN THAM GIA" (atMs: 304430 -> 6.08s, holdMs: 2000 -> holds to 8.08s)
+      tl.fromTo(
+        "#overlay-2",
+        { y: 35, autoAlpha: 0, scale: 0.95 },
+        { y: 0, autoAlpha: 1, scale: 1, duration: 0.45, ease: "power3.out" },
+        6.08
+      );
+
+      // Subtle outward pulse on both zone panels when Overlay 2 confirms bilateral participation
+      tl.fromTo(
+        ["#zone-box-a", "#zone-box-b"],
+        { backgroundColor: "rgba(231, 227, 217, 0.45)" },
+        {
+          backgroundColor: "rgba(255, 106, 26, 0.16)",
+          duration: 0.4,
+          ease: "power2.out",
+        },
+        6.3
+      );
+
+      // Register the master timeline on the required window registry
+      window.__timelines["scene-s32"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

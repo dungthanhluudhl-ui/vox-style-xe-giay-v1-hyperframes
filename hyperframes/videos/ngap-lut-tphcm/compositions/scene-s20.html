@@ -1,0 +1,545 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap"
+    />
+      <style>
+/* hf-safe-colors (tất định từ style-tokens.json) */
+.hf-text-ink { color: #141414; }
+.hf-text-light { color: #F7F4EC; }
+.hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+.hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+.hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+.hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #e7e3d9;
+        font-family: "Be Vietnam Pro", sans-serif;
+        color: #141414;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      #root {
+        position: relative;
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+        background-color: #e7e3d9;
+      }
+
+      /* Nền lưới kỹ thuật chuẩn Vox 84px */
+      .bg-grid {
+        position: absolute;
+        inset: 0;
+        background-image:
+          linear-gradient(to right, rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px),
+          linear-gradient(to bottom, rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px);
+        background-size: 84px 84px;
+        pointer-events: none;
+        z-index: 1;
+      }
+
+      /* Thanh cam nhận diện cố định mép đáy */
+      .bottom-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 1080px;
+        height: 12px;
+        background-color: #ff6a1a;
+        z-index: 100;
+      }
+
+      /* Lớp quy ước chuẩn của HyperFrames: tuyệt đối, trải full frame */
+      .clip {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+      }
+
+      /* Header an toàn trên cùng (Safe zone Y: 160-250px) */
+      .header-container {
+        position: absolute;
+        top: 170px;
+        left: 70px;
+        width: 940px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        z-index: 25;
+      }
+
+      .header-tag {
+        background-color: #141414;
+        color: #f7f4ec;
+        padding: 10px 22px;
+        font-size: 26px;
+        font-weight: 900;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        box-shadow: 6px 6px 0px rgba(20, 20, 20, 0.25);
+      }
+
+      .header-tag::before {
+        content: "";
+        display: inline-block;
+        width: 14px;
+        height: 14px;
+        background-color: #ff6a1a;
+      }
+
+      .header-sub {
+        background-color: #ff6a1a;
+        color: #141414;
+        padding: 10px 18px;
+        font-size: 22px;
+        font-weight: 900;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        box-shadow: 6px 6px 0px #141414;
+      }
+
+      /* Khung card Hero chứa cụm cao ốc chọc trời đè lún đầm lầy */
+      .hero-card-container {
+        position: absolute;
+        top: 270px;
+        left: 70px;
+        width: 940px;
+        height: 1050px;
+        perspective: 1400px;
+        z-index: 10;
+      }
+
+      .hero-card {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        background-color: #141414;
+        border: 6px solid #141414;
+        box-shadow: 16px 16px 0px #141414;
+        overflow: hidden;
+        transform-origin: center center;
+      }
+
+      .hero-image-wrapper {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+      }
+
+      /* Crop tập trung vào nửa bên phải của img-01 theo đúng Shotlist S20-1 */
+      .hero-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: 86% center;
+        display: block;
+        transform-origin: 86% 50%;
+      }
+
+      /* Thước đo độ lún & cao trình kỹ thuật cạnh phải card (Visual Language: Diagram/Data) */
+      .tech-gauge {
+        position: absolute;
+        top: 40px;
+        right: 24px;
+        background-color: #141414;
+        border: 2px solid #ff6a1a;
+        padding: 14px 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        z-index: 15;
+      }
+
+      .gauge-mark {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: #f7f4ec;
+        font-size: 16px;
+        font-weight: 700;
+        letter-spacing: 1px;
+      }
+
+      .gauge-mark .tick {
+        width: 12px;
+        height: 2px;
+        background-color: #ff6a1a;
+      }
+
+      .gauge-mark.active {
+        color: #ff6a1a;
+        font-weight: 900;
+      }
+
+      .gauge-mark.active .tick {
+        width: 18px;
+        height: 4px;
+        background-color: #ff6a1a;
+      }
+
+      /* Overlay 1: ĐẤT BÙN YẾU (Shot S20-1) */
+      .overlay-mud-wrap {
+        position: absolute;
+        bottom: 640px;
+        left: 110px;
+        z-index: 30;
+      }
+
+      .callout-plate {
+        background-color: #141414;
+        border-left: 10px solid #ff6a1a;
+        padding: 18px 26px;
+        box-shadow: 10px 10px 0px rgba(20, 20, 20, 0.45);
+        display: inline-block;
+      }
+
+      .callout-title {
+        color: #f7f4ec;
+        font-size: 42px;
+        font-weight: 900;
+        letter-spacing: 1.5px;
+        line-height: 1.2;
+        margin-bottom: 8px;
+      }
+
+      .callout-badge {
+        display: inline-block;
+        background-color: #ff6a1a;
+        color: #141414;
+        font-size: 20px;
+        font-weight: 900;
+        padding: 4px 12px;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+      }
+
+      .mud-indicator {
+        position: absolute;
+        bottom: -50px;
+        left: 60px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .indicator-dot {
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background-color: #ff6a1a;
+        border: 3px solid #141414;
+        box-shadow: 0 0 0 4px #ff6a1a;
+      }
+
+      .indicator-line {
+        width: 80px;
+        height: 3px;
+        background-color: #141414;
+      }
+
+      /* Overlay 2: QUÁ TẢI XÂY DỰNG & Vector áp lực tải trọng (Shot S20-1) */
+      .overlay-load-wrap {
+        position: absolute;
+        top: 320px;
+        left: 110px;
+        z-index: 35;
+      }
+
+      .vectors-container {
+        position: absolute;
+        top: 480px;
+        left: 280px;
+        width: 480px;
+        display: flex;
+        justify-content: space-around;
+        z-index: 32;
+      }
+
+      .vector-arrow {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .vector-shaft {
+        width: 8px;
+        height: 70px;
+        background-color: #ff6a1a;
+        border-left: 2px solid #141414;
+        border-right: 2px solid #141414;
+      }
+
+      .vector-head {
+        width: 0;
+        height: 0;
+        border-left: 18px solid transparent;
+        border-right: 18px solid transparent;
+        border-top: 24px solid #ff6a1a;
+        filter: drop-shadow(0px 2px 0px #141414);
+      }
+
+      /* Chú thích chân sơ đồ kỹ thuật */
+      .footer-label {
+        position: absolute;
+        bottom: 545px;
+        left: 70px;
+        width: 940px;
+        display: flex;
+        justify-content: flex-end;
+        z-index: 20;
+      }
+
+      .footer-tag {
+        background-color: #e7e3d9;
+        border: 2px solid #141414;
+        color: #141414;
+        font-size: 20px;
+        font-weight: 900;
+        letter-spacing: 1px;
+        padding: 6px 16px;
+        text-transform: uppercase;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s20"
+      data-width="1080"
+      data-height="1920"
+      data-duration="7.87"
+    >
+      <!-- Nền lưới toạ độ cố định -->
+      <div class="bg-grid"></div>
+
+      <!-- Shot S20-1: Hero Scene (Duration: 7.87s) -->
+      <section id="scene-s20" class="clip" data-start="0" data-duration="7.87">
+        <!-- Header dẫn nhập ngữ cảnh -->
+        <div class="header-container" id="headerGroup">
+          <div class="header-tag">TẢI TRỌNG ĐÔ THỊ HÓA</div>
+          <div class="header-sub">HỒ SƠ ĐỊA CHẤT</div>
+        </div>
+
+        <!-- Khung Hero Card tập trung vào toà nhà đè lún bùn đầm lầy -->
+        <div class="hero-card-container">
+          <div class="hero-card" id="heroCard">
+            <div class="hero-image-wrapper">
+              <img
+                id="heroImage"
+                class="hero-image"
+                src="assets/img-01-intellectual-weight-urban-footprint-spli.jpg"
+                alt="Khối cao ốc đô thị đè nén vùng đầm lầy trũng"
+              />
+            </div>
+
+            <!-- Thước đo cao trình lún kỹ thuật -->
+            <div class="tech-gauge" id="techGauge">
+              <div class="gauge-mark"><span>+60m</span><span class="tick"></span></div>
+              <div class="gauge-mark"><span>+30m</span><span class="tick"></span></div>
+              <div class="gauge-mark"><span>±0.0m</span><span class="tick"></span></div>
+              <div class="gauge-mark active"><span>-15m</span><span class="tick"></span></div>
+              <div class="gauge-mark active"><span>-30m</span><span class="tick"></span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Chú thích chân khung hình -->
+        <div class="footer-label" id="footerGroup">
+          <div class="footer-tag">MÔ HÌNH NÉN LÚN ĐỊA PHƯƠNG</div>
+        </div>
+      </section>
+
+      <!-- Overlay 1: "ĐẤT BÙN YẾU" (atMs: 150500 -> start: 2.34s, hold: 2.20s) -->
+      <section id="clip-mud" class="clip" data-start="2.34" data-duration="2.2">
+        <div class="overlay-mud-wrap" id="overlayMudBox">
+          <div class="callout-plate">
+            <div class="callout-title">ĐẤT BÙN YẾU</div>
+            <div class="callout-badge">TẦNG ĐẦM LẦY TRŨNG</div>
+          </div>
+          <div class="mud-indicator" id="mudIndicator">
+            <div class="indicator-dot"></div>
+            <div class="indicator-line"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Overlay 2: "QUÁ TẢI XÂY DỰNG" (atMs: 153500 -> start: 5.34s, hold: 2.40s) -->
+      <section id="clip-load" class="clip" data-start="5.34" data-duration="2.53">
+        <div class="overlay-load-wrap" id="overlayLoadBox">
+          <div class="callout-plate">
+            <div class="callout-title">QUÁ TẢI XÂY DỰNG</div>
+            <div class="callout-badge">CAO ỐC &amp; HẠ TẦNG NẶNG</div>
+          </div>
+        </div>
+
+        <!-- Các vector mũi tên lực nén thẳng đứng -->
+        <div class="vectors-container" id="vectorsGroup">
+          <div class="vector-arrow">
+            <div class="vector-shaft"></div>
+            <div class="vector-head"></div>
+          </div>
+          <div class="vector-arrow">
+            <div class="vector-shaft" style="height: 90px"></div>
+            <div class="vector-head"></div>
+          </div>
+          <div class="vector-arrow">
+            <div class="vector-shaft" style="height: 75px"></div>
+            <div class="vector-head"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Dải thương hiệu cam mép dưới cùng -->
+      <div class="bottom-bar"></div>
+    </div>
+
+    <script>
+      // Timeline gốc paused bắt buộc của HyperFrames
+      const tl = gsap.timeline({ paused: true });
+
+      // 1. Scene Entrance: Flip 3D theo đúng entranceAnimation="flip"
+      tl.fromTo(
+        "#heroCard",
+        {
+          rotationY: -22,
+          rotationX: 8,
+          scale: 0.88,
+          opacity: 0,
+        },
+        {
+          rotationY: 0,
+          rotationX: 0,
+          scale: 1,
+          opacity: 1,
+          duration: 0.8,
+          ease: "power3.out",
+        },
+        0.1
+      );
+
+      // Header và Footer trượt vào vị trí
+      tl.fromTo(
+        "#headerGroup",
+        { y: -35, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.55, ease: "power2.out" },
+        0.25
+      );
+
+      tl.fromTo(
+        "#footerGroup",
+        { y: 20, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.5, ease: "power2.out" },
+        0.35
+      );
+
+      tl.fromTo(
+        "#techGauge",
+        { opacity: 0, x: 25 },
+        { opacity: 1, x: 0, duration: 0.5, ease: "power2.out" },
+        0.45
+      );
+
+      // 2. Camera Motion: Zoom-in chậm 1.0x -> 1.06x xuyên suốt shot theo shotlist
+      tl.fromTo(
+        "#heroImage",
+        { scale: 1.0 },
+        { scale: 1.06, duration: 7.87, ease: "none" },
+        0
+      );
+
+      // Dao động vi mô để bố cục giữ nhịp sống, không bị đông cứng
+      tl.to(
+        "#heroCard",
+        {
+          y: -10,
+          duration: 3.4,
+          yoyo: true,
+          repeat: 1,
+          ease: "sine.inOut",
+        },
+        1.1
+      );
+
+      // 3. Overlay 1: "ĐẤT BÙN YẾU" xuất hiện tại t = 2.34s
+      tl.fromTo(
+        "#overlayMudBox",
+        { scale: 0.82, opacity: 0, y: 30 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.45, ease: "power3.out" },
+        2.34
+      );
+
+      tl.fromTo(
+        "#mudIndicator",
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.35, ease: "power2.out" },
+        2.5
+      );
+
+      // Thooát nhẹ nhàng trước khi clip kết thúc (t = 4.3s)
+      tl.to(
+        "#overlayMudBox",
+        { opacity: 0, y: -15, duration: 0.24, ease: "power2.in" },
+        4.3
+      );
+
+      // 4. Overlay 2: "QUÁ TẢI XÂY DỰNG" xuất hiện tại t = 5.34s
+      tl.fromTo(
+        "#overlayLoadBox",
+        { scale: 0.82, opacity: 0, y: -25 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.45, ease: "power3.out" },
+        5.34
+      );
+
+      // Vector mũi tên áp lực đè lún hạ xuống dồn dập
+      tl.fromTo(
+        "#vectorsGroup .vector-arrow",
+        { opacity: 0, y: -40, scaleY: 0.6 },
+        {
+          opacity: 1,
+          y: 0,
+          scaleY: 1,
+          duration: 0.45,
+          stagger: 0.1,
+          ease: "power3.out",
+        },
+        5.55
+      );
+
+      // Nhịp nén lực nhẹ tượng trưng cho sức nặng hạ tầng
+      tl.to(
+        "#vectorsGroup .vector-arrow",
+        {
+          y: 12,
+          duration: 0.75,
+          yoyo: true,
+          repeat: 1,
+          ease: "sine.inOut",
+        },
+        6.1
+      );
+
+      // Đăng ký timeline cho runtime HyperFrames
+      window.__timelines["scene-s20"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

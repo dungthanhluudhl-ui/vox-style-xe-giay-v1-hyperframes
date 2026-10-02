@@ -1,0 +1,742 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+      /* hf-safe-colors (tất định từ style-tokens.json) */
+      .hf-text-ink { color: #141414; }
+      .hf-text-light { color: #F7F4EC; }
+      .hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+      .hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+      .hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+      .hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+      /* --- RESET & FRAMEWORK CONTRACT --- */
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+        background-color: #E7E3D9;
+        font-family: "Be Vietnam Pro", sans-serif;
+        color: #141414;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: #E7E3D9;
+      }
+
+      /* Quy ước clip của HyperFrames: inset 0, không hardcode width/height px */
+      .clip {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+      }
+
+      /* --- NỀN GRID & CHỮ KÝ VOX --- */
+      .vox-grid-layer {
+        position: absolute;
+        inset: 0;
+        background-image:
+          linear-gradient(to right, rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px),
+          linear-gradient(to bottom, rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px);
+        background-size: 84px 84px;
+        pointer-events: none;
+      }
+
+      /* Thanh cam nhận diện thương hiệu cố định mép đáy */
+      .vox-bottom-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 1080px;
+        height: 16px;
+        background-color: #FF6A1A;
+        z-index: 999;
+      }
+
+      /* Nhãn kỹ thuật toạ độ Vox góc trên */
+      .vox-header-tag {
+        position: absolute;
+        top: 80px;
+        left: 60px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        z-index: 10;
+      }
+      .vox-header-bullet {
+        width: 12px;
+        height: 12px;
+        background-color: #FF6A1A;
+        border: 2px solid #141414;
+      }
+      .vox-header-text {
+        font-size: 22px;
+        font-weight: 700;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        color: #141414;
+      }
+
+      /* --- CAMERA RIG (pan-left từ t=0 đến hết scene) --- */
+      #camera-rig {
+        position: absolute;
+        inset: 0;
+        will-change: transform;
+      }
+
+      /* --- HERO ILLUSTRATION: BỘ HỒ SƠ & CƠ CHẾ LỘT RUỘT --- */
+      /* Chiều cao tối ưu nằm gọn trong khoảng y=240 đến y=930 để chừa toàn bộ khoảng trống dưới an toàn */
+      .hero-stage {
+        position: absolute;
+        top: 240px;
+        left: 90px;
+        width: 900px;
+        height: 690px;
+        perspective: 1400px;
+      }
+
+      /* Bìa sau tập hồ sơ (Folder Back) */
+      .folder-back {
+        position: absolute;
+        inset: 0;
+        background-color: #D6CEBF;
+        border: 4px solid #141414;
+        border-radius: 12px;
+        box-shadow: 16px 20px 0px rgba(20, 20, 20, 0.95);
+      }
+      .folder-tab {
+        position: absolute;
+        top: -44px;
+        left: 36px;
+        width: 320px;
+        height: 46px;
+        background-color: #D6CEBF;
+        border: 4px solid #141414;
+        border-bottom: none;
+        border-radius: 10px 10px 0 0;
+        display: flex;
+        align-items: center;
+        padding-left: 20px;
+        font-size: 18px;
+        font-weight: 900;
+        letter-spacing: 1.5px;
+        color: #141414;
+      }
+      /* Lòng folder rỗng dạng lưới kỹ thuật, không chứa text để tránh che khuất/contrast audit */
+      .folder-cavity-inner {
+        position: absolute;
+        inset: 20px;
+        background-color: #212121;
+        border: 3px dashed rgba(247, 244, 236, 0.25);
+        border-radius: 8px;
+        background-image:
+          linear-gradient(45deg, rgba(247, 244, 236, 0.04) 25%, transparent 25%),
+          linear-gradient(-45deg, rgba(247, 244, 236, 0.04) 25%, transparent 25%),
+          linear-gradient(45deg, transparent 75%, rgba(247, 244, 236, 0.04) 75%),
+          linear-gradient(-45deg, transparent 75%, rgba(247, 244, 236, 0.04) 75%);
+        background-size: 32px 32px;
+        overflow: hidden;
+      }
+
+      /* Lớp ruột tài liệu (Document Core) */
+      #document-core {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        width: 860px;
+        height: 650px;
+        will-change: transform, opacity;
+      }
+
+      /* Tờ tài liệu chính Sheet */
+      .doc-sheet {
+        position: absolute;
+        inset: 0;
+        background-color: #FBF9F3;
+        border: 3.5px solid #141414;
+        border-radius: 6px;
+        padding: 26px 32px;
+        box-shadow: 6px 8px 0px rgba(20, 20, 20, 0.2);
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+      .sheet-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 3px solid #141414;
+        padding-bottom: 10px;
+      }
+      .sheet-title {
+        font-size: 24px;
+        font-weight: 900;
+        color: #141414;
+        letter-spacing: 1px;
+      }
+
+      /* Bảng phân bổ tiền: Đứng tên (1 phần) vs Giấu mặt (Phần lớn) */
+      .money-split-container {
+        display: flex;
+        gap: 16px;
+      }
+      .split-card {
+        border: 3px solid #141414;
+        border-radius: 8px;
+        padding: 14px 18px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+      .split-card-small {
+        flex: 1;
+        background-color: #F5F0E4;
+      }
+      .split-card-large {
+        flex: 2.2;
+        background-color: #FF6A1A;
+        box-shadow: 6px 6px 0px #141414;
+      }
+      .split-role {
+        font-size: 17px;
+        font-weight: 900;
+        text-transform: uppercase;
+        color: #141414;
+        letter-spacing: 0.5px;
+      }
+      .split-amount {
+        font-size: 34px;
+        font-weight: 900;
+        color: #141414;
+        margin-top: 4px;
+        line-height: 1.1;
+      }
+      .split-sub {
+        font-size: 15px;
+        font-weight: 700;
+        color: #141414;
+        margin-top: 4px;
+      }
+
+      /* Ba lớp kiểm tra tín dụng ngân hàng */
+      .check-layers-box {
+        margin-top: 2px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .check-layer-item {
+        background-color: #F5F0E4;
+        border: 3px solid #141414;
+        padding: 8px 16px;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        height: 56px;
+      }
+      .check-title-col {
+        font-size: 19px;
+        font-weight: 700;
+        color: #141414;
+        width: 540px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .check-action-col {
+        position: relative;
+        width: 170px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+      }
+      /* Ô đích để dập dấu - rỗng hoàn toàn, không có chữ bên trong để tuyệt đối tránh lỗi text_occluded */
+      .stamp-target-box {
+        width: 150px;
+        height: 38px;
+        border: 2px dashed rgba(20, 20, 20, 0.4);
+        border-radius: 4px;
+        background-color: #E7E3D9;
+      }
+
+      /* Con dấu "BỎ QUA" dập thẳng vào ô đích bên phải */
+      .stamp-bypassed {
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 150px;
+        height: 38px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #FF6A1A;
+        border: 3px solid #141414;
+        color: #141414;
+        font-size: 18px;
+        font-weight: 900;
+        letter-spacing: 1.5px;
+        box-shadow: 4px 4px 0px #141414;
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      /* Bìa trước (Front Cover) với hiệu ứng Peel */
+      #folder-front-cover {
+        position: absolute;
+        inset: 0;
+        background-color: #DFD7C7;
+        border: 4px solid #141414;
+        border-radius: 12px;
+        transform-origin: 0% 50%;
+        box-shadow: 10px 14px 0px rgba(20, 20, 20, 0.4);
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        padding: 44px;
+        z-index: 5;
+        will-change: transform;
+      }
+      .front-cover-badge {
+        align-self: flex-start;
+        background-color: #FF6A1A;
+        border: 3px solid #141414;
+        padding: 8px 20px;
+        font-size: 20px;
+        font-weight: 900;
+        color: #141414;
+        box-shadow: 4px 4px 0px #141414;
+      }
+      .front-cover-title {
+        font-size: 52px;
+        font-weight: 900;
+        line-height: 1.15;
+        color: #141414;
+        border-left: 8px solid #FF6A1A;
+        padding-left: 22px;
+      }
+      .front-cover-foot {
+        font-size: 19px;
+        font-weight: 700;
+        letter-spacing: 2px;
+        color: #141414;
+        border-top: 2px solid #141414;
+        padding-top: 12px;
+      }
+
+      /* Con dấu "CÁI VỎ" đè vào lòng folder khi đã rút ruột */
+      #stamp-empty-shell {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform-origin: center center;
+        background-color: #FF6A1A;
+        border: 6px solid #141414;
+        padding: 22px 50px;
+        box-shadow: 10px 12px 0px #141414;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        z-index: 4;
+        will-change: transform, opacity;
+      }
+      .stamp-shell-sub {
+        font-size: 22px;
+        font-weight: 900;
+        color: #141414;
+        letter-spacing: 4px;
+        text-transform: uppercase;
+      }
+      .stamp-shell-main {
+        font-size: 88px;
+        font-weight: 900;
+        color: #141414;
+        line-height: 1;
+        letter-spacing: 2px;
+      }
+
+      /* --- OVERLAY 1: ICON DOC (name: doc, atMs: 435440 = 4.4s) --- */
+      #overlay-doc-icon {
+        position: absolute;
+        top: 130px;
+        right: 80px;
+        width: 110px;
+        height: 140px;
+        background-color: #F5F0E4;
+        border: 3.5px solid #141414;
+        border-radius: 8px;
+        box-shadow: 8px 8px 0px #141414;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        z-index: 20;
+        will-change: transform, opacity;
+      }
+      .doc-icon-svg {
+        width: 74px;
+        height: 94px;
+      }
+      .doc-icon-svg path {
+        fill: none;
+        stroke: #141414;
+        stroke-width: 6;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
+      /* --- OVERLAY 2: LABEL "MẤT LỚP KIỂM TRA" (atMs: 437760 = 6.72s) --- */
+      /* Vị trí y=960px, cao 64px (kết thúc ở 1024px), hoàn toàn an toàn */
+      #overlay-label-check {
+        position: absolute;
+        top: 960px;
+        left: 90px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        background-color: #FF6A1A;
+        border: 4px solid #141414;
+        padding: 12px 24px;
+        box-shadow: 8px 8px 0px #141414;
+        opacity: 0;
+        z-index: 30;
+        will-change: transform, opacity;
+      }
+      .label-alert-sign {
+        width: 34px;
+        height: 34px;
+        background-color: #141414;
+        color: #FF6A1A;
+        font-size: 22px;
+        font-weight: 900;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+      }
+      .label-check-text {
+        font-size: 30px;
+        font-weight: 900;
+        color: #141414;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+      }
+
+      /* --- OVERLAY 3: PUNCH-PHRASE "HỒ SƠ THÀNH CÁI VỎ" (t=9.6s -> 11.2s) --- */
+      /* Đặt tại top: 1040px, cao 145px -> đáy tại y=1185px, cách xa vùng caption (bắt đầu từ 1390px) hơn 200px */
+      #punch-wrapper {
+        position: absolute;
+        top: 1040px;
+        left: 90px;
+        width: 900px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        opacity: 0;
+        z-index: 50;
+        will-change: transform, opacity;
+      }
+      .punch-plate-top {
+        align-self: flex-start;
+        background-color: #141414;
+        padding: 8px 22px;
+        border-radius: 4px;
+        box-shadow: 6px 6px 0px rgba(20, 20, 20, 0.4);
+      }
+      .punch-text-light {
+        font-size: 30px;
+        font-weight: 900;
+        color: #F7F4EC;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+      }
+      .punch-plate-main {
+        align-self: flex-start;
+        background-color: #FF6A1A;
+        border: 4px solid #141414;
+        padding: 14px 30px;
+        box-shadow: 8px 8px 0px #141414;
+      }
+      .punch-text-ink {
+        font-size: 54px;
+        font-weight: 900;
+        line-height: 1.1;
+        color: #141414;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s48"
+      data-start="0"
+      data-width="1080"
+      data-height="1920"
+      data-duration="11.2"
+    >
+      <!-- Lớp nền kẻ ô vuông 84px chuẩn Vox DNA -->
+      <div class="vox-grid-layer"></div>
+
+      <!-- Dải cam đáy thương hiệu -->
+      <div class="vox-bottom-bar"></div>
+
+      <!-- Header Tag thông tin hồ sơ -->
+      <div class="vox-header-tag">
+        <div class="vox-header-bullet"></div>
+        <div class="vox-header-text">VOX INVESTIGATION // CREDIT COLLATERAL MECHANISM</div>
+      </div>
+
+      <!-- CLIP CHÍNH CHỨA TOÀN BỘ CẢNH S48 (11.2s) -->
+      <section id="scene-s48" class="clip" data-start="0" data-duration="11.2">
+        <div id="camera-rig">
+          <!-- KHỐI MINH HOẠ CHÍNH: BỘ HỒ SƠ VAY VỐN -->
+          <div class="hero-stage">
+            <!-- Bìa sau Folder -->
+            <div class="folder-back">
+              <div class="folder-tab">HỒ SƠ SỐ: #48-TD/BANK</div>
+              <!-- Lòng rỗng hồ sơ không chứa text nhằm đảm bảo tuyệt đối không đè chữ/lỗi tương phản -->
+              <div class="folder-cavity-inner"></div>
+            </div>
+
+            <!-- Con dấu CÁI VỎ xuất hiện khi ruột bị rút sạch -->
+            <div id="stamp-empty-shell" data-layout-allow-overlap="true" data-layout-allow-occlusion="true">
+              <div class="stamp-shell-sub">BIẾN CHẤT THÀNH</div>
+              <div class="stamp-shell-main">CÁI VỎ</div>
+            </div>
+
+            <!-- Tệp ruột hồ sơ bị rút sạch ruột -->
+            <div id="document-core">
+              <div class="doc-sheet">
+                <div class="sheet-header">
+                  <div class="sheet-title">HỢP ĐỒNG VAY VỐN & GIẢI NGÂN</div>
+                </div>
+
+                <!-- Bảng chia tiền: Đứng tên (ít) vs Giấu mặt (lớn) -->
+                <div class="money-split-container">
+                  <div class="split-card split-card-small" id="split-nominee">
+                    <div>
+                      <div class="split-role">ĐỨNG TÊN</div>
+                      <div class="split-amount">10%</div>
+                    </div>
+                    <div class="split-sub">Nhận một phần nhỏ</div>
+                  </div>
+                  <div class="split-card split-card-large" id="split-mastermind">
+                    <div>
+                      <div class="split-role">NGƯỜI GIẤU MẶT</div>
+                      <div class="split-amount">90%</div>
+                    </div>
+                    <div class="split-sub">Rút trọn phần lớn</div>
+                  </div>
+                </div>
+
+                <!-- Các lớp kiểm tra tín dụng: bên phải là ô trống, khi dập con dấu không che bất kỳ chữ nào -->
+                <div class="check-layers-box">
+                  <div class="check-layer-item" id="check-item-1">
+                    <div class="check-title-col">1. Thẩm định năng lực tài chính</div>
+                    <div class="check-action-col">
+                      <div class="stamp-target-box"></div>
+                      <div class="stamp-bypassed" id="stamp-1">BỎ QUA</div>
+                    </div>
+                  </div>
+                  <div class="check-layer-item" id="check-item-2">
+                    <div class="check-title-col">2. Kiểm tra thực địa doanh nghiệp</div>
+                    <div class="check-action-col">
+                      <div class="stamp-target-box"></div>
+                      <div class="stamp-bypassed" id="stamp-2">BỎ QUA</div>
+                    </div>
+                  </div>
+                  <div class="check-layer-item" id="check-item-3">
+                    <div class="check-title-col">3. Định giá tài sản bảo đảm</div>
+                    <div class="check-action-col">
+                      <div class="stamp-target-box"></div>
+                      <div class="stamp-bypassed" id="stamp-3">BỎ QUA</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Bìa trước (Front Cover) lật mở hiệu ứng Peel -->
+            <div id="folder-front-cover">
+              <div class="front-cover-badge">HỒ SƠ TÍN DỤNG</div>
+              <div class="front-cover-title">TẬP HỒ SƠ<br />VAY VỐN</div>
+              <div class="front-cover-foot">PHÊ DUYỆT TÍN DỤNG // BẢO MẬT</div>
+            </div>
+          </div>
+
+          <!-- OVERLAY 1: ICON DOC (name: doc, atMs: 435440 = 4.4s, đặt góc trên an toàn) -->
+          <div id="overlay-doc-icon">
+            <svg class="doc-icon-svg" viewBox="0 0 100 120" xmlns="http://www.w3.org/2000/svg">
+              <path id="doc-outline" d="M 20 10 L 65 10 L 85 30 L 85 110 L 20 110 Z" />
+              <path id="doc-fold" d="M 65 10 L 65 30 L 85 30" />
+              <path id="doc-line-1" d="M 32 50 L 73 50" />
+              <path id="doc-line-2" d="M 32 70 L 73 70" />
+              <path id="doc-line-3" d="M 32 90 L 58 90" />
+            </svg>
+          </div>
+
+          <!-- OVERLAY 2: LABEL "MẤT LỚP KIỂM TRA" (atMs: 437760 = 6.72s) -->
+          <div id="overlay-label-check">
+            <div class="label-alert-sign">!</div>
+            <div class="label-check-text">MẤT LỚP KIỂM TRA</div>
+          </div>
+
+          <!-- OVERLAY 3: PUNCH-PHRASE "HỒ SƠ THÀNH CÁI VỎ" (t=9.6s -> 11.2s) -->
+          <div id="punch-wrapper">
+            <div class="punch-plate-top">
+              <div class="punch-text-light">HỒ SƠ VAY VỐN</div>
+            </div>
+            <div class="punch-plate-main">
+              <div class="punch-text-ink">THÀNH CÁI VỎ</div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- SCRIPT CHÍNH ĐIỀU KHIỂN TIMELINE TẤT ĐỊNH -->
+    <script>
+      // 1. Chuẩn bị hiệu ứng vẽ SVG path cho doc icon theo quy tắc svg-path-draw.md
+      const docPaths = document.querySelectorAll(".doc-icon-svg path");
+      docPaths.forEach((path) => {
+        const length = path.getTotalLength();
+        path.style.strokeDasharray = length;
+        path.style.strokeDashoffset = length;
+      });
+
+      // 2. Tạo paused timeline chính của HyperFrames
+      const tl = gsap.timeline({ paused: true });
+
+      // [Camera Motion: pan-left nhẹ nhàng xuyên suốt 11.2s]
+      tl.fromTo("#camera-rig", { x: 25 }, { x: -25, duration: 11.2, ease: "none" }, 0);
+
+      // [0.15s -> 1.1s]: Hiệu ứng PEEL - Bìa trước mở lật ra để lộ ruột hồ sơ
+      tl.fromTo(
+        "#folder-front-cover",
+        { rotateY: 0, x: 0 },
+        { rotateY: -115, x: -50, duration: 0.95, ease: "power3.out" },
+        0.15
+      );
+
+      // [0.8s -> 1.8s]: Phân chia tiền - box người đứng tên & người giấu mặt pop vào
+      tl.fromTo(
+        "#split-nominee",
+        { scale: 0.85, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.5, ease: "power3.out" },
+        0.8
+      );
+      tl.fromTo(
+        "#split-mastermind",
+        { scale: 0.85, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.6, ease: "power3.out" },
+        1.1
+      );
+
+      // [4.4s -> 6.6s]: OVERLAY 1 - Icon doc vẽ tay xuất hiện
+      // Relative atMs = (435440 - 431040)/1000 = 4.4s, holdMs = 2200 (kéo dài đến 6.6s)
+      tl.fromTo(
+        "#overlay-doc-icon",
+        { scale: 0.6, opacity: 0, y: 20 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.4, ease: "power3.out" },
+        4.4
+      );
+
+      // Progressive draw các nét SVG của doc icon
+      tl.to("#doc-outline", { strokeDashoffset: 0, duration: 0.5, ease: "power2.out" }, 4.5);
+      tl.to("#doc-fold", { strokeDashoffset: 0, duration: 0.3, ease: "power2.out" }, 4.7);
+      tl.to("#doc-line-1", { strokeDashoffset: 0, duration: 0.25, ease: "power2.out" }, 4.9);
+      tl.to("#doc-line-2", { strokeDashoffset: 0, duration: 0.25, ease: "power2.out" }, 5.05);
+      tl.to("#doc-line-3", { strokeDashoffset: 0, duration: 0.25, ease: "power2.out" }, 5.2);
+
+      // [4.9s -> 6.4s]: Ngân hàng bỏ qua các lớp kiểm tra - 3 con dấu BỎ QUA dập xuống ô trống bên phải
+      tl.fromTo(
+        "#stamp-1",
+        { scale: 1.8, opacity: 0, rotation: -10 },
+        { scale: 1, opacity: 1, rotation: -6, duration: 0.35, ease: "power3.out" },
+        4.9
+      );
+      tl.fromTo(
+        "#stamp-2",
+        { scale: 1.8, opacity: 0, rotation: 8 },
+        { scale: 1, opacity: 1, rotation: 5, duration: 0.35, ease: "power3.out" },
+        5.4
+      );
+      tl.fromTo(
+        "#stamp-3",
+        { scale: 1.8, opacity: 0, rotation: -12 },
+        { scale: 1, opacity: 1, rotation: -8, duration: 0.35, ease: "power3.out" },
+        5.9
+      );
+
+      // Icon doc mờ dần khi kết thúc hold 2.2s (6.6s)
+      tl.to("#overlay-doc-icon", { opacity: 0, scale: 0.9, duration: 0.3, ease: "power2.in" }, 6.6);
+
+      // [6.72s -> 9.5s]: OVERLAY 2 - Label "MẤT LỚP KIỂM TRA" xuất hiện
+      // Relative atMs = (437760 - 431040)/1000 = 6.72s, holdMs = 2400 (đến 9.12s)
+      tl.fromTo(
+        "#overlay-label-check",
+        { y: 24, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.45, ease: "power3.out" },
+        6.72
+      );
+
+      // [7.1s -> 8.4s]: CƠ CHẾ RÚT RUỘT HỒ SƠ - toàn bộ ruột tài liệu bị rút trượt bay đi
+      tl.to(
+        "#document-core",
+        {
+          y: -500,
+          x: 200,
+          rotation: 12,
+          opacity: 0,
+          duration: 1.3,
+          ease: "power2.in"
+        },
+        7.1
+      );
+
+      // [8.6s -> 9.6s]: Trong lòng rỗng của folder, con dấu khổng lồ "CÁI VỎ" dập mạnh xuống
+      tl.fromTo(
+        "#stamp-empty-shell",
+        { scale: 2.2, opacity: 0, rotation: -8, xPercent: -50, yPercent: -50 },
+        { scale: 1, opacity: 1, rotation: -3, xPercent: -50, yPercent: -50, duration: 0.5, ease: "power3.out" },
+        8.6
+      );
+
+      // Label "MẤT LỚP KIỂM TRA" mờ đi để nhường chỗ cho Punch-phrase
+      tl.to("#overlay-label-check", { opacity: 0, y: -15, duration: 0.4, ease: "power2.in" }, 9.2);
+
+      // [9.6s -> 11.2s]: OVERLAY 3 - PUNCH-PHRASE "HỒ SƠ THÀNH CÁI VỎ"
+      // Xuất hiện từ 9.6s vững chãi đến hết 11.2s (1.6s theo đúng punchPhraseMinHoldSec)
+      tl.fromTo(
+        "#punch-wrapper",
+        { y: 30, scale: 0.95, opacity: 0 },
+        { y: 0, scale: 1, opacity: 1, duration: 0.5, ease: "power3.out" },
+        9.6
+      );
+
+      // 3. ĐĂNG KÝ BẮT BUỘC VỚI HYPERFRAMES RUNTIME
+      window.__timelines["scene-s48"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

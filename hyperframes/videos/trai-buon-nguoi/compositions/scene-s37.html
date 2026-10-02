@@ -1,0 +1,510 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap"
+    />
+      <style>
+      /* hf-safe-colors (tất định từ style-tokens.json) */
+      .hf-text-ink {
+        color: #141414;
+      }
+      .hf-text-light {
+        color: #f7f4ec;
+      }
+      .hf-hl-orange {
+        color: #141414;
+        background-color: #ff6a1a;
+      }
+      .hf-plate-ink {
+        color: #f7f4ec;
+        background-color: #141414;
+      }
+      .hf-plate-ink-orange {
+        color: #ff6a1a;
+        background-color: #141414;
+      }
+      .hf-plate-paper {
+        color: #141414;
+        background-color: #f5f0e4;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background: #e7e3d9;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+      .clip {
+        position: absolute;
+        inset: 0;
+      }
+
+      /* Chart Background Variant (STYLE_DNA: 4 horizontal ruled lines + left-edge orange tick marks) */
+      .bg-chart {
+        position: absolute;
+        inset: 0;
+        background-color: #e7e3d9;
+        background-image:
+          linear-gradient(to right, rgba(20, 20, 20, 0.08) 1.5px, transparent 1.5px),
+          linear-gradient(to bottom, rgba(20, 20, 20, 0.08) 1.5px, transparent 1.5px);
+        background-size: 84px 84px;
+      }
+      .chart-line {
+        position: absolute;
+        left: 0;
+        width: 1080px;
+        height: 2px;
+        background: rgba(20, 20, 20, 0.22);
+      }
+      .chart-line-1 {
+        top: 384px;
+      }
+      .chart-line-2 {
+        top: 768px;
+      }
+      .chart-line-3 {
+        top: 1152px;
+      }
+      .chart-line-4 {
+        top: 1536px;
+      }
+      .chart-tick {
+        position: absolute;
+        left: 40px;
+        top: -3px;
+        width: 24px;
+        height: 8px;
+        background: #ff6a1a;
+      }
+
+      /* Signature persistent bottom bar */
+      #bottom-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 1080px;
+        height: 12px;
+        background: #ff6a1a;
+        z-index: 100;
+      }
+
+      /* Top Header Kicker (Fixed UI layer, safe from zoom-out camera) */
+      #top-header {
+        position: absolute;
+        top: 175px;
+        left: 0;
+        width: 1080px;
+        display: flex;
+        justify-content: center;
+        z-index: 30;
+      }
+      .header-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        background: #141414;
+        color: #f7f4ec;
+        border: 2px solid #ff6a1a;
+        border-radius: 6px;
+        padding: 10px 24px;
+        font-size: 22px;
+        font-weight: 900;
+        letter-spacing: 2px;
+        box-shadow: 4px 4px 0px rgba(20, 20, 20, 0.35);
+      }
+      .header-dot {
+        width: 10px;
+        height: 10px;
+        background: #ff6a1a;
+        border-radius: 50%;
+      }
+
+      /* Camera Stage Rig for continuous zoom-out motion */
+      #camera-stage {
+        position: absolute;
+        inset: 0;
+        transform-origin: 540px 650px;
+      }
+
+      /* Central Hero Card (img-11 collage) */
+      #hero-card-wrapper {
+        position: absolute;
+        top: 245px;
+        left: 220px;
+        width: 640px;
+        height: 810px;
+        z-index: 15;
+      }
+      .hero-card {
+        width: 100%;
+        height: 100%;
+        background: #f5f0e4;
+        border: 3px solid #141414;
+        border-radius: 12px;
+        box-shadow: 14px 14px 0px #141414;
+        padding: 12px;
+        position: relative;
+        transform-origin: 50% 50%;
+      }
+      .hero-card img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+        border-radius: 8px;
+      }
+
+      /* Formula loop rail (SVG connector demonstrating closed loop) */
+      #formula-rail-svg {
+        position: absolute;
+        top: 270px;
+        left: 80px;
+        width: 100px;
+        height: 760px;
+        z-index: 18;
+      }
+
+      /* Editorial Callout Badges (Overlays) */
+      .callout-layer {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        z-index: 40;
+      }
+      .editorial-callout {
+        position: absolute;
+        left: 170px;
+        width: 740px;
+        padding: 16px 28px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 16px;
+        font-weight: 900;
+        box-sizing: border-box;
+      }
+      .callout-step {
+        font-size: 22px;
+        letter-spacing: 2px;
+        white-space: nowrap;
+      }
+      .callout-divider {
+        font-size: 26px;
+        line-height: 1;
+      }
+      .callout-title {
+        font-size: 38px;
+        letter-spacing: 1px;
+        white-space: nowrap;
+      }
+
+      /* Overlay 1 styling */
+      #badge-1 {
+        top: 340px;
+        border: 3px solid #141414;
+        box-shadow: 8px 8px 0px #141414;
+      }
+
+      /* Overlay 2 styling */
+      #badge-2 {
+        top: 550px;
+        border: 3px solid #ff6a1a;
+        box-shadow: 8px 8px 0px #141414;
+      }
+
+      /* Overlay 3: Punch-phrase Box */
+      #punch-wrapper {
+        position: absolute;
+        top: 1090px;
+        left: 90px;
+        width: 900px;
+        z-index: 50;
+      }
+      .punch-box {
+        width: 100%;
+        background: #141414;
+        border: 4px solid #ff6a1a;
+        box-shadow: 10px 10px 0px rgba(20, 20, 20, 0.45);
+        border-radius: 12px;
+        padding: 24px 32px;
+        text-align: center;
+        box-sizing: border-box;
+      }
+      .punch-badge-tag {
+        color: #ff6a1a;
+        font-size: 20px;
+        font-weight: 900;
+        letter-spacing: 3px;
+        text-transform: uppercase;
+        margin-bottom: 6px;
+      }
+      .punch-headline {
+        color: #f7f4ec;
+        font-size: 64px;
+        font-weight: 900;
+        line-height: 1.25;
+        letter-spacing: 1.5px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 16px;
+      }
+      .punch-num {
+        display: inline-block;
+        background: #ff6a1a;
+        color: #141414;
+        width: 72px;
+        height: 72px;
+        line-height: 72px;
+        border-radius: 8px;
+        text-align: center;
+        font-size: 58px;
+        font-weight: 900;
+      }
+      .punch-subline {
+        color: #f7f4ec;
+        font-size: 22px;
+        font-weight: 700;
+        letter-spacing: 2px;
+        margin-top: 10px;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s37"
+      data-width="1080"
+      data-height="1920"
+      data-duration="9.01"
+    >
+      <!-- Base Shot S37-1: Hero Diagram & Background -->
+      <div id="shot-hero" class="clip" data-start="0" data-duration="9.01">
+        <!-- Background Chart Variant (ruled horizontal lines and orange ticks) -->
+        <div class="bg-chart">
+          <div class="chart-line chart-line-1"><div class="chart-tick"></div></div>
+          <div class="chart-line chart-line-2"><div class="chart-tick"></div></div>
+          <div class="chart-line chart-line-3"><div class="chart-tick"></div></div>
+          <div class="chart-line chart-line-4"><div class="chart-tick"></div></div>
+        </div>
+
+        <!-- Top Header Kicker -->
+        <div id="top-header">
+          <div id="top-pill" class="header-pill">
+            <span class="header-dot"></span>
+            <span id="top-pill-text">TỔNG KẾT • MÔ HÌNH THÀNH CÔNG</span>
+          </div>
+        </div>
+
+        <!-- Camera Stage Rig (Smooth Zoom-out Motion) -->
+        <div id="camera-stage">
+          <!-- Formula Loop Rail (SVG progressive line) -->
+          <svg
+            id="formula-rail-svg"
+            viewBox="0 0 100 760"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <!-- Vertical guide track -->
+            <path
+              id="loop-track-path"
+              d="M 60 20 L 60 720"
+              stroke="#141414"
+              stroke-width="3"
+              stroke-dasharray="6 6"
+              stroke-linecap="round"
+            />
+            <!-- Loop back arc to emphasize closed loop formula -->
+            <path
+              id="loop-arrow-path"
+              d="M 60 720 C 15 720 10 650 10 370 C 10 90 15 35 52 24"
+              stroke="#ff6a1a"
+              stroke-width="4"
+              stroke-linecap="round"
+            />
+            <!-- Return arrowhead -->
+            <polygon points="48,16 60,24 48,32" fill="#ff6a1a" />
+            <!-- Pillar markers -->
+            <circle cx="60" cy="40" r="8" fill="#ff6a1a" stroke="#141414" stroke-width="3" />
+            <circle cx="60" cy="250" r="8" fill="#141414" stroke="#ff6a1a" stroke-width="3" />
+            <circle cx="60" cy="460" r="8" fill="#141414" stroke="#ff6a1a" stroke-width="3" />
+            <circle cx="60" cy="670" r="8" fill="#ff6a1a" stroke="#141414" stroke-width="3" />
+          </svg>
+
+          <!-- Hero Infographic Card (img-11) -->
+          <div id="hero-card-wrapper">
+            <div id="hero-card" class="hero-card">
+              <img
+                id="hero-img"
+                src="assets/img-11-torn-paper-key-points-list.jpg"
+                alt="Bốn trụ cột thành công"
+              />
+            </div>
+          </div>
+        </div>
+
+        <!-- Signature bottom orange brand stripe -->
+        <div id="bottom-bar"></div>
+      </div>
+
+      <!-- Overlay 1: Label "ĐỀ TÀI THU HÚT" (at 0.96s, hold 1.80s) -->
+      <div id="clip-overlay-1" class="clip" data-start="0.96" data-duration="1.80">
+        <div class="callout-layer">
+          <div id="badge-1" class="editorial-callout hf-hl-orange">
+            <span class="callout-step">TRỤ CỘT 01</span>
+            <span class="callout-divider">/</span>
+            <span class="callout-title">ĐỀ TÀI THU HÚT</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Overlay 2: Label "TRẢI NGHIỆM GIỮ CHÂN" (at 3.26s, hold 1.80s) -->
+      <div id="clip-overlay-2" class="clip" data-start="3.26" data-duration="1.80">
+        <div class="callout-layer">
+          <div id="badge-2" class="editorial-callout hf-plate-ink">
+            <span class="callout-step" style="color: #ff6a1a">TRỤ CỘT 02</span>
+            <span class="callout-divider" style="color: #ff6a1a">/</span>
+            <span class="callout-title" style="color: #f7f4ec">TRẢI NGHIỆM GIỮ CHÂN</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Overlay 3: Punch-phrase "4 MẮT XÍCH CHÍNH" (at 6.89s, hold 2.12s) -->
+      <div id="clip-overlay-3" class="clip" data-start="6.89" data-duration="2.12">
+        <div id="punch-wrapper">
+          <div id="punch-card" class="punch-box">
+            <div id="punch-tag" class="punch-badge-tag">KẾT LUẬN TOÀN CẢNH</div>
+            <div id="punch-main" class="punch-headline">
+              <span id="punch-digit" class="punch-num">4</span>
+              <span id="punch-text">MẮT XÍCH CHÍNH</span>
+            </div>
+            <div id="punch-sub" class="punch-subline">CHU TRÌNH THÀNH CÔNG KHÉP KÍN</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Single paused timeline registered on window.__timelines["scene-s37"]
+      const tl = gsap.timeline({ paused: true });
+
+      // Setup SVG loop draw length
+      const loopArrowPath = document.querySelector("#loop-arrow-path");
+      if (loopArrowPath) {
+        const pathLen = loopArrowPath.getTotalLength();
+        loopArrowPath.style.strokeDasharray = `${pathLen}`;
+        loopArrowPath.style.strokeDashoffset = `${pathLen}`;
+      }
+
+      // 1. Entrance animation ("rise" on hero card & top header)
+      tl.fromTo(
+        "#top-header",
+        { y: -40, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.55, ease: "power3.out" },
+        0.1,
+      );
+
+      tl.fromTo(
+        "#hero-card",
+        { y: 100, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.7, ease: "power3.out" },
+        0.15,
+      );
+
+      // 2. Progressive stroke draw on the formula loop rail
+      if (loopArrowPath) {
+        tl.to(
+          loopArrowPath,
+          { strokeDashoffset: 0, duration: 2.2, ease: "power2.out" },
+          0.6,
+        );
+      }
+
+      // 3. Camera Motion: Smooth zoom-out across the scene (1.08 -> 1.0)
+      tl.fromTo(
+        "#camera-stage",
+        { scale: 1.08 },
+        { scale: 1.0, duration: 9.01, ease: "none" },
+        0,
+      );
+
+      // Subtle editorial organic sway on the hero card
+      tl.fromTo(
+        "#hero-card",
+        { rotation: 0 },
+        { rotation: 0.7, duration: 4.2, ease: "sine.inOut" },
+        0.9,
+      );
+      tl.fromTo(
+        "#hero-card",
+        { rotation: 0.7 },
+        { rotation: -0.5, duration: 3.9, ease: "sine.inOut" },
+        5.1,
+      );
+
+      // 4. Overlay 1: "ĐỀ TÀI THU HÚT" (starts at 0.96s)
+      tl.fromTo(
+        "#badge-1",
+        { scale: 0.7, opacity: 0, y: 20 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.45, ease: "power3.out" },
+        0.96,
+      );
+      tl.to(
+        "#badge-1",
+        { opacity: 0, y: -16, duration: 0.25, ease: "power2.in" },
+        2.45,
+      );
+
+      // 5. Overlay 2: "TRẢI NGHIỆM GIỮ CHÂN" (starts at 3.26s)
+      tl.fromTo(
+        "#badge-2",
+        { scale: 0.7, opacity: 0, y: 20 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.45, ease: "power3.out" },
+        3.26,
+      );
+      tl.to(
+        "#badge-2",
+        { opacity: 0, y: -16, duration: 0.25, ease: "power2.in" },
+        4.75,
+      );
+
+      // 6. Overlay 3: Punch-phrase "4 MẮT XÍCH CHÍNH" (starts at 6.89s)
+      tl.fromTo(
+        "#punch-card",
+        { scale: 0.85, opacity: 0, y: 20 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.5, ease: "power3.out" },
+        6.89,
+      );
+      tl.fromTo(
+        "#punch-digit",
+        { scale: 0.6, rotation: -8 },
+        { scale: 1, rotation: 0, duration: 0.35, ease: "power3.out" },
+        7.05,
+      );
+
+      // Register the paused timeline with HyperFrames
+      window.__timelines = window.__timelines || {};
+      window.__timelines["scene-s37"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

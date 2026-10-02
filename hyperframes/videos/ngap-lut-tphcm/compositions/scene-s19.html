@@ -1,0 +1,472 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap">
+      <style>
+    /* hf-safe-colors (tất định từ style-tokens.json) */
+    .hf-text-ink { color: #141414; }
+    .hf-text-light { color: #F7F4EC; }
+    .hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+    .hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+    .hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+    .hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #E7E3D9;
+      font-family: "Be Vietnam Pro", sans-serif;
+      color: #141414;
+      -webkit-font-smoothing: antialiased;
+      overflow: hidden;
+    }
+
+    #root {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #E7E3D9;
+      background-image:
+        linear-gradient(rgba(20, 20, 20, 0.22) 1.5px, transparent 1.5px),
+        linear-gradient(90deg, rgba(20, 20, 20, 0.22) 1.5px, transparent 1.5px);
+      background-size: 84px 84px;
+    }
+
+    .clip {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+    }
+
+    /* Top Header Section */
+    #header-card {
+      position: absolute;
+      top: 170px;
+      left: 60px;
+      width: 960px;
+      background: #141414;
+      border-left: 10px solid #FF6A1A;
+      padding: 24px 30px;
+      border-radius: 4px;
+      box-shadow: 8px 8px 0px rgba(20, 20, 20, 0.85);
+      z-index: 30;
+    }
+
+    .header-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background-color: #FF6A1A;
+      color: #141414;
+      font-size: 20px;
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 6px 14px;
+      border-radius: 4px;
+      margin-bottom: 12px;
+    }
+
+    .header-title {
+      font-size: 52px;
+      font-weight: 900;
+      line-height: 1.25;
+      color: #F7F4EC;
+      text-transform: uppercase;
+      letter-spacing: -0.02em;
+    }
+
+    .header-sub {
+      font-size: 22px;
+      font-weight: 700;
+      color: #FF6A1A;
+      margin-top: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    /* Diagram Viewport Card */
+    #diagram-card {
+      position: absolute;
+      top: 360px;
+      left: 60px;
+      width: 960px;
+      height: 960px;
+      background: #F5F0E4;
+      border: 4px solid #141414;
+      border-radius: 8px;
+      box-shadow: 12px 12px 0px rgba(20, 20, 20, 0.9);
+      overflow: hidden;
+      z-index: 20;
+    }
+
+    /* Technical Corner Reticles */
+    .corner-mark {
+      position: absolute;
+      width: 24px;
+      height: 24px;
+      border-color: #141414;
+      border-style: solid;
+      z-index: 40;
+      pointer-events: none;
+    }
+    .corner-tl { top: 12px; left: 12px; border-width: 3px 0 0 3px; }
+    .corner-tr { top: 12px; right: 12px; border-width: 3px 3px 0 0; }
+    .corner-bl { bottom: 12px; left: 12px; border-width: 0 0 3px 3px; }
+    .corner-br { bottom: 12px; right: 12px; border-width: 0 3px 3px 0; }
+
+    /* Depth Scale Bar on Right Edge */
+    #depth-scale {
+      position: absolute;
+      right: 18px;
+      top: 40px;
+      bottom: 40px;
+      width: 70px;
+      border-left: 2px dashed rgba(20, 20, 20, 0.45);
+      z-index: 35;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding-left: 10px;
+      pointer-events: none;
+    }
+
+    .depth-marker {
+      background: #141414;
+      color: #F7F4EC;
+      font-size: 14px;
+      font-weight: 900;
+      padding: 3px 6px;
+      border-radius: 3px;
+      letter-spacing: 0.05em;
+    }
+
+    /* The Image Inside Viewport (Panned by Camera) */
+    #image-viewport {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+    }
+
+    #geo-image {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 960px;
+      height: 1600px;
+      object-fit: cover;
+      display: block;
+    }
+
+    /* Overlay Callout Cards (WCAG Compliant Solid Plates) */
+    .callout-plate {
+      position: absolute;
+      background: #141414;
+      border: 3px solid #141414;
+      border-left: 8px solid #FF6A1A;
+      border-radius: 6px;
+      padding: 16px 20px;
+      box-shadow: 6px 6px 0px rgba(20, 20, 20, 0.95);
+      z-index: 50;
+      max-width: 480px;
+      opacity: 0;
+    }
+
+    .callout-tag-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 6px;
+    }
+
+    .callout-index {
+      background: #FF6A1A;
+      color: #141414;
+      font-size: 16px;
+      font-weight: 900;
+      padding: 2px 8px;
+      border-radius: 3px;
+    }
+
+    .callout-label {
+      font-size: 28px;
+      font-weight: 900;
+      color: #F7F4EC;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+      line-height: 1.2;
+    }
+
+    .callout-desc {
+      font-size: 18px;
+      font-weight: 700;
+      color: #FF6A1A;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    /* Position of each Callout inside Diagram Viewport */
+    #callout-1 {
+      left: 36px;
+      top: 480px;
+    }
+
+    #callout-2 {
+      right: 90px;
+      bottom: 50px;
+    }
+
+    #callout-3 {
+      left: 36px;
+      top: 70px;
+    }
+
+    /* Pointer Lines SVG */
+    .callout-arrow {
+      position: absolute;
+      z-index: 45;
+      pointer-events: none;
+    }
+
+    .callout-dot {
+      opacity: 0;
+    }
+
+    /* Fixed Bottom Signature Orange Bar */
+    #bottom-brand-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 16px;
+      background-color: #FF6A1A;
+      z-index: 100;
+    }
+  </style>
+
+  <div id="root" data-composition-id="scene-s19" data-width="1080" data-height="1920" data-duration="8.49">
+    <div id="scene-clip" class="clip" data-start="0" data-duration="8.49">
+      
+      <!-- Top Title Plate -->
+      <section id="header-card">
+        <div class="header-badge">
+          <span>● MẶT CẮT ĐỊA CHẤT</span>
+        </div>
+        <h1 class="header-title">NGUYÊN NHÂN SỤT LÚN</h1>
+        <div class="header-sub">3 YẾU TỐ TÁC ĐỘNG HỘI TỤ</div>
+      </section>
+
+      <!-- Main Diagram Frame -->
+      <div id="diagram-card">
+        <!-- Technical Corner Reticles -->
+        <div class="corner-mark corner-tl"></div>
+        <div class="corner-mark corner-tr"></div>
+        <div class="corner-mark corner-bl"></div>
+        <div class="corner-mark corner-br"></div>
+
+        <!-- Depth Scale Markers -->
+        <div id="depth-scale">
+          <div class="depth-marker">0m BỀ MẶT</div>
+          <div class="depth-marker">-15m TẦNG SÉT</div>
+          <div class="depth-marker">-45m NƯỚC NGẦM</div>
+        </div>
+
+        <!-- Image Container with Camera Pan -->
+        <div id="image-viewport">
+          <img
+            id="geo-image"
+            src="assets/img-03-hcmc-land-subsidence-diagram.jpg"
+            alt="Mặt cắt địa chất và hiện tượng sụt lún đất TP.HCM"
+          />
+        </div>
+
+        <!-- Connector Indicator Arrows (SVG Paths) -->
+        <svg id="arrow-svg" class="callout-arrow" width="960" height="960" viewBox="0 0 960 960" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <!-- Arrow 1: Pointing to Soft Clay Layer -->
+          <path id="path-arrow-1" d="M 380 520 L 510 520 L 550 550" stroke="#FF6A1A" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
+          <circle id="dot-1" class="callout-dot" cx="550" cy="550" r="6" fill="#FF6A1A" />
+
+          <!-- Arrow 2: Pointing to Underground Water Void -->
+          <path id="path-arrow-2" d="M 450 820 L 370 820 L 330 790" stroke="#FF6A1A" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
+          <circle id="dot-2" class="callout-dot" cx="330" cy="790" r="6" fill="#FF6A1A" />
+
+          <!-- Arrow 3: Pointing to Surface Building Load -->
+          <path id="path-arrow-3" d="M 450 110 L 540 110 L 580 140" stroke="#FF6A1A" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
+          <circle id="dot-3" class="callout-dot" cx="580" cy="140" r="6" fill="#FF6A1A" />
+        </svg>
+
+        <!-- Overlay 1: NỀN ĐẤT YẾU (at 4.13s) -->
+        <div id="callout-1" class="callout-plate">
+          <div class="callout-tag-row">
+            <span class="callout-index">01</span>
+            <span class="callout-desc">TẦNG ĐỊA CHẤT YẾU</span>
+          </div>
+          <div class="callout-label">NỀN ĐẤT YẾU</div>
+        </div>
+
+        <!-- Overlay 2: HÚT NƯỚC NGẦM (at 5.83s) -->
+        <div id="callout-2" class="callout-plate">
+          <div class="callout-tag-row">
+            <span class="callout-index">02</span>
+            <span class="callout-desc">BIẾN ĐỘNG NƯỚC NGẦM</span>
+          </div>
+          <div class="callout-label">HÚT NƯỚC NGẦM</div>
+        </div>
+
+        <!-- Overlay 3: TẢI TRỌNG CAO TẦNG (at 7.13s) -->
+        <div id="callout-3" class="callout-plate">
+          <div class="callout-tag-row">
+            <span class="callout-index">03</span>
+            <span class="callout-desc">KHỐI BÊ TÔNG ĐÈ NẶNG</span>
+          </div>
+          <div class="callout-label">TẢI TRỌNG CAO TẦNG</div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- Persistent Brand Accent Bar -->
+    <div id="bottom-brand-bar"></div>
+  </div>
+
+  <script>
+    // Measure SVG line drawing lengths
+    const p1 = document.getElementById("path-arrow-1");
+    const p2 = document.getElementById("path-arrow-2");
+    const p3 = document.getElementById("path-arrow-3");
+
+    const len1 = p1.getTotalLength();
+    const len2 = p2.getTotalLength();
+    const len3 = p3.getTotalLength();
+
+    p1.style.strokeDasharray = `${len1}`;
+    p2.style.strokeDasharray = `${len2}`;
+    p3.style.strokeDasharray = `${len3}`;
+
+    // Build Master Paused Timeline
+    const tl = gsap.timeline({ paused: true });
+
+    // Deterministic state initialization at t=0 inside timeline
+    tl.set(["#callout-1", "#callout-2", "#callout-3"], { opacity: 0 }, 0);
+    tl.set(["#dot-1", "#dot-2", "#dot-3"], { opacity: 0 }, 0);
+    tl.set("#path-arrow-1", { strokeDashoffset: len1 }, 0);
+    tl.set("#path-arrow-2", { strokeDashoffset: len2 }, 0);
+    tl.set("#path-arrow-3", { strokeDashoffset: len3 }, 0);
+
+    // Phase 1: Entrance Transition (wobble-drop) for Header and Diagram Frame
+    tl.fromTo(
+      "#header-card",
+      { y: -80, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.6, ease: "power3.out" },
+      0.15
+    );
+
+    tl.fromTo(
+      "#diagram-card",
+      { y: -180, opacity: 0, rotation: -2.5 },
+      { y: 0, opacity: 1, rotation: 0, duration: 0.8, ease: "power2.out" },
+      0.2
+    );
+
+    // Subtle wobble settle on the card
+    tl.to(
+      "#diagram-card",
+      { rotation: 1.0, duration: 0.25, ease: "sine.inOut" },
+      0.8
+    );
+    tl.to(
+      "#diagram-card",
+      { rotation: 0, duration: 0.35, ease: "power2.out" },
+      1.05
+    );
+
+    // Phase 2: Continuous Camera Pan across the geological strata
+    tl.fromTo(
+      "#geo-image",
+      { y: -480, x: 0, scale: 1.05 },
+      { y: -40, x: -35, scale: 1.05, duration: 8.2, ease: "sine.inOut" },
+      0.2
+    );
+
+    // Phase 3: Synchronized Overlays according to Shotlist Timing
+    // Overlay 1: NỀN ĐẤT YẾU at local time 4.13s (143800ms - 139670ms)
+    tl.fromTo(
+      "#callout-1",
+      { scale: 0.84, opacity: 0, x: -30 },
+      { scale: 1, opacity: 1, x: 0, duration: 0.45, ease: "power3.out" },
+      4.13
+    );
+    tl.fromTo(
+      "#path-arrow-1",
+      { strokeDashoffset: len1 },
+      { strokeDashoffset: 0, duration: 0.4, ease: "power2.out" },
+      4.2
+    );
+    tl.fromTo(
+      "#dot-1",
+      { opacity: 0 },
+      { opacity: 1, duration: 0.2, ease: "power1.out" },
+      4.45
+    );
+
+    // Overlay 2: HÚT NƯỚC NGẦM at local time 5.83s (145500ms - 139670ms)
+    tl.fromTo(
+      "#callout-2",
+      { scale: 0.84, opacity: 0, x: 30 },
+      { scale: 1, opacity: 1, x: 0, duration: 0.45, ease: "power3.out" },
+      5.83
+    );
+    tl.fromTo(
+      "#path-arrow-2",
+      { strokeDashoffset: len2 },
+      { strokeDashoffset: 0, duration: 0.4, ease: "power2.out" },
+      5.9
+    );
+    tl.fromTo(
+      "#dot-2",
+      { opacity: 0 },
+      { opacity: 1, duration: 0.2, ease: "power1.out" },
+      6.15
+    );
+
+    // Overlay 3: TẢI TRỌNG CAO TẦNG at local time 7.13s (146800ms - 139670ms)
+    tl.fromTo(
+      "#callout-3",
+      { scale: 0.84, opacity: 0, y: -24 },
+      { scale: 1, opacity: 1, y: 0, duration: 0.45, ease: "power3.out" },
+      7.13
+    );
+    tl.fromTo(
+      "#path-arrow-3",
+      { strokeDashoffset: len3 },
+      { strokeDashoffset: 0, duration: 0.4, ease: "power2.out" },
+      7.2
+    );
+    tl.fromTo(
+      "#dot-3",
+      { opacity: 0 },
+      { opacity: 1, duration: 0.2, ease: "power1.out" },
+      7.45
+    );
+
+    // Register Master Paused Timeline for HyperFrames seek runtime
+    window.__timelines = window.__timelines || {};
+    window.__timelines["scene-s19"] = tl;
+  </script>
+
+    </template>
+  </body>
+</html>

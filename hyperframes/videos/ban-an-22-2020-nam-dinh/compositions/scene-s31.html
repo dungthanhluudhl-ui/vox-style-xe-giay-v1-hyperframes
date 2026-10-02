@@ -1,0 +1,524 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+/* hf-safe-colors (tất định từ style-tokens.json) */
+.hf-text-ink { color: #141414; }
+.hf-text-light { color: #F7F4EC; }
+.hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+.hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+.hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+.hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+      *, *::before, *::after {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #141414;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: #E7E3D9;
+      }
+
+      /* Quy ước clip HyperFrames: inset: 0, layout độc lập */
+      .clip {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+      }
+
+      /* Camera Rig phục vụ chuyển động cameraMotion: zoom-in */
+      #camera-rig {
+        position: absolute;
+        inset: 0;
+        transform-origin: 50% 50%;
+        will-change: transform;
+      }
+
+      /* Thanh cam nhận diện thương hiệu cố định mép đáy */
+      .bottom-orange-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 1080px;
+        height: 12px;
+        background-color: #FF6A1A;
+        z-index: 999;
+      }
+
+      /* Nền spotlight: giấy ngà + lưới ô vuông 84px + vignette tối */
+      .spotlight-bg {
+        position: absolute;
+        inset: 0;
+        background-color: #E7E3D9;
+        background-image:
+          linear-gradient(to right, rgba(20, 20, 20, 0.28) 1.5px, transparent 1.5px),
+          linear-gradient(to bottom, rgba(20, 20, 20, 0.28) 1.5px, transparent 1.5px);
+        background-size: 84px 84px;
+      }
+
+      .spotlight-vignette {
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(
+          circle at 50% 45%,
+          rgba(231, 227, 217, 0.05) 0%,
+          rgba(20, 20, 20, 0.55) 60%,
+          rgba(20, 20, 20, 0.88) 100%
+        );
+      }
+
+      /* Vùng sân khấu chính (Safe zone Y: 160 -> 1390) */
+      #stage-container {
+        position: absolute;
+        top: 380px;
+        left: 60px;
+        width: 960px;
+        height: 720px;
+      }
+
+      /* Tia sáng cam rọi qua khe cửa */
+      #light-beam-layer {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        overflow: visible;
+      }
+
+      /* Khung sắt 3D chứa cánh cửa hé mở */
+      #door-frame-3d {
+        position: absolute;
+        left: 320px;
+        top: 20px;
+        width: 600px;
+        height: 680px;
+        perspective: 1200px;
+        perspective-origin: 0% 50%;
+      }
+
+      #door-leaf {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 580px;
+        height: 680px;
+        transform-origin: 0% 50%;
+        transform-style: preserve-3d;
+        will-change: transform;
+      }
+
+      /* Technical Diagram Badges & Annotations */
+      .angle-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background-color: #FF6A1A;
+        color: #141414; /* WCAG: 6.4:1 contrast */
+        font-weight: 900;
+        font-size: 22px;
+        padding: 6px 16px;
+        border-radius: 6px;
+        box-shadow: 0 4px 14px rgba(20, 20, 20, 0.4);
+      }
+
+      .latch-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background-color: #141414;
+        border: 2px solid #FF6A1A;
+        color: #FF6A1A; /* WCAG: 6.4:1 contrast trên nền mực */
+        font-weight: 700;
+        font-size: 20px;
+        padding: 6px 14px;
+        border-radius: 6px;
+      }
+
+      .badge-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background-color: #FF6A1A;
+      }
+
+      /* OVERLAY 1: "CỬA TÙ CHƯA ĐÓNG HẲN" (atMs: 293450, hold 2.2s) */
+      #overlay-1-wrap {
+        position: absolute;
+        top: 190px;
+        left: 60px;
+        width: 960px;
+        height: auto;
+      }
+
+      .card-plate-ink {
+        background-color: #141414;
+        border-left: 8px solid #FF6A1A;
+        border-radius: 8px;
+        padding: 24px 32px;
+        box-shadow: 0 16px 36px rgba(0, 0, 0, 0.55);
+      }
+
+      .card-tag {
+        display: inline-block;
+        background-color: #FF6A1A;
+        color: #141414; /* WCAG: 6.4:1 */
+        font-weight: 900;
+        font-size: 20px;
+        padding: 4px 12px;
+        border-radius: 4px;
+        letter-spacing: 0.5px;
+        margin-bottom: 12px;
+      }
+
+      .card-title {
+        margin: 0;
+        font-size: 54px;
+        font-weight: 900;
+        line-height: 1.25;
+        color: #F7F4EC; /* WCAG: 16.8:1 trên nền mực */
+        letter-spacing: -0.5px;
+      }
+
+      .card-subtitle {
+        margin-top: 10px;
+        font-size: 24px;
+        font-weight: 700;
+        color: #FF6A1A; /* WCAG: 6.4:1 trên nền mực */
+        letter-spacing: 0.5px;
+      }
+
+      /* OVERLAY 2: "TRẠNG THÁI CHỜ MỞ" (atMs: 296900, hold 2.0s) */
+      #overlay-2-wrap {
+        position: absolute;
+        top: 1160px;
+        left: 60px;
+        width: 960px;
+        height: auto;
+      }
+
+      .warning-card-plate {
+        background-color: #141414;
+        border: 3.5px solid #FF6A1A;
+        border-radius: 12px;
+        padding: 24px 30px;
+        box-shadow: 0 20px 48px rgba(0, 0, 0, 0.65);
+      }
+
+      .warning-header-row {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+      }
+
+      .warning-icon-svg {
+        flex-shrink: 0;
+        width: 58px;
+        height: 58px;
+        will-change: transform;
+      }
+
+      .warning-title {
+        margin: 0;
+        font-size: 52px;
+        font-weight: 900;
+        line-height: 1.2;
+        color: #F7F4EC; /* WCAG: 16.8:1 */
+        letter-spacing: -0.5px;
+      }
+
+      .warning-footer-plate {
+        margin-top: 18px;
+        background-color: #FF6A1A;
+        border-radius: 6px;
+        padding: 10px 18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .warning-footer-text {
+        color: #141414; /* WCAG: 6.4:1 trên nền cam */
+        font-size: 23px;
+        font-weight: 900;
+        letter-spacing: 0.5px;
+      }
+    </style>
+
+    <!-- Composition Root: Standalone portrait 1080x1920 @5.5s (292850 -> 298350) -->
+    <div
+      id="root"
+      data-composition-id="scene-s31"
+      data-start="0"
+      data-width="1080"
+      data-height="1920"
+      data-duration="5.5"
+    >
+      <!-- Dải cam cố định đáy khung hình -->
+      <div class="bottom-orange-bar"></div>
+
+      <!-- Camera Rig phục vụ cameraMotion zoom-in -->
+      <div id="camera-rig">
+        <!-- NỀN SPOTLIGHT CẢNH BÁO -->
+        <section id="scene-bg" class="clip" data-start="0" data-duration="5.5">
+          <div class="spotlight-bg"></div>
+          <div class="spotlight-vignette"></div>
+        </section>
+
+        <!-- SÂN KHẤU CHÍNH: HỆ CỬA TÙ & DIAGRAM HÉ MỞ -->
+        <section id="prison-stage" class="clip" data-start="0" data-duration="5.5">
+          <div id="stage-container">
+            <!-- 1. TIA SÁNG CAM RỌI QUA KHE CỬA (Backdrop layer) -->
+            <svg id="light-beam-layer" viewBox="0 0 960 720" width="960" height="720">
+              <defs>
+                <linearGradient id="beam-grad" x1="0%" y1="50%" x2="100%" y2="50%">
+                  <stop offset="0%" stop-color="#FF6A1A" stop-opacity="0.9" />
+                  <stop offset="45%" stop-color="#FF6A1A" stop-opacity="0.35" />
+                  <stop offset="100%" stop-color="#FF6A1A" stop-opacity="0.0" />
+                </linearGradient>
+                <linearGradient id="floor-spill" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#FF6A1A" stop-opacity="0.6" />
+                  <stop offset="100%" stop-color="#FF6A1A" stop-opacity="0.0" />
+                </linearGradient>
+              </defs>
+
+              <!-- Tia sáng chiếu xiên qua khe cửa từ phía buồng giam -->
+              <g id="light-beam-group" opacity="0">
+                <polygon points="340,30 960,0 960,720 340,690" fill="url(#beam-grad)" />
+                <polygon points="340,680 960,540 960,720 340,710" fill="url(#floor-spill)" />
+                <!-- Tia diagram kỹ thuật thể hiện hướng sáng -->
+                <line x1="340" y1="360" x2="940" y2="280" stroke="#FF6A1A" stroke-width="2" stroke-dasharray="8 6" opacity="0.6" />
+                <line x1="340" y1="360" x2="940" y2="440" stroke="#FF6A1A" stroke-width="2" stroke-dasharray="8 6" opacity="0.6" />
+              </g>
+            </svg>
+
+            <!-- 2. VÁCH SẮT CỐ ĐỊNH PHÍA BÊN TRÁI (KHUNG TƯỜNG TRẠI GIAM) -->
+            <svg id="left-wall" viewBox="0 0 340 720" width="340" height="720" style="position: absolute; left: 0; top: 0;">
+              <!-- Nền buồng giam tối -->
+              <rect x="10" y="20" width="310" height="680" fill="#141414" />
+              <!-- Các chấn song sắt đứng cố định -->
+              <line x1="60" y1="20" x2="60" y2="700" stroke="#E7E3D9" stroke-width="12" />
+              <line x1="120" y1="20" x2="120" y2="700" stroke="#E7E3D9" stroke-width="12" />
+              <line x1="180" y1="20" x2="180" y2="700" stroke="#E7E3D9" stroke-width="12" />
+              <line x1="240" y1="20" x2="240" y2="700" stroke="#E7E3D9" stroke-width="12" />
+              <!-- Thanh giằng ngang chịu lực -->
+              <rect x="10" y="60" width="310" height="26" fill="#141414" stroke="#E7E3D9" stroke-width="4" />
+              <rect x="10" y="345" width="310" height="30" fill="#141414" stroke="#E7E3D9" stroke-width="4" />
+              <rect x="10" y="630" width="310" height="26" fill="#141414" stroke="#E7E3D9" stroke-width="4" />
+              <!-- Cột trụ bản lề cửa -->
+              <rect x="310" y="10" width="26" height="700" fill="#141414" stroke="#FF6A1A" stroke-width="3" />
+              <!-- Bản lề chịu tải nặng -->
+              <rect x="304" y="90" width="22" height="40" rx="3" fill="#FF6A1A" />
+              <rect x="304" y="590" width="22" height="40" rx="3" fill="#FF6A1A" />
+            </svg>
+
+            <!-- 3. CÁNH CỬA SẮT TRONG KHÔNG GIAN 3D (XOAY HÉ MỞ 10 ĐỘ) -->
+            <div id="door-frame-3d">
+              <div id="door-leaf">
+                <svg viewBox="0 0 580 680" width="580" height="680" style="display: block;">
+                  <!-- Khung thép chính của cánh cửa -->
+                  <rect x="6" y="6" width="568" height="668" rx="4" fill="none" stroke="#141414" stroke-width="16" />
+                  <!-- Các chấn song đứng trên cánh cửa -->
+                  <line x1="75" y1="12" x2="75" y2="668" stroke="#141414" stroke-width="14" />
+                  <line x1="150" y1="12" x2="150" y2="668" stroke="#141414" stroke-width="14" />
+                  <line x1="225" y1="12" x2="225" y2="668" stroke="#141414" stroke-width="14" />
+                  <line x1="300" y1="12" x2="300" y2="668" stroke="#141414" stroke-width="14" />
+                  <line x1="375" y1="12" x2="375" y2="668" stroke="#141414" stroke-width="14" />
+                  <line x1="450" y1="12" x2="450" y2="668" stroke="#141414" stroke-width="14" />
+                  <!-- 3 thanh đai ngang gia cố cửa -->
+                  <rect x="6" y="46" width="568" height="26" fill="#141414" />
+                  <rect x="6" y="325" width="568" height="34" fill="#141414" />
+                  <rect x="6" y="605" width="568" height="26" fill="#141414" />
+                  <!-- Hộp khóa cơ khí nặng ở mép phải cánh cửa -->
+                  <rect x="460" y="295" width="105" height="95" rx="6" fill="#141414" stroke="#FF6A1A" stroke-width="4" />
+                  <rect x="495" y="332" width="34" height="22" rx="3" fill="#E7E3D9" />
+                  <circle cx="512" cy="343" r="4.5" fill="#141414" />
+                  <!-- Chốt khóa thép lộ ra ở trạng thái chưa gài vào ổ -->
+                  <rect id="door-bolt" x="565" y="331" width="16" height="24" rx="2" fill="#FF6A1A" />
+                </svg>
+              </div>
+            </div>
+
+            <!-- 4. KHUNG ĐỐI XỨNG BÊN PHẢI (GỜ KHÓA / STRIKE PLATE) -->
+            <svg id="right-jamb" viewBox="0 0 60 720" width="60" height="720" style="position: absolute; right: 0; top: 0;">
+              <!-- Cột đỡ mép khung cửa bên phải -->
+              <rect x="20" y="10" width="30" height="700" fill="#141414" stroke="#FF6A1A" stroke-width="3" />
+              <!-- Lỗ tiếp nhận chốt khóa (vẫn trống vì cửa chưa đóng sập) -->
+              <rect x="15" y="325" width="20" height="36" rx="2" fill="#FF6A1A" />
+              <rect x="20" y="331" width="12" height="24" rx="1" fill="#141414" />
+            </svg>
+
+            <!-- 5. DIAGRAM ANNOTATIONS: CUNG ĐO GÓC 10° & CHỐT HÃM -->
+            <div id="diagram-callouts" style="position: absolute; inset: 0; pointer-events: none;">
+              <!-- Cung đo góc 10 độ ở chân cửa -->
+              <div id="angle-measure-group" style="position: absolute; left: 740px; top: 580px; width: 220px; height: 120px;">
+                <svg viewBox="0 0 220 120" width="220" height="120" style="position: absolute; inset: 0;">
+                  <!-- Cung tròn đo khe hé mở -->
+                  <path d="M 30,30 Q 80,45 130,85" fill="none" stroke="#FF6A1A" stroke-width="3" stroke-dasharray="6 4" />
+                  <!-- Mũi tên chỉ báo chiều mở -->
+                  <polygon points="135,88 120,80 126,94" fill="#FF6A1A" />
+                </svg>
+                <div style="position: absolute; left: 40px; top: 10px;">
+                  <span class="angle-badge">10° HÉ MỞ</span>
+                </div>
+              </div>
+
+              <!-- Nhãn trạng thái chốt khóa (tối đa 4 từ, chuẩn style DNA) -->
+              <div id="latch-callout-group" style="position: absolute; left: 630px; top: 295px;">
+                <div class="latch-badge">
+                  <span class="badge-dot"></span>
+                  CHỐT HÃM CHƯA GÀI
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- OVERLAY 1: "CỬA TÙ CHƯA ĐÓNG HẲN" (atMs: 293450 -> 0.6s, hold 2.2s -> 2.8s) -->
+        <section id="overlay-1-clip" class="clip" data-start="0.6" data-duration="2.4">
+          <div id="overlay-1-wrap">
+            <div class="card-plate-ink">
+              <span class="card-tag">CƠ CHẾ RĂN ĐE</span>
+              <h1 class="card-title">CỬA TÙ CHƯA ĐÓNG HẲN</h1>
+              <div class="card-subtitle">KHOẢNG HỞ 10° • KHÔNG KHÓA HOÀN TOÀN</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- OVERLAY 2: "TRẠNG THÁI CHỜ MỞ" (atMs: 296900 -> 4.05s, hold 2.0s -> 5.5s) -->
+        <section id="overlay-2-clip" class="clip" data-start="4.05" data-duration="1.45">
+          <div id="overlay-2-wrap">
+            <div class="warning-card-plate">
+              <div class="warning-header-row">
+                <!-- SVG Icon chuẩn "warning" trong style-tokens.json (15-icon vocabulary) -->
+                <svg class="warning-icon-svg" viewBox="0 0 64 64" fill="none">
+                  <polygon points="32,6 60,56 4,56" fill="#FF6A1A" stroke="#141414" stroke-width="3" stroke-linejoin="round" />
+                  <rect x="29.5" y="22" width="5" height="19" rx="2.5" fill="#141414" />
+                  <circle cx="32" cy="48" r="3.5" fill="#141414" />
+                </svg>
+                <h2 class="warning-title">TRẠNG THÁI CHỜ MỞ</h2>
+              </div>
+              <div class="warning-footer-plate">
+                <span class="warning-footer-text">CHỈ CẦN 1 VI PHẠM • CỬA SẼ MỞ RA LẬP TỨC</span>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <!-- GSAP Seekable Timeline Script -->
+    <script>
+      // Khởi tạo Timeline Paused theo hợp đồng bắt buộc của HyperFrames
+      const tl = gsap.timeline({ paused: true });
+
+      // 1. Camera Motion: zoom-in chậm, liên tục xuyên suốt 5.5s của scene
+      tl.to("#camera-rig", {
+        scale: 1.07,
+        duration: 5.5,
+        ease: "sine.inOut"
+      }, 0);
+
+      // 2. TransitionIn "strike": Cánh cửa sắt va đập mạnh từ ngoài vào, giật nảy và dừng sững ở góc hé 10 độ
+      // Bắt đầu từ góc mở sâu -50 độ
+      tl.fromTo("#door-leaf",
+        { rotateY: -50 },
+        { rotateY: 0, duration: 0.35, ease: "power4.in" },
+        0
+      );
+
+      // Khoảnh khắc va chạm (strike) ở t = 0.35s: nảy ngược lại và cố định ở góc -10 độ
+      tl.to("#door-leaf", {
+        rotateY: -10,
+        duration: 0.45,
+        ease: "power2.out"
+      }, 0.35);
+
+      // Rung chấn camera khi cánh cửa va vào chốt hãm
+      tl.fromTo("#camera-rig",
+        { y: -10 },
+        { y: 0, duration: 0.22, ease: "power2.out" },
+        0.35
+      );
+
+      // 3. Tia sáng cam bùng lên rọi qua khe cửa ngay tại khoảnh khắc va chạm
+      tl.fromTo("#light-beam-group",
+        { opacity: 0 },
+        { opacity: 1, duration: 0.3, ease: "power3.out" },
+        0.35
+      );
+
+      // Ánh sáng cam thở nhẹ (ambient pulsation) cảnh báo trạng thái treo
+      tl.to("#light-beam-group", {
+        opacity: 0.75,
+        duration: 1.2,
+        yoyo: true,
+        repeat: 3,
+        ease: "sine.inOut"
+      }, 0.7);
+
+      // 4. Overlay 1: "CỬA TÙ CHƯA ĐÓNG HẲN" xuất hiện tại t = 0.6s
+      tl.fromTo("#overlay-1-wrap",
+        { y: 35, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.5, ease: "power3.out" },
+        0.6
+      );
+
+      // Diagram annotations (cung đo góc và nhãn chốt) hiển thị đồng bộ
+      tl.fromTo("#angle-measure-group",
+        { scale: 0.8, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.4, ease: "power2.out" },
+        0.8
+      );
+
+      tl.fromTo("#latch-callout-group",
+        { x: 25, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.4, ease: "power2.out" },
+        0.95
+      );
+
+      // Overlay 1 thu hồi êm ái trước khi sang nhịp tiếp theo (t = 2.7s)
+      tl.to("#overlay-1-wrap", {
+        y: -15,
+        opacity: 0,
+        duration: 0.3,
+        ease: "power2.in"
+      }, 2.7);
+
+      // 5. Overlay 2: "TRẠNG THÁI CHỜ MỞ" + warning icon xuất hiện dứt khoát tại t = 4.05s
+      tl.fromTo("#overlay-2-wrap",
+        { y: 40, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.45, ease: "power3.out" },
+        4.05
+      );
+
+      // Icon cảnh báo nảy vào vị trí
+      tl.fromTo(".warning-icon-svg",
+        { scale: 0.3, rotation: -18 },
+        { scale: 1, rotation: 0, duration: 0.4, ease: "power3.out" },
+        4.1
+      );
+
+      // Đăng ký timeline chính duy nhất cho composition root "scene-s31"
+      window.__timelines["scene-s31"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

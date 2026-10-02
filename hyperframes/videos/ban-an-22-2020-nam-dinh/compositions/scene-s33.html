@@ -1,0 +1,585 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+      /* hf-safe-colors (tất định từ style-tokens.json) */
+      .hf-text-ink { color: #141414; }
+      .hf-text-light { color: #F7F4EC; }
+      .hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+      .hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+      .hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+      .hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+      *, *::before, *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #E7E3D9;
+        font-family: "Be Vietnam Pro", sans-serif;
+        color: #141414;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: #E7E3D9;
+        background-image:
+          linear-gradient(rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px),
+          linear-gradient(90deg, rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px);
+        background-size: 84px 84px;
+      }
+
+      /* Khung full canvas chuẩn HyperFrames */
+      .clip {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+      }
+
+      /* Thanh cam nhận diện cố định mép đáy */
+      .brand-bottom-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 10px;
+        background-color: #FF6A1A;
+        z-index: 999;
+      }
+
+      /* Khối tiêu đề đầu cảnh (Safe zone Y: 170px) */
+      .header-container {
+        position: absolute;
+        top: 170px;
+        left: 50px;
+        right: 50px;
+        height: auto;
+        z-index: 25;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .header-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        align-self: flex-start;
+        background-color: #FF6A1A;
+        color: #141414;
+        padding: 6px 16px;
+        font-size: 20px;
+        font-weight: 900;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        border: 2px solid #141414;
+        box-shadow: 4px 4px 0 #141414;
+      }
+
+      .header-card {
+        background-color: #141414;
+        border: 4px solid #141414;
+        padding: 18px 24px;
+        box-shadow: 8px 10px 0 rgba(20, 20, 20, 0.25);
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      .header-title {
+        font-size: 40px;
+        font-weight: 900;
+        line-height: 1.2;
+        color: #F7F4EC;
+        text-transform: uppercase;
+        letter-spacing: -0.01em;
+      }
+
+      .header-subtitle {
+        font-size: 22px;
+        font-weight: 700;
+        line-height: 1.25;
+        color: #E7E3D9;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
+
+      /* Khung chứa ảnh đồ hoạ chia đôi màn hình (Split screen) */
+      .split-card-wrapper {
+        position: absolute;
+        top: 360px;
+        left: 50px;
+        width: 980px;
+        height: 720px;
+        z-index: 10;
+      }
+
+      .split-card {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        background-color: #F5F0E4;
+        border: 4px solid #141414;
+        box-shadow: 12px 14px 0 #141414;
+        overflow: hidden;
+      }
+
+      .split-image-viewport {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+      }
+
+      .split-image {
+        position: absolute;
+        top: -30px;
+        left: -35px;
+        width: 1050px;
+        height: 780px;
+        object-fit: cover;
+        display: block;
+      }
+
+      /* Nhãn phân loại hai nhánh pháp lý */
+      .split-tags-row {
+        position: absolute;
+        top: 18px;
+        left: 18px;
+        right: 18px;
+        display: flex;
+        justify-content: space-between;
+        z-index: 18;
+        pointer-events: none;
+      }
+
+      .split-tag {
+        padding: 8px 18px;
+        font-size: 20px;
+        font-weight: 900;
+        border: 2px solid #141414;
+        text-transform: uppercase;
+        box-shadow: 4px 4px 0 #141414;
+      }
+
+      .split-tag-left {
+        background-color: #FF6A1A;
+        color: #141414;
+      }
+
+      .split-tag-right {
+        background-color: #141414;
+        color: #F7F4EC;
+      }
+
+      /* Vạch ranh giới phân đôi màn hình (căn giữa không dùng CSS transform) */
+      .split-seam-line {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 488px;
+        width: 4px;
+        background-color: #FF6A1A;
+        z-index: 14;
+        box-shadow: 0 0 8px rgba(0, 0, 0, 0.45);
+      }
+
+      /* Huy hiệu VS ở tâm (căn giữa tuyệt đối bằng pixel, không dùng CSS transform) */
+      .split-vs-badge {
+        position: absolute;
+        top: 336px;
+        left: 466px;
+        background-color: #141414;
+        color: #FF6A1A;
+        border: 2px solid #FF6A1A;
+        width: 48px;
+        height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        font-weight: 900;
+        border-radius: 50%;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.6);
+        z-index: 16;
+      }
+
+      /* Hiệu ứng bóng lật giấy cho transition peel (left cố định ở 0, translate qua x) */
+      .peel-curl-shadow {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        width: 50px;
+        background: linear-gradient(90deg, rgba(20, 20, 20, 0.5), transparent);
+        z-index: 20;
+        pointer-events: none;
+      }
+
+      /* Khung thẻ overlay xuất hiện theo nhịp thoại (Safe zone bottom: Y <= 1390px) */
+      .callout-box {
+        position: absolute;
+        top: 1120px;
+        left: 50px;
+        width: 980px;
+        height: auto;
+        z-index: 40;
+      }
+
+      .callout-card {
+        background-color: #141414;
+        border: 4px solid #141414;
+        border-left: 14px solid #FF6A1A;
+        padding: 22px 28px;
+        box-shadow: 10px 12px 0 rgba(20, 20, 20, 0.3);
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .callout-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        align-self: flex-start;
+        background-color: #FF6A1A;
+        color: #141414;
+        padding: 6px 14px;
+        font-size: 19px;
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
+
+      .callout-main-text {
+        font-size: 48px;
+        font-weight: 900;
+        line-height: 1.2;
+        color: #F7F4EC;
+        letter-spacing: -0.01em;
+        text-transform: uppercase;
+      }
+
+      .callout-sub-text {
+        font-size: 24px;
+        font-weight: 700;
+        color: #E7E3D9;
+        line-height: 1.35;
+      }
+
+      /* Bố cục overlay có icon tự vẽ (Quyết định xử phạt) */
+      .callout-with-icon {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 24px;
+      }
+
+      .icon-box {
+        flex-shrink: 0;
+        width: 104px;
+        height: 104px;
+        background-color: #141414;
+        border: 3px solid #FF6A1A;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 5px 5px 0 #FF6A1A;
+      }
+
+      .icon-box svg {
+        width: 70px;
+        height: 70px;
+      }
+
+      .callout-text-col {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        flex: 1;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s33"
+      data-start="0"
+      data-width="1080"
+      data-height="1920"
+      data-duration="7.71"
+    >
+      <!-- Shot chính S33-1: Toàn bộ thời lượng 7.71s -->
+      <section id="shot-s33-1" class="clip" data-start="0" data-duration="7.71">
+        <!-- Tiêu đề và chủ thể thẩm quyền -->
+        <div id="header-block" class="header-container">
+          <div class="header-badge">Công an huyện Xuân Trường</div>
+          <div class="header-card">
+            <h1 class="header-title">Xử phạt hành chính</h1>
+            <p class="header-subtitle">Những người tham gia khác</p>
+          </div>
+        </div>
+
+        <!-- Khung đồ hoạ Split Screen so sánh trách nhiệm pháp lý -->
+        <div class="split-card-wrapper">
+          <div id="split-card" class="split-card">
+            <div class="split-image-viewport" data-layout-allow-overflow="true">
+              <img
+                id="hero-img"
+                class="split-image"
+                data-layout-allow-overflow="true"
+                src="assets/img-01-legal-liability-comparison-split.jpg"
+                alt="So sánh xử phạt hành chính và xử lý hình sự"
+              />
+            </div>
+
+            <!-- Vạch chia đôi & nhãn hai nhánh -->
+            <div id="split-seam" class="split-seam-line" data-layout-ignore="true"></div>
+            <div id="split-vs" class="split-vs-badge">VS</div>
+
+            <div class="split-tags-row">
+              <div class="split-tag split-tag-left">Xử phạt hành chính</div>
+              <div class="split-tag split-tag-right">Xử lý hình sự</div>
+            </div>
+
+            <!-- Bóng gập giấy của hiệu ứng Peel (chỉ animate x và opacity) -->
+            <div id="peel-shadow" class="peel-curl-shadow" data-layout-ignore="true"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Overlay 1: CHƯA ĐỦ CẤU THÀNH (start 2.77s, duration 2.6s, hold đến 5.37s) -->
+      <section id="clip-overlay-1" class="clip" data-start="2.77" data-duration="2.6">
+        <div id="card-overlay-1" class="callout-box">
+          <div class="callout-card">
+            <div class="callout-badge">Đánh giá pháp lý</div>
+            <h2 class="callout-main-text">Chưa đủ cấu thành</h2>
+            <p class="callout-sub-text">Chưa đến mức bị xử lý hình sự</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Overlay 2: PHẠT TIỀN HÀNH CHÍNH kèm icon văn bản tự vẽ (start 6.13s, duration 1.58s đến hết scene) -->
+      <section id="clip-overlay-2" class="clip" data-start="6.13" data-duration="1.58">
+        <div id="card-overlay-2" class="callout-box">
+          <div class="callout-card">
+            <div class="callout-with-icon">
+              <div class="icon-box">
+                <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <!-- Đường viền văn bản quyết định gập góc -->
+                  <path
+                    id="doc-outline"
+                    d="M 22 12 L 58 12 L 78 32 L 78 88 L 22 88 Z"
+                    stroke="#F7F4EC"
+                    stroke-width="5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                  <!-- Nếp gập góc văn bản -->
+                  <path
+                    id="doc-fold"
+                    d="M 58 12 L 58 32 L 78 32"
+                    stroke="#FF6A1A"
+                    stroke-width="5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                  <!-- Các dòng chữ văn bản pháp lý -->
+                  <path
+                    id="doc-line-1"
+                    d="M 32 46 L 68 46"
+                    stroke="#F7F4EC"
+                    stroke-width="4.5"
+                    stroke-linecap="round"
+                  />
+                  <path
+                    id="doc-line-2"
+                    d="M 32 58 L 68 58"
+                    stroke="#F7F4EC"
+                    stroke-width="4.5"
+                    stroke-linecap="round"
+                  />
+                  <path
+                    id="doc-line-3"
+                    d="M 32 70 L 52 70"
+                    stroke="#FF6A1A"
+                    stroke-width="4.5"
+                    stroke-linecap="round"
+                  />
+                  <!-- Dấu mộc thẩm quyền hình tròn -->
+                  <circle
+                    id="doc-stamp"
+                    cx="65"
+                    cy="72"
+                    r="9"
+                    stroke="#FF6A1A"
+                    stroke-width="3.5"
+                    stroke-dasharray="3 3"
+                  />
+                </svg>
+              </div>
+              <div class="callout-text-col">
+                <div class="callout-badge">Quyết định xử lý</div>
+                <h2 class="callout-main-text">Phạt tiền hành chính</h2>
+                <p class="callout-sub-text">Công an huyện Xuân Trường ra quyết định</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Thanh cam đáy cố định -->
+      <div class="brand-bottom-bar"></div>
+    </div>
+
+    <script>
+      const tl = gsap.timeline({ paused: true });
+
+      // 1. Hiệu ứng vào cảnh Peel Transition (bóc/mở giấy hé lộ khung so sánh)
+      tl.fromTo(
+        "#split-card",
+        {
+          clipPath: "polygon(0% 0%, 0% 0%, 0% 100%, 0% 100%)",
+        },
+        {
+          clipPath: "polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)",
+          duration: 0.85,
+          ease: "power3.out",
+        },
+        0.05
+      );
+
+      // Thay thế hoàn toàn "left" bằng transform sub-pixel "x" để tránh lỗi layout snap
+      tl.fromTo(
+        "#peel-shadow",
+        { x: 0, opacity: 0.8 },
+        { x: 930, opacity: 0, duration: 0.85, ease: "power2.out" },
+        0.05
+      );
+
+      // 2. Tiêu đề cảnh trượt vào dứt khoát
+      tl.fromTo(
+        "#header-block",
+        { y: -50, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.55, ease: "power3.out" },
+        0.15
+      );
+
+      // 3. Vạch phân đôi & huy hiệu VS xuất hiện
+      tl.fromTo(
+        "#split-seam",
+        { scaleY: 0, transformOrigin: "top center" },
+        { scaleY: 1, duration: 0.5, ease: "power2.out" },
+        0.5
+      );
+
+      tl.fromTo(
+        "#split-vs",
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.4, ease: "power3.out" },
+        0.65
+      );
+
+      // 4. Nhãn phân loại hai nhánh xuất hiện
+      tl.fromTo(
+        ".split-tag-left",
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.45, ease: "power3.out" },
+        0.4
+      );
+
+      tl.fromTo(
+        ".split-tag-right",
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.45, ease: "power3.out" },
+        0.52
+      );
+
+      // 5. Chuyển động máy quay Pan-Right nhẹ nhàng xuyên suốt cảnh
+      tl.fromTo(
+        "#hero-img",
+        { x: 30, scale: 1.10 },
+        { x: -50, scale: 1.15, duration: 7.71, ease: "none" },
+        0
+      );
+
+      // 6. Overlay 1: "CHƯA ĐỦ CẤU THÀNH" (atMs: 309300 -> 2.77s)
+      tl.fromTo(
+        "#card-overlay-1",
+        { y: 40, scale: 0.92, opacity: 0 },
+        { y: 0, scale: 1, opacity: 1, duration: 0.48, ease: "power3.out" },
+        2.77
+      );
+
+      // Rút Overlay 1 trước khi clip kết thúc (dùng fromTo với endpoint rõ ràng)
+      tl.fromTo(
+        "#card-overlay-1",
+        { y: 0, opacity: 1 },
+        { y: -20, opacity: 0, duration: 0.35, ease: "power2.in" },
+        4.95
+      );
+
+      // 7. Nhịp nhấn thị giác giữa cảnh (5.3s): nhấn mạnh nhánh xử phạt hành chính
+      tl.fromTo(
+        ".split-tag-left",
+        { scale: 1 },
+        { scale: 1.08, duration: 0.2, ease: "power2.out" },
+        5.3
+      );
+      tl.fromTo(
+        ".split-tag-left",
+        { scale: 1.08 },
+        { scale: 1, duration: 0.2, ease: "power2.in" },
+        5.5
+      );
+
+      // 8. Cấu hình tự vẽ đường nét SVG cho icon văn bản (deterministic stroke draw)
+      const setupSvgStroke = (selector, len, dur, at) => {
+        const el = document.querySelector(selector);
+        if (el) {
+          el.style.strokeDasharray = len;
+          el.style.strokeDashoffset = len;
+          tl.fromTo(
+            el,
+            { strokeDashoffset: len },
+            { strokeDashoffset: 0, duration: dur, ease: "power2.out" },
+            at
+          );
+        }
+      };
+
+      setupSvgStroke("#doc-outline", 260, 0.35, 6.25);
+      setupSvgStroke("#doc-fold", 45, 0.20, 6.45);
+      setupSvgStroke("#doc-line-1", 40, 0.15, 6.55);
+      setupSvgStroke("#doc-line-2", 40, 0.15, 6.65);
+      setupSvgStroke("#doc-line-3", 25, 0.15, 6.75);
+      setupSvgStroke("#doc-stamp", 60, 0.25, 6.85);
+
+      // 9. Overlay 2: "PHẠT TIỀN HÀNH CHÍNH" (atMs: 312660 -> 6.13s)
+      tl.fromTo(
+        "#card-overlay-2",
+        { y: 40, scale: 0.92, opacity: 0 },
+        { y: 0, scale: 1, opacity: 1, duration: 0.45, ease: "power3.out" },
+        6.13
+      );
+
+      // Đăng ký timeline duy nhất cho composition
+      window.__timelines = window.__timelines || {};
+      window.__timelines["scene-s33"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

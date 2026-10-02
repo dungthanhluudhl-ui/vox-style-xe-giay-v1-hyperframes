@@ -1,0 +1,443 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+      /* hf-safe-colors (tất định từ style-tokens.json) */
+      .hf-text-ink { color: #141414; }
+      .hf-text-light { color: #F7F4EC; }
+      .hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+      .hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+      .hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+      .hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+      *, *::before, *::after {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #E7E3D9;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: #E7E3D9;
+        /* Lưới ô vuông 84px chuẩn DNA Vox */
+        background-image:
+          linear-gradient(to right, rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px),
+          linear-gradient(to bottom, rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px);
+        background-size: 84px 84px;
+      }
+
+      .clip {
+        position: absolute;
+        inset: 0;
+      }
+
+      /* Thanh cam nhận diện thương hiệu cố định đáy khung hình */
+      #bottom-brand-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 12px;
+        background-color: #FF6A1A;
+        z-index: 99;
+      }
+
+      /* Khung ảnh ghép xé dán trung tâm */
+      #photo-frame {
+        position: absolute;
+        top: 210px;
+        left: 60px;
+        width: 960px;
+        height: 870px;
+        background-color: #F5F0E4;
+        border: 4px solid #141414;
+        box-shadow: 12px 12px 0px #141414;
+        overflow: hidden;
+        z-index: 10;
+        transform-origin: 50% 50%;
+      }
+
+      #photo-zoom-wrap {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+      }
+
+      #photo-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+        transform-origin: 50% 40%;
+      }
+
+      /* Lớp SVG vết rách phân tách */
+      #tear-svg {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: 15;
+      }
+
+      /* Băng keo dán góc phong cách collage */
+      .tape-corner {
+        position: absolute;
+        width: 84px;
+        height: 28px;
+        background-color: rgba(231, 227, 217, 0.9);
+        border: 1.5px solid #141414;
+        z-index: 16;
+      }
+
+      .tape-tl {
+        top: -10px;
+        left: -15px;
+        transform: rotate(-35deg);
+      }
+
+      .tape-tr {
+        top: -10px;
+        right: -15px;
+        transform: rotate(35deg);
+      }
+
+      /* Overlay 2: CON DẤU LY HÔN 03/2019 (xuất hiện lúc 5.51s dập xuống ảnh) */
+      #card-divorce {
+        position: absolute;
+        top: 540px;
+        left: 120px;
+        width: 840px;
+        height: 140px;
+        background-color: #141414;
+        border: 4px solid #FF6A1A;
+        border-radius: 6px;
+        box-shadow: 12px 12px 0px rgba(20, 20, 20, 0.85);
+        z-index: 30;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 20px;
+        transform-origin: 50% 50%;
+      }
+
+      .divorce-mark {
+        width: 20px;
+        height: 52px;
+        background-color: #FF6A1A;
+      }
+
+      .divorce-title {
+        font-size: 52px;
+        font-weight: 900;
+        color: #F7F4EC;
+        line-height: 1;
+        letter-spacing: 2px;
+        margin: 0;
+        white-space: nowrap;
+      }
+
+      /* KHU VỰC TIẾN TRÌNH DƯỚI ẢNH (Y: 1120px -> 1340px, nằm trọn trong Safe Zone) */
+      #timeline-deck {
+        position: absolute;
+        top: 1120px;
+        left: 60px;
+        width: 960px;
+        height: 230px;
+        z-index: 20;
+      }
+
+      /* Overlay 1: KẾT HÔN 2010 */
+      #card-marriage {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 960px;
+        height: 100px;
+        background-color: #141414;
+        border: 3px solid #141414;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        padding: 0 24px;
+        box-shadow: 8px 8px 0px rgba(20, 20, 20, 0.25);
+        transform-origin: 50% 50%;
+      }
+
+      .marriage-accent {
+        width: 14px;
+        height: 48px;
+        background-color: #FF6A1A;
+        margin-right: 24px;
+        flex-shrink: 0;
+      }
+
+      .marriage-title {
+        font-size: 44px;
+        font-weight: 900;
+        color: #F7F4EC;
+        line-height: 1;
+        letter-spacing: 1px;
+        margin: 0;
+        white-space: nowrap;
+      }
+
+      /* Overlay 3: ICON PERSON */
+      #card-person {
+        position: absolute;
+        top: 120px;
+        left: 0;
+        width: 960px;
+        height: 100px;
+        background-color: #141414;
+        border: 3px solid #141414;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        padding: 0 24px;
+        box-shadow: 8px 8px 0px rgba(20, 20, 20, 0.25);
+        transform-origin: 50% 50%;
+      }
+
+      .person-icon-box {
+        width: 64px;
+        height: 64px;
+        background-color: #FF6A1A;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s06"
+      data-width="1080"
+      data-height="1920"
+      data-duration="10.14"
+    >
+      <div id="scene-clip" class="clip" data-start="0" data-duration="10.14">
+        <!-- Khung ảnh trung tâm gia đình và vết rách -->
+        <div id="photo-frame">
+          <div class="tape-corner tape-tl"></div>
+          <div class="tape-corner tape-tr"></div>
+
+          <div id="photo-zoom-wrap" data-layout-allow-overflow="true">
+            <img
+              id="photo-img"
+              src="assets/img-10-divorce-stamp-torn-family-photo.jpg"
+              alt="Ảnh gia đình"
+            />
+          </div>
+
+          <!-- Đường nét rách vẽ dần ngăn cách -->
+          <svg id="tear-svg" viewBox="0 0 960 870">
+            <path
+              id="tear-shadow"
+              d="M 483 0 L 467 150 L 499 300 L 461 460 L 507 610 L 469 750 L 485 870"
+              fill="none"
+              stroke="#141414"
+              stroke-width="8"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+            <path
+              id="tear-line"
+              d="M 480 0 L 464 150 L 496 300 L 458 460 L 504 610 L 466 750 L 482 870"
+              fill="none"
+              stroke="#FF6A1A"
+              stroke-width="4.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+        </div>
+
+        <!-- Overlay 2: Con dấu ly hôn dập xuống trên ảnh -->
+        <div id="card-divorce" data-layout-allow-overlap="true">
+          <div class="divorce-mark"></div>
+          <h2 class="divorce-title">LY HÔN 03/2019</h2>
+          <div class="divorce-mark"></div>
+        </div>
+
+        <!-- Khung tiến trình sự kiện (Safe Zone dưới) -->
+        <div id="timeline-deck">
+          <!-- Overlay 1: KẾT HÔN 2010 -->
+          <div id="card-marriage">
+            <div class="marriage-accent"></div>
+            <h3 class="marriage-title">KẾT HÔN 2010</h3>
+          </div>
+
+          <!-- Overlay 3: Icon person -->
+          <div id="card-person">
+            <div class="person-icon-box">
+              <svg width="42" height="42" viewBox="0 0 64 64" fill="none">
+                <!-- Icon Person vẽ nét chuẩn phong cách diagram DNA -->
+                <circle
+                  id="icon-person-head"
+                  cx="32"
+                  cy="20"
+                  r="10"
+                  stroke="#141414"
+                  stroke-width="5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+                <path
+                  id="icon-person-body"
+                  d="M 14 52 C 14 38, 50 38, 50 52"
+                  stroke="#141414"
+                  stroke-width="5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Thanh cam đáy cố định -->
+      <div id="bottom-brand-bar"></div>
+    </div>
+
+    <script>
+      // Thiết lập độ dài vết rách SVG để vẽ tuần tự
+      const tearPath = document.getElementById("tear-line");
+      const tearShadow = document.getElementById("tear-shadow");
+      if (tearPath && tearShadow) {
+        const tearLen = tearPath.getTotalLength ? tearPath.getTotalLength() : 900;
+        tearPath.style.strokeDasharray = tearLen;
+        tearPath.style.strokeDashoffset = tearLen;
+        tearShadow.style.strokeDasharray = tearLen;
+        tearShadow.style.strokeDashoffset = tearLen;
+      }
+
+      // Thiết lập độ dài Icon Person SVG để vẽ tuần tự
+      const personHead = document.getElementById("icon-person-head");
+      const personBody = document.getElementById("icon-person-body");
+      if (personHead && personBody) {
+        const headLen = personHead.getTotalLength ? personHead.getTotalLength() : 65;
+        personHead.style.strokeDasharray = headLen;
+        personHead.style.strokeDashoffset = headLen;
+
+        const bodyLen = personBody.getTotalLength ? personBody.getTotalLength() : 60;
+        personBody.style.strokeDasharray = bodyLen;
+        personBody.style.strokeDashoffset = bodyLen;
+      }
+
+      // Khởi tạo Timeline GSAP duy nhất, ở trạng thái paused
+      const tl = gsap.timeline({ paused: true });
+
+      // 1. Vào cảnh: Peel transition mở khung ảnh gia đình (0.00s -> 0.75s)
+      tl.fromTo(
+        "#photo-frame",
+        { scale: 0.94, rotation: -2.5, y: 35, opacity: 0 },
+        { scale: 1, rotation: 0, y: 0, opacity: 1, duration: 0.65, ease: "power3.out" },
+        0.15
+      );
+
+      // Camera motion: Zoom chậm 4% kết hợp pan nhẹ dọc theo thời lượng cảnh (0s -> 10.14s)
+      tl.fromTo(
+        "#photo-img",
+        { scale: 1.0, y: 0 },
+        { scale: 1.04, y: -25, duration: 10.14, ease: "sine.inOut" },
+        0
+      );
+
+      // 2. Overlay 1: "KẾT HÔN 2010" xuất hiện lúc 0.77s (atMs: 40750)
+      tl.fromTo(
+        "#card-marriage",
+        { scale: 0.85, y: 30, opacity: 0 },
+        { scale: 1, y: 0, opacity: 1, duration: 0.55, ease: "power3.out" },
+        0.77
+      );
+
+      // Overlay 1 ẩn lúc 3.17s (holdMs: 2400)
+      tl.to(
+        "#card-marriage",
+        { opacity: 0, duration: 0.2, ease: "power2.in" },
+        3.17
+      );
+
+      // 3. Vết nứt xuất hiện & Con dấu dập "LY HÔN 03/2019" lúc 5.51s (atMs: 45490)
+      tl.to(
+        "#tear-shadow",
+        { strokeDashoffset: 0, duration: 0.35, ease: "power2.in" },
+        5.51
+      );
+      tl.to(
+        "#tear-line",
+        { strokeDashoffset: 0, duration: 0.35, ease: "power2.in" },
+        5.51
+      );
+
+      // Con dấu tòa án dập mạnh xuống ảnh (Overlay 2) — punch arrival
+      tl.fromTo(
+        "#card-divorce",
+        { scale: 1.45, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.38, ease: "power4.out" },
+        5.51
+      );
+
+      // Overlay 2 ẩn lúc 7.91s (holdMs: 2400)
+      tl.to(
+        "#card-divorce",
+        { opacity: 0, duration: 0.2, ease: "power2.in" },
+        7.91
+      );
+
+      // 4. Overlay 3: Icon person xuất hiện lúc 8.56s (atMs: 48540)
+      tl.fromTo(
+        "#card-person",
+        { scale: 0.88, y: 25, opacity: 0 },
+        { scale: 1, y: 0, opacity: 1, duration: 0.5, ease: "power3.out" },
+        8.56
+      );
+
+      // Tự vẽ icon Person
+      tl.to(
+        "#icon-person-head",
+        { strokeDashoffset: 0, duration: 0.38, ease: "power2.out" },
+        8.68
+      );
+      tl.to(
+        "#icon-person-body",
+        { strokeDashoffset: 0, duration: 0.42, ease: "power2.out" },
+        8.76
+      );
+
+      // Overlay 3 ẩn lúc 10.06s (holdMs: 1500)
+      tl.to(
+        "#card-person",
+        { opacity: 0, duration: 0.08, ease: "power2.in" },
+        10.06
+      );
+
+      // Đăng ký timeline chính thức cho HyperFrames seek runtime
+      window.__timelines = window.__timelines || {};
+      window.__timelines["scene-s06"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

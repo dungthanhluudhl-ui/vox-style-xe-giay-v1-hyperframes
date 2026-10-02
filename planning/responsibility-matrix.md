@@ -250,13 +250,13 @@ tạo media từ script; prompt 2b không đọc PDF, không đổi). Toàn bộ
   dải chữ ngang ~1080px có vùng quan trọng tô cam vẽ sẵn). Thư mục `documents/` tách khỏi `images/` để Stage 3 không đổi tên/vision lại.
 - `case-facts.json`: dữ kiện regex (số bản án, ngày, toà, điều luật, hình phạt, số tiền) mỗi mục kèm `page` + `quote` (là chuỗi con của text trang). Verdict/law chỉ lấy từ sau tiêu đề "QUYẾT ĐỊNH:" (bản phúc thẩm tóm tắt cả bản sơ thẩm ở phần trước).
 - `crosscheck.md`: đối chiếu số/ngày/điều luật trong script với PDF — **chỉ cảnh báo, không chặn**; "không thấy" cần người kiểm (có thể là ví dụ giả định, làm tròn, hay đơn vị khác). Số tiền lệch ≤5% = "gần khớp".
-- PDF scan (trang không có text-layer): ghi `needsOcr:true`, chỉ render trang 1 (`scan-page`, `provenance.verified:false`); KHÔNG đoán nội dung, chưa có OCR.
+- PDF scan (trang không có text-layer): ghi `needsOcr:true`, chỉ render trang 1 (`scan-page`, `provenance.verified:false`). **Từ 2026-10-01** `02c-pdf-source.local.mjs` (Node, không phải Python) gọi 9router[`vision_ocr`] (model theo `model-routing.json`; lưu ý `flash-high` đọc chữ trong ảnh tốt hơn `-medium`) cho mỗi `scan-page`: ghi `ocrText` + cập nhật `description` (Stage 3 chép nguyên sang manifest). **Giới hạn thật:** vision-LLM chỉ trả VĂN BẢN, không có bbox theo từ như Tesseract → KHÔNG cắt crop tập trung được, ảnh dựng video vẫn là NGUYÊN TRANG scan; `verified` vẫn `false` (AI đọc có thể sai). Phát hiện thật (`ngap-lut-tphcm`): PDF in từ trang báo web → trang 1 phần lớn là menu/header, ít nội dung hữu ích.
 - Stage 3 chỉ **nối** `doc-NN` vào cuối `manifest.json` (không vision, không đổi tên, giữ truy vết): `type:"image"`, `source:"pdf"`, `visual_language:"document"`, `provenance{pdf,page,bbox,quote,verified}`, `description` sinh tất định từ câu trích.
 - Hạ nguồn (chỉ kích hoạt khi manifest có `source:"pdf"`): Stage 5 chỉ gán doc cho scene mà lời thoại nói đúng nội dung đó (không bắt buộc dùng hết, mỗi doc ≤1 lần); Stage 6/7 hiển thị doc dạng **thẻ tài liệu giữa khung** (`object-fit:contain`, không cover/nền, không mờ/filter/lớp tối, không vẽ thêm highlight, không chép lại chữ bản án thành HTML). Số "N media" ở Stage 5 tính không kể doc.
 - **Số ảnh `doc-NN` KHÔNG cố định và KHÔNG phụ thuộc script lời thoại** — do nội dung PDF khớp quy tắc regex tất định (`TARGETS` trong `scripts/lib/pdf_extract.py`): `header` (dòng "BẢN ÁN", tối đa 1) + `verdict` (tuyên bố/xử phạt/phạt tù/giữ nguyên/sửa/hủy bản án, CHỈ từ sau tiêu đề "QUYẾT ĐỊNH:", tối đa 2) + `law` (căn cứ/áp dụng … Điều N, tối đa 1) = tối đa 4; nhóm nào không khớp dòng nào thì bỏ qua (không bịa). Cộng thêm 1 ảnh `highlight` cho mỗi cụm trong `highlights.txt` tìm thấy nguyên văn, và 1 ảnh `scan-page` nếu trang 1 là bản scan. Script lời thoại chỉ dùng cho `crosscheck.md`, không ảnh hưởng số ảnh. Ví dụ thật: `ban-an-23-2023-ben-tre` → 3 ảnh (header p1, verdict p8, law p8; verdict chỉ khớp 1/2).
 - Claude không tự xem ảnh doc; kiểm tra bằng số liệu (kích thước, pixel cam, quote ⊂ text trang) hoặc vision 9router hỏi về BỐ CỤC/độ đọc được (đừng yêu cầu chép nguyên văn chữ — Gemini chặn `recitation`).
 - Đã kiểm chứng: (1) POC `poc/pdf-source/` — Stage 2c→3→5→6→7 scene S08 PASS; (2) **POC E2E `poc/pdf-source-e2e/` (30/09)** — Bản án 935/2024/HS-PT, audio 35s, `run-stages-1-6.mjs` thật: Stage 2b (Flow thật, `--images-only`, 3 ảnh) chạy song song 2c, 5 scene (`doc-02` ở S02, `doc-01`+`doc-03` liên tiếp ở S05) Stage 7 PASS 5/5, 7b PASS, render `09-render.hf.mjs` (looks) 1080×1920 h264/aac đúng 35.000s, vision xác nhận thẻ bản án rõ/không cắt/không đè phụ đề, người dùng đã xem video. Chi tiết + bài học: `poc/pdf-source-e2e/README.md`.
-- Chưa làm: OCR bản scan; highlight animate theo lời thoại (hiện tô cam cố định trong ảnh).
+- Chưa làm: OCR tất định có bbox (Tesseract) để cắt crop tập trung bản scan; highlight animate theo lời thoại (hiện tô cam cố định trong ảnh).
 
 ## 3. Xử lý Media nguồn (ảnh/video)
 Media tới đây từ Stage 2b (tự động qua Google Flow) hoặc copy tay như trước — cả 2 đường đều
@@ -269,6 +269,18 @@ PDF (`doc-NN`, mục 2c) nằm ở `media/documents/` và chỉ được nối v
 | Tạo contact sheet (lưới thumbnail để review) | Local | ffmpeg + sharp |
 | Phân tích nội dung từng ảnh/video (mô tả, gắn tag, đánh giá dùng được, đề xuất đoạn cắt/khung hình) — 1 lời gọi/1 tier duy nhất, không tách 2 bước như bản tài liệu cũ | 9router[vision_media_analyze] | `ag/gemini-3.8-flash-high` |
 | Thực thi cắt/crop/resize theo quyết định đã chọn | Local | ffmpeg |
+
+**Gotcha đã gặp 2 lần (`flydubai-fz1073` 2026-10-02, `trai-buon-nguoi` 2026-10-02) — ảnh nguồn `.webp` bị Stage 3 bỏ
+qua HOÀN TOÀN, im lặng, không log cảnh báo:** `03-media-analyze.router.mjs` lọc ảnh bằng regex
+`/\.(jpe?g|png)$/i` (dòng ~140) — file `.webp` không khớp nên không được phân tích/đổi tên/đưa vào
+`manifest.json`, cũng không crash gì để báo hiệu. Ở `flydubai-fz1073` bị bỏ qua luôn (2 ảnh); ở
+`trai-buon-nguoi` phát hiện bằng cách đối chiếu số file thật trong `media/images/` (`ls | wc -l`) với số
+asset Stage 3 báo đã phân tích — lệch số là dấu hiệu duy nhất, không có log lỗi. Cách xử lý đã làm (không
+sửa code Stage 3, vì ngoài phạm vi yêu cầu khi đó): convert `.webp` → `.jpg` bằng `ffmpeg` TRƯỚC khi chạy
+Stage 3 (ảnh nội dung giữ nguyên, chỉ đổi container). **Nếu cấp media nguồn có `.webp`, kiểm tra ngay từ
+đầu** (so số file trong `imagesDir` với số "Phân tích N ảnh" Stage 3 in ra) — đừng tin số asset Stage 3 báo
+là đã bao gồm hết mọi file trong thư mục. Chưa sửa tận gốc (mở rộng regex Stage 3 nhận `.webp`, hoặc tự
+convert trong script) — cân nhắc nếu gặp lần thứ 3.
 
 ## 4. Style DNA (khi nhận tài liệu style)
 | Task | Ai/gì đảm nhiệm | Công cụ |
@@ -393,12 +405,11 @@ prompt (quy tắc "không chữ cam trên nền be" có từ 21/09 vẫn là l�
 **Quy tắc bắt buộc (giữ nguyên từ bản Remotion): KHÔNG BAO GIỜ batch nhiều scene trong 1 lần gọi.** Luôn 1 scene/lần: `node scripts/07-codegen.hf.router.mjs --video=<slug> --scenes=SNN [--issue-file=...]`.
 
 **Chạy song song nhiều scene — MẶC ĐỊNH cho mọi video từ 2 scene trở lên:**
-`node scripts/07-codegen-hf-parallel.mjs --video=<slug> --scenes=S01,S02,...,SNN [--concurrency=10]` — mirror đúng worker-pool đã kiểm chứng bên Remotion (xem "Lịch sử: pipeline Remotion" bên dưới), nhưng AN TOÀN HƠN theo kiến trúc: mỗi scene HyperFrames sinh trong project tạm RIÊNG THƯ MỤC (không phải cùng chia sẻ `src/` như Remotion), nên không còn nhóm lỗi race-condition-verify-quét-nhầm-file từng gặp bên Remotion. Khi TẤT CẢ scene PASS, script tự gọi `syncRootHf()` ráp `index.html`.
+`node scripts/07-codegen-hf-parallel.mjs --video=<slug> --scenes=S01,S02,...,SNN [--concurrency=20]` (mặc định 20 từ 2026-10-01) — mirror đúng worker-pool đã kiểm chứng bên Remotion (xem "Lịch sử: pipeline Remotion" bên dưới), nhưng AN TOÀN HƠN theo kiến trúc: mỗi scene HyperFrames sinh trong project tạm RIÊNG THƯ MỤC (không phải cùng chia sẻ `src/` như Remotion), nên không còn nhóm lỗi race-condition-verify-quét-nhầm-file từng gặp bên Remotion. Khi TẤT CẢ scene PASS, script tự gọi `syncRootHf()` ráp `index.html`.
 
 **Concurrency 20 đã kiểm chứng (video "ban-an-23-2023-ben-tre", 2026-09-30, 35 scene, `--concurrency=20` theo yêu cầu người dùng):** 0 lỗi
 hạ tầng/race/timeout, 27/35 PASS lần đầu (77%, nằm trong dải các video trước 65-100% ở concurrency=10); 8 scene còn lại đều lỗi NỘI DUNG thật, sửa
-xong bằng `--issue-file`/sửa tay. Mặc định trong code VẪN là 10 (`07-codegen-hf-parallel.mjs`), không tự đổi — dùng `--concurrency=20` khi
-người dùng yêu cầu. Trần thật của 9router/tài khoản CHƯA biết (chưa thử >20): nếu cần tăng nữa thì tăng dần và đo (lỗi hạ tầng `429`/`5xx`
+xong bằng `--issue-file`/sửa tay. Mặc định trong code đã đổi thành 20 (2026-10-01, người dùng yêu cầu; `07-codegen-hf-parallel.mjs`) — không cần truyền cờ nữa. Trần thật của 9router/tài khoản CHƯA biết (chưa thử >20): nếu cần tăng nữa thì tăng dần và đo (lỗi hạ tầng `429`/`5xx`
 trong `codegen-issues.jsonl`), đừng chốt số "an toàn" không có cơ sở. Khi đổi `--concurrency` giữa chừng: dừng lệnh cũ (`TaskStop`) TRƯỚC khi
 chạy lại — scene mới bắt đầu chỉ có thư mục tạm `hyperframes/.gen-tmp/`, chưa ghi `compositions/` nên dừng an toàn.
 

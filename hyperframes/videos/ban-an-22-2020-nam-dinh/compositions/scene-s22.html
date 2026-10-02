@@ -1,0 +1,523 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+/* hf-safe-colors (tất định từ style-tokens.json) */
+.hf-text-ink { color: #141414; }
+.hf-text-light { color: #F7F4EC; }
+.hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+.hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+.hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+.hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #E7E3D9;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+
+      /* Quy ước bắt buộc: .clip dùng inset: 0, không đặt width/height cứng */
+      .clip {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+      }
+
+      /* Style tokens và bảng màu an toàn theo Style DNA */
+      .hf-plate-ink {
+        background-color: #141414;
+        color: #F7F4EC;
+      }
+      .hf-plate-ink-orange {
+        background-color: #141414;
+        color: #FF6A1A;
+      }
+      .hf-hl-orange {
+        background-color: #FF6A1A;
+        color: #141414;
+      }
+      .hf-text-ink {
+        color: #141414;
+      }
+      .hf-text-light {
+        color: #F7F4EC;
+      }
+
+      /* Background biến thể "chart" theo Style DNA */
+      .bg-layer {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        z-index: 1;
+      }
+      .chart-grid {
+        position: absolute;
+        inset: 0;
+        background-image:
+          linear-gradient(to right, rgba(20, 20, 20, 0.08) 1.5px, transparent 1.5px),
+          linear-gradient(to bottom, rgba(20, 20, 20, 0.08) 1.5px, transparent 1.5px);
+        background-size: 84px 84px;
+      }
+      .chart-line {
+        position: absolute;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background-color: rgba(20, 20, 20, 0.35);
+      }
+      .chart-line-20 { top: 20%; }
+      .chart-line-40 { top: 40%; }
+      .chart-line-60 { top: 60%; }
+      .chart-line-80 { top: 80%; }
+
+      .chart-tick {
+        position: absolute;
+        left: 0;
+        width: 20px;
+        height: 6px;
+        background-color: #FF6A1A;
+        transform: translateY(-2px);
+      }
+
+      /* Thanh cam đáy nhận diện thương hiệu Vox */
+      #bottom-accent-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 10px;
+        background-color: #FF6A1A;
+        z-index: 999;
+      }
+
+      /* Bố cục SHOT 1: Tài liệu bản án doc-04 */
+      #shot-1-content {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 10;
+      }
+
+      /* Wrapper thẻ tài liệu doc-04 */
+      .doc-card-wrapper {
+        position: absolute;
+        top: 560px;
+        left: 43px;
+        width: 994px; /* ≈ 92% khung 1080 */
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        perspective: 1200px;
+      }
+      .doc-card {
+        width: 100%;
+        background-color: #F5F0E4;
+        border: 3px solid #141414;
+        border-radius: 4px;
+        box-shadow: 10px 14px 0px rgba(20, 20, 20, 0.9);
+        padding: 24px 28px;
+        position: relative;
+        transform-origin: center center;
+      }
+      .doc-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 2px dashed rgba(20, 20, 20, 0.4);
+        padding-bottom: 14px;
+        margin-bottom: 20px;
+      }
+      .doc-stamp {
+        background-color: #141414;
+        color: #F7F4EC;
+        font-size: 22px;
+        font-weight: 900;
+        letter-spacing: 2px;
+        padding: 6px 16px;
+        border-radius: 2px;
+        text-transform: uppercase;
+      }
+      .doc-meta {
+        font-size: 20px;
+        font-weight: 700;
+        color: #141414;
+        letter-spacing: 0.5px;
+      }
+      .doc-image-container {
+        width: 100%;
+        background-color: #FFFFFF;
+        border: 2px solid #141414;
+        padding: 12px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+      .doc-image-container img {
+        width: 100%;
+        height: auto;
+        display: block;
+        object-fit: contain;
+      }
+
+      /* Overlays của Shot 1 */
+      .s1-overlay-top {
+        position: absolute;
+        top: 390px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: max-content;
+        display: flex;
+        justify-content: center;
+        z-index: 20;
+        opacity: 0;
+      }
+      .s1-overlay-bottom {
+        position: absolute;
+        top: 960px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: max-content;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 16px;
+        z-index: 20;
+        opacity: 0;
+      }
+
+      .badge-crime {
+        padding: 16px 36px;
+        font-size: 42px;
+        font-weight: 900;
+        letter-spacing: 1.5px;
+        border-radius: 4px;
+        box-shadow: 6px 8px 0px rgba(20, 20, 20, 0.85);
+        text-transform: uppercase;
+        border: 3px solid #141414;
+      }
+      .badge-law {
+        padding: 16px 32px;
+        font-size: 38px;
+        font-weight: 900;
+        letter-spacing: 1.5px;
+        border-radius: 4px;
+        box-shadow: 6px 8px 0px rgba(20, 20, 20, 0.85);
+        border: 3px solid #FF6A1A;
+        display: flex;
+        align-items: center;
+        gap: 18px;
+      }
+      .icon-doc-svg {
+        width: 40px;
+        height: 40px;
+        stroke: #FF6A1A;
+        stroke-width: 2.5;
+        fill: none;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
+      /* Bố cục SHOT 2: Đồ hoạ phân tích Điều 134 BLHS img-16 */
+      #shot-2-content {
+        position: absolute;
+        inset: 0;
+        z-index: 10;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .diagram-card-wrapper {
+        position: absolute;
+        top: 180px;
+        left: 45px;
+        width: 990px;
+        height: 1200px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        overflow: hidden;
+        border: 4px solid #141414;
+        border-radius: 6px;
+        background-color: #141414;
+        box-shadow: 12px 16px 0px rgba(20, 20, 20, 0.95);
+      }
+      .diagram-card-inner {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+      .diagram-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center;
+        display: block;
+      }
+
+      /* Overlays của Shot 2 */
+      .s2-overlay-calc {
+        position: absolute;
+        top: 260px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: max-content;
+        z-index: 30;
+        opacity: 0;
+      }
+      .badge-calc {
+        padding: 16px 40px;
+        font-size: 46px;
+        font-weight: 900;
+        letter-spacing: 2px;
+        border-radius: 4px;
+        border: 4px solid #FF6A1A;
+        box-shadow: 8px 10px 0px rgba(20, 20, 20, 0.9);
+        display: flex;
+        align-items: center;
+        gap: 14px;
+      }
+      .calc-accent {
+        color: #FF6A1A;
+      }
+
+      .s2-overlay-aggravate {
+        position: absolute;
+        top: 1190px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: max-content;
+        z-index: 30;
+        opacity: 0;
+      }
+      .badge-aggravate {
+        padding: 18px 44px;
+        font-size: 42px;
+        font-weight: 900;
+        letter-spacing: 2px;
+        border-radius: 4px;
+        border: 4px solid #141414;
+        box-shadow: 8px 10px 0px rgba(20, 20, 20, 0.9);
+        text-transform: uppercase;
+      }
+    </style>
+
+    <!-- Composition Root với đầy đủ data attributes, không bọc template -->
+    <div
+      id="root"
+      data-composition-id="scene-s22"
+      data-start="0"
+      data-width="1080"
+      data-height="1920"
+      data-duration="13.62"
+    >
+      <!-- Lớp Background dạng Chart chung cho Scene S22 -->
+      <div class="bg-layer" aria-hidden="true">
+        <div class="chart-grid"></div>
+        <div class="chart-line chart-line-20"><div class="chart-tick"></div></div>
+        <div class="chart-line chart-line-40"><div class="chart-tick"></div></div>
+        <div class="chart-line chart-line-60"><div class="chart-tick"></div></div>
+        <div class="chart-line chart-line-80"><div class="chart-tick"></div></div>
+      </div>
+
+      <!-- SHOT 1 (0.0s -> 6.71s): Trích dẫn Bản án doc-04 dạng thẻ trung tâm -->
+      <section id="shot-1" class="clip" data-start="0" data-duration="6.71">
+        <div id="shot-1-content">
+          <!-- Overlay 1.1: CỐ Ý GÂY THƯƠNG TÍCH (at 1.88s, hold 2.2s -> 4.08s) -->
+          <div id="s1-overlay-1" class="s1-overlay-top">
+            <div class="badge-crime hf-hl-orange">CỐ Ý GÂY THƯƠNG TÍCH</div>
+          </div>
+
+          <!-- Thẻ tài liệu bản án chính giữa khung hình -->
+          <div class="doc-card-wrapper" id="doc-card-wrapper">
+            <div class="doc-card" id="doc-card">
+              <div class="doc-card-header">
+                <div class="doc-stamp">BẢN ÁN HÌNH SỰ</div>
+                <div class="doc-meta">TRANG 5 / BẢN ÁN SỐ 22</div>
+              </div>
+              <div class="doc-image-container">
+                <img
+                  id="doc-04-img"
+                  src="assets/doc-04-law.png"
+                  alt="Trích dẫn điểm đ khoản 2 Điều 134 Bộ luật Hình sự"
+                />
+              </div>
+            </div>
+          </div>
+
+          <!-- Overlay 1.2: ĐIỂM Đ KHOẢN 2 ĐIỀU 134 (at 3.68s, hold 2.4s -> 6.08s) -->
+          <div id="s1-overlay-2" class="s1-overlay-bottom">
+            <div class="badge-law hf-plate-ink">
+              <svg class="icon-doc-svg" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+                <line x1="16" y1="13" x2="8" y2="13"></line>
+                <line x1="16" y1="17" x2="8" y2="17"></line>
+                <polyline points="10 9 9 9 8 9"></polyline>
+              </svg>
+              <span>ĐIỂM Đ KHOẢN 2 ĐIỀU 134</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SHOT 2 (6.71s -> 13.62s): Đồ hoạ phân tích pháp lý img-16 -->
+      <section id="shot-2" class="clip" data-start="6.71" data-duration="6.91">
+        <div id="shot-2-content">
+          <!-- Overlay 2.1: 30% + HUNG KHÍ (at 7.97s, hold 2.4s -> 10.37s) -->
+          <div id="s2-overlay-1" class="s2-overlay-calc">
+            <div class="badge-calc hf-plate-ink">
+              <span class="calc-accent">30%</span>
+              <span class="hf-text-light">+ HUNG KHÍ</span>
+            </div>
+          </div>
+
+          <!-- Card chứa hình ảnh đồ hoạ phân tích Điều 134 -->
+          <div class="diagram-card-wrapper" id="diagram-card-wrapper">
+            <div class="diagram-card-inner">
+              <img
+                id="img-16-el"
+                class="diagram-img"
+                src="assets/img-16-article-134-injury-law-diagram.jpg"
+                alt="Đồ hoạ phân tích Điều 134 BLHS"
+              />
+            </div>
+          </div>
+
+          <!-- Overlay 2.2: CẤU THÀNH TĂNG NẶNG (at 12.76s -> hết scene 13.62s) -->
+          <div id="s2-overlay-2" class="s2-overlay-aggravate">
+            <div class="badge-aggravate hf-hl-orange">CẤU THÀNH TĂNG NẶNG</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Thanh thương hiệu cố định mép dưới -->
+      <div id="bottom-accent-bar" aria-hidden="true"></div>
+    </div>
+
+    <!-- GSAP Animation Engine: Deterministic Seekable Timeline -->
+    <script>
+      // Đăng ký đúng 1 paused timeline vào window.__timelines["scene-s22"]
+      const tl = gsap.timeline({ paused: true });
+
+      /* =========================================================================
+         CHOREOGRAPHY SHOT 1 (0.0s -> 6.71s): doc-04 Evidence Reveal
+         ========================================================================= */
+      // 1. Flip entrance cho thẻ tài liệu bản án
+      tl.fromTo(
+        "#doc-card",
+        { rotationX: 75, opacity: 0, y: 50 },
+        { rotationX: 0, opacity: 1, y: 0, duration: 0.65, ease: "power3.out" },
+        0.15
+      );
+
+      // 2. Chuyển động camera zoom-in rất nhẹ 2.5% giữ nhịp thị giác liên tục
+      tl.fromTo(
+        "#doc-card-wrapper",
+        { scale: 1 },
+        { scale: 1.025, duration: 6.4, ease: "none" },
+        0.15
+      );
+
+      // 3. Overlay 1.1: CỐ Ý GÂY THƯƠNG TÍCH (at 1.88s, hold 2.2s -> 4.08s)
+      tl.fromTo(
+        "#s1-overlay-1",
+        { scale: 0.85, opacity: 0, y: 25 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.35, ease: "power3.out" },
+        1.88
+      );
+      tl.to(
+        "#s1-overlay-1",
+        { opacity: 0, y: -20, duration: 0.3, ease: "power2.in" },
+        4.08
+      );
+
+      // 4. Overlay 1.2: ĐIỂM Đ KHOẢN 2 ĐIỀU 134 (at 3.68s, hold 2.4s -> 6.08s)
+      tl.fromTo(
+        "#s1-overlay-2",
+        { scale: 0.85, opacity: 0, y: 25 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.35, ease: "power3.out" },
+        3.68
+      );
+      tl.to(
+        "#s1-overlay-2",
+        { opacity: 0, y: -20, duration: 0.3, ease: "power2.in" },
+        6.08
+      );
+
+      // 5. Kết thúc Shot 1 mượt mà trước khi chuyển cảnh
+      tl.to(
+        "#shot-1-content",
+        { opacity: 0, scale: 0.97, duration: 0.28, ease: "power2.in" },
+        6.43
+      );
+
+      /* =========================================================================
+         CHOREOGRAPHY SHOT 2 (6.71s -> 13.62s): img-16 Analysis & Punch
+         ========================================================================= */
+      // 1. Punch entrance cho card đồ hoạ phân tích Điều 134
+      tl.fromTo(
+        "#diagram-card-wrapper",
+        { scale: 1.08, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.45, ease: "power4.out" },
+        6.71
+      );
+
+      // 2. Chuyển động zoom-in chậm của hình ảnh bên trong khung
+      tl.fromTo(
+        "#img-16-el",
+        { scale: 1 },
+        { scale: 1.05, duration: 6.9, ease: "none" },
+        6.71
+      );
+
+      // 3. Overlay 2.1: 30% + HUNG KHÍ (at 7.97s, hold 2.4s -> 10.37s)
+      tl.fromTo(
+        "#s2-overlay-1",
+        { scale: 0.85, opacity: 0, y: 30 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.38, ease: "power3.out" },
+        7.97
+      );
+      tl.to(
+        "#s2-overlay-1",
+        { opacity: 0, y: -20, duration: 0.32, ease: "power2.in" },
+        10.37
+      );
+
+      // 4. Overlay 2.2: CẤU THÀNH TĂNG NẶNG (at 12.76s -> giữ đến 13.62s)
+      tl.fromTo(
+        "#s2-overlay-2",
+        { scale: 0.88, opacity: 0, y: 30 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.35, ease: "power3.out" },
+        12.76
+      );
+
+      // Gắn timeline gốc vào window.__timelines
+      window.__timelines["scene-s22"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

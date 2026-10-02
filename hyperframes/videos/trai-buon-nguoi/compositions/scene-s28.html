@@ -1,0 +1,399 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+      /* hf-safe-colors (tất định từ style-tokens.json) */
+      .hf-text-ink { color: #141414; }
+      .hf-text-light { color: #F7F4EC; }
+      .hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+      .hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+      .hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+      .hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background: #F5F0E4;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: #F5F0E4;
+      }
+      .clip {
+        position: absolute;
+        inset: 0;
+      }
+
+      /* Base Container with 3D perspective for peel rotation */
+      .scene-container {
+        position: absolute;
+        inset: 0;
+        perspective: 1000px;
+      }
+
+      /* Editorial Registration & Header */
+      .meta-header {
+        position: absolute;
+        top: 175px;
+        left: 60px;
+        right: 60px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      .badge-row {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+      }
+      .tag-pill {
+        background: #141414;
+        color: #F7F4EC;
+        font-size: 20px;
+        font-weight: 900;
+        letter-spacing: 2px;
+        padding: 6px 16px;
+        border-radius: 4px;
+        display: inline-block;
+      }
+      .file-ref {
+        font-size: 18px;
+        font-weight: 700;
+        color: #141414;
+        letter-spacing: 1px;
+      }
+      .headline-main {
+        margin: 0;
+        font-size: 56px;
+        font-weight: 900;
+        line-height: 1.15;
+        color: #141414;
+        text-transform: uppercase;
+        letter-spacing: -0.5px;
+      }
+
+      /* Documentary Photo Card */
+      .photo-card-wrapper {
+        position: absolute;
+        top: 335px;
+        left: 60px;
+        width: 960px;
+        height: 720px;
+        background: #E7E3D9;
+        border: 3px solid #141414;
+        box-shadow: 12px 14px 0 #141414;
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        transform-style: preserve-3d;
+      }
+      .photo-viewport {
+        position: relative;
+        width: 100%;
+        height: 616px;
+        overflow: hidden;
+        border: 2px solid #141414;
+        background: #141414;
+      }
+      .photo-pan-wrapper {
+        position: absolute;
+        top: -30px;
+        left: -60px;
+        width: calc(100% + 120px);
+        height: calc(100% + 60px);
+        overflow: hidden;
+      }
+      #hero-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+
+      /* Viewfinder Focus Box */
+      .focus-bracket-box {
+        position: absolute;
+        top: 130px;
+        left: 280px;
+        width: 400px;
+        height: 380px;
+        pointer-events: none;
+        transform-origin: center center;
+      }
+      .corner-bracket {
+        position: absolute;
+        width: 30px;
+        height: 30px;
+        border-color: #FF6A1A;
+        border-style: solid;
+      }
+      .corner-bracket.tl { top: 0; left: 0; border-width: 4px 0 0 4px; }
+      .corner-bracket.tr { top: 0; right: 0; border-width: 4px 4px 0 0; }
+      .corner-bracket.bl { bottom: 0; left: 0; border-width: 0 0 4px 4px; }
+      .corner-bracket.br { bottom: 0; right: 0; border-width: 0 4px 4px 0; }
+      .focus-tag {
+        position: absolute;
+        bottom: -32px;
+        right: 0;
+        background: #141414;
+        color: #FF6A1A;
+        font-size: 15px;
+        font-weight: 900;
+        letter-spacing: 1px;
+        padding: 4px 12px;
+        border-radius: 2px;
+      }
+
+      .photo-card-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        height: 52px;
+        padding: 0 4px;
+      }
+      .photo-caption {
+        font-size: 20px;
+        font-weight: 900;
+        color: #141414;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+      .photo-index {
+        font-size: 18px;
+        font-weight: 700;
+        color: #141414;
+      }
+
+      /* Timed Overlay Slot and Editorial Card Style */
+      .overlay-slot {
+        position: absolute;
+        top: 1090px;
+        left: 60px;
+        right: auto;
+        bottom: auto;
+        width: 960px;
+        height: 180px;
+        z-index: 10;
+      }
+      .overlay-card {
+        width: 100%;
+        height: 100%;
+        background: #141414;
+        border-left: 14px solid #FF6A1A;
+        border-top: 3px solid #141414;
+        border-right: 3px solid #141414;
+        border-bottom: 3px solid #141414;
+        padding: 24px 36px;
+        box-shadow: 10px 12px 0 #141414;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        transform-origin: center center;
+      }
+      .overlay-card-left {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .overlay-card-tag {
+        font-size: 18px;
+        font-weight: 900;
+        color: #FF6A1A;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+      }
+      .overlay-card-title {
+        font-size: 44px;
+        font-weight: 900;
+        color: #F7F4EC;
+        text-transform: uppercase;
+        margin: 0;
+        letter-spacing: 0.5px;
+      }
+      .overlay-card-stamp {
+        background: #FF6A1A;
+        color: #141414;
+        font-size: 20px;
+        font-weight: 900;
+        padding: 12px 22px;
+        border-radius: 4px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+
+      /* Signature Vox Bottom Bar */
+      .bottom-brand-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 14px;
+        background: #FF6A1A;
+        z-index: 100;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s28"
+      data-start="0"
+      data-width="1080"
+      data-height="1920"
+      data-duration="8"
+    >
+      <section id="scene-s28" class="clip" data-start="0" data-duration="8">
+        <div class="scene-container">
+          <!-- Meta Header -->
+          <div class="meta-header" id="meta-header">
+            <div class="badge-row">
+              <span class="tag-pill">HỒ SƠ ĐIỆN ẢNH</span>
+              <span class="file-ref">REF. S28 // CASTING DOSSIER</span>
+            </div>
+            <h1 class="headline-main">DÀN DIỄN VIÊN THỰC LỰC</h1>
+          </div>
+
+          <!-- Hero Documentary Photo Card -->
+          <div class="photo-card-wrapper" id="photo-frame">
+            <div class="photo-viewport">
+              <div class="photo-pan-wrapper" id="photo-pan-wrapper">
+                <img
+                  id="hero-img"
+                  src="assets/img-35-two-men-motorbike-chase-escape.jpg"
+                  alt="Hai nhân vật trên xe máy"
+                />
+              </div>
+              <!-- Viewfinder Focus Target Box -->
+              <div class="focus-bracket-box" id="focus-box">
+                <div class="corner-bracket tl"></div>
+                <div class="corner-bracket tr"></div>
+                <div class="corner-bracket bl"></div>
+                <div class="corner-bracket br"></div>
+                <div class="focus-tag">FOCUS // CẬN CẢNH</div>
+              </div>
+            </div>
+            <div class="photo-card-footer">
+              <span class="photo-caption">TRUY ĐUỔI GAY CẤN // BỐI CẢNH HIỆN TRƯỜNG</span>
+              <span class="photo-index">FIG. 35</span>
+            </div>
+          </div>
+
+          <!-- Overlay 1: DIỄN VIÊN GAI GÓC (1.12s - 3.47s) -->
+          <div id="overlay-1-slot" class="clip overlay-slot" data-start="1.12" data-duration="2.35">
+            <div id="overlay-1" class="overlay-card">
+              <div class="overlay-card-left">
+                <span class="overlay-card-tag">DÀN NHÂN VẬT</span>
+                <h2 class="overlay-card-title">DIỄN VIÊN GAI GÓC</h2>
+              </div>
+              <div class="overlay-card-stamp">TIÊU ĐIỂM</div>
+            </div>
+          </div>
+
+          <!-- Overlay 2: DẤU ẤN VAI PHỤ (6.23s - 8.0s) -->
+          <div id="overlay-2-slot" class="clip overlay-slot" data-start="6.23" data-duration="1.77">
+            <div id="overlay-2" class="overlay-card">
+              <div class="overlay-card-left">
+                <span class="overlay-card-tag">ĐIỂM NHẤN NHÂN VẬT</span>
+                <h2 class="overlay-card-title">DẤU ẤN VAI PHỤ</h2>
+              </div>
+              <div class="overlay-card-stamp">HIỆU ỨNG RIÊNG</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Vox Style Bottom Orange Stripe -->
+        <div class="bottom-brand-bar"></div>
+      </section>
+    </div>
+
+    <script>
+      const tl = gsap.timeline({ paused: true });
+
+      // 1. Initial State & Peel entrance on scene elements
+      tl.fromTo(
+        "#meta-header",
+        { opacity: 0, y: -25 },
+        { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" },
+        0.1
+      );
+
+      // Peel entrance on the documentary photo card (3D perspective active on parent)
+      tl.fromTo(
+        "#photo-frame",
+        { opacity: 0, scale: 0.94, rotationX: 8, rotationZ: -2, y: 35 },
+        { opacity: 1, scale: 1, rotationX: 0, rotationZ: 0, y: 0, duration: 0.75, ease: "power3.out" },
+        0.15
+      );
+
+      // Camera motion: continuous pan-left on image wrapper
+      tl.fromTo(
+        "#photo-pan-wrapper",
+        { x: 35 },
+        { x: -35, duration: 8.0, ease: "none" },
+        0
+      );
+
+      // 2. Overlay 1 ("DIỄN VIÊN GAI GÓC") atMs 192080 (1.12s from scene start, holdMs: 2000)
+      tl.fromTo(
+        "#overlay-1",
+        { opacity: 0, y: 35, scale: 0.96 },
+        { opacity: 1, y: 0, scale: 1, duration: 0.45, ease: "power3.out" },
+        1.12
+      );
+      // Turn off Overlay 1 cleanly at 3.12s (hold 2.0s ends)
+      tl.to(
+        "#overlay-1",
+        { opacity: 0, y: -20, scale: 0.96, duration: 0.35, ease: "power2.in" },
+        3.12
+      );
+
+      // 3. Viewfinder focus target snapping onto characters (at 2.8s)
+      tl.fromTo(
+        "#focus-box",
+        { opacity: 0, scale: 1.25 },
+        { opacity: 1, scale: 1.0, duration: 0.4, ease: "power3.out" },
+        2.8
+      );
+
+      // Focus lock pulse at 4.5s - sequential deterministic to() chain
+      tl.to(
+        "#focus-box",
+        { scale: 1.06, duration: 0.25, ease: "power2.out" },
+        4.5
+      );
+      tl.to(
+        "#focus-box",
+        { scale: 1.0, duration: 0.25, ease: "power2.in" },
+        4.75
+      );
+
+      // 4. Overlay 2 ("DẤU ẤN VAI PHỤ") atMs 197190 (6.23s from scene start, holdMs: 1800)
+      tl.fromTo(
+        "#overlay-2",
+        { opacity: 0, y: 35, scale: 0.96 },
+        { opacity: 1, y: 0, scale: 1, duration: 0.5, ease: "power3.out" },
+        6.23
+      );
+
+      // Register the deterministic timeline
+      window.__timelines["scene-s28"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

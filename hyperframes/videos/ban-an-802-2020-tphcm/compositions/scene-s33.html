@@ -1,0 +1,571 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap">
+      <style>
+    /* hf-safe-colors (tất định từ style-tokens.json) */
+    .hf-text-ink { color: #141414; }
+    .hf-text-light { color: #F7F4EC; }
+    .hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+    .hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+    .hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+    .hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #141414;
+      color: #141414;
+      font-family: "Be Vietnam Pro", sans-serif;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Root theo đúng hợp đồng HyperFrames: width/height 100%, canvas do data-width/data-height quy định */
+    #root {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #E7E3D9;
+    }
+
+    /* Lưới toạ độ đặc trưng phong cách Vox */
+    .bg-grid {
+      position: absolute;
+      inset: 0;
+      background-size: 84px 84px;
+      background-image:
+        linear-gradient(to right, rgba(20, 20, 20, 0.22) 1.5px, transparent 1.5px),
+        linear-gradient(to bottom, rgba(20, 20, 20, 0.22) 1.5px, transparent 1.5px);
+      pointer-events: none;
+    }
+
+    /* Biến thể Spotlight tối cho cảnh án hình sự / hệ quả nghiêm trọng */
+    .bg-spotlight {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 50% 48%, rgba(20, 20, 20, 0.05) 20%, rgba(20, 20, 20, 0.45) 75%, rgba(20, 20, 20, 0.78) 100%);
+      pointer-events: none;
+    }
+
+    /* Thanh cam nhận diện cố định đáy khung hình */
+    .brand-bottom-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 14px;
+      background-color: #FF6A1A;
+      z-index: 100;
+    }
+
+    .clip {
+      position: absolute;
+      inset: 0;
+    }
+
+    /* Khung nội dung chính trong dải an toàn (safe-zone: y 160 -> 1390) */
+    .scene-container {
+      position: absolute;
+      top: 170px;
+      left: 60px;
+      width: 960px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      z-index: 10;
+    }
+
+    /* Tiêu đề nhận định Tòa án */
+    .header-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      background-color: #141414;
+      padding: 10px 24px;
+      border-radius: 6px;
+      margin-bottom: 14px;
+    }
+
+    .header-badge-tag {
+      color: #FF6A1A;
+      font-size: 22px;
+      font-weight: 900;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    .header-title {
+      font-size: 46px;
+      font-weight: 900;
+      line-height: 1.25;
+      text-align: center;
+      color: #141414;
+      text-transform: uppercase;
+      margin-bottom: 26px;
+      max-width: 900px;
+    }
+
+    /* Khối thẻ 1: Chữ ký ly hôn hợp pháp */
+    .stage-card-1 {
+      position: relative;
+      width: 900px;
+      background-color: #F5F0E4;
+      border: 3.5px solid #141414;
+      border-radius: 14px;
+      box-shadow: 8px 8px 0 #141414;
+      padding: 30px 36px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .card-top-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 2px dashed rgba(20, 20, 20, 0.4);
+      padding-bottom: 14px;
+    }
+
+    .card-label {
+      font-size: 24px;
+      font-weight: 900;
+      color: #141414;
+      letter-spacing: 1px;
+    }
+
+    .card-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background-color: #141414;
+      color: #F7F4EC;
+      font-size: 18px;
+      font-weight: 700;
+      padding: 6px 14px;
+      border-radius: 4px;
+    }
+
+    .card-body-doc {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+    }
+
+    .doc-info {
+      flex: 1;
+    }
+
+    .doc-headline {
+      font-size: 38px;
+      font-weight: 900;
+      color: #141414;
+      margin-bottom: 8px;
+    }
+
+    .doc-sub {
+      font-size: 22px;
+      font-weight: 700;
+      color: #141414;
+      line-height: 1.4;
+    }
+
+    .signature-box {
+      width: 280px;
+      height: 100px;
+      border: 2px solid rgba(20, 20, 20, 0.35);
+      background-color: #E7E3D9;
+      border-radius: 8px;
+      padding: 10px 14px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+    }
+
+    .sig-caption {
+      font-size: 14px;
+      font-weight: 700;
+      color: #141414;
+      text-transform: uppercase;
+    }
+
+    .sig-svg {
+      width: 100%;
+      height: 60px;
+    }
+
+    .sig-path {
+      fill: none;
+      stroke: #141414;
+      stroke-width: 3.5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    /* Nhãn Overlay 1: TỪ CHỐI TÌNH CẢM (Stamp đỏ cam đè lên chữ ký) */
+    .overlay-rejection-stamp {
+      position: absolute;
+      right: 20px;
+      bottom: -22px;
+      background-color: #FF6A1A;
+      color: #141414;
+      border: 3px solid #141414;
+      border-radius: 8px;
+      box-shadow: 5px 5px 0 #141414;
+      padding: 12px 24px;
+      font-size: 30px;
+      font-weight: 900;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      z-index: 15;
+      transform-origin: center center;
+    }
+
+    /* Đường nối vector / Mũi tên thù hằn đứt gãy */
+    .flow-connector {
+      width: 900px;
+      height: 130px;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 10px 0;
+    }
+
+    .flow-svg {
+      width: 900px;
+      height: 130px;
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+
+    .arrow-stroke {
+      fill: none;
+      stroke: #FF6A1A;
+      stroke-width: 6;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .arrow-head {
+      fill: #FF6A1A;
+      stroke: #141414;
+      stroke-width: 2.5;
+    }
+
+    .connector-badge {
+      position: relative;
+      z-index: 5;
+      background-color: #141414;
+      color: #F7F4EC;
+      border: 2px solid #FF6A1A;
+      padding: 10px 22px;
+      border-radius: 20px;
+      font-size: 22px;
+      font-weight: 900;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+    }
+
+    /* Khối thẻ 2: Đe doạ / Chuẩn bị công cụ tước đoạt mạng sống */
+    .stage-card-2 {
+      position: relative;
+      width: 900px;
+      background-color: #141414;
+      border: 3.5px solid #FF6A1A;
+      border-radius: 14px;
+      box-shadow: 10px 10px 0 rgba(20, 20, 20, 0.6);
+      padding: 34px 40px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .crime-tag-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .crime-badge {
+      background-color: #FF6A1A;
+      color: #141414;
+      font-size: 20px;
+      font-weight: 900;
+      padding: 6px 16px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .crime-warning-icon {
+      width: 38px;
+      height: 38px;
+    }
+
+    /* Overlay 2: Punch Phrase - TƯỚC ĐOẠT MẠNG SỐNG */
+    .punch-phrase-container {
+      position: relative;
+      padding: 12px 0;
+    }
+
+    .punch-phrase-text {
+      font-size: 64px;
+      font-weight: 900;
+      line-height: 1.18;
+      color: #FF6A1A;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      transform-origin: center center;
+    }
+
+    .card-2-footer {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      border-top: 1.5px solid rgba(247, 244, 236, 0.2);
+      padding-top: 16px;
+    }
+
+    .crime-detail-text {
+      font-size: 24px;
+      font-weight: 700;
+      color: #F7F4EC;
+      line-height: 1.35;
+    }
+
+    .threat-indicator {
+      width: 14px;
+      height: 14px;
+      background-color: #FF6A1A;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+  </style>
+
+  <div
+    id="root"
+    data-composition-id="scene-s33"
+    data-width="1080"
+    data-height="1920"
+    data-duration="8.14"
+  >
+    <!-- Lớp nền toạ độ & spotlight -->
+    <div class="bg-grid"></div>
+    <div class="bg-spotlight"></div>
+
+    <!-- Thanh nhận diện cam cố định đáy -->
+    <div class="brand-bottom-bar"></div>
+
+    <!-- Scene visual clip: chạy từ 0 đến 8.14s -->
+    <div id="scene-s33" class="clip" data-start="0" data-duration="8.14">
+      <div class="scene-container" id="scene-content">
+
+        <!-- Nhận định của Tòa án -->
+        <div class="header-badge" id="header-badge">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FF6A1A" stroke-width="2.5">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+          </svg>
+          <span class="header-badge-tag">Hội đồng xét xử nhận định</span>
+        </div>
+
+        <h1 class="header-title" id="header-title">Động cơ phạm tội đê hèn</h1>
+
+        <!-- Khối 1: Quan hệ hôn nhân đã ly hôn hợp pháp -->
+        <div class="stage-card-1" id="card-stage-1">
+          <div class="card-top-row">
+            <span class="card-label">QUAN HỆ HÔN NHÂN</span>
+            <div class="card-status">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FF6A1A" stroke-width="3">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+              <span>ĐÃ CHẤM DỨT PHÁP LÝ</span>
+            </div>
+          </div>
+
+          <div class="card-body-doc">
+            <div class="doc-info">
+              <div class="doc-headline">Quyết định ly hôn</div>
+              <div class="doc-sub">Hai bên không còn ràng buộc nghĩa vụ vợ chồng</div>
+            </div>
+
+            <div class="signature-box">
+              <span class="sig-caption">Chữ ký xác nhận</span>
+              <svg class="sig-svg" viewBox="0 0 240 50">
+                <path id="sig-stroke" class="sig-path" d="M 15 35 Q 45 10, 75 30 T 130 25 Q 160 40, 195 15 T 225 32"/>
+              </svg>
+            </div>
+          </div>
+
+          <!-- Overlay 1: TỪ CHỐI TÌNH CẢM (atMs: 262820 -> offset = 1.24s) -->
+          <div class="overlay-rejection-stamp" id="rejection-stamp">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#141414" stroke-width="3.5" stroke-linecap="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+            <span>TỪ CHỐI TÌNH CẢM</span>
+          </div>
+        </div>
+
+        <!-- Sơ đồ mũi tên thù hằn kết nối từ nguyên cớ sang tội ác -->
+        <div class="flow-connector" id="flow-connector">
+          <svg class="flow-svg" viewBox="0 0 900 130">
+            <!-- Mũi tên vector đâm thẳng xuống thẻ số 2 -->
+            <path id="flow-arrow-path" class="arrow-stroke" d="M 450 10 L 450 105" />
+            <polygon id="flow-arrow-head" class="arrow-head" points="434,95 466,95 450,122" />
+          </svg>
+          <div class="connector-badge" id="connector-badge">
+            <span>Chuẩn bị sẵn công cụ</span>
+          </div>
+        </div>
+
+        <!-- Khối 2: Tội ác tước đoạt mạng sống -->
+        <div class="stage-card-2" id="card-stage-2">
+          <div class="crime-tag-row">
+            <span class="crime-badge">Hành vi đặc biệt nguy hiểm</span>
+            <svg class="crime-warning-icon" viewBox="0 0 24 24" fill="none" stroke="#FF6A1A" stroke-width="2.5" stroke-linecap="round">
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+              <line x1="12" y1="9" x2="12" y2="13"/>
+              <line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+          </div>
+
+          <!-- Overlay 2: Punch Phrase (atMs: 266810 -> offset = 5.23s) -->
+          <div class="punch-phrase-container" id="punch-container">
+            <h2 class="punch-phrase-text" id="punch-text">TƯỚC ĐOẠT MẠNG SỐNG</h2>
+          </div>
+
+          <div class="card-2-footer" id="card-2-footer">
+            <div class="threat-indicator"></div>
+            <div class="crime-detail-text">Xâm phạm sinh mạng người từng là vợ mình</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Khởi tạo GSAP Timeline chính ở trạng thái paused theo đúng hợp đồng HyperFrames
+    const tl = gsap.timeline({ paused: true });
+
+    // Đo đạc hình học SVG chính xác cho hiệu ứng vẽ stroke tự nhiên
+    const sigPath = document.getElementById("sig-stroke");
+    const sigLen = sigPath.getTotalLength();
+    sigPath.style.strokeDasharray = sigLen;
+    sigPath.style.strokeDashoffset = sigLen;
+
+    const arrowPath = document.getElementById("flow-arrow-path");
+    const arrowLen = arrowPath.getTotalLength();
+    arrowPath.style.strokeDasharray = arrowLen;
+    arrowPath.style.strokeDashoffset = arrowLen;
+
+    // --- TIMELINE CHOREOGRAPHY ---
+
+    // 1. Vào cảnh: hiệu ứng "rise" cho toàn bộ cụm nội dung (t = 0.05s)
+    tl.fromTo("#scene-content",
+      { y: 50, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.65, ease: "power3.out" },
+      0.05
+    );
+
+    // Tiêu đề & badge xuất hiện
+    tl.fromTo("#header-badge",
+      { y: -20, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.45, ease: "power2.out" },
+      0.15
+    );
+
+    tl.fromTo("#header-title",
+      { y: 20, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.5, ease: "power3.out" },
+      0.25
+    );
+
+    // Thẻ 1: Pháp lý ly hôn xuất hiện vững chắc
+    tl.fromTo("#card-stage-1",
+      { scale: 0.94, opacity: 0, y: 20 },
+      { scale: 1, opacity: 1, y: 0, duration: 0.55, ease: "power3.out" },
+      0.4
+    );
+
+    // Chữ ký ly hôn được vẽ ra (t = 0.75s -> 1.25s)
+    tl.to(sigPath,
+      { strokeDashoffset: 0, duration: 0.5, ease: "power2.out" },
+      0.75
+    );
+
+    // 2. Overlay 1: Stamp "TỪ CHỐI TÌNH CẢM" đóng dấu đè lên (t = 1.24s theo shotlist)
+    tl.fromTo("#rejection-stamp",
+      { scale: 1.45, opacity: 0, rotation: 6 },
+      { scale: 1, opacity: 1, rotation: -3, duration: 0.38, ease: "power3.out" },
+      1.24
+    );
+
+    // 3. Mũi tên thù hằn đâm xuyên xuống (t = 2.1s -> 2.65s)
+    tl.to(arrowPath,
+      { strokeDashoffset: 0, duration: 0.55, ease: "power2.inOut" },
+      2.1
+    );
+
+    tl.fromTo("#flow-arrow-head",
+      { scale: 0, opacity: 0, transformOrigin: "center center" },
+      { scale: 1, opacity: 1, duration: 0.25, ease: "power2.out" },
+      2.55
+    );
+
+    // Huy hiệu "Chuẩn bị sẵn công cụ" xuất hiện trên đường tên
+    tl.fromTo("#connector-badge",
+      { scale: 0.85, opacity: 0, y: -10 },
+      { scale: 1, opacity: 1, y: 0, duration: 0.4, ease: "power3.out" },
+      2.7
+    );
+
+    // 4. Khối thẻ 2 (Tội ác tước đoạt mạng sống) xuất hiện (t = 3.3s)
+    tl.fromTo("#card-stage-2",
+      { scale: 0.95, opacity: 0, y: 30 },
+      { scale: 1, opacity: 1, y: 0, duration: 0.6, ease: "power3.out" },
+      3.3
+    );
+
+    tl.fromTo("#card-2-footer",
+      { opacity: 0, x: -20 },
+      { opacity: 1, x: 0, duration: 0.45, ease: "power2.out" },
+      3.8
+    );
+
+    // 5. Overlay 2: Punch Phrase "TƯỚC ĐOẠT MẠNG SỐNG" (t = 5.23s theo shotlist)
+    tl.fromTo("#punch-text",
+      { scale: 0.72, opacity: 0, y: 15 },
+      { scale: 1, opacity: 1, y: 0, duration: 0.5, ease: "power3.out" },
+      5.23
+    );
+
+    // Đăng ký timeline duy nhất cho runtime HyperFrames
+    window.__timelines = window.__timelines || {};
+    window.__timelines["scene-s33"] = tl;
+  </script>
+
+    </template>
+  </body>
+</html>
