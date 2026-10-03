@@ -6,10 +6,12 @@
 //        node scripts/05-scene-plan.router.mjs --video=<slug> --from=S05   (giữ nguyên scene trước S05, chỉ tạo lại từ S05 trở đi)
 import fs from "node:fs";
 import path from "node:path";
+import { execFileSync } from "node:child_process";
 import { callModel, extractText, extractJson, loadModelRouting, appendRunLog } from "./lib/router-client.mjs";
 import { getVideoSlug, videoPaths } from "./lib/video-paths.mjs";
 // [POC mascot-aroll / ADN v2] kit mascot + kiểm tra tất định v2
 import { loadKit, kitSummaryForPrompt, driftDirForIndex, BG_VARIANTS, fitForAsset } from "./lib/mascot-scene.mjs";
+import { tileScenes } from "./lib/scene-tiling.mjs";
 import { validatePlan, softPlanWarnings } from "./lib/v2-checks.mjs";
 
 const root = process.cwd();
@@ -57,7 +59,13 @@ QUY TẮC ẢNH TRÍCH DẪN BẢN ÁN (${pdfDocs.length} asset có source="pdf"
 `
   : "";
 
-const totalDurationMs = captions[captions.length - 1]?.endMs ?? 0;
+// [vòng 4] Tổng thời lượng = ĐỘ DÀI AUDIO THẬT (ffprobe), không phải mốc kết thúc từ cuối trong captions: whisper hay chốt từ cuối sớm hơn tiếng đọc thật
+// (đo 03/10 su-kien-thien-an-mon: từ cuối kết thúc 129,5s nhưng audio còn tiếng nói tới 130,52s → video cắt cụt 1,02s cuối lời thoại; flydubai: 0,14s).
+const captionsEndMs = captions[captions.length - 1]?.endMs ?? 0;
+let audioDurationMs = 0;
+try { audioDurationMs = Math.round(parseFloat(execFileSync("ffprobe", ["-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", vp.audioFile], { encoding: "utf8" })) * 1000) || 0; } catch { /* không có ffprobe/audio → dùng captions */ }
+const totalDurationMs = Math.max(captionsEndMs, audioDurationMs);
+if (audioDurationMs > captionsEndMs) console.log(`[ADN v2] Audio thật dài ${audioDurationMs}ms > từ cuối trong captions ${captionsEndMs}ms: scene cuối sẽ kéo tới hết audio (không cắt cụt lời thoại).`);
 
 const fromArg = process.argv.find((a) => a.startsWith("--from="));
 const fromSceneId = fromArg ? fromArg.split("=")[1] : null;
@@ -87,20 +95,20 @@ NHIỆM VỤ: chia audio/script thành các SCENE theo đúng khung tư duy edit
 
 QUY TẮC ƯU TIÊN MEDIA — QUAN TRỌNG NHẤT, GHI ĐÈ LÊN XU HƯỚNG MẶC ĐỊNH CHỌN DIAGRAM CỦA STYLE DNA:
 Toàn bộ ${aiMediaCount} media (không tính ảnh trích dẫn bản án PDF, nếu có) trong manifest bên dưới được TẠO RIÊNG bằng AI dựa trên đúng kịch bản này (không phải stock chung chung, không phải ảnh minh hoạ đại diện). Vì vậy với MỖI scene, việc đầu tiên phải làm là kiểm tra manifest xem có asset nào (chưa dùng cho scene khác) khớp nội dung/cảm xúc của scene đó không.
-- [ADN v2] Nếu CÓ asset khớp: BẮT BUỘC dùng nó làm CẢNH ASSET (kind="asset", assetIds khai báo asset đó). Cảnh asset là media thuần + phụ đề: TUYỆT ĐỐI KHÔNG overlay, chữ, thẻ, icon, diagram lên media. Quan hệ ý nghĩa được truyền tải bằng CÁCH TRÌNH BÀY chính asset (xem bảng "Quan hệ cần thấy → cách trình bày asset" ở STYLE_DNA.md mục 4) và lời thoại/phụ đề, không bằng lớp chồng.
+- [ADN v2] Nếu CÓ asset khớp: BẮT BUỘC dùng nó làm CẢNH ASSET (kind="asset", assetIds khai báo asset đó). Cảnh asset là media thuần + phụ đề: TUYỆT ĐỐI KHÔNG overlay, chữ, thẻ, icon, diagram lên media (ngoại lệ DUY NHẤT: beat mascot ở đuôi cảnh do script dựng tất định, bạn không tự thêm). Quan hệ ý nghĩa được truyền tải bằng CÁCH TRÌNH BÀY chính asset (xem bảng "Quan hệ cần thấy → cách trình bày asset" ở STYLE_DNA.md mục 4) và lời thoại/phụ đề, không bằng lớp chồng.
 - CHỈ được dựng CẢNH ĐỒ HOẠ (kind="graphics", không asset) khi: (a) không còn asset nào (trong ${aiMediaCount} asset) khớp nội dung cảnh đó, HOẶC (b) asset có sẵn không truyền tải được quan hệ chính xác cần thể hiện (số liệu/cấu trúc/vị trí) — khi đó dựng MỘT cảnh đồ hoạ RIÊNG, KHÔNG đặt overlay lên asset.
 - Cố gắng dùng hết/gần hết ${aiMediaCount} asset đã phân tích nếu nội dung cho phép, tránh để phần lớn media không được dùng.
 
 [ADN v2] MASCOT CAPYBARA (người kể chuyện) — thư viện v1, CHỈ các ID sau là có thật (không tự bịa trang phục/biểu cảm):
 ${JSON.stringify(kitSummaryForPrompt(kit))}
-- Mascot là cảnh RIÊNG (kind="mascot"), shot riêng toàn khung (nhân vật + nền), KHÔNG ghép ảnh/video/đồ hoạ/chữ. Mascot là NGƯỜI KỂ (đặt câu hỏi, bình luận/bóc tách giả định, ví von nhẹ, chuyển ý, chốt ý, đoạn nhạy cảm), KHÔNG phải hình chứng minh sự kiện. KHÔNG có quota; KHÔNG dùng mascot để lấp chỗ thiếu asset (thiếu asset → cảnh đồ hoạ). Chỉ dùng khi một nhịp "người kể xuất hiện" cải thiện cảnh; phải gắn narrativeFunction thật và khác nhịp cảnh liền trước (contrastWithPrevious).
-- Cảnh mascot dài 3–5 giây, do ý đồ quyết định: nhấn mạnh dứt khoát (câu hỏi, chốt ý) ~3s; bình luận/giải thích/ví von/chỗ thở dài hơn tới ~5s. Điểm cắt bám khoảng nghỉ hơi/ranh giới câu; mascot không dồn vào một đoạn và không biến mất ở 1/3 cuối; hai cảnh liên tiếp không có độ dài gần bằng nhau (±15%). Ngưỡng ~5s KHÔNG áp cho cảnh mascot (chỉ áp cho cảnh asset).
+- [ADN v2, vòng 4] Mascot KHÔNG còn là cảnh riêng (không dùng kind="mascot"): mascot xuất hiện ở ĐUÔI một CẢNH ASSET dưới dạng "beat" — asset chạy toàn khung một lúc, rồi chính shot đó THU NHỎ thành thẻ, nhân vật hiện kèm chữ bổ trợ (bố cục do script chọn tất định, bạn KHÔNG chọn/không mô tả). Muốn có beat thì gắn mascotIntent vào cảnh asset đó. Mascot là NGƯỜI KỂ (đặt câu hỏi, bình luận/bóc tách giả định, ví von nhẹ, chuyển ý, chốt ý, đoạn nhạy cảm), KHÔNG phải hình chứng minh sự kiện. KHÔNG có quota; KHÔNG dùng mascot để lấp chỗ thiếu asset (thiếu asset → cảnh đồ hoạ; cảnh đồ hoạ KHÔNG có mascot). Chỉ dùng khi nhịp "người kể xuất hiện" cải thiện cảnh: phải có lý do biên tập thật (gắn narrativeFunction) và phần lời thoại CUỐI cảnh asset đó phải đúng là chỗ cần người kể phản ứng.
+- ĐIỀU KIỆN BEAT: cảnh asset chứa beat phải đủ dài để asset chạy toàn khung ≥3s rồi mới tới beat; beat dài theo chữ (~4–7s cho chữ 15–48 ký tự) ⇒ cảnh asset có mascotIntent thường ≥ 8–11s (script báo lỗi nếu ngắn hơn). Mascot nhìn thấy trong phần lời thoại CUỐI cảnh (khoảng 4–7s cuối) — chọn cảnh có phần cuối lời thoại là chỗ nhân vật bình luận/hỏi/chốt. Hai cảnh asset liền nhau KHÔNG cùng có mascot; mascot không dồn vào một đoạn và không biến mất ở 1/3 cuối; đừng gắn mascot cho mọi cảnh (thường ≤ 1/4 số cảnh). Ngưỡng ~5s của cảnh asset vẫn áp dụng.
 - mascotIntent = {"narrativeRole": một narrativeRole CÓ TRONG kit (opening/question/analysis/explanation/consequence/sensitive_fact/empathy/positive_outcome/light_analogy/established_point/uncertainty/takeaway/closing/narration/reporting), "outfit": "host" (mặc định; "reporter" chỉ cho đoạn tường thuật), "tone": ngắn}.
-- [ADN v2, vòng 3] CHỮ BỔ TRỢ CHO MASCOT: mascotIntent.textIntent = {"format": một trong thought|quote|punch|question|sticky|stamp, "purpose": một trong hỏi|khẳng định|cảm thán|ví von|chốt, "text": chữ ngắn gọn, cô đọng}. Chữ là SUY NGHĨ/PHẢN ỨNG của nhân vật và phải BỔ SUNG một ý hoặc cảm xúc mà lời thoại CHƯA nói (đặt câu hỏi cho người xem, khẳng định, cảm thán, ví von, chốt ý); TUYỆT ĐỐI không đọc lại hoặc chép nguyên văn lời thoại. Tối đa 9 từ, tiếng Việt, đúng 1 khối chữ/cảnh, không emoji, KHÔNG tự bịa con số/tên riêng/mốc thời gian không có trong kịch bản. Chọn format hợp purpose: thought=lẩm bẩm/ví von nhẹ; quote=câu cô đọng đáng nhớ; punch=cụm nhấn mạnh 1–3 từ; question=câu hỏi hướng tới người xem; sticky=ghi chú nhắc ý; stamp=chốt/kết luận dứt khoát. Hai cảnh mascot liền nhau KHÔNG cùng format. Chữ phải có ý đồ biên tập gắn với narrativeFunction của cảnh, không chèn cho có.
-- [ADN v2, vòng 3] TÔNG BIỂU CẢM mascot: đa dạng, đừng mặc định nghiêm. serious/concerned/sad CHỈ cho đoạn nhạy cảm thật sự; mở đầu/chuyển ý/ví von/chốt nên dùng welcome, amused, confident, happy, explain, think, question… Không quá 2 cảnh mascot liên tiếp cùng nhóm nghiêm (serious/concerned/sad).
+- [ADN v2, vòng 3] CHỮ BỔ TRỢ CHO MASCOT: mascotIntent.textIntent = {"format": một trong thought|quote|punch|question|sticky|stamp, "purpose": một trong hỏi|khẳng định|cảm thán|ví von|chốt, "text": chữ ngắn gọn, cô đọng}. Chữ là SUY NGHĨ/PHẢN ỨNG của nhân vật và phải BỔ SUNG một ý hoặc cảm xúc mà lời thoại CHƯA nói (đặt câu hỏi cho người xem, khẳng định, cảm thán, ví von, chốt ý); TUYỆT ĐỐI không đọc lại hoặc chép nguyên văn lời thoại. Tối đa 9 từ VÀ 48 ký tự (chữ hiện suốt beat nhưng phải đọc kịp), tiếng Việt, đúng 1 khối chữ/beat, không emoji, KHÔNG tự bịa con số/tên riêng/mốc thời gian không có trong kịch bản. Chọn format hợp purpose: thought=lẩm bẩm/ví von nhẹ; quote=câu cô đọng đáng nhớ; punch=cụm nhấn mạnh 1–3 từ; question=câu hỏi hướng tới người xem; sticky=ghi chú nhắc ý; stamp=chốt/kết luận dứt khoát. Hai beat mascot liên tiếp KHÔNG cùng format. Chữ phải có ý đồ biên tập gắn với narrativeFunction của cảnh, không chèn cho có.
+- [ADN v2, vòng 3] TÔNG BIỂU CẢM mascot: đa dạng, đừng mặc định nghiêm. serious/concerned/sad CHỈ cho đoạn nhạy cảm thật sự; mở đầu/chuyển ý/ví von/chốt nên dùng welcome, amused, confident, happy, explain, think, question… Không quá 2 beat mascot liên tiếp cùng nhóm nghiêm (serious/concerned/sad).
 - [ADN v2, camera liên tục] Cảnh asset: điền "presentationStyle" — MỘT trong: drift-in (zoom-in chậm), drift-out, pan, diag, doc-card. Mỗi shot chỉ có MỘT chuyển động camera liền mạch suốt shot; SỰ KIỆN THỊ GIÁC của cảnh asset = ĐỔI ASSET bám cue lời thoại (giữa hai lần đổi camera luôn trôi, không tính dead-air — luật "≤3s không sự kiện" KHÔNG áp cho cảnh asset). Mỗi asset dùng đúng 1 lần liền mạch trong scene (CẤM tách 1 ảnh thành nhiều shot re-crop); shot ~4–8s: scene dài (>8s) hãy gán NHIỀU asset khác nhau thay vì kéo dài một ảnh. Hai cảnh asset liền nhau KHÔNG cùng presentationStyle (đa dạng kiểu/hướng giữa các cảnh).
 - Kiểu vào cảnh (entranceAnimation) chỉ trong bộ KHÔNG XOAY: rise, grow, punch, shatter, unfold, zoom-through, strike (BỎ flip/peel/spiral/wobble-drop). Không trùng cảnh liền trước.
-- backgroundVariant chỉ cho cảnh mascot/graphics: một trong grid-moving/chart/card/spotlight (cảnh asset: null). Hai cảnh liền nhau có nền nhìn thấy không cùng biến thể.
+- backgroundVariant: cảnh graphics: một trong grid-moving/chart/card/spotlight; cảnh asset: null (script tự gán nền cho cảnh asset có beat mascot hoặc có media contain). Hai cảnh liền nhau có nền nhìn thấy không cùng biến thể.
 
 QUY TẮC NGƯỠNG NHỊP ĐỘ — ÁP DỤNG ĐỒNG THỜI VỚI QUY TẮC ƯU TIÊN MEDIA Ở TRÊN, KHÔNG ĐƯỢC HY SINH CÁI NÀY ĐỂ LẤY CÁI KIA:
 - TUYỆT ĐỐI KHÔNG được tách một scene thành nhiều scene con chỉ để mỗi asset có một scene riêng nếu việc tách khiến scene ngắn hơn ~5 giây. Ngắn hơn 5 giây khiến người xem không kịp đọc/hiểu, dù đúng asset vẫn là một lỗi.
@@ -134,14 +142,14 @@ Trả về DUY NHẤT một JSON object đúng schema:
       "scriptText": "câu/đoạn lời thoại của scene này, trích nguyên văn từ script gốc",
       "narrativeFunction": "một trong: hook/question/paradox/cause/causal-chain/list/definition/mechanism/evidence/reversal/conclusion",
       "visualRelationship": "câu trả lời cụ thể cho 'quan hệ nào người xem phải THẤY HÌNH THÀNH' — không phải mô tả chủ đề chung chung",
-      "kind": "asset | mascot | graphics",
-      "visualLanguages": ["cảnh asset: 1 trong background-photo/cutout/split/document; cảnh mascot: [\"mascot-narrator\"]; cảnh graphics: 1-2 giá trị từ 13 ngôn ngữ thị giác"],
+      "kind": "asset | graphics",
+      "visualLanguages": ["cảnh asset: 1 trong background-photo/cutout/split/document; cảnh graphics: 1-2 giá trị từ 13 ngôn ngữ thị giác"],
       "presentationStyle": "chỉ cảnh asset: drift-in/drift-out/pan/diag/doc-card; cảnh khác: null",
-      "mascotIntent": "chỉ cảnh mascot: {narrativeRole, outfit, tone, textIntent:{format, purpose, text}}; cảnh khác: null",
-      "backgroundVariant": "cảnh mascot/graphics: grid-moving/chart/card/spotlight; cảnh asset: null",
-      "assetIds": ["id từ media manifest — BẮT BUỘC có ở cảnh asset; RỖNG ở cảnh mascot/graphics"],
+      "mascotIntent": "CHỈ cảnh asset muốn có beat mascot ở đuôi: {narrativeRole, outfit, tone, textIntent:{format, purpose, text}}; còn lại: null",
+      "backgroundVariant": "cảnh graphics: grid-moving/chart/card/spotlight; cảnh asset: null",
+      "assetIds": ["id từ media manifest — BẮT BUỘC có ở cảnh asset; RỖNG ở cảnh graphics"],
       "entranceAnimation": "một trong bộ KHÔNG XOAY (rise/grow/punch/shatter/unfold/zoom-through/strike), KHÔNG trùng với scene liền trước",
-      "notes": "lý do chọn (với cảnh mascot: vì sao người kể xuất hiện ở nhịp này), cảnh báo nếu cần fallback"
+      "notes": "lý do chọn (với beat mascot: vì sao người kể xuất hiện ở cuối cảnh này), cảnh báo nếu cần fallback"
     }
   ]
 }
@@ -174,11 +182,15 @@ function normalizeScenes(newScenes) {
   // Chuẩn hoá id TẤT ĐỊNH theo vị trí mảng — KHÔNG tin id do LLM tự đặt (đã từng sinh sai
   // "S010/S011..." khi ghép chuỗi thay vì zero-pad, và từng tự tách 1 beat thành "S17a/S17b/S17c").
   // Ghi đè hoàn toàn field "id". CHỈ áp dụng cho scene MỚI — keptScenes giữ nguyên id cũ.
+  // [vòng 4] NỐI LIỀN MẠCH các scene (tất định): khe hở giữa scene = khung đen khi chuyển cảnh (đo 03/10: 6/6 khoảng đen trùng 6 khe hở của plan).
+  // Scene sau giữ nguyên startMs (bám từ đầu tiên được nói); phần nghỉ trước đó thuộc scene trước. Không im lặng: in ra số khe hở đã vá.
+  const tiled = tileScenes(newScenes, { startMs: regenFromMs, totalMs: totalDurationMs });
+  if (tiled.changed.length) console.log(`[ADN v2] Nối liền mạch scene: vá ${tiled.changed.length} khe hở/chồng (tổng ${tiled.changed.reduce((a, c) => a + Math.abs(c.deltaMs), 0)}ms): ${tiled.changed.map((c) => `${c.id} ${c.deltaMs > 0 ? "+" : ""}${c.deltaMs}ms`).join(", ")}`);
+  if (tiled.errors.length) { console.error("Không nối liền mạch được scene:\n- " + tiled.errors.join("\n- ")); process.exit(1); }
   newScenes.forEach((s, i) => {
     s.id = `S${String(keptScenes.length + i + 1).padStart(2, "0")}`;
     if (!["asset", "mascot", "graphics"].includes(s.kind)) s.kind = (s.assetIds ?? []).length ? "asset" : "graphics";
-    if (s.kind === "mascot") s.assetIds = [];
-    if (s.kind !== "mascot") s.mascotIntent = null;
+    if (s.kind === "graphics") s.mascotIntent = null; // [vòng 4] mascot chỉ ở cảnh asset (beat); kind "mascot" cũ KHÔNG tự đổi — validatePlan báo lỗi để model sửa
     if (s.kind !== "asset") s.presentationStyle = null;
   });
   // [ADN v2, vòng 3] từ vựng presentationStyle = camera liên tục; ánh xạ kiểu cũ (push-in/pull-out/crop-reframe/split/reveal/multi-shot-cut)
@@ -201,10 +213,10 @@ function normalizeScenes(newScenes) {
   for (const s of all) {
     if (s.kind === "asset") {
       s.containAssets = (s.assetIds ?? []).filter((id) => fitForAsset(mediaById05[id]).fit === "contain");
-      if (!s.containAssets.length) { s.backgroundVariant = null; s.driftDir = null; }
+      if (!s.containAssets.length && !s.mascotIntent) { s.backgroundVariant = null; s.driftDir = null; } // cảnh asset có beat mascot cần nền nhìn thấy dưới thẻ thu nhỏ
     }
   }
-  const visible = (s) => s && (s.kind !== "asset" || s.containAssets.length > 0);
+  const visible = (s) => s && (s.kind !== "asset" || s.containAssets.length > 0 || !!s.mascotIntent);
   const isAssigned = (s) => !!s.driftDir && BG_VARIANTS.includes(s.backgroundVariant);
   let visibleIdx = 0;
   all.forEach((s, i) => {
@@ -227,7 +239,7 @@ let newScenes;
 if (renormalize) {
   newScenes = JSON.parse(fs.readFileSync(vp.scenePlanJson, "utf8"));
   normalizeScenes(newScenes);
-  const problems = validatePlan(newScenes, kit, scriptText);
+  const problems = validatePlan(newScenes, kit, scriptText, totalDurationMs);
   console.log(`[ADN v2] --renormalize: ${newScenes.length} scene, ${newScenes.filter((x) => x.containAssets?.length).length} cảnh asset có media contain, ${problems.length} lỗi chặn.`);
   if (problems.length) { console.error("- " + problems.join("\n- ")); process.exit(1); }
 }
@@ -259,7 +271,7 @@ for (let planAttempt = 1; !renormalize && planAttempt <= 2; planAttempt++) {
     process.exit(1);
   }
   normalizeScenes(newScenes);
-  const problems = validatePlan([...keptScenes, ...newScenes], kit, scriptText);
+  const problems = validatePlan([...keptScenes, ...newScenes], kit, scriptText, totalDurationMs);
   const soft = softPlanWarnings([...keptScenes, ...newScenes]);
   if (!problems.length && (!soft.length || planAttempt === 2)) {
     if (soft.length) console.log(`[ADN v2] Cảnh báo mềm còn lại (không chặn):\n- ${soft.join("\n- ")}`);
@@ -289,7 +301,7 @@ const md = [
   "|---|---|---|---|---|---|---|---|---|---|",
   ...scenes.map(
     (s) =>
-      `| ${s.id} | ${s.kind} | ${fmtMs(s.startMs)}–${fmtMs(s.endMs)} | ${s.scriptText} | ${s.narrativeFunction} | ${s.visualRelationship} | ${s.kind === "mascot" ? `mascot:${s.mascotIntent?.narrativeRole}/${s.mascotIntent?.tone ?? ""}` : s.presentationStyle ?? "—"} | ${s.backgroundVariant ?? "—"}${s.driftDir ? ` (${s.driftDir})` : ""} | ${(s.assetIds || []).join(", ") || "—"} | ${s.entranceAnimation} |`,
+      `| ${s.id} | ${s.kind} | ${fmtMs(s.startMs)}–${fmtMs(s.endMs)} | ${s.scriptText} | ${s.narrativeFunction} | ${s.visualRelationship} | ${s.presentationStyle ?? "—"}${s.mascotIntent ? ` + beat mascot:${s.mascotIntent.narrativeRole}/${s.mascotIntent.tone ?? ""}` : ""} | ${s.backgroundVariant ?? "—"}${s.driftDir ? ` (${s.driftDir})` : ""} | ${(s.assetIds || []).join(", ") || "—"} | ${s.entranceAnimation} |`,
   ),
   "",
   "## Ghi chú từng scene",

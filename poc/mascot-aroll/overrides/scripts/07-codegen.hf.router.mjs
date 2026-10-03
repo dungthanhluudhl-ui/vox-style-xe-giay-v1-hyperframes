@@ -40,8 +40,8 @@ import { autofixVideoTiming, autofixContrast, injectIntoFirstStyle } from "./lib
 import { annotateShotsForCodegen, REVIEW_FORMAT, REVIEW_POLICY, parseReviewVerdict, checkAssetUsage } from "./lib/review-gate.mjs";
 // [POC mascot-aroll / ADN v2]
 import { loadKit, buildMascotSceneHtml } from "./lib/mascot-scene.mjs";
-import { buildAssetSceneHtml, assetShotWarnings } from "./lib/asset-scene.mjs";
-import { checkAssetScene, checkGraphicsScene, checkMascotScene, overflowProblems } from "./lib/v2-checks.mjs";
+import { buildAssetSceneHtml, assetShotWarnings, ensureHoldFrames } from "./lib/asset-scene.mjs";
+import { checkAssetScene, checkGraphicsScene, checkMascotScene, overflowProblems, beatSceneProblems } from "./lib/v2-checks.mjs";
 
 const root = process.cwd();
 const routing = loadModelRouting();
@@ -230,12 +230,28 @@ if (scenes[0]?.kind === "asset") {
   const sceneShots = shots.filter((s) => s.sceneId === sceneId).sort((a, b) => a.startMs - b.startMs);
   const bad = sceneShots.filter((s) => !s.camera || !s.mediaFit);
   if (bad.length) { console.error(`Cảnh ${sceneId}: shot ${bad.map((s) => s.id).join(",")} thiếu camera/mediaFit — chạy lại Stage 6 (hoặc 06 --annotate-only).`); process.exit(1); }
-  const html = buildAssetSceneHtml({ scene: sc, shots: sceneShots, mediaById, bgVariant: sc.backgroundVariant, driftDir: sc.driftDir });
+  // [vòng 4] BEAT mascot trong cảnh asset: kiểm hợp lệ TRƯỚC khi dựng, chép file pose của kit vào assets, builder dựng thẻ thu nhỏ + mascot + chữ.
+  const lastBeat = sceneShots.at(-1)?.mascotBeat; // beat do Stage 6 tính tất định, nằm ở SHOT CUỐI; nền lấy từ scene (Stage 5 đã gán)
+  if (lastBeat) sc.mascotBeat = { ...lastBeat, bgVariant: sc.backgroundVariant, driftDir: sc.driftDir };
+  const kit = sc.mascotBeat ? loadKit(root) : null;
+  const beatProbs = beatSceneProblems(sc, sceneShots, kit);
+  if (beatProbs.length) { console.error(`Cảnh ${sceneId}: beat không hợp lệ:\n- ${beatProbs.join("\n- ")}`); process.exit(1); }
+  if (sc.mascotBeat) {
+    const pose = kit.byId[sc.mascotBeat.poseId];
+    for (const destDir of [vp.hfAssetsDir, path.join(tempProjectDir, "assets")]) {
+      fs.mkdirSync(destDir, { recursive: true });
+      fs.copyFileSync(path.join(kit.dir, pose.file), path.join(destDir, path.basename(pose.file)));
+    }
+  }
+  // [vòng 4] video ngắn hơn shot → ảnh tĩnh khung cuối (engine drawElement không giữ khung cuối <video>, xem lib/asset-scene.mjs)
+  const heldFrames = ensureHoldFrames(sceneShots, mediaById, root, [vp.hfAssetsDir, path.join(tempProjectDir, "assets")]);
+  if (heldFrames.length) console.log(`  Khung cuối video → ảnh giữ khung: ${heldFrames.map((f) => path.basename(f)).join(", ")}`);
+  const html = buildAssetSceneHtml({ scene: sc, shots: sceneShots, mediaById, bgVariant: sc.backgroundVariant, driftDir: sc.driftDir, kit });
   fs.writeFileSync(path.join(tempProjectDir, "index.html"), html, "utf8");
-  console.log(`Cảnh asset ${sceneId} (${((sc.endMs - sc.startMs) / 1000).toFixed(2)}s, ${sceneShots.length} shot${sceneShots.some((s) => s.mediaFit === "contain") ? `, có contain/nền ${sc.backgroundVariant}/${sc.driftDir}` : ""}) — dựng tất định, camera liên tục.`);
+  console.log(`Cảnh asset ${sceneId} (${((sc.endMs - sc.startMs) / 1000).toFixed(2)}s, ${sceneShots.length} shot${sceneShots.some((s) => s.mediaFit === "contain") ? `, có contain/nền ${sc.backgroundVariant}/${sc.driftDir}` : ""}${sc.mascotBeat ? `, BEAT mascot ${sc.mascotBeat.layout}/${sc.mascotBeat.side} từ ${((sc.mascotBeat.startMs - sc.startMs) / 1000).toFixed(1)}s` : ""}) — dựng tất định, camera liên tục.`);
   for (const w of assetShotWarnings(sc, sceneShots)) console.log("  ⚠ " + w);
   const v = runHyperframesCheck(tempProjectDir, { extraArgs: [getCaptionZoneArg(root, { seek: SCENE_CAPTION_SEEK })] });
-  const probs = [...checkAssetScene(html), ...(v.passed ? overflowProblems(v.raw) : [])];
+  const probs = [...checkAssetScene(html, { beat: !!sc.mascotBeat }), ...(v.passed ? overflowProblems(v.raw) : [])];
   const ok = v.passed && probs.length === 0;
   let summary;
   if (ok) {
