@@ -1,0 +1,19 @@
+# Scene Plan — vua-chuot-ratking-phan-1
+
+> Sinh bởi `scripts/05-scene-plan.router.mjs` qua ag/gemini-3.8-flash-high. Nguồn dữ liệu: `planning/videos/vua-chuot-ratking-phan-1/scene-plan.json`. Sửa tay thì sửa cả 2 file cho khớp.
+
+Tổng thời lượng: 32.039s · 4 scene
+
+| # | Loại | Thời gian | Lời thoại | Chức năng | Quan hệ hình ảnh | Trình bày/Mascot | Nền (hướng) | Asset | Vào cảnh |
+|---|---|---|---|---|---|---|---|---|---|
+| S01 | asset | 0.000s–6.680s | Như tiêu đề thì hôm nay chúng ta sẽ nói về những cái hiện tượng khoa học khá là khó giải thích và một số cái thậm chí nghe còn hơi bị siêu nhiên. | hook | Người xem thấy các manh mối và bài báo điều tra được liên kết chằng chịt nhưng bị chặn lại bởi các dấu hỏi bí ẩn phát sáng — hình thành cảm giác bế tắc của tri thức trước một hiện tượng dị thường. | pan | — | vid-02, img-05 | zoom-through |
+| S02 | mascot | 6.680s–11.860s | Nhưng mà không hẳn là phi khoa học, mà kiểu khoa học cũng kiểu không biết giải thích thế nào ấy. Ok, bắt đầu thôi! | paradox | Người xem thấy sự chuyển biến từ không khí trinh thám u ám sang tương tác trực diện thân thiện: người kể chuyện capybara nhún vai bối rối thừa nhận giới hạn của khoa học, tạo nhịp thở tâm lý và kết nối người xem trước khi đi vào giải thích. | mascot:uncertainty/hài hước, tự trào khi khoa học cũng bối rối rồi hào hứng bắt đầu | grid-moving (left) | — | grow |
+| S03 | asset | 11.860s–20.960s | Đầu tiên là Vua chuột hay là Rat King. Đây là một hiện tượng khá là hiếm gặp ở chuột, đặc biệt là ở chuột đen hay còn gọi là chuột Tàu. Và không, đây không phải là một con chuột đột biến xong rồi đi dạy võ cho bốn con rùa. | reversal | Sự va chạm giữa danh xưng kỳ bí 'Rat King' với cú lật ngược định kiến: hình tượng chuột võ sư Ninja Rùa quen thuộc bị phủ định dứt khoát bởi dấu gạch chéo đỏ lớn, xóa bỏ liên tưởng hư cấu để kéo người xem về thực tế sinh học. | multi-shot-cut | — | vid-04, img-01, vid-05, img-04 | punch |
+| S04 | asset | 20.960s–32.039s | Vua chuột là khi mà nhiều con chuột bị mắc đuôi vào nhau, và đuôi của chúng nó thì xoắn lại thành một cái cục đến mức mà cả đám gần như là không thể tách ra, và cũng không thể di chuyển bình thường. Và một Vua chuột có thể bao gồm từ vài con cho tới vài chục con. | mechanism | Người xem thấy một cấu trúc giằng co bế tắc hình thành rồi mở rộng sang tư liệu lịch sử: các mũi tên lực kéo ngược hướng quanh búi đuôi thắt nút ở tâm, sau đó chuyển dịch sang bằng chứng hồ sơ mẫu vật ghi nhận quy mô bầy đàn từ vài con đến hàng chục con. | reveal | — | vid-03, img-02, vid-01, img-03 | unfold |
+
+## Ghi chú từng scene
+
+- **S01**: Mở đầu video bằng bảng điều tra trinh thám u ám, camera lia chậm qua các bài báo cũ và manh mối dấu hỏi nhấp nháy (vid-02) kết hợp điểm nhấn chi tiết (img-05) tạo không khí kỳ bí lôi cuốn người xem.
+- **S02**: Sử dụng mascot capybara pose 'capy-v1-host-shrug' (5.18s) đóng vai trò người kể chuyện trực diện, giải tỏa sự căng thẳng của đoạn hook, thể hiện đúng tinh thần lời thoại tự trào về sự bất lực của khoa học và hô hào bắt đầu.
+- **S03**: Gộp 2 beat để đảm bảo thời lượng chuẩn (9.10s): nửa đầu dùng vid-04/img-01 giới thiệu title card Rat King u ám cùng đàn chuột đen bò qua lại; đúng cue 'Và không...' (17.52s) cắt dứt khoát sang vid-05/img-04 chuột sư phụ và 4 rùa bị gạch chéo đỏ để tạo sự kiện thị giác mới đúng nhịp.
+- **S04**: Cảnh dài 11.08s giải thích bản chất: 8s đầu dùng đồ họa cắt dán vid-03/img-02 mô tả chi tiết cơ chế thắt nút đuôi và lực giằng co bế tắc; ở 3s cuối (cue 'từ vài con cho tới vài chục con') gạt/reveal sang hồ sơ lưu trữ vid-01/img-03 chứng minh mẫu vật lịch sử thực tế, tận dụng trọn vẹn toàn bộ 10 asset nguồn.

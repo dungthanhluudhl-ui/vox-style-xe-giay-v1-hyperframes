@@ -1,0 +1,782 @@
+// Sinh composition HyperFrames (HTML + GSAP) theo shotlist đã chốt — bản HyperFrames của
+// archive/remotion-legacy/scripts/07-codegen.router.mjs.
+//
+// KIẾN TRÚC (đã sửa sau khi Checkpoint D phát hiện điểm khớp Style DNA thấp — xem
+// pipeline/codegen-issues.jsonl và lịch sử trao đổi ngày video an-le-64): LLM CHỈ sinh 1
+// composition STANDALONE (index.html, composition-id "main") — mirror ĐÚNG NGUYÊN VẸN
+// poc/hyperframes/codegen-poc.mjs đã kiểm chứng cho điểm khớp style DNA tốt (~5.6-6.5/10) —
+// KHÔNG bắt LLM biết gì về sub-composition/<template>/tránh trùng id="root". Sau khi
+// verify+review PASS, một bước TẤT ĐỊNH riêng (standaloneToSubComposition trong
+// scripts/lib/sync-root-hf-lib.mjs, tổng quát hoá đúng logic đã chứng minh đúng của
+// poc/hyperframes/assemble-poc.mjs) chuyển đổi cơ học file standalone đó thành
+// compositions/scene-sNN.html thật trong project chung của video. LLM không bao giờ phải tự
+// viết đúng khuôn dạng sub-composition — loại bỏ hẳn khả năng ràng buộc kỹ thuật đó làm phân
+// tán sự tập trung của model khỏi chất lượng thị giác — ĐÃ XÁC NHẬN bằng thực nghiệm đối chứng
+// (không phải suy đoán): Checkpoint D từ 4.3/10 (sub-composition trực tiếp) lên 6.2/10 (cách
+// này), vượt cả baseline POC ~6/10. Xem kế hoạch "Chẩn đoán và khắc phục chất lượng thấp
+// Checkpoint D" để biết đầy đủ quá trình loại trừ các giả thuyết khác.
+//
+// QUY TẮC (giống hệt bản Remotion, xem planning/responsibility-matrix.md mục 6): KHÔNG BAO GIỜ
+// batch nhiều scene trong 1 lần gọi — luôn 1 scene/lần (script này giả định sceneIds có đúng 1
+// phần tử ở bước chuyển đổi cuối). Chạy song song nhiều scene của CÙNG 1 video: mỗi tiến trình
+// có project test standalone TẠM RIÊNG (đặt tên theo scene) nên generate+verify+review hoàn
+// toàn cách ly nhau, không còn race — --no-root-sync giờ chỉ còn ý nghĩa "đừng ráp index.html
+// chung ngay, để làm sau khi mọi tiến trình xong" (mirror scripts/08-sync-root.hf.mjs).
+//
+// Usage: node scripts/07-codegen.hf.router.mjs --video=<slug> --scenes=S01
+//        node scripts/07-codegen.hf.router.mjs --video=<slug> --scenes=S01 --issue-file=path/to/bug.txt
+//        node scripts/07-codegen.hf.router.mjs --video=<slug> --scenes=S06 --no-root-sync
+//        node scripts/07-codegen.hf.router.mjs --video=<slug> --scenes=S06 --review-only   (dùng lại .gen-tmp đã PASS verify, chỉ review — sau mã thoát 2)
+import fs from "node:fs";
+import path from "node:path";
+import { execSync } from "node:child_process";
+import { callModel, extractText, loadModelRouting, appendRunLog, callWithModelFallback } from "./lib/router-client.mjs";
+import { getVideoSlug, videoPaths } from "./lib/video-paths.mjs";
+import { syncRootHf, standaloneToSubComposition } from "./lib/sync-root-hf-lib.mjs";
+import { getCaptionZoneArg, SCENE_CAPTION_SEEK } from "./lib/caption-zone.mjs";
+import { HF_VERSION, runHyperframesCheck, findRootLayoutFlags, formatCheckFeedback } from "./lib/hf-check.mjs";
+import { buildTextColorRules, buildSafeColorClasses } from "./lib/palette-contrast.mjs";
+import { autofixVideoTiming, autofixContrast, injectIntoFirstStyle } from "./lib/hf-autofix.mjs";
+import { annotateShotsForCodegen, REVIEW_FORMAT, REVIEW_POLICY, parseReviewVerdict, checkAssetUsage } from "./lib/review-gate.mjs";
+// [POC mascot-aroll / ADN v2]
+import { loadKit, buildMascotSceneHtml } from "./lib/mascot-scene.mjs";
+import { buildAssetSceneHtml, assetShotWarnings } from "./lib/asset-scene.mjs";
+import { checkAssetScene, checkGraphicsScene, checkMascotScene, overflowProblems } from "./lib/v2-checks.mjs";
+
+const root = process.cwd();
+const routing = loadModelRouting();
+const GEN_MODEL = routing.reasoning_generator;
+// Generator dự phòng (quyết định người dùng 2026-09-26, cùng cơ chế đã áp cho reviewer): hết hạn
+// mức/lỗi mạng → chuyển NGAY sang model này, không tự thử lại model đang bị khoá. Đặt trong script
+// (không phải hướng dẫn cho Claude điều phối) để mọi session/agent áp dụng đồng nhất.
+const GEN_MODEL_FALLBACK = routing.reasoning_generator_fallback;
+let genModelUsed = null; // model THỰC SỰ đã sinh code (chính hoặc dự phòng) — ghi vào run-log
+const REVIEW_MODEL = routing.reasoning_reviewer;
+// Reviewer dự phòng (quyết định người dùng 2026-09-26): model chính lỗi hạ tầng (hết hạn mức/mạng) →
+// chuyển NGAY sang model này thay vì thử đi thử lại model đang bị khoá (callWithModelFallback).
+const REVIEW_MODEL_FALLBACK = routing.reasoning_reviewer_fallback;
+let reviewModelUsed = null; // model THỰC SỰ đã trả verdict (chính hoặc dự phòng) — ghi vào run-log
+const MAX_ATTEMPTS = 3;
+// Lỗi HẠ TẦNG khi gọi generator/reviewer (403 hết hạn mức, 429, 5xx, timeout) KHÔNG tiêu MAX_ATTEMPTS:
+// callWithModelFallback() (router-client.mjs) chuyển ngay sang model dự phòng, cả 2 cùng lỗi mới chờ
+// đúng "reset after Ns" rồi thử lại cả chuỗi. Bài học thật 2026-09-26: bản cũ retry review NGAY (vẫn
+// dính 403) rồi coi cả lần thử là hỏng → vứt code đã PASS verify, sinh lại từ đầu; ban-an-425-phan-1
+// mất 97/186 lần thử vì vậy. Hết ngân sách hạ tầng mà verify đã PASS →
+// thoát mã 2, giữ .gen-tmp, chạy lại bằng --review-only (không gọi generator).
+const EXIT_REVIEW_UNAVAILABLE = 2;
+const reviewOnly = process.argv.includes("--review-only");
+
+const slug = getVideoSlug();
+const vp = videoPaths(slug);
+
+function read(p) {
+  return fs.readFileSync(path.join(root, p), "utf8");
+}
+
+const argScenes = (process.argv.find((a) => a.startsWith("--scenes=")) || "--scenes=S01").split("=")[1];
+const allScenes = JSON.parse(fs.readFileSync(vp.scenePlanJson, "utf8"));
+const allShots = JSON.parse(fs.readFileSync(vp.shotlistJson, "utf8"));
+const sceneIds = argScenes === "all" ? allScenes.map((s) => s.id) : argScenes.split(",");
+const sceneId = sceneIds[0]; // bước chuyển đổi cuối chỉ hỗ trợ đúng 1 scene/lần (đúng quy tắc)
+
+const scenes = allScenes.filter((s) => sceneIds.includes(s.id));
+const shots = allShots.filter((s) => sceneIds.includes(s.sceneId));
+const mediaManifest = JSON.parse(fs.readFileSync(vp.manifestJson, "utf8"));
+const mediaById = Object.fromEntries(mediaManifest.map((m) => [m.id, m]));
+// Shotlist đưa vào prompt generator + reviewer: gắn ghi chú ưu tiên cho shot ẢNH có lệnh xử lý màu (mâu
+// thuẫn Stage 6 vs quy tắc dự án — xem review-gate.mjs). `shots` gốc giữ nguyên cho logic tất định khác.
+const shotsForPrompt = annotateShotsForCodegen(shots, mediaById);
+const usedMedia = [...new Set(shots.map((s) => s.assetId).filter(Boolean))].map((id) => mediaById[id]);
+const noRootSync = process.argv.includes("--no-root-sync");
+
+// --- Scaffold project HyperFrames MỘT LẦN cho cả video (project chung, đích cuối của scene) ---
+// `hyperframes init` từ chối scaffold vào thư mục đã tồn tại VÀ không rỗng — thư mục
+// hyperframes/videos/<slug>/ có thể đã có sẵn nội dung từ Giai đoạn A (caption-track.html) hoặc
+// từ lần chạy trước, nên init vào 1 thư mục tạm rồi copy đúng các file scaffold còn thiếu
+// (hyperframes.json/meta.json/package.json/index.html) sang, KHÔNG ghi đè gì đã có sẵn.
+if (!fs.existsSync(path.join(vp.hfProjectDir, "hyperframes.json"))) {
+  fs.mkdirSync(path.dirname(vp.hfProjectDir), { recursive: true });
+  // Tên thư mục tạm PHẢI unique per-process (sceneId + pid) — nếu nhiều scene chạy song song
+  // đều thấy "chưa tồn tại" cùng lúc (chưa có scene nào bootstrap trước), dùng chung 1 tên tmp
+  // cố định gây race condition thật (1 process rmSync trong khi process khác đang init cùng
+  // path) — lỗi thật đã gặp khi chạy 18 scene song song ngay từ đầu (video ban-an-473-phan-2,
+  // không bootstrap 1 scene riêng trước). Copy sang đích cuối vẫn dùng guard !exists(dest) nên
+  // nhiều process cùng scaffold xong rồi copy đè không gây hỏng dữ liệu (cùng version/flags CLI).
+  const tmpDir = path.join(path.dirname(vp.hfProjectDir), `.scaffold-tmp-${slug}-${sceneId.toLowerCase()}-${process.pid}`);
+  fs.rmSync(tmpDir, { recursive: true, force: true });
+  console.log(`Scaffold project HyperFrames mới cho video "${slug}": ${vp.hfProjectDir}`);
+  execSync(
+    `npx --yes hyperframes@${HF_VERSION} init "${path.basename(tmpDir)}" --resolution portrait --non-interactive`,
+    {
+      cwd: path.dirname(vp.hfProjectDir),
+      stdio: "inherit",
+      env: { ...process.env, HYPERFRAMES_SKIP_SKILLS: "1" },
+    },
+  );
+  fs.mkdirSync(vp.hfProjectDir, { recursive: true });
+  for (const f of fs.readdirSync(tmpDir)) {
+    const dest = path.join(vp.hfProjectDir, f);
+    if (fs.existsSync(dest)) continue;
+    try {
+      fs.cpSync(path.join(tmpDir, f), dest, { recursive: true });
+    } catch (e) {
+      // Race condition khi N scene cùng bootstrap project chung lần đầu (mọi tiến trình tự init
+      // ra bộ file GIỐNG HỆT trong tmp dir riêng rồi cùng copy vào 1 đích chung) — 2 tiến trình có
+      // thể cùng cpSync trúng đúng 1 file cùng lúc, Windows khoá file gây EPIPE/EBUSY dù nội dung
+      // cả 2 bên đang ghi là như nhau. An toàn bỏ qua: tiến trình đang tranh chấp file này chắc
+      // chắn sẽ hoàn tất nó. Tổng quát hoá từ bản vá riêng cho meta.json (sự cố
+      // lay-bac-tu-phim-x-quang, 2026-09-28) sang TOÀN BỘ vòng lặp copy sau khi gặp lại đúng họ
+      // lỗi này trên package.json (video vua-bao-chua-han-quoc, 2026-09-29, xem
+      // planning/responsibility-matrix.md mục 6).
+      console.warn(`  ⚠ Bỏ qua copy "${f}" (đọc/ghi trúng lúc process khác đang bootstrap song song, không ảnh hưởng render/check): ${e.message}`);
+    }
+  }
+  fs.rmSync(tmpDir, { recursive: true, force: true });
+  const metaPath = path.join(vp.hfProjectDir, "meta.json");
+  if (fs.existsSync(metaPath)) {
+    // Race condition thật (video "lay-bac-tu-phim-x-quang", 2026-09-28): nhiều scene cùng bootstrap
+    // project chung lần đầu (guard !exists(hyperframes.json) đúng cho cả N process cùng lúc) — 1
+    // process có thể đọc trúng meta.json khi process khác đang ghi dở (cpSync/writeFileSync không
+    // atomic giữa các process), JSON.parse trúng nội dung rỗng/dở dang -> crash cả scene dù bootstrap
+    // thực chất đã thành công. meta.name chỉ là field cosmetic (không dùng ở đâu khác trong pipeline,
+    // xem planning/responsibility-matrix.md mục 6) — bỏ qua an toàn thay vì làm fail cả scene.
+    try {
+      const meta = JSON.parse(fs.readFileSync(metaPath, "utf8"));
+      meta.name = slug;
+      fs.writeFileSync(metaPath, JSON.stringify(meta, null, 2), "utf8");
+    } catch (e) {
+      console.warn(`  ⚠ Bỏ qua cập nhật meta.json (đọc trúng lúc process khác đang bootstrap song song, không ảnh hưởng render/check): ${e.message}`);
+    }
+  }
+
+  // Lỗi thật đã xảy ra (video "ban-an-35-phan-1", 2026-09-23): CLAUDE.md/AGENTS.md do `hyperframes
+  // init` scaffold sẵn chỉ có hướng dẫn chung của CLI, không nhắc quy ước render RIÊNG của repo
+  // này — agent chỉ có context của project này (không đọc planning/README.md ở repo root) đã tự
+  // render sai cả đường dẫn (rơi về mặc định CLI `renders/<name>.mp4`) lẫn quality (chọn nhầm
+  // `delivery`/`high`). Ghi tất định đoạn quy ước này vào chính CLAUDE.md/AGENTS.md của project
+  // ngay khi scaffold — không phụ thuộc agent nhớ kiểm tra tài liệu ở repo root. Điểm chặn CHÍNH là
+  // `scripts/09-render.hf.mjs` (preflight assertion từ chối lệch convention) — đoạn này chỉ là
+  // lớp nhắc bổ sung phòng khi ai đó gõ tay lệnh CLI thô thay vì dùng script.
+  const renderConventionNote = `
+
+## Quy ước render riêng của repo này (ĐỌC TRƯỚC KHI RENDER — ghi đè mặc định CLI)
+
+Repo \`vox-style-xe-giay-v1-hyperframes\` có quy ước RIÊNG cho việc render, khác mặc định của CLI —
+LUÔN dùng wrapper tất định sau (chạy từ REPO ROOT, không phải từ thư mục project này):
+
+\`\`\`bash
+node scripts/09-render.hf.mjs --video=${slug}
+\`\`\`
+
+Wrapper này tự cố định \`--quality looks\` + output \`out/${slug}-full.mp4\` (KHÔNG PHẢI
+\`renders/<name>.mp4\` mặc định của CLI), tự chạy ffprobe đối chiếu duration với audio thật, và tự
+ghi vào run-log — KHÔNG cần tự gõ lệnh \`npx hyperframes render\` thô. Nếu thật sự cần 1 bản xuất
+đặc biệt khác convention (quality/đường dẫn khác), wrapper sẽ TỪ CHỐI chạy trừ khi thêm cờ
+\`--force-non-default\` — đọc thông báo lỗi của wrapper để biết cú pháp chính xác. Xem
+\`planning/README.md\` bước 10 và \`planning/responsibility-matrix.md\` mục 8 để biết đầy đủ.
+`;
+  for (const docFile of ["CLAUDE.md", "AGENTS.md"]) {
+    const docPath = path.join(vp.hfProjectDir, docFile);
+    if (fs.existsSync(docPath)) {
+      fs.appendFileSync(docPath, renderConventionNote, "utf8");
+    }
+  }
+}
+fs.mkdirSync(vp.hfCompositionsDir, { recursive: true });
+fs.mkdirSync(vp.hfAssetsDir, { recursive: true });
+
+// Copy đúng file asset (ảnh/video) của scene đang xử lý vào assets/ dùng chung của video — tất
+// định, không AI, giống vai trò staticFile() phía Remotion.
+for (const m of usedMedia) {
+  if (!m?.file) continue;
+  const src = path.join(root, m.file);
+  const dest = path.join(vp.hfAssetsDir, path.basename(m.file));
+  // Ảnh trích dẫn PDF (doc-NN) do 02c TẠO LẠI được (idempotent) nên bản đã copy có thể cũ -> ghi đè khi khác kích thước.
+  const stalePdfCopy = m.source === "pdf" && fs.existsSync(src) && fs.existsSync(dest) && fs.statSync(src).size !== fs.statSync(dest).size;
+  if (fs.existsSync(src) && (!fs.existsSync(dest) || stalePdfCopy)) {
+    fs.copyFileSync(src, dest);
+    console.log(`  copied asset ${path.basename(m.file)}${stalePdfCopy ? " (ghi đè bản cũ)" : ""}`);
+  }
+}
+
+// --- Project test STANDALONE tạm riêng cho scene này (mirror đúng codegen-poc.mjs: mỗi scene
+// 1 project riêng, độc lập hoàn toàn — không race khi chạy song song nhiều scene khác nhau). ---
+const tempProjectDir = path.join(root, "hyperframes", ".gen-tmp", `${slug}-${sceneId.toLowerCase()}`);
+if (!fs.existsSync(path.join(tempProjectDir, "hyperframes.json"))) {
+  fs.mkdirSync(path.dirname(tempProjectDir), { recursive: true });
+  console.log(`Scaffold project test standalone cho scene ${sceneId}: ${tempProjectDir}`);
+  execSync(
+    `npx --yes hyperframes@${HF_VERSION} init "${path.basename(tempProjectDir)}" --resolution portrait --non-interactive`,
+    {
+      cwd: path.dirname(tempProjectDir),
+      stdio: "inherit",
+      env: { ...process.env, HYPERFRAMES_SKIP_SKILLS: "1" },
+    },
+  );
+}
+fs.mkdirSync(path.join(tempProjectDir, "assets"), { recursive: true });
+for (const m of usedMedia) {
+  if (!m?.file) continue;
+  const src = path.join(root, m.file);
+  const dest = path.join(tempProjectDir, "assets", path.basename(m.file));
+  if (fs.existsSync(src) && (!fs.existsSync(dest) || (m.source === "pdf" && fs.statSync(src).size !== fs.statSync(dest).size))) fs.copyFileSync(src, dest);
+}
+
+// === [POC mascot-aroll / ADN v2, vòng 3] CẢNH ASSET: dựng TẤT ĐỊNH, camera liên tục — KHÔNG gọi generator/reviewer. ===
+// Lý do: generator AI tự viết nhiều tween đa pha + cắt 1 ảnh thành nhiều shot re-crop → giật cục (đo flydubai: 4,3 tween/cảnh vs 1,9 ở v1).
+// Builder: 1 tween camera/shot, ease none, ngân sách zoom theo độ phân giải thật (lib/asset-scene.mjs).
+if (scenes[0]?.kind === "asset") {
+  const sc = scenes[0];
+  const sceneShots = shots.filter((s) => s.sceneId === sceneId).sort((a, b) => a.startMs - b.startMs);
+  const bad = sceneShots.filter((s) => !s.camera || !s.mediaFit);
+  if (bad.length) { console.error(`Cảnh ${sceneId}: shot ${bad.map((s) => s.id).join(",")} thiếu camera/mediaFit — chạy lại Stage 6 (hoặc 06 --annotate-only).`); process.exit(1); }
+  const html = buildAssetSceneHtml({ scene: sc, shots: sceneShots, mediaById, bgVariant: sc.backgroundVariant, driftDir: sc.driftDir });
+  fs.writeFileSync(path.join(tempProjectDir, "index.html"), html, "utf8");
+  console.log(`Cảnh asset ${sceneId} (${((sc.endMs - sc.startMs) / 1000).toFixed(2)}s, ${sceneShots.length} shot${sceneShots.some((s) => s.mediaFit === "contain") ? `, có contain/nền ${sc.backgroundVariant}/${sc.driftDir}` : ""}) — dựng tất định, camera liên tục.`);
+  for (const w of assetShotWarnings(sc, sceneShots)) console.log("  ⚠ " + w);
+  const v = runHyperframesCheck(tempProjectDir, { extraArgs: [getCaptionZoneArg(root, { seek: SCENE_CAPTION_SEEK })] });
+  const probs = [...checkAssetScene(html), ...(v.passed ? overflowProblems(v.raw) : [])];
+  const ok = v.passed && probs.length === 0;
+  let summary;
+  if (ok) {
+    const compId = `scene-${sceneId.toLowerCase()}`;
+    fs.writeFileSync(path.join(vp.hfCompositionsDir, `${compId}.html`), standaloneToSubComposition(html, compId), "utf8");
+    fs.rmSync(tempProjectDir, { recursive: true, force: true });
+    if (!noRootSync) syncRootHf(slug, root);
+    summary = `Cảnh ASSET [${sceneId}] PASS (dựng tất định, hyperframes check ok) — compositions/${compId}.html.`;
+  } else {
+    summary = `Cảnh ASSET [${sceneId}] KHÔNG đạt: ${v.passed ? "" : "hyperframes check FAIL — " + formatCheckFeedback(v.raw, 2500)} ${probs.join("; ")}\nProject tạm còn giữ: ${tempProjectDir}`;
+  }
+  console.log("\n" + summary);
+  appendRunLog(`\`scripts/07-codegen.hf.router.mjs --video=${slug} --scenes=${sceneId}\` — ${summary}`, vp.runLog);
+  process.exit(ok ? 0 : 1);
+}
+
+// === [POC mascot-aroll / ADN v2] CẢNH MASCOT: ráp TẤT ĐỊNH từ template kit — KHÔNG gọi generator/reviewer. ===
+// Contract kit (PIPELINE_CONTRACT.md): Stage 7 chỉ bind ID/duration/preset; không vẽ lại nhân vật, không đổi ID.
+// Lưu ý: không dùng appendCodegenIssue ở đây (biến `attempt` khai báo phía dưới — TDZ).
+if (scenes[0]?.kind === "mascot") {
+  const sc = scenes[0];
+  const kit = loadKit(root);
+  const sceneShots = shots.filter((s) => s.sceneId === sceneId).sort((a, b) => a.startMs - b.startMs);
+  const mshots = sceneShots.map((s) => ({
+    id: s.id,
+    startSec: +((s.startMs - sc.startMs) / 1000).toFixed(3),
+    endSec: +((s.endMs - sc.startMs) / 1000).toFixed(3),
+    mascotAssetId: s.mascotAssetId,
+    textEvents: (s.textEvents ?? []).map((e) => ({ text: e.text, format: e.format, atSec: +((e.atMs - sc.startMs) / 1000).toFixed(3), holdSec: +(e.holdMs / 1000).toFixed(3) })),
+  }));
+  const durationSec = +((sc.endMs - sc.startMs) / 1000).toFixed(3);
+  for (const s of mshots) {
+    const a = kit.byId[s.mascotAssetId];
+    if (!a) { console.error(`Cảnh ${sceneId}: mascotAssetId "${s.mascotAssetId}" không có trong kit — trả lỗi về Stage 6, không thay pose.`); process.exit(1); }
+    const src = path.join(kit.dir, a.file);
+    for (const destDir of [vp.hfAssetsDir, path.join(tempProjectDir, "assets")]) {
+      fs.mkdirSync(destDir, { recursive: true });
+      fs.copyFileSync(src, path.join(destDir, path.basename(a.file)));
+    }
+  }
+  const html = buildMascotSceneHtml({ durationSec, shots: mshots, bgVariant: sc.backgroundVariant, driftDir: sc.driftDir, kit, side: sceneShots[0]?.mascotSide ?? "left" });
+  fs.writeFileSync(path.join(tempProjectDir, "index.html"), html, "utf8");
+  console.log(`Cảnh mascot ${sceneId} (${durationSec}s, ${mshots.length} shot, nền ${sc.backgroundVariant}/${sc.driftDir}) — ráp tất định, không AI.`);
+  const v = runHyperframesCheck(tempProjectDir, { extraArgs: [getCaptionZoneArg(root, { seek: SCENE_CAPTION_SEEK })] });
+  const probs = [...checkMascotScene(html, { maxBlocks: mshots.length }), ...(v.passed ? overflowProblems(v.raw) : [])];
+  let summary;
+  let ok = v.passed && probs.length === 0;
+  if (ok) {
+    const compId = `scene-${sceneId.toLowerCase()}`;
+    fs.writeFileSync(path.join(vp.hfCompositionsDir, `${compId}.html`), standaloneToSubComposition(html, compId), "utf8");
+    fs.rmSync(tempProjectDir, { recursive: true, force: true });
+    if (!noRootSync) syncRootHf(slug, root);
+    summary = `Cảnh MASCOT [${sceneId}] PASS (ráp tất định từ kit, hyperframes check ok) — compositions/${compId}.html.`;
+  } else {
+    summary = `Cảnh MASCOT [${sceneId}] KHÔNG đạt: ${v.passed ? "" : "hyperframes check FAIL — " + formatCheckFeedback(v.raw, 2500)} ${probs.join("; ")}\nProject tạm còn giữ: ${tempProjectDir}`;
+  }
+  console.log("\n" + summary);
+  appendRunLog(`\`scripts/07-codegen.hf.router.mjs --video=${slug} --scenes=${sceneId}\` — ${summary}`, vp.runLog);
+  process.exit(ok ? 0 : 1);
+}
+
+// --- Tài liệu tham chiếu HyperFrames (đã kiểm chứng ở poc/hyperframes/codegen-poc.mjs) ---
+const skillFiles = [
+  ".agents/skills/hyperframes-core/SKILL.md",
+  ".agents/skills/hyperframes-core/references/minimal-composition.md",
+  ".agents/skills/hyperframes-core/references/data-attributes.md",
+  ".agents/skills/hyperframes-core/references/determinism-rules.md",
+  ".agents/skills/hyperframes-core/references/tracks-and-clips.md",
+  // Quy tắc đặt <video> (video_nested_in_timed_element / data-start) — thiếu file này, model hay lồng
+  // video trong section shot có data-start rồi kẹt giữa 2 lỗi lint (xem VIDEO_RULE_HF bên dưới).
+  ".agents/skills/hyperframes-core/references/variables-and-media.md",
+  ".agents/skills/hyperframes-animation/SKILL.md",
+  ".agents/skills/hyperframes-animation/adapters/gsap.md",
+  ".agents/skills/hyperframes-animation/adapters/gsap-timeline-and-labels.md",
+  ".agents/skills/hyperframes-animation/adapters/gsap-easing-and-stagger.md",
+  ".agents/skills/hyperframes-animation/rules/svg-path-draw.md",
+  ".agents/skills/hyperframes-animation/rules/spring-pop-entrance.md",
+];
+const skillDocs = skillFiles.map((f) => `### ${f}\n\n${read(f)}`).join("\n\n---\n\n");
+const styleTokens = read("planning/style-dna/style-tokens.json");
+const styleDnaCore = read("planning/style-dna/STYLE_DNA.md");
+const styleTokensObj = JSON.parse(styleTokens);
+// Bảng cặp màu chữ/nền + bộ class màu an toàn — TÍNH TẤT ĐỊNH từ style-tokens.json (palette đổi thì tự
+// đổi theo). Lý do (đo 2026-09-26): contrast là lỗi verify #1, đúng các cặp palette không bao giờ đạt AA
+// (cam/giấy 2.24, cam/card 2.52, kem/cam 2.61) — câu cấm chung chung có từ 21/09 không đủ.
+const TEXT_COLOR_RULES_HF = buildTextColorRules(styleTokensObj);
+const SAFE_COLORS = buildSafeColorClasses(styleTokensObj);
+// Màu đặc trong palette — dùng để hạ cấp tất định lỗi "đổi qua lại 2 màu đều trong palette" (review-gate.mjs).
+const PALETTE_HEXES = new Set(Object.values(styleTokensObj.colors ?? {}).filter((v) => /^#[0-9a-f]{6}$/i.test(v)).map((v) => v.toLowerCase()));
+
+// Lỗi lint phổ biến nhất ở lần thử đầu (~45% lần thử 1 fail do lint, chủ yếu media_missing_data_start)
+// — khi lint lỗi, check BỎ QUA toàn bộ kiểm tra trình duyệt nên lỗi contrast/che chữ chỉ lộ ở lần sau.
+// Chỉ mô tả THUỘC TÍNH bắt buộc của thẻ <video>, không phải bố cục mẫu (người dùng không muốn scene mẫu).
+const VIDEO_RULE_HF = `- VIDEO (<video>) — CẤU TRÚC BẮT BUỘC: thẻ <video> KHÔNG được nằm trong bất kỳ phần tử nào có data-start (kể cả <section>/<div class="clip"> của shot) — lồng vào → lint lỗi video_nested_in_timed_element; ngược lại thiếu data-start trên chính <video> → lint lỗi media_missing_data_start. Đặt <video> là con trực tiếp của #root (hoặc trong wrapper KHÔNG có data-start — dùng wrapper này nếu cần zoom/pan, không animate kích thước chính thẻ video), với đủ thuộc tính: id, src="assets/<file>", muted, playsinline, data-start (giây tính từ đầu scene = (shot.startMs - scene.startMs)/1000), data-duration (độ dài shot, giây), data-media-start (= trimStartSec nếu có). Khi shot có videoRetimeNote yêu cầu retime, dùng data-playback-rate (0.1..10) theo đúng ghi chú; đây là thuộc tính HyperFrames chính thức (hyperframes-core/references/creator-editing-recipes.md mục Constant speed), không phải thuộc tính tự chế. KHÔNG class="clip" trên <video>. Chữ/thẻ overlay của shot đặt trong phần tử RIÊNG có data-start/data-duration của shot, z-index cao hơn video.`;
+
+// KNOWN_GOTCHAS_HF — NGUYÊN VĂN nội dung đã kiểm chứng ở poc/hyperframes/codegen-poc.mjs
+// (composition ĐỘC LẬP, không nhắc gì tới sub-composition/<template> — đó là chuyện của bước
+// chuyển đổi tất định sau này, không phải việc của model). Dùng chung
+// pipeline/codegen-issues.jsonl với bản Remotion (field `framework` phân biệt).
+const KNOWN_GOTCHAS_HF = `QUY TẮC BẮT BUỘC CỦA COMPOSITION CONTRACT (rút từ scaffold CLAUDE.md + skill docs, vi phạm gây lỗi ÂM THẦM không báo lỗi rõ ràng):
+- Mọi phần tử có thời gian (timed element) PHẢI có data-start + 1 nguồn duration (data-duration, hoặc suy ra từ media). class="clip" không bắt buộc về mặt runtime nhưng lint sẽ cảnh báo nếu thiếu, và CSS .clip có sẵn cho layout full-frame — luôn thêm.
+- BẮT BUỘC đăng ký đúng 1 timeline gốc PAUSED cho composition trên window.__timelines["main"]: const tl = gsap.timeline({paused: true}); window.__timelines["main"] = tl;. Thiếu bước này → composition không lỗi console nhưng KHÔNG render đúng (silent failure).
+- Timeline con (nested/scene) được thêm thủ công vào timeline gốc KHÔNG được tự pause riêng — nếu pause, nó sẽ không tiến khi timeline gốc seek.
+- Video dùng thuộc tính muted trên thẻ <video>, âm thanh tách riêng bằng <audio> riêng (scene này KHÔNG cần audio riêng — audio tổng của video đến từ track khác, ngoài phạm vi 1 scene).
+- CHỈ dùng logic tất định — TUYỆT ĐỐI không Date.now(), không Math.random(), không network fetch trong runtime composition (phá vỡ tính deterministic của render theo frame).
+- data-composition-id="main", data-width, data-height bắt buộc trên root div.
+- Nếu có chồng lấn/overflow/occlusion CÓ CHỦ ĐÍCH (vd hiệu ứng zoom tràn khung, overlay che chữ có tính toán trước), đánh dấu rõ bằng data-layout-allow-overflow / data-layout-allow-overlap / data-layout-allow-occlusion trên đúng phần tử đó — nếu không, "npx hyperframes check" sẽ coi là lỗi layout thật.
+- TUYỆT ĐỐI không đặt data-layout-allow-overflow / data-layout-allow-overlap / data-layout-allow-occlusion trên #root (phần tử data-composition-id="main") — 3 cờ này áp dụng cho MỌI phần tử con qua closest(), tắt HOÀN TOÀN layout audit của cả scene (kể cả lỗi không liên quan tới lý do đặt cờ), che khuất mọi lỗi thật khác thay vì chỉ cho phép đúng 1 trường hợp cố ý. Luôn đặt cờ trên ĐÚNG phần tử con cụ thể cần opt-out, không bao giờ trên root — "hyperframes check" sẽ FAIL cứng nếu phát hiện cờ này trên root (xem phần verify()).
+- Tự định nghĩa .clip với width/height cố định bằng px (vd width:1080px; height:1920px) thay vì đúng quy ước inset:0 (xem hyperframes-core/references/tracks-and-clips.md) có thể gây lỗi tràn khung ẩn: nếu 1 class con chỉ override top mà không override height/bottom, trình duyệt giữ nguyên height kế thừa, khiến khối kéo dài quá xa khung hình (VD lỗi thật đã xảy ra: top:1300px + height:1920px kế thừa = khối cao tới y=3220px, tràn quá đáy khung 1920px tới 1300px). Luôn định nghĩa .clip { position:absolute; inset:0; } (KHÔNG set width/height cứng); nếu 1 overlay/badge muốn cao theo nội dung, phải tự đặt height:auto tường minh để ghi đè.
+- Ảnh/asset dùng đường dẫn tương đối "assets/<file>" (đã copy sẵn vào thư mục assets/ của project).
+- FONT "Be Vietnam Pro" (weight 700/900): KHÔNG dùng @font-face với local(...) hay trỏ tới file .ttf không có sẵn trong assets/ (sẽ gây lỗi 404 runtime — không tất định, "hyperframes check" sẽ bắt lỗi này). BẮT BUỘC nạp qua Google Fonts CDN bằng đúng 1 thẻ trong <head>: <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap">, rồi dùng font-family: "Be Vietnam Pro", sans-serif trực tiếp trong CSS — không cần @font-face thủ công.
+- Một số TÊN FILE ảnh có chữ "cutout" (vd img-08-extortion-money-demand-cutout.jpeg) — đó chỉ là mô tả phong cách minh hoạ đã có sẵn TRONG chính ảnh AI tạo ra, KHÔNG phải chỉ định phải code thêm xử lý cutout. Dùng ảnh này y như file ảnh thường (nền toàn khung, giữ nguyên màu), không thêm filter grayscale/tách nền/đổ bóng trong code (nguồn: STYLE_DNA.md §2 "Ngoại lệ chính thức" — ảnh AI Flow là tranh màu).
+- TUYỆT ĐỐI không dùng biến template literal (vd \`\${compId}\`, \`\${sceneId}\`) bên trong querySelector/CSS selector ở thẻ <script> — trình bundler HTML của HyperFrames parse CSS/selector bằng static analysis và CRASH khi gặp biến nội suy. Luôn hardcode chuỗi cố định (vd document.querySelector('[data-composition-id="main"]'), không phải \`[data-composition-id="\${id}"]\`).
+- ${TEXT_COLOR_RULES_HF}
+- CLASS MÀU AN TOÀN ĐÃ CÓ SẴN (script tự chèn vào <style>, KHÔNG cần tự định nghĩa, dùng tuỳ ý cho phần tử chữ — vẫn tự do bố cục/kích thước/animation): ${SAFE_COLORS.doc}.
+${VIDEO_RULE_HF}
+- TUYỆT ĐỐI không dùng giá trị GSAP tương đối (vd y: "+=6") trên 1 thuộc tính nếu có tween khác cũng ghi cùng thuộc tính đó trên cùng phần tử ở khoảng thời gian gần nhau — "hyperframes check" bắt lỗi \`gsap_relative_value_second_writer\` (giá trị tương đối chốt mốc gốc lúc tween khởi tạo, seek tuần tự vs. worker render lẻ frame sẽ ra 2 kết quả khác nhau). Luôn dùng giá trị tuyệt đối cho y/x/scale/rotation, hoặc fromTo() với endpoint tường minh.
+- Kiểm tra kỹ mọi text/chữ KHÔNG bị phần tử khác đè lên (che khuất) tại bất kỳ mốc thời gian nào trong lúc nó đang hiển thị — "hyperframes check" bắt lỗi \`text_occluded\` (chữ bị ẩn dưới 1 phần tử opaque). Nếu che khuất là CÓ CHỦ ĐÍCH (transition, reveal), dùng data-layout-allow-occlusion trên đúng phần tử; nếu không, đổi z-index/vị trí để chữ luôn đọc được khi đang trong khung thời gian hiển thị của nó.
+- TUYỆT ĐỐI không tạo NHIỀU phần tử timed (data-start khác nhau) cùng chứa/render TRÙNG LẶP cùng 1 nội dung text (vd hiệu ứng "label/punch-phrase xuất hiện" bị vô tình lặp lại thành 2-3 bản sao với data-start lệch nhau vài trăm ms đến ~1.3s thay vì đúng 1 bản duy nhất) — "hyperframes check" bắt lỗi \`content_overlap\` (2 khối text đè lên nhau tại cùng vị trí, chữ bị lem không đọc được). Mỗi label/punch-phrase/overlay chỉ được có ĐÚNG 1 phần tử/1 timeline hiển thị nó; nếu cần hiệu ứng xuất hiện theo từng từ, dùng 1 cấu trúc timeline duy nhất kiểm soát opacity/transform của từng span con, không tạo nhiều bản sao độc lập của cùng khối text.
+- TUYỆT ĐỐI không tự bịa thêm số liệu/trích dẫn cụ thể KHÔNG có trong SCENE PLAN/SHOTLIST được giao (vd % con số, tỷ lệ, tên điều/khoản luật, ngày tháng, số tiền) dù nghe có vẻ hợp lý hoặc đúng kiến thức nền — chỉ dùng ĐÚNG số liệu/chữ đã có trong "overlays"/"notes" của shot. Lỗi này đã lặp lại ở nhiều video khác nhau (số liệu tài chính bịa, % bịa, trích dẫn điều luật cụ thể không có nguồn) — kể cả khi số liệu tự thêm đúng thực tế khách quan, đây vẫn là rủi ro sai lệch nội dung bản án/kịch bản thật không được xác minh, reviewer sẽ FAIL. Nếu 1 label/overlay trong shotlist chỉ mô tả Ý ĐỒ chung (không kèm con số cụ thể), hãy diễn đạt lại bằng chữ, không tự chế thêm con số để "cho cụ thể hơn".`;
+
+// Chỉ chèn khi scene có dùng ảnh trích dẫn bản án PDF (source:"pdf") — scene khác không đổi prompt.
+const PDF_DOC_RULE_HF = usedMedia.some((m) => m?.source === "pdf")
+  ? `- ẢNH TRÍCH DẪN BẢN ÁN (asset có source="pdf", id doc-NN) là BẰNG CHỨNG, không phải ảnh nền: đây là dải chữ NGANG (vd 1080x300) chụp từ bản án, đã tô cam sẵn đoạn quan trọng NGAY TRONG ảnh. Hiển thị dạng THẺ giữa khung dọc: width ≈ 92% khung, height:auto (hoặc object-fit:contain), canh giữa theo chiều dọc trong vùng an toàn, KHÔNG dùng object-fit:cover, KHÔNG phủ toàn khung, KHÔNG dùng làm nền. Chữ trong ảnh PHẢI đọc được suốt shot: không opacity<1 sau khi đã vào, không filter/blur/lớp tối phủ lên ảnh, không cắt mép, KHÔNG vẽ thêm highlight/khung lên ảnh (đã có), không đặt overlay đè lên ảnh. Chỉ animate vào/ra (fade, trượt nhẹ, scale ≤5%). Đặt thẻ ngoài vùng phụ đề. TUYỆT ĐỐI không tự viết lại/tóm tắt/chế thêm chữ của bản án thành text HTML — chỉ dùng chữ overlay có trong SHOTLIST.`
+  : null;
+
+// [POC mascot-aroll / ADN v2] Luật riêng theo loại cảnh — chỉ mô tả ràng buộc kỹ thuật + quy tắc ADN v2, không dựng khung sẵn.
+const SCENE_KIND = scenes[0]?.kind ?? "asset";
+const MOVING_GRID_SNIPPET = `Nền "grid-moving" (lưới ô 84px TRÔI CHẬM, tất định) — dùng ĐÚNG khuôn sau cho lớp nền (đặt TRƯỚC mọi phần tử khác trong #root, không timed):
+HTML: <div class="bg-wrap"><div id="bg-grid" class="bg-grid"></div></div>
+CSS: .bg-wrap{position:absolute;left:0;top:0;width:1080px;height:1920px;overflow:hidden} .bg-grid{position:absolute;left:-168px;top:-168px;width:1416px;height:2256px;background-image:linear-gradient(to right,rgba(20,20,20,0.32) 1.5px,transparent 1.5px),linear-gradient(to bottom,rgba(20,20,20,0.32) 1.5px,transparent 1.5px);background-size:84px 84px}
+JS: tl.fromTo("#bg-grid",{x:0,y:0},{x:<dx>,y:<dy>,duration:<thời lượng scene giây>,ease:"none",immediateRender:false},0); với (dx,dy) theo HƯỚNG TRÔI của scene (driftDir): left=(-D,0) right=(D,0) up=(0,-D) down=(0,D) diag-dr=(0.7D,0.7D) diag-ul=(-0.7D,-0.7D), D = min(150, round(18 × thời lượng scene giây)) px. Không repeat:-1, không xoay.`;
+const BG_INSTRUCTION = scenes[0]?.backgroundVariant === "grid-moving"
+  ? MOVING_GRID_SNIPPET + `\nHƯỚNG TRÔI của scene này: ${scenes[0]?.driftDir}.`
+  : `Nền của scene này: "${scenes[0]?.backgroundVariant}" (card=phẳng #F5F0E4 không lưới; spotlight=nền giấy + vignette radial rgba(20,20,20,0.28) ở mép; chart=4 đường kẻ ngang đậm 20/40/60/80% + vạch cam bên trái) — không dùng lưới.`;
+// [ADN v2] shot media đặt "contain" (nằm ngang/phân giải thấp/doc-NN) — hộp cố định + nền nhìn thấy phía sau
+const CONTAIN_SHOTS = shots.filter((s) => s.mediaFit === "contain");
+const CONTAIN_RULES = CONTAIN_SHOTS.length
+  ? `\n- [ADN v2 — SHOT MEDIA "CONTAIN"] Các shot sau đặt media GỌN (không phủ kín khung) vì ảnh/video nằm ngang hoặc độ phân giải thấp (phủ kín sẽ phóng ×4–11 và cắt 60–70% hình): ${CONTAIN_SHOTS.map((s) => `${s.id} asset ${s.assetId} hộp {left:${s.containBox.x}px, top:${s.containBox.y}px, width:${s.containBox.w}px, height:${s.containBox.h}px}`).join("; ")}. Với các shot này: wrapper media position:absolute với left/top/width/height PX CỐ ĐỊNH đúng hộp + overflow:hidden; thẻ <img>/<video> bên trong width:100%;height:100% của CHÍNH wrapper có kích thước cố định đó, object-fit:cover (hộp đã đúng tỉ lệ nguồn nên không cắt). KHÔNG zoom/crop làm cắt hình; chuyển động chỉ scale ≤1.08 hoặc pan ≤40px trên wrapper (không có data-start). NỀN NHÌN THẤY quanh media là lớp NỀN của scene: đặt phía sau mọi media, không timed, hiện xuyên suốt scene (shot cover phủ kín nên che nó). ${BG_INSTRUCTION} Đây là ngoại lệ DUY NHẤT cho lớp nền trong cảnh asset: nền KHÔNG được phủ lên media; không thêm chữ/svg/khung viền/bóng đổ quanh media.`
+  : "";
+const V2_SCENE_RULES = SCENE_KIND === "asset"
+  ? `- [ADN v2 — CẢNH ASSET] Cảnh này CHỈ gồm media (ảnh/video) + chuyển động của chính media. TUYỆT ĐỐI KHÔNG: phần tử chữ nào (kể cả nhãn/tiêu đề/số/mốc thời gian), <svg>/<canvas>, icon, mũi tên, thẻ/card, khối màu/gradient/vignette/lớp tối phủ lên media, khung viền, thanh cam đáy khung, nền lưới. Phụ đề do track riêng ở cấp video — KHÔNG tự thêm. Thực hiện đúng presentationStyle/cameraMotion của scene/shot bằng transform (x/y/scale/opacity) trên wrapper KHÔNG có data-start: push-in/pull-out (scale), pan (x/y), crop-reframe (đổi vùng nhìn bằng scale+x/y), split (2 khung media nằm sát nhau, mỗi khung wrapper có width/height px cố định + overflow:hidden), reveal (wipe bằng wrapper overflow:hidden + dịch x/y), multi-shot-cut (đổi shot đúng mốc). Sự kiện hình (đổi crop/camera/shot) phải bám cue và dàn đều, không để >3s không có sự kiện. TUYỆT ĐỐI không rotate/skew/rotation≠0 ở bất kỳ phần tử nào (kể cả lúc vào cảnh). KÍCH THƯỚC: mọi wrapper media có width/height px CỐ ĐỊNH + overflow:hidden; thẻ <img>/<video> bên trong dùng px cố định hoặc object-fit:cover trong wrapper đó — KHÔNG dùng width/height:100% cho con của phần tử không định kích thước (đã gây video tràn thành mảng đen ở dua-inox-han-quoc S09). Media không được tràn khung 1080×1920.${CONTAIN_RULES}`
+  : `- [ADN v2 — CẢNH ĐỒ HOẠ] Chỉ dùng cảnh này vì thiếu asset phù hợp. Tối đa 3 khối chữ (1 punch phrase + 2 nhãn/thẻ), không chồng lên nhau, chữ/thẻ/media KHÔNG xoay/nghiêng/skew (rotation=0) ở mọi thời điểm kể cả lúc vào cảnh — CHỈ bộ phận vẽ thuần KHÔNG chứa chữ (kim đồng hồ, mũi tên, máy bay trong sơ đồ…) được xoay khi đó là ý nghĩa của shot (vd kim xoay 90°→140°), và bộ phận xoay không được chứa chữ/ảnh/video bên trong; nền spotlight/card/chart KHÔNG có lưới (lưới chỉ ở biến thể grid-moving); màu chỉ trong palette (không tự thêm màu nâu/xanh…); kiểu vào cảnh chỉ trong bộ KHÔNG XOAY: rise/grow/punch/shatter/unfold/zoom-through/strike; chuyển động nền liên tục chỉ bằng bob (y)/drift-x (x)/breathe (scale 1→1.012), lệch pha giữa các phần tử; KHÔNG thanh cam đáy khung.
+${BG_INSTRUCTION}`;
+
+function buildPrompt(feedback, previousFiles) {
+  const retryFilesBlock = previousFiles
+    ? Object.entries(previousFiles)
+        .map(([p, c]) => `### ${p}\n\`\`\`\n${c}\n\`\`\``)
+        .join("\n\n")
+    : null;
+
+  const systemPrompt = `Bạn là kỹ sư HyperFrames (framework dựng video từ HTML + CSS + GSAP của HeyGen, render qua headless Chrome + FFmpeg). Đây là composition HTML thuần, KHÔNG phải React/Remotion — không dùng bất kỳ API Remotion nào (useCurrentFrame, interpolate, Sequence...).
+
+SKILL DOCS (bắt buộc tuân theo — nguồn xác thực duy nhất cho cú pháp HyperFrames/GSAP đúng):
+${skillDocs}
+
+STYLE DNA (STYLE_DNA.md — quy tắc hình ảnh/màu/font/caption/pacing bắt buộc, độc lập framework):
+${styleDnaCore}
+
+STYLE TOKENS (số liệu chính xác, độc lập framework):
+${styleTokens}
+
+DỰ ÁN HIỆN TẠI:
+- Project HyperFrames đã scaffold sẵn (portrait 1080x1920), file "index.html" hiện là blank template mặc định — bạn sẽ THAY THẾ TOÀN BỘ nội dung index.html bằng composition thật cho scene này.
+- Đây là 1 composition ĐỘC LẬP (không phải sub-composition, không có <template>) — chỉ cần đúng 1 composition-id "main", duration = tổng thời lượng scene (tính bằng giây từ startMs/endMs của SHOTLIST bên dưới, chia 1000).
+- Ảnh/video nguồn đã có sẵn trong thư mục "assets/" của project (xem MEDIA bên dưới để biết đúng tên file) — dùng thẳng đường dẫn tương đối "assets/<file>".
+- Dịch lại đúng tinh thần SHOTLIST bên dưới (từng shot có assetTreatment/cameraMotion/overlays/transitionIn/notes chi tiết) bằng ngôn ngữ GSAP/HTML tự nhiên của HyperFrames — KHÔNG cần dịch máy móc từng animation của bản Remotion đối chứng (bạn không thấy code Remotion đó), chỉ cần đúng Ý ĐỒ biên tập mô tả trong shotlist.
+- Video (assetTreatment có trimStartSec/trimEndSec) dùng thẻ <video> theo đúng CẤU TRÚC BẮT BUỘC ở mục VIDEO bên dưới.
+
+HỢP ĐỒNG RIÊNG CỦA REPO (đặt CUỐI để không bị chìm giữa ~30k token tài liệu chung — vi phạm các quy tắc này là nguyên nhân verify FAIL phổ biến nhất đã đo được; chúng KHÔNG giới hạn sáng tạo bố cục/animation, chỉ là ràng buộc kỹ thuật):
+${KNOWN_GOTCHAS_HF}${PDF_DOC_RULE_HF ? `
+${PDF_DOC_RULE_HF}` : ""}
+${V2_SCENE_RULES}
+
+${
+  feedback
+    ? `\nLẦN THỬ TRƯỚC BỊ LỖI. Đây là TOÀN BỘ code lần thử trước:\n\n${retryFilesBlock}\n\nLỖI CẦN SỬA (sửa đúng các lỗi này, giữ nguyên kiến trúc/ý tưởng đã dùng nếu không liên quan tới lỗi, in lại đầy đủ nội dung file đã sửa):\n${feedback}\n`
+    : ""
+}
+
+ĐỊNH DẠNG OUTPUT — KHÔNG dùng JSON, dùng định dạng sau cho MỖI file cần tạo/cập nhật (in lại TOÀN BỘ nội dung file, không phải diff, không markdown fence bên trong):
+
+### FILE: index.html
+<toàn bộ nội dung file>
+### END
+
+Không viết gì khác ngoài khối ### FILE ... ### END này. Chỉ output đúng 1 file "index.html".`;
+
+  const userPrompt = `SCENE PLAN (scene cần code lần này):
+${JSON.stringify(scenes, null, 2)}
+
+SHOTLIST (chi tiết từng shot):
+${JSON.stringify(shotsForPrompt, null, 2)}
+
+MEDIA MANIFEST (asset dùng trong các shot trên):
+${JSON.stringify(usedMedia, null, 2)}
+
+Hãy sinh composition HyperFrames cho scene: ${sceneId}.`;
+
+  return { systemPrompt, userPrompt };
+}
+
+function parseFiles(text) {
+  const files = {};
+  const re = /### FILE: (.+?)\r?\n([\s\S]*?)(?=\r?\n### FILE: |\r?\n### END|$)/g;
+  let m;
+  while ((m = re.exec(text))) {
+    files[m[1].trim()] = m[2].replace(/\r?\n$/, "");
+  }
+  return files;
+}
+
+async function generate(feedback, previousFiles) {
+  const { systemPrompt, userPrompt } = buildPrompt(feedback, previousFiles);
+  console.log(`Gọi ${GEN_MODEL} để sinh composition HyperFrames cho scene: ${sceneId}${feedback ? " (retry)" : ""}...`);
+  const { response, model } = await callWithModelFallback(
+    [GEN_MODEL, GEN_MODEL_FALLBACK],
+    (m) =>
+      callModel({
+        model: m,
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt },
+        ],
+        temperature: 0.3,
+        maxTokens: 16000,
+        timeoutMs: 900000,
+      }),
+    {
+      label: "generator",
+      onInfraError: (e, m, round) =>
+        appendCodegenIssue([{ stage: "generate-infra-error", detail: `${m} vòng ${round}: ${String(e.message ?? e).slice(0, 500)}` }]),
+    },
+  );
+  if (model !== GEN_MODEL) console.log(`  (sinh bằng model DỰ PHÒNG ${model})`);
+  genModelUsed = model;
+  const text = extractText(response);
+  const files = parseFiles(text);
+  if (Object.keys(files).length === 0) {
+    throw new Error("Không parse được file nào từ output generator:\n" + text.slice(0, 1000));
+  }
+  return files;
+}
+
+// Dùng CHUNG pipeline/codegen-issues.jsonl với bản Remotion (field `framework` phân biệt) — mục
+// đích audit định kỳ tìm lỗi lặp lại xuyên cả 2 framework, không phân mảnh log.
+function appendCodegenIssue(entries) {
+  const logPath = path.join(root, "pipeline", "codegen-issues.jsonl");
+  fs.mkdirSync(path.dirname(logPath), { recursive: true });
+  const ts = new Date().toISOString();
+  const lines = entries.map((e) =>
+    JSON.stringify({ ts, video: slug, scene: sceneId, attempt, framework: "hyperframes", ...e }),
+  );
+  fs.appendFileSync(logPath, lines.join("\n") + "\n", "utf8");
+}
+
+// Ghi MỌI lỗi hạ tầng vào codegen-issues.jsonl — trước đây chỉ in console nên audit không thấy (lỗ
+// đen: hàng trăm lần thử mất mà không có dòng verify/review nào được ghi).
+function logInfraError(stage, model) {
+  return (e, tryNo) => appendCodegenIssue([{ stage, detail: `${model} lần ${tryNo}: ${String(e.message ?? e).slice(0, 500)}` }]);
+}
+
+/** Bước tất định TRƯỚC check: (1) chèn bộ class màu an toàn vào khối <style> đầu tiên (idempotent);
+ * (2) sửa cấu trúc <video> khi chắc chắn (hf-autofix.mjs). Trả files mới (đã ghi đĩa nếu có đổi). */
+function applyPreCheckAutofix(files) {
+  let html = files["index.html"];
+  if (!html) return files;
+  if (!html.includes("hf-safe-colors")) html = injectIntoFirstStyle(html, SAFE_COLORS.css) ?? html;
+  const vf = autofixVideoTiming(html, { scene: scenes[0], shots, mediaById });
+  if (vf.changes.length) {
+    console.log(`Autofix <video> (tất định): ${vf.changes.join("; ")}`);
+    appendCodegenIssue([{ stage: "autofix-video", detail: vf.changes.join("\n").slice(0, 2000) }]);
+    html = vf.html;
+  }
+  if (vf.skipped.length) console.log(`(autofix <video> bỏ qua: ${vf.skipped.join("; ")})`);
+  if (html === files["index.html"]) return files;
+  const out = { ...files, "index.html": html };
+  writeFiles(out);
+  return out;
+}
+
+function writeFiles(files) {
+  for (const [rel, content] of Object.entries(files)) {
+    const full = path.join(tempProjectDir, rel);
+    fs.mkdirSync(path.dirname(full), { recursive: true });
+    fs.writeFileSync(full, content, "utf8");
+    console.log(`  wrote ${rel} (${content.length} chars)`);
+  }
+}
+
+// verify() — mirror ĐÚNG codegen-poc.mjs: check project STANDALONE tạm, luôn full
+// `hyperframes check` (lint+runtime+layout+motion+contrast) — an toàn chạy song song vì mỗi
+// scene có project riêng, không còn file nào bị race.
+// --caption-zone: check TOẠ ĐỘ HÌNH HỌC thuần tuý (bắt scene tự đặt card/text đè vùng caption dành
+// riêng — bài học thật S02/S16: standalone PASS riêng lẻ vẫn lọt lỗi khi ráp chung với
+// caption-track). Scene standalone ở đây KHÔNG mount caption-track.html nên không dính false
+// positive đã gặp khi test caption-track tự báo lỗi trên chính nó (đã sửa riêng ở
+// generate-caption-track-hf.mjs bằng data-layout-allow-caption-zone).
+function verify(files) {
+  const rootFlags = findRootLayoutFlags(files["index.html"]);
+  if (rootFlags.length > 0) {
+    return {
+      passed: false,
+      infraError: false,
+      raw: `Phát hiện cờ layout đặt SAI CHỖ trên #root: ${rootFlags.join(", ")}. Các cờ này dùng closest() nên tắt TOÀN BỘ layout audit của cả scene khi đặt ở root — di chuyển xuống ĐÚNG phần tử con cụ thể cần opt-out (không phải root).`,
+    };
+  }
+  // seek dày: caption-zone mặc định CLI chỉ xét khung cuối scene — xem SCENE_CAPTION_SEEK.
+  return runHyperframesCheck(tempProjectDir, { extraArgs: [getCaptionZoneArg(root, { seek: SCENE_CAPTION_SEEK })] });
+}
+
+async function review(files) {
+  // Cổng review có cấu trúc (quyết định người dùng 2026-09-26): reviewer phân loại BLOCKING/ADVISORY,
+  // SCRIPT quyết định PASS/FAIL theo danh sách BLOCKING (parseReviewVerdict) — xem review-gate.mjs.
+  const systemPrompt = `Bạn review code HyperFrames (HTML + GSAP) vừa sinh ra, đối chiếu với shotlist và style DNA. Code này ĐÃ PASS "hyperframes check" (lint + runtime + layout + contrast + caption-zone).
+${REVIEW_FORMAT}
+
+QUAN TRỌNG: đây là HyperFrames (HTML/GSAP), KHÔNG PHẢI Remotion/React — không chấm điểm dựa trên quy ước Remotion.
+
+${REVIEW_POLICY}
+
+SKILL DOCS:
+${skillDocs}
+
+${KNOWN_GOTCHAS_HF}
+${V2_SCENE_RULES}
+
+LƯU Ý VỀ TÊN FILE ASSET: một số file ảnh có chữ "cutout" trong TÊN FILE — đó chỉ là mô tả phong cách minh hoạ do ảnh AI tạo sẵn đã có, KHÔNG phải chỉ định phải áp dụng xử lý cutout trong code. Theo quyết định dự án, ảnh luôn dùng làm nền toàn khung, giữ nguyên màu (nguồn: STYLE_DNA.md §2 "Ngoại lệ chính thức").`;
+  const filesText = Object.entries(files)
+    .map(([p, c]) => `### ${p}\n\`\`\`html\n${c}\n\`\`\``)
+    .join("\n\n");
+  const userPrompt = `SHOTLIST liên quan:\n${JSON.stringify(shotsForPrompt, null, 2)}\n\nCODE VỪA SINH:\n${filesText}`;
+  const { response, model } = await callWithModelFallback(
+    [REVIEW_MODEL, REVIEW_MODEL_FALLBACK],
+    (m) =>
+      callModel({
+        model: m,
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt },
+        ],
+        temperature: 0.2,
+        maxTokens: 2000,
+        timeoutMs: 900000,
+      }),
+    {
+      label: "reviewer",
+      onInfraError: (e, m, round) =>
+        appendCodegenIssue([{ stage: "review-infra-error", detail: `${m} vòng ${round}: ${String(e.message ?? e).slice(0, 500)}` }]),
+    },
+  );
+  if (model !== REVIEW_MODEL) console.log(`  (review bằng model DỰ PHÒNG ${model})`);
+  reviewModelUsed = model;
+  return extractText(response);
+}
+
+const issueFileArg = process.argv.find((a) => a.startsWith("--issue-file="));
+const issueFilePath = issueFileArg?.slice("--issue-file=".length);
+const seededIssue = issueFileArg
+  ? fs.readFileSync(issueFilePath, "utf8")
+  : null;
+
+let attempt = 0;
+let feedback = seededIssue ? `Người dùng báo lỗi trên bản đã PASS trước đó, sửa đúng các lỗi sau (giữ nguyên phần còn lại):\n${seededIssue}` : null;
+// --issue-file sửa lỗi TRÊN code hiện có (không sinh lại từ đầu) — nạp file standalone tạm nếu
+// còn (attempt trước fail chưa dọn), best-effort: nếu không còn (vd lần trước đã PASS+dọn), model
+// sẽ sinh lại từ đầu chỉ dựa vào mô tả lỗi.
+let previousFiles = seededIssue && fs.existsSync(path.join(tempProjectDir, "index.html"))
+  ? { "index.html": fs.readFileSync(path.join(tempProjectDir, "index.html"), "utf8") }
+  : null;
+let finalFiles = null;
+let finalVerdict = null;
+let finalReviewPass = false; // quyết định theo parseReviewVerdict (lỗi CHẶN), không theo dòng VERDICT
+// Code đã PASS verify gần nhất — giữ lại khi reviewer/generator lỗi hạ tầng hết ngân sách (không vứt).
+let verifyPassedFiles = null;
+let infraFailure = null; // { stage: "generate" | "review", message }
+
+// --review-only: dùng lại index.html đang có trong .gen-tmp (thường là bản đã PASS verify nhưng
+// reviewer lỗi hạ tầng ở lần chạy trước, mã thoát 2) — verify lại + review, không gọi generator. Nếu
+// verify lại FAIL thì tiếp tục vòng sửa bình thường với feedback.
+const tmpIndexPath = path.join(tempProjectDir, "index.html");
+if (reviewOnly && !fs.existsSync(tmpIndexPath)) {
+  console.error(`--review-only nhưng không có ${tmpIndexPath} — chạy lại không có cờ này.`);
+  process.exit(1);
+}
+let reuseFiles = reviewOnly ? { "index.html": fs.readFileSync(tmpIndexPath, "utf8") } : null;
+
+while (attempt < MAX_ATTEMPTS) {
+  attempt++;
+  console.log(`\n=== Attempt ${attempt}/${MAX_ATTEMPTS} ===`);
+  try {
+    let files;
+    if (reuseFiles) {
+      files = reuseFiles;
+      reuseFiles = null;
+      console.log("(--review-only) dùng lại index.html trong .gen-tmp, không gọi generator.");
+    } else {
+      try {
+        files = await generate(feedback, previousFiles);
+      } catch (e) {
+        if (e.infraExhausted) {
+          infraFailure = { stage: "generate", message: String(e.message ?? e) };
+          console.log(`Lỗi khi gọi 9router — generator không khả dụng sau khi đã chờ/thử lại: ${e.message || e}`);
+          break;
+        }
+        throw e;
+      }
+      writeFiles(files);
+    }
+    files = applyPreCheckAutofix(files);
+    previousFiles = files;
+
+    // [ADN v2] kiểm tra TẤT ĐỊNH trước `hyperframes check` (rẻ hơn 1 lần check ~20s): không chữ/svg trên cảnh asset,
+    // không xoay/skew, giới hạn số khối chữ cảnh đồ hoạ. Lỗi → feedback ngay, không tốn check/reviewer.
+    const v2Problems = SCENE_KIND === "asset" ? checkAssetScene(files["index.html"]) : checkGraphicsScene(files["index.html"]);
+    if (v2Problems.length) {
+      console.log("ADN v2 check FAILED:\n" + v2Problems.join("\n"));
+      appendCodegenIssue([{ stage: "v2-check", detail: v2Problems.join("\n").slice(0, 2000) }]);
+      feedback = "LỖI CHẶN (script kiểm tra tất định ADN v2):\n" + v2Problems.map((p) => "- " + p).join("\n");
+      continue;
+    }
+
+    let v = verify(files);
+    if (!v.passed && !v.infraError) {
+      // Tự sửa contrast tất định (1 lượt) — chỉ khi MỌI lỗi còn lại là contrast xác định chắc chắn phần
+      // tử; thay 1 vòng generate LLM bằng 1 lần check lại. Xem hf-autofix.mjs.
+      const cf = autofixContrast(files["index.html"], v.raw, { sceneId, tokens: styleTokensObj });
+      if (cf.applied) {
+        console.log(`Autofix contrast (tất định): ${cf.changes.join("; ")} — check lại...`);
+        appendCodegenIssue([{ stage: "autofix-contrast", detail: cf.changes.join("\n").slice(0, 2000) }]);
+        files = { ...files, "index.html": cf.html };
+        writeFiles(files);
+        previousFiles = files;
+        v = verify(files);
+      } else {
+        console.log(`(autofix contrast không áp dụng: ${cf.reason})`);
+      }
+    }
+    if (!v.passed) {
+      // formatCheckFeedback: chỉ lỗi làm FAIL, gộp theo nguyên nhân (phần tử che / cặp màu), giữ
+      // text/fg/bg/suggestedColor/phần tử che — bản cũ (summarizeCheckRaw) bỏ mất các field này và in
+      // lặp mỗi mốc thời gian, model phải đoán cách sửa (đo 2026-09-26: 34% dòng lỗi là lặp).
+      console.log("Verify (hyperframes check) FAILED:\n" + formatCheckFeedback(v.raw, 3000));
+      appendCodegenIssue([{ stage: v.infraError ? "verify-infra-error" : "verify-hf-check", detail: formatCheckFeedback(v.raw, 3000) }]);
+      feedback = "hyperframes check FAILED:\n" + formatCheckFeedback(v.raw, 5000);
+      continue;
+    }
+    console.log("Verify (hyperframes check) PASS.");
+    // [ADN v2] overflow của media/mascot mức warning cũng là lỗi cứng (bài học dua-inox-han-quoc S09)
+    const ovProblems = overflowProblems(v.raw);
+    if (ovProblems.length) {
+      console.log("ADN v2 overflow FAILED:\n" + ovProblems.join("\n"));
+      appendCodegenIssue([{ stage: "v2-overflow", detail: ovProblems.join("\n").slice(0, 2000) }]);
+      feedback = "LỖI CHẶN (script kiểm tra tất định ADN v2):\n" + ovProblems.map((p) => "- " + p).join("\n");
+      continue;
+    }
+    verifyPassedFiles = files;
+
+    // Kiểm tra TẤT ĐỊNH dùng đúng file asset được giao — trước reviewer (không tốn 1 lần gọi reviewer, và
+    // reviewer không thấy ảnh nên không được tự đoán "sai asset" từ tên file). Xem review-gate.mjs.
+    const assetProblems = checkAssetUsage(files["index.html"], shots, mediaById);
+    if (assetProblems.length) {
+      console.log("Asset check FAILED:\n" + assetProblems.join("\n"));
+      appendCodegenIssue([{ stage: "asset-check", detail: assetProblems.join("\n") }]);
+      feedback = "LỖI CHẶN (script kiểm tra tất định):\n" + assetProblems.map((p) => "- " + p).join("\n");
+      continue;
+    }
+
+    let reviewText;
+    try {
+      reviewText = await review(files);
+    } catch (e) {
+      if (e.infraExhausted) {
+        // KHÔNG sinh lại: code đã PASS verify vẫn nằm nguyên trong .gen-tmp để --review-only dùng lại.
+        infraFailure = { stage: "review", message: String(e.message ?? e) };
+        console.log(`Lỗi khi gọi 9router — reviewer không khả dụng sau khi đã chờ/thử lại: ${e.message || e}`);
+        break;
+      }
+      throw e;
+    }
+    console.log("Review result:\n" + reviewText);
+    finalFiles = files;
+    finalVerdict = reviewText;
+    // SCRIPT quyết định theo danh sách lỗi CHẶN (review-gate.mjs), không theo dòng VERDICT tự do.
+    const rv = parseReviewVerdict(reviewText, { paletteHexes: PALETTE_HEXES, assetUsageVerified: true }); // tới đây checkAssetUsage đã PASS
+    if (rv.demoted?.length) {
+      console.log(`(hạ cấp tự động ${rv.demoted.length} mục BLOCKING thuộc loại GÓP Ý theo chính sách)`);
+      appendCodegenIssue([{ stage: "review-demoted", detail: rv.demoted.join("\n").slice(0, 2000) }]);
+    }
+    finalReviewPass = rv.pass;
+    if (rv.advisory.length) appendCodegenIssue([{ stage: "review-advisory", detail: rv.advisory.join("\n").slice(0, 2000) }]);
+    if (rv.pass) {
+      if (!rv.verdictPass) console.log(`(reviewer ghi VERDICT FAIL nhưng không có lỗi CHẶN → PASS; ${rv.advisory.length} góp ý đã ghi log)`);
+      break;
+    }
+    appendCodegenIssue([{ stage: "review", detail: (rv.structured ? rv.blocking.map((b) => "- " + b).join("\n") : reviewText).slice(0, 2000) }]);
+    feedback = rv.structured
+      ? "Reviewer FAIL — LỖI CHẶN cần sửa (chỉ sửa đúng các lỗi này, giữ nguyên phần còn lại):\n" + rv.blocking.map((b) => "- " + b).join("\n")
+      : "Reviewer FAIL:\n" + reviewText;
+  } catch (e) {
+    // Lỗi KHÔNG phải hạ tầng (vd không parse được output generator) — giữ hành vi cũ: tính 1 lần thử.
+    console.log(`Lỗi khi gọi 9router (sẽ thử lại): ${e.message || e}`);
+    appendCodegenIssue([{ stage: "attempt-error", detail: String(e.message ?? e).slice(0, 1000) }]);
+  }
+}
+
+const passed = finalReviewPass === true; // theo lỗi CHẶN (parseReviewVerdict), không theo dòng VERDICT
+
+if (passed) {
+  // --- Chuyển đổi TẤT ĐỊNH standalone -> sub-composition (KHÔNG AI) — tổng quát hoá đúng logic
+  // đã chứng minh đúng của poc/hyperframes/assemble-poc.mjs. ---
+  const compId = `scene-${sceneId.toLowerCase()}`;
+  const standaloneHtml = fs.readFileSync(path.join(tempProjectDir, "index.html"), "utf8");
+  const subCompHtml = standaloneToSubComposition(standaloneHtml, compId);
+  fs.writeFileSync(path.join(vp.hfCompositionsDir, `${compId}.html`), subCompHtml, "utf8");
+  console.log(`  chuyển đổi tất định: standalone -> compositions/${compId}.html`);
+  fs.rmSync(tempProjectDir, { recursive: true, force: true });
+
+  if (!noRootSync) {
+    syncRootHf(slug, root);
+  }
+}
+
+const failReason = infraFailure
+  ? infraFailure.stage === "review" && verifyPassedFiles
+    ? `verify PASS nhưng reviewer ${REVIEW_MODEL} + dự phòng ${REVIEW_MODEL_FALLBACK} đều KHÔNG KHẢ DỤNG (lỗi hạ tầng sau khi đã chờ/thử lại: ${infraFailure.message.slice(0, 300)}) — chạy lại bằng --review-only, không cần sinh lại code.`
+    : `${infraFailure.stage === "generate" ? `generator ${GEN_MODEL} + dự phòng ${GEN_MODEL_FALLBACK}` : `reviewer ${REVIEW_MODEL} + dự phòng ${REVIEW_MODEL_FALLBACK}`} KHÔNG KHẢ DỤNG (lỗi hạ tầng sau khi đã chờ/thử lại: ${infraFailure.message.slice(0, 300)}).`
+  : finalVerdict
+    ? `Verdict cuối:\n${finalVerdict}`
+    : verifyPassedFiles
+      ? "verify đã PASS nhưng chưa có verdict review hợp lệ."
+      : "(chưa qua được verify)";
+const summary = passed
+  ? `Codegen HyperFrames scene [${sceneId}] PASS sau ${attempt} lần thử bằng ${genModelUsed ?? GEN_MODEL}${genModelUsed && genModelUsed !== GEN_MODEL ? " — DỰ PHÒNG" : ""} (review: ${reviewModelUsed ?? REVIEW_MODEL}${reviewModelUsed && reviewModelUsed !== REVIEW_MODEL ? " — DỰ PHÒNG" : ""})${reviewOnly ? " [--review-only]" : ""} — đã chuyển đổi thành compositions/scene-${sceneId.toLowerCase()}.html.`
+  : `Codegen HyperFrames scene [${sceneId}] KHÔNG đạt sau ${attempt} lần thử — cần Claude can thiệp. ${failReason}\nProject standalone tạm còn giữ tại: ${tempProjectDir}`;
+
+console.log("\n" + summary);
+appendRunLog(`\`scripts/07-codegen.hf.router.mjs --video=${slug} --scenes=${sceneId}${issueFilePath ? ` --issue-file=${issueFilePath}` : ""}${reviewOnly ? " --review-only" : ""}\` — ${summary}`, vp.runLog);
+
+if (!passed) {
+  // Mã 2 = verify PASS nhưng reviewer không khả dụng → 07-codegen-hf-parallel.mjs tự chạy --review-only.
+  process.exit(infraFailure?.stage === "review" && verifyPassedFiles ? EXIT_REVIEW_UNAVAILABLE : 1);
+}

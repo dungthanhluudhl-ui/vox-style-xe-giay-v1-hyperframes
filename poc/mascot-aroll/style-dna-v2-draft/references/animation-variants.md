@@ -1,6 +1,6 @@
 # Biến thể chuyển động vào cảnh (entrance animations)
 
-> **[v2 NHÁP]** Cảnh đồ hoạ chỉ dùng: rise, grow, punch, shatter, unfold, zoom-through, strike + chuyển động nền `bob`. Không phần tử nào có rotation ≠ 0 / skew. Cảnh mascot chỉ `hold`/`grow-600`.
+> **[v2 NHÁP]** Cảnh ASSET: KHÔNG dùng 11 kiểu vào cảnh bên dưới — chỉ camera liên tục 1 tween/shot (STYLE_DNA.md mục 5), cắt hoặc crossfade 0,25s giữa các asset. Cảnh đồ hoạ chỉ dùng: rise, grow, punch, shatter, unfold, zoom-through, strike + chuyển động nền `bob`. Không phần tử nào có rotation ≠ 0 / skew. Cảnh mascot chỉ `hold`/`grow-600`.
 
 
 Mỗi cảnh, chủ thể chính (hero cutout) phải có một kiểu vào cảnh THẬT SỰ khác biệt. **Không

@@ -1,0 +1,486 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+      /* hf-safe-colors (tất định từ style-tokens.json) */
+      .hf-text-ink { color: #141414; }
+      .hf-text-light { color: #F7F4EC; }
+      .hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+      .hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+      .hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+      .hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background: #E7E3D9;
+        font-family: "Be Vietnam Pro", sans-serif;
+        color: #141414;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+      #root {
+        position: relative;
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+        background-color: #E7E3D9;
+      }
+
+      /* Lớp nền lưới chuyển động tất định (ADN v2: grid-moving) */
+      .bg-wrap {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+        z-index: 1;
+      }
+      .bg-grid {
+        position: absolute;
+        left: -168px;
+        top: -168px;
+        width: 1416px;
+        height: 2256px;
+        background-image:
+          linear-gradient(to right, rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px),
+          linear-gradient(to bottom, rgba(20, 20, 20, 0.32) 1.5px, transparent 1.5px);
+        background-size: 84px 84px;
+      }
+
+      /* Clip quy chuẩn của HyperFrames */
+      .clip {
+        position: absolute;
+        inset: 0;
+      }
+
+      /* Stage đồ họa hỗ trợ camera push-in ở Shot 2 */
+      #flow-stage {
+        position: absolute;
+        inset: 0;
+        transform-origin: 540px 960px;
+        z-index: 2;
+      }
+
+      /* SVG Diagram Overlay chứa hệ thống mắt xích và đường nối liên hoàn */
+      .flow-svg {
+        position: absolute;
+        inset: 0;
+        width: 1080px;
+        height: 1920px;
+        pointer-events: none;
+        z-index: 2;
+      }
+
+      /* Đường ray nền (Guide rails) */
+      .rail-guide {
+        fill: none;
+        stroke: rgba(20, 20, 20, 0.18);
+        stroke-width: 4px;
+        stroke-dasharray: 6 6;
+      }
+
+      /* Lớp lót đen mực cho đường dẫn cam nhằm đảm bảo tương phản tuyệt đối trên nền giấy */
+      .path-under {
+        fill: none;
+        stroke: #141414;
+        stroke-width: 10px;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
+      /* Nét cam tự vẽ chính của các mắt xích */
+      .path-active {
+        fill: none;
+        stroke: #FF6A1A;
+        stroke-width: 6px;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
+      /* Thẻ nhãn thông tin (Labels - tối đa 2 nhãn theo ADN v2) */
+      .label-card {
+        position: absolute;
+        background: #141414;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        padding: 16px 26px;
+        border: 2px solid rgba(255, 106, 26, 0.5);
+        box-shadow: 0 14px 32px rgba(20, 20, 20, 0.28);
+        z-index: 10;
+        will-change: transform, opacity;
+      }
+
+      .label-accent-bar {
+        width: 8px;
+        height: 38px;
+        background-color: #FF6A1A;
+        border-radius: 4px;
+        flex-shrink: 0;
+      }
+
+      .label-text {
+        color: #F7F4EC;
+        font-weight: 700;
+        font-size: 34px;
+        line-height: 1.2;
+        letter-spacing: 1px;
+        white-space: nowrap;
+      }
+
+      /* Thẻ Punch-phrase kết thúc video (Shot 2 - đúng 1 punch phrase duy nhất) */
+      .punch-card {
+        position: absolute;
+        left: 80px;
+        top: 1120px;
+        width: 920px;
+        background: #141414;
+        border-radius: 18px;
+        padding: 40px 32px;
+        box-sizing: border-box;
+        border: 3.5px solid #FF6A1A;
+        box-shadow: 0 24px 56px rgba(20, 20, 20, 0.38);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 20;
+        will-change: transform, opacity;
+      }
+
+      .punch-accent-top {
+        width: 140px;
+        height: 6px;
+        background-color: #FF6A1A;
+        border-radius: 3px;
+        margin-bottom: 22px;
+      }
+
+      .punch-title {
+        margin: 0;
+        color: #F7F4EC;
+        font-weight: 900;
+        font-size: 66px;
+        line-height: 1.25;
+        letter-spacing: 2px;
+        text-align: center;
+        white-space: nowrap;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s24"
+      data-width="1080"
+      data-height="1920"
+      data-duration="7.4"
+    >
+      <!-- Nền lưới chuyển động theo hướng diag-dr (ADN v2) -->
+      <div class="bg-wrap">
+        <div id="bg-grid" class="bg-grid" data-layout-allow-overflow="true"></div>
+      </div>
+
+      <!-- Khối clip chính chứa toàn bộ sơ đồ đồ họa chuyển động -->
+      <section id="scene-clip" class="clip" data-start="0" data-duration="7.4">
+        <div id="flow-stage">
+          <!-- Sơ đồ đường nối và mắt xích dạng SVG vector (thuần đồ họa, không chứa text) -->
+          <svg class="flow-svg" viewBox="0 0 1080 1920">
+            <!-- Ray dẫn hướng nền mờ -->
+            <path class="rail-guide" d="M 220 400 L 540 400" />
+            <path class="rail-guide" d="M 540 400 L 540 660" />
+            <path class="rail-guide" d="M 540 660 L 860 660" />
+            <path class="rail-guide" d="M 860 660 C 860 840, 540 820, 540 940" />
+            <path class="rail-guide" d="M 540 1014 L 540 1118" />
+
+            <!-- Đoạn 1: Mở khóa -> Ứng cứu (từ tâm 220,400 sang 540,400) -->
+            <path id="path-1-under" class="path-under" d="M 220 400 L 540 400" />
+            <path id="path-1" class="path-active" d="M 220 400 L 540 400" />
+
+            <!-- Đoạn 2: Ứng cứu -> Khống chế (từ tâm 540,400 xuống 540,660) -->
+            <path id="path-2-under" class="path-under" d="M 540 400 L 540 660" />
+            <path id="path-2" class="path-active" d="M 540 400 L 540 660" />
+
+            <!-- Đoạn 3: Khống chế -> Giữ cần lái (từ tâm 540,660 sang 860,660) -->
+            <path id="path-3-under" class="path-under" d="M 540 660 L 860 660" />
+            <path id="path-3" class="path-active" d="M 540 660 L 860 660" />
+
+            <!-- Đoạn 4: Giữ cần lái -> Điểm hạ cánh an toàn (từ 860,660 cong xuống 540,940) -->
+            <path id="path-4-under" class="path-under" d="M 860 660 C 860 840, 540 820, 540 940" />
+            <path id="path-4" class="path-active" d="M 860 660 C 860 840, 540 820, 540 940" />
+
+            <!-- Đoạn 5: Nối từ Điểm hạ cánh an toàn xuống punch card -->
+            <path id="path-5-under" class="path-under" d="M 540 1014 L 540 1118" />
+            <path id="path-5" class="path-active" d="M 540 1014 L 540 1118" />
+
+            <!-- Node 1 (Huy hiệu 1: Mở khóa cửa buồng lái) -->
+            <g id="node-1">
+              <circle class="node-glow" cx="220" cy="400" r="74" fill="none" stroke="#FF6A1A" stroke-width="3" opacity="0" />
+              <circle cx="220" cy="400" r="58" fill="#141414" stroke="#FF6A1A" stroke-width="4.5" />
+              <circle cx="220" cy="400" r="46" fill="none" stroke="#F7F4EC" stroke-width="1.5" stroke-dasharray="4 4" />
+              <!-- Icon ổ khóa mở -->
+              <rect x="202" y="392" width="36" height="28" rx="4" fill="#FF6A1A" />
+              <path d="M 210 392 V 380 A 10 10 0 0 1 230 380 V 385" fill="none" stroke="#FF6A1A" stroke-width="4" stroke-linecap="round" />
+              <circle cx="220" cy="406" r="3" fill="#141414" />
+            </g>
+
+            <!-- Node 2 (Huy hiệu 2: Hành khách ứng cứu) -->
+            <g id="node-2">
+              <circle class="node-glow" cx="540" cy="400" r="74" fill="none" stroke="#FF6A1A" stroke-width="3" opacity="0" />
+              <circle cx="540" cy="400" r="58" fill="#141414" stroke="#FF6A1A" stroke-width="4.5" />
+              <circle cx="540" cy="400" r="46" fill="none" stroke="#F7F4EC" stroke-width="1.5" stroke-dasharray="4 4" />
+              <!-- Icon hiệp lực / ứng cứu -->
+              <path d="M 522 400 L 558 400 M 544 386 L 558 400 L 544 414" fill="none" stroke="#FF6A1A" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" />
+              <path d="M 522 388 L 536 400 L 522 412" fill="none" stroke="#F7F4EC" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+            </g>
+
+            <!-- Node 3 (Huy hiệu 3: Khống chế hung thủ) -->
+            <g id="node-3">
+              <circle class="node-glow" cx="540" cy="660" r="74" fill="none" stroke="#FF6A1A" stroke-width="3" opacity="0" />
+              <circle cx="540" cy="660" r="58" fill="#141414" stroke="#FF6A1A" stroke-width="4.5" />
+              <circle cx="540" cy="660" r="46" fill="none" stroke="#F7F4EC" stroke-width="1.5" stroke-dasharray="4 4" />
+              <!-- Icon khiên trấn áp -->
+              <path d="M 540 636 L 560 644 V 664 C 560 678 540 687 540 687 C 540 687 520 678 520 664 V 644 Z" fill="none" stroke="#FF6A1A" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" />
+              <circle cx="540" cy="661" r="5" fill="#FF6A1A" />
+            </g>
+
+            <!-- Node 4 (Huy hiệu 4: Phi công giữ vững cần lái) -->
+            <g id="node-4">
+              <circle class="node-glow" cx="860" cy="660" r="74" fill="none" stroke="#FF6A1A" stroke-width="3" opacity="0" />
+              <circle cx="860" cy="660" r="58" fill="#141414" stroke="#FF6A1A" stroke-width="4.5" />
+              <circle cx="860" cy="660" r="46" fill="none" stroke="#F7F4EC" stroke-width="1.5" stroke-dasharray="4 4" />
+              <!-- Icon vô lăng / cần lái máy bay -->
+              <circle cx="860" cy="660" r="25" fill="none" stroke="#FF6A1A" stroke-width="4" />
+              <path d="M 837 660 H 883 M 860 640 V 680" fill="none" stroke="#F7F4EC" stroke-width="2.5" stroke-linecap="round" />
+              <circle cx="860" cy="660" r="5" fill="#FF6A1A" />
+            </g>
+
+            <!-- Node 5: Mắt xích & Biểu tượng ĐIỂM HẠ CÁNH AN TOÀN (Shot 2 - Vector thuần) -->
+            <g id="node-5">
+              <!-- Vòng quét tín hiệu an toàn phát sáng -->
+              <circle class="node-glow" id="node-5-glow" cx="540" cy="940" r="92" fill="none" stroke="#FF6A1A" stroke-width="3" opacity="0" />
+              <!-- Vành huy hiệu trung tâm -->
+              <circle cx="540" cy="940" r="74" fill="#141414" stroke="#FF6A1A" stroke-width="5" />
+              <circle cx="540" cy="940" r="60" fill="none" stroke="#F7F4EC" stroke-width="1.5" stroke-dasharray="4 4" />
+
+              <!-- Icon Đường băng và Máy bay tiếp đất an toàn -->
+              <!-- Nét vạch đường băng hội tụ -->
+              <path d="M 516 976 L 528 920 M 564 976 L 552 920" fill="none" stroke="#FF6A1A" stroke-width="3.5" stroke-linecap="round" />
+              <!-- Vạch trung tâm đường băng -->
+              <path d="M 540 972 L 540 958 M 540 950 L 540 938 M 540 930 L 540 918" fill="none" stroke="#F7F4EC" stroke-width="2.5" stroke-linecap="round" />
+              <!-- Vạch ngưỡng tiếp đất an toàn (touchdown zone) -->
+              <path d="M 514 976 H 566" fill="none" stroke="#FF6A1A" stroke-width="4" stroke-linecap="round" />
+
+              <!-- Thân và cánh máy bay hạ cánh an toàn -->
+              <path d="M 540 902 L 540 946" fill="none" stroke="#F7F4EC" stroke-width="5" stroke-linecap="round" />
+              <path d="M 510 926 L 570 926" fill="none" stroke="#F7F4EC" stroke-width="4" stroke-linecap="round" />
+              <path d="M 524 944 L 556 944" fill="none" stroke="#F7F4EC" stroke-width="3" stroke-linecap="round" />
+              <circle cx="540" cy="902" r="4" fill="#FF6A1A" />
+            </g>
+          </svg>
+
+          <!-- Label 1: MỞ KHÓA ỨNG CỨU (Shot 1, top-left) -->
+          <div id="label-1" class="label-card" style="left: 70px; top: 230px;">
+            <div class="label-accent-bar"></div>
+            <div class="label-text">MỞ KHÓA ỨNG CỨU</div>
+          </div>
+
+          <!-- Label 2: GIỮ VỮNG CẦN LÁI (Shot 1, middle-right) -->
+          <div id="label-2" class="label-card" style="right: 70px; top: 495px;">
+            <div class="label-accent-bar"></div>
+            <div class="label-text">GIỮ VỮNG CẦN LÁI</div>
+          </div>
+
+          <!-- Punch phrase kết thúc video: MUA THÊM CƠ HỘI (Shot 2, center) -->
+          <div id="punch-card" class="punch-card">
+            <div class="punch-accent-top"></div>
+            <h1 class="punch-title">MUA THÊM CƠ HỘI</h1>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <script>
+      // 1. Khởi tạo timeline chính ở trạng thái paused theo hợp đồng HyperFrames
+      const tl = gsap.timeline({ paused: true });
+
+      // 2. Thiết lập đường dẫn SVG (đo geometry thực tế để strokeDashoffset seek-safe)
+      const pathPairs = [
+        { under: "#path-1-under", active: "#path-1" },
+        { under: "#path-2-under", active: "#path-2" },
+        { under: "#path-3-under", active: "#path-3" },
+        { under: "#path-4-under", active: "#path-4" },
+        { under: "#path-5-under", active: "#path-5" }
+      ];
+
+      pathPairs.forEach(function (pair) {
+        const elUnder = document.querySelector(pair.under);
+        const elActive = document.querySelector(pair.active);
+        if (elUnder && elActive) {
+          const len = elActive.getTotalLength();
+          elUnder.style.strokeDasharray = len;
+          elUnder.style.strokeDashoffset = len;
+          elActive.style.strokeDasharray = len;
+          elActive.style.strokeDashoffset = len;
+        }
+      });
+
+      // Đặt tâm xoay/scale hình học cho các node SVG
+      document.querySelector("#node-1").style.transformOrigin = "220px 400px";
+      document.querySelector("#node-2").style.transformOrigin = "540px 400px";
+      document.querySelector("#node-3").style.transformOrigin = "540px 660px";
+      document.querySelector("#node-4").style.transformOrigin = "860px 660px";
+      document.querySelector("#node-5").style.transformOrigin = "540px 940px";
+
+      // 3. Nền lưới chuyển động trôi chậm tất định (diag-dr: dx=93, dy=93 trong 7.4s)
+      tl.fromTo(
+        "#bg-grid",
+        { x: 0, y: 0 },
+        { x: 93, y: 93, duration: 7.4, ease: "none", immediateRender: false },
+        0
+      );
+
+      // --- SHOT 1: Tiến trình liên hoàn các mắt xích (0.0s -> 3.6s) ---
+      // 0.15s: Node 1 (Mở khóa) xuất hiện
+      tl.fromTo(
+        "#node-1",
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.45, ease: "power3.out" },
+        0.15
+      );
+
+      // 0.20s: Label 1 "MỞ KHÓA ỨNG CỨU" vào cảnh (rise: y: 35 -> 0, không xoay)
+      tl.fromTo(
+        "#label-1",
+        { y: 35, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.5, ease: "power3.out" },
+        0.20
+      );
+
+      // 0.65s: Nối từ Node 1 sang Node 2
+      tl.to("#path-1-under", { strokeDashoffset: 0, duration: 0.6, ease: "power2.out" }, 0.65);
+      tl.to("#path-1", { strokeDashoffset: 0, duration: 0.6, ease: "power2.out" }, 0.65);
+
+      // 1.25s: Node 2 (Hành khách ứng cứu) sáng rõ khi nét vẽ vừa chạm đích
+      tl.fromTo(
+        "#node-2",
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.45, ease: "power3.out" },
+        1.25
+      );
+
+      // 1.50s: Nối từ Node 2 xuống Node 3
+      tl.to("#path-2-under", { strokeDashoffset: 0, duration: 0.55, ease: "power2.out" }, 1.50);
+      tl.to("#path-2", { strokeDashoffset: 0, duration: 0.55, ease: "power2.out" }, 1.50);
+
+      // 2.05s: Node 3 (Khống chế hung thủ) xuất hiện
+      tl.fromTo(
+        "#node-3",
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.45, ease: "power3.out" },
+        2.05
+      );
+
+      // 2.22s: Label 2 "GIỮ VỮNG CẦN LÁI" vào cảnh (rise: y: 35 -> 0, đúng atMs 177420)
+      tl.fromTo(
+        "#label-2",
+        { y: 35, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.5, ease: "power3.out" },
+        2.22
+      );
+
+      // 2.45s: Nối từ Node 3 sang Node 4
+      tl.to("#path-3-under", { strokeDashoffset: 0, duration: 0.6, ease: "power2.out" }, 2.45);
+      tl.to("#path-3", { strokeDashoffset: 0, duration: 0.6, ease: "power2.out" }, 2.45);
+
+      // 3.05s: Node 4 (Phi công giữ cần lái) xuất hiện
+      tl.fromTo(
+        "#node-4",
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.45, ease: "power3.out" },
+        3.05
+      );
+
+      // 3.35s: Toàn bộ 4 mắt xích sáng bừng sắc cam đẩy lùi vùng tối
+      tl.to(
+        ".node-glow",
+        { opacity: 0.85, scale: 1.18, duration: 0.45, yoyo: true, repeat: 1, ease: "power2.out" },
+        3.35
+      );
+
+      // --- SHOT 2: Hội tụ và thông điệp cốt lõi (3.6s -> 7.4s) ---
+      // 3.60s: Camera push-in nhẹ nhàng tiến gần vào mô hình chuỗi hành động
+      tl.to("#flow-stage", { scale: 1.05, duration: 3.8, ease: "sine.out" }, 3.60);
+
+      // 3.75s: Đường dẫn thứ 4 vươn xuống Điểm hạ cánh an toàn
+      tl.to("#path-4-under", { strokeDashoffset: 0, duration: 0.85, ease: "power2.out" }, 3.75);
+      tl.to("#path-4", { strokeDashoffset: 0, duration: 0.85, ease: "power2.out" }, 3.75);
+
+      // 4.60s: Node 5 (Mắt xích & Biểu tượng ĐIỂM HẠ CÁNH AN TOÀN) xuất hiện uy lực
+      tl.fromTo(
+        "#node-5",
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.55, ease: "power3.out" },
+        4.60
+      );
+
+      // 4.85s: Đường dẫn kết nối từ Điểm hạ cánh an toàn xuống punch card
+      tl.to("#path-5-under", { strokeDashoffset: 0, duration: 0.35, ease: "power2.out" }, 4.85);
+      tl.to("#path-5", { strokeDashoffset: 0, duration: 0.35, ease: "power2.out" }, 4.85);
+
+      // 5.06s: Punch-phrase "MUA THÊM CƠ HỘI" xuất hiện uy lực (grow + rise, không xoay, đúng atMs 180260)
+      tl.fromTo(
+        "#punch-card",
+        { scale: 0.92, y: 30, opacity: 0 },
+        { scale: 1, y: 0, opacity: 1, duration: 0.55, ease: "power3.out" },
+        5.06
+      );
+
+      // 5.35s: Điểm hạ cánh an toàn phát sáng xung radar củng cố thông điệp đúc kết
+      tl.to(
+        "#node-5-glow",
+        { opacity: 0.9, scale: 1.22, duration: 0.5, yoyo: true, repeat: 1, ease: "power2.out" },
+        5.35
+      );
+
+      // --- CHUYỂN ĐỘNG NỀN LIÊN TỤC (IDLE MOTION) HỮU HẠN & LỆCH PHA THEO ADN v2 ---
+      // Label 1: bob dọc nhẹ (hữu hạn, endpoint tường minh)
+      tl.fromTo(
+        "#label-1",
+        { y: 0 },
+        { y: -6, duration: 0.8, yoyo: true, repeat: 5, ease: "sine.inOut" },
+        0.90
+      );
+
+      // Label 2: drift-x ngang nhẹ (hữu hạn, lệch pha với Label 1)
+      tl.fromTo(
+        "#label-2",
+        { x: 0 },
+        { x: 6, duration: 0.75, yoyo: true, repeat: 4, ease: "sine.inOut" },
+        2.80
+      );
+
+      // Punch card: breathe scale 1.0 -> 1.012 sau khi xuất hiện
+      tl.to(
+        "#punch-card",
+        { scale: 1.012, duration: 0.85, yoyo: true, repeat: 1, ease: "sine.inOut" },
+        5.70
+      );
+
+      // 4. Đăng ký timeline hoàn tất vào window.__timelines["scene-s24"]
+      window.__timelines["scene-s24"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

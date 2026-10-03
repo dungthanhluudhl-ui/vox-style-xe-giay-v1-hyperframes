@@ -1,0 +1,540 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap">
+      <style>
+/* hf-safe-colors (tất định từ style-tokens.json) */
+.hf-text-ink { color: #141414; }
+.hf-text-light { color: #F7F4EC; }
+.hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+.hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+.hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+.hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #E7E3D9;
+      font-family: "Be Vietnam Pro", sans-serif;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    #root {
+      position: relative;
+      width: 1080px;
+      height: 1920px;
+      overflow: hidden;
+      background-color: #E7E3D9;
+    }
+
+    .clip {
+      position: absolute;
+      inset: 0;
+    }
+
+    /* Chart Background Variant (4 ruled lines at 20%, 40%, 60%, 80% + left orange ticks, strictly no text) */
+    #chart-bg {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .chart-rule {
+      position: absolute;
+      left: 0;
+      width: 1080px;
+      height: 2px;
+      display: flex;
+      align-items: center;
+    }
+
+    .chart-tick {
+      width: 32px;
+      height: 8px;
+      background-color: #FF6A1A;
+      flex-shrink: 0;
+    }
+
+    .chart-line {
+      flex-grow: 1;
+      height: 2px;
+      background-color: rgba(20, 20, 20, 0.32);
+    }
+
+    /* SHOT 1: Technical Roll Gauge (Centered via flex layout, NO CSS transform) */
+    #shot-1 {
+      z-index: 10;
+    }
+
+    .gauge-wrapper {
+      position: absolute;
+      top: 360px;
+      left: 0;
+      width: 100%;
+      height: 820px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .gauge-svg {
+      width: 820px;
+      height: 820px;
+      overflow: visible;
+    }
+
+    /* SHOT 2: Cabin Cross-Section (Centered via flex layout, NO CSS transform) */
+    #shot-2 {
+      z-index: 12;
+    }
+
+    .cabin-diagram-container {
+      position: absolute;
+      top: 360px;
+      left: 0;
+      width: 100%;
+      height: 820px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .cabin-svg {
+      width: 820px;
+      height: 820px;
+      overflow: visible;
+    }
+
+    /* OVERLAYS: Exactly 3 Text Blocks (1 Punch Phrase + 2 Labels, zero rotation) */
+    /* Overlay 1: Punch Phrase (S20-1 at 2.94s, top-center) */
+    #overlay-punch {
+      z-index: 60;
+      pointer-events: none;
+    }
+
+    .punch-wrapper {
+      position: absolute;
+      top: 210px;
+      left: 0;
+      width: 100%;
+      display: flex;
+      justify-content: center;
+    }
+
+    .punch-plate {
+      background-color: #FF6A1A;
+      border: 4px solid #141414;
+      padding: 16px 40px;
+      box-shadow: 8px 8px 0px #141414;
+    }
+
+    .punch-text {
+      font-size: 48px;
+      font-weight: 900;
+      color: #141414;
+      letter-spacing: 0.5px;
+      line-height: 1.25;
+      white-space: nowrap;
+      text-transform: uppercase;
+      text-align: center;
+    }
+
+    /* Overlay 2: Label 1 (S20-2 at 5.12s, middle-right) */
+    #overlay-label-1 {
+      z-index: 62;
+      pointer-events: none;
+    }
+
+    .label-1-card {
+      position: absolute;
+      top: 660px;
+      right: 60px;
+      background-color: #141414;
+      border-left: 10px solid #FF6A1A;
+      padding: 18px 32px;
+      box-shadow: 8px 8px 0px rgba(20, 20, 20, 0.4);
+    }
+
+    .label-1-text {
+      font-size: 36px;
+      font-weight: 900;
+      color: #F7F4EC;
+      letter-spacing: 0.8px;
+      white-space: nowrap;
+      text-transform: uppercase;
+    }
+
+    /* Overlay 3: Label 2 (S20-2 at 6.87s, bottom-center, well above y=1390) */
+    #overlay-label-2 {
+      z-index: 64;
+      pointer-events: none;
+    }
+
+    .label-2-wrapper {
+      position: absolute;
+      top: 1220px;
+      left: 0;
+      width: 100%;
+      display: flex;
+      justify-content: center;
+    }
+
+    .label-2-card {
+      background-color: #141414;
+      border: 4px solid #141414;
+      border-bottom: 8px solid #FF6A1A;
+      padding: 16px 36px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .label-2-indicator {
+      width: 16px;
+      height: 16px;
+      background-color: #FF6A1A;
+      flex-shrink: 0;
+    }
+
+    .label-2-text {
+      font-size: 36px;
+      font-weight: 900;
+      color: #F7F4EC;
+      letter-spacing: 0.8px;
+      white-space: nowrap;
+      text-transform: uppercase;
+    }
+  </style>
+
+  <div id="root" data-composition-id="scene-s20" data-width="1080" data-height="1920" data-duration="8.88">
+
+    <!-- CHART BACKGROUND VARIANT (untimed base layer, strictly no text) -->
+    <div id="chart-bg">
+      <div class="chart-rule" style="top: 384px;">
+        <div class="chart-tick"></div>
+        <div class="chart-line"></div>
+      </div>
+      <div class="chart-rule" style="top: 768px;">
+        <div class="chart-tick"></div>
+        <div class="chart-line"></div>
+      </div>
+      <div class="chart-rule" style="top: 1152px;">
+        <div class="chart-tick"></div>
+        <div class="chart-line"></div>
+      </div>
+      <div class="chart-rule" style="top: 1536px;">
+        <div class="chart-tick"></div>
+        <div class="chart-line"></div>
+      </div>
+    </div>
+
+    <!-- SHOT 1: TECHNICAL ATTITUDE INDICATOR (0s -> 4.25s, purely graphical, no text) -->
+    <section id="shot-1" class="clip" data-start="0" data-duration="4.25">
+      <div class="gauge-wrapper" id="shot-1-gauge-container">
+        <svg class="gauge-svg" viewBox="0 0 820 820" xmlns="http://www.w3.org/2000/svg">
+          <!-- Outer Bezel & Reference Circle -->
+          <circle cx="410" cy="410" r="380" fill="none" stroke="#141414" stroke-width="6" />
+          <circle cx="410" cy="410" r="350" fill="none" stroke="rgba(20, 20, 20, 0.25)" stroke-width="2" stroke-dasharray="10 6" />
+          <circle cx="410" cy="410" r="280" fill="#F5F0E4" stroke="#141414" stroke-width="3" />
+
+          <!-- Attitude Angle Degree Ticks -->
+          <!-- 0 deg (Top Center) -->
+          <line x1="410" y1="30" x2="410" y2="70" stroke="#141414" stroke-width="8" />
+          <!-- 30 deg -->
+          <line x1="585" y1="77" x2="570" y2="103" stroke="#141414" stroke-width="4" />
+          <!-- 60 deg -->
+          <line x1="713" y1="205" x2="687" y2="220" stroke="#141414" stroke-width="4" />
+          <!-- 90 deg (Right Center) -->
+          <line x1="750" y1="410" x2="790" y2="410" stroke="#141414" stroke-width="8" />
+          <!-- 120 deg -->
+          <line x1="713" y1="615" x2="687" y2="600" stroke="#141414" stroke-width="4" />
+          <!-- 140 deg (Target Inverted Bank Angle - Heavy Orange Marker) -->
+          <line x1="635" y1="701" x2="598" y2="656" stroke="#FF6A1A" stroke-width="12" />
+          <!-- 180 deg (Bottom Center) -->
+          <line x1="410" y1="750" x2="410" y2="790" stroke="#141414" stroke-width="6" />
+
+          <!-- Roll Indicator Arc: Sweeps from 0° (top) to 140° -->
+          <!-- Arc circumference portion: 2 * PI * 320 * (140/360) = 782px -->
+          <path id="roll-arc-path"
+            d="M 410,90 A 320,320 0 0,1 615,655"
+            fill="none"
+            stroke="#FF6A1A"
+            stroke-width="16"
+            stroke-linecap="round"
+            stroke-dasharray="782"
+            stroke-dashoffset="782" />
+
+          <!-- Artificial Horizon Center Reference Bars -->
+          <line x1="220" y1="410" x2="350" y2="410" stroke="#141414" stroke-width="5" />
+          <line x1="470" y1="410" x2="600" y2="410" stroke="#141414" stroke-width="5" />
+          <circle cx="410" cy="410" r="12" fill="#FF6A1A" stroke="#141414" stroke-width="2" />
+
+          <!-- 140 Degree Target Dot Marker (Reveals on roll completion) -->
+          <circle id="marker-140" cx="628" cy="690" r="16" fill="#FF6A1A" stroke="#141414" stroke-width="4" />
+
+          <!-- Mechanical Rotating Group: Needle Pointer (Pure vector, no text) -->
+          <g id="needle-rotator">
+            <polygon points="410,70 396,130 424,130" fill="#FF6A1A" stroke="#141414" stroke-width="2" />
+            <line x1="410" y1="130" x2="410" y2="380" stroke="#FF6A1A" stroke-width="5" stroke-dasharray="8 6" />
+          </g>
+
+          <!-- Mechanical Rotating Group: DC-10 Aircraft Silhouette (Pure vector, no text) -->
+          <g id="aircraft-rotator">
+            <!-- Fuselage -->
+            <ellipse cx="410" cy="410" rx="18" ry="120" fill="#141414" />
+            <!-- Swept Wings -->
+            <polygon points="410,380 200,480 220,500 410,430 600,500 620,480" fill="#141414" />
+            <!-- Jet Engines Under Wings -->
+            <rect x="280" y="440" width="18" height="50" rx="6" fill="#141414" />
+            <rect x="522" y="440" width="18" height="50" rx="6" fill="#141414" />
+            <!-- Tail Horizontal Stabilizers -->
+            <polygon points="410,490 310,540 320,555 410,525 500,555 510,540" fill="#141414" />
+            <!-- DC-10 Signature Tail Engine Tube (#2 Center Engine) -->
+            <rect x="401" y="480" width="18" height="50" rx="5" fill="#FF6A1A" />
+            <!-- Cockpit Nose Dot -->
+            <circle cx="410" cy="305" r="5" fill="#F7F4EC" />
+          </g>
+        </svg>
+      </div>
+    </section>
+
+    <!-- SHOT 2: CABIN CROSS-SECTION & GRAVITATIONAL FORCES (4.25s -> 8.88s, strictly no SVG rotation, no text) -->
+    <section id="shot-2" class="clip" data-start="4.25" data-duration="4.63">
+      <div class="cabin-diagram-container" id="shot-2-diagram">
+        <svg class="cabin-svg" viewBox="0 0 900 900" xmlns="http://www.w3.org/2000/svg">
+          <!-- Fuselage Outer Structural Hull -->
+          <circle cx="450" cy="450" r="380" fill="#F5F0E4" stroke="#141414" stroke-width="8" />
+          <circle cx="450" cy="450" r="350" fill="none" stroke="rgba(20, 20, 20, 0.3)" stroke-width="3" stroke-dasharray="12 8" />
+
+          <!-- Tilted Cabin Floor at 140° (Drawn directly with coordinates, no SVG rotate) -->
+          <line x1="160" y1="700" x2="740" y2="200" stroke="#141414" stroke-width="14" stroke-linecap="square" />
+          <line x1="200" y1="760" x2="780" y2="260" stroke="rgba(20, 20, 20, 0.4)" stroke-width="4" stroke-dasharray="8 6" />
+
+          <!-- Overhead Luggage Bins (Drawn as slanted polygons, no SVG rotate) -->
+          <polygon points="210,270 300,195 320,220 230,295" fill="#141414" />
+          <polygon points="370,140 460,65 480,90 390,165" fill="#141414" />
+
+          <!-- Kinetic Impact Waves at Contact Wall (Arcs drawn with paths, no SVG rotate) -->
+          <g id="impact-waves">
+            <path class="impact-wave" d="M 230,710 Q 320,780 410,710" fill="none" stroke="#FF6A1A" stroke-width="6" stroke-linecap="round" />
+            <path class="impact-wave" d="M 200,740 Q 320,830 440,740" fill="none" stroke="#FF6A1A" stroke-width="4" stroke-linecap="round" stroke-dasharray="8 6" />
+          </g>
+
+          <!-- Attacker Silhouette Pinned Helplessly (Direct coordinates, no SVG rotate) -->
+          <g id="attacker-group">
+            <!-- Torso -->
+            <polygon points="290,600 370,535 395,565 315,630" fill="#141414" />
+            <!-- Head pressed against inverted surface -->
+            <circle cx="270" cy="630" r="26" fill="#141414" />
+            <!-- Splayed Arms -->
+            <line x1="310" y1="580" x2="260" y2="540" stroke="#141414" stroke-width="14" stroke-linecap="round" />
+            <line x1="360" y1="620" x2="410" y2="590" stroke="#141414" stroke-width="14" stroke-linecap="round" />
+            <!-- Legs crushed under downforce -->
+            <line x1="340" y1="620" x2="400" y2="680" stroke="#141414" stroke-width="16" stroke-linecap="round" />
+            <line x1="360" y1="600" x2="430" y2="650" stroke="#141414" stroke-width="16" stroke-linecap="round" />
+            <!-- Dislodged Weapon (Hammer) falling away -->
+            <polygon points="470,700 510,700 510,712 470,712" fill="#141414" />
+            <polygon points="460,690 475,690 475,722 460,722" fill="#FF6A1A" stroke="#141414" stroke-width="2" />
+          </g>
+
+          <!-- Massive G-Force Acceleration Vectors (Straight Downward onto Attacker) -->
+          <g id="g-force-arrows">
+            <!-- Left Vector Arrow -->
+            <g class="g-force-arrow">
+              <line x1="290" y1="200" x2="290" y2="480" stroke="#FF6A1A" stroke-width="14" stroke-linecap="square" />
+              <polygon points="290,530 265,470 315,470" fill="#FF6A1A" />
+            </g>
+            <!-- Center Primary Heavy Vector Arrow -->
+            <g class="g-force-arrow">
+              <line x1="360" y1="140" x2="360" y2="500" stroke="#FF6A1A" stroke-width="22" stroke-linecap="square" />
+              <polygon points="360,560 325,490 395,490" fill="#FF6A1A" />
+            </g>
+            <!-- Right Vector Arrow -->
+            <g class="g-force-arrow">
+              <line x1="430" y1="180" x2="430" y2="460" stroke="#FF6A1A" stroke-width="14" stroke-linecap="square" />
+              <polygon points="430,510 405,450 455,450" fill="#FF6A1A" />
+            </g>
+          </g>
+        </svg>
+      </div>
+    </section>
+
+    <!-- OVERLAY 1: Punch Phrase (S20-1 at 2.94s, hold 3.0s -> ends at 5.94s) -->
+    <div id="overlay-punch" class="clip" data-start="2.94" data-duration="3.0">
+      <div class="punch-wrapper">
+        <div class="punch-plate">
+          <div class="punch-text">NGHIÊNG 140 ĐỘ LẬT ÚP</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- OVERLAY 2: Label 1 (S20-2 at 5.12s, hold 3.2s -> ends at 8.32s) -->
+    <div id="overlay-label-1" class="clip" data-start="5.12" data-duration="3.2">
+      <div class="label-1-card">
+        <div class="label-1-text">ĐẢO CHIỀU TRỌNG LỰC</div>
+      </div>
+    </div>
+
+    <!-- OVERLAY 3: Label 2 (S20-2 at 6.87s, hold 2.0s -> ends at 8.87s) -->
+    <div id="overlay-label-2" class="clip" data-start="6.87" data-duration="2.0">
+      <div class="label-2-wrapper">
+        <div class="label-2-card">
+          <span class="label-2-indicator"></span>
+          <span class="label-2-text">CHẶN KẺ TẤN CÔNG</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // Paused master GSAP timeline registered on window.__timelines["scene-s20"]
+    const tl = gsap.timeline({ paused: true });
+
+    // ==========================================
+    // SHOT 1: ATTITUDE GAUGE (0.0s -> 4.25s)
+    // ==========================================
+
+    // Transition In: "strike" entrance (fast downward landing and settle)
+    tl.fromTo(
+      "#shot-1-gauge-container",
+      { y: -90, opacity: 0, scale: 1.04 },
+      { y: 0, opacity: 1, scale: 1, duration: 0.5, ease: "power4.out" },
+      0.0
+    );
+
+    // Mechanical Roll Rotation: Needle and aircraft bank from 0° to 140°
+    tl.fromTo(
+      "#aircraft-rotator",
+      { rotation: 0, transformOrigin: "410px 410px" },
+      { rotation: 140, duration: 2.2, ease: "power2.inOut" },
+      0.5
+    );
+
+    tl.fromTo(
+      "#needle-rotator",
+      { rotation: 0, transformOrigin: "410px 410px" },
+      { rotation: 140, duration: 2.2, ease: "power2.inOut" },
+      0.5
+    );
+
+    // Roll Arc progressive draw
+    tl.fromTo(
+      "#roll-arc-path",
+      { strokeDashoffset: 782 },
+      { strokeDashoffset: 0, duration: 2.2, ease: "power2.inOut" },
+      0.5
+    );
+
+    // Target 140 degree marker arrival pop
+    tl.fromTo(
+      "#marker-140",
+      { scale: 0, opacity: 0, transformOrigin: "center center" },
+      { scale: 1, opacity: 1, duration: 0.4, ease: "power3.out" },
+      2.5
+    );
+
+    // Continuous subtle bobbing (strictly non-rotational)
+    tl.fromTo(
+      "#shot-1-gauge-container",
+      { y: 0 },
+      { y: 8, duration: 1.4, ease: "sine.inOut", yoyo: true, repeat: 1 },
+      1.2
+    );
+
+    // ==========================================
+    // OVERLAY 1: PUNCH PHRASE (2.94s -> 5.94s)
+    // ==========================================
+    tl.fromTo(
+      ".punch-wrapper",
+      { y: -35, opacity: 0, scale: 0.94 },
+      { y: 0, opacity: 1, scale: 1, duration: 0.45, ease: "power4.out" },
+      2.94
+    );
+
+    tl.fromTo(
+      ".punch-wrapper",
+      { opacity: 1, y: 0 },
+      { opacity: 0, y: -20, duration: 0.3, ease: "power2.in" },
+      5.64
+    );
+
+    // ==========================================
+    // SHOT 2: CABIN CROSS-SECTION (4.25s -> 8.88s)
+    // ==========================================
+
+    // Cut transition to cabin diagram at 4.25s (animate child diagram, not .clip)
+    tl.fromTo(
+      "#shot-2-diagram",
+      { scale: 0.96, opacity: 0 },
+      { scale: 1, opacity: 1, duration: 0.35, ease: "power3.out" },
+      4.25
+    );
+
+    // Crushing G-Force vector arrows thrust down
+    tl.fromTo(
+      ".g-force-arrow",
+      { scaleY: 0, opacity: 0, transformOrigin: "center top" },
+      { scaleY: 1, opacity: 1, duration: 0.45, stagger: 0.1, ease: "power4.out" },
+      4.55
+    );
+
+    // Attacker silhouette recoil under impact
+    tl.fromTo(
+      "#attacker-group",
+      { y: -30, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.35, ease: "power3.out" },
+      4.75
+    );
+
+    // Kinetic impact waves expanding at contact surface
+    tl.fromTo(
+      ".impact-wave",
+      { opacity: 0, scale: 0.75, transformOrigin: "center center" },
+      { opacity: 1, scale: 1.05, duration: 0.4, stagger: 0.12, ease: "power2.out" },
+      4.85
+    );
+
+    // Ambient subtle breathing on cabin diagram (no rotation)
+    tl.fromTo(
+      "#shot-2-diagram",
+      { y: 0 },
+      { y: 6, duration: 1.8, ease: "sine.inOut", yoyo: true, repeat: 1 },
+      5.2
+    );
+
+    // OVERLAY 2: "ĐẢO CHIỀU TRỌNG LỰC" (starts at 5.12s)
+    tl.fromTo(
+      ".label-1-card",
+      { x: 50, opacity: 0 },
+      { x: 0, opacity: 1, duration: 0.5, ease: "power3.out" },
+      5.12
+    );
+
+    // OVERLAY 3: "CHẶN KẺ TẤN CÔNG" (starts at 6.87s)
+    tl.fromTo(
+      ".label-2-wrapper",
+      { y: 35, opacity: 0, scale: 0.94 },
+      { y: 0, opacity: 1, scale: 1, duration: 0.45, ease: "power4.out" },
+      6.87
+    );
+
+    // Export timeline to HyperFrames runtime
+    window.__timelines["scene-s20"] = tl;
+  </script>
+
+    </template>
+  </body>
+</html>
