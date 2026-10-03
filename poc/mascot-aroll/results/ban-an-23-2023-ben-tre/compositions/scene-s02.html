@@ -1,0 +1,616 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap"
+    />
+      <style>
+      /* hf-safe-colors (tất định từ style-tokens.json) */
+      .hf-text-ink { color: #141414; }
+      .hf-text-light { color: #F7F4EC; }
+      .hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+      .hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+      .hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+      .hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #e7e3d9;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: #e7e3d9;
+      }
+
+      .clip {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+      }
+
+      /* CAMERA RIG: Ken Burns drift-out bao quát */
+      #camera-rig {
+        position: absolute;
+        inset: 0;
+        transform-origin: 50% 50%;
+        will-change: transform;
+      }
+
+      /* NỀN CHART ĐẶC TRƯNG: 4 đường kẻ ngang đậm 20/40/60/80% + vạch cam bên trái */
+      .chart-bg {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+      }
+
+      .chart-line {
+        position: absolute;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background-color: rgba(20, 20, 20, 0.22);
+      }
+
+      .chart-tick {
+        position: absolute;
+        left: 0;
+        width: 28px;
+        height: 6px;
+        background-color: #ff6a1a;
+      }
+
+      .line-1 { top: 384px; } /* 20% */
+      .line-2 { top: 768px; } /* 40% */
+      .line-3 { top: 1152px; } /* 60% */
+      .line-4 { top: 1536px; } /* 80% */
+
+      /* NỘI DUNG CHÍNH CỦA SCENE */
+      #scene-content {
+        position: absolute;
+        inset: 0;
+        will-change: transform, opacity;
+      }
+
+      /* KHỐI 1: PUNCH PHRASE (1 phần tử duy nhất, không dùng span con để đảm bảo đúng 1 khối chữ) */
+      .punch-phrase-wrapper {
+        position: absolute;
+        top: 236px;
+        left: 0;
+        width: 1080px;
+        display: flex;
+        justify-content: center;
+        z-index: 30;
+        pointer-events: none;
+      }
+
+      #punch-phrase {
+        background-color: #141414;
+        color: #f7f4ec;
+        border-radius: 8px;
+        padding: 18px 46px;
+        font-size: 48px;
+        font-weight: 900;
+        line-height: 1.34;
+        letter-spacing: 1px;
+        box-shadow: 0 14px 32px rgba(20, 20, 20, 0.16);
+        white-space: nowrap;
+        text-align: center;
+        will-change: transform, opacity;
+      }
+
+      /* HỆ THỐNG CÁN CÂN CÔNG LÝ (SCALE OF JUSTICE DIAGRAM) */
+      #scale-diagram {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+      }
+
+      /* ĐẾ CÂN & TRỤ ĐỨNG */
+      .scale-stand {
+        position: absolute;
+        left: 330px;
+        top: 480px;
+        width: 420px;
+        height: 720px;
+        z-index: 10;
+        will-change: transform;
+      }
+
+      .scale-base-bottom {
+        position: absolute;
+        bottom: 0;
+        left: 20px;
+        width: 380px;
+        height: 22px;
+        background-color: #141414;
+        border-radius: 4px;
+      }
+
+      .scale-base-top {
+        position: absolute;
+        bottom: 22px;
+        left: 90px;
+        width: 240px;
+        height: 16px;
+        background-color: #141414;
+        border-radius: 2px;
+      }
+
+      .scale-pillar-rod {
+        position: absolute;
+        bottom: 38px;
+        left: 200px;
+        width: 20px;
+        height: 640px;
+        background-color: #141414;
+        border-radius: 4px;
+      }
+
+      /* KHỐI TRỤ XOAY VÀ KIM CHỈ THỊ TRUNG TÂM */
+      #scale-pivot-hub {
+        position: absolute;
+        left: 518px;
+        top: 460px;
+        width: 44px;
+        height: 44px;
+        background-color: #ff6a1a;
+        border: 5px solid #141414;
+        border-radius: 50%;
+        z-index: 25;
+      }
+
+      #scale-pointer {
+        position: absolute;
+        left: 537px;
+        top: 406px;
+        width: 6px;
+        height: 80px;
+        background-color: #141414;
+        transform-origin: 3px 76px;
+        border-radius: 3px;
+        z-index: 15;
+        will-change: transform;
+      }
+
+      /* THANH ĐÒN CÂN (CHỈ XOAY BẰNG GSAP - LÀ HÌNH VẼ THUẦN KHÔNG CHỨA CHỮ) */
+      #scale-beam {
+        position: absolute;
+        left: 160px;
+        top: 476px;
+        width: 760px;
+        height: 14px;
+        background-color: #141414;
+        border-radius: 7px;
+        transform-origin: 380px 7px;
+        z-index: 12;
+        will-change: transform;
+      }
+
+      .beam-hook-left {
+        position: absolute;
+        left: 4px;
+        top: -6px;
+        width: 14px;
+        height: 26px;
+        border: 4px solid #141414;
+        border-radius: 50%;
+      }
+
+      .beam-hook-right {
+        position: absolute;
+        right: 4px;
+        top: -6px;
+        width: 14px;
+        height: 26px;
+        border: 4px solid #141414;
+        border-radius: 50%;
+      }
+
+      /* ĐĨA CÂN BÊN TRÁI: MÓN NỢ 25 TRIỆU (DI CHUYỂN TỊNH TIẾN Y, ROTATION=0) */
+      #pan-left {
+        position: absolute;
+        left: 50px;
+        top: 482px;
+        width: 280px;
+        height: 480px;
+        z-index: 18;
+        will-change: transform;
+      }
+
+      /* ĐĨA CÂN BÊN PHẢI: BẢN ÁN 20 NĂM TÙ (DI CHUYỂN TỊNH TIẾN Y, ROTATION=0) */
+      #pan-right {
+        position: absolute;
+        left: 750px;
+        top: 482px;
+        width: 280px;
+        height: 480px;
+        z-index: 18;
+        will-change: transform;
+      }
+
+      .pan-svg {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 280px;
+        height: 320px;
+      }
+
+      /* VẬT THỂ MINH HOẠ ĐỒ HOẠ TRÊN ĐĨA CÂN (KHÔNG CHỨA CHỮ) */
+      #debt-item {
+        position: absolute;
+        left: 85px;
+        top: 172px;
+        width: 110px;
+        height: 64px;
+        background-color: #f5f0e4;
+        border: 3px solid #141414;
+        border-radius: 6px;
+        box-shadow: 0 6px 14px rgba(20, 20, 20, 0.12);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        will-change: transform, opacity;
+      }
+
+      .money-stripe {
+        width: 28px;
+        height: 100%;
+        background-color: #ff6a1a;
+        opacity: 0.85;
+      }
+
+      #prison-weight {
+        position: absolute;
+        left: 40px;
+        top: 86px;
+        width: 200px;
+        height: 154px;
+        background-color: #141414;
+        border: 4px solid #141414;
+        border-radius: 10px;
+        box-shadow: 0 16px 36px rgba(20, 20, 20, 0.28);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: space-evenly;
+        padding: 12px;
+        will-change: transform, opacity;
+      }
+
+      .prison-bars-grid {
+        display: flex;
+        gap: 16px;
+        width: 100%;
+        height: 80px;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .prison-bar {
+        width: 8px;
+        height: 76px;
+        background-color: #f7f4ec;
+        border-radius: 4px;
+      }
+
+      .weight-accent-line {
+        width: 140px;
+        height: 6px;
+        background-color: #ff6a1a;
+        border-radius: 3px;
+      }
+
+      /* KHỐI 2: NHÃN 1 "Món nợ ban đầu" (ROTATION=0 TUYỆT ĐỐI) */
+      #label-debt {
+        position: absolute;
+        left: 10px;
+        top: 298px;
+        width: 260px;
+        background-color: #f5f0e4;
+        border: 3px solid #141414;
+        border-radius: 6px;
+        padding: 10px 14px;
+        font-size: 28px;
+        font-weight: 700;
+        color: #141414;
+        text-align: center;
+        white-space: nowrap;
+        box-shadow: 0 8px 18px rgba(20, 20, 20, 0.1);
+        will-change: transform, opacity;
+      }
+
+      /* KHỐI 3: NHÃN 2 "Cái giá phải trả" (ROTATION=0 TUYỆT ĐỐI) */
+      #label-prison {
+        position: absolute;
+        left: 10px;
+        top: 298px;
+        width: 260px;
+        background-color: #ff6a1a;
+        border: 3px solid #141414;
+        border-radius: 6px;
+        padding: 12px 14px;
+        font-size: 30px;
+        font-weight: 900;
+        color: #141414;
+        text-align: center;
+        white-space: nowrap;
+        box-shadow: 0 10px 24px rgba(20, 20, 20, 0.16);
+        will-change: transform, opacity;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s02"
+      data-width="1080"
+      data-height="1920"
+      data-duration="6.71"
+    >
+      <section id="shot-s02" class="clip" data-start="0" data-duration="6.71">
+        <!-- NỀN BIẾN THỂ CHART: 4 đường kẻ ngang 20/40/60/80% + vạch cam mép trái -->
+        <div class="chart-bg">
+          <div class="chart-line line-1"></div>
+          <div class="chart-tick line-1"></div>
+
+          <div class="chart-line line-2"></div>
+          <div class="chart-tick line-2"></div>
+
+          <div class="chart-line line-3"></div>
+          <div class="chart-tick line-3"></div>
+
+          <div class="chart-line line-4"></div>
+          <div class="chart-tick line-4"></div>
+        </div>
+
+        <!-- CAMERA RIG: Chuyển động drift-out liên tục suốt shot -->
+        <div id="camera-rig">
+          <div id="scene-content">
+            <!-- KHỐI CHỮ 1: PUNCH PHRASE (atMs 11710 -> local 2.37s) -->
+            <div class="punch-phrase-wrapper">
+              <div id="punch-phrase" class="hf-plate-ink">25 TRIỆU VS 20 NĂM TÙ</div>
+            </div>
+
+            <!-- DIAGRAM CÁN CÂN CÔNG LÝ BẤT ĐỐI XỨNG -->
+            <div id="scale-diagram">
+              <!-- ĐẾ VÀ TRỤ CÂN -->
+              <div class="scale-stand" id="scale-stand">
+                <div class="scale-pillar-rod"></div>
+                <div class="scale-base-top"></div>
+                <div class="scale-base-bottom"></div>
+              </div>
+
+              <!-- KIM CHỈ THỊ (HÌNH HOẠ THUẦN XOAY THEO ĐÒN BẨY) -->
+              <div id="scale-pointer"></div>
+
+              <!-- CHỐT XOAY ĐỈNH -->
+              <div id="scale-pivot-hub"></div>
+
+              <!-- THANH ĐÒN CÂN (BỘ PHẬN THUẦN HÌNH HOẠ, ĐƯỢC PHÉP XOAY) -->
+              <div id="scale-beam">
+                <div class="beam-hook-left"></div>
+                <div class="beam-hook-right"></div>
+              </div>
+
+              <!-- ĐĨA TRÁI: BÊN NỢ (TỊNH TIẾN Y, KHÔNG XOAY) -->
+              <div id="pan-left">
+                <svg
+                  class="pan-svg"
+                  viewBox="0 0 280 320"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <!-- 2 DÂY TREO ĐĨA CÂN -->
+                  <line
+                    x1="140"
+                    y1="0"
+                    x2="32"
+                    y2="238"
+                    stroke="#141414"
+                    stroke-width="3.5"
+                    stroke-linecap="round"
+                  />
+                  <line
+                    x1="140"
+                    y1="0"
+                    x2="248"
+                    y2="238"
+                    stroke="#141414"
+                    stroke-width="3.5"
+                    stroke-linecap="round"
+                  />
+                  <!-- MẶT ĐĨA CÂN CONG -->
+                  <path
+                    d="M 18 238 C 70 274, 210 274, 262 238"
+                    stroke="#141414"
+                    stroke-width="5"
+                    stroke-linecap="round"
+                  />
+                </svg>
+
+                <!-- VẬT THỂ MÓN NỢ NHỎ -->
+                <div id="debt-item">
+                  <div class="money-stripe"></div>
+                </div>
+
+                <!-- KHỐI CHỮ 2: NHÃN 1 (atMs 12800 -> local 3.46s) -->
+                <div id="label-debt" class="hf-plate-paper">Món nợ ban đầu</div>
+              </div>
+
+              <!-- ĐĨA PHẢI: BÊN ÁN TÙ (TỊNH TIẾN Y, KHÔNG XOAY) -->
+              <div id="pan-right">
+                <svg
+                  class="pan-svg"
+                  viewBox="0 0 280 320"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <!-- 2 DÂY TREO ĐĨA CÂN -->
+                  <line
+                    x1="140"
+                    y1="0"
+                    x2="32"
+                    y2="238"
+                    stroke="#141414"
+                    stroke-width="3.5"
+                    stroke-linecap="round"
+                  />
+                  <line
+                    x1="140"
+                    y1="0"
+                    x2="248"
+                    y2="238"
+                    stroke="#141414"
+                    stroke-width="3.5"
+                    stroke-linecap="round"
+                  />
+                  <!-- MẶT ĐĨA CÂN CONG -->
+                  <path
+                    d="M 18 238 C 70 274, 210 274, 262 238"
+                    stroke="#141414"
+                    stroke-width="5"
+                    stroke-linecap="round"
+                  />
+                </svg>
+
+                <!-- VẬT THỂ ÁN TÙ NẶNG TRỊCH -->
+                <div id="prison-weight">
+                  <div class="weight-accent-line"></div>
+                  <div class="prison-bars-grid">
+                    <div class="prison-bar"></div>
+                    <div class="prison-bar"></div>
+                    <div class="prison-bar"></div>
+                    <div class="prison-bar"></div>
+                    <div class="prison-bar"></div>
+                  </div>
+                  <div class="weight-accent-line"></div>
+                </div>
+
+                <!-- KHỐI CHỮ 3: NHÃN 2 (atMs 14000 -> local 4.66s) -->
+                <div id="label-prison" class="hf-hl-orange">Cái giá phải trả</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- GSAP TIMELINE ORCHESTRATION -->
+    <script>
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true });
+
+      // 1. CAMERA MOTION: drift-out liền mạch suốt cả shot (1.05 -> 1.00, ease: none)
+      tl.fromTo(
+        "#camera-rig",
+        { scale: 1.05 },
+        { scale: 1.0, duration: 6.71, ease: "none" },
+        0,
+      );
+
+      // 2. ENTRANCE TRANSITION: rise (trượt từ dưới lên, duration: 0.7s)
+      tl.fromTo(
+        "#scene-content",
+        { y: 52, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.7, ease: "power3.out" },
+        0.1,
+      );
+
+      // 3. IDLE ĐẦU SCENE: Cán cân cơ học dao động cực nhẹ tự nhiên (0.8s -> 2.37s)
+      tl.to("#scale-beam", { rotation: 0.7, duration: 0.8, ease: "sine.inOut" }, 0.8);
+      tl.to("#pan-left", { y: -5, duration: 0.8, ease: "sine.inOut" }, 0.8);
+      tl.to("#pan-right", { y: 5, duration: 0.8, ease: "sine.inOut" }, 0.8);
+      tl.to("#scale-pointer", { rotation: 0.7, duration: 0.8, ease: "sine.inOut" }, 0.8);
+
+      tl.to("#scale-beam", { rotation: -0.5, duration: 0.7, ease: "sine.inOut" }, 1.6);
+      tl.to("#pan-left", { y: 4, duration: 0.7, ease: "sine.inOut" }, 1.6);
+      tl.to("#pan-right", { y: -4, duration: 0.7, ease: "sine.inOut" }, 1.6);
+      tl.to("#scale-pointer", { rotation: -0.5, duration: 0.7, ease: "sine.inOut" }, 1.6);
+
+      // 4. OVERLAY 1: PUNCH PHRASE "25 TRIỆU VS 20 NĂM TÙ" (atMs 11710 -> local 2.37s)
+      tl.fromTo(
+        "#punch-phrase",
+        { scale: 0.86, opacity: 0, y: -24 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.52, ease: "power3.out" },
+        2.37,
+      );
+
+      // 5. OVERLAY 2: "Món nợ ban đầu" + Vật thể nợ xuất hiện (atMs 12800 -> local 3.46s)
+      tl.fromTo(
+        "#debt-item",
+        { scale: 0, opacity: 0, y: -28 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.4, ease: "power3.out" },
+        3.46,
+      );
+      tl.fromTo(
+        "#label-debt",
+        { opacity: 0, y: 16 },
+        { opacity: 1, y: 0, duration: 0.45, ease: "power3.out" },
+        3.56,
+      );
+
+      // Món nợ đặt lên đĩa trái -> cán cân hơi chùng sang trái (-3.5 deg)
+      tl.to("#scale-beam", { rotation: -3.5, duration: 0.55, ease: "power2.out" }, 3.5);
+      tl.to("#pan-left", { y: 24, duration: 0.55, ease: "power2.out" }, 3.5);
+      tl.to("#pan-right", { y: -24, duration: 0.55, ease: "power2.out" }, 3.5);
+      tl.to("#scale-pointer", { rotation: -3.5, duration: 0.55, ease: "power2.out" }, 3.5);
+
+      // 6. OVERLAY 3: "Cái giá phải trả" + Khối án tù giáng mạnh xuống (atMs 14000 -> local 4.66s)
+      tl.fromTo(
+        "#prison-weight",
+        { y: -180, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.38, ease: "power4.in" },
+        4.66,
+      );
+      tl.fromTo(
+        "#label-prison",
+        { scale: 0.88, opacity: 0, y: 18 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.42, ease: "power3.out" },
+        4.86,
+      );
+
+      // KHI KHỐI ÁN TÙ CHẠM ĐĨA PHẢI (5.04s): CÁN CÂN BỊ ĐÈ BẸP BẤT ĐỐI XỨNG (+16 deg)
+      // Đĩa phải chìm sâu (+105px), Đĩa trái bị hất tung lên cao (-105px)
+      tl.to("#scale-beam", { rotation: 16, duration: 0.6, ease: "power3.out" }, 5.04);
+      tl.to("#pan-left", { y: -105, duration: 0.6, ease: "power3.out" }, 5.04);
+      tl.to("#pan-right", { y: 105, duration: 0.6, ease: "power3.out" }, 5.04);
+      tl.to("#scale-pointer", { rotation: 16, duration: 0.6, ease: "power3.out" }, 5.04);
+
+      // Độ rung chấn cơ học khi khối lượng khổng lồ va chạm (5.06s -> 5.3s)
+      tl.to("#scale-stand", { x: 3, duration: 0.08, ease: "power1.inOut" }, 5.06);
+      tl.to("#scale-stand", { x: -3, duration: 0.08, ease: "power1.inOut" }, 5.14);
+      tl.to("#scale-stand", { x: 0, duration: 0.08, ease: "power1.out" }, 5.22);
+
+      // 7. ELASTIC SETTLE: Nhịp đàn hồi vật lý tự nhiên sau va chạm (5.64s -> 6.64s)
+      tl.to("#scale-beam", { rotation: 15.5, duration: 0.5, ease: "sine.inOut" }, 5.64);
+      tl.to("#scale-beam", { rotation: 16, duration: 0.5, ease: "sine.inOut" }, 6.14);
+      tl.to("#scale-pointer", { rotation: 15.5, duration: 0.5, ease: "sine.inOut" }, 5.64);
+      tl.to("#scale-pointer", { rotation: 16, duration: 0.5, ease: "sine.inOut" }, 6.14);
+
+      // Đăng ký timeline gốc duy nhất cho HyperFrames renderer
+      window.__timelines["scene-s02"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

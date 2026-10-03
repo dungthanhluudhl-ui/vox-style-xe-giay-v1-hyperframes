@@ -184,6 +184,10 @@ export function validatePlanAndShots(scenes, shots, kit, mediaById) {
       if (dur < 2.9 || dur > 5.2) problems.push(`Scene ${sc.id} (mascot) dài ${dur.toFixed(2)}s, ngoài khoảng 3–5s.`);
       if (dur > 3.6 && list.length < 2) problems.push(`Scene ${sc.id} (mascot) dài ${dur.toFixed(2)}s >3,5s phải tách 2 shot đổi pose.`);
     } else {
+      if (sc.kind === "graphics") {
+        const nOv = list.reduce((a, sh) => a + (sh.overlays ?? []).length, 0);
+        if (nOv > 3) problems.push(`Scene ${sc.id} (đồ hoạ) có ${nOv} overlay chữ, tối đa 3 cho cả cảnh (1 punch phrase + 2 nhãn) — gộp tên các bước vào nhãn dạng "A • B • C", nút/bước còn lại là hình không chữ.`);
+      }
       prevMascotPose = null;
       for (const sh of list) {
         if (sc.kind === "asset") {
