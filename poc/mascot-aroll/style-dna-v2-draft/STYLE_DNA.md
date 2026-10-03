@@ -1,6 +1,6 @@
 # Vox-style DNA — grayscale + orange collage, 9:16 (BẢN NHÁP v2)
 
-> **BẢN NHÁP v2 (POC `poc/mascot-aroll/`) — CHƯA áp dụng cho pipeline thật.** Khác bản thật ở mục 1 (bỏ thanh cam đáy, nền lưới chuyển động), 3, 4 (+4b mascot), 5, 6, 7, 8. Các đoạn `[ĐÃ DUYỆT]` đã được người dùng chốt; `[ĐÃ KIỂM CHỨNG POC]` = đã đo thật ở Bước C (lưới chuyển động, PNG alpha). Mục 2, 9, 10 giữ nguyên. **Nguyên tắc sửa:** chỉ bỏ/chỉnh những gì buộc phải đổi vì (a) không còn chữ/component trên cảnh asset, (b) có mascot; mọi tư duy dựng cốt lõi (ý nghĩa trước component sau, nhịp/chỗ thở, không lặp liên tiếp, đa dạng, media-first, hợp đồng phụ đề…) được giữ và diễn đạt lại cho khớp v2.
+> **BẢN NHÁP v2 (POC `poc/mascot-aroll/`) — CHƯA áp dụng cho pipeline thật.** Khác bản thật ở mục 1 (bỏ thanh cam đáy, nền lưới chuyển động), 3, 4 (+4b chữ A-roll), 5, 6, 7, 8. Các đoạn `[ĐÃ DUYỆT]` đã được người dùng chốt; `[ĐÃ KIỂM CHỨNG POC]` = đã đo thật ở Bước C (lưới chuyển động, PNG alpha). Mục 2, 9, 10 giữ nguyên. **Nguyên tắc sửa:** chỉ bỏ/chỉnh những gì buộc phải đổi vì (a) không còn chữ/component trên cảnh asset, (b) mascot đã bỏ ở vòng 5 và thay bằng chữ A-roll có điểm neo narration (mục 4b); mọi tư duy dựng cốt lõi (ý nghĩa trước component sau, nhịp/chỗ thở, không lặp liên tiếp, đa dạng, media-first, hợp đồng phụ đề…) được giữ và diễn đạt lại cho khớp v2.
 
 Đây là **bản đặc tả phong cách** (không phải hướng dẫn vận hành một pipeline cụ thể). Nó
 chắt lọc lại toàn bộ quyết định thiết kế đã được kiểm chứng qua nhiều video thật (V10-V13)
@@ -22,7 +22,7 @@ phong cách trong một lưới ảnh.
   Cam là màu DUY NHẤT được dùng làm điểm nhấn — không thêm màu nhấn thứ hai.
 - **Font**: Be Vietnam Pro, weight 700/900 (chỉ dùng nét đậm/rất đậm, không dùng regular
   cho tiêu đề), hỗ trợ dấu tiếng Việt đầy đủ.
-- **Nền cảnh mặc định — lưới CHUYỂN ĐỘNG** (thay lưới tĩnh của v1): lưới ô vuông 84px, nét `rgba(20,20,20,0.32)`, trôi chậm theo một hướng để nền có sức sống mà không cạnh tranh với chủ thể. Ba biến thể khác giữ nguyên: `chart` (đường kẻ ngang đậm cho cảnh số liệu), `card` (nền phẳng không lưới cho cảnh tiêu đề/trích dẫn), `spotlight` (vignette tối cho cảnh cảnh báo/hệ quả). **Chọn biến thể có chủ đích theo từng cảnh**, đừng để mọi cảnh dùng mặc định; **hai cảnh liền nhau có nền nhìn thấy được (cảnh mascot, cảnh đồ hoạ, cảnh thẻ tài liệu) không dùng cùng một biến thể nền — và với lưới chuyển động thì không cùng hướng trôi** — để tạo khác biệt và biến đổi.
+- **Nền cảnh mặc định — lưới CHUYỂN ĐỘNG** (thay lưới tĩnh của v1): lưới ô vuông 84px, nét `rgba(20,20,20,0.32)`, trôi chậm theo một hướng để nền có sức sống mà không cạnh tranh với chủ thể. Ba biến thể khác giữ nguyên: `chart` (đường kẻ ngang đậm cho cảnh số liệu), `card` (nền phẳng không lưới cho cảnh tiêu đề/trích dẫn), `spotlight` (vignette tối cho cảnh cảnh báo/hệ quả). **Chọn biến thể có chủ đích theo từng cảnh**, đừng để mọi cảnh dùng mặc định; **hai cảnh liền nhau có nền nhìn thấy được (cảnh đồ hoạ, cảnh thẻ tài liệu, cảnh asset đang dùng nền giấy khi chữ A-roll thu nhỏ asset) không dùng cùng một biến thể nền — và với lưới chuyển động thì không cùng hướng trôi** — để tạo khác biệt và biến đổi.
   - **Lưới chuyển động — kỹ thuật (tất định, `[ĐÃ KIỂM CHỨNG POC]`: 84px/4s = 21px/s, lưới lớn hơn khung 2 ô mỗi cạnh nằm trong wrapper `overflow:hidden`; `hyperframes check` ok, chỉ ghi `container_overflow` mức `info`; đo trên mp4 render: lưới dịch 72px so với kỳ vọng 71,4px):** một phần tử lưới lớn hơn khung mỗi cạnh ≥2 ô, trôi bằng GSAP `x`/`y` (alias transform) với `ease:"none"`, quãng trôi = số NGUYÊN ô (bội của 84px) trong đúng thời lượng cảnh nên không cần lặp vô hạn (cấm `repeat:-1`); tốc độ ~84px mỗi 4-6 giây; hướng đổi theo cảnh (trái/phải/lên/xuống/chéo); tuyệt đối không xoay. Chỉ nằm sau chủ thể, không đè lên media.
 - **Không có thanh cam đáy khung hình** (v2 bỏ hoàn toàn dải cam mỏng ở mép dưới mà v1 dùng làm chữ ký thương hiệu). Màu cam `#FF6A1A` vẫn là màu nhấn duy nhất trong cảnh đồ hoạ (mục 3/6) nhưng không còn phần tử cố định nào ở mép dưới.
 
@@ -50,7 +50,7 @@ luôn trông nhỏ hơn thực tế dù khung chứa nó có to bao nhiêu.
 
 ## 3. Chữ & caption
 
-**Cảnh asset: KHÔNG có chữ nào trên hình** — không punch phrase, nhãn, mốc thời gian, địa điểm, con số, tên, tiêu đề hay trích dẫn. Chữ duy nhất là phụ đề đồng bộ giọng đọc (bên dưới). Lý do: mỗi phần tử chữ do code tự đặt là một nguồn lỗi (chồng nhau, nghiêng, bị che, quá nhiều); bỏ hẳn thì không còn lỗi đó. **Cảnh mascot có đúng 1 khối chữ bổ trợ/shot** (`[ĐÃ DUYỆT 03/10]`) — xem mục 4b: chữ là suy nghĩ/phản ứng của nhân vật, BỔ SUNG ý mà lời thoại chưa nói, ≤9 từ, không chép nguyên văn lời thoại, không bịa số/tên, 6 định dạng luân phiên, không xoay. Đây là ngoại lệ DUY NHẤT cho chữ ngoài phụ đề ở cảnh có media/nhân vật.
+**Cảnh asset: KHÔNG có chữ nào trên hình** — không punch phrase, nhãn, mốc thời gian, địa điểm, con số, tên, tiêu đề hay trích dẫn. Chữ duy nhất là phụ đề đồng bộ giọng đọc (bên dưới). Lý do: mỗi phần tử chữ do code tự đặt là một nguồn lỗi (chồng nhau, nghiêng, bị che, quá nhiều); bỏ hẳn thì không còn lỗi đó. **Ngoại lệ DUY NHẤT: chữ A-roll nhấn mạnh narration** (mục 4b, `[ĐÃ DUYỆT 03/10]`) — chỉ khi narration đặt câu hỏi/khẳng định MẤU CHỐT, hiện đúng lúc người đọc nói, đủ thời gian để đọc; không thẻ/khung.
 
 **Cảnh đồ hoạ** (chỉ khi thiếu asset phù hợp, mục 4) giữ quy tắc cũ sau, kèm giới hạn mới:
 
@@ -66,13 +66,12 @@ luôn trông nhỏ hơn thực tế dù khung chứa nó có to bao nhiêu.
   cấp timeline tổng (không phải theo từng cảnh) bằng frame tuyệt đối, để đọc liền mạch
   xuyên qua các lần chuyển cảnh.
 
-## 4. Ba loại cảnh và 13 ngôn ngữ thị giác
+## 4. Hai loại cảnh và 13 ngôn ngữ thị giác
 
-Mỗi cảnh thuộc ĐÚNG MỘT trong ba loại; Stage 5 chọn:
+Mỗi cảnh thuộc ĐÚNG MỘT trong hai loại; Stage 5 chọn (mascot đã bỏ ở vòng 5, 03/10):
 
 1. **Cảnh asset** — dùng ảnh/video minh hoạ có sẵn, kể cả thẻ tài liệu PDF `doc-NN` (người dùng chốt: `doc-NN` là **asset tương đương**, dùng như hiện nay: thẻ đặt giữa khung, `object-fit:contain`, giữ nguyên bản — không mờ/filter/lớp tối, không vẽ thêm highlight, không chép lại chữ bản án thành HTML; nền phía sau thẻ là một biến thể nền ở mục 1). Chỉ có media + phụ đề. KHÔNG icon, diagram, thẻ, chữ, mũi tên, nét vẽ, lớp tối/vignette phủ lên media. Ngôn ngữ thị giác: `background-photo`, `cutout`, `split` (hai media đối lập/xen nhau), `document` (thẻ hồ sơ nguyên bản). Sự sống đến từ chuyển động của chính asset (mục 5).
-2. **Cảnh mascot** — người kể capybara toàn khung (mục 4b).
-3. **Cảnh đồ hoạ** — CHỈ khi không còn asset nào khớp (Stage 2b đã không bổ sung được). Giữ nguyên toàn bộ bảng 13 ngôn ngữ ở [`references/visual-languages.md`](references/visual-languages.md) (`diagram`, `flow`, `timeline`, `data`, `map`, `quote`, `annotated`, `mockup`, `text-only`…) và quy tắc đi kèm. Không xếp đồ hoạ lên media của cảnh asset.
+2. **Cảnh đồ hoạ** — CHỈ khi không còn asset nào khớp (Stage 2b đã không bổ sung được). Giữ nguyên toàn bộ bảng 13 ngôn ngữ ở [`references/visual-languages.md`](references/visual-languages.md) (`diagram`, `flow`, `timeline`, `data`, `map`, `quote`, `annotated`, `mockup`, `text-only`…) và quy tắc đi kèm. Không xếp đồ hoạ lên media của cảnh asset.
 
 **Cách đặt media trong cảnh asset — `cover` hay `contain` `[ĐÃ DUYỆT hướng; ngưỡng đã chạy POC flydubai]`.** Quyết định TẤT ĐỊNH theo kích thước thật trong manifest, theo từng shot (một cảnh có thể trộn cả hai):
 - **`cover`** (mặc định): ảnh/video 9:16 đủ nét phủ kín khung 1080×1920. Ảnh AI Stage 2b 768×1376 là loại này (phóng ×1,41, cắt ~1%).
@@ -96,33 +95,25 @@ Mỗi cảnh thuộc ĐÚNG MỘT trong ba loại; Stage 5 chọn:
 
 **Rủi ro v2 phải kiểm soát — đơn điệu.** Bài học v1: video bị chê có 54-67% cảnh thuộc nhóm "giống nhau nhất", video được thích 23-38% (`references/quality-bars.md` §6). Cảnh asset đều là media toàn khung nên dễ giống nhau theo thiết kế; vì vậy `[ĐÃ DUYỆT]`: đo "kiểu trình bày" của cảnh asset (đẩy vào, lùi ra, lia, đổi crop, `split`, reveal, nhiều shot cắt, thẻ `doc-NN`); không hai cảnh liên tiếp cùng kiểu; không kiểu nào quá ~35% số cảnh asset; nhóm cảnh giống nhau nhất ≤38% tổng số cảnh (đo trên bản dựng thật).
 
-### 4b. Mascot capybara (thư viện `capybara-library-v1`, 17 PNG 1024×1536 nền trong suốt)
+### 4b. Chữ A-roll nhấn mạnh narration `[ĐÃ DUYỆT 03/10 — thay mascot, người dùng bỏ hoàn toàn mascot vì thấy "chèn cho có, đơ, không nhấn mạnh"]`
 
-- Là NGƯỜI KỂ, không phải hình chứng minh sự kiện. Dùng khi: đặt câu hỏi, bình luận/bóc tách giả định, ví von nhẹ, chuyển ý, chốt ý, đoạn nhạy cảm (`serious`/`concerned`/`sad`). KHÔNG quota; KHÔNG dùng để lấp chỗ thiếu asset (thiếu asset → cảnh đồ hoạ).
-- Cảnh mascot là shot RIÊNG: nhân vật + nền + (tối đa 1 khối chữ bổ trợ/shot); không ghép ảnh/video/đồ hoạ. **Nền là một biến thể nền của ADN (mục 1)**: đổi biến thể/hướng lưới giữa các cảnh liền kề; lớp nền là phần tử riêng PHÍA SAU ảnh PNG, không đụng tới pixel PNG (không filter/shadow lên nhân vật).
-- **Chọn theo chức năng kể chuyện, không theo cảm tính.** Mascot phải gắn với `narrativeFunction` của đoạn (hook/question/paradox/mechanism/evidence/reversal/conclusion…, xem `references/editorial-framework.md`) và `contrastWithPrevious` (đổi nhịp so với cảnh trước). Ánh xạ gợi ý với `narrativeRole` của kit: `hook`→`opening`/`question`; `question`/`paradox`→`question`/`uncertainty`; `mechanism`/`cause`→`analysis`/`explanation`; ví von→`light_analogy`; hậu quả→`consequence`; sự kiện nhạy cảm→`sensitive_fact`/`empathy`; `reversal`→`established_point`/`uncertainty`; `conclusion`→`takeaway`/`closing`. Mascot cũng là **chỗ thở** hợp lệ sau một cụm cảnh mật độ cao (mục 5) — nhưng KHÔNG được dùng chỉ để lấp thời lượng.
-- **Độ dài cảnh mascot 3–5 giây, do ý đồ quyết định (không phải con số cố định):** nhấn mạnh dứt khoát (đặt câu hỏi, chốt ý) ngắn ~3 giây; bình luận/giải thích/ví von/chỗ thở dài hơn tới ~5 giây; điểm cắt bám khoảng nghỉ hơi/ranh giới câu của lời thoại thật, không bám độ dài lời thoại; không để hai cảnh liên tiếp có độ dài gần bằng nhau (±15%, tránh nhịp metronome); mascot không dồn vào một đoạn và không biến mất ở 1/3 cuối video (video không được "nhạt dần").
-- **Sự kiện thị giác trong cảnh mascot `[ĐÃ DUYỆT]`:** quy tắc cốt lõi "không quá 3 giây không có sự kiện thị giác mới" vẫn áp dụng, nhưng cảnh mascot >3 giây có xung đột (1 pose + `grow-600` chỉ có sự kiện ở 0,6s đầu; nền lưới trôi là chuyển động nền chứ không tính là sự kiện mới). Quy định: cảnh mascot >~3,5 giây tách 2 shot đổi pose (đúng contract kit: đổi pose = shot mới, không cùng pose liền nhau) để luôn có sự kiện thị giác mỗi ≤3 giây.
-- Chọn đúng ID có thật trong `manifest.json`; không suy tổ hợp trang phục×biểu cảm từ tên. Mặc định trang phục `host`; `reporter` chỉ cho đoạn tường thuật. Giữ cùng trang phục xuyên phân đoạn. Mỗi shot 1 pose; đổi pose = shot mới; không cùng pose ở hai shot mascot liền nhau.
-- **Hiển thị (v2 vòng 3, người dùng chốt 03/10 vì mascot to toàn khung bị 'đơ, gượng'):** PNG nguyên trạng (không crop/mirror/stretch/xoay/filter/shadow/recolor) NHƯNG NHỎ ~×0,58 (≈476×713), đứng đáy dải an toàn (y=1390), LỆCH TRÁI/PHẢI xen kẽ theo thứ tự cảnh mascot; vùng chữ nằm phía trên (y≈210–650), không bao giờ giao nhân vật. Chuyển động TẤT ĐỊNH, không xoay: trượt vào từ cạnh đứng (0,6s, power3.out) rồi nhấp nhô y ±6px (sine, finite) trên MỘT wrapper xuyên suốt scene — đổi pose giữa hai shot chỉ là cắt ảnh, nhịp nhô không đứt. Preset `slide-bob` (mở rộng contract kit vốn chỉ `hold`/`grow-600`; kit chỉ cấm idle motion NGẪU NHIÊN). Không lip-sync, không chớp mắt.
-- Stage 7 không vẽ lại nhân vật bằng CSS/SVG/canvas, không đổi ID; thiếu file thì trả lỗi.
-- **Chữ bổ trợ mascot (`textIntent` → `textEvents`)** — hình thức do builder quyết định, nội dung do Stage 5 đề xuất, SCRIPT kiểm tất định:
-  - Mục đích (`purpose`) gắn `narrativeFunction`: `hỏi` (đặt câu hỏi cho người xem), `khẳng định`, `cảm thán`, `ví von`, `chốt`. Chữ phải CÓ Ý ĐỒ biên tập, không chèn cho có; phải bổ sung một ý/cảm xúc mà lời thoại chưa nói.
-  - Luật cứng: ≤9 từ; đúng 1 khối/cảnh (≤1/shot); không emoji; KHÔNG chép nguyên văn lời thoại (so khớp chuẩn hoá bỏ dấu/hoa-thường); mọi chữ số và tên riêng phải có trong kịch bản; hiện ≥1,5s, ≤3,5s, kết thúc trước hết shot; chữ không giao nhân vật.
-  - 6 định dạng, luân phiên, **không lặp ở hai cảnh mascot liền kề**, mỗi kiểu một cách xuất hiện riêng (không xoay): `thought` (bong bóng + đuôi hướng về mascot, pop có overshoot), `quote` (dấu “ cam + chữ hiện từng từ, tổng ≤0,5s), `punch` (cụm nhấn trên nền cam, slam), `question` (huy hiệu ? + thẻ, huy hiệu pop rồi thẻ trượt), `sticky` (ghi chú kem + băng cam, rơi xuống), `stamp` (khung viền dày, đóng dấu).
-  - Tông biểu cảm đa dạng: `serious`/`concerned`/`sad` chỉ cho đoạn nhạy cảm thật sự; mở đầu/chuyển ý/ví von/chốt nên dùng `welcome`/`amused`/`confident`/`happy`/`explain`/`think`; không quá 2 cảnh mascot liên tiếp cùng nhóm nghiêm; mỗi pose ≤2 lần/video khi kit còn lựa chọn khác. (Một phần cảm giác 'đơ' là do thiết kế kit; bộ mascot mới sẽ do người dùng làm sau.)
+- **Mặc định cảnh asset KHÔNG có chữ.** Chữ A-roll chỉ xuất hiện khi lời thoại đặt MỘT CÂU HỎI MẤU CHỐT hoặc nêu MỘT KHẲNG ĐỊNH MANG TÍNH QUYẾT ĐỊNH (cao trào/chốt vấn đề). Hạn mức cứng: ≤1 chữ/cảnh, ≤ max(1, ⌊số cảnh/8⌋) chữ/video, hai cảnh có chữ cách nhau ≥3 cảnh, chỉ ở cảnh asset (cảnh đồ hoạ không có).
+- **Nội dung:** để NHẤN MẠNH narration — ≤8 từ và ≤44 ký tự, được phép giống lời thoại nhưng phải ngắn gọn (không nhắc lại cả câu), không bịa số/tên riêng, không emoji.
+- **ĐIỂM NEO — đúng lúc narration:** chữ hiện ĐÚNG LÚC người đọc bắt đầu nói cụm neo (cụm nguyên văn trong lời thoại, khớp mốc từng từ của captions; sai số ≤1 khung), không trước, không sau. Chữ giữ ≥ max(2s; 0,7s + 80ms/ký tự) cộng thời gian vào/ra và phải nằm trọn trong MỘT shot. Narration nói nhanh hoặc neo sát hết shot, không đủ chỗ để đọc kịp → **BỎ chữ đó** (script tự bỏ, ghi lý do), không kéo dài cảnh, không rút ngắn chữ.
+- **KHÔNG thẻ/khung/nền:** chỉ là CHỮ (Be Vietnam Pro 900, không xoay). 5 hình thức vào, không lặp ở hai lần chữ liền kề: gõ chữ `typewriter` (hợp câu hỏi), đóng dấu `stamp` (hợp khẳng định dứt khoát; phóng to→chạm→rung dịch chuyển, không xoay), từng từ bật theo nhịp nói `wordpop`, trượt lên trong mặt nạ `maskrise`, gạch chân quét `sweep`.
+- **Asset phản ứng để chữ nổi bật** (script chọn TẤT ĐỊNH theo hình học asset, không lặp treatment liền kề): `dim-center` (asset mờ toàn khung, chữ kem ở giữa), `dim-lower` (gradient tối nửa dưới, chữ lower-third), `shrink-top` (asset thu nhỏ ×0,72 dồn xuống, chữ mực trên nền giấy ở dải trên; hết chữ asset trở lại), `band-free` (asset ngang/`doc-NN` vốn còn dải trống trên/dưới hộp → chữ vào dải đó, asset không đổi). Chữ luôn y≤1390 (không đè phụ đề), không chồng asset khi shrink/band; camera của asset vẫn trôi liên tục bên trong.
 
 ## 5. Chuyển động & nhịp độ
 
-**Cảnh asset — camera LIÊN TỤC là baseline `[ĐÃ DUYỆT 03/10 sau khi xem flydubai-fz1073]`.** Mỗi shot chỉ có MỘT chuyển động camera liền mạch suốt cả shot (như v1 và skill HyperFrames: Ken Burns `scale 1→1,04…1,10` với `ease:"none"`; `multi-phase-camera`: một nơi duy nhất viết camera để camera không bao giờ đứng yên rồi bật lại). **Sự kiện thị giác của cảnh asset = ĐỔI ASSET bám cue lời thoại**, không phải re-crop/zoom ngắt quãng. Giữa hai lần đổi asset camera luôn trôi → không tính là dead-air; luật "không quá 3 giây không có sự kiện" KHÔNG áp cho cảnh asset (chỉ áp cho cảnh mascot/đồ hoạ). Lý do (đo thật): luật cũ khiến Stage 6 cắt 1 ảnh thành 3–4 shot re-crop (shot TB 3,2s vs 5,7s ở v1; 4,3 tween/cảnh vs 1,9) → zoom-dừng-reset, crop bất ngờ, giật cục. Quy tắc cứng: (1) shot ~4–8s (tối đa ~10s); nếu cảnh dài hãy dùng NHIỀU asset khác nhau thay vì kéo dài một ảnh; (2) CẤM tách một ảnh thành nhiều shot liền kề (mỗi lần cắt reset khung); (3) từ vựng camera như v1: `drift-in` (zoom-in chậm), `drift-out`, `pan-left/right/up/down`, `diag`; mỗi cảnh một kiểu/hướng/biên độ khác cảnh liền trước ("đừng dùng cùng ambient zoom ở mọi cảnh" — skill); (4) CẤM punch-entrance, CẤM ease đa pha (`power4.out` rồi `sine.out`…), CẤM đặt lại scale giữa các shot cùng cảnh; (5) NGÂN SÁCH ZOOM theo độ phân giải thật: tổng phóng hiệu dụng trên nguồn raster không quá ~×2,0 (ảnh AI 768×1376 đã ×1,41 nên camera thêm tối đa ~+10%; video thật +5%; media `contain`/nguồn nhỏ gần như chỉ pan ≤30px); (6) chuyển shot = cắt thẳng hoặc crossfade 0,25s (xen kẽ), không wipe/zoom-through. `crop-reframe`, `multi-shot-cut`, `split`, `reveal` BỊ HOÃN khỏi từ vựng v2.
+**Cảnh asset — camera LIÊN TỤC là baseline `[ĐÃ DUYỆT 03/10 sau khi xem flydubai-fz1073]`.** Mỗi shot chỉ có MỘT chuyển động camera liền mạch suốt cả shot (như v1 và skill HyperFrames: Ken Burns `scale 1→1,04…1,10` với `ease:"none"`; `multi-phase-camera`: một nơi duy nhất viết camera để camera không bao giờ đứng yên rồi bật lại). **Sự kiện thị giác của cảnh asset = ĐỔI ASSET bám cue lời thoại**, không phải re-crop/zoom ngắt quãng. Giữa hai lần đổi asset camera luôn trôi → không tính là dead-air; luật "không quá 3 giây không có sự kiện" KHÔNG áp cho cảnh asset (chỉ áp cho cảnh đồ hoạ). Lý do (đo thật): luật cũ khiến Stage 6 cắt 1 ảnh thành 3–4 shot re-crop (shot TB 3,2s vs 5,7s ở v1; 4,3 tween/cảnh vs 1,9) → zoom-dừng-reset, crop bất ngờ, giật cục. Quy tắc cứng: (1) shot ~4–8s (tối đa ~10s); nếu cảnh dài hãy dùng NHIỀU asset khác nhau thay vì kéo dài một ảnh; (2) CẤM tách một ảnh thành nhiều shot liền kề (mỗi lần cắt reset khung); (3) từ vựng camera như v1: `drift-in` (zoom-in chậm), `drift-out`, `pan-left/right/up/down`, `diag`; mỗi cảnh một kiểu/hướng/biên độ khác cảnh liền trước ("đừng dùng cùng ambient zoom ở mọi cảnh" — skill); (4) CẤM punch-entrance, CẤM ease đa pha (`power4.out` rồi `sine.out`…), CẤM đặt lại scale giữa các shot cùng cảnh; (5) NGÂN SÁCH ZOOM theo độ phân giải thật: tổng phóng hiệu dụng trên nguồn raster không quá ~×2,0 (ảnh AI 768×1376 đã ×1,41 nên camera thêm tối đa ~+10%; video thật +5%; media `contain`/nguồn nhỏ gần như chỉ pan ≤30px); (6) chuyển shot = cắt thẳng hoặc crossfade 0,25s (xen kẽ), không wipe/zoom-through. `crop-reframe`, `multi-shot-cut`, `split`, `reveal` BỊ HOÃN khỏi từ vựng v2.
 
 **Kiểu vào cảnh/chuyển cảnh — vẫn không bao giờ lặp ở hai cảnh liên tiếp (mọi loại cảnh).** Cảnh asset: kiểu camera/hướng/biên độ của shot đầu phải khác cảnh liền trước; âm thanh chuyển cảnh cũng đổi theo cảnh (tránh 1-2 hiệu ứng cho cả video).
 
-**Cảnh mascot** — nhân vật NHỎ lệch trái/phải: trượt vào + nhấp nhô nhẹ tất định (không xoay, không ngẫu nhiên); chữ bổ trợ vào bằng kiểu riêng của từng định dạng (mục 4b). Sự sống đến từ nhân vật, chữ và nền lưới trôi (mục 1); đổi biến thể/hướng nền giữa các cảnh liền kề.
+**Chữ A-roll** — mỗi hình thức vào bằng kiểu riêng (mục 4b); asset mờ đi/thu nhỏ bằng MỘT tween transform/opacity 0,35–0,45s, camera trôi bên trong tiếp tục; đổi biến thể/hướng nền giữa các cảnh liền kề.
 
 **Cảnh đồ hoạ** — kiểu vào cảnh chỉ dùng bộ KHÔNG XOAY: rise, grow, punch, shatter, unfold, zoom-through, strike ([`references/animation-variants.md`](references/animation-variants.md)). **BỎ `flip` (rotateY), `peel`, `spiral`, `wobble-drop`** — bốn kiểu này có xoay, là gốc của lỗi "thẻ chữ nghiêng/xoay". Không hai cảnh liên tiếp cùng kiểu vào cảnh. **Chuyển động nền liên tục vẫn BẮT BUỘC (bài học v1: chủ thể đứng yên = ảnh tĩnh chết cứng) và vẫn phải đổi CHẾ ĐỘ giữa các phần tử cùng khung, lệch pha** — nhưng chỉ dùng chế độ KHÔNG xoay: `bob` (trôi dọc vài px), `drift-x` (trôi ngang vài px), `breathe` (scale 1→1,012). BỎ `sway`/`tremble` (xoay theo độ).
 
-**Quy tắc chung:** không phần tử nào của cảnh (chữ, thẻ, media, mascot) có `rotation` ≠ 0 hoặc skew tại bất kỳ thời điểm nào.
+**Quy tắc chung:** không phần tử nào của cảnh (chữ, thẻ, media) có `rotation` ≠ 0 hoặc skew tại bất kỳ thời điểm nào.
 
 **Nhịp dựng**: một cảnh trung bình 6-9 giây (cảnh dài quá 13 giây là dấu hiệu "chết khí");
 15 giây mở đầu cần nhiều nhịp riêng biệt thay vì một cảnh giới thiệu dài; punch phrase (chỉ ở cảnh đồ hoạ) phải
@@ -139,11 +130,11 @@ không bắt buộc bằng thời gian nói (xem `references/editorial-framework
 `comprehensionLoad`). Ưu tiên dùng media thật và giữ đủ nhịp độ để xem kịp là YÊU CẦU ĐỒNG
 THỜI, không phải hai lựa chọn đánh đổi lẫn nhau.
 
-**Cảnh mascot và ngưỡng ~5 giây:** cảnh mascot không áp ngưỡng dưới ~5 giây của cảnh asset (đó là một nhịp kể chuyện/chỗ thở, không phải nhịp xem asset); độ dài 3–5 giây do ý đồ nhấn mạnh và nhịp dựng quyết định, xem mục 4b. Các nguyên tắc nhịp còn lại (cảnh `complex` không ngắn hơn trung vị, phần tử hiện diện ≥1,5 giây, tránh metronome ±15%, có chỗ thở giữa các cảnh mật độ cao) vẫn áp dụng nguyên cho mọi loại cảnh.
+**Chữ A-roll không đổi nhịp cảnh** (ngưỡng ~5 giây của cảnh asset vẫn áp dụng; chữ chỉ là lớp nhấn mạnh trong cảnh, mục 4b). Các nguyên tắc nhịp còn lại (cảnh `complex` không ngắn hơn trung vị, phần tử hiện diện ≥1,5 giây, tránh metronome ±15%, có chỗ thở giữa các cảnh mật độ cao) vẫn áp dụng nguyên cho mọi loại cảnh.
 
 ## 6. Icon vocabulary chuẩn hoá
 
-15 biểu tượng vẽ tay bằng đường path tự-vẽ-dần: ban, check, clock, crowd, density, doc, fall, money, person, phone, pin, question, rise, scale, warning. **Chỉ dùng trong CẢNH ĐỒ HOẠ** (thiếu asset). Tuyệt đối không đặt icon lên cảnh asset hay cảnh mascot. Diagram/icon tự-vẽ-dần phức tạp rất dễ lỗi hoặc xấu khi code tự sinh hàng loạt, ưu tiên phiên bản đơn giản.
+15 biểu tượng vẽ tay bằng đường path tự-vẽ-dần: ban, check, clock, crowd, density, doc, fall, money, person, phone, pin, question, rise, scale, warning. **Chỉ dùng trong CẢNH ĐỒ HOẠ** (thiếu asset). Tuyệt đối không đặt icon lên cảnh asset. Diagram/icon tự-vẽ-dần phức tạp rất dễ lỗi hoặc xấu khi code tự sinh hàng loạt, ưu tiên phiên bản đơn giản.
 
 ## 7. Khung tư duy biên tập — "Ý NGHĨA trước, COMPONENT sau"
 
@@ -177,7 +168,7 @@ HyperFrames) — không phải vẽ minh hoạ từ đầu khi đã có media ph
 cảnh chỉ dùng khi thực sự không có media phù hợp (mục 4), ưu tiên phiên bản đơn giản thay vì bộ
 "self-drawing SVG path" phức tạp ở mục 6 nếu không thật sự cần thiết cho cảnh đó.
 
-**Phạm vi v2:** cảnh asset = media thật + camera + chuyển cảnh + phụ đề, không gì khác. Cảnh mascot ráp TẤT ĐỊNH từ template của kit (bind ID/duration/preset), không do AI viết code. Chỉ cảnh đồ hoạ mới do generator dựng bố cục.
+**Phạm vi v2:** cảnh asset = media thật + camera + chuyển cảnh + phụ đề, không gì khác. Chữ A-roll do builder dựng TẤT ĐỊNH từ điểm neo narration, không do AI viết code. Chỉ cảnh đồ hoạ mới do generator dựng bố cục.
 
 ## 8. Ngưỡng chất lượng — "tốt" trông như thế nào bằng số
 
@@ -187,7 +178,7 @@ liệu tham chiếu của video được đánh giá đạt cả 4 tiêu chí ng
 chiếm 45-55% dải nội dung hữu dụng (cảnh asset toàn khung luôn thoả), không quá 3 giây không
 có sự kiện thị giác mới, video không được "nhạt dần" ở 1/3 cuối, và 4 tiêu chí nghiệm thu
 (illustrated / composed / varied / purposeful) vẫn cần một người/agent thật sự NHÌN bản dựng
-đã ghép caption. Riêng v2: (1) mọi phần tử có mặt phải có lý do — mascot gắn `narrativeFunction`;
+đã ghép caption. Riêng v2: (1) mọi phần tử có mặt phải có lý do — chữ A-roll gắn lý do biên tập (`why`) + điểm neo narration;
 (2) đa dạng kiểu trình bày cảnh asset theo mục 4; (3) hồ sơ tham chiếu V10 là hồ sơ v1 —
 **không sửa số, không hạ**; sẽ lập hồ sơ v2 riêng từ video v2 đầu tiên được duyệt.
 

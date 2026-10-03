@@ -1,0 +1,490 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap" />
+      <style>
+      /* hf-safe-colors (tất định từ style-tokens.json) */
+      .hf-text-ink { color: #141414; }
+      .hf-text-light { color: #F7F4EC; }
+      .hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+      .hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+      .hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+      .hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+      *, *::before, *::after {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #F5F0E4; /* Biến thể card phẳng màu kem, không lưới */
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      /* Khung canvas chuẩn 1080x1920 */
+      #root {
+        position: relative;
+        width: 1080px;
+        height: 1920px;
+        background-color: #F5F0E4;
+        overflow: hidden;
+      }
+
+      /* Quy ước clip: định vị absolute inset:0, không hardcode width/height theo pixel */
+      .clip {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+      }
+
+      /* Camera rig phục vụ chuyển động pan-right nhẹ toàn cảnh */
+      #camera-rig {
+        position: absolute;
+        inset: 0;
+      }
+
+      /* 1. Punch Phrase: ĐỐI THOẠI ĐỔ VỠ */
+      .punch-container {
+        position: absolute;
+        top: 340px;
+        left: 0;
+        right: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .punch-title {
+        font-size: 68px;
+        font-weight: 900;
+        line-height: 1.2;
+        letter-spacing: -0.02em;
+        text-transform: uppercase;
+        color: #141414;
+        text-align: center;
+        margin: 0;
+      }
+
+      .punch-underline {
+        margin-top: 16px;
+        width: 180px;
+        height: 8px;
+        background-color: #FF6A1A;
+        border-radius: 4px;
+        transform-origin: 50% 50%;
+      }
+
+      /* 2. Diagram Card trung tâm (chỉ chứa đồ họa hình học, không chứa thẻ chữ) */
+      .diagram-wrapper {
+        position: absolute;
+        top: 490px;
+        left: 90px;
+        width: 900px;
+        height: 580px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      #diagram-card {
+        width: 100%;
+        height: 100%;
+        background-color: #E7E3D9; /* Nền giấy ngà tương phản rõ với nền card #F5F0E4 */
+        border: 4px solid #141414;
+        border-radius: 16px;
+        box-shadow: 12px 12px 0px #141414; /* Shadow đặc neo-brutalist phong cách Vox */
+        position: relative;
+        overflow: hidden;
+        transform-origin: 50% 50%;
+      }
+
+      /* Header thanh kỹ thuật hình học thuần túy (không chữ) */
+      .card-header-bar {
+        position: absolute;
+        top: 24px;
+        left: 28px;
+        right: 28px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        z-index: 2;
+      }
+
+      .tech-decor-group {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .tech-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+      }
+
+      .tech-dot-orange {
+        background-color: #FF6A1A;
+      }
+
+      .tech-dot-ink {
+        background-color: #141414;
+        opacity: 0.35;
+      }
+
+      .tech-mini-line {
+        width: 60px;
+        height: 4px;
+        background-color: #141414;
+        opacity: 0.25;
+        border-radius: 2px;
+        margin-left: 6px;
+      }
+
+      .tech-status-indicator {
+        display: flex;
+        align-items: center;
+      }
+
+      .status-bar-segmented {
+        display: flex;
+        gap: 5px;
+      }
+
+      .status-bar-segmented .segment {
+        width: 20px;
+        height: 6px;
+        border-radius: 2px;
+        background-color: #141414;
+        opacity: 0.2;
+      }
+
+      .status-bar-segmented .segment.active {
+        background-color: #FF6A1A;
+        opacity: 1;
+      }
+
+      /* SVG biểu đồ va chạm */
+      .diagram-svg {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+      }
+
+      /* 3. Nhãn 1: XUNG ĐỘT QUAN ĐIỂM (card-ink) */
+      #label-conflict-card {
+        position: absolute;
+        left: 140px;
+        top: 860px; /* Tâm khoảng x: 340, y: 880 theo shotlist */
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        background-color: #141414;
+        border: 3px solid #141414;
+        border-radius: 8px;
+        padding: 14px 24px;
+        box-shadow: 6px 6px 0px rgba(20, 20, 20, 0.25);
+        z-index: 10;
+        transform-origin: 50% 50%;
+      }
+
+      .badge-dot-orange {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background-color: #FF6A1A;
+        flex-shrink: 0;
+      }
+
+      .badge-text-light {
+        font-size: 24px;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+        text-transform: uppercase;
+        color: #F7F4EC;
+        white-space: nowrap;
+        margin: 0;
+      }
+
+      /* 4. Nhãn 2: ĐÓNG BĂNG ĐÀM PHÁN (card-orange) */
+      #label-freeze-card {
+        position: absolute;
+        left: 540px;
+        top: 1150px; /* Tâm khoảng x: 720, y: 1180 theo shotlist */
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        background-color: #FF6A1A;
+        border: 3px solid #141414;
+        border-radius: 8px;
+        padding: 14px 24px;
+        box-shadow: 6px 6px 0px #141414;
+        z-index: 10;
+        transform-origin: 50% 50%;
+      }
+
+      .badge-icon-ink {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+
+      .badge-text-ink {
+        font-size: 24px;
+        font-weight: 900;
+        letter-spacing: 0.02em;
+        text-transform: uppercase;
+        color: #141414;
+        white-space: nowrap;
+        margin: 0;
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s11"
+      data-width="1080"
+      data-height="1920"
+      data-duration="8"
+    >
+      <!-- Camera rig cho pan-right nhẹ -->
+      <div id="camera-rig">
+
+        <!-- Lớp sơ đồ đồ họa (clip t=0 đến t=8.0s, không chứa chữ) -->
+        <div id="clip-diagram" class="clip" data-start="0" data-duration="8" data-track-index="0">
+          <div class="diagram-wrapper">
+            <div id="diagram-card">
+              <!-- Thanh kỹ thuật thuần hình học trang trí (không chứa text) -->
+              <div class="card-header-bar">
+                <div class="tech-decor-group">
+                  <span class="tech-dot tech-dot-orange"></span>
+                  <span class="tech-dot tech-dot-ink"></span>
+                  <span class="tech-dot tech-dot-ink"></span>
+                  <div class="tech-mini-line"></div>
+                </div>
+                <div class="tech-status-indicator">
+                  <div class="status-bar-segmented">
+                    <span class="segment active"></span>
+                    <span class="segment active"></span>
+                    <span class="segment active"></span>
+                    <span class="segment"></span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- SVG Biểu đồ va chạm thuần hình học (tuyệt đối không thẻ text) -->
+              <svg class="diagram-svg" viewBox="0 0 900 580" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <!-- Đường trục gióng ngang đứt nét -->
+                <line x1="60" y1="290" x2="840" y2="290" stroke="#141414" stroke-width="2.5" stroke-dasharray="8 8" stroke-opacity="0.3" />
+
+                <!-- Đường chỉ dẫn kỹ thuật nối ra các vị trí nhãn -->
+                <path d="M220 320 L220 410 L250 410" stroke="#141414" stroke-width="2" stroke-dasharray="4 4" stroke-opacity="0.4" />
+                <path d="M450 420 L450 510 L520 510" stroke="#141414" stroke-width="2" stroke-dasharray="4 4" stroke-opacity="0.4" />
+
+                <!-- Vector Trái: Đoàn Sinh Viên tiến sang phải -->
+                <g id="vector-left">
+                  <!-- Biểu tượng nhóm sinh viên -->
+                  <circle cx="120" cy="290" r="46" fill="#141414" />
+                  <circle cx="120" cy="276" r="10" fill="#F7F4EC" />
+                  <path d="M102 308 C102 294 138 294 138 308 Z" fill="#F7F4EC" />
+                  <circle cx="98" cy="280" r="8" fill="#F7F4EC" fill-opacity="0.75" />
+                  <path d="M84 308 C84 297 110 297 110 308 Z" fill="#F7F4EC" fill-opacity="0.75" />
+                  <circle cx="142" cy="280" r="8" fill="#F7F4EC" fill-opacity="0.75" />
+                  <path d="M130 308 C130 297 156 297 156 308 Z" fill="#F7F4EC" fill-opacity="0.75" />
+
+                  <!-- Thanh mũi tên lực -->
+                  <rect x="180" y="279" width="180" height="22" rx="4" fill="#141414" />
+                  <polygon points="360,266 405,290 360,314" fill="#141414" />
+                </g>
+
+                <!-- Vector Phải: Đại Diện Chính Quyền tiến sang trái -->
+                <g id="vector-right">
+                  <!-- Biểu tượng chính quyền / quyền uy -->
+                  <circle cx="780" cy="290" r="46" fill="#141414" />
+                  <path d="M758 308 L802 308 M764 308 L764 282 M774 308 L774 282 M786 308 L786 282 M796 308 L796 282 M758 282 L802 282 M780 268 L754 282 L806 282 Z" stroke="#F7F4EC" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+
+                  <!-- Thanh mũi tên lực -->
+                  <rect x="540" y="279" width="180" height="22" rx="4" fill="#141414" />
+                  <polygon points="540,266 495,290 540,314" fill="#141414" />
+                </g>
+
+                <!-- Cụm Bế Tắc Trung Tâm: Rào chắn va chạm -->
+                <g id="deadlock-group">
+                  <!-- Thanh rào chắn cam sọc chéo hazard -->
+                  <rect x="428" y="160" width="44" height="260" rx="8" fill="#FF6A1A" stroke="#141414" stroke-width="4" />
+                  <path d="M428 190 L472 215 M428 235 L472 260 M428 280 L472 305 M428 325 L472 350 M428 370 L472 395" stroke="#141414" stroke-width="5" stroke-linecap="square" />
+
+                  <!-- Tia va chạm nảy ra 2 bên -->
+                  <path class="impact-spark" d="M400 250 L420 270 L395 285 L418 298 L402 320" stroke="#FF6A1A" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+                  <path class="impact-spark" d="M500 250 L480 270 L505 285 L482 298 L498 320" stroke="#FF6A1A" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+
+                  <!-- Vòng tròn trung tâm với ổ khóa bế tắc -->
+                  <circle cx="450" cy="290" r="48" fill="#141414" stroke="#FF6A1A" stroke-width="4" />
+                  <rect x="437" y="283" width="26" height="20" rx="4" fill="#FF6A1A" />
+                  <path d="M442 283 V274 C442 269 458 269 458 274 V283" stroke="#FF6A1A" stroke-width="4" stroke-linecap="round" fill="none" />
+                  <circle cx="450" cy="292" r="2.5" fill="#141414" />
+                  <path d="M450 294.5 V298.5" stroke="#141414" stroke-width="2.5" stroke-linecap="round" />
+                </g>
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <!-- Khối Chữ 1 (duy nhất 1 punch phrase): ĐỐI THOẠI ĐỔ VỠ (t=0.85s đến 8.0s) -->
+        <div id="clip-punch" class="clip" data-start="0.85" data-duration="7.15" data-track-index="1">
+          <div class="punch-container">
+            <h1 id="punch-title" class="punch-title hf-text-ink">ĐỐI THOẠI ĐỔ VỠ</h1>
+            <div id="punch-underline" class="punch-underline"></div>
+          </div>
+        </div>
+
+        <!-- Khối Chữ 2 (nhãn 1): XUNG ĐỘT QUAN ĐIỂM (t=1.85s đến 8.0s) -->
+        <div id="clip-label-conflict" class="clip" data-start="1.85" data-duration="6.15" data-track-index="2">
+          <div id="label-conflict-card" class="hf-plate-ink">
+            <span class="badge-dot-orange"></span>
+            <span class="badge-text-light hf-text-light">XUNG ĐỘT QUAN ĐIỂM</span>
+          </div>
+        </div>
+
+        <!-- Khối Chữ 3 (nhãn 2): ĐÓNG BĂNG ĐÀM PHÁN (t=5.65s đến 8.0s) -->
+        <div id="clip-label-freeze" class="clip" data-start="5.65" data-duration="2.35" data-track-index="3">
+          <div id="label-freeze-card" class="hf-hl-orange">
+            <span class="badge-icon-ink">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#141414" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+              </svg>
+            </span>
+            <span class="badge-text-ink hf-text-ink">ĐÓNG BĂNG ĐÀM PHÁN</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Script GSAP Timeline -->
+    <script>
+      // Khởi tạo paused timeline duy nhất cho composition root "scene-s11"
+      const tl = gsap.timeline({ paused: true });
+
+      // 1. Chuyển động Camera Pan-Right nhẹ nhàng suốt 8 giây (từ x: -14px sang x: 14px)
+      tl.fromTo(
+        "#camera-rig",
+        { x: -14 },
+        { x: 14, duration: 8.0, ease: "none" },
+        0
+      );
+
+      // 2. KHUNG ĐẦU KHÔNG TRỐNG: Diagram xuất hiện ngay từ t=0 bằng hiệu ứng punch (hoàn thành lúc 0.22s, opacity=1.0)
+      tl.fromTo(
+        "#diagram-card",
+        { scale: 0.88, opacity: 0 },
+        { scale: 1.0, opacity: 1, duration: 0.22, ease: "power3.out" },
+        0
+      );
+
+      // Hai vector va chạm tiến nhanh vào tâm trong 0.2s
+      tl.fromTo(
+        "#vector-left",
+        { x: -70, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.2, ease: "power2.out" },
+        0
+      );
+
+      tl.fromTo(
+        "#vector-right",
+        { x: 70, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.2, ease: "power2.out" },
+        0
+      );
+
+      // Cụm rào chắn nảy lên khi hai vector va chạm (t=0.12s)
+      tl.fromTo(
+        "#deadlock-group",
+        { scale: 0.5, opacity: 0 },
+        { scale: 1.0, opacity: 1, duration: 0.16, ease: "power3.out" },
+        0.12
+      );
+
+      // Tia nứt va chạm chớp sáng
+      tl.fromTo(
+        ".impact-spark",
+        { scale: 0, opacity: 0 },
+        { scale: 1.0, opacity: 1, duration: 0.14, ease: "power2.out" },
+        0.16
+      );
+
+      // 3. Khối Chữ 1: Punch Phrase vào tại t=0.85s (92350ms)
+      tl.fromTo(
+        "#punch-title",
+        { y: 30, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.35, ease: "power3.out" },
+        0.85
+      );
+
+      tl.fromTo(
+        "#punch-underline",
+        { scaleX: 0, opacity: 0 },
+        { scaleX: 1, opacity: 1, duration: 0.32, ease: "power2.out" },
+        1.0
+      );
+
+      // 4. Khối Chữ 2: Nhãn 1 "XUNG ĐỘT QUAN ĐIỂM" vào tại t=1.85s (93350ms)
+      tl.fromTo(
+        "#label-conflict-card",
+        { scale: 0.85, opacity: 0, y: 15 },
+        { scale: 1.0, opacity: 1, y: 0, duration: 0.35, ease: "power3.out" },
+        1.85
+      );
+
+      // 5. Khối Chữ 3: Nhãn 2 "ĐÓNG BĂNG ĐÀM PHÁN" vào tại t=5.65s (97150ms)
+      tl.fromTo(
+        "#label-freeze-card",
+        { scale: 0.85, opacity: 0, y: 15 },
+        { scale: 1.0, opacity: 1, y: 0, duration: 0.35, ease: "power3.out" },
+        5.65
+      );
+
+      // 6. Chuyển động nền liên tục hữu hạn (breathe & bob không xoay, lệch pha)
+      // Diagram card breathe nhẹ
+      tl.fromTo(
+        "#diagram-card",
+        { scale: 1.0 },
+        { scale: 1.012, duration: 3.8, ease: "sine.inOut", yoyo: true, repeat: 1 },
+        0.22
+      );
+
+      // Nút thắt bế tắc bob nhẹ
+      tl.fromTo(
+        "#deadlock-group",
+        { y: 0 },
+        { y: -6, duration: 1.8, ease: "sine.inOut", yoyo: true, repeat: 3 },
+        0.3
+      );
+
+      // Nhãn 1 bob nhẹ sau khi vào
+      tl.fromTo(
+        "#label-conflict-card",
+        { y: 0 },
+        { y: 5, duration: 2.0, ease: "sine.inOut", yoyo: true, repeat: 2 },
+        2.2
+      );
+
+      // Đăng ký timeline cho HyperFrames
+      window.__timelines = window.__timelines || {};
+      window.__timelines["scene-s11"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

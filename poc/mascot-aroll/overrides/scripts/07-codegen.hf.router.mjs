@@ -39,9 +39,9 @@ import { buildTextColorRules, buildSafeColorClasses } from "./lib/palette-contra
 import { autofixVideoTiming, autofixContrast, injectIntoFirstStyle } from "./lib/hf-autofix.mjs";
 import { annotateShotsForCodegen, REVIEW_FORMAT, REVIEW_POLICY, parseReviewVerdict, checkAssetUsage } from "./lib/review-gate.mjs";
 // [POC mascot-aroll / ADN v2]
-import { loadKit, buildMascotSceneHtml } from "./lib/mascot-scene.mjs";
 import { buildAssetSceneHtml, assetShotWarnings, ensureHoldFrames } from "./lib/asset-scene.mjs";
-import { checkAssetScene, checkGraphicsScene, checkMascotScene, overflowProblems, beatSceneProblems } from "./lib/v2-checks.mjs";
+import { checkAssetScene, checkGraphicsScene, overflowProblems, keyTextTimingProblems } from "./lib/v2-checks.mjs";
+import { blankStartProblems } from "./lib/blank-start.mjs";
 
 const root = process.cwd();
 const routing = loadModelRouting();
@@ -230,28 +230,25 @@ if (scenes[0]?.kind === "asset") {
   const sceneShots = shots.filter((s) => s.sceneId === sceneId).sort((a, b) => a.startMs - b.startMs);
   const bad = sceneShots.filter((s) => !s.camera || !s.mediaFit);
   if (bad.length) { console.error(`Cảnh ${sceneId}: shot ${bad.map((s) => s.id).join(",")} thiếu camera/mediaFit — chạy lại Stage 6 (hoặc 06 --annotate-only).`); process.exit(1); }
-  // [vòng 4] BEAT mascot trong cảnh asset: kiểm hợp lệ TRƯỚC khi dựng, chép file pose của kit vào assets, builder dựng thẻ thu nhỏ + mascot + chữ.
-  const lastBeat = sceneShots.at(-1)?.mascotBeat; // beat do Stage 6 tính tất định, nằm ở SHOT CUỐI; nền lấy từ scene (Stage 5 đã gán)
-  if (lastBeat) sc.mascotBeat = { ...lastBeat, bgVariant: sc.backgroundVariant, driftDir: sc.driftDir };
-  const kit = sc.mascotBeat ? loadKit(root) : null;
-  const beatProbs = beatSceneProblems(sc, sceneShots, kit);
-  if (beatProbs.length) { console.error(`Cảnh ${sceneId}: beat không hợp lệ:\n- ${beatProbs.join("\n- ")}`); process.exit(1); }
-  if (sc.mascotBeat) {
-    const pose = kit.byId[sc.mascotBeat.poseId];
-    for (const destDir of [vp.hfAssetsDir, path.join(tempProjectDir, "assets")]) {
-      fs.mkdirSync(destDir, { recursive: true });
-      fs.copyFileSync(path.join(kit.dir, pose.file), path.join(destDir, path.basename(pose.file)));
-    }
-  }
+  // [vòng 5] CHỮ A-ROLL: Stage 6 đã tính tất định (shot.keyText: đúng lúc từ neo, treatment không lặp); kiểm lại thời gian trước khi dựng
+  // (builder còn kiểm hình học: chữ không chồng asset thu nhỏ/dải trống, y≤1390, nằm trọn trong shot).
+  const ktShots = sceneShots.filter((x) => x.keyText);
+  const ktProbs = ktShots.flatMap((x) => keyTextTimingProblems(x.keyText, { shotEndMs: x.endMs, label: `Shot ${x.id} chữ` }));
+  if (ktProbs.length) { console.error(`Cảnh ${sceneId}: chữ A-roll không hợp lệ:\n- ${ktProbs.join("\n- ")}`); process.exit(1); }
+  if (sc.keyTextDropped) console.log(`  ℹ Chữ A-roll đã BỎ ở Stage 5: ${sc.keyTextDropped}`);
+  const droppedShot = sceneShots.find((x) => x.keyTextDropped);
+  if (droppedShot) console.log(`  ℹ Chữ A-roll đã BỎ ở Stage 6: ${droppedShot.keyTextDropped}`);
   // [vòng 4] video ngắn hơn shot → ảnh tĩnh khung cuối (engine drawElement không giữ khung cuối <video>, xem lib/asset-scene.mjs)
   const heldFrames = ensureHoldFrames(sceneShots, mediaById, root, [vp.hfAssetsDir, path.join(tempProjectDir, "assets")]);
   if (heldFrames.length) console.log(`  Khung cuối video → ảnh giữ khung: ${heldFrames.map((f) => path.basename(f)).join(", ")}`);
-  const html = buildAssetSceneHtml({ scene: sc, shots: sceneShots, mediaById, bgVariant: sc.backgroundVariant, driftDir: sc.driftDir, kit });
+  let html;
+  try { html = buildAssetSceneHtml({ scene: sc, shots: sceneShots, mediaById, bgVariant: sc.backgroundVariant, driftDir: sc.driftDir }); }
+  catch (e) { console.error(`Cảnh ${sceneId}: ${e.message}`); process.exit(1); }
   fs.writeFileSync(path.join(tempProjectDir, "index.html"), html, "utf8");
-  console.log(`Cảnh asset ${sceneId} (${((sc.endMs - sc.startMs) / 1000).toFixed(2)}s, ${sceneShots.length} shot${sceneShots.some((s) => s.mediaFit === "contain") ? `, có contain/nền ${sc.backgroundVariant}/${sc.driftDir}` : ""}${sc.mascotBeat ? `, BEAT mascot ${sc.mascotBeat.layout}/${sc.mascotBeat.side} từ ${((sc.mascotBeat.startMs - sc.startMs) / 1000).toFixed(1)}s` : ""}) — dựng tất định, camera liên tục.`);
+  console.log(`Cảnh asset ${sceneId} (${((sc.endMs - sc.startMs) / 1000).toFixed(2)}s, ${sceneShots.length} shot${sceneShots.some((s) => s.mediaFit === "contain") ? `, có contain/nền ${sc.backgroundVariant}/${sc.driftDir}` : ""}${ktShots.length ? `, CHỮ ${ktShots[0].keyText.format}/${ktShots[0].keyText.treatment} @${((ktShots[0].keyText.atMs - sc.startMs) / 1000).toFixed(1)}s` : ""}) — dựng tất định, camera liên tục.`);
   for (const w of assetShotWarnings(sc, sceneShots)) console.log("  ⚠ " + w);
   const v = runHyperframesCheck(tempProjectDir, { extraArgs: [getCaptionZoneArg(root, { seek: SCENE_CAPTION_SEEK })] });
-  const probs = [...checkAssetScene(html, { beat: !!sc.mascotBeat }), ...(v.passed ? overflowProblems(v.raw) : [])];
+  const probs = [...checkAssetScene(html, { keyText: ktShots.length > 0 }), ...(v.passed ? overflowProblems(v.raw) : [])];
   const ok = v.passed && probs.length === 0;
   let summary;
   if (ok) {
@@ -262,51 +259,6 @@ if (scenes[0]?.kind === "asset") {
     summary = `Cảnh ASSET [${sceneId}] PASS (dựng tất định, hyperframes check ok) — compositions/${compId}.html.`;
   } else {
     summary = `Cảnh ASSET [${sceneId}] KHÔNG đạt: ${v.passed ? "" : "hyperframes check FAIL — " + formatCheckFeedback(v.raw, 2500)} ${probs.join("; ")}\nProject tạm còn giữ: ${tempProjectDir}`;
-  }
-  console.log("\n" + summary);
-  appendRunLog(`\`scripts/07-codegen.hf.router.mjs --video=${slug} --scenes=${sceneId}\` — ${summary}`, vp.runLog);
-  process.exit(ok ? 0 : 1);
-}
-
-// === [POC mascot-aroll / ADN v2] CẢNH MASCOT: ráp TẤT ĐỊNH từ template kit — KHÔNG gọi generator/reviewer. ===
-// Contract kit (PIPELINE_CONTRACT.md): Stage 7 chỉ bind ID/duration/preset; không vẽ lại nhân vật, không đổi ID.
-// Lưu ý: không dùng appendCodegenIssue ở đây (biến `attempt` khai báo phía dưới — TDZ).
-if (scenes[0]?.kind === "mascot") {
-  const sc = scenes[0];
-  const kit = loadKit(root);
-  const sceneShots = shots.filter((s) => s.sceneId === sceneId).sort((a, b) => a.startMs - b.startMs);
-  const mshots = sceneShots.map((s) => ({
-    id: s.id,
-    startSec: +((s.startMs - sc.startMs) / 1000).toFixed(3),
-    endSec: +((s.endMs - sc.startMs) / 1000).toFixed(3),
-    mascotAssetId: s.mascotAssetId,
-    textEvents: (s.textEvents ?? []).map((e) => ({ text: e.text, format: e.format, atSec: +((e.atMs - sc.startMs) / 1000).toFixed(3), holdSec: +(e.holdMs / 1000).toFixed(3) })),
-  }));
-  const durationSec = +((sc.endMs - sc.startMs) / 1000).toFixed(3);
-  for (const s of mshots) {
-    const a = kit.byId[s.mascotAssetId];
-    if (!a) { console.error(`Cảnh ${sceneId}: mascotAssetId "${s.mascotAssetId}" không có trong kit — trả lỗi về Stage 6, không thay pose.`); process.exit(1); }
-    const src = path.join(kit.dir, a.file);
-    for (const destDir of [vp.hfAssetsDir, path.join(tempProjectDir, "assets")]) {
-      fs.mkdirSync(destDir, { recursive: true });
-      fs.copyFileSync(src, path.join(destDir, path.basename(a.file)));
-    }
-  }
-  const html = buildMascotSceneHtml({ durationSec, shots: mshots, bgVariant: sc.backgroundVariant, driftDir: sc.driftDir, kit, side: sceneShots[0]?.mascotSide ?? "left" });
-  fs.writeFileSync(path.join(tempProjectDir, "index.html"), html, "utf8");
-  console.log(`Cảnh mascot ${sceneId} (${durationSec}s, ${mshots.length} shot, nền ${sc.backgroundVariant}/${sc.driftDir}) — ráp tất định, không AI.`);
-  const v = runHyperframesCheck(tempProjectDir, { extraArgs: [getCaptionZoneArg(root, { seek: SCENE_CAPTION_SEEK })] });
-  const probs = [...checkMascotScene(html, { maxBlocks: mshots.length }), ...(v.passed ? overflowProblems(v.raw) : [])];
-  let summary;
-  let ok = v.passed && probs.length === 0;
-  if (ok) {
-    const compId = `scene-${sceneId.toLowerCase()}`;
-    fs.writeFileSync(path.join(vp.hfCompositionsDir, `${compId}.html`), standaloneToSubComposition(html, compId), "utf8");
-    fs.rmSync(tempProjectDir, { recursive: true, force: true });
-    if (!noRootSync) syncRootHf(slug, root);
-    summary = `Cảnh MASCOT [${sceneId}] PASS (ráp tất định từ kit, hyperframes check ok) — compositions/${compId}.html.`;
-  } else {
-    summary = `Cảnh MASCOT [${sceneId}] KHÔNG đạt: ${v.passed ? "" : "hyperframes check FAIL — " + formatCheckFeedback(v.raw, 2500)} ${probs.join("; ")}\nProject tạm còn giữ: ${tempProjectDir}`;
   }
   console.log("\n" + summary);
   appendRunLog(`\`scripts/07-codegen.hf.router.mjs --video=${slug} --scenes=${sceneId}\` — ${summary}`, vp.runLog);
@@ -395,6 +347,7 @@ const CONTAIN_RULES = CONTAIN_SHOTS.length
 const V2_SCENE_RULES = SCENE_KIND === "asset"
   ? `- [ADN v2 — CẢNH ASSET] Cảnh này CHỈ gồm media (ảnh/video) + chuyển động của chính media. TUYỆT ĐỐI KHÔNG: phần tử chữ nào (kể cả nhãn/tiêu đề/số/mốc thời gian), <svg>/<canvas>, icon, mũi tên, thẻ/card, khối màu/gradient/vignette/lớp tối phủ lên media, khung viền, thanh cam đáy khung, nền lưới. Phụ đề do track riêng ở cấp video — KHÔNG tự thêm. Thực hiện đúng presentationStyle/cameraMotion của scene/shot bằng transform (x/y/scale/opacity) trên wrapper KHÔNG có data-start: push-in/pull-out (scale), pan (x/y), crop-reframe (đổi vùng nhìn bằng scale+x/y), split (2 khung media nằm sát nhau, mỗi khung wrapper có width/height px cố định + overflow:hidden), reveal (wipe bằng wrapper overflow:hidden + dịch x/y), multi-shot-cut (đổi shot đúng mốc). Sự kiện hình (đổi crop/camera/shot) phải bám cue và dàn đều, không để >3s không có sự kiện. TUYỆT ĐỐI không rotate/skew/rotation≠0 ở bất kỳ phần tử nào (kể cả lúc vào cảnh). KÍCH THƯỚC: mọi wrapper media có width/height px CỐ ĐỊNH + overflow:hidden; thẻ <img>/<video> bên trong dùng px cố định hoặc object-fit:cover trong wrapper đó — KHÔNG dùng width/height:100% cho con của phần tử không định kích thước (đã gây video tràn thành mảng đen ở dua-inox-han-quoc S09). Media không được tràn khung 1080×1920.${CONTAIN_RULES}`
   : `- [ADN v2 — CẢNH ĐỒ HOẠ] Chỉ dùng cảnh này vì thiếu asset phù hợp. Tối đa 3 khối chữ (1 punch phrase + 2 nhãn/thẻ), không chồng lên nhau, chữ/thẻ/media KHÔNG xoay/nghiêng/skew (rotation=0) ở mọi thời điểm kể cả lúc vào cảnh — CHỈ bộ phận vẽ thuần KHÔNG chứa chữ (kim đồng hồ, mũi tên, máy bay trong sơ đồ…) được xoay khi đó là ý nghĩa của shot (vd kim xoay 90°→140°), và bộ phận xoay không được chứa chữ/ảnh/video bên trong; nền spotlight/card/chart KHÔNG có lưới (lưới chỉ ở biến thể grid-moving); màu chỉ trong palette (không tự thêm màu nâu/xanh…); kiểu vào cảnh chỉ trong bộ KHÔNG XOAY: rise/grow/punch/shatter/unfold/zoom-through/strike; chuyển động nền liên tục chỉ bằng bob (y)/drift-x (x)/breathe (scale 1→1.012), lệch pha giữa các phần tử; KHÔNG thanh cam đáy khung.
+- [ADN v2 — KHUNG ĐẦU KHÔNG TRỐNG] Tại t=0,25s hình chính của cảnh (diagram/khối/hình lớn — KHÔNG chỉ nền giấy/lưới) PHẢI đã hiện rõ (opacity ≥0,8): entrance của hình chính bắt đầu ở t=0 (không delay), dài ≤0,3s; chỉ nhãn/chữ phụ mới vào sau theo cue lời thoại. Nửa giây đầu chỉ có nền giấy làm người xem thấy "màn hình trắng chớp" sau khi cắt cảnh — script CHỤP khung t=0,25s để kiểm, trống là FAIL.
 ${BG_INSTRUCTION}`;
 
 function buildPrompt(feedback, previousFiles) {
@@ -701,13 +654,24 @@ while (attempt < MAX_ATTEMPTS) {
       continue;
     }
     console.log("Verify (hyperframes check) PASS.");
-    // [ADN v2] overflow của media/mascot mức warning cũng là lỗi cứng (bài học dua-inox-han-quoc S09)
+    // [ADN v2] overflow của media mức warning cũng là lỗi cứng (bài học dua-inox-han-quoc S09)
     const ovProblems = overflowProblems(v.raw);
     if (ovProblems.length) {
       console.log("ADN v2 overflow FAILED:\n" + ovProblems.join("\n"));
       appendCodegenIssue([{ stage: "v2-overflow", detail: ovProblems.join("\n").slice(0, 2000) }]);
       feedback = "LỖI CHẶN (script kiểm tra tất định ADN v2):\n" + ovProblems.map((p) => "- " + p).join("\n");
       continue;
+    }
+    // [vòng 5] khung đầu cảnh đồ hoạ không được trống (chụp thật t=0,25s). Không chụp được → báo rõ rồi bỏ qua kiểm tra này (không bỏ qua im lặng).
+    if (SCENE_KIND === "graphics") {
+      let bp = [];
+      try { bp = blankStartProblems(tempProjectDir); } catch (e) { console.log(`(KHÔNG chụp được khung đầu để kiểm tra nền trống: ${String(e.message ?? e).slice(0, 200)} — bỏ qua kiểm tra này lần này)`); }
+      if (bp.length) {
+        console.log("ADN v2 khung đầu FAILED:\n" + bp.join("\n"));
+        appendCodegenIssue([{ stage: "v2-blank-start", detail: bp.join("\n").slice(0, 2000) }]);
+        feedback = "LỖI CHẶN (script kiểm tra tất định ADN v2):\n" + bp.map((p) => "- " + p).join("\n");
+        continue;
+      }
     }
     verifyPassedFiles = files;
 

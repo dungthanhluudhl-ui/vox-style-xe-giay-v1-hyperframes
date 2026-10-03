@@ -1,6 +1,6 @@
 # Khung tư duy biên tập 2 tầng — Editorial Director → Motion Implementer
 
-> **[v2 NHÁP]** Ba loại cảnh (asset / mascot / đồ hoạ) và các thay đổi ở STYLE_DNA.md mục 3-5 ghi đè mọi chỗ trong file này nói về overlay/chữ/thẻ trên cảnh có media.
+> **[v2 NHÁP]** Hai loại cảnh (asset / đồ hoạ; mascot đã bỏ) và các thay đổi ở STYLE_DNA.md mục 3-5 ghi đè mọi chỗ trong file này nói về overlay/chữ/thẻ trên cảnh có media.
 
 
 ## Vì sao cần 2 tầng, không phải 1

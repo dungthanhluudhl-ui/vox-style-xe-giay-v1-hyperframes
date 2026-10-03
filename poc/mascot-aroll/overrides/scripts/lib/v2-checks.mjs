@@ -1,52 +1,28 @@
 // POC mascot-aroll: kiểm tra TẤT ĐỊNH theo ADN v2 (chạy sau `hyperframes check`, trước reviewer).
 // - Cảnh asset: không chữ nào trên hình, không <svg>/<canvas>, không xoay/skew.
 // - Cảnh đồ hoạ: không xoay/skew, ≤3 khối chữ (1 punch phrase + 2 nhãn).
-// - Cảnh mascot: do builder tất định tạo (vẫn quét xoay để chắc chắn).
+// - Chữ A-roll (vòng 5, thay mascot): đúng lúc từ neo narration, đủ thời gian đọc, trong shot, không lặp liền kề, ≤quota (lib/key-text*.mjs).
 import { parseHTML } from "linkedom";
-import { enterSec, minReadSec, fullyVisibleSec, EXIT_SEC, MAX_TEXT_CHARS } from "./mascot-text.mjs";
-import { BEAT_MIN_LEAD_SEC, BEAT_MIN_LAST_SHOT_SEC, BEAT_MAX_SEC, beatNeedSec } from "./beat-plan.mjs";
-import { BEAT_LAYOUTS } from "./mascot-scene.mjs";
+import { enterSec, minReadSec, fullyVisibleSec, EXIT_SEC, TEXT_FORMATS, treatmentLayout } from "./key-text.mjs";
+import { keyTextProblems, keyTextQuotaProblems, matchAnchor } from "./key-text-plan.mjs";
 import { tilingProblems } from "./scene-tiling.mjs";
 
 const SKIP_TAGS = new Set(["SCRIPT", "STYLE", "NOSCRIPT", "TEMPLATE", "TITLE", "HEAD"]);
 
-// === Chữ bổ trợ cho cảnh mascot (ADN v2, vòng 3): luật TẤT ĐỊNH ===
-export const TEXT_FORMATS = ["thought", "quote", "punch", "question", "sticky", "stamp"];
-export const TEXT_PURPOSES = ["hỏi", "khẳng định", "cảm thán", "ví von", "chốt"];
-const SERIOUS_POSES = /host-(serious|concerned|sad)$/;
-const SERIOUS_ROLES = new Set(["sensitive_fact", "empathy", "consequence"]);
+// === Chữ A-roll (ADN v2, vòng 5): luật TẤT ĐỊNH — nội dung/neo/quota ở lib/key-text-plan.mjs, thời gian/hình học ở đây và lib/key-text.mjs ===
+export { TEXT_FORMATS };
 const normText = (t) => String(t ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/gi, "d").toLowerCase().replace(/[^a-z0-9\s]/g, " ").replace(/\s+/g, " ").trim();
 export const wordCount = (t) => String(t ?? "").trim().split(/\s+/).filter(Boolean).length;
 
-/** Kiểm chữ mascot (textIntent): ≤9 từ, không emoji, không chép nguyên văn lời thoại, số/tên riêng phải có trong kịch bản, format/purpose hợp lệ. */
-export function mascotTextProblems(ti, scriptAll, sid) {
+/** Thời gian chữ A-roll (lỗi cứng): chữ hiện ĐÚNG lúc từ neo được nói (≤1 khung 34ms, không sớm/muộn); hiện ĐẦY ĐỦ ≥ chuẩn đọc; kết thúc ≥150ms trước hết shot. */
+export function keyTextTimingProblems(k, { shotEndMs, label = "chữ A-roll" } = {}) {
   const p = [];
-  const text = String(ti?.text ?? "").trim();
-  if (!text) return [`${sid}: textIntent.text rỗng.`];
-  if (!TEXT_FORMATS.includes(ti.format)) p.push(`${sid}: textIntent.format "${ti.format}" không thuộc ${TEXT_FORMATS.join("|")}.`);
-  if (!TEXT_PURPOSES.includes(ti.purpose)) p.push(`${sid}: textIntent.purpose "${ti.purpose}" không thuộc ${TEXT_PURPOSES.join("|")}.`);
-  const n = wordCount(text);
-  if (n > 9) p.push(`${sid}: chữ mascot dài ${n} từ (tối đa 9): "${text}".`);
-  if (text.length > MAX_TEXT_CHARS) p.push(`${sid}: chữ mascot dài ${text.length} ký tự (tối đa ${MAX_TEXT_CHARS}) — chữ dài không đủ thời gian đọc trong beat ≤7s: "${text}".`);
-  if (/\p{Extended_Pictographic}/u.test(text)) p.push(`${sid}: chữ mascot có emoji.`);
-  const ns = normText(scriptAll), nt = normText(text);
-  if (nt.split(" ").length >= 2 && ns.includes(nt)) p.push(`${sid}: chữ mascot "${text}" chép NGUYÊN VĂN lời thoại — phải bổ sung ý mới, không đọc lại.`);
-  for (const d of text.match(/\d[\d.,]*/g) ?? []) if (!ns.includes(normText(d))) p.push(`${sid}: chữ mascot có số "${d}" không có trong kịch bản (không được bịa).`);
-  const toks = text.split(/\s+/).slice(1).map((t) => t.replace(/[^\p{L}\p{N}]/gu, "")).filter((t) => t.length >= 2 && /^\p{Lu}/u.test(t) && t !== t.toUpperCase());
-  for (const t of toks) if (!ns.includes(normText(t))) p.push(`${sid}: chữ mascot có tên riêng "${t}" không có trong kịch bản (không được bịa).`);
-  return p;
-}
-
-/** Thời gian chữ mascot (lỗi cứng): hiện ĐẦY ĐỦ ≥ chuẩn đọc ADN `max(1,5s; 0,5s+70ms×ký tự)`; chữ không bắt đầu muộn hơn `maxLateSec`
- * sau `refStartMs` (lúc mascot bắt đầu xuất hiện); chữ kết thúc trước `limitEndMs` (hết shot/beat). */
-export function textTimingProblems(ev, { refStartMs, limitEndMs, maxLateSec = 0.6, label = "chữ mascot" }) {
-  const p = [];
-  const holdSec = ev.holdMs / 1000;
-  const vis = fullyVisibleSec(ev.text, ev.format, holdSec);
-  const need = minReadSec(ev.text);
-  if (vis + 0.001 < need) p.push(`${label} "${ev.text}": hiện đầy đủ chỉ ${vis.toFixed(2)}s, chuẩn đọc cần ≥${need.toFixed(2)}s (giữ ${holdSec.toFixed(2)}s gồm vào ${enterSec(ev.format, ev.text).toFixed(2)}s + ra ${EXIT_SEC}s) — không kịp đọc.`);
-  if (Number.isFinite(refStartMs) && (ev.atMs - refStartMs) / 1000 > maxLateSec + 0.001) p.push(`${label} "${ev.text}": hiện muộn ${((ev.atMs - refStartMs) / 1000).toFixed(2)}s sau khi mascot xuất hiện (tối đa ${maxLateSec}s).`);
-  if (Number.isFinite(limitEndMs) && ev.atMs + ev.holdMs > limitEndMs + 60) p.push(`${label} "${ev.text}": kết thúc ${ev.atMs + ev.holdMs}ms sau hết khung ${limitEndMs}ms.`);
+  const holdSec = k.holdMs / 1000;
+  const vis = fullyVisibleSec(k.text, k.format, holdSec, k.wordOffsets ?? null);
+  const need = minReadSec(k.text);
+  if (Number.isFinite(k.anchorStartMs) && Math.abs(k.atMs - k.anchorStartMs) > 34) p.push(`${label} "${k.text}": hiện lúc ${k.atMs}ms ≠ lúc narration nói từ neo ${k.anchorStartMs}ms (lệch ${k.atMs - k.anchorStartMs}ms; phải cùng lúc, không trước/sau).`);
+  if (vis + 0.001 < need) p.push(`${label} "${k.text}": hiện đầy đủ chỉ ${vis.toFixed(2)}s, chuẩn đọc cần ≥${need.toFixed(2)}s — không kịp đọc.`);
+  if (Number.isFinite(shotEndMs) && k.atMs + k.holdMs > shotEndMs - 150) p.push(`${label} "${k.text}": kết thúc ${k.atMs + k.holdMs}ms, sát/vượt hết shot (${shotEndMs}ms).`);
   return p;
 }
 
@@ -65,7 +41,7 @@ export function textBlocks(html) {
 }
 
 /** Xoay/skew: CSS transform/rotate(), GSAP rotation/rotateX/Y/Z/skewX/Y khác 0.
- * `allowDiagram` (chỉ cảnh đồ hoạ — đúng đặc tả ADN v2: chữ/thẻ/media/mascot không xoay, còn BỘ PHẬN VẼ THUẦN không chứa chữ như
+ * `allowDiagram` (chỉ cảnh đồ hoạ — đúng đặc tả ADN v2: chữ/thẻ/media không xoay, còn BỘ PHẬN VẼ THUẦN không chứa chữ như
  * kim đồng hồ/mũi tên/máy bay trong sơ đồ được xoay khi đó là ý nghĩa của shot): chỉ coi là lỗi khi phần tử bị xoay
  * (tìm theo selector của lệnh GSAP/quy tắc CSS) chứa chữ, <img>/<video>, hoặc không xác định được selector. */
 export function rotationProblems(html, { allowDiagram = false } = {}) {
@@ -117,13 +93,13 @@ export function rotationProblems(html, { allowDiagram = false } = {}) {
   return [...new Set(problems)];
 }
 
-export function checkAssetScene(html, { beat = false } = {}) {
+export function checkAssetScene(html, { keyText = false } = {}) {
   const problems = [];
-  if (beat) {
-    // Cảnh asset CÓ beat mascot: được phép đúng 1 khối chữ #tb-1 (do builder tất định tạo) + mascot; mọi chữ khác vẫn bị cấm.
+  if (keyText) {
+    // Cảnh asset CÓ chữ A-roll: được phép đúng 1 khối #kt-1 (do builder tất định tạo); mọi chữ khác vẫn bị cấm.
     const { document } = parseHTML(html);
-    const blocks = [...document.querySelectorAll("[id^='tb-']")].filter((e) => /^tb-\d+$/.test(e.id));
-    if (blocks.length > 1) problems.push(`Cảnh asset có beat nhưng ${blocks.length} khối chữ mascot, tối đa 1.`);
+    const blocks = [...document.querySelectorAll("#kt-1")];
+    if (blocks.length > 1) problems.push(`Cảnh asset có ${blocks.length} khối chữ A-roll, tối đa 1.`);
     blocks.forEach((e) => e.remove());
     html = document.toString();
   }
@@ -135,33 +111,6 @@ export function checkAssetScene(html, { beat = false } = {}) {
   return problems;
 }
 
-/** Luật thời lượng/hợp lệ của BEAT mascot trong cảnh asset (tất định; dùng ở Stage 6/7). scene.mascotBeat = {startMs, side, layout, poseId, textEvent?}. */
-export function beatSceneProblems(scene, sceneShots, kit) {
-  const b = scene.mascotBeat;
-  const p = [];
-  if (!b) return p;
-  const id = scene.id;
-  if (scene.kind !== "asset") return [`${id}: mascotBeat chỉ được nằm trong cảnh asset (kind="${scene.kind}").`];
-  if (!sceneShots?.length) return [`${id}: beat nhưng cảnh không có shot.`];
-  const last = [...sceneShots].sort((a, c) => a.startMs - c.startMs).at(-1);
-  if (!["left", "right"].includes(b.side)) p.push(`${id}: beat.side phải left|right.`);
-  if (!BEAT_LAYOUTS.includes(b.layout)) p.push(`${id}: beat.layout "${b.layout}" không thuộc ${BEAT_LAYOUTS.join("|")}.`);
-  if (kit && !kit.byId[b.poseId]) p.push(`${id}: beat.poseId "${b.poseId}" không có trong kit.`);
-  const lead = (b.startMs - scene.startMs) / 1000, durSec = (scene.endMs - b.startMs) / 1000;
-  if (lead < BEAT_MIN_LEAD_SEC - 0.001) p.push(`${id}: asset toàn khung chỉ ${lead.toFixed(2)}s trước beat (cần ≥${BEAT_MIN_LEAD_SEC}s) — beat không được che mất asset.`);
-  if (b.startMs < last.startMs) p.push(`${id}: beat bắt đầu trước shot cuối (${b.startMs} < ${last.startMs}).`);
-  else if ((b.startMs - last.startMs) / 1000 < BEAT_MIN_LAST_SHOT_SEC - 0.001) p.push(`${id}: shot cuối chỉ chạy toàn khung ${((b.startMs - last.startMs) / 1000).toFixed(2)}s trước beat (cần ≥${BEAT_MIN_LAST_SHOT_SEC}s).`);
-  const te = b.textEvent;
-  const need = beatNeedSec(te);
-  if (durSec < need - 0.001) p.push(`${id}: beat dài ${durSec.toFixed(2)}s, cần ≥${need.toFixed(2)}s${te ? " (đủ chỗ cho chữ + mascot vào/ra)" : ""}.`);
-  if (durSec > BEAT_MAX_SEC + 0.001) p.push(`${id}: beat dài ${durSec.toFixed(2)}s, tối đa ${BEAT_MAX_SEC}s — bắt đầu beat muộn hơn.`);
-  if (te) {
-    if (!TEXT_FORMATS.includes(te.format)) p.push(`${id}: beat.textEvent.format "${te.format}" không hợp lệ.`);
-    p.push(...textTimingProblems(te, { refStartMs: b.startMs, limitEndMs: scene.endMs, label: `${id} chữ beat` }));
-  }
-  return p;
-}
-
 export function checkGraphicsScene(html) {
   const problems = [];
   const t = textBlocks(html);
@@ -170,25 +119,8 @@ export function checkGraphicsScene(html) {
   return problems;
 }
 
-export function checkMascotScene(html, { maxBlocks = 99 } = {}) {
-  const problems = rotationProblems(html).map((p) => `Cấm xoay/skew (ADN v2): ${p}`);
-  const { document } = parseHTML(html);
-  const blocks = [...document.querySelectorAll("[id^='tb-']")].filter((e) => /^tb-\d+$/.test(e.id));
-  if (blocks.length > maxBlocks) problems.push(`Cảnh mascot có ${blocks.length} khối chữ, tối đa ${maxBlocks} (1/shot).`);
-  for (const b of blocks) {
-    const n = wordCount(b.textContent);
-    if (n > 9) problems.push(`Khối chữ #${b.id} dài ${n} từ (tối đa 9).`);
-  }
-  const stray = textBlocks(html).filter((t) => {
-    const el = t.id ? document.getElementById(t.id) : null;
-    return !(el && el.closest("[id^='tb-']")) && !blocks.some((b) => b.textContent.includes(t.text.slice(0, 20)));
-  });
-  if (stray.length) problems.push(`Cảnh mascot có chữ NGOÀI khối chữ bổ trợ: ${stray.slice(0, 3).map((b) => `"${b.text}"`).join(", ")}`);
-  return problems;
-}
-
 /** Bài học dua-inox-han-quoc S09: `container_overflow` của media chỉ là warning nên lọt tới render (video tràn khung →
- * mảng đen). Ở v2 coi overflow mức warning/error của phần tử media/mascot là lỗi cứng; mức `info` (nằm trong
+ * mảng đen). Ở v2 coi overflow mức warning/error của phần tử media là lỗi cứng; mức `info` (nằm trong
  * wrapper overflow:hidden, vd lưới nền trôi) vẫn được phép. `raw` = JSON của `hyperframes check --json`. */
 export function overflowProblems(raw) {
   let d;
@@ -202,12 +134,13 @@ export function overflowProblems(raw) {
 }
 
 /** Kiểm chéo shotlist/plan sau Stage 6 (tất định). Trả danh sách lỗi (rỗng = ổn).
- * Mascot KHÔNG còn là cảnh/shot riêng: cảnh asset có `mascotIntent` phải có `mascotBeat` ở SHOT CUỐI (do Stage 6 tính tất định). */
-export function validatePlanAndShots(scenes, shots, kit, mediaById) {
+ * [vòng 5] Mascot đã bỏ. Chữ A-roll: cảnh asset có `keyText` ở plan có thể (hoặc không, nếu Stage 6 BỎ vì không đủ chỗ đọc — lý do ghi ở shot.keyTextDropped)
+ * có `keyText` ở ĐÚNG MỘT shot: đúng lúc từ neo, đủ thời gian đọc, trong shot, treatment hợp lệ, không lặp treatment liền trước. */
+export function validatePlanAndShots(scenes, shots, mediaById) {
   const problems = [];
   const byScene = Object.fromEntries(scenes.map((s) => [s.id, []]));
   for (const sh of shots) (byScene[sh.sceneId] ??= []).push(sh);
-  let prevBeat = null;
+  let prevTreatment = null;
   for (const sc of scenes) {
     const list = (byScene[sc.id] ?? []).sort((a, b) => a.startMs - b.startMs);
     if (!list.length) { problems.push(`Scene ${sc.id} không có shot nào.`); continue; }
@@ -217,98 +150,81 @@ export function validatePlanAndShots(scenes, shots, kit, mediaById) {
       const nOv = list.reduce((a, sh) => a + (sh.overlays ?? []).length, 0);
       if (nOv > 3) problems.push(`Scene ${sc.id} (đồ hoạ) có ${nOv} overlay chữ, tối đa 3 cho cả cảnh (1 punch phrase + 2 nhãn) — gộp tên các bước vào nhãn dạng "A • B • C", nút/bước còn lại là hình không chữ.`);
     }
-    const last = list[list.length - 1];
     for (const sh of list) {
       if (sc.kind === "asset") {
         if ((sh.overlays ?? []).length) problems.push(`Shot ${sh.id} của cảnh asset phải overlays=[] (ADN v2).`);
         if (sh.assetId && !mediaById[sh.assetId]) problems.push(`Shot ${sh.id}: assetId "${sh.assetId}" không có trong manifest.`);
         if (!sh.assetId) problems.push(`Shot ${sh.id} của cảnh asset phải có assetId.`);
       }
-      if (sh.presentationMode === "mascot") problems.push(`Shot ${sh.id}: presentationMode "mascot" đã bỏ — mascot là beat ở đuôi cảnh asset.`);
-      if (sh !== last && sh.mascotBeat) problems.push(`Shot ${sh.id}: mascotBeat chỉ được nằm ở shot cuối của cảnh.`);
+      if (sh.presentationMode === "mascot" || sh.mascotBeat || sh.mascotAssetId) problems.push(`Shot ${sh.id}: mascot đã bỏ ở vòng 5 — dùng chữ A-roll (keyText).`);
     }
-    const wantsBeat = sc.kind === "asset" && !!sc.mascotIntent;
-    if (!wantsBeat) {
-      if (last.mascotBeat) problems.push(`Scene ${sc.id}: có mascotBeat nhưng plan không có mascotIntent ở cảnh asset này.`);
-      continue;
+    const withKt = list.filter((x) => x.keyText);
+    if (withKt.length > 1) problems.push(`Scene ${sc.id}: ${withKt.length} shot có chữ A-roll, tối đa 1 cho cả cảnh.`);
+    if (withKt.length && !(sc.kind === "asset" && sc.keyText)) problems.push(`Scene ${sc.id}: có chữ A-roll ở shot nhưng plan không có keyText ở cảnh asset này.`);
+    for (const sh of withKt) {
+      const kt = sh.keyText;
+      const box = sh.mediaFit === "contain" ? sh.containBox : { x: 0, y: 0, w: 1080, h: 1920 };
+      const layout = treatmentLayout(kt.treatment, box, sh.mediaFit);
+      if (!layout.valid) problems.push(`Shot ${sh.id}: treatment "${kt.treatment}" không hợp lệ cho asset này: ${layout.why}.`);
+      if (!TEXT_FORMATS.includes(kt.format)) problems.push(`Shot ${sh.id}: hình thức chữ "${kt.format}" không hợp lệ.`);
+      problems.push(...keyTextTimingProblems(kt, { shotEndMs: sh.endMs, label: `Shot ${sh.id} chữ` }));
+      if (kt.atMs < sh.startMs) problems.push(`Shot ${sh.id}: chữ bắt đầu ${kt.atMs}ms trước shot (${sh.startMs}ms).`);
+      if (normText(kt.text) !== normText(sc.keyText?.text)) problems.push(`Shot ${sh.id}: chữ khác keyText của plan (không được sửa chữ).`);
+      if (prevTreatment && prevTreatment === kt.treatment) problems.push(`Shot ${sh.id}: treatment "${kt.treatment}" trùng lần chữ liền trước.`);
+      prevTreatment = kt.treatment;
     }
-    const b = last.mascotBeat;
-    if (!b) { problems.push(`Scene ${sc.id}: có mascotIntent nhưng shot cuối ${last.id} thiếu mascotBeat (kiểm mascotAssetId của shot cuối).`); continue; }
-    problems.push(...beatSceneProblems({ ...sc, mascotBeat: b }, list, kit));
-    const want = sc.mascotIntent.textIntent?.text;
-    if (want && normText(b.textEvent?.text) !== normText(want)) problems.push(`Scene ${sc.id}: chữ beat khác textIntent của plan (không được sửa chữ).`);
-    if (prevBeat && prevBeat.pose === b.poseId) problems.push(`Scene ${sc.id}: trùng pose mascot với beat liền trước (${b.poseId}).`);
-    if (prevBeat && prevBeat.layout === b.layout) problems.push(`Scene ${sc.id}: trùng bố cục beat "${b.layout}" với beat liền trước.`);
-    prevBeat = { pose: b.poseId, layout: b.layout };
   }
   return problems;
 }
 
-/** Cảnh báo MỀM của plan (không chặn, chỉ yêu cầu gọi lại 1 lần): luật chỉ có trong prompt nay đo tất định.
- * - Đa dạng kiểu trình bày cảnh asset: không kiểu nào >35% khi có ≥6 cảnh asset.
- * - Phân bố beat mascot: >35% số cảnh có mascot; 3 beat liên tiếp cùng nhóm nghiêm; video ≥12 cảnh có mascot thì phải có ở 1/3 cuối. */
-export function softPlanWarnings(scenes) {
+/** Cảnh báo MỀM của plan (không chặn, chỉ yêu cầu gọi lại 1 lần): cảnh asset dài >12s chỉ 1 asset; đa dạng kiểu trình bày cảnh asset (không kiểu nào >35% khi có ≥6 cảnh asset). */
+export function softPlanWarnings(scenes, mediaById = {}) {
   const warn = [];
+  // Cảnh asset dài >12s mà chỉ có MỘT asset (ảnh tĩnh trôi chậm, hoặc video 8s rồi giữ khung) → người xem thấy "đơ": chia thêm asset/cảnh đồ hoạ (đo 03/10: thiên-an-môn S09 27s một ảnh).
+  for (const s of scenes) {
+    if (s.kind !== "asset" || (s.assetIds ?? []).length !== 1) continue;
+    const d = (s.endMs - s.startMs) / 1000;
+    if (d > 12) warn.push(`${s.id}: cảnh asset dài ${d.toFixed(1)}s chỉ với MỘT asset (${s.assetIds[0]}${mediaById[s.assetIds[0]]?.type === "video" ? ", video chỉ 8s rồi giữ khung" : ", ảnh tĩnh"}) — dễ "đơ": tách cảnh (thêm cảnh đồ hoạ cho phần còn lại) hoặc dùng thêm asset, mỗi cảnh một asset ≲12s.`);
+  }
   const assets = scenes.filter((s) => s.kind === "asset");
   if (assets.length >= 6) {
     const cnt = {};
     for (const s of assets) cnt[s.presentationStyle] = (cnt[s.presentationStyle] ?? 0) + 1;
     for (const [style, n] of Object.entries(cnt)) if (n / assets.length > 0.35) warn.push(`presentationStyle "${style}" chiếm ${n}/${assets.length} cảnh asset (>35%) — đa dạng hoá kiểu trình bày.`);
   }
-  const beats = scenes.filter((s) => s.kind === "asset" && s.mascotIntent);
-  if (beats.length / scenes.length > 0.35) warn.push(`Mascot xuất hiện ở ${beats.length}/${scenes.length} cảnh (>35%) — chỉ dùng khi nhịp người kể thật sự cần.`);
-  for (let i = 0; i + 2 < beats.length; i++) if ([0, 1, 2].every((k) => SERIOUS_ROLES.has(beats[i + k].mascotIntent?.narrativeRole))) { warn.push(`3 beat mascot liên tiếp thuộc nhóm nghiêm (${beats[i].id}-${beats[i + 2].id}) — đa dạng tông biểu cảm.`); break; }
-  if (scenes.length >= 12 && beats.length >= 1) {
-    const total = scenes[scenes.length - 1].endMs;
-    if (!beats.some((s) => s.startMs >= (total * 2) / 3)) warn.push("Không có beat mascot nào ở 1/3 cuối video — video không được nhạt dần về cuối.");
-  }
   return warn;
 }
 
-/** Cảnh báo MỀM beat (không chặn): mỗi pose ≤2 lần/video; không ≥3 beat liên tiếp pose nghiêm; không bố cục nào >50% khi có ≥4 beat. */
+/** Cảnh báo MỀM chữ A-roll (không chặn): ≥3 lần chữ mà một treatment chiếm >60% → đa dạng hơn. */
 export function softShotWarnings(scenes, shots) {
   const w = [];
-  const bs = shots.filter((s) => s.mascotBeat).sort((a, b) => a.startMs - b.startMs);
-  const cnt = {};
-  for (const s of bs) cnt[s.mascotBeat.poseId] = (cnt[s.mascotBeat.poseId] ?? 0) + 1;
-  for (const [id, n] of Object.entries(cnt)) if (n > 2) w.push(`Pose ${id} dùng ${n} lần (>2) — đa dạng biểu cảm hơn.`);
-  for (let i = 0; i + 2 < bs.length; i++) if ([0, 1, 2].every((k) => SERIOUS_POSES.test(bs[i + k].mascotBeat.poseId))) { w.push(`3 beat liên tiếp pose nghiêm (${bs[i].sceneId}…${bs[i + 2].sceneId}).`); break; }
-  const lay = {};
-  for (const s of bs) lay[s.mascotBeat.layout] = (lay[s.mascotBeat.layout] ?? 0) + 1;
-  if (bs.length >= 4) for (const [l, n] of Object.entries(lay)) if (n / bs.length > 0.5) w.push(`Bố cục beat "${l}" chiếm ${n}/${bs.length} (>50%) — đa dạng bố cục.`);
+  const ks = shots.filter((s) => s.keyText);
+  if (ks.length >= 3) {
+    const cnt = {};
+    for (const s of ks) cnt[s.keyText.treatment] = (cnt[s.keyText.treatment] ?? 0) + 1;
+    for (const [t, n] of Object.entries(cnt)) if (n / ks.length > 0.6) w.push(`Treatment "${t}" chiếm ${n}/${ks.length} lần chữ (>60%) — đa dạng hơn.`);
+  }
   return w;
 }
 
-/** Kiểm tra plan (Stage 5): kind hợp lệ (asset|graphics), mascotIntent chỉ ở cảnh asset + đủ dài cho beat, nền/kiểu trình bày/định dạng chữ liền kề không trùng. */
-export function validatePlan(scenes, kit, scriptAll = "", totalMs = 0) {
+/** Kiểm tra plan (Stage 5): scene nối liền mạch, kind asset|graphics, chữ A-roll (nội dung, neo khớp lời thoại, hạn mức), nền/kiểu trình bày liền kề không trùng.
+ * captions = mốc từng từ (để kiểm điểm neo); không truyền thì bỏ qua kiểm neo. */
+export function validatePlan(scenes, scriptAll = "", totalMs = 0, captions = null) {
   const problems = [...tilingProblems(scenes, totalMs)]; // scene phải nối LIỀN MẠCH toàn audio (khe hở = khung đen giữa 2 scene)
   let prevBg = null;
   let prevStyle = null;
-  let prevFormat = null;
-  let prevBeatScene = false;
-  const roles = new Set(Object.values(kit.byId).map((a) => a.narrativeRole));
   for (const sc of scenes) {
-    if (!["asset", "graphics"].includes(sc.kind)) problems.push(`${sc.id}: kind="${sc.kind}" không hợp lệ (asset|graphics) — mascot KHÔNG còn là cảnh riêng: gắn mascotIntent vào CẢNH ASSET (mascot hiện ở đuôi cảnh đó).`);
-    const mi = sc.mascotIntent;
-    if (mi) {
-      if (sc.kind !== "asset") problems.push(`${sc.id}: mascotIntent chỉ được nằm ở cảnh asset (cảnh đồ hoạ không có asset để thu nhỏ).`);
+    if (!["asset", "graphics"].includes(sc.kind)) problems.push(`${sc.id}: kind="${sc.kind}" không hợp lệ (asset|graphics) — mascot đã bỏ ở vòng 5.`);
+    if (sc.mascotIntent) problems.push(`${sc.id}: mascotIntent đã bỏ ở vòng 5 — muốn nhấn mạnh narration dùng keyText (chữ A-roll) ở cảnh asset.`);
+    if (sc.keyText) {
+      if (sc.kind !== "asset") problems.push(`${sc.id}: keyText chỉ được ở cảnh asset.`);
       else {
-        if (!mi.narrativeRole || !roles.has(mi.narrativeRole)) problems.push(`${sc.id}: mascotIntent.narrativeRole "${mi.narrativeRole}" không có trong kit.`);
-        const ti = mi.textIntent;
-        if (!ti) problems.push(`${sc.id}: mascotIntent thiếu textIntent (chữ bổ trợ).`);
-        else {
-          problems.push(...mascotTextProblems(ti, scriptAll, sc.id));
-          if (prevFormat && ti.format === prevFormat) problems.push(`${sc.id}: định dạng chữ "${ti.format}" trùng beat mascot liền trước.`);
-          prevFormat = ti.format;
-        }
-        const dur = (sc.endMs - sc.startMs) / 1000, need = BEAT_MIN_LEAD_SEC + beatNeedSec(ti);
-        if (dur < need - 0.001) problems.push(`${sc.id}: cảnh asset dài ${dur.toFixed(2)}s, cần ≥${need.toFixed(2)}s để asset chạy toàn khung ${BEAT_MIN_LEAD_SEC}s rồi mới tới beat mascot — dùng cảnh dài hơn hoặc bỏ mascotIntent ở cảnh này.`);
-        if (prevBeatScene) problems.push(`${sc.id}: hai cảnh asset liền nhau đều có mascot — chỉ một trong hai.`);
+        problems.push(...keyTextProblems(sc.keyText, sc, scriptAll));
+        if (captions) { const a = matchAnchor(captions, sc, sc.keyText.anchorPhrase); if (a.error) problems.push(`${sc.id}: ${a.error}.`); }
       }
     }
-    prevBeatScene = sc.kind === "asset" && !!mi;
     if (sc.kind === "asset") {
-      if (!sc.backgroundVariant) prevBg = null; // cảnh asset che kín nền → hai cảnh có nền nhìn thấy cách nhau bởi cảnh asset không còn là "liền kề" (trừ cảnh asset có media contain/có beat: nền nhìn thấy)
+      if (!sc.backgroundVariant) prevBg = null; // cảnh asset che kín nền → hai cảnh có nền nhìn thấy cách nhau bởi cảnh asset không còn là "liền kề" (trừ cảnh asset có media contain hoặc chữ dùng nền giấy: nền nhìn thấy)
       if (!(sc.assetIds ?? []).length) problems.push(`${sc.id}: cảnh asset phải có assetIds.`);
       if (prevStyle && sc.presentationStyle === prevStyle) problems.push(`${sc.id}: presentationStyle "${sc.presentationStyle}" trùng cảnh asset liền trước.`);
       prevStyle = sc.presentationStyle;
@@ -318,5 +234,6 @@ export function validatePlan(scenes, kit, scriptAll = "", totalMs = 0) {
       prevBg = { variant: sc.backgroundVariant, dir: sc.driftDir };
     }
   }
+  problems.push(...keyTextQuotaProblems(scenes));
   return problems;
 }

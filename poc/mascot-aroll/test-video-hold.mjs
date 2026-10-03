@@ -4,7 +4,6 @@ import os from "node:os";
 import path from "node:path";
 import { execFileSync } from "node:child_process";
 import { buildAssetSceneHtml, finalizeAssetShots, ensureHoldFrames, videoAvailSec, holdFrameName } from "./overrides/scripts/lib/asset-scene.mjs";
-import { loadKit } from "./overrides/scripts/lib/mascot-scene.mjs";
 
 const here = path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, "$1"));
 const run = path.join(here, "run-thien-an-mon");
@@ -14,7 +13,7 @@ const ok = (c, m) => { if (!c) { fail++; console.log("FAIL:", m); } };
 const vid = { id: "vid-03", type: "video", file: "x/vid-03-tense.mp4", width: 720, height: 1280, durationSec: 8 };
 const mediaById = { "vid-03": vid };
 const mk = (endMs, trimStartSec) => finalizeAssetShots([{ id: "S1-1", sceneId: "S1", assetId: "vid-03", startMs: 0, endMs, trimStartSec }], mediaById, { k: 0, prev: null, lastTransition: "cut" });
-const html = (shots, extra = {}) => buildAssetSceneHtml({ scene: { id: "S1", startMs: 0, endMs: shots.at(-1).endMs, ...extra }, shots, mediaById, kit: extra.mascotBeat ? loadKit(run) : undefined });
+const html = (shots, extra = {}) => buildAssetSceneHtml({ scene: { id: "S1", startMs: 0, endMs: shots.at(-1).endMs, ...extra }, shots, mediaById });
 
 // 1) shot 11s, nguồn 8s → video 8s + ảnh giữ khung 3s, nằm TRONG #cam-1
 {
@@ -38,14 +37,13 @@ const html = (shots, extra = {}) => buildAssetSceneHtml({ scene: { id: "S1", sta
   const h = html(sh);
   ok(/<video id="m-1"[^>]*data-duration="3"[^>]*data-media-start="5"/.test(h) && /id="m-1-hold"[^>]*data-start="3"[^>]*data-duration="2"/.test(h), "trim 5s: video 3s + hold 2s từ 3s");
 }
-// 4) có BEAT: ảnh giữ khung phải nằm TRONG #shrink-1 (thu nhỏ cùng thẻ)
+// 4) có chữ A-roll kiểu shrink-top: ảnh giữ khung phải nằm TRONG #shrink-1 (thu nhỏ cùng asset)
 {
   const shots = mk(11000);
-  const kit = loadKit(run);
-  const poseId = Object.keys(kit.byId)[0];
-  const h = html(shots, { mascotBeat: { startMs: 5400, side: "left", layout: "top", poseId, textEvent: null } });
-  const sh = /<div id="shrink-1"[\s\S]*?<\/div>\s*<div id="card-frame"/.exec(h);
-  ok(sh && sh[0].includes("m-1-hold") && sh[0].includes("<video id=\"m-1\""), "với beat: video và ảnh giữ khung phải nằm trong #shrink-1");
+  shots[0].keyText = { text: "Vì sao?", format: "stamp", treatment: "shrink-top", atMs: 2000, holdMs: 3500, bgVariant: "grid-moving", driftDir: "left" };
+  const h = html(shots);
+  const sh = /<div id="shrink-1"[\s\S]*?<\/div>\s*<div id="kt-1"|<div id="shrink-1"[\s\S]*?<\/div>\s*<div id="kt-scrim"/.exec(h);
+  ok(sh && sh[0].includes("m-1-hold") && sh[0].includes("<video id=\"m-1\""), "với chữ shrink-top: video và ảnh giữ khung phải nằm trong #shrink-1");
 }
 // 5) Trích khung THẬT từ file video thật
 {

@@ -1,0 +1,637 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap"
+    />
+      <style>
+      /* hf-safe-colors (tất định từ style-tokens.json) */
+      .hf-text-ink { color: #141414; }
+      .hf-text-light { color: #F7F4EC; }
+      .hf-hl-orange { color: #141414; background-color: #FF6A1A; }
+      .hf-plate-ink { color: #F7F4EC; background-color: #141414; }
+      .hf-plate-ink-orange { color: #FF6A1A; background-color: #141414; }
+      .hf-plate-paper { color: #141414; background-color: #F5F0E4; }
+
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background: #e7e3d9;
+        color: #141414;
+        font-family: "Be Vietnam Pro", sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: #e7e3d9;
+      }
+      .clip {
+        position: absolute;
+        inset: 0;
+      }
+
+      /* Camera Rig for continuous subtle cinematic pan-left motion */
+      #camera-rig {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+      }
+
+      /* Background Variant: Chart (4 horizontal ruled lines at 20%, 40%, 60%, 80% + left orange tick marks) */
+      .chart-line {
+        position: absolute;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: #141414;
+      }
+      .chart-line-1 {
+        top: 384px; /* 20% */
+      }
+      .chart-line-2 {
+        top: 768px; /* 40% */
+      }
+      .chart-line-3 {
+        top: 1152px; /* 60% */
+      }
+      .chart-line-4 {
+        top: 1536px; /* 80% */
+      }
+
+      .chart-tick {
+        position: absolute;
+        left: 0;
+        width: 48px;
+        height: 14px;
+        background-color: #ff6a1a;
+        transform: translateY(-5px);
+      }
+
+      /* Diagram Container Frame - high contrast, visible from t=0 */
+      #diagram-board {
+        position: absolute;
+        left: 80px;
+        top: 500px;
+        width: 920px;
+        height: 860px;
+        border: 5px solid #141414;
+        background: #f5f0e4;
+        border-radius: 14px;
+        box-shadow: 0 14px 36px rgba(20, 20, 20, 0.14);
+        overflow: hidden;
+      }
+
+      /* Diagram Board Top Header Bar (geometric, pure graphic, no extra text) */
+      .board-header {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 52px;
+        background-color: #141414;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 24px;
+      }
+      .header-pills {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+      .header-pill-orange {
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background-color: #ff6a1a;
+      }
+      .header-pill-light {
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background-color: #f7f4ec;
+      }
+      .header-pill-paper {
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background-color: #e7e3d9;
+      }
+      .header-notches {
+        display: flex;
+        gap: 6px;
+      }
+      .header-notch {
+        width: 22px;
+        height: 6px;
+        background-color: #f7f4ec;
+      }
+      .header-notch-accent {
+        width: 28px;
+        height: 6px;
+        background-color: #ff6a1a;
+      }
+
+      /* Coordinate Axes inside diagram */
+      .axis-vertical {
+        position: absolute;
+        left: 100px;
+        top: 80px;
+        bottom: 80px;
+        width: 4px;
+        background-color: #141414;
+      }
+      .axis-arrow-up {
+        position: absolute;
+        top: -16px;
+        left: -6px;
+        width: 0;
+        height: 0;
+        border-left: 8px solid transparent;
+        border-right: 8px solid transparent;
+        border-bottom: 16px solid #141414;
+      }
+
+      .axis-horizontal {
+        position: absolute;
+        left: 100px;
+        right: 60px;
+        bottom: 80px;
+        height: 4px;
+        background-color: #141414;
+      }
+      .axis-arrow-right {
+        position: absolute;
+        right: -16px;
+        top: -6px;
+        width: 0;
+        height: 0;
+        border-top: 8px solid transparent;
+        border-bottom: 8px solid transparent;
+        border-left: 16px solid #141414;
+      }
+
+      /* Axis Ticks */
+      .tick-v {
+        position: absolute;
+        left: -12px;
+        width: 12px;
+        height: 3px;
+        background-color: #141414;
+      }
+      .tick-h {
+        position: absolute;
+        bottom: -12px;
+        width: 3px;
+        height: 12px;
+        background-color: #141414;
+      }
+
+      /* Indicator index blocks on left */
+      .index-bar {
+        position: absolute;
+        left: 40px;
+        top: 140px;
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+      }
+      .index-block {
+        width: 16px;
+        height: 6px;
+        background-color: #141414;
+      }
+      .index-block-orange {
+        width: 24px;
+        height: 8px;
+        background-color: #ff6a1a;
+      }
+
+      /* SVG vector overlays across canvas */
+      #mechanism-svg {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 15;
+        pointer-events: none;
+      }
+
+      /* Punch Phrase: CẢNH BÁO CHÍNH SÁCH */
+      #punch-wrapper {
+        position: absolute;
+        top: 360px;
+        left: 0;
+        width: 1080px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 30;
+        pointer-events: none;
+      }
+      .punch-card {
+        background-color: #f5f0e4;
+        border: 4px solid #141414;
+        padding: 16px 42px;
+        border-radius: 8px;
+        box-shadow: 0 10px 28px rgba(20, 20, 20, 0.16);
+      }
+      .punch-text {
+        font-size: 64px;
+        font-weight: 900;
+        line-height: 1.2;
+        color: #141414;
+        letter-spacing: -0.5px;
+        margin: 0;
+        text-transform: uppercase;
+      }
+
+      /* Label 1: TRẤN ÁP VŨ LỰC (card-ink) */
+      #label-1-wrapper {
+        position: absolute;
+        left: 170px;
+        top: 840px;
+        width: 380px;
+        height: 80px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 25;
+        pointer-events: none;
+      }
+      .card-ink-box {
+        background-color: #141414;
+        color: #f7f4ec;
+        padding: 14px 26px;
+        border-radius: 8px;
+        font-size: 32px;
+        font-weight: 900;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        white-space: nowrap;
+        border: 2px solid #141414;
+        box-shadow: 0 8px 22px rgba(20, 20, 20, 0.22);
+      }
+
+      /* Label 2: KHỦNG HOẢNG LEO THANG (card-orange) */
+      #label-2-wrapper {
+        position: absolute;
+        left: 490px;
+        top: 1140px;
+        width: 480px;
+        height: 80px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 25;
+        pointer-events: none;
+      }
+      .card-orange-box {
+        background-color: #ff6a1a;
+        color: #141414;
+        padding: 14px 26px;
+        border-radius: 8px;
+        font-size: 32px;
+        font-weight: 900;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        white-space: nowrap;
+        border: 3px solid #141414;
+        box-shadow: 0 8px 22px rgba(20, 20, 20, 0.16);
+      }
+    </style>
+
+    <div
+      id="root"
+      data-composition-id="scene-s06"
+      data-start="0"
+      data-width="1080"
+      data-height="1920"
+      data-duration="10"
+    >
+      <section id="scene-s06" class="clip" data-start="0" data-duration="10">
+        <!-- Camera rig for continuous pan-left motion -->
+        <div id="camera-rig">
+          <!-- Background Variant: Chart (4 horizontal ruled lines + left orange tick marks) -->
+          <div class="chart-line chart-line-1"><div class="chart-tick"></div></div>
+          <div class="chart-line chart-line-2"><div class="chart-tick"></div></div>
+          <div class="chart-line chart-line-3"><div class="chart-tick"></div></div>
+          <div class="chart-line chart-line-4"><div class="chart-tick"></div></div>
+
+          <!-- Main Diagram Board (High contrast, starts unfold at t=0, fully ready at t=0.20s) -->
+          <div id="diagram-board">
+            <div class="board-header">
+              <div class="header-pills">
+                <div class="header-pill-orange"></div>
+                <div class="header-pill-light"></div>
+                <div class="header-pill-paper"></div>
+              </div>
+              <div class="header-notches">
+                <div class="header-notch"></div>
+                <div class="header-notch"></div>
+                <div class="header-notch-accent"></div>
+              </div>
+            </div>
+
+            <!-- Left indicator block scale -->
+            <div class="index-bar">
+              <div class="index-block-orange"></div>
+              <div class="index-block"></div>
+              <div class="index-block"></div>
+              <div class="index-block-orange"></div>
+              <div class="index-block"></div>
+              <div class="index-block"></div>
+            </div>
+
+            <!-- Coordinate axes -->
+            <div class="axis-vertical">
+              <div class="axis-arrow-up"></div>
+              <div class="tick-v" style="top: 100px;"></div>
+              <div class="tick-v" style="top: 220px;"></div>
+              <div class="tick-v" style="top: 340px;"></div>
+              <div class="tick-v" style="top: 460px;"></div>
+              <div class="tick-v" style="top: 580px;"></div>
+            </div>
+
+            <div class="axis-horizontal">
+              <div class="axis-arrow-right"></div>
+              <div class="tick-h" style="left: 120px;"></div>
+              <div class="tick-h" style="left: 240px;"></div>
+              <div class="tick-h" style="left: 360px;"></div>
+              <div class="tick-h" style="left: 480px;"></div>
+              <div class="tick-h" style="left: 600px;"></div>
+            </div>
+          </div>
+
+          <!-- SVG Graphic Structure & Timed Vectors -->
+          <svg
+            id="mechanism-svg"
+            viewBox="0 0 1080 1920"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <!-- Static structural diagram geometry (unfolds with board at t=0) -->
+            <g id="diagram-static-geom">
+              <!-- Threshold guideline across diagram -->
+              <line
+                x1="220"
+                y1="960"
+                x2="940"
+                y2="960"
+                stroke="#FF6A1A"
+                stroke-width="3"
+                stroke-dasharray="14 10"
+              />
+              <rect x="200" y="953" width="14" height="14" fill="#FF6A1A" />
+
+              <!-- Impact Reticle Target at (360, 880) -->
+              <circle
+                cx="360"
+                cy="880"
+                r="54"
+                stroke="#141414"
+                stroke-width="4"
+                stroke-dasharray="10 6"
+              />
+              <circle cx="360" cy="880" r="28" stroke="#FF6A1A" stroke-width="3" />
+              <circle cx="360" cy="880" r="8" fill="#FF6A1A" />
+              <!-- Reticle crosshairs -->
+              <line x1="290" y1="880" x2="330" y2="880" stroke="#141414" stroke-width="4" />
+              <line x1="390" y1="880" x2="430" y2="880" stroke="#141414" stroke-width="4" />
+              <line x1="360" y1="810" x2="360" y2="850" stroke="#141414" stroke-width="4" />
+              <line x1="360" y1="910" x2="360" y2="950" stroke="#141414" stroke-width="4" />
+            </g>
+
+            <!-- Dynamic Strike Pulse at collision (t=6.03s) -->
+            <circle
+              id="impact-pulse"
+              cx="360"
+              cy="880"
+              r="60"
+              stroke="#FF6A1A"
+              stroke-width="6"
+              fill="none"
+              opacity="0"
+            />
+
+            <!-- Downward Force Vector (Trấn áp cứng rắn) -->
+            <path
+              id="force-arrow-stem"
+              d="M 360 640 L 360 820"
+              stroke="#141414"
+              stroke-width="8"
+              stroke-linecap="round"
+            />
+            <path
+              id="force-arrow-head"
+              d="M 344 804 L 360 826 L 376 804"
+              stroke="#141414"
+              stroke-width="8"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+
+            <!-- Escalation Rebound Curve (Phản lực leo thang) -->
+            <path
+              id="escalation-curve"
+              d="M 360 920 C 440 980, 520 1060, 720 1130"
+              stroke="#FF6A1A"
+              stroke-width="8"
+              stroke-linecap="round"
+            />
+            <path
+              id="escalation-arrow-head"
+              d="M 700 1115 L 726 1132 L 712 1148"
+              stroke="#FF6A1A"
+              stroke-width="8"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+
+          <!-- Text Element 1: Punch Phrase (CẢNH BÁO CHÍNH SÁCH) -->
+          <div id="punch-wrapper">
+            <div id="punch-card" class="punch-card">
+              <h1 class="punch-text">CẢNH BÁO CHÍNH SÁCH</h1>
+            </div>
+          </div>
+
+          <!-- Text Element 2: Label 1 (TRẤN ÁP VŨ LỰC) -->
+          <div id="label-1-wrapper">
+            <div id="label-1-box" class="card-ink-box">TRẤN ÁP VŨ LỰC</div>
+          </div>
+
+          <!-- Text Element 3: Label 2 (KHỦNG HOẢNG LEO THANG) -->
+          <div id="label-2-wrapper">
+            <div id="label-2-box" class="card-orange-box">KHỦNG HOẢNG LEO THANG</div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <script>
+      const tl = gsap.timeline({ paused: true });
+
+      // Pre-calculate path lengths for deterministic SVG drawing
+      const forceStem = document.getElementById("force-arrow-stem");
+      const forceHead = document.getElementById("force-arrow-head");
+      const escCurve = document.getElementById("escalation-curve");
+      const escHead = document.getElementById("escalation-arrow-head");
+
+      const forceStemLen = forceStem.getTotalLength();
+      const forceHeadLen = forceHead.getTotalLength();
+      const escCurveLen = escCurve.getTotalLength();
+      const escHeadLen = escHead.getTotalLength();
+
+      forceStem.style.strokeDasharray = forceStemLen;
+      forceStem.style.strokeDashoffset = forceStemLen;
+
+      forceHead.style.strokeDasharray = forceHeadLen;
+      forceHead.style.strokeDashoffset = forceHeadLen;
+
+      escCurve.style.strokeDasharray = escCurveLen;
+      escCurve.style.strokeDashoffset = escCurveLen;
+
+      escHead.style.strokeDasharray = escHeadLen;
+      escHead.style.strokeDashoffset = escHeadLen;
+
+      // Initial states for timed text and dynamic vector elements
+      gsap.set("#punch-card", { opacity: 0, scale: 0.9 });
+      gsap.set("#label-1-box", { opacity: 0, scale: 0.85 });
+      gsap.set("#label-2-box", { opacity: 0, scale: 0.85 });
+
+      // Camera motion: continuous pan-left across 10 seconds
+      tl.fromTo(
+        "#camera-rig",
+        { x: 18 },
+        { x: -18, duration: 10.0, ease: "none" },
+        0
+      );
+
+      // Phase 0: Non-empty opening frame (t=0 -> 0.20s)
+      // Diagram board and static graphics unfold immediately at t=0, fully ready before t=0.25s
+      tl.fromTo(
+        "#diagram-board",
+        { opacity: 0, scaleY: 0.2, transformOrigin: "50% 50%" },
+        { opacity: 1, scaleY: 1, duration: 0.20, ease: "power2.out" },
+        0
+      );
+
+      tl.fromTo(
+        "#diagram-static-geom",
+        { opacity: 0, scaleY: 0.2, transformOrigin: "540px 930px" },
+        { opacity: 1, scaleY: 1, duration: 0.20, ease: "power2.out" },
+        0
+      );
+
+      // Chart background lines enter at t=0
+      tl.fromTo(
+        ".chart-line",
+        { opacity: 0 },
+        { opacity: 1, duration: 0.16, stagger: 0.03, ease: "power1.out" },
+        0
+      );
+
+      // Phase 1: Punch Phrase Reveal at atMs 46760 (1.26s from scene start)
+      tl.fromTo(
+        "#punch-card",
+        { opacity: 0, scale: 0.9 },
+        { opacity: 1, scale: 1, duration: 0.45, ease: "power3.out" },
+        1.26
+      );
+
+      // Phase 2: Action Vector & Label 1 at atMs 51530 (6.03s from scene start)
+      // Downward force vector draws into position (5.65s -> 6.03s)
+      tl.to(
+        forceStem,
+        { strokeDashoffset: 0, duration: 0.32, ease: "power2.in" },
+        5.65
+      );
+      tl.to(
+        forceHead,
+        { strokeDashoffset: 0, duration: 0.12, ease: "power2.out" },
+        5.93
+      );
+
+      // Collision impact pulse wave at 6.03s
+      tl.fromTo(
+        "#impact-pulse",
+        { scale: 0.6, opacity: 1, transformOrigin: "360px 880px" },
+        { scale: 1.6, opacity: 0, duration: 0.45, ease: "power2.out" },
+        6.03
+      );
+
+      // Label 1 "TRẤN ÁP VŨ LỰC" reveals at 6.03s
+      tl.fromTo(
+        "#label-1-box",
+        { opacity: 0, scale: 0.85, y: 10 },
+        { opacity: 1, scale: 1, y: 0, duration: 0.35, ease: "power3.out" },
+        6.03
+      );
+
+      // Phase 3: Escalation Rebound Curve & Label 2 at atMs 53590 (8.09s from scene start)
+      // Rebound curve draws rapidly up to position (7.65s -> 8.09s)
+      tl.to(
+        escCurve,
+        { strokeDashoffset: 0, duration: 0.38, ease: "power2.inOut" },
+        7.65
+      );
+      tl.to(
+        escHead,
+        { strokeDashoffset: 0, duration: 0.12, ease: "power2.out" },
+        7.97
+      );
+
+      // Label 2 "KHỦNG HOẢNG LEO THANG" expands into view at 8.09s
+      tl.fromTo(
+        "#label-2-box",
+        { opacity: 0, scale: 0.85, y: 10 },
+        { opacity: 1, scale: 1, y: 0, duration: 0.38, ease: "power3.out" },
+        8.09
+      );
+
+      // Phase 4: Idle & Breathing Motions (deterministic, finite repeat, no rotation)
+      // Diagram board subtle breathe
+      tl.fromTo(
+        "#diagram-board",
+        { scale: 1.0 },
+        { scale: 1.012, duration: 3.5, ease: "sine.inOut", yoyo: true, repeat: 1 },
+        0.5
+      );
+
+      // Punch card subtle bob
+      tl.fromTo(
+        "#punch-card",
+        { y: 0 },
+        { y: -6, duration: 2.2, ease: "sine.inOut", yoyo: true, repeat: 2 },
+        2.0
+      );
+
+      // Label 1 subtle bob
+      tl.fromTo(
+        "#label-1-box",
+        { y: 0 },
+        { y: -5, duration: 1.8, ease: "sine.inOut", yoyo: true, repeat: 1 },
+        6.6
+      );
+
+      // Register timeline on window object with data-composition-id
+      window.__timelines["scene-s06"] = tl;
+    </script>
+  
+    </template>
+  </body>
+</html>

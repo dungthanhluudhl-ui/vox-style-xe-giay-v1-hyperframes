@@ -110,3 +110,22 @@ Người dùng xem video vòng 2 báo: (1) chuyển động asset giật cục/n
 - Model Stage 5/6/7: ĐỌC `scripts/model-routing.json` (03/10: `ag/gemini-3.8-flash-high` cho Stage 5/6/generator; reviewer `cx/gpt-6-sol[1m]`).
 - `validate-shotlist.py` của kit trên Windows cần `PYTHONUTF8=1`.
 - Chạy lệnh nền dài thẳng, không ghép `| head`/`| tee`.
+
+## Vòng 5 (03/10) — BỎ mascot, thay bằng chữ A-roll; vá khung đen/trống giữa cảnh
+
+**Quyết định người dùng:** bỏ HOÀN TOÀN mascot + chữ trong thẻ ("chèn cho có, đơ, không nhấn mạnh"). Checkpoint trước khi gỡ: commit `fed3e80` + tag `checkpoint-truoc-nang-cap-mascot-20261003`. Kit `mascot-kit/` giữ nguyên trên đĩa (không còn nạp vào pipeline).
+
+**Chữ A-roll (`keyText`, thiết kế trong `style-dna-v2-draft/STYLE_DNA.md` §4b):** chỉ ở cảnh asset khi narration đặt câu hỏi/khẳng định MẤU CHỐT; ≤max(1,⌊số cảnh/8⌋) chữ/video, cách nhau ≥3 cảnh. Stage 5 (model) chỉ đề xuất `{anchorPhrase, text, format, purpose, why}`; script khớp `anchorPhrase` (nguyên văn) với mốc TỪNG TỪ của `captions.json` → chữ hiện ĐÚNG LÚC từ neo được nói; chữ giữ ≥max(2s; 0,7s+80ms/ký tự)+vào/ra và nằm trọn trong một shot, không đủ chỗ → BỎ chữ đó (có log). 5 hình thức (`typewriter`, `stamp`, `wordpop`, `maskrise`, `sweep`), 4 treatment asset (`dim-center`, `dim-lower`, `shrink-top` ×0,72, `band-free` cho asset ngang/doc), chọn tất định, không lặp liền kề. Module: `lib/key-text.mjs`, `lib/key-text-plan.mjs`, `lib/asset-scene.mjs` (builder), `lib/v2-checks.mjs`; `lib/media-layout.mjs` = phần còn dùng của mascot-scene cũ.
+
+**Vá lỗi (đều đo thật, đã ghi `memory/feedback_pipeline_ops_gotchas.md` #5–6):**
+1. Khung ĐEN giữa 2 scene = khe hở trong scene-plan (mọi khoảng đen `blackdetect` trùng đúng khe hở plan; flydubai 6/6). Sửa: `lib/scene-tiling.mjs` (Stage 5 nối liền mạch; Stage 6 `fitShotsToScenes`; chốt chặn throw trong `lib/sync-root-hf-lib.mjs`; nền root = giấy).
+2. Tổng thời lượng lấy từ ĐỘ DÀI AUDIO (ffprobe), không từ từ cuối trong captions (thiên-an-môn bị cắt cụt 1,02s lời thoại).
+3. `<video>` dài hơn nguồn 8s KHÔNG giữ khung cuối ở chế độ capture `drawElement` → màn hình trống (S04 3s). Sửa: `ensureHoldFrames` (ảnh PNG khung cuối nối tiếp trong cùng lớp camera/#shrink).
+4. Nền trống 0,5–0,7s ĐẦU cảnh đồ hoạ (hình chính vào trễ vì canh nhãn theo narration): `lib/blank-start.mjs` chụp `snapshot --at 0.25` và FAIL nếu σ<12; thêm luật prompt. S06 bị bắt ở lượt 1, sửa lượt 2.
+5. Stage 5: cảnh báo mềm cảnh asset >12s chỉ 1 asset ("đơ": thiên-an-môn S09 từng 27s một ảnh).
+
+**Công cụ đo/test mới:** `measure-flat-frames.mjs` (khung phẳng/trống mà `blackdetect` bỏ lọt), `measure-keytext-sync.mjs` (onset chữ trong mp4 so với từ neo), `test-key-text.mjs` (83 ca), `test-key-text-plan.mjs` (neo/khả thi/quota trên captions thật), `test-scene-tiling.mjs`, `test-video-hold.mjs`. Đã xoá: mọi tool/test mascot (khôi phục từ `fed3e80`).
+
+**Kết quả E2E `su-kien-thien-an-mon` (run-thien-an-mon-2, 130,53s khớp audio 130,52s, 14 cảnh: 11 asset + 3 đồ hoạ):** Stage 5/6 đạt lần đầu; Stage 7 14/14; 1 chữ A-roll (S12 `stamp` + `dim-lower`, "CÁC ANH ĐÃ ĐI QUÁ XA RỒI") hiện lệch 0ms so với từ neo, giữ 3,62s; `blackdetect` 0; khung phẳng 0 đoạn bất thường; `blank-frame suspect` 64→33; vision riêng chữ: đọc rõ 4/5, không che mặt/chủ thể.
+
+**Còn yếu / chưa làm:** chuyển cảnh điện ảnh có chủ đích (cross-dissolve…) vẫn hoãn; vision không đánh giá được độ mượt (người dùng xem mp4); số chữ A-roll có thể rất ít/0 nếu narration không có chỗ mấu chốt đủ thời gian đọc; tích hợp ADN v2 mặc định + `archive/` v1 chờ người dùng duyệt (khi tích hợp phải mang sang `scripts/` thật: tiling, audio duration, giữ khung cuối, blank-start, sync-root chốt chặn).

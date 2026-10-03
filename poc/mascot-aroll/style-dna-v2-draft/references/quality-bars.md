@@ -64,7 +64,7 @@ Ngưỡng thời lượng đi kèm:
 
 ## 4. Chữ trên màn hình
 
-**[v2 NHÁP]** Mục này chỉ áp dụng cho CẢNH ĐỒ HOẠ. Cảnh asset và cảnh mascot không có chữ/icon nào trên hình.
+**[v2 NHÁP]** Mục này chỉ áp dụng cho CẢNH ĐỒ HOẠ. Cảnh asset không có chữ/icon nào trên hình, trừ chữ A-roll nhấn mạnh narration (STYLE_DNA.md mục 4b).
 
 - Nhãn vẽ tay tối đa 4 từ; không được lặp lại nguyên văn lời thoại.
 - Nhãn không được đè lên một hình ảnh khác trong lúc cả hai cùng hiện — "lấp khoảng trống
@@ -90,7 +90,7 @@ Ngưỡng thời lượng đi kèm:
 
 ## 6. Bố cục lặp lại/đơn điệu — đo trên bản dựng thật, không đo trên kế hoạch
 
-**[v2 NHÁP]** Ngưỡng 23-38% (thích) vs 54-67% (bị chê) vẫn là thước đo chính, và v2 dễ vi phạm nó nhất vì cảnh asset đều là media toàn khung. Với v2, "nhóm cảnh giống nhau" được đo theo KIỂU TRÌNH BÀY (đẩy vào, lùi ra, lia, đổi crop, `split`, reveal, nhiều shot cắt, thẻ `doc-NN`, mascot, cảnh đồ hoạ), trên bản dựng thật.
+**[v2 NHÁP]** Ngưỡng 23-38% (thích) vs 54-67% (bị chê) vẫn là thước đo chính, và v2 dễ vi phạm nó nhất vì cảnh asset đều là media toàn khung. Với v2, "nhóm cảnh giống nhau" được đo theo KIỂU TRÌNH BÀY (đẩy vào, lùi ra, lia, đổi crop, `split`, reveal, nhiều shot cắt, thẻ `doc-NN`, chữ A-roll, cảnh đồ hoạ), trên bản dựng thật.
 
 Cách đo hiệu quả nhất không phải đặt hạn ngạch trước khi dựng (hạn ngạch đặt trước đã hai
 lần không áp dụng được cho video khác), mà là **đo nhóm cảnh giống nhau nhiều nhất** trên

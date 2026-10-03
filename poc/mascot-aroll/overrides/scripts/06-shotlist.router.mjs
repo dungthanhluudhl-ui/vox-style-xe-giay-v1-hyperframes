@@ -7,14 +7,14 @@ import fs from "node:fs";
 import path from "node:path";
 import { callModel, extractText, extractJson, loadModelRouting, appendRunLog } from "./lib/router-client.mjs";
 import { getVideoSlug, videoPaths } from "./lib/video-paths.mjs";
-// [POC mascot-aroll / ADN v2] kit mascot + kiểm tra tất định v2
-import { loadKit, kitSummaryForPrompt, fitForAsset, chooseBeatLayout } from "./lib/mascot-scene.mjs";
-import { planBeat } from "./lib/beat-plan.mjs";
+// [POC mascot-aroll / ADN v2] chữ A-roll (thay mascot) + kiểm tra tất định v2
+import { fitForAsset } from "./lib/media-layout.mjs";
+import { chooseTreatment } from "./lib/key-text.mjs";
+import { planKeyText } from "./lib/key-text-plan.mjs";
 import { finalizeAssetShots } from "./lib/asset-scene.mjs";
 import { validatePlanAndShots, softShotWarnings } from "./lib/v2-checks.mjs";
 
 const root = process.cwd();
-const kit = loadKit(root);
 const routing = loadModelRouting();
 const model = routing.reasoning_planning;
 const FPS = 30;
@@ -87,12 +87,11 @@ VỚI MỖI SHOT PHẢI XÁC ĐỊNH:
 - Thời gian chính xác (startMs/endMs, khớp trong khoảng thời gian của scene chứa nó, tổng các shot phải khớp đúng toàn bộ khoảng thời gian scene, không có khoảng trống/chồng lấn).
 - assetId dùng cho shot này (nếu scene có nhiều asset, chia mỗi asset thành 1 shot riêng theo trình tự đã ghi trong "notes" của scene plan). Nếu asset là video (durationSec có trong manifest) và thời lượng shot NGẮN HƠN video gốc, chỉ định rõ đoạn trim (trimStartSec/trimEndSec trong video gốc) — ưu tiên đoạn có hành động rõ nhất (thường là giữa clip). Nếu shot DÀI HƠN video gốc 8s, chỉ định cách xử lý (giữ khung cuối/loop nhẹ/chuyển sang ảnh tĩnh từ frame cuối) — "giữ khung cuối" là mặc định rẻ nhất: HyperFrames tự giữ frame cuối khi video được đặt dài trọn shot (đã đo 2026-09-26), không cần kỹ thuật riêng.
 - assetTreatment: cách xử lý hình ảnh cụ thể (Ken Burns zoom chậm hướng nào, giữ tĩnh, crop theo tỷ lệ dọc 9:16 nếu asset gốc không đúng tỷ lệ, v.v.) — ĐÂY LÀ NHIỆM VỤ CHO CODE REMOTION (A-roll/B-roll compositing), không phải dựng lại nội dung ảnh. Với asset là ẢNH: CHỈ mô tả chuyển động/crop/khung hình/vị trí — TUYỆT ĐỐI KHÔNG ghi lệnh xử lý màu (grayscale/đen trắng, bóng cam, cutout/tách nền, filter, đổ bóng): quyết định dự án là ảnh dùng NGUYÊN MÀU như file gốc; quy tắc "người grayscale + bóng cam" trong Style DNA mô tả phong cách lúc TẠO ảnh (Stage 2b), không phải việc của code dựng. Ghi lệnh xử lý màu ở đây từng làm Stage 7 lật qua lật lại (reviewer đòi grayscale rồi lại cấm filter). Nguồn: STYLE_DNA.md §2 "Ngoại lệ chính thức".
-- [ADN v2] overlays: cảnh asset (kind="asset", kể cả khi có beat mascot): LUÔN overlays = [] (không chữ/nhãn/icon/diagram/mũi tên trên hình — chỉ có media + phụ đề). Cảnh đồ hoạ (kind="graphics", không asset): tối đa 1 punch-phrase + 2 nhãn/thẻ (label ≤4 từ không lặp lời thoại), chữ/thẻ thẳng hàng KHÔNG xoay/nghiêng (riêng BỘ PHẬN VẼ THUẦN không chứa chữ như kim đồng hồ/mũi tên/máy bay trong sơ đồ được xoay nếu ý nghĩa shot cần), mỗi overlay có atMs (khớp cụm từ trong transcript) và holdMs (≥1.5s; punch-phrase ≥1.6s). CẢNH ĐỒ HOẠ PHẢI TỰ NHẤT QUÁN & THỰC HIỆN ĐƯỢC: tổng chữ của cả cảnh (mọi shot) ≤3 khối (đếm cả chữ số/tên từng bước) nên KHÔNG mô tả sơ đồ cần chữ/số riêng cho từng nút; bước/mục nào assetTreatment hoặc notes nhắc tới mà cần được gọi tên thì tên PHẢI nằm trong chữ của overlays (gộp dạng "A • B • C" vào 1 nhãn khi >3 mục), không để mục nào được yêu cầu mà không có chỗ nào trong overlays; các nút/bước không cần chữ thì mô tả là hình học/biểu tượng KHÔNG chữ.
+- [ADN v2] overlays: cảnh asset (kind="asset", kể cả khi cảnh có chữ A-roll do script thêm): LUÔN overlays = [] (không chữ/nhãn/icon/diagram/mũi tên trên hình — chỉ có media + phụ đề). Cảnh đồ hoạ (kind="graphics", không asset): tối đa 1 punch-phrase + 2 nhãn/thẻ (label ≤4 từ không lặp lời thoại), chữ/thẻ thẳng hàng KHÔNG xoay/nghiêng (riêng BỘ PHẬN VẼ THUẦN không chứa chữ như kim đồng hồ/mũi tên/máy bay trong sơ đồ được xoay nếu ý nghĩa shot cần), mỗi overlay có atMs (khớp cụm từ trong transcript) và holdMs (≥1.5s; punch-phrase ≥1.6s). CẢNH ĐỒ HOẠ PHẢI TỰ NHẤT QUÁN & THỰC HIỆN ĐƯỢC: tổng chữ của cả cảnh (mọi shot) ≤3 khối (đếm cả chữ số/tên từng bước) nên KHÔNG mô tả sơ đồ cần chữ/số riêng cho từng nút; bước/mục nào assetTreatment hoặc notes nhắc tới mà cần được gọi tên thì tên PHẢI nằm trong chữ của overlays (gộp dạng "A • B • C" vào 1 nhãn khi >3 mục), không để mục nào được yêu cầu mà không có chỗ nào trong overlays; các nút/bước không cần chữ thì mô tả là hình học/biểu tượng KHÔNG chữ.
 - [ADN v2] cameraMotion (cảnh asset): MỘT chuyển động liền mạch suốt cả shot, từ vựng v1: drift-in (zoom-in chậm), drift-out, pan-left, pan-right, pan-up, pan-down, diag-dr, diag-ul — chọn kiểu KHÁC shot/cảnh liền trước. Sự kiện thị giác của cảnh asset = ĐỔI ASSET bám cue lời thoại; mỗi asset đúng 1 shot liền mạch trong scene, TUYỆT ĐỐI KHÔNG tách 1 asset thành nhiều shot re-crop/zoom (script sẽ gộp) và KHÔNG ghi crop-reframe/split/reveal/punch. shot ~4–8s. KHÔNG xoay (rotate/skew).
 - transitionIn: cảnh asset chỉ "cut" hoặc "crossfade" (0,25s, script tự xen kẽ nếu bạn không chỉ định); cảnh đồ hoạ: 1 trong bộ KHÔNG XOAY (rise/grow/punch/shatter/unfold/zoom-through/strike) hoặc cut/dissolve, mặc định theo entranceAnimation của scene cho shot đầu tiên.
 
-[ADN v2, vòng 4] BEAT MASCOT: scene asset có "mascotIntent" sẽ có nhân vật hiện ở ĐUÔI scene (shot cuối thu nhỏ thành thẻ). Thời điểm, độ dài, bên đứng, bố cục, chữ do SCRIPT tính tất định — bạn KHÔNG ghi gì về chúng và KHÔNG đổi assetId/overlays/camera của shot. VIỆC DUY NHẤT của bạn: ở SHOT CUỐI của scene có mascotIntent, thêm trường "mascotAssetId" = ID CÓ THẬT trong kit dưới đây, chọn theo mascotIntent.narrativeRole + tone (KHÔNG bịa ID; tông biểu cảm đa dạng, chỉ serious/concerned/sad cho đoạn nhạy cảm thật sự; không cùng pose với beat liền trước kể cả ở scene khác). Shot không phải shot cuối, hoặc scene không có mascotIntent: KHÔNG có mascotAssetId.
-KIT MASCOT: ${JSON.stringify(kitSummaryForPrompt(kit))}
+[ADN v2, vòng 5] CHỮ A-ROLL: cảnh asset có "keyText" trong plan sẽ có chữ nhấn mạnh hiện ĐÚNG LÚC narration nói cụm neo. Thời điểm, hình thức, cách asset phản ứng (mờ đi/thu nhỏ nhẹ) do SCRIPT tính TẤT ĐỊNH từ mốc từng từ — bạn KHÔNG ghi gì về chữ và KHÔNG thêm trường nào cho nó; mọi shot asset vẫn overlays=[]. Chỉ cần chia shot như bình thường (đừng để ranh giới shot cắt ngang ~4–6s ngay sau cụm neo của cảnh có keyText: cửa sổ chữ phải nằm trọn trong một shot).
 
 ${PDF_SHOT_RULES}${FIT_RULES}
 TRANSCRIPT VỚI TIMESTAMP CẤP TỪ (dùng để canh overlay đúng cue lời thoại):
@@ -116,19 +115,6 @@ Trả về DUY NHẤT JSON object:
       "cameraMotion": "push-in",
       "overlays": [],
       "transitionIn": "zoom-through",
-      "notes": "..."
-    },
-    {
-      "id": "S02-1",
-      "sceneId": "S02",
-      "startMs": 3900,
-      "endMs": 12400,
-      "assetId": "img-05",
-      "mascotAssetId": "capy-v1-host-question",
-      "assetTreatment": "ví dụ SHOT CUỐI của scene có mascotIntent: chỉ thêm mascotAssetId (pose thật trong kit); phần còn lại như shot asset bình thường",
-      "cameraMotion": "pan-left",
-      "overlays": [],
-      "transitionIn": "cut",
       "notes": "..."
     }
   ]
@@ -161,7 +147,6 @@ function fitShotsToScenes(newShots) {
     fix(list[list.length - 1], "endMs", sc.endMs);
   }
 }
-const poseHintByScene = {}; // pose do model chọn ở shot cuối — lưu theo cảnh TRƯỚC khi mergeAdjacentSameAsset bỏ các trường của shot bị gộp
 function normalizeShots(newShots) {
   fitLog.length = 0;
   fitShotsToScenes(newShots);
@@ -170,9 +155,8 @@ function normalizeShots(newShots) {
     const sc = sceneById[s.sceneId];
     if (!sc) continue;
     s.presentationMode = sc.kind === "graphics" ? "graphics" : "asset";
-    s._poseHint = s.mascotAssetId ?? s.mascotBeat?.poseId ?? null; // pose do model chọn (hoặc từ shotlist cũ khi --annotate-only); finalizeBeats quyết định
-    if (s._poseHint) poseHintByScene[s.sceneId] = s._poseHint;
-    delete s.mascotAssetId; delete s.mascotBeat; delete s.animationPreset; delete s.mascotSide; delete s.mascotScale; delete s.textEvents;
+    delete s.keyText; delete s.keyTextDropped; // tính lại tất định ở finalizeKeyTexts
+    delete s.mascotAssetId; delete s.mascotBeat; delete s.animationPreset; delete s.mascotSide; delete s.mascotScale; delete s.textEvents; // dấu vết mascot cũ (vòng 1–4)
     if (sc.kind === "asset") {
       s.overlays = [];
       // [ADN v2] cách đặt media TẤT ĐỊNH theo kích thước thật: cover (9:16 đủ nét) | contain (nằm ngang/phân giải thấp/doc-NN)
@@ -183,33 +167,35 @@ function normalizeShots(newShots) {
   }
 }
 
-// [ADN v2, vòng 4] BEAT mascot ở ĐUÔI cảnh asset có mascotIntent — TẤT ĐỊNH: thời điểm/độ dài theo chữ (lib/beat-plan.mjs), chữ hiện suốt beat,
-// bên đứng xen kẽ trái/phải, bố cục chọn theo tỉ lệ asset + không trùng beat liền trước (lib/mascot-scene.mjs). Model chỉ chọn pose (shot cuối).
-// Lỗi không tính được beat (cảnh quá ngắn…) đưa vào `beatErrors` → validate hiển thị cho vòng thử lại, KHÔNG tự cắt chữ/bỏ beat.
-const beatErrors = [];
-function finalizeBeats(shots) {
-  beatErrors.length = 0;
+// [ADN v2, vòng 5] CHỮ A-ROLL — TẤT ĐỊNH: khớp cụm neo của plan với mốc từng từ narration → chữ hiện ĐÚNG lúc từ neo được nói; cửa sổ chữ (đọc kịp + vào/ra) phải
+// nằm trọn trong MỘT shot, không thì BỎ chữ đó (kèm lý do, log + ghi shot.keyTextDropped; KHÔNG tự cắt chữ/đổi ranh giới shot). Chọn treatment (asset mờ đi /
+// thu nhỏ nhẹ / dải trống) theo hình học asset, không lặp lần chữ liền trước. Neo SAI (không khớp lời thoại) = lỗi cứng → vòng thử lại.
+const keyTextErrors = [];
+const keyTextLog = [];
+function finalizeKeyTexts(shots) {
+  keyTextErrors.length = 0; keyTextLog.length = 0;
   const byScene = new Map();
   for (const sh of shots) { if (!byScene.has(sh.sceneId)) byScene.set(sh.sceneId, []); byScene.get(sh.sceneId).push(sh); }
-  const keptBeats = keptShots.filter((s) => s.mascotBeat).sort((a, b) => a.startMs - b.startMs);
-  let k = keptBeats.length, prevLayout = keptBeats.at(-1)?.mascotBeat.layout ?? null;
+  const kept = keptShots.filter((x) => x.keyText).sort((a, b) => a.startMs - b.startMs);
+  let k = kept.length, prevTreatment = kept.at(-1)?.keyText.treatment ?? null;
   for (const [sid, list] of byScene) {
     const sc = sceneById[sid];
+    if (sc?.kind !== "asset" || !sc.keyText) continue;
     list.sort((a, b) => a.startMs - b.startMs);
-    const last = list.at(-1);
-    const wants = sc?.kind === "asset" && sc.mascotIntent;
-    const poseId = poseHintByScene[sid] ?? last._poseHint ?? null;
-    list.forEach((s) => delete s._poseHint);
-    if (!wants) continue;
-    const ti = sc.mascotIntent.textIntent;
-    const plan = planBeat({ sceneStartMs: sc.startMs, sceneEndMs: sc.endMs, lastShotStartMs: last.startMs, textIntent: ti });
-    if (plan.error) { beatErrors.push(`Scene ${sid}: không dựng được beat mascot — ${plan.error} Stage 5 phải bỏ mascotIntent hoặc dùng cảnh dài hơn.`); continue; }
-    const content = last.mediaFit === "contain" ? last.containBox : { w: 1080, h: 1920 };
-    const layout = chooseBeatLayout({ content, prev: prevLayout, k });
-    last.mascotBeat = { startMs: plan.startMs, side: k % 2 === 0 ? "left" : "right", layout, poseId, textEvent: plan.textEvent, narrativeRole: sc.mascotIntent.narrativeRole };
-    prevLayout = layout;
+    const r = planKeyText({ scene: sc, shots: list, captions, kt: sc.keyText });
+    if (r.error) { keyTextErrors.push(`Scene ${sid}: ${r.error}.`); continue; }
+    if (r.drop) { list[0].keyTextDropped = r.reason; keyTextLog.push(`${sid}: BỎ chữ A-roll — ${r.reason}`); continue; }
+    const shot = list.find((x) => x.id === r.shotId);
+    const content = shot.mediaFit === "contain" ? shot.containBox : { x: 0, y: 0, w: 1080, h: 1920 };
+    const treatment = chooseTreatment({ content, fit: shot.mediaFit, prev: prevTreatment, k });
+    shot.keyText = {
+      text: sc.keyText.text, format: sc.keyText.format, treatment, atMs: r.atMs, holdMs: r.holdMs, anchorStartMs: r.anchorStartMs, anchorEndMs: r.anchorEndMs,
+      wordOffsets: r.wordOffsets, purpose: sc.keyText.purpose, why: sc.keyText.why, bgVariant: sc.backgroundVariant ?? null, driftDir: sc.driftDir ?? null,
+    };
+    prevTreatment = treatment;
     k++;
   }
+  for (const m of keyTextLog) console.log(`[ADN v2] ${m}`);
   return shots;
 }
 
@@ -231,8 +217,8 @@ if (annotateOnly) {
   newShots = existingShotlist;
   normalizeShots(newShots);
   newShots = finalizeAssetScenes(newShots);
-  newShots = finalizeBeats(newShots);
-  const problems = [...beatErrors, ...validatePlanAndShots(scenes, newShots, kit, mediaById)];
+  newShots = finalizeKeyTexts(newShots);
+  const problems = [...keyTextErrors, ...validatePlanAndShots(scenes, newShots, mediaById)];
   console.log(`[ADN v2] --annotate-only: ${newShots.length} shot, ${newShots.filter((x) => x.mediaFit === "contain").length} shot contain, ${problems.length} lỗi chặn.`);
   if (problems.length) { console.error("- " + problems.join("\n- ")); process.exit(1); }
 }
@@ -265,8 +251,8 @@ for (let attempt = 1; !annotateOnly && attempt <= 2; attempt++) {
   }
   normalizeShots(newShots);
   newShots = finalizeAssetScenes(newShots);
-  newShots = finalizeBeats(newShots);
-  const problems = [...beatErrors, ...validatePlanAndShots(scenes, newShots, kit, mediaById)];
+  newShots = finalizeKeyTexts(newShots);
+  const problems = [...keyTextErrors, ...validatePlanAndShots(scenes, newShots, mediaById)];
   if (!problems.length) break;
   console.log(`[ADN v2] Kiểm tra shotlist lần ${attempt}: ${problems.length} vấn đề:\n- ${problems.join("\n- ")}`);
   if (attempt === 2) { console.error("Shotlist vẫn vi phạm ADN v2 sau 2 lần — dừng để người xem xét."); process.exit(1); }
@@ -307,9 +293,9 @@ const md = [
       "| Shot | Frame (start–end) | Thời gian | Asset | Trim | Xử lý | Camera | Overlay | Transition |",
       "|---|---|---|---|---|---|---|---|---|",
       ...sceneShots.map((s) => {
-        const asset = s.assetId ? `${s.assetId} (${mediaById[s.assetId]?.file?.split("/").pop() ?? ""})${s.mediaFit === "contain" ? " [CONTAIN]" : ""}${s.mascotBeat ? ` + BEAT ${s.mascotBeat.layout}/${s.mascotBeat.side} ${s.mascotBeat.poseId} @${s.mascotBeat.startMs}ms` : ""}` : "—";
+        const asset = s.assetId ? `${s.assetId} (${mediaById[s.assetId]?.file?.split("/").pop() ?? ""})${s.mediaFit === "contain" ? " [CONTAIN]" : ""}${s.keyText ? ` + CHỮ ${s.keyText.format}/${s.keyText.treatment}` : s.keyTextDropped ? " (chữ A-roll bị bỏ)" : ""}` : "—";
         const trim = s.trimStartSec != null ? `${s.trimStartSec}s–${s.trimEndSec}s` : "—";
-        const overlays = (s.overlays || []).map((o) => `${o.type}:"${o.text ?? o.icon ?? o.name}"@${o.atMs}ms`).concat(s.mascotBeat?.textEvent ? [`${s.mascotBeat.textEvent.format}:"${s.mascotBeat.textEvent.text}"@${s.mascotBeat.textEvent.atMs}ms`] : []).join("; ") || "—";
+        const overlays = (s.overlays || []).map((o) => `${o.type}:"${o.text ?? o.icon ?? o.name}"@${o.atMs}ms`).concat(s.keyText ? [`${s.keyText.format}:"${s.keyText.text}"@${s.keyText.atMs}ms`] : []).join("; ") || "—";
         return `| ${s.id} | ${s.startFrame}–${s.endFrame} (${s.durationInFrames}f) | ${fmtMs(s.startMs)}–${fmtMs(s.endMs)} | ${asset} | ${trim} | ${s.assetTreatment ?? "—"} | ${s.cameraMotion} | ${overlays} | ${s.transitionIn} |`;
       }),
       "",

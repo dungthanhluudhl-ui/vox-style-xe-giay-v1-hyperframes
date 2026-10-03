@@ -7,7 +7,8 @@
 import path from "node:path";
 import fs from "node:fs";
 import { execFileSync } from "node:child_process";
-import { fitForAsset, bgBlock, beatGeometry, beatLayoutProblems, mascotLayer, CARD_FRAME, MORPH_SEC } from "./mascot-scene.mjs";
+import { fitForAsset, bgBlock } from "./media-layout.mjs";
+import { treatmentLayout, renderKeyText, keyTextLayoutProblems, MORPH_SEC, SCRIM_SEC } from "./key-text.mjs";
 
 export const CAMERA_PRESETS = ["drift-in", "drift-out", "pan-left", "pan-right", "pan-up", "pan-down", "diag-dr", "diag-ul"];
 export const ASSET_STYLES = ["drift-in", "drift-out", "pan", "diag", "doc-card"];
@@ -123,34 +124,37 @@ export function assetShotWarnings(scene, shots) {
   return w;
 }
 
-/** Dựng HTML standalone cảnh asset. shots: shot đã qua finalizeAssetShots (startMs/endMs tuyệt đối). */
-/** [vòng 4] scene.mascotBeat = { startMs, side, poseId, textEvent?: {text,format,atMs,holdMs}, bgVariant?, driftDir? } — beat nằm ở ĐUÔI cảnh:
- * từ startMs (trong shot cuối) tới hết cảnh, shot cuối thu nhỏ thành thẻ phía trên, mascot + chữ phía dưới. `kit` bắt buộc khi có beat. */
-export function buildAssetSceneHtml({ scene, shots, mediaById, bgVariant, driftDir, kit }) {
+/** Dựng HTML standalone cảnh asset. shots: shot đã qua finalizeAssetShots (startMs/endMs tuyệt đối).
+ * [vòng 5] shot có thể mang `keyText` = { text, format, treatment, atMs, holdMs, wordOffsets? } (chữ A-roll do Stage 6 tính tất định từ mốc từng từ narration):
+ *  - dim-center / dim-lower: lớp tối (scrim) mờ vào dưới chữ, asset giữ nguyên toàn khung;
+ *  - shrink-top: asset thu nhỏ ×0,8 (chỉ transform x/y/scale trên #shrink) dồn xuống, nền giấy hiện ở dải trên cho chữ; hết chữ asset TRỞ LẠI (nếu còn chỗ);
+ *  - band-free: asset contain đã có dải trống trên/dưới → chữ vào dải đó, asset không đổi.
+ * Chữ KHÔNG thẻ/khung. Camera trôi bên trong (#cam) chạy tiếp suốt; một writer cho mỗi thuộc tính. */
+export function buildAssetSceneHtml({ scene, shots, mediaById, bgVariant, driftDir }) {
   const sceneStart = scene.startMs;
   const durationSec = +((scene.endMs - sceneStart) / 1000).toFixed(3);
   const hasContain = shots.some((s) => s.mediaFit === "contain");
   const bg = hasContain ? bgBlock(bgVariant ?? "grid-moving", driftDir ?? "left", durationSec) : { html: "", css: "", js: "" };
-  const beat = scene.mascotBeat ?? null;
-  const lastIdx = shots.length - 1;
-  let bi = null;
-  if (beat) {
-    const pose = kit?.byId?.[beat.poseId];
-    if (!pose) throw new Error(`Beat ${scene.id}: poseId "${beat.poseId}" không có trong kit/ready.`);
-    const lastShot = shots[lastIdx];
-    const startSec = +((beat.startMs - sceneStart) / 1000).toFixed(3);
-    if (startSec < (lastShot.startMs - sceneStart) / 1000 - 0.001) throw new Error(`Beat ${scene.id}: beat bắt đầu ${startSec}s trước shot cuối — beat chỉ được nằm trong shot cuối của cảnh.`);
-    const durSec = +(durationSec - startSec).toFixed(3);
-    const cb = lastShot.mediaFit === "contain" ? lastShot.containBox : { x: 0, y: 0, w: W, h: H };
-    const geom = beatGeometry(beat.layout ?? "top", beat.side ?? "left", cb);
-    const te = beat.textEvent ? { text: beat.textEvent.text, format: beat.textEvent.format, atSec: +((beat.textEvent.atMs - sceneStart) / 1000).toFixed(3), holdSec: +(beat.textEvent.holdMs / 1000).toFixed(3) } : null;
-    const layer = mascotLayer({ side: beat.side ?? "left", beatStartSec: startSec, beatDurSec: durSec, pose, textEvent: te, geom });
-    const probs = beatLayoutProblems(geom, layer.textBox);
-    if (layer.textOverflow) probs.push("khối chữ vượt chiều cao cột cho phép");
-    if (te && te.atSec + te.holdSec > durationSec + 0.06) probs.push(`chữ kết thúc ${(te.atSec + te.holdSec).toFixed(2)}s sau hết cảnh ${durationSec}s`);
-    if (probs.length) throw new Error(`Beat ${scene.id}: ${probs.join(" ")}`);
-    const beatBg = hasContain ? null : bgBlock(beat.bgVariant ?? bgVariant ?? "grid-moving", beat.driftDir ?? driftDir ?? "left", durSec, startSec);
-    bi = { startSec, durSec, cb, geom, layer, beatBg, pose };
+  const rel = (ms) => +((ms - sceneStart) / 1000).toFixed(3);
+  const ktIdx = shots.findIndex((s) => s.keyText);
+  let kx = null;
+  if (ktIdx >= 0) {
+    const sh = shots[ktIdx], k = sh.keyText;
+    const box = sh.mediaFit === "contain" ? sh.containBox : { x: 0, y: 0, w: W, h: H };
+    const layout = treatmentLayout(k.treatment, box, sh.mediaFit);
+    const atSec = rel(k.atMs), holdSec = +(k.holdMs / 1000).toFixed(3);
+    const shotStartSec = rel(sh.startMs), shotEndSec = rel(sh.endMs);
+    const text = layout.valid ? renderKeyText({ kt: { text: k.text, format: k.format, atSec, holdSec, wordOffsets: k.wordOffsets ?? null }, layout }) : null;
+    const probs = layout.valid ? keyTextLayoutProblems(layout, text.box) : [layout.why];
+    if (text?.overflow) probs.push("khối chữ vượt chiều cao vùng cho phép");
+    if (atSec < shotStartSec - 0.001) probs.push(`chữ bắt đầu ${atSec}s trước shot ${sh.id} (${shotStartSec}s)`);
+    if (atSec + holdSec > shotEndSec - 0.15) probs.push(`chữ kết thúc ${(atSec + holdSec).toFixed(2)}s, sát/vượt hết shot ${sh.id} (${shotEndSec}s)`);
+    if (probs.length) throw new Error(`Chữ A-roll ${scene.id}: ${probs.join(" ")}`);
+    const endText = +(atSec + holdSec).toFixed(3);
+    const restore = !!layout.shrink && shotEndSec - endText >= MORPH_SEC + 0.1;
+    const bgEnd = restore ? endText + MORPH_SEC : durationSec;
+    const paperBg = layout.needBg && !hasContain ? bgBlock(k.bgVariant ?? bgVariant ?? "grid-moving", k.driftDir ?? driftDir ?? "left", +(bgEnd - atSec).toFixed(3), atSec) : null;
+    kx = { sh, k, box, layout, atSec, holdSec, endText, restore, bgEnd, paperBg, text };
   }
   const items = shots.map((s, i) => {
     const a = mediaById[s.assetId];
@@ -176,46 +180,61 @@ export function buildAssetSceneHtml({ scene, shots, mediaById, bgVariant, driftD
     const open = fadeIn ? `<div id="fade-${i + 1}" style="position:absolute;left:0;top:0;width:${W}px;height:${H}px">` : "";
     const close = fadeIn ? "</div>" : "";
     const c = s.camera;
-    const withBeat = bi && i === lastIdx;
     let js = `tl.fromTo("#cam-${i + 1}",{scale:${c.scale0},x:${c.x0},y:${c.y0}},{scale:${c.scale1},x:${c.x1},y:${c.y1},duration:${dur},ease:"none",immediateRender:false},${start});`;
     if (fadeIn) js += `\n tl.fromTo("#fade-${i + 1}",{opacity:0},{opacity:1,duration:${CROSSFADE_SEC},ease:"none",immediateRender:false},${start});`;
-    if (withBeat) {
-      const g = bi.geom.card;
+    if (kx?.layout.shrink && i === ktIdx) {
+      const t = kx.layout.shrink;
       const inner = `<div id="cam-${i + 1}" style="position:absolute;left:0;top:0;width:${box.w}px;height:${box.h}px;transform-origin:50% 50%;will-change:transform">${media}</div>`;
       const shrink = `<div id="shrink-${i + 1}" style="position:absolute;left:${box.x}px;top:${box.y}px;width:${box.w}px;height:${box.h}px;overflow:hidden;transform-origin:0 0;will-change:transform">${inner}</div>`;
-      js += `\n tl.fromTo("#shrink-${i + 1}",{x:0,y:0,scale:1},{x:${g.x - box.x},y:${g.y - box.y},scale:${g.scale},duration:${MORPH_SEC},ease:"power2.inOut",immediateRender:false},${bi.startSec});`;
+      js += `\n tl.fromTo("#shrink-${i + 1}",{x:0,y:0,scale:1},{x:${t.x - box.x},y:${t.y - box.y},scale:${t.scale},duration:${MORPH_SEC},ease:"power2.inOut",immediateRender:false},${kx.atSec});`;
+      if (kx.restore) js += `\n tl.fromTo("#shrink-${i + 1}",{x:${t.x - box.x},y:${t.y - box.y},scale:${t.scale}},{x:0,y:0,scale:1,duration:${MORPH_SEC},ease:"power2.inOut",immediateRender:false},${kx.endText});`;
       return { html: `${open}${shrink}${close}`, js };
     }
     return { html: `${open}<div id="cam-${i + 1}" style="${camStyle}">${media}</div>${close}`, js };
   });
+  // lớp tối (dim) + chữ nằm TRÊN mọi shot; nền giấy phụ (cảnh cover dùng shrink-top) nằm DƯỚI mọi shot
+  let scrimHtml = "", scrimJs = "", paperBgHtml = "";
+  if (kx?.layout.scrim) {
+    const sc = kx.layout.scrim;
+    const style = sc.type === "full"
+      ? `top:0;height:${H}px;background:rgba(20,20,20,${sc.alpha})`
+      : `top:700px;height:${H - 700}px;background:linear-gradient(to bottom,rgba(20,20,20,0) 0,rgba(20,20,20,${sc.alpha}) 45%,rgba(20,20,20,${sc.alpha}) 100%)`;
+    scrimHtml = `<div id="kt-scrim" style="position:absolute;left:0;width:${W}px;opacity:0;${style}"></div>`;
+    scrimJs = `tl.fromTo("#kt-scrim",{opacity:0},{opacity:1,duration:${SCRIM_SEC},ease:"power1.out",immediateRender:false},${kx.atSec});
+ tl.fromTo("#kt-scrim",{opacity:1},{opacity:0,duration:0.3,ease:"power1.in",immediateRender:false},${+(kx.endText - 0.3).toFixed(3)});`;
+  }
+  if (kx?.paperBg) {
+    paperBgHtml = `<div id="kt-bg" style="position:absolute;left:0;top:0;width:1080px;height:1920px;opacity:0">${kx.paperBg.html}</div>`;
+  }
+  const paperBgJs = kx?.paperBg
+    ? `${kx.paperBg.js}\n tl.fromTo("#kt-bg",{opacity:0},{opacity:1,duration:0.3,ease:"none",immediateRender:false},${kx.atSec});${kx.restore ? `\n tl.fromTo("#kt-bg",{opacity:1},{opacity:0,duration:0.3,ease:"none",immediateRender:false},${+(kx.endText + 0.15).toFixed(3)});` : ""}`
+    : "";
   return `<!doctype html>
 <html lang="vi" data-resolution="portrait"><head>
 <meta charset="UTF-8"><meta name="viewport" content="width=1080, height=1920">
-<script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>${bi?.layer.textBox ? `
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>${kx ? `
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;900&display=swap">` : ""}
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{margin:0;width:1080px;height:1920px;overflow:hidden}
 #root{position:relative;width:1080px;height:1920px;background:#E7E3D9;overflow:hidden}
-${bg.css}${bi?.beatBg ? "\n" + bi.beatBg.css : ""}${bi ? "\n" + bi.layer.css : ""}
+${bg.css}${kx?.paperBg ? "\n" + kx.paperBg.css : ""}${kx ? "\n" + kx.text.css : ""}
 </style></head><body>
 <div id="root" data-composition-id="main" data-start="0" data-duration="${durationSec}" data-width="1080" data-height="1920">
- ${bg.html}${bi?.beatBg ? `\n <div id="beat-bg" style="position:absolute;left:0;top:0;width:1080px;height:1920px;opacity:0">${bi.beatBg.html}</div>` : ""}
- ${items.map((x) => x.html).join("\n ")}${bi ? `\n ${cardFrameHtml(bi.geom.card)}\n ${bi.layer.html}` : ""}
+ ${bg.html}${paperBgHtml ? "\n " + paperBgHtml : ""}
+ ${items.map((x) => x.html).join("\n ")}${scrimHtml ? "\n " + scrimHtml : ""}${kx ? "\n " + kx.text.html : ""}
 </div>
 <script>
 (() => {
  const tl = gsap.timeline({ paused: true });
- ${bg.js}${bi?.beatBg ? `\n ${bi.beatBg.js}\n tl.fromTo("#beat-bg",{opacity:0},{opacity:1,duration:0.3,ease:"none",immediateRender:false},${bi.startSec});` : ""}
- ${items.map((x) => x.js).join("\n ")}${bi ? `\n tl.fromTo("#card-frame",{opacity:0},{opacity:1,duration:0.25,ease:"none",immediateRender:false},${+(bi.startSec + MORPH_SEC - 0.25).toFixed(3)});\n ${bi.layer.js}` : ""}
+ ${bg.js}${paperBgJs ? "\n " + paperBgJs : ""}
+ ${items.map((x) => x.js).join("\n ")}${scrimJs ? "\n " + scrimJs : ""}${kx ? "\n " + kx.text.js : ""}
  window.__timelines = window.__timelines || {};
  window.__timelines["main"] = tl;
 })();
 </script></body></html>
 `;
 }
-
-const cardFrameHtml = (c) => `<div id="card-frame" style="position:absolute;left:${c.x - CARD_FRAME.border}px;top:${c.y - CARD_FRAME.border}px;width:${c.w + 2 * CARD_FRAME.border}px;height:${c.h + 2 * CARD_FRAME.border}px;border:${CARD_FRAME.border}px solid #141414;box-shadow:${CARD_FRAME.shadow}px ${CARD_FRAME.shadow}px 0 #141414;opacity:0"></div>`;
 
 // === Video ngắn hơn shot → GIỮ KHUNG CUỐI bằng ẢNH TĨNH (không dựa vào engine) ===
 // Đo 03/10 (su-kien-thien-an-mon): ở chế độ capture `drawElement` (tự bật khi cảnh không có drop-shadow/filter — đúng như cảnh ADN v2), <video> có

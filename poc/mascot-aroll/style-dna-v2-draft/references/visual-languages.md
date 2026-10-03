@@ -1,6 +1,6 @@
 # 13 ngôn ngữ thị giác — quyết định HÌNH THỨC trước khi chọn cách dựng
 
-> **[v2 NHÁP]** 13 ngôn ngữ dưới đây chỉ dùng cho CẢNH ĐỒ HOẠ (thiếu asset). Cảnh asset chỉ dùng `background-photo`/`cutout`/`split`/`document` thuần media; cảnh mascot xem STYLE_DNA.md mục 4b.
+> **[v2 NHÁP]** 13 ngôn ngữ dưới đây chỉ dùng cho CẢNH ĐỒ HOẠ (thiếu asset). Cảnh asset chỉ dùng `background-photo`/`cutout`/`split`/`document` thuần media; chữ A-roll nhấn mạnh narration xem STYLE_DNA.md mục 4b.
 
 
 ## Vì sao tài liệu này tồn tại
@@ -63,7 +63,7 @@ ngôn ngữ thị giác nào.
 
 ## Xếp lớp — đừng chỉ chọn một
 
-> **[v2 NHÁP]** Chỉ áp dụng cho CẢNH ĐỒ HOẠ; cảnh asset và cảnh mascot không xếp lớp thêm gì.
+> **[v2 NHÁP]** Chỉ áp dụng cho CẢNH ĐỒ HOẠ; cảnh asset không xếp lớp thêm gì (ngoại lệ duy nhất: chữ A-roll, mục 4b).
 
 Thói quen hữu ích nhất: hầu hết các cảnh MẠNH là **hai ngôn ngữ xếp chồng lên nhau**, không
 phải một ngôn ngữ dùng đơn lẻ. Một `timeline` trên giấy trắng vẫn là một khung hình thưa;
