@@ -1,5 +1,8 @@
 # Biến thể chuyển động vào cảnh (entrance animations)
 
+> **[ADN v2]** Cảnh ASSET: KHÔNG dùng 11 kiểu vào cảnh bên dưới — chỉ camera liên tục 1 tween/shot (STYLE_DNA.md mục 5), cắt hoặc crossfade 0,25s giữa các asset. Cảnh đồ hoạ chỉ dùng: rise, grow, punch, shatter, unfold, zoom-through, strike + chuyển động nền `bob`. Không phần tử nào có rotation ≠ 0 / skew. Chữ A-roll có kiểu vào riêng (STYLE_DNA.md mục 4b), asset chỉ mờ đi/thu nhỏ bằng một tween transform/opacity.
+
+
 Mỗi cảnh, chủ thể chính (hero cutout) phải có một kiểu vào cảnh THẬT SỰ khác biệt. **Không
 bao giờ để hai cảnh liên tiếp dùng chung một kiểu** — lặp lại cùng một chuyển động đọc như
 phẳng lì, thiếu sức sống. Sau khi chuyển động vào cảnh kết thúc, luôn phủ thêm một chuyển
@@ -36,7 +39,7 @@ scaleY = 1 + (1 - t) * 0.15
 ```
 SFX: `pop` hoặc `coin` cho một số liệu/thống kê vừa đáp xuống.
 
-## flip
+## flip  **[v2: BỎ — có xoay rotateY]**
 Xoay quanh trục dọc (rotateY, có phối cảnh) từ 90 độ về 0. Hợp cho một "sự tiết lộ" hoặc
 một nhịp trích dẫn/hội thoại.
 ```
@@ -50,7 +53,7 @@ bằng clip-path) bay vào từ nhiều hướng rồi khớp lại đúng lúc 
 cho một đoạn kết hoặc một "điểm vỡ vụn".
 SFX: `shatter`.
 
-## peel
+## peel  **[v2: BỎ — có xoay]**
 Vào cảnh như một miếng sticker đang được bóc và dán xuống: bắt đầu xoay/nhấc lên ở một góc
 với khoảng hở bóng mờ bên dưới, rồi nằm phẳng với một cú nảy nhẹ.
 ```
@@ -64,7 +67,7 @@ Bắt đầu co gần về 0 chỉ trên MỘT trục (scaleY từ 0.1 lên 1, n
 trục còn lại bắt kịp sau nửa nhịp.
 SFX: `boing`.
 
-## spiral
+## spiral  **[v2: BỎ — có xoay]**
 Kết hợp một vòng xoay (720 độ → 0) với phóng to dần, giảm tốc mạnh để phần lớn vòng xoay
 hoàn tất trong 1/3 đầu của chuyển động vào cảnh.
 ```
@@ -73,7 +76,7 @@ scale = interpolate(frame, [0, 20], [0.3, 1])
 ```
 SFX: `boing` hoặc `whoosh`.
 
-## wobble-drop
+## wobble-drop  **[v2: BỎ — có xoay]**
 Rơi từ trên xuống theo trọng lực (đường cong bậc hai, KHÔNG tuyến tính), đáp xuống, rồi lắc
 qua lại vài lần trước khi ổn định.
 SFX: `thud` lúc đáp.
@@ -101,10 +104,12 @@ SFX: một tiếng click/thud dứt khoát đúng vào khung hình đáp, không
 Thay đổi CHẾ ĐỘ chuyển động giữa các phần tử trên màn hình, không chỉ lệch pha — dùng lặp
 đi lặp lại một kiểu lắc hình sin cho mọi thứ cũng đọc phẳng như chỉ dùng một kiểu vào cảnh:
 
-- `sway` (mặc định) — xoay nhẹ nhàng, `sin(frame/22) * 3 độ`.
-- `tremble` — nhanh hơn, nhỏ hơn, rung không đều (năng lượng lo lắng):
+- `sway` **[v2: BỎ — xoay]** (v1 mặc định) — xoay nhẹ nhàng, `sin(frame/22) * 3 độ`.
+- `tremble` **[v2: BỎ — xoay]** — nhanh hơn, nhỏ hơn, rung không đều (năng lượng lo lắng):
   `sin(frame/4)*1.1 + sin(frame/2.3)*0.6`, đơn vị độ.
 - `bob` — trôi dọc chậm thay vì xoay (hợp cho vật treo/lá cờ): `sin(frame/18) * 6`, đơn vị px.
+- `drift-x` **[v2 mới, không xoay]** — trôi ngang chậm: `sin(frame/26) * 5`, đơn vị px.
+- `breathe` **[v2 mới, không xoay]** — thở nhẹ: `scale = 1 + sin(frame/30) * 0.012`.
 
 Lệch pha giữa các phần tử để nhiều cutout trên cùng khung hình không bao giờ chuyển động
 đồng bộ, bất kể cùng chế độ hay khác chế độ. Chỉ vài px / 1-2 độ là đủ — nhiều hơn đọc như

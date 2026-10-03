@@ -95,6 +95,14 @@ export function syncRootHf(slug, root = process.cwd()) {
 
   const totalDurationSec = scenes[scenes.length - 1].endMs / 1000;
 
+  // [POC ADN v2 vòng 4] CHỐT CHẶN khe hở giữa scene: khe hở = khung đen/trống khi chuyển cảnh (đo 03/10). Chỉ kiểm khi đủ scene (đang ráp dở thì thiếu scene là bình thường).
+  if (missing.length === 0) {
+    const gaps = [];
+    if (scenes[0].startMs !== 0) gaps.push(`đầu video: ${scenes[0].startMs}ms`);
+    for (let i = 1; i < scenes.length; i++) if (scenes[i].startMs !== scenes[i - 1].endMs) gaps.push(`${scenes[i - 1].id}→${scenes[i].id}: ${scenes[i].startMs - scenes[i - 1].endMs}ms`);
+    if (gaps.length) throw new Error(`Video "${slug}": scene không liền mạch (${gaps.join("; ")}) — sẽ có khung đen khi chuyển cảnh. Sửa bằng \`node scripts/05-scene-plan.router.mjs --video=${slug} --renormalize\` (nối liền mạch tất định) rồi Stage 6 --annotate-only và dựng lại scene đổi.`);
+  }
+
   const hoistedLinks = new Set();
   const slots = scenes.map((scene) => {
     const compId = `scene-${scene.id.toLowerCase()}`;
@@ -175,7 +183,7 @@ export function syncRootHf(slug, root = process.cwd()) {
     <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
     <style>
       * { margin: 0; padding: 0; box-sizing: border-box; }
-      html, body { margin: 0; width: 1080px; height: 1920px; overflow: hidden; background: #0a0a0a; }
+      html, body { margin: 0; width: 1080px; height: 1920px; overflow: hidden; background: #E7E3D9; /* nền GIẤY (không đen): lỡ có khoảng trống cũng không loé đen; khe hở scene đã bị chặn ở trên */ }
       #root { width: 100%; height: 100%; position: relative; }
       /* Slot dùng class RIÊNG .hf-slot, KHÔNG dùng .clip: CSS của root và mọi sub-composition
          nằm chung 1 trang, nên selector .clip ở đây sẽ áp cả lên các phần tử class="clip" BÊN

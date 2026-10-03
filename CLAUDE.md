@@ -13,12 +13,15 @@ việc cùng nhau.
   để biết chính xác việc nào do ai/gì làm.
 - Claude **không tự xem ảnh/video/audio nguồn trực tiếp** — luôn để model vision qua 9router
   làm việc đó và ghi lại thành mô tả text, Claude chỉ đọc mô tả text.
-- Claude **không tự tay viết code scene** — toàn bộ code (kể cả file nền tảng đầu tiên) đi
-  qua vòng generator → verify (`hyperframes check`) → reviewer → retry của
-  `scripts/07-codegen.hf.router.mjs`. Việc ráp `index.html` là tất định
-  (`scripts/lib/sync-root-hf-lib.mjs`), không dùng AI. (4 video dựng bằng Remotion trước đây
+- Claude **không tự tay viết code scene**. **ADN v2 (mặc định từ 03/10/2026):** cảnh asset dựng TẤT ĐỊNH
+  bằng builder (`scripts/lib/asset-scene.mjs`, không AI); chỉ cảnh đồ hoạ đi qua vòng generator → verify
+  (`hyperframes check`) → reviewer → retry của `scripts/07-codegen.hf.router.mjs`. Việc ráp `index.html` là
+  tất định (`scripts/lib/sync-root-hf-lib.mjs`), không dùng AI. Chi tiết v2: `planning/style-dna-integration.md`. (4 video dựng bằng Remotion trước đây
   giữ nguyên làm archive tại `archive/remotion-legacy/` — không migrate lại, không phát triển
   tiếp trên nhánh đó.)
+- **KHÔNG đọc `archive/` và `poc/` trừ khi người dùng yêu cầu rõ.** `archive/adn-v1/` = ADN + script v1 (dự phòng,
+  cách khôi phục ở `archive/adn-v1/README.md`), `archive/remotion-legacy/` = Remotion cũ, `poc/` = lịch sử thử nghiệm
+  (mascot, beat… đã bỏ). Đọc chúng chỉ gây nhiễu và tốn context.
 - Mục đích của toàn bộ kiến trúc trên: giữ session chính của Claude nhẹ token/context, để có
   thể điều phối một dự án sản xuất video phức tạp, nhiều giai đoạn mà không phình to.
 
@@ -116,8 +119,10 @@ việc cùng nhau.
   `responsibility-matrix.md` để file đó không phình to theo thời gian). CHỈ đọc khi đang điều tra
   1 vấn đề có khả năng đã gặp trước đó (grep từ khoá/tên video/mã lỗi liên quan) — không đọc mặc
   định, không đọc trọn file.
-- `planning/style-dna/` — style DNA dùng chung cho mọi video (đọc `style-dna/README.md` trước).
-- `planning/style-dna-integration.md` — cách style DNA áp dụng riêng cho repo này.
+- `planning/style-dna/` — ADN v2 dùng chung cho mọi video (đọc `style-dna/README.md` trước).
+- `planning/style-dna-integration.md` — tóm tắt ADN v2 áp dụng cho repo này.
+- `scripts/qa/` — công cụ đo tất định sau render (khung đen/phẳng, đồng bộ chữ A-roll, chuyển động, vision bố cục); `09-render` tự chạy QA khung đen/phẳng
+  và ghi `blackFramesOk/flatFramesOk` vào `completion-manifest.json`. `node scripts/tests/run-all.mjs` chạy mọi test tất định.
 - `pipeline/videos/<slug>/run-log.md` — nhật ký chi tiết từng bước của một video cụ thể.
 - `scripts/lib/video-paths.mjs` — nguồn xác thực duy nhất cho convention đường dẫn theo video.
 - Memory dự án (`project_vox_style_xe_giay`, `feedback_incremental_buildout` trong hệ thống

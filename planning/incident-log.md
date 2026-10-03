@@ -924,3 +924,15 @@ Tham chiếu ổn định (bảng model, timeout, chẩn đoán): `planning/resp
 - Số ảnh PDF `doc-NN` là tất định theo nội dung PDF (tối đa 1 header + 2 verdict + 1 law + highlights + scan-page), không cố định, không đọc script — người dùng hỏi, ghi ở matrix mục 2c.
 
 **Chưa xác minh:** tốc độ `cx/*` buổi sáng cùng ngày có nhanh hơn ~20 tok/s hay không (người dùng nhớ "sáng đến trưa vẫn gọi bình thường" — có thể do output nhỏ hơn hoặc nhanh hơn thật; repo không lưu thời gian sinh).
+
+---
+
+### 03/10/2026 — Khung đen/trống giữa scene + nâng ADN v2 (đo thật; nhật ký ngắn, chi tiết ở `archive`/POC không đọc mặc định)
+Người dùng báo "màn hình đen/trắng rất ngắn giữa 2 scene, video nào cũng có" (vd 2:09 video flydubai). Nguyên nhân đo được, 4 lỗi độc lập:
+1. **Khe hở trong scene-plan = khung đen.** Stage 5 do model sinh, scene bắt đầu ở lúc từ đầu tiên được nói → thời gian nghỉ giữa câu (40–730ms) không thuộc scene nào → `index.html` không có slot → lộ nền `#0a0a0a`. flydubai: 6/6 khoảng đen `blackdetect` trùng đúng 6 khe hở plan; repo cũ cũng có (ban-an-935: 25 khe hở/3,5s; ban-an-19-yen-bai: 13). Sửa: `lib/scene-tiling.mjs` (Stage 5/6), chốt chặn trong `sync-root-hf-lib.mjs`, nền root = giấy.
+2. **Tổng thời lượng lấy từ từ cuối trong captions, không phải audio thật** → video cắt cụt lời thoại (thiên-an-môn v1 129,5s vs audio 130,52s; flydubai 0,14s). Sửa: Stage 5 lấy `ffprobe` audio.
+3. **`<video>` dài hơn nguồn 8s KHÔNG được giữ khung cuối ở chế độ capture `drawElement`** (tự bật khi cảnh không có drop-shadow/filter; >700 khung, 3 worker) → màn hình trống (S04 3s). Phép đo cũ "engine tự giữ khung cuối (SSIM 0,985)" làm khi style v1 còn ép chế độ `screenshot`; test tối giản vẫn giữ OK nên chỉ log render thật ("drawElement blank-frame suspect") mới lộ. Sửa: ảnh PNG khung cuối nối tiếp trong cùng lớp camera (`ensureHoldFrames`).
+4. **Nền trống 0,5–0,7s đầu cảnh đồ hoạ** (hình chính vào trễ vì canh nhãn theo narration; v1 cũng có 0,2–0,3s). Sửa: Stage 7 chụp `snapshot --at 0.25` và FAIL nếu σ<12 (`lib/blank-start.mjs`) + luật prompt.
+Công cụ đo mới: `scripts/qa/measure-flat-frames.mjs` + `lib/render-qa.mjs` (09-render ghi `blackFramesOk/flatFramesOk`). Bài học: `blackdetect` bỏ lọt khung trống màu giấy sáng; cảnh báo lẻ 1 khung của engine là dương tính giả (đã kiểm 30fps).
+So sánh v1↔v2 trên CÙNG video thiên-an-môn: Stage 7 v1 = 14/14 cảnh qua generator+reviewer, ~37 lượt generator, 21 bản ghi lỗi (12 hyperframes check + 9 reviewer FAIL), 4/14 đạt lần đầu, 2 cảnh phải can thiệp tay, 7b FAIL 1 lần; v2 = 11 cảnh asset tất định (0 lần gọi model, 11/11 đạt lần đầu) + 3 cảnh đồ hoạ 5 lượt, 0 can thiệp tay, 7b đạt.
+Mascot (beat trong cảnh asset, 4 bố cục) đã thử 4 vòng rồi **người dùng bỏ hẳn** ("chèn cho có, đơ") → thay bằng chữ A-roll có điểm neo narration (`STYLE_DNA.md` mục 4b). Ma trận 35 tổ hợp chữ × asset thật: bỏ `dim-center` (che chủ thể 13/20 ảnh), `doc-NN` không bao giờ bị làm mờ.

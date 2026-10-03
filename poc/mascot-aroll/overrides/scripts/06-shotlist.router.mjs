@@ -187,7 +187,8 @@ function finalizeKeyTexts(shots) {
     if (r.drop) { list[0].keyTextDropped = r.reason; keyTextLog.push(`${sid}: BỎ chữ A-roll — ${r.reason}`); continue; }
     const shot = list.find((x) => x.id === r.shotId);
     const content = shot.mediaFit === "contain" ? shot.containBox : { x: 0, y: 0, w: 1080, h: 1920 };
-    const treatment = chooseTreatment({ content, fit: shot.mediaFit, prev: prevTreatment, k });
+    const treatment = chooseTreatment({ content, fit: shot.mediaFit, prev: prevTreatment, k, isDoc: mediaById[shot.assetId]?.source === "pdf" });
+    if (!treatment) { const why = `không có cách trình bày hợp lệ cho ${shot.assetId} (${mediaById[shot.assetId]?.source === "pdf" ? "doc-NN: không được làm mờ và không còn dải trống quanh thẻ" : "không còn chỗ cho chữ"})`; list[0].keyTextDropped = why; keyTextLog.push(`${sid}: BỎ chữ A-roll — ${why}`); continue; }
     shot.keyText = {
       text: sc.keyText.text, format: sc.keyText.format, treatment, atMs: r.atMs, holdMs: r.holdMs, anchorStartMs: r.anchorStartMs, anchorEndMs: r.anchorEndMs,
       wordOffsets: r.wordOffsets, purpose: sc.keyText.purpose, why: sc.keyText.why, bgVariant: sc.backgroundVariant ?? null, driftDir: sc.driftDir ?? null,

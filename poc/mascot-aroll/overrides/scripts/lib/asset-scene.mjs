@@ -126,7 +126,7 @@ export function assetShotWarnings(scene, shots) {
 
 /** Dựng HTML standalone cảnh asset. shots: shot đã qua finalizeAssetShots (startMs/endMs tuyệt đối).
  * [vòng 5] shot có thể mang `keyText` = { text, format, treatment, atMs, holdMs, wordOffsets? } (chữ A-roll do Stage 6 tính tất định từ mốc từng từ narration):
- *  - dim-center / dim-lower: lớp tối (scrim) mờ vào dưới chữ, asset giữ nguyên toàn khung;
+ *  - dim-lower: gradient tối (scrim) mờ vào nửa dưới, chữ lower-third, asset giữ nguyên toàn khung;
  *  - shrink-top: asset thu nhỏ ×0,8 (chỉ transform x/y/scale trên #shrink) dồn xuống, nền giấy hiện ở dải trên cho chữ; hết chữ asset TRỞ LẠI (nếu còn chỗ);
  *  - band-free: asset contain đã có dải trống trên/dưới → chữ vào dải đó, asset không đổi.
  * Chữ KHÔNG thẻ/khung. Camera trôi bên trong (#cam) chạy tiếp suốt; một writer cho mỗi thuộc tính. */

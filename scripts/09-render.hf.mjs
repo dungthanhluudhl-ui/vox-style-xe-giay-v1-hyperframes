@@ -9,6 +9,7 @@
 //   --output=<path>      Mặc định out/<slug>-full.mp4 (vp.finalOutput). Giá trị khác BẮT BUỘC đi
 //                        kèm --force-non-default.
 //   --fps=<n>            Truyền thẳng qua CLI hyperframes render (không có preflight riêng).
+//   --no-qa              Bỏ QA tất định sau render (khung đen + khung phẳng/trống). Mặc định BẬT.
 //   --force-non-default  Xác nhận CHỦ ĐÍCH override quality/output khác convention repo — thiếu cờ
 //                        này, script TỪ CHỐI chạy nếu --quality/--output khác mặc định.
 import fs from "node:fs";
@@ -18,6 +19,7 @@ import { getVideoSlug, videoPaths } from "./lib/video-paths.mjs";
 import { appendRunLog } from "./lib/router-client.mjs";
 import { syncRootHf } from "./lib/sync-root-hf-lib.mjs";
 import { HF_VERSION } from "./lib/hf-check.mjs";
+import { findBlackIntervals, findFlatRuns } from "./lib/render-qa.mjs";
 
 const root = process.cwd();
 const slug = getVideoSlug();
@@ -168,6 +170,28 @@ if (fs.existsSync(vp.audioFile)) {
     : `⚠ LỆCH ${diff.toFixed(3)}s so với audio thật ${audioDurationSec.toFixed(3)}s — KIỂM TRA LẠI`;
 }
 
+// QA TẤT ĐỊNH sau render (không model/vision; chỉ báo — render đã xong): khung ĐEN và khung PHẲNG/TRỐNG giữa 2 scene hoặc khi video hết nguồn (lib/render-qa.mjs).
+// Ghi vào completion-manifest như mọi field *Ok khác: false = chưa được coi là "hoàn tất". QA không chạy được (thiếu ffmpeg…) cũng là false, KHÔNG bỏ qua im lặng.
+let blackFramesOk = true, flatFramesOk = true, qaNote = "bỏ qua (--no-qa)", qaDetail = null;
+if (!process.argv.includes("--no-qa")) {
+  try {
+    const planRaw = JSON.parse(fs.readFileSync(vp.scenePlanJson, "utf8"));
+    const plan = Array.isArray(planRaw) ? planRaw : planRaw.scenes;
+    const black = findBlackIntervals(outputPath);
+    const flat = findFlatRuns(outputPath, plan);
+    blackFramesOk = black.length === 0;
+    flatFramesOk = flat.hard.length === 0;
+    qaDetail = { black, flatHard: flat.hard, flatInfo: flat.info.length };
+    qaNote = `khung đen ${black.length} khoảng, khung phẳng/trống bất thường ${flat.hard.length} đoạn${flat.info.length ? ` (+${flat.info.length} nền trống đầu cảnh đồ hoạ, chỉ ghi nhận)` : ""}`;
+    for (const b of black) console.warn(`  ⚠ KHUNG ĐEN ${b.dur.toFixed(2)}s tại t=${b.start.toFixed(2)}–${b.end.toFixed(2)}s (thường do khe hở giữa 2 scene trong scene-plan)`);
+    for (const f of flat.hard) console.warn(`  ⚠ KHUNG PHẲNG/TRỐNG ${f.dur.toFixed(1)}s tại t=${f.start.toFixed(1)}–${f.end.toFixed(1)}s${f.scene ? ` — ${f.scene} (${f.kind}) +${f.rel.toFixed(1)}s/${f.sceneDur.toFixed(1)}s` : ""}`);
+  } catch (e) {
+    blackFramesOk = flatFramesOk = false;
+    qaNote = `⚠ QA KHÔNG chạy được: ${String(e.message ?? e).slice(0, 160)}`;
+    console.warn(qaNote);
+  }
+}
+
 const phaseBreakdown =
   Object.entries(parsedLog.phaseDurations)
     .map(([phase, ms]) => `${phase}=${(ms / 1000).toFixed(1)}s`)
@@ -179,7 +203,7 @@ const summary =
   `${renderSeconds.toFixed(1)}s render time, quality=${quality}. Xác minh ffprobe: ` +
   `duration=${videoDurationSec.toFixed(3)}s (${audioCompareNote}), ${resolution} ${codec}. ` +
   `Capture mode: ${parsedLog.captureMode}. GPU mode: ${parsedLog.gpuMode}. ` +
-  `Stage timing: ${phaseBreakdown}.`;
+  `Stage timing: ${phaseBreakdown}. QA tất định: ${qaNote}.`;
 
 console.log(`\n${summary}`);
 appendRunLog(`\`scripts/09-render.hf.mjs\` — ${summary}`, vp.runLog);
@@ -195,9 +219,12 @@ const manifest = {
   totalPlanned: syncResult.totalPlanned,
   renderOk: true,
   ffprobeOk,
+  blackFramesOk,
+  flatFramesOk,
   outputPath: path.relative(root, outputPath),
   quality,
   timestamp: new Date().toISOString(),
+  ...(qaDetail ? { qa: qaDetail } : {}),
 };
 fs.mkdirSync(path.dirname(vp.completionManifest), { recursive: true });
 fs.writeFileSync(vp.completionManifest, JSON.stringify(manifest, null, 2), "utf8");

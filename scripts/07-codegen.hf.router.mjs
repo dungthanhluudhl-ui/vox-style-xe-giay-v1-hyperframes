@@ -38,6 +38,10 @@ import { HF_VERSION, runHyperframesCheck, findRootLayoutFlags, formatCheckFeedba
 import { buildTextColorRules, buildSafeColorClasses } from "./lib/palette-contrast.mjs";
 import { autofixVideoTiming, autofixContrast, injectIntoFirstStyle } from "./lib/hf-autofix.mjs";
 import { annotateShotsForCodegen, REVIEW_FORMAT, REVIEW_POLICY, parseReviewVerdict, checkAssetUsage } from "./lib/review-gate.mjs";
+// [ADN v2]
+import { buildAssetSceneHtml, assetShotWarnings, ensureHoldFrames } from "./lib/asset-scene.mjs";
+import { checkAssetScene, checkGraphicsScene, overflowProblems, keyTextTimingProblems } from "./lib/v2-checks.mjs";
+import { blankStartProblems } from "./lib/blank-start.mjs";
 
 const root = process.cwd();
 const routing = loadModelRouting();
@@ -218,6 +222,49 @@ for (const m of usedMedia) {
   if (fs.existsSync(src) && (!fs.existsSync(dest) || (m.source === "pdf" && fs.statSync(src).size !== fs.statSync(dest).size))) fs.copyFileSync(src, dest);
 }
 
+// === [ADN v2, vòng 3] CẢNH ASSET: dựng TẤT ĐỊNH, camera liên tục — KHÔNG gọi generator/reviewer. ===
+// Lý do: generator AI tự viết nhiều tween đa pha + cắt 1 ảnh thành nhiều shot re-crop → giật cục (đo flydubai: 4,3 tween/cảnh vs 1,9 ở v1).
+// Builder: 1 tween camera/shot, ease none, ngân sách zoom theo độ phân giải thật (lib/asset-scene.mjs).
+if (scenes[0]?.kind === "asset") {
+  const sc = scenes[0];
+  const sceneShots = shots.filter((s) => s.sceneId === sceneId).sort((a, b) => a.startMs - b.startMs);
+  const bad = sceneShots.filter((s) => !s.camera || !s.mediaFit);
+  if (bad.length) { console.error(`Cảnh ${sceneId}: shot ${bad.map((s) => s.id).join(",")} thiếu camera/mediaFit — chạy lại Stage 6 (hoặc 06 --annotate-only).`); process.exit(1); }
+  // [vòng 5] CHỮ A-ROLL: Stage 6 đã tính tất định (shot.keyText: đúng lúc từ neo, treatment không lặp); kiểm lại thời gian trước khi dựng
+  // (builder còn kiểm hình học: chữ không chồng asset thu nhỏ/dải trống, y≤1390, nằm trọn trong shot).
+  const ktShots = sceneShots.filter((x) => x.keyText);
+  const ktProbs = ktShots.flatMap((x) => keyTextTimingProblems(x.keyText, { shotEndMs: x.endMs, label: `Shot ${x.id} chữ` }));
+  if (ktProbs.length) { console.error(`Cảnh ${sceneId}: chữ A-roll không hợp lệ:\n- ${ktProbs.join("\n- ")}`); process.exit(1); }
+  if (sc.keyTextDropped) console.log(`  ℹ Chữ A-roll đã BỎ ở Stage 5: ${sc.keyTextDropped}`);
+  const droppedShot = sceneShots.find((x) => x.keyTextDropped);
+  if (droppedShot) console.log(`  ℹ Chữ A-roll đã BỎ ở Stage 6: ${droppedShot.keyTextDropped}`);
+  // [vòng 4] video ngắn hơn shot → ảnh tĩnh khung cuối (engine drawElement không giữ khung cuối <video>, xem lib/asset-scene.mjs)
+  const heldFrames = ensureHoldFrames(sceneShots, mediaById, root, [vp.hfAssetsDir, path.join(tempProjectDir, "assets")]);
+  if (heldFrames.length) console.log(`  Khung cuối video → ảnh giữ khung: ${heldFrames.map((f) => path.basename(f)).join(", ")}`);
+  let html;
+  try { html = buildAssetSceneHtml({ scene: sc, shots: sceneShots, mediaById, bgVariant: sc.backgroundVariant, driftDir: sc.driftDir }); }
+  catch (e) { console.error(`Cảnh ${sceneId}: ${e.message}`); process.exit(1); }
+  fs.writeFileSync(path.join(tempProjectDir, "index.html"), html, "utf8");
+  console.log(`Cảnh asset ${sceneId} (${((sc.endMs - sc.startMs) / 1000).toFixed(2)}s, ${sceneShots.length} shot${sceneShots.some((s) => s.mediaFit === "contain") ? `, có contain/nền ${sc.backgroundVariant}/${sc.driftDir}` : ""}${ktShots.length ? `, CHỮ ${ktShots[0].keyText.format}/${ktShots[0].keyText.treatment} @${((ktShots[0].keyText.atMs - sc.startMs) / 1000).toFixed(1)}s` : ""}) — dựng tất định, camera liên tục.`);
+  for (const w of assetShotWarnings(sc, sceneShots)) console.log("  ⚠ " + w);
+  const v = runHyperframesCheck(tempProjectDir, { extraArgs: [getCaptionZoneArg(root, { seek: SCENE_CAPTION_SEEK })] });
+  const probs = [...checkAssetScene(html, { keyText: ktShots.length > 0 }), ...(v.passed ? overflowProblems(v.raw) : [])];
+  const ok = v.passed && probs.length === 0;
+  let summary;
+  if (ok) {
+    const compId = `scene-${sceneId.toLowerCase()}`;
+    fs.writeFileSync(path.join(vp.hfCompositionsDir, `${compId}.html`), standaloneToSubComposition(html, compId), "utf8");
+    fs.rmSync(tempProjectDir, { recursive: true, force: true });
+    if (!noRootSync) syncRootHf(slug, root);
+    summary = `Cảnh ASSET [${sceneId}] PASS (dựng tất định, hyperframes check ok) — compositions/${compId}.html.`;
+  } else {
+    summary = `Cảnh ASSET [${sceneId}] KHÔNG đạt: ${v.passed ? "" : "hyperframes check FAIL — " + formatCheckFeedback(v.raw, 2500)} ${probs.join("; ")}\nProject tạm còn giữ: ${tempProjectDir}`;
+  }
+  console.log("\n" + summary);
+  appendRunLog(`\`scripts/07-codegen.hf.router.mjs --video=${slug} --scenes=${sceneId}\` — ${summary}`, vp.runLog);
+  process.exit(ok ? 0 : 1);
+}
+
 // --- Tài liệu tham chiếu HyperFrames (đã kiểm chứng ở poc/hyperframes/codegen-poc.mjs) ---
 const skillFiles = [
   ".agents/skills/hyperframes-core/SKILL.md",
@@ -283,6 +330,26 @@ const PDF_DOC_RULE_HF = usedMedia.some((m) => m?.source === "pdf")
   ? `- ẢNH TRÍCH DẪN BẢN ÁN (asset có source="pdf", id doc-NN) là BẰNG CHỨNG, không phải ảnh nền: đây là dải chữ NGANG (vd 1080x300) chụp từ bản án, đã tô cam sẵn đoạn quan trọng NGAY TRONG ảnh. Hiển thị dạng THẺ giữa khung dọc: width ≈ 92% khung, height:auto (hoặc object-fit:contain), canh giữa theo chiều dọc trong vùng an toàn, KHÔNG dùng object-fit:cover, KHÔNG phủ toàn khung, KHÔNG dùng làm nền. Chữ trong ảnh PHẢI đọc được suốt shot: không opacity<1 sau khi đã vào, không filter/blur/lớp tối phủ lên ảnh, không cắt mép, KHÔNG vẽ thêm highlight/khung lên ảnh (đã có), không đặt overlay đè lên ảnh. Chỉ animate vào/ra (fade, trượt nhẹ, scale ≤5%). Đặt thẻ ngoài vùng phụ đề. TUYỆT ĐỐI không tự viết lại/tóm tắt/chế thêm chữ của bản án thành text HTML — chỉ dùng chữ overlay có trong SHOTLIST.`
   : null;
 
+// [ADN v2] Luật riêng theo loại cảnh — chỉ mô tả ràng buộc kỹ thuật + quy tắc ADN v2, không dựng khung sẵn.
+const SCENE_KIND = scenes[0]?.kind ?? "asset";
+const MOVING_GRID_SNIPPET = `Nền "grid-moving" (lưới ô 84px TRÔI CHẬM, tất định) — dùng ĐÚNG khuôn sau cho lớp nền (đặt TRƯỚC mọi phần tử khác trong #root, không timed):
+HTML: <div class="bg-wrap"><div id="bg-grid" class="bg-grid"></div></div>
+CSS: .bg-wrap{position:absolute;left:0;top:0;width:1080px;height:1920px;overflow:hidden} .bg-grid{position:absolute;left:-168px;top:-168px;width:1416px;height:2256px;background-image:linear-gradient(to right,rgba(20,20,20,0.32) 1.5px,transparent 1.5px),linear-gradient(to bottom,rgba(20,20,20,0.32) 1.5px,transparent 1.5px);background-size:84px 84px}
+JS: tl.fromTo("#bg-grid",{x:0,y:0},{x:<dx>,y:<dy>,duration:<thời lượng scene giây>,ease:"none",immediateRender:false},0); với (dx,dy) theo HƯỚNG TRÔI của scene (driftDir): left=(-D,0) right=(D,0) up=(0,-D) down=(0,D) diag-dr=(0.7D,0.7D) diag-ul=(-0.7D,-0.7D), D = min(150, round(18 × thời lượng scene giây)) px. Không repeat:-1, không xoay.`;
+const BG_INSTRUCTION = scenes[0]?.backgroundVariant === "grid-moving"
+  ? MOVING_GRID_SNIPPET + `\nHƯỚNG TRÔI của scene này: ${scenes[0]?.driftDir}.`
+  : `Nền của scene này: "${scenes[0]?.backgroundVariant}" (card=phẳng #F5F0E4 không lưới; spotlight=nền giấy + vignette radial rgba(20,20,20,0.28) ở mép; chart=4 đường kẻ ngang đậm 20/40/60/80% + vạch cam bên trái) — không dùng lưới.`;
+// [ADN v2] shot media đặt "contain" (nằm ngang/phân giải thấp/doc-NN) — hộp cố định + nền nhìn thấy phía sau
+const CONTAIN_SHOTS = shots.filter((s) => s.mediaFit === "contain");
+const CONTAIN_RULES = CONTAIN_SHOTS.length
+  ? `\n- [ADN v2 — SHOT MEDIA "CONTAIN"] Các shot sau đặt media GỌN (không phủ kín khung) vì ảnh/video nằm ngang hoặc độ phân giải thấp (phủ kín sẽ phóng ×4–11 và cắt 60–70% hình): ${CONTAIN_SHOTS.map((s) => `${s.id} asset ${s.assetId} hộp {left:${s.containBox.x}px, top:${s.containBox.y}px, width:${s.containBox.w}px, height:${s.containBox.h}px}`).join("; ")}. Với các shot này: wrapper media position:absolute với left/top/width/height PX CỐ ĐỊNH đúng hộp + overflow:hidden; thẻ <img>/<video> bên trong width:100%;height:100% của CHÍNH wrapper có kích thước cố định đó, object-fit:cover (hộp đã đúng tỉ lệ nguồn nên không cắt). KHÔNG zoom/crop làm cắt hình; chuyển động chỉ scale ≤1.08 hoặc pan ≤40px trên wrapper (không có data-start). NỀN NHÌN THẤY quanh media là lớp NỀN của scene: đặt phía sau mọi media, không timed, hiện xuyên suốt scene (shot cover phủ kín nên che nó). ${BG_INSTRUCTION} Đây là ngoại lệ DUY NHẤT cho lớp nền trong cảnh asset: nền KHÔNG được phủ lên media; không thêm chữ/svg/khung viền/bóng đổ quanh media.`
+  : "";
+const V2_SCENE_RULES = SCENE_KIND === "asset"
+  ? `- [ADN v2 — CẢNH ASSET] Cảnh này CHỈ gồm media (ảnh/video) + chuyển động của chính media. TUYỆT ĐỐI KHÔNG: phần tử chữ nào (kể cả nhãn/tiêu đề/số/mốc thời gian), <svg>/<canvas>, icon, mũi tên, thẻ/card, khối màu/gradient/vignette/lớp tối phủ lên media, khung viền, thanh cam đáy khung, nền lưới. Phụ đề do track riêng ở cấp video — KHÔNG tự thêm. Thực hiện đúng presentationStyle/cameraMotion của scene/shot bằng transform (x/y/scale/opacity) trên wrapper KHÔNG có data-start: push-in/pull-out (scale), pan (x/y), crop-reframe (đổi vùng nhìn bằng scale+x/y), split (2 khung media nằm sát nhau, mỗi khung wrapper có width/height px cố định + overflow:hidden), reveal (wipe bằng wrapper overflow:hidden + dịch x/y), multi-shot-cut (đổi shot đúng mốc). Sự kiện hình (đổi crop/camera/shot) phải bám cue và dàn đều, không để >3s không có sự kiện. TUYỆT ĐỐI không rotate/skew/rotation≠0 ở bất kỳ phần tử nào (kể cả lúc vào cảnh). KÍCH THƯỚC: mọi wrapper media có width/height px CỐ ĐỊNH + overflow:hidden; thẻ <img>/<video> bên trong dùng px cố định hoặc object-fit:cover trong wrapper đó — KHÔNG dùng width/height:100% cho con của phần tử không định kích thước (đã gây video tràn thành mảng đen ở dua-inox-han-quoc S09). Media không được tràn khung 1080×1920.${CONTAIN_RULES}`
+  : `- [ADN v2 — CẢNH ĐỒ HOẠ] Chỉ dùng cảnh này vì thiếu asset phù hợp. Tối đa 3 khối chữ (1 punch phrase + 2 nhãn/thẻ), không chồng lên nhau, chữ/thẻ/media KHÔNG xoay/nghiêng/skew (rotation=0) ở mọi thời điểm kể cả lúc vào cảnh — CHỈ bộ phận vẽ thuần KHÔNG chứa chữ (kim đồng hồ, mũi tên, máy bay trong sơ đồ…) được xoay khi đó là ý nghĩa của shot (vd kim xoay 90°→140°), và bộ phận xoay không được chứa chữ/ảnh/video bên trong; nền spotlight/card/chart KHÔNG có lưới (lưới chỉ ở biến thể grid-moving); màu chỉ trong palette (không tự thêm màu nâu/xanh…); kiểu vào cảnh chỉ trong bộ KHÔNG XOAY: rise/grow/punch/shatter/unfold/zoom-through/strike; chuyển động nền liên tục chỉ bằng bob (y)/drift-x (x)/breathe (scale 1→1.012), lệch pha giữa các phần tử; KHÔNG thanh cam đáy khung.
+- [ADN v2 — KHUNG ĐẦU KHÔNG TRỐNG] Tại t=0,25s hình chính của cảnh (diagram/khối/hình lớn — KHÔNG chỉ nền giấy/lưới) PHẢI đã hiện rõ (opacity ≥0,8): entrance của hình chính bắt đầu ở t=0 (không delay), dài ≤0,3s; chỉ nhãn/chữ phụ mới vào sau theo cue lời thoại. Nửa giây đầu chỉ có nền giấy làm người xem thấy "màn hình trắng chớp" sau khi cắt cảnh — script CHỤP khung t=0,25s để kiểm, trống là FAIL.
+${BG_INSTRUCTION}`;
+
 function buildPrompt(feedback, previousFiles) {
   const retryFilesBlock = previousFiles
     ? Object.entries(previousFiles)
@@ -311,6 +378,7 @@ DỰ ÁN HIỆN TẠI:
 HỢP ĐỒNG RIÊNG CỦA REPO (đặt CUỐI để không bị chìm giữa ~30k token tài liệu chung — vi phạm các quy tắc này là nguyên nhân verify FAIL phổ biến nhất đã đo được; chúng KHÔNG giới hạn sáng tạo bố cục/animation, chỉ là ràng buộc kỹ thuật):
 ${KNOWN_GOTCHAS_HF}${PDF_DOC_RULE_HF ? `
 ${PDF_DOC_RULE_HF}` : ""}
+${V2_SCENE_RULES}
 
 ${
   feedback
@@ -463,6 +531,7 @@ SKILL DOCS:
 ${skillDocs}
 
 ${KNOWN_GOTCHAS_HF}
+${V2_SCENE_RULES}
 
 LƯU Ý VỀ TÊN FILE ASSET: một số file ảnh có chữ "cutout" trong TÊN FILE — đó chỉ là mô tả phong cách minh hoạ do ảnh AI tạo sẵn đã có, KHÔNG phải chỉ định phải áp dụng xử lý cutout trong code. Theo quyết định dự án, ảnh luôn dùng làm nền toàn khung, giữ nguyên màu (nguồn: STYLE_DNA.md §2 "Ngoại lệ chính thức").`;
   const filesText = Object.entries(files)
@@ -549,6 +618,16 @@ while (attempt < MAX_ATTEMPTS) {
     files = applyPreCheckAutofix(files);
     previousFiles = files;
 
+    // [ADN v2] kiểm tra TẤT ĐỊNH trước `hyperframes check` (rẻ hơn 1 lần check ~20s): không chữ/svg trên cảnh asset,
+    // không xoay/skew, giới hạn số khối chữ cảnh đồ hoạ. Lỗi → feedback ngay, không tốn check/reviewer.
+    const v2Problems = SCENE_KIND === "asset" ? checkAssetScene(files["index.html"]) : checkGraphicsScene(files["index.html"]);
+    if (v2Problems.length) {
+      console.log("ADN v2 check FAILED:\n" + v2Problems.join("\n"));
+      appendCodegenIssue([{ stage: "v2-check", detail: v2Problems.join("\n").slice(0, 2000) }]);
+      feedback = "LỖI CHẶN (script kiểm tra tất định ADN v2):\n" + v2Problems.map((p) => "- " + p).join("\n");
+      continue;
+    }
+
     let v = verify(files);
     if (!v.passed && !v.infraError) {
       // Tự sửa contrast tất định (1 lượt) — chỉ khi MỌI lỗi còn lại là contrast xác định chắc chắn phần
@@ -575,6 +654,25 @@ while (attempt < MAX_ATTEMPTS) {
       continue;
     }
     console.log("Verify (hyperframes check) PASS.");
+    // [ADN v2] overflow của media mức warning cũng là lỗi cứng (bài học dua-inox-han-quoc S09)
+    const ovProblems = overflowProblems(v.raw);
+    if (ovProblems.length) {
+      console.log("ADN v2 overflow FAILED:\n" + ovProblems.join("\n"));
+      appendCodegenIssue([{ stage: "v2-overflow", detail: ovProblems.join("\n").slice(0, 2000) }]);
+      feedback = "LỖI CHẶN (script kiểm tra tất định ADN v2):\n" + ovProblems.map((p) => "- " + p).join("\n");
+      continue;
+    }
+    // [vòng 5] khung đầu cảnh đồ hoạ không được trống (chụp thật t=0,25s). Không chụp được → báo rõ rồi bỏ qua kiểm tra này (không bỏ qua im lặng).
+    if (SCENE_KIND === "graphics") {
+      let bp = [];
+      try { bp = blankStartProblems(tempProjectDir); } catch (e) { console.log(`(KHÔNG chụp được khung đầu để kiểm tra nền trống: ${String(e.message ?? e).slice(0, 200)} — bỏ qua kiểm tra này lần này)`); }
+      if (bp.length) {
+        console.log("ADN v2 khung đầu FAILED:\n" + bp.join("\n"));
+        appendCodegenIssue([{ stage: "v2-blank-start", detail: bp.join("\n").slice(0, 2000) }]);
+        feedback = "LỖI CHẶN (script kiểm tra tất định ADN v2):\n" + bp.map((p) => "- " + p).join("\n");
+        continue;
+      }
+    }
     verifyPassedFiles = files;
 
     // Kiểm tra TẤT ĐỊNH dùng đúng file asset được giao — trước reviewer (không tốn 1 lần gọi reviewer, và

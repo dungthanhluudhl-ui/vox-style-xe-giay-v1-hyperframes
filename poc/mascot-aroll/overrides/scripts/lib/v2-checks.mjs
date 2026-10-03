@@ -140,7 +140,6 @@ export function validatePlanAndShots(scenes, shots, mediaById) {
   const problems = [];
   const byScene = Object.fromEntries(scenes.map((s) => [s.id, []]));
   for (const sh of shots) (byScene[sh.sceneId] ??= []).push(sh);
-  let prevTreatment = null;
   for (const sc of scenes) {
     const list = (byScene[sc.id] ?? []).sort((a, b) => a.startMs - b.startMs);
     if (!list.length) { problems.push(`Scene ${sc.id} không có shot nào.`); continue; }
@@ -170,8 +169,7 @@ export function validatePlanAndShots(scenes, shots, mediaById) {
       problems.push(...keyTextTimingProblems(kt, { shotEndMs: sh.endMs, label: `Shot ${sh.id} chữ` }));
       if (kt.atMs < sh.startMs) problems.push(`Shot ${sh.id}: chữ bắt đầu ${kt.atMs}ms trước shot (${sh.startMs}ms).`);
       if (normText(kt.text) !== normText(sc.keyText?.text)) problems.push(`Shot ${sh.id}: chữ khác keyText của plan (không được sửa chữ).`);
-      if (prevTreatment && prevTreatment === kt.treatment) problems.push(`Shot ${sh.id}: treatment "${kt.treatment}" trùng lần chữ liền trước.`);
-      prevTreatment = kt.treatment;
+      if (kt.treatment.startsWith("dim") && mediaById[sh.assetId]?.source === "pdf") problems.push(`Shot ${sh.id}: doc-NN (bằng chứng) KHÔNG được làm mờ/phủ lớp tối (treatment "${kt.treatment}") — chỉ band-free.`);
     }
   }
   return problems;
@@ -195,10 +193,11 @@ export function softPlanWarnings(scenes, mediaById = {}) {
   return warn;
 }
 
-/** Cảnh báo MỀM chữ A-roll (không chặn): ≥3 lần chữ mà một treatment chiếm >60% → đa dạng hơn. */
+/** Cảnh báo MỀM chữ A-roll (không chặn): treatment lặp liền kề (chỉ xảy ra khi asset chỉ có 1 cách hợp lệ, vd doc-NN); ≥3 lần chữ mà một treatment chiếm >60% → đa dạng hơn. */
 export function softShotWarnings(scenes, shots) {
   const w = [];
-  const ks = shots.filter((s) => s.keyText);
+  const ks = shots.filter((s) => s.keyText).sort((a, b) => a.startMs - b.startMs);
+  for (let i = 1; i < ks.length; i++) if (ks[i].keyText.treatment === ks[i - 1].keyText.treatment) w.push(`Treatment "${ks[i].keyText.treatment}" lặp ở ${ks[i - 1].id} → ${ks[i].id} (asset chỉ có một cách trình bày hợp lệ).`);
   if (ks.length >= 3) {
     const cnt = {};
     for (const s of ks) cnt[s.keyText.treatment] = (cnt[s.keyText.treatment] ?? 0) + 1;

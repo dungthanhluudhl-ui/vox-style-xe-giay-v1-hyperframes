@@ -2,7 +2,7 @@
 // một writer/thuộc tính, morph/restore đúng, chữ không chồng asset (shrink/band) và y≤1390; bộ chọn treatment; ca cố ý vi phạm bị bắt.
 import { buildAssetSceneHtml, finalizeAssetShots } from "./overrides/scripts/lib/asset-scene.mjs";
 import { TEXT_FORMATS, TREATMENTS, treatmentLayout, chooseTreatment, holdFor, renderKeyText, keyTextLayoutProblems, MORPH_SEC, countWords, MAX_TEXT_CHARS, MAX_WORDS } from "./overrides/scripts/lib/key-text.mjs";
-import { rotationProblems, checkAssetScene, keyTextTimingProblems } from "./overrides/scripts/lib/v2-checks.mjs";
+import { rotationProblems, checkAssetScene, keyTextTimingProblems, validatePlanAndShots } from "./overrides/scripts/lib/v2-checks.mjs";
 
 let fail = 0, cases = 0, skipped = 0;
 const ok = (c, m) => { if (!c) { fail++; console.log("FAIL:", m); } };
@@ -79,16 +79,24 @@ for (const [kind, media] of Object.entries(MEDIA)) {
   }
 }
 
-// Bộ chọn treatment: không trùng liền kề; cover không band-free, contain không shrink-top; đa dạng
-for (const [lab, fit, content] of [["cover", "cover", { x: 0, y: 0, w: 1080, h: 1920 }], ["contain ngang", "contain", { x: 40, y: 640, w: 1000, h: 563 }], ["contain doc", "contain", { x: 105, y: 160, w: 870, h: 1230 }]]) {
+// Bộ chọn treatment: không trùng liền kề khi còn lựa chọn; cover không band-free, contain không shrink-top; doc-NN CHỈ band-free (không bao giờ dim-*)
+for (const [lab, fit, content, isDoc] of [["cover", "cover", { x: 0, y: 0, w: 1080, h: 1920 }, false], ["contain ngang", "contain", { x: 40, y: 640, w: 1000, h: 563 }, false], ["doc ngang (dải chữ)", "contain", { x: 40, y: 588, w: 1000, h: 374 }, true]]) {
   cases++;
   const seq = []; let prev = null;
-  for (let k = 0; k < 12; k++) { const t = chooseTreatment({ content, fit, prev, k }); seq.push(t); ok(t !== prev, `chooser ${lab}: k=${k} trùng ${prev}`); ok(treatmentLayout(t, content, fit).valid, `chooser ${lab}: chọn treatment không hợp lệ ${t}`); prev = t; }
-  ok(new Set(seq).size >= 2, `chooser ${lab}: chỉ ${new Set(seq).size} treatment`);
-  if (fit === "cover") ok(!seq.includes("band-free"), "cover không được band-free");
-  if (fit === "contain") ok(!seq.includes("shrink-top"), "contain không được shrink-top");
-  console.log(`  chooser ${lab}: ${seq.slice(0, 6).join(" → ")} …`);
+  for (let k = 0; k < 12; k++) {
+    const t = chooseTreatment({ content, fit, prev, k, isDoc });
+    seq.push(t);
+    ok(t && treatmentLayout(t, content, fit).valid, `chooser ${lab}: chọn treatment không hợp lệ ${t}`);
+    if (!isDoc) ok(t !== prev, `chooser ${lab}: k=${k} trùng ${prev}`);
+    prev = t;
+  }
+  if (fit === "cover") { ok(!seq.includes("band-free") && !seq.includes("dim-center"), "cover không được band-free/dim-center"); ok(new Set(seq).size === 2, `cover phải xoay 2 treatment, có ${new Set(seq).size}`); }
+  if (fit === "contain" && !isDoc) { ok(!seq.includes("shrink-top"), "contain không được shrink-top"); ok(new Set(seq).size === 2, "contain phải xoay band-free/dim-lower"); }
+  if (isDoc) ok(seq.every((t) => t === "band-free"), `doc-NN chỉ được band-free, có ${[...new Set(seq)]}`);
+  console.log(`  chooser ${lab}: ${seq.slice(0, 5).join(" → ")} …`);
 }
+ok(chooseTreatment({ content: { x: 105, y: 160, w: 870, h: 1230 }, fit: "contain", isDoc: true }) === null, "doc-NN không còn dải trống phải trả null (BỎ chữ), không được rơi về dim-*");
+ok(!TREATMENTS.includes("dim-center"), "dim-center phải đã bị bỏ");
 
 // Ca CỐ Ý vi phạm: phải bị bắt
 const cover = treatmentLayout("shrink-top", { x: 0, y: 0, w: 1080, h: 1920 }, "cover");
@@ -102,12 +110,19 @@ ok(!treatmentLayout("band-free", { x: 105, y: 160, w: 870, h: 1230 }, "contain")
 { // cửa sổ chữ vượt hết shot → builder chặn
   const mediaById = { "img-c": MEDIA.cover };
   const shots = finalizeAssetShots([{ id: "S1-1", sceneId: "S1", assetId: "img-c", startMs: 0, endMs: 5000 }], mediaById, { k: 0, prev: null, lastTransition: "cut" });
-  shots[0].keyText = { text: LONG, format: "typewriter", treatment: "dim-center", atMs: 3500, holdMs: 4000 };
+  shots[0].keyText = { text: LONG, format: "typewriter", treatment: "dim-lower", atMs: 3500, holdMs: 4000 };
   let threw = false; try { buildAssetSceneHtml({ scene: { id: "S1", startMs: 0, endMs: 5000 }, shots, mediaById }); } catch (e) { threw = /sát\/vượt hết shot/.test(e.message); }
   ok(threw, "cửa sổ chữ vượt hết shot phải bị chặn");
 }
 ok(keyTextTimingProblems({ text: "Vì sao?", format: "stamp", atMs: 2300, holdMs: 3600, anchorStartMs: 2000 }, { shotEndMs: 20000 }).some((m) => m.includes("cùng lúc")), "không bắt chữ lệch neo >1 khung");
 ok(keyTextTimingProblems({ text: LONG, format: "stamp", atMs: 2000, holdMs: 1500, anchorStartMs: 2000 }, { shotEndMs: 20000 }).some((m) => m.includes("không kịp đọc")), "không bắt chữ hiện quá ngắn");
 
+{ // doc-NN không được dim (validatePlanAndShots)
+  const sc = [{ id: "S1", kind: "asset", startMs: 0, endMs: 14000, assetIds: ["doc-01"], keyText: { text: "Vì sao?" }, presentationStyle: "drift-in" }];
+  const mk = (treatment) => [{ id: "S1-1", sceneId: "S1", assetId: "doc-01", startMs: 0, endMs: 14000, overlays: [], mediaFit: "contain", containBox: { x: 40, y: 588, w: 1000, h: 374 }, keyText: { text: "Vì sao?", format: "stamp", treatment, atMs: 2000, holdMs: 3600, anchorStartMs: 2000 } }];
+  const med = { "doc-01": { id: "doc-01", source: "pdf" } };
+  ok(validatePlanAndShots(sc, mk("dim-lower"), med).some((m) => m.includes("doc-NN")), "doc-NN + dim-lower phải bị chặn");
+  ok(!validatePlanAndShots(sc, mk("band-free"), med).some((m) => m.includes("doc-NN")), "doc-NN + band-free phải được phép");
+}
 console.log(`${cases} ca (bỏ qua ${skipped} tổ hợp treatment không áp dụng cho asset đó) — ${fail ? fail + " LỖI" : "ĐẠT"}`);
 process.exit(fail ? 1 : 0);

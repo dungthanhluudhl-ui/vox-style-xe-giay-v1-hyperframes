@@ -82,10 +82,11 @@ BLOCKING (lỗi chặn):
 - Sai/thiếu NỘI DUNG CHÍNH của shotlist: chữ overlay/punch-phrase/label sai chữ, sai số liệu, sai ý; thiếu hẳn overlay quan trọng; dùng sai asset hoặc không dùng asset được giao.
 - Lệch Style DNA RÕ RÀNG: màu nhấn ngoài palette, sai font, xử lý màu ảnh bằng code (filter/grayscale/tách nền/đổ bóng giả trên ẢNH — trái quyết định dự án).
 - Lỗi hiển thị nhận ra chắc chắn từ code: phần tử nội dung chính không bao giờ hiện, chữ nằm ngoài khung hình.
+- [ADN v2] Cảnh asset có BẤT KỲ phần tử nào ngoài media + wrapper chuyển động (chữ, svg, icon, khối màu/gradient/vignette/lớp tối phủ lên media, thanh/khung viền, mũi tên, nền lưới), hoặc có xoay/skew/rotation≠0 — vi phạm ADN v2 (NGOẠI LỆ: ở shot media "contain", lớp nền phía sau/quanh media là hợp lệ miễn không phủ lên media) (script cũng đã kiểm tất định, đây là lớp bảo hiểm).
 ADVISORY (góp ý, KHÔNG chặn):
 - Thời điểm/holdMs overlay lệch so với shotlist, overlay giữ lâu hơn hoặc ngắn hơn.
 - Transition/easing/camera motion khác mô tả nhưng vẫn hợp tinh thần.
-- Chi tiết sáng tạo THÊM ngoài shotlist (diagram, icon, trang trí) miễn không che/lấn nội dung chính và đúng Style DNA.
+- Chi tiết sáng tạo THÊM ngoài shotlist ở CẢNH ĐỒ HOẠ (KHÔNG áp dụng cho cảnh asset) miễn không che/lấn nội dung chính, không xoay, không quá 3 khối chữ và đúng Style DNA.
 - Đề xuất thêm cờ data-layout-allow-* hay nghi ngờ tràn/che/tương phản — "hyperframes check" (lint + layout + contrast + caption-zone) ĐÃ PASS trước khi tới bước review, KHÔNG bàn lại các mục đó.
 - Thẩm mỹ chủ quan.
 KHÔNG yêu cầu xử lý màu/grayscale/bóng cam cho ẢNH dù assetTreatment có mô tả (xem assetTreatmentNote trong shotlist nếu có).

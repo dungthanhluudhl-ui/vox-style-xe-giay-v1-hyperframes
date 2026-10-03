@@ -1,5 +1,8 @@
 # Khung tư duy biên tập 2 tầng — Editorial Director → Motion Implementer
 
+> **[ADN v2]** Hai loại cảnh (asset / đồ hoạ; mascot đã bỏ) và các thay đổi ở STYLE_DNA.md mục 3-5 ghi đè mọi chỗ trong file này nói về overlay/chữ/thẻ trên cảnh có media.
+
+
 ## Vì sao cần 2 tầng, không phải 1
 
 Một AI dựng video kém thường làm theo mô hình: **câu thoại mới → đổi ảnh → chữ bay vào →
@@ -45,13 +48,12 @@ CHỈ SAU KHI Tầng 1 xong, mới quyết định, theo đúng thứ tự:
   danh sách media nguồn có sẵn (mô tả, tags, `suitability_notes` trong
   `pipeline/media-analysis/manifest.json`) — media này được chuẩn bị riêng cho đúng kịch
   bản, không phải stock chung chung. Nếu có asset khớp tốt nội dung/cảm xúc cảnh: **bắt
-  buộc dùng nó** (`visualLanguage` = `cutout` hoặc `background-photo`), và chỉ cân nhắc
-  thêm một lớp `diagram`/`data`/`annotated` NHẸ làm overlay nếu cảnh cần nhấn số liệu/cấu
-  trúc cụ thể. Chỉ khi KHÔNG asset nào khớp mới chuyển hẳn sang `diagram`/`map`/`timeline`/
+  buộc dùng nó** (`visualLanguage` = `cutout` hoặc `background-photo`), và **[v2] KHÔNG
+  thêm lớp overlay nào** (diagram/data/annotated/chữ) lên cảnh asset. Chỉ khi KHÔNG asset nào khớp mới chuyển hẳn sang `diagram`/`map`/`timeline`/
   `flow` dựng thuần bằng code — code tự sinh cho các ngôn ngữ này dễ lỗi/xấu hơn nhiều so
   với dùng media thật đã có, nên luôn là lựa chọn thứ hai.
 - `visualLanguage` — một trong 13 ngôn ngữ ở [`visual-languages.md`](visual-languages.md);
-  ưu tiên xếp chồng ≥2 ngôn ngữ
+  **[v2] cảnh asset KHÔNG xếp chồng; chỉ cảnh đồ hoạ mới có thể xếp ≥2 ngôn ngữ**
 - `template`/`backdrop`/`variant` — nền cảnh nào, biến thể animation nào
   ([`animation-variants.md`](animation-variants.md))
 - Danh sách tài nguyên hình ảnh cần có, và với MỖI tài nguyên: một trường `describes` nêu

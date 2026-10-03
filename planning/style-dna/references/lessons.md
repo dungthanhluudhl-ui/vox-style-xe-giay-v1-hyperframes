@@ -46,7 +46,7 @@ có vẻ dễ.
   trên và cụm ảnh cô lập ở giữa, với một khoảng chết lớn ở giữa và bên cạnh, thay vì đọc như
   một khung hình có bố cục thống nhất. Luôn đặt tiêu đề sát cụm ảnh THỰC TẾ (bbox đã render),
   không phải một vị trí `top` cố định bỏ qua cụm ảnh.
-- **Một cảnh chỉ có MỘT ngôn ngữ thị giác/MỘT phần tử không có lớp dự phòng thứ hai.** Khi
+- > **[ADN v2]** (bài học v1, KHÔNG áp dụng cho cảnh asset v2 — lớp thứ hai bằng chữ/thẻ là nguồn lỗi chồng/nghiêng; v2 lấp khung bằng chuyển động của asset.) **Một cảnh chỉ có MỘT ngôn ngữ thị giác/MỘT phần tử không có lớp dự phòng thứ hai.** Khi
   phần tử đó được chỉnh đúng kích thước, phần còn lại của khung hình vẫn trống vì chưa từng
   có gì khác được lên kế hoạch cho không gian đó. Đây chính là lý do quy tắc "hầu hết cảnh
   mạnh xếp chồng ≥2 ngôn ngữ" không phải là một sở thích phong cách — nó là thứ khiến bạn

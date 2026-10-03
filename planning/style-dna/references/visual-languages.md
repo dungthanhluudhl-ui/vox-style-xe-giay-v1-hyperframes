@@ -1,5 +1,8 @@
 # 13 ngôn ngữ thị giác — quyết định HÌNH THỨC trước khi chọn cách dựng
 
+> **[ADN v2]** 13 ngôn ngữ dưới đây chỉ dùng cho CẢNH ĐỒ HOẠ (thiếu asset). Cảnh asset chỉ dùng `background-photo`/`cutout`/`split`/`document` thuần media; chữ A-roll nhấn mạnh narration xem STYLE_DNA.md mục 4b.
+
+
 ## Vì sao tài liệu này tồn tại
 
 Nguồn: mỗi cảnh của một video từng dựng đều theo đúng một công thức — cắt nền một chủ thể,
@@ -40,7 +43,7 @@ ngôn ngữ thị giác nào.
   (`cutout` hoặc `background-photo`) TRƯỚC khi nghĩ tới việc dựng `diagram`/`data`/`flow`/
   `timeline` mới bằng code. Không bỏ qua một asset khớp tốt chỉ vì một ngôn ngữ khác "thể
   hiện quan hệ ý nghĩa" thuần khái niệm hơn — quan hệ đó vẫn có thể truyền tải qua
-  caption/punch-phrase hoặc một overlay nhẹ đặt trên nền media thật.
+  caption. **[v2] Không overlay/chữ/thẻ trên nền media thật ở cảnh asset.**
 - **Không ngôn ngữ nào chiếm quá 50% số cảnh của một video.** Lặp một kỹ thuật cho cả video
   luôn đọc như một công thức, bất kể kỹ thuật đó tốt đến đâu.
 - **`text-only` giới hạn ở 15% số cảnh.** Một video từng chạy ở mức 29-47% tuỳ cách đếm —
@@ -59,6 +62,8 @@ ngôn ngữ thị giác nào.
   chỉ bằng cách khai báo thêm sự kiện trên giấy.
 
 ## Xếp lớp — đừng chỉ chọn một
+
+> **[ADN v2]** Chỉ áp dụng cho CẢNH ĐỒ HOẠ; cảnh asset không xếp lớp thêm gì (ngoại lệ duy nhất: chữ A-roll, mục 4b).
 
 Thói quen hữu ích nhất: hầu hết các cảnh MẠNH là **hai ngôn ngữ xếp chồng lên nhau**, không
 phải một ngôn ngữ dùng đơn lẻ. Một `timeline` trên giấy trắng vẫn là một khung hình thưa;

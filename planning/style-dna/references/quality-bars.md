@@ -1,5 +1,8 @@
 # Ngưỡng chất lượng — "tốt" trông như thế nào bằng số
 
+> **[ADN v2]** Các chỉ số '% cảnh xếp chồng ≥2 ngôn ngữ', '% cảnh có hình vẽ bằng code', 'tài nguyên trung bình mỗi cảnh' là hồ sơ video tham chiếu v1, KHÔNG phải đích cho cảnh asset v2 (cảnh asset: 0 chữ/thẻ/hình vẽ trên media). Ngưỡng độ phủ ≥12% và 'không quá 3 giây không có sự kiện thị giác' vẫn áp dụng.
+
+
 Đây là các ngưỡng số hoá được rút ra từ việc đo NHIỀU video thật đã lên sóng và đối chiếu
 với đánh giá thật của người xem — không phải số bịa ra trước. Coi đây là **hợp đồng thiết
 kế** cần tuân theo khi lên kế hoạch/tự đánh giá một video mới, bất kể công cụ dựng là gì.
@@ -61,13 +64,15 @@ Ngưỡng thời lượng đi kèm:
 
 ## 4. Chữ trên màn hình
 
+**[ADN v2]** Mục này chỉ áp dụng cho CẢNH ĐỒ HOẠ. Cảnh asset không có chữ/icon nào trên hình, trừ chữ A-roll nhấn mạnh narration (STYLE_DNA.md mục 4b).
+
 - Nhãn vẽ tay tối đa 4 từ; không được lặp lại nguyên văn lời thoại.
 - Nhãn không được đè lên một hình ảnh khác trong lúc cả hai cùng hiện — "lấp khoảng trống
   bằng cách viết đè lên ảnh" không phải là lấp khoảng trống.
 - Nhãn không được lấn vào dải caption (dải dưới cùng dành cho phụ đề đồng bộ giọng đọc).
 - Nếu một khái niệm đã có icon chuẩn trong bộ vocabulary (mục 6, STYLE_DNA.md), phải dùng
   icon đó thay vì đánh vần khái niệm ra bằng chữ.
-- Cần một "sàn biểu tượng": một tỉ lệ tối thiểu số cảnh trong video phải mang một icon vẽ
+- **[v2: BỎ — buộc phải có icon, mâu thuẫn với cảnh asset không icon]** (v1) Cần một "sàn biểu tượng": một tỉ lệ tối thiểu số cảnh trong video phải mang một icon vẽ
   tay — vì quy tắc "không lặp lại lời thoại" một mình có thể bị lách bằng cách đơn giản là
   không bao giờ gõ từ khoá kích hoạt.
 - Chữ phải đủ tương phản với nền phía sau nó (không để mực tối chìm vào một tấm ảnh tối) —
@@ -84,6 +89,8 @@ Ngưỡng thời lượng đi kèm:
   viền, chủ thể không bị cắt cụt vì tràn ra ngoài khung nguồn.
 
 ## 6. Bố cục lặp lại/đơn điệu — đo trên bản dựng thật, không đo trên kế hoạch
+
+**[ADN v2]** Ngưỡng 23-38% (thích) vs 54-67% (bị chê) vẫn là thước đo chính, và v2 dễ vi phạm nó nhất vì cảnh asset đều là media toàn khung. Với v2, "nhóm cảnh giống nhau" được đo theo KIỂU TRÌNH BÀY (đẩy vào, lùi ra, lia, đổi crop, `split`, reveal, nhiều shot cắt, thẻ `doc-NN`, chữ A-roll, cảnh đồ hoạ), trên bản dựng thật.
 
 Cách đo hiệu quả nhất không phải đặt hạn ngạch trước khi dựng (hạn ngạch đặt trước đã hai
 lần không áp dụng được cho video khác), mà là **đo nhóm cảnh giống nhau nhiều nhất** trên
@@ -114,6 +121,8 @@ phút đầu tiên — lý do các ngưỡng số tồn tại là để loại b
 thay thế việc đánh giá bằng mắt.
 
 ## 8. Hồ sơ tham chiếu — một video đã đạt cả 4 tiêu chí trông như thế nào bằng số
+
+**[ADN v2]** Bảng dưới là hồ sơ V10 của v1 (video kiểu v1, ảnh nằm ở `archive/adn-v1/`) — GIỮ NGUYÊN SỐ, không hạ; số đo của video v2 đã duyệt nằm ở `v2-reference-profile.md` (đúng nguyên tắc cuối mục này). Các dòng '% cảnh xếp chồng ≥2', '% cảnh có hình vẽ bằng code', '% cảnh chỉ-ảnh-nền ≤23%', 'tài nguyên TB mỗi cảnh' KHÔNG là đích của v2 vì cảnh asset là media thuần theo thiết kế. Các dòng 'không nhạt dần ở 1/3 cuối', 'khoảng cách sự kiện thị giác ≤3s', độ phủ và tâm khối lượng vẫn áp dụng. Hồ sơ v2 sẽ được lập từ video v2 đầu tiên được duyệt, không suy diễn trước.
 
 Video tham chiếu ("V10"): 26 cảnh, tổng thời lượng 100.78 giây.
 

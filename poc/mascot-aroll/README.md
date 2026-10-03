@@ -1,3 +1,5 @@
+> **LỊCH SỬ — không đọc khi không được yêu cầu.** POC này đã được tích hợp vào pipeline thật (ADN v2, 03/10/2026) và mascot đã bỏ; mã chạy thật nằm ở `scripts/`, `scripts/tests/`, `scripts/qa/`.
+
 # POC: mascot capybara + cảnh asset thuần (ADN v2 nháp)
 
 Trạng thái: **Bước B xong, bản nháp ADN v2 đã được người dùng duyệt (vòng 3). Bước C xong (kit + alpha + lưới chuyển động đạt). Chờ người dùng cho đi tiếp Bước D.** Chưa chạy AI, chưa sửa `scripts/` hay `planning/style-dna/` thật.

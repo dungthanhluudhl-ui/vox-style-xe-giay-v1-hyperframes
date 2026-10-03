@@ -2,7 +2,8 @@
 // Chữ KHÔNG nằm trong thẻ/khung: chỉ là CHỮ (5 hình thức vào khác nhau) trên asset đã mờ đi (dim) hoặc trên dải giấy do asset thu nhỏ/có sẵn chừa ra.
 // Mọi thứ TẤT ĐỊNH (không xoay, không ngẫu nhiên, không repeat:-1): thời điểm do lib/key-text-plan.mjs tính từ mốc TỪNG TỪ của narration.
 export const TEXT_FORMATS = ["typewriter", "stamp", "wordpop", "maskrise", "sweep"];
-export const TREATMENTS = ["dim-center", "dim-lower", "shrink-top", "band-free"];
+// Ma trận A1 (03/10, 60 tổ hợp vision): `dim-center` BỎ — chữ giữa khung che chủ thể quan trọng 13/20 ảnh, che mặt 5/20 (dim-lower 5/20, shrink-top/band-free 0).
+export const TREATMENTS = ["dim-lower", "shrink-top", "band-free"];
 export const TEXT_PURPOSES = ["câu hỏi mấu chốt", "khẳng định quyết định"];
 export const MAX_WORDS = 8;
 export const MAX_TEXT_CHARS = 44;
@@ -63,9 +64,6 @@ export function fitText(text, widthPx, maxH, lineHeight = 1.14, upper = false) {
  * Trả { treatment, valid, why?, shrink:{x,y,scale}|null, scrim:null|{type,alpha}, needBg, zone, ink, assetRect }. zone = vùng chữ. */
 export function treatmentLayout(treatment, content, fit) {
   const full = { x: content.x, y: content.y, w: content.w, h: content.h };
-  if (treatment === "dim-center") {
-    return { treatment, valid: true, shrink: null, scrim: { type: "full", alpha: 0.62 }, needBg: false, zone: { x: 70, w: 940, cy: 860, maxH: 700 }, ink: "cream", assetRect: full };
-  }
   if (treatment === "dim-lower") {
     return { treatment, valid: true, shrink: null, scrim: { type: "lower", alpha: 0.84 }, needBg: false, zone: { x: 70, w: 940, bottom: 1350, maxH: 420 }, ink: "cream", assetRect: full };
   }
@@ -87,15 +85,19 @@ export function treatmentLayout(treatment, content, fit) {
   return { treatment, valid: false, why: `treatment "${treatment}" không hợp lệ` };
 }
 
-/** Chọn treatment TẤT ĐỊNH: ưu tiên theo hình học asset, loại treatment không hợp lệ, KHÔNG trùng treatment ở lần chữ liền trước, xoay vòng theo k. */
-export function chooseTreatment({ content, fit, prev = null, k = 0 }) {
-  const pref = fit === "contain" ? ["band-free", "dim-lower", "dim-center"] : ["dim-lower", "shrink-top", "dim-center"];
-  for (let j = 0; j < pref.length; j++) {
-    const t = pref[(k + j) % pref.length];
-    if (t === prev) continue;
-    if (treatmentLayout(t, content, fit).valid) return t;
+/** Chọn treatment TẤT ĐỊNH theo hình học + loại asset, KHÔNG trùng treatment lần chữ liền trước (nếu còn lựa chọn khác), xoay vòng theo k.
+ * Ưu tiên theo đo ma trận A1: cover → shrink-top (đọc 4,0/đẹp 4,0, không che gì) rồi dim-lower; contain → band-free rồi dim-lower;
+ * `isDoc` (doc-NN = BẰNG CHỨNG, DNA cấm làm mờ/lớp tối + chữ trắng trên trang sáng khó đọc 3/5) → CHỈ band-free (dải trống quanh thẻ).
+ * Trả null khi không treatment nào hợp lệ (người gọi BỎ chữ, ghi lý do). */
+export function chooseTreatment({ content, fit, prev = null, k = 0, isDoc = false }) {
+  const pref = isDoc ? ["band-free"] : fit === "contain" ? ["band-free", "dim-lower"] : ["shrink-top", "dim-lower"];
+  const ok = pref.filter((t) => treatmentLayout(t, content, fit).valid);
+  if (!ok.length) return null;
+  for (let j = 0; j < ok.length; j++) {
+    const t = ok[(k + j) % ok.length];
+    if (t !== prev) return t;
   }
-  return prev === "dim-lower" ? "dim-center" : "dim-lower";
+  return ok[k % ok.length]; // chỉ còn đúng 1 lựa chọn hợp lệ (vd doc-NN): chấp nhận lặp
 }
 
 const rectOf = (r) => ({ l: r.x, t: r.y, r: r.x + r.w, b: r.y + r.h });
@@ -154,9 +156,11 @@ export function renderKeyText({ kt, layout, trackIndex = 40 }) {
     extraCss = `#kt-1 .w{display:inline-block;opacity:0}`;
     js = words.map((_, i) => `tl.fromTo("#kt-w${i}",{opacity:0,y:28,scale:0.82},{opacity:1,y:0,scale:1,duration:0.24,ease:"back.out(1.6)",immediateRender:false},${r3(T + times[i])});`).join("\n ") + `\n ${exit}`;
   } else if (format === "maskrise") {
+    // Lộ từng từ bằng clip-path (mép lộ trượt từ dưới lên) + dịch chuyển nhỏ 28px — KHÔNG đẩy từ xuống 115% dòng như bản đầu: phần tử đang dịch nằm
+    // dưới vùng chữ làm `hyperframes check` báo caption_zone_collision ở treatment dim-lower (ma trận A1: 3/60 tổ hợp lỗi) dù bị mặt nạ che.
     inner = words.map((w, i) => `<span class="m"><span class="mi" id="kt-w${i}">${esc(w)}</span></span>`).join(" ");
-    extraCss = `#kt-1 .m{display:inline-block;overflow:hidden;vertical-align:top;padding:0.04em 0.06em 0.14em}#kt-1 .mi{display:inline-block}`;
-    js = `tl.fromTo("#kt-1 .mi",{yPercent:115},{yPercent:0,duration:0.45,ease:"power3.out",stagger:0.07,immediateRender:false},${T});
+    extraCss = `#kt-1 .m{display:inline-block;vertical-align:top}#kt-1 .mi{display:inline-block;clip-path:inset(120% -10% -20% -10%)}`;
+    js = `tl.fromTo("#kt-1 .mi",{clipPath:"inset(120% -10% -20% -10%)",y:28},{clipPath:"inset(-20% -10% -20% -10%)",y:0,duration:0.45,ease:"power3.out",stagger:0.07,immediateRender:false},${T});
  ${exit}`;
   } else { // sweep
     inner = `<div id="kt-t">${esc(shown)}</div><div id="kt-bar"></div>`;

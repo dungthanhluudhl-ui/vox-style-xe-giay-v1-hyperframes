@@ -6,8 +6,14 @@
 //        node scripts/05-scene-plan.router.mjs --video=<slug> --from=S05   (giữ nguyên scene trước S05, chỉ tạo lại từ S05 trở đi)
 import fs from "node:fs";
 import path from "node:path";
+import { execFileSync } from "node:child_process";
 import { callModel, extractText, extractJson, loadModelRouting, appendRunLog } from "./lib/router-client.mjs";
 import { getVideoSlug, videoPaths } from "./lib/video-paths.mjs";
+// [ADN v2] chữ A-roll (thay mascot) + kiểm tra tất định v2
+import { driftDirForIndex, BG_VARIANTS, fitForAsset } from "./lib/media-layout.mjs";
+import { dropInfeasibleKeyTexts } from "./lib/key-text-plan.mjs";
+import { tileScenes } from "./lib/scene-tiling.mjs";
+import { validatePlan, softPlanWarnings } from "./lib/v2-checks.mjs";
 
 const root = process.cwd();
 const routing = loadModelRouting();
@@ -53,7 +59,13 @@ QUY TẮC ẢNH TRÍCH DẪN BẢN ÁN (${pdfDocs.length} asset có source="pdf"
 `
   : "";
 
-const totalDurationMs = captions[captions.length - 1]?.endMs ?? 0;
+// [vòng 4] Tổng thời lượng = ĐỘ DÀI AUDIO THẬT (ffprobe), không phải mốc kết thúc từ cuối trong captions: whisper hay chốt từ cuối sớm hơn tiếng đọc thật
+// (đo 03/10 su-kien-thien-an-mon: từ cuối kết thúc 129,5s nhưng audio còn tiếng nói tới 130,52s → video cắt cụt 1,02s cuối lời thoại; flydubai: 0,14s).
+const captionsEndMs = captions[captions.length - 1]?.endMs ?? 0;
+let audioDurationMs = 0;
+try { audioDurationMs = Math.round(parseFloat(execFileSync("ffprobe", ["-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", vp.audioFile], { encoding: "utf8" })) * 1000) || 0; } catch { /* không có ffprobe/audio → dùng captions */ }
+const totalDurationMs = Math.max(captionsEndMs, audioDurationMs);
+if (audioDurationMs > captionsEndMs) console.log(`[ADN v2] Audio thật dài ${audioDurationMs}ms > từ cuối trong captions ${captionsEndMs}ms: scene cuối sẽ kéo tới hết audio (không cắt cụt lời thoại).`);
 
 const fromArg = process.argv.find((a) => a.startsWith("--from="));
 const fromSceneId = fromArg ? fromArg.split("=")[1] : null;
@@ -83,10 +95,18 @@ NHIỆM VỤ: chia audio/script thành các SCENE theo đúng khung tư duy edit
 
 QUY TẮC ƯU TIÊN MEDIA — QUAN TRỌNG NHẤT, GHI ĐÈ LÊN XU HƯỚNG MẶC ĐỊNH CHỌN DIAGRAM CỦA STYLE DNA:
 Toàn bộ ${aiMediaCount} media (không tính ảnh trích dẫn bản án PDF, nếu có) trong manifest bên dưới được TẠO RIÊNG bằng AI dựa trên đúng kịch bản này (không phải stock chung chung, không phải ảnh minh hoạ đại diện). Vì vậy với MỖI scene, việc đầu tiên phải làm là kiểm tra manifest xem có asset nào (chưa dùng cho scene khác) khớp nội dung/cảm xúc của scene đó không.
-- Nếu CÓ asset khớp: BẮT BUỘC dùng nó làm lớp hình ảnh chính (assetIds khai báo asset đó, visualLanguage tương ứng thường là "cutout" hoặc "background-photo"), kể cả khi một diagram/data/flow tự dựng có vẻ thể hiện "quan hệ ý nghĩa" thuần khái niệm rõ hơn — quan hệ đó vẫn truyền tải được qua caption/punch-phrase/overlay nhẹ đặt TRÊN nền media thật, không cần thay hẳn bằng cảnh dựng code.
-- CHỈ được chuyển sang dựng thuần bằng code (diagram/map/timeline/flow/data không có asset nền) khi: (a) không còn asset nào (trong ${aiMediaCount} asset) khớp nội dung cảnh đó, HOẶC (b) cảnh bắt buộc phải thể hiện số liệu/cấu trúc/vị trí chính xác mà không ảnh/video nào truyền tải được (vd đúng con số tiền, đúng vị trí địa lý) — khi đó ưu tiên overlay diagram NHẸ trên nền media thật nếu có, chỉ dựng toàn bộ bằng code khi thực sự không còn asset nào để làm nền.
-- Lý do bắt buộc theo quy tắc này: code Remotion tự sinh cho diagram/icon-tự-vẽ phức tạp (mục 6 STYLE_DNA.md) rất dễ lỗi và xấu trong thực tế sản xuất. Code Remotion nên tập trung vào phụ đề/caption, text/title, ráp A-roll/B-roll (media thật), motion graphics/transition — không phải vẽ minh hoạ từ đầu khi đã có media phù hợp.
-- Cố gắng dùng hết/gần hết ${aiMediaCount} asset đã phân tích nếu nội dung cho phép, tránh để phần lớn media không được dùng trong khi vẫn tạo thêm scene fallback bằng code.
+- [ADN v2] Nếu CÓ asset khớp: BẮT BUỘC dùng nó làm CẢNH ASSET (kind="asset", assetIds khai báo asset đó). Cảnh asset là media thuần + phụ đề: TUYỆT ĐỐI KHÔNG overlay, chữ, thẻ, icon, diagram lên media (ngoại lệ DUY NHẤT: chữ A-roll keyText do script dựng tất định, xem quy tắc riêng bên dưới). Quan hệ ý nghĩa được truyền tải bằng CÁCH TRÌNH BÀY chính asset (xem bảng "Quan hệ cần thấy → cách trình bày asset" ở STYLE_DNA.md mục 4) và lời thoại/phụ đề, không bằng lớp chồng.
+- CHỈ được dựng CẢNH ĐỒ HOẠ (kind="graphics", không asset) khi: (a) không còn asset nào (trong ${aiMediaCount} asset) khớp nội dung cảnh đó, HOẶC (b) asset có sẵn không truyền tải được quan hệ chính xác cần thể hiện (số liệu/cấu trúc/vị trí) — khi đó dựng MỘT cảnh đồ hoạ RIÊNG, KHÔNG đặt overlay lên asset.
+- Cố gắng dùng hết/gần hết ${aiMediaCount} asset đã phân tích nếu nội dung cho phép, tránh để phần lớn media không được dùng.
+
+[ADN v2, vòng 5] CHỮ A-ROLL NHẤN MẠNH NARRATION (thay mascot — mascot đã bỏ hoàn toàn: KHÔNG dùng kind="mascot", mascotIntent hay nhân vật):
+- Mặc định cảnh asset KHÔNG có chữ. CHỈ gắn "keyText" vào cảnh asset khi lời thoại ở đó đặt MỘT CÂU HỎI MẤU CHỐT hoặc nêu MỘT KHẲNG ĐỊNH MANG TÍNH QUYẾT ĐỊNH của cả video (điểm cao trào/chốt vấn đề). KHÔNG dùng để trang trí, minh hoạ, nhắc ý phụ hay lấp chỗ thiếu asset. Thường chỉ 0–2 chỗ cho cả video (hạn mức CỨNG: ≤ max(1, ⌊số cảnh/8⌋); hai cảnh có chữ cách nhau ≥3 cảnh; cảnh đồ hoạ KHÔNG có keyText).
+- keyText = {"anchorPhrase": cụm 2–6 từ LIÊN TIẾP chép NGUYÊN VĂN từ lời thoại của chính cảnh đó (ĐIỂM NEO: chữ hiện ĐÚNG LÚC người đọc bắt đầu nói cụm này — không trước, không sau; cụm phải DUY NHẤT trong cảnh), "text": chữ nhấn mạnh (≤8 từ VÀ ≤44 ký tự, tiếng Việt; có thể GIỐNG lời thoại nhưng phải NGẮN GỌN, tuyệt đối không nhắc lại cả câu; không emoji; KHÔNG bịa số/tên riêng không có trong kịch bản), "format": một trong typewriter (gõ chữ — hợp câu hỏi/ngập ngừng) | stamp (đóng dấu — hợp khẳng định dứt khoát) | wordpop (từng từ bật theo nhịp nói — chữ nên TRÙNG anchorPhrase) | maskrise (trượt lên — hợp chuyển ý/giới thiệu) | sweep (gạch chân quét — hợp nhấn một cụm), "purpose": "câu hỏi mấu chốt" hoặc "khẳng định quyết định", "why": lý do biên tập (vì sao ĐÂY là điểm mấu chốt)}.
+- Thời gian đọc do script tính TẤT ĐỊNH: chữ giữ ≥ max(2s; 0,7s + 80ms/ký tự) cộng thời gian vào/ra và PHẢI nằm trọn trong shot; nếu từ neo quá sát hết cảnh hoặc narration nói quá nhanh để đọc kịp thì script BỎ chữ đó. Vì vậy chọn neo ở phần ĐẦU/GIỮA cảnh (còn ≥4–6s tới hết cảnh), không phải câu cuối sát lúc chuyển cảnh. Hai chữ liên tiếp KHÔNG cùng format.
+- Bạn KHÔNG chọn cách trình bày: script tự chọn asset mờ đi hoặc thu nhỏ nhẹ để chữ nằm ở cạnh trên/dưới, linh hoạt và không lặp liền kề.
+- [ADN v2, camera liên tục] Cảnh asset: điền "presentationStyle" — MỘT trong: drift-in (zoom-in chậm), drift-out, pan, diag, doc-card. Mỗi shot chỉ có MỘT chuyển động camera liền mạch suốt shot; SỰ KIỆN THỊ GIÁC của cảnh asset = ĐỔI ASSET bám cue lời thoại (giữa hai lần đổi camera luôn trôi, không tính dead-air — luật "≤3s không sự kiện" KHÔNG áp cho cảnh asset). Mỗi asset dùng đúng 1 lần liền mạch trong scene (CẤM tách 1 ảnh thành nhiều shot re-crop); shot ~4–8s: scene dài (>8s) hãy gán NHIỀU asset khác nhau thay vì kéo dài một ảnh. Hai cảnh asset liền nhau KHÔNG cùng presentationStyle (đa dạng kiểu/hướng giữa các cảnh).
+- Kiểu vào cảnh (entranceAnimation) chỉ trong bộ KHÔNG XOAY: rise, grow, punch, shatter, unfold, zoom-through, strike (BỎ flip/peel/spiral/wobble-drop). Không trùng cảnh liền trước.
+- backgroundVariant: cảnh graphics: một trong grid-moving/chart/card/spotlight; cảnh asset: null (script tự gán nền cho cảnh asset có chữ A-roll hoặc có media contain). Hai cảnh liền nhau có nền nhìn thấy không cùng biến thể.
 
 QUY TẮC NGƯỠNG NHỊP ĐỘ — ÁP DỤNG ĐỒNG THỜI VỚI QUY TẮC ƯU TIÊN MEDIA Ở TRÊN, KHÔNG ĐƯỢC HY SINH CÁI NÀY ĐỂ LẤY CÁI KIA:
 - TUYỆT ĐỐI KHÔNG được tách một scene thành nhiều scene con chỉ để mỗi asset có một scene riêng nếu việc tách khiến scene ngắn hơn ~5 giây. Ngắn hơn 5 giây khiến người xem không kịp đọc/hiểu, dù đúng asset vẫn là một lỗi.
@@ -120,11 +140,14 @@ Trả về DUY NHẤT một JSON object đúng schema:
       "scriptText": "câu/đoạn lời thoại của scene này, trích nguyên văn từ script gốc",
       "narrativeFunction": "một trong: hook/question/paradox/cause/causal-chain/list/definition/mechanism/evidence/reversal/conclusion",
       "visualRelationship": "câu trả lời cụ thể cho 'quan hệ nào người xem phải THẤY HÌNH THÀNH' — không phải mô tả chủ đề chung chung",
-      "visualLanguages": ["1-2 giá trị từ 13 ngôn ngữ thị giác, ưu tiên xếp chồng ≥2 cho scene mạnh"],
-      "backgroundVariant": "một trong: grid/chart/card/spotlight",
-      "assetIds": ["id từ media manifest nếu phù hợp, có thể rỗng"],
-      "entranceAnimation": "một trong 11 kiểu vào cảnh trong animation-variants.md, KHÔNG trùng với scene liền trước",
-      "notes": "lý do chọn, cảnh báo nếu cần fallback text/card/diagram"
+      "kind": "asset | graphics",
+      "visualLanguages": ["cảnh asset: 1 trong background-photo/cutout/split/document; cảnh graphics: 1-2 giá trị từ 13 ngôn ngữ thị giác"],
+      "presentationStyle": "chỉ cảnh asset: drift-in/drift-out/pan/diag/doc-card; cảnh khác: null",
+      "keyText": "CHỈ cảnh asset có câu hỏi/khẳng định MẤU CHỐT: {anchorPhrase, text, format, purpose, why}; còn lại (ĐA SỐ cảnh): null",
+      "backgroundVariant": "cảnh graphics: grid-moving/chart/card/spotlight; cảnh asset: null",
+      "assetIds": ["id từ media manifest — BẮT BUỘC có ở cảnh asset; RỖNG ở cảnh graphics"],
+      "entranceAnimation": "một trong bộ KHÔNG XOAY (rise/grow/punch/shatter/unfold/zoom-through/strike), KHÔNG trùng với scene liền trước",
+      "notes": "lý do chọn (với chữ A-roll: vì sao đây là điểm mấu chốt), cảnh báo nếu cần fallback"
     }
   ]
 }
@@ -149,41 +172,116 @@ Hãy lập Scene Plan ${fromSceneId ? `phần còn lại (từ ${fromSceneId} tr
 
 console.log(`Gọi ${model} để lập scene plan (script ${scriptText.length} ký tự, ${captions.length} từ có timestamp, ${mediaForPrompt.length} media asset)...`);
 
-const response = await callModel({
-  model,
-  messages: [
-    { role: "system", content: systemPrompt },
-    { role: "user", content: userPrompt },
-  ],
-  temperature: 0.4,
-  maxTokens: 16000,
-  timeoutMs: 900000,
-  responseFormat: { type: "json_object" },
-});
+// [ADN v2] Chuẩn hoá TẤT ĐỊNH sau khi model trả về (kind/nền/hướng trôi) rồi kiểm tra v2; lỗi → gọi lại 1 lần kèm lỗi.
+const mediaById05 = Object.fromEntries(mediaManifest.map((m) => [m.id, m]));
+const renormalize = process.argv.includes("--renormalize"); // chuẩn hoá lại scene-plan.json ĐÃ CÓ (kind/nền/containAssets), KHÔNG gọi model
 
-const text = extractText(response);
-let result;
-try {
-  result = extractJson(text);
-} catch (e) {
-  console.error("Không parse được JSON trả về từ model:\n", text.slice(0, 2000));
-  process.exit(1);
+function normalizeScenes(newScenes) {
+  // Chuẩn hoá id TẤT ĐỊNH theo vị trí mảng — KHÔNG tin id do LLM tự đặt (đã từng sinh sai
+  // "S010/S011..." khi ghép chuỗi thay vì zero-pad, và từng tự tách 1 beat thành "S17a/S17b/S17c").
+  // Ghi đè hoàn toàn field "id". CHỈ áp dụng cho scene MỚI — keptScenes giữ nguyên id cũ.
+  // [vòng 4] NỐI LIỀN MẠCH các scene (tất định): khe hở giữa scene = khung đen khi chuyển cảnh (đo 03/10: 6/6 khoảng đen trùng 6 khe hở của plan).
+  // Scene sau giữ nguyên startMs (bám từ đầu tiên được nói); phần nghỉ trước đó thuộc scene trước. Không im lặng: in ra số khe hở đã vá.
+  const tiled = tileScenes(newScenes, { startMs: regenFromMs, totalMs: totalDurationMs });
+  if (tiled.changed.length) console.log(`[ADN v2] Nối liền mạch scene: vá ${tiled.changed.length} khe hở/chồng (tổng ${tiled.changed.reduce((a, c) => a + Math.abs(c.deltaMs), 0)}ms): ${tiled.changed.map((c) => `${c.id} ${c.deltaMs > 0 ? "+" : ""}${c.deltaMs}ms`).join(", ")}`);
+  if (tiled.errors.length) { console.error("Không nối liền mạch được scene:\n- " + tiled.errors.join("\n- ")); process.exit(1); }
+  newScenes.forEach((s, i) => {
+    s.id = `S${String(keptScenes.length + i + 1).padStart(2, "0")}`;
+    if (!["asset", "mascot", "graphics"].includes(s.kind)) s.kind = (s.assetIds ?? []).length ? "asset" : "graphics"; // "mascot" cũ KHÔNG tự đổi — validatePlan báo lỗi để model sửa
+    if (s.kind === "graphics") s.keyText = null; // chữ A-roll chỉ ở cảnh asset
+    if (s.kind !== "asset") s.presentationStyle = null;
+  });
+  // [vòng 5] BỎ (kèm lý do, không im lặng) chữ A-roll không đủ chỗ đọc (narration nói nhanh/neo sát hết cảnh). Làm TRƯỚC khi gán nền để cảnh mất chữ không giữ nền thừa.
+  const drops = dropInfeasibleKeyTexts(newScenes, captions);
+  for (const d of drops) console.log(`[ADN v2] ${d}`);
+  // [ADN v2, vòng 3] từ vựng presentationStyle = camera liên tục; ánh xạ kiểu cũ (push-in/pull-out/crop-reframe/split/reveal/multi-shot-cut)
+  // và chống trùng với cảnh asset liền trước (xoay vòng tất định).
+  const STYLE_MAP = { "push-in": "drift-in", "pull-out": "drift-out", pan: "pan", "crop-reframe": "diag", split: "drift-in", reveal: "drift-in", "multi-shot-cut": "drift-in" };
+  const STYLES = ["drift-in", "pan", "drift-out", "diag"];
+  let prevStyle = null;
+  for (const s of [...keptScenes, ...newScenes]) {
+    if (s.kind !== "asset") continue;
+    let st = STYLE_MAP[s.presentationStyle] ?? s.presentationStyle;
+    if (![...STYLES, "doc-card"].includes(st)) st = "drift-in";
+    if (st !== "doc-card" && st === prevStyle) st = STYLES[(STYLES.indexOf(st) + 1) % STYLES.length];
+    s.presentationStyle = st;
+    prevStyle = st;
+  }
+  // Nền + hướng trôi (TẤT ĐỊNH). Cảnh asset che kín nền (null) TRỪ khi có media "contain" (nằm ngang / phân giải thấp / doc-NN) —
+  // khi đó cần nền nhìn thấy. Cảnh đã được gán nền+hướng từ trước (--from/--renormalize) được GIỮ NGUYÊN để không lệch với scene đã dựng;
+  // chỉ gán cho cảnh chưa có, tránh trùng biến thể/hướng với cảnh có nền nhìn thấy liền kề (trước và sau).
+  const all = [...keptScenes, ...newScenes];
+  for (const s of all) {
+    if (s.kind === "asset") {
+      s.containAssets = (s.assetIds ?? []).filter((id) => fitForAsset(mediaById05[id]).fit === "contain");
+      if (!s.containAssets.length && !s.keyText) { s.backgroundVariant = null; s.driftDir = null; } // cảnh asset có chữ A-roll có thể cần nền giấy khi asset thu nhỏ
+    }
+  }
+  const visible = (s) => s && (s.kind !== "asset" || s.containAssets.length > 0 || !!s.keyText);
+  const isAssigned = (s) => !!s.driftDir && BG_VARIANTS.includes(s.backgroundVariant);
+  let visibleIdx = 0;
+  all.forEach((s, i) => {
+    if (!visible(s)) return;
+    const prev = visible(all[i - 1]) ? all[i - 1] : null;
+    const next = visible(all[i + 1]) && isAssigned(all[i + 1]) ? all[i + 1] : null;
+    if (isAssigned(s)) { visibleIdx++; return; }
+    let v = BG_VARIANTS.includes(s.backgroundVariant) ? s.backgroundVariant : "grid-moving";
+    for (let k = 0; k < BG_VARIANTS.length && (v === prev?.backgroundVariant || v === next?.backgroundVariant); k++) v = BG_VARIANTS[(BG_VARIANTS.indexOf(v) + 1) % BG_VARIANTS.length];
+    let d = driftDirForIndex(visibleIdx);
+    for (let k = 0; k < 6 && (d === prev?.driftDir || d === next?.driftDir); k++) d = driftDirForIndex(visibleIdx + k + 1);
+    s.backgroundVariant = v;
+    s.driftDir = d;
+    visibleIdx++;
+  });
 }
 
-const newScenes = result.scenes;
-if (!Array.isArray(newScenes) || newScenes.length === 0) {
-  console.error("Cảnh báo: 'scenes' không phải array hợp lệ hoặc rỗng.");
-  process.exit(1);
+let feedbackForRetry = "";
+let newScenes;
+if (renormalize) {
+  newScenes = JSON.parse(fs.readFileSync(vp.scenePlanJson, "utf8"));
+  normalizeScenes(newScenes);
+  const problems = validatePlan(newScenes, scriptText, totalDurationMs, captions);
+  console.log(`[ADN v2] --renormalize: ${newScenes.length} scene, ${newScenes.filter((x) => x.containAssets?.length).length} cảnh asset có media contain, ${problems.length} lỗi chặn.`);
+  if (problems.length) { console.error("- " + problems.join("\n- ")); process.exit(1); }
 }
+for (let planAttempt = 1; !renormalize && planAttempt <= 2; planAttempt++) {
+  const response = await callModel({
+    model,
+    messages: [
+      { role: "system", content: systemPrompt },
+      { role: "user", content: userPrompt + feedbackForRetry },
+    ],
+    temperature: 0.4,
+    maxTokens: 16000,
+    timeoutMs: 900000,
+    responseFormat: { type: "json_object" },
+  });
 
-// Chuẩn hoá id TẤT ĐỊNH theo vị trí mảng — KHÔNG tin id do LLM tự đặt (đã từng sinh sai
-// "S010/S011..." khi ghép chuỗi thay vì zero-pad, và từng tự tách 1 beat thành "S17a/S17b/S17c").
-// Ghi đè hoàn toàn field "id", không cố "dọn"/parse chuỗi cũ. CHỈ áp dụng cho scene MỚI —
-// keptScenes (chế độ --from=) giữ nguyên id cũ để không phá tên file
-// compositions/scene-sXXX.html đã render trước đó cho các scene đã chốt.
-newScenes.forEach((s, i) => {
-  s.id = `S${String(keptScenes.length + i + 1).padStart(2, "0")}`;
-});
+  const text = extractText(response);
+  let result;
+  try {
+    result = extractJson(text);
+  } catch (e) {
+    console.error("Không parse được JSON trả về từ model:\n", text.slice(0, 2000));
+    process.exit(1);
+  }
+
+  newScenes = result.scenes;
+  if (!Array.isArray(newScenes) || newScenes.length === 0) {
+    console.error("Cảnh báo: 'scenes' không phải array hợp lệ hoặc rỗng.");
+    process.exit(1);
+  }
+  normalizeScenes(newScenes);
+  const problems = validatePlan([...keptScenes, ...newScenes], scriptText, totalDurationMs, captions);
+  const soft = softPlanWarnings([...keptScenes, ...newScenes], mediaById05);
+  if (!problems.length && (!soft.length || planAttempt === 2)) {
+    if (soft.length) console.log(`[ADN v2] Cảnh báo mềm còn lại (không chặn):\n- ${soft.join("\n- ")}`);
+    break;
+  }
+  console.log(`[ADN v2] Kiểm tra scene plan lần ${planAttempt}: ${problems.length} lỗi chặn, ${soft.length} cảnh báo mềm:\n- ${[...problems, ...soft].join("\n- ")}`);
+  if (planAttempt === 2) { console.error("Scene plan vẫn vi phạm ADN v2 sau 2 lần — dừng để người xem xét."); process.exit(1); }
+  feedbackForRetry = `\n\nLẦN TRƯỚC SAI QUY TẮC (sửa đúng các điểm sau, giữ nguyên phần còn lại):\n- ${[...problems, ...soft].join("\n- ")}`;
+}
 
 const scenes = [...keptScenes, ...newScenes];
 
@@ -200,11 +298,11 @@ const md = [
   "",
   `Tổng thời lượng: ${fmtMs(totalDurationMs)} · ${scenes.length} scene`,
   "",
-  "| # | Thời gian | Lời thoại | Chức năng | Quan hệ hình ảnh | Ngôn ngữ thị giác | Nền | Asset | Vào cảnh |",
-  "|---|---|---|---|---|---|---|---|---|",
+  "| # | Loại | Thời gian | Lời thoại | Chức năng | Quan hệ hình ảnh | Trình bày / chữ A-roll | Nền (hướng) | Asset | Vào cảnh |",
+  "|---|---|---|---|---|---|---|---|---|---|",
   ...scenes.map(
     (s) =>
-      `| ${s.id} | ${fmtMs(s.startMs)}–${fmtMs(s.endMs)} | ${s.scriptText} | ${s.narrativeFunction} | ${s.visualRelationship} | ${(s.visualLanguages || []).join(" + ")} | ${s.backgroundVariant} | ${(s.assetIds || []).join(", ") || "—"} | ${s.entranceAnimation} |`,
+      `| ${s.id} | ${s.kind} | ${fmtMs(s.startMs)}–${fmtMs(s.endMs)} | ${s.scriptText} | ${s.narrativeFunction} | ${s.visualRelationship} | ${s.presentationStyle ?? "—"}${s.keyText ? ` + chữ ${s.keyText.format}: “${s.keyText.text}”` : s.keyTextDropped ? " (chữ bị bỏ: không đủ chỗ đọc)" : ""} | ${s.backgroundVariant ?? "—"}${s.driftDir ? ` (${s.driftDir})` : ""} | ${(s.assetIds || []).join(", ") || "—"} | ${s.entranceAnimation} |`,
   ),
   "",
   "## Ghi chú từng scene",

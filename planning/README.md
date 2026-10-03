@@ -10,6 +10,15 @@ Mọi nội dung riêng của 1 video nằm trong thư mục con `videos/<slug>/
 giữ nguyên làm archive tại `archive/remotion-legacy/` (xem mục "Archive: pipeline Remotion cũ" ở
 cuối file) — không migrate lại, không phát triển tiếp trên nhánh đó.
 
+## ADN v2 — MẶC ĐỊNH từ 03/10/2026 (đọc mục này trước)
+Pipeline mặc định nay là ADN v2 (v1 lưu ở `archive/adn-v1/`, chỉ đọc khi được yêu cầu). Các video liệt kê bên dưới được dựng bằng v1 (đến 02/10/2026) trừ khi ghi khác; dữ liệu của chúng KHÔNG bị đụng.
+Khác biệt vận hành so với v1:
+- **Stage 5 (`05-scene-plan`)**: model lập plan với hai loại cảnh `asset|graphics` (không còn mascot); thêm bước TẤT ĐỊNH: nối liền mạch scene (hết khung đen), tổng thời lượng = độ dài audio thật (ffprobe), gán nền, kiểm tra + thử lại; cảnh asset có thể mang `keyText` (chữ A-roll) với cụm neo nguyên văn.
+- **Stage 6 (`06-shotlist`)**: model chia shot; script tất định gộp shot cùng asset, chọn cover/contain theo kích thước thật, gán camera 1 tween/shot, khớp shot vào ranh giới scene, tính thời điểm/treatment chữ A-roll từ mốc từng từ narration (không đủ chỗ đọc → bỏ chữ, có log).
+- **Stage 7 (`07-codegen`)**: **cảnh asset = builder tất định, 0 lần gọi model**; cảnh đồ hoạ = generator → verify → reviewer + kiểm tra khung đầu không trống (chụp `snapshot --at 0.25`). Video ngắn hơn shot → ảnh khung cuối (engine `drawElement` không giữ khung cuối).
+- **Stage 7b/8/9**: 8 từ chối ráp khi scene còn khe hở; 9 chạy QA tất định sau render (khung đen + khung phẳng) và ghi `blackFramesOk/flatFramesOk` vào `completion-manifest.json`.
+- Công cụ: `scripts/qa/*` (đo), `node scripts/tests/run-all.mjs` (test). Chữ A-roll và các quy tắc: `planning/style-dna/STYLE_DNA.md` mục 4b.
+
 ## Input cần nhận từ bạn (cho MỖI video mới, slug ví dụ `<slug>`)
 - **Audio sạch**: đặt vào `public/videos/<slug>/audio/narration.mp3`
 - **Script video**: đặt vào `content/videos/<slug>/script.txt`

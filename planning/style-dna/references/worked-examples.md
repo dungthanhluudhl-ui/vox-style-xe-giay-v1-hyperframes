@@ -1,5 +1,8 @@
 # Ví dụ thực chiến — lời thoại vào, quyết định hình ảnh ra
 
+> **[ADN v2]** Các ví dụ có overlay/diagram/chữ trên nền media và quy tắc 'Hai ngôn ngữ xếp chồng thắng một ngôn ngữ dùng giỏi' là hồ sơ v1, chỉ còn đúng cho CẢNH ĐỒ HOẠ. Cảnh asset v2 là media thuần.
+
+
 Mỗi ngưỡng chất lượng trong bộ DNA này chỉ đo được một CÁI SÀN. Không ngưỡng nào tự nghĩ ra
 được một ý tưởng hay. Tài liệu này là nửa còn lại: mười hai quyết định thật, mỗi quyết định
 kèm câu thoại đã gợi ra nó, lý do, khung hình đã lên sóng, và **phương án hiển nhiên đã bị

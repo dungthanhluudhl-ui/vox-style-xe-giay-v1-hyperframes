@@ -282,6 +282,19 @@ Stage 3 (ảnh nội dung giữ nguyên, chỉ đổi container). **Nếu cấp 
 là đã bao gồm hết mọi file trong thư mục. Chưa sửa tận gốc (mở rộng regex Stage 3 nhận `.webp`, hoặc tự
 convert trong script) — cân nhắc nếu gặp lần thứ 3.
 
+## ADN v2 — ai/gì đảm nhiệm khác v1 (từ 03/10/2026; áp dụng cho §4–§8 bên dưới)
+Các mục §4–§6 dưới đây mô tả khung chung; chỗ nào nói "generator + reviewer cho MỌI scene" chỉ còn đúng cho **cảnh đồ hoạ**. Bảng v2:
+| Việc | Ai/gì đảm nhiệm v2 | Ghi chú |
+|---|---|---|
+| Lập Scene Plan (Stage 5) | model `reasoning_planning` + **script tất định**: `lib/scene-tiling.mjs` (nối liền scene), độ dài audio thật (ffprobe), `lib/key-text-plan.mjs` (khớp neo + khả thi + hạn mức chữ A-roll), `lib/v2-checks.mjs` (`validatePlan`/`softPlanWarnings`) → thử lại tối đa 2 lượt | v1: chỉ model, không kiểm tra tất định |
+| Lập Shotlist (Stage 6) | model chia shot + **script tất định**: gộp shot cùng asset, `fitForAsset` (cover/contain), camera 1 tween/shot (`lib/asset-scene.mjs`), khớp shot vào scene, `finalizeKeyTexts` | v1: chỉ model |
+| Code cảnh ASSET (Stage 7) | **builder tất định** (`lib/asset-scene.mjs`) + `hyperframes check` + `checkAssetScene` + `overflowProblems` + `keyTextTimingProblems`; KHÔNG generator/reviewer | v1: generator + reviewer |
+| Code cảnh ĐỒ HOẠ (Stage 7) | generator → verify → **reviewer** (model reviewer + `review-gate.mjs` quyết định theo lỗi CHẶN) + `checkGraphicsScene` + khung đầu không trống (`lib/blank-start.mjs`) | như v1 + 2 kiểm tra tất định mới |
+| Ráp `index.html` (Stage 8) | tất định (`lib/sync-root-hf-lib.mjs`), **từ chối khi scene còn khe hở** | nền root = giấy, không đen |
+| Render + QA (Stage 9) | tất định: `09-render.hf.mjs` + `lib/render-qa.mjs` (khung đen, khung phẳng) → `completion-manifest.json` | QA vision tuỳ chọn (`qa-blank-frame-audit.mjs`, `scripts/qa/vision-qa.mjs`) |
+| Model reviewer | `reasoning_reviewer` (đọc `model-routing.json`), reviewer KHÔNG xem ảnh | chỉ chạy cho cảnh đồ hoạ |
+Bài học vận hành 03/10: khe hở scene = khung đen, video ngắn hơn shot = trống ở chế độ `drawElement`, nền trống đầu cảnh đồ hoạ — xem `planning/incident-log.md` (mục 03/10/2026).
+
 ## 4. Style DNA (khi nhận tài liệu style)
 | Task | Ai/gì đảm nhiệm | Công cụ |
 |---|---|---|
